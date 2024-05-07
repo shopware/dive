@@ -1,5 +1,19 @@
 {
     "name": "@shopware-ag/dive",
     "version": "1.0.0",
-    "exports": "./src/index.ts"
+    "exports": "./src/index.ts",
+    "publish": {
+      "include": [
+        "dist",
+        "src"
+      ],
+      "exclude": [
+        ".github",
+        ".gitignore",
+        ".yarnrc.yml",
+        "eslint.config.js",
+        "jest.config.cjs",
+        "tsup.config.ts"
+      ]
+    }
   }

@@ -99,4 +99,4 @@ jobs:
         if: steps.yarn-cache.outputs.cache-hit != 'true'
         run: yarn
       - name: Publish DIVE Dry-Run (testing with JSR)
-        run: yarn dlx jsr publish --dry-run
+        run: yarn publish-dry-run

@@ -49,7 +49,8 @@
     "build": "tsup",
     "lint": "eslint",
     "test": "jest",
-    "test-coverage": "jest --coverage"
+    "test-coverage": "jest --coverage",
+    "publish-dry-run": "yarn dlx jsr publish --dry-run"
   },
   "packageManager": "yarn@4.1.1"
 }
