@@ -5,9 +5,13 @@
     "publish": {
       "include": [
         "dist",
-        "src"
+        "src",
+        "package.json",
+        "tsconfig.json",
+        "yarn.lock"
       ],
       "exclude": [
+        "src/**/*.test.ts",
         ".github",
         ".gitignore",
         ".yarnrc.yml",

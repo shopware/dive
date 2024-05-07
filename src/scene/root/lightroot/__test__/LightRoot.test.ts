@@ -46,7 +46,13 @@ jest.mock('../../../../light/PointLight.ts', () => {
     });
 });
 
+const consoleWarnSpy = jest.spyOn(console, 'warn').mockImplementation(() => { });
+
 describe('dive/scene/root/lightroot/DIVELightRoot', () => {
+    beforeEach(() => {
+        consoleWarnSpy.mockClear();
+    });
+
     it('should instantiate', () => {
         const lightRoot = new DIVELightRoot();
         expect(lightRoot).toBeDefined();
@@ -55,12 +61,14 @@ describe('dive/scene/root/lightroot/DIVELightRoot', () => {
     it('should not add incorrect light without id', () => {
         const lightRoot = new DIVELightRoot();
         expect(() => lightRoot.UpdateLight({ id: undefined })).not.toThrow();
+        expect(consoleWarnSpy).toHaveBeenCalled();
         expect(lightRoot.children).toHaveLength(0);
     });
 
     it('should not add incorrect light', () => {
         const lightRoot = new DIVELightRoot();
         expect(() => lightRoot.UpdateLight(({ id: 'test_id', name: 'test', type: 'this not a real light type' }) as unknown as COMLight)).not.toThrow();
+        expect(consoleWarnSpy).toHaveBeenCalled();
         expect(lightRoot.children).toHaveLength(0);
     });
 
@@ -88,6 +96,7 @@ describe('dive/scene/root/lightroot/DIVELightRoot', () => {
     it('should update configured light', () => {
         const lightRoot = new DIVELightRoot();
         lightRoot.UpdateLight({ id: 'test_id', type: 'point', position: { x: 1, y: 2, z: 3 }, intensity: 0.5, color: 0x123456 });
+        expect(consoleWarnSpy).not.toHaveBeenCalled();
         expect(lightRoot.children).toHaveLength(1);
         expect(lightRoot.children[0].userData.id).toBe('test_id');
         expect(mock_SetIntensity).toHaveBeenCalledTimes(1);
@@ -100,6 +109,7 @@ describe('dive/scene/root/lightroot/DIVELightRoot', () => {
         expect(() => lightRoot.GetLight({ id: undefined })).not.toThrow();
         expect(lightRoot.GetLight({ id: 'test_id' })).toBeUndefined();
         lightRoot.UpdateLight({ id: 'test_id', type: 'point', position: { x: 1, y: 2, z: 3 }, intensity: 0.5, color: 0x123456 });
+        expect(consoleWarnSpy).toHaveBeenCalled();
         expect(lightRoot.GetLight({ id: 'test_id' })).toBeDefined();
     });
 

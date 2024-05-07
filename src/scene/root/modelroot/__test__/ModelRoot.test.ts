@@ -43,7 +43,13 @@ jest.mock('../../../../model/Model.ts', () => {
 
 jest.spyOn(DIVECommunication, 'get').mockReturnValue({ PerformAction: jest.fn() } as unknown as DIVECommunication);
 
+const consoleWarnSpy = jest.spyOn(console, 'warn').mockImplementation(() => { });
+
 describe('dive/scene/root/modelroot/DIVEModelRoot', () => {
+    beforeEach(() => {
+        consoleWarnSpy.mockClear();
+    });
+
     it('should instantiate', () => {
         const modelRoot = new DIVEModelRoot();
         expect(modelRoot).toBeDefined();
@@ -52,6 +58,7 @@ describe('dive/scene/root/modelroot/DIVEModelRoot', () => {
     it('should not add incorrect model', async () => {
         const modelRoot = new DIVEModelRoot();
         await expect(() => modelRoot.UpdateModel({ id: undefined })).not.toThrow();
+        expect(consoleWarnSpy).toHaveBeenCalled();
         expect(modelRoot.children).toHaveLength(0);
     });
 
@@ -96,6 +103,7 @@ describe('dive/scene/root/modelroot/DIVEModelRoot', () => {
     it('should not place incorrect model on floor', async () => {
         const modelRoot = new DIVEModelRoot();
         expect(() => modelRoot.PlaceOnFloor({ id: undefined })).not.toThrow();
+        expect(consoleWarnSpy).toHaveBeenCalled();
         expect(mock_PlaceOnFloor).toHaveBeenCalledTimes(0);
     });
 
@@ -121,6 +129,7 @@ describe('dive/scene/root/modelroot/DIVEModelRoot', () => {
     it('should get model', async () => {
         const modelRoot = new DIVEModelRoot();
         expect(() => modelRoot.GetModel({ id: undefined })).not.toThrow();
+        expect(consoleWarnSpy).toHaveBeenCalled();
         expect(modelRoot.GetModel({ id: 'test_id' })).toBeUndefined();
         await expect(() => modelRoot.UpdateModel({
             id: 'test_id',
@@ -135,7 +144,10 @@ describe('dive/scene/root/modelroot/DIVEModelRoot', () => {
     it('should delete model', async () => {
         const modelRoot = new DIVEModelRoot();
         expect(() => modelRoot.DeleteModel({ id: undefined })).not.toThrow();
+        expect(consoleWarnSpy).toHaveBeenCalled();
+        consoleWarnSpy.mockClear();
         expect(() => modelRoot.DeleteModel({ id: 'test_id' })).not.toThrow();
+        expect(consoleWarnSpy).toHaveBeenCalled();
         await expect(() => modelRoot.UpdateModel({
             id: 'test_id',
             uri: 'not a real uri',

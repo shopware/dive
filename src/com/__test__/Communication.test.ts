@@ -573,10 +573,14 @@ describe('dive/communication/DIVECommunication', () => {
     });
 
     it('should perform action GENERATE_MEDIA', () => {
+        const spy = jest.spyOn(console, 'warn').mockImplementation(() => { });
+
         const success0 = testCom.PerformAction('GENERATE_MEDIA', {
             id: 'test ID',
             dataUri: '',
         });
+        expect(spy).toHaveBeenCalled();
+        spy.mockClear();
         expect(success0).toBe(false);
 
         const mockModel = {
@@ -594,6 +598,8 @@ describe('dive/communication/DIVECommunication', () => {
             id: 'test0',
             dataUri: '',
         });
+        expect(spy).toHaveBeenCalled();
+        spy.mockClear();
         expect(success1).toBe(false);
 
         const mock0 = {
@@ -608,6 +614,8 @@ describe('dive/communication/DIVECommunication', () => {
             id: 'test0',
             dataUri: '',
         });
+        expect(spy).not.toHaveBeenCalled();
+        spy.mockRestore();
         expect(success2).toBe(true);
     });
 });
