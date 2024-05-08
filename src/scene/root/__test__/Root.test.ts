@@ -19,6 +19,16 @@ jest.mock('../../../primitive/floor/Floor', () => {
     });
 });
 
+jest.mock('../../../grid/Grid', () => {
+    return jest.fn(function () {
+        this.isObject3D = true;
+        this.parent = null;
+        this.dispatchEvent = jest.fn();
+        this.removeFromParent = jest.fn();
+        return this;
+    });
+});
+
 jest.mock('../lightroot/LightRoot', () => {
     return jest.fn(function () {
         this.isObject3D = true;
@@ -54,12 +64,17 @@ describe('DIVE/scene/root/DIVERoot', () => {
     it('should instantiate', () => {
         const root = new DIVERoot();
         expect(root).toBeDefined();
-        expect(root.children).toHaveLength(3);
+        expect(root.children).toHaveLength(4);
     });
 
     it('should have Floor', () => {
         const root = new DIVERoot();
         expect(root.Floor).toBeDefined();
+    });
+
+    it('should have Grid', () => {
+        const root = new DIVERoot();
+        expect(root.Grid).toBeDefined();
     });
 
     it('should add object', () => {

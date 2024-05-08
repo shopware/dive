@@ -49,7 +49,15 @@ jest.mock('three', () => {
     }
 });
 
-jest.spyOn(DIVECommunication, 'get').mockReturnValue({ PerformAction: jest.fn() } as unknown as DIVECommunication);
+jest.mock('../../com/Communication.ts', () => {
+    return {
+        get: jest.fn(() => {
+            return {
+                PerformAction: jest.fn(),
+            }
+        }),
+    }
+});
 
 describe('dive/light/DIVEPointLight', () => {
     it('should instantiate', () => {

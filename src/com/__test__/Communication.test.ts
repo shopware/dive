@@ -28,6 +28,12 @@ import DIVEOrbitControls from '../../controls/OrbitControls';
 import { COMLight, COMModel, COMPov } from '../types';
 import { Object3D } from 'three';
 
+jest.mock('three/src/math/MathUtils', () => {
+    return {
+        generateUUID: jest.fn().mockReturnValue('uuid'),
+    }
+});
+
 const mockScene = {
     SetBackground: jest.fn(),
     AddSceneObject: jest.fn(),
@@ -128,16 +134,21 @@ describe('dive/communication/DIVECommunication', () => {
     });
 
     afterEach(() => {
+        testCom.DestroyInstance();
         jest.clearAllMocks();
     });
 
     it('should instantiate', () => {
         expect(testCom).toBeDefined();
         expect(() => DIVECommunication.get('id')).not.toThrow();
+        expect(DIVECommunication['__instances']).toHaveLength(1);
     });
 
-    it('should not perform invalid action', () => {
-        // expect(testCom.PerformAction('NOT_A_VALID_ACTION', {})).toBe(false);
+    it('should destroy instance', () => {
+        expect(testCom).toBeDefined();
+        testCom.DestroyInstance();
+        expect(DIVECommunication['__instances']).toBeDefined();
+        expect(DIVECommunication['__instances']).toHaveLength(0);
     });
 
     it('should subscribe, listen and unsubscribe from action', () => {
@@ -573,49 +584,29 @@ describe('dive/communication/DIVECommunication', () => {
     });
 
     it('should perform action GENERATE_MEDIA', () => {
-        const spy = jest.spyOn(console, 'warn').mockImplementation(() => { });
-
-        const success0 = testCom.PerformAction('GENERATE_MEDIA', {
-            id: 'test ID',
-            dataUri: '',
-        });
-        expect(spy).toHaveBeenCalled();
-        spy.mockClear();
-        expect(success0).toBe(false);
-
-        const mockModel = {
-            entityType: "model",
-            id: "test0",
-            position: { x: 0, y: 0, z: 0 },
-            rotation: { x: 0, y: 0, z: 0 },
-            scale: { x: 0.01, y: 0.01, z: 0.01 },
-
-            uri: "https://threejs.org/examples/models/gltf/LittlestTokyo.glb",
-        } as COMModel;
-        testCom.PerformAction('ADD_OBJECT', mockModel);
-
-        const success1 = testCom.PerformAction('GENERATE_MEDIA', {
-            id: 'test0',
-            dataUri: '',
-        });
-        expect(spy).toHaveBeenCalled();
-        spy.mockClear();
-        expect(success1).toBe(false);
-
-        const mock0 = {
+        const mock1 = {
             entityType: "pov",
-            id: "test0",
+            id: "test1",
             position: { x: 0, y: 0, z: 0 },
             target: { x: 0, y: 0, z: 0 },
         } as COMPov;
-        testCom.PerformAction('UPDATE_OBJECT', mock0);
+        testCom.PerformAction('ADD_OBJECT', mock1);
 
-        const success2 = testCom.PerformAction('GENERATE_MEDIA', {
-            id: 'test0',
+        const success0 = testCom.PerformAction('GENERATE_MEDIA', {
+            id: 'test1',
+            width: 800,
+            height: 600,
             dataUri: '',
         });
-        expect(spy).not.toHaveBeenCalled();
-        spy.mockRestore();
-        expect(success2).toBe(true);
+        expect(success0).toBe(true);
+
+        const success1 = testCom.PerformAction('GENERATE_MEDIA', {
+            position: { x: 0, y: 0, z: 0 },
+            target: { x: 0, y: 0, z: 0 },
+            width: 800,
+            height: 600,
+            dataUri: '',
+        });
+        expect(success1).toBe(true);
     });
 });

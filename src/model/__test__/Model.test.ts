@@ -59,6 +59,16 @@ jest.mock('three', () => {
     }
 });
 
+jest.mock('../../com/Communication.ts', () => {
+    return {
+        get: jest.fn(() => {
+            return {
+                PerformAction: jest.fn(),
+            }
+        }),
+    }
+});
+
 const gltf = {
     scene: {
         isObject3D: true,

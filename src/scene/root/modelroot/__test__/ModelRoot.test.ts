@@ -23,6 +23,16 @@ jest.mock('../../../../loadingmanager/LoadingManager.ts', () => {
     });
 });
 
+jest.mock('../../../../com/Communication.ts', () => {
+    return {
+        get: jest.fn(() => {
+            return {
+                PerformAction: jest.fn(),
+            }
+        }),
+    }
+});
+
 jest.mock('../../../../model/Model.ts', () => {
     return jest.fn(function () {
         this.isObject3D = true;

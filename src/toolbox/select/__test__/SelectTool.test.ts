@@ -2,7 +2,7 @@ import DIVESelectTool from '../SelectTool';
 import DIVEScene from '../../../scene/Scene';
 import DIVEOrbitControls from '../../../controls/OrbitControls';
 import DIVEPerspectiveCamera from '../../../camera/PerspectiveCamera';
-import DIVERenderer from '../../../renderer/Renderer';
+import DIVERenderer, { DIVERendererDefaultSettings } from '../../../renderer/Renderer';
 import { DIVESelectable } from '../../../interface/Selectable';
 
 jest.mock('../../../renderer/Renderer', () => {
@@ -112,7 +112,7 @@ jest.mock('three/examples/jsm/Addons.js', () => {
 });
 
 const mockCamera: DIVEPerspectiveCamera = {} as DIVEPerspectiveCamera;
-const mockRenderer: DIVERenderer = new DIVERenderer();
+const mockRenderer: DIVERenderer = new DIVERenderer(DIVERendererDefaultSettings);
 const mockScene: DIVEScene = new DIVEScene();
 const mockController: DIVEOrbitControls = new DIVEOrbitControls(mockCamera, mockRenderer);
 

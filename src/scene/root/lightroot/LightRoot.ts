@@ -50,11 +50,11 @@ export default class DIVELightRoot extends Object3D {
             this.add(sceneObject);
         }
 
-        if (light.name !== undefined) sceneObject.name = light.name;
-        if (light.position !== undefined) sceneObject.position.set(light.position.x, light.position.y, light.position.z);
-        if (light.intensity !== undefined) (sceneObject as (DIVEAmbientLight | DIVEPointLight)).SetIntensity(light.intensity);
-        if (light.enabled !== undefined) (sceneObject as (DIVEAmbientLight | DIVEPointLight)).SetEnabled(light.enabled);
-        if (light.color !== undefined) (sceneObject as (DIVEAmbientLight | DIVEPointLight)).SetColor(new Color(light.color));
+        if (light.name !== undefined && light.name !== null) sceneObject.name = light.name;
+        if (light.position !== undefined && light.position !== null) sceneObject.position.set(light.position.x, light.position.y, light.position.z);
+        if (light.intensity !== undefined && light.intensity !== null) (sceneObject as (DIVEAmbientLight | DIVEPointLight)).SetIntensity(light.intensity);
+        if (light.enabled !== undefined && light.enabled !== null) (sceneObject as (DIVEAmbientLight | DIVEPointLight)).SetEnabled(light.enabled);
+        if (light.color !== undefined && light.color !== null) (sceneObject as (DIVEAmbientLight | DIVEPointLight)).SetColor(new Color(light.color));
     }
 
     public DeleteLight(light: Partial<COMLight>): void {

@@ -3,14 +3,20 @@ import DIVELightRoot from "./lightroot/LightRoot.ts";
 import DIVEModelRoot from "./modelroot/ModelRoot.ts";
 import { COMLight, COMModel, COMEntity } from "../../com/types.ts";
 import DIVEFloor from "../../primitive/floor/Floor.ts";
+import DIVEGrid from "../../grid/Grid.ts";
 
 export default class DIVERoot extends Object3D {
     private lightRoot: DIVELightRoot;
     private modelRoot: DIVEModelRoot;
     private floor: DIVEFloor;
+    private grid: DIVEGrid;
 
     public get Floor(): DIVEFloor {
         return this.floor;
+    }
+
+    public get Grid(): DIVEGrid {
+        return this.grid;
     }
 
     constructor() {
@@ -23,6 +29,8 @@ export default class DIVERoot extends Object3D {
         this.add(this.modelRoot);
         this.floor = new DIVEFloor();
         this.add(this.floor);
+        this.grid = new DIVEGrid();
+        this.add(this.grid);
     }
 
     public GetSceneObject(object: Partial<COMEntity>): Object3D | undefined {

@@ -1,128 +1,169 @@
 import { Vector4 } from "three";
-import { update as updateTween } from "@tweenjs/tween.js";
+import DIVERenderer, { DIVERendererDefaultSettings, DIVERendererSettings } from "./renderer/Renderer.ts";
 import DIVEScene from "./scene/Scene.ts";
-import DIVEPerspectiveCamera from "./camera/PerspectiveCamera.ts";
-import DIVERenderer from "./renderer/Renderer.ts";
+import DIVEPerspectiveCamera, { DIVEPerspectiveCameraDefaultSettings, DIVEPerspectiveCameraSettings } from "./camera/PerspectiveCamera.ts";
+import DIVEOrbitControls, { DIVEOrbitControlsDefaultSettings, DIVEOrbitControlsSettings } from "./controls/OrbitControls.ts";
 import DIVEMediaCreator from "./mediacreator/MediaCreator.ts";
-import DIVEToolBox from "./toolbox/ToolBox.ts";
+import DIVEToolbox from "./toolbox/ToolBox.ts";
 import DIVECommunication from "./com/Communication.ts";
+import DIVEAnimationSystem from "./animation/AnimationSystem.ts";
 import DIVEAxisCamera from "./axiscamera/AxisCamera.ts";
-import DIVEOrbitControls from "./controls/OrbitControls.ts";
-import { DIVEMath } from './math/index.ts';
-import DIVEGrid from "./grid/Grid.ts";
+import { getObjectDelta } from "./helper/getObjectDelta/getObjectDelta.ts";
 
-export const initSwSceneEditor = (): { canvasElement: HTMLCanvasElement, com: DIVECommunication, resizing: { enableResize: () => void, disableResize: () => void, setRendererSize: (_width: number, _height: number) => void } } => {
-    const renderer = new DIVERenderer();
-    const scene = new DIVEScene();
-    const cam = new DIVEPerspectiveCamera(80, 1);
-    const controls = new DIVEOrbitControls(cam, renderer);
-    const mediaCreator = new DIVEMediaCreator(renderer, scene, controls);
-    const toolbox = new DIVEToolBox(scene, controls);
-
-    const com = new DIVECommunication(scene, controls, toolbox, mediaCreator);
-
-    scene.add(new DIVEGrid());
-
-    // generate env map (for later)
-    // const pmremGenerator = new PMREMGenerator(renderer);
-    //scene.environment = pmremGenerator.fromScene( scene ).texture;
-
-    // start running the render loop
-    renderer.AddPreRenderCallback(() => {
-        updateTween();
-    });
-
-    // resize observer
-    let width = 0;
-    let height = 0;
-    let resizing = true;
-
-    /**
-     * TEMPORARY SOLUTION - Properly disable resizing
-     */
-    function disableResize() {
-        controls.enabled = false;
-        resizing = false;
-        cam.SetCameraLayer('LIVE');
-        renderer.PauseRenderer();
-    }
-
-    function enableResize() {
-        resizing = true;
-        renderer.setPixelRatio(window.devicePixelRatio);
-        cam.SetCameraLayer('EDITOR');
-        renderer.ResumeRenderer();
-        controls.enabled = true;
-    }
-
-    function setRendererSize(_width: number, _height: number) {
-        disableResize();
-        // resize renderer
-        renderer.setSize(_width, _height);
-        renderer.setPixelRatio(1);
-        renderer.domElement.style.width = 'unset';
-        renderer.domElement.style.height = 'unset';
-
-        // resize camera
-        cam.aspect = _width / _height;
-        cam.updateProjectionMatrix();
-
-        renderer.ForceRendering();
-
-        width = _width;
-        height = _height;
-    }
-
-    const onResize = () => {
-        // check if it should resize
-        if (!resizing) return;
-
-        // check if the canvas is mounted
-        const canvasWrapper = renderer.domElement.parentElement;
-        if (!canvasWrapper) return;
-
-        const { clientWidth, clientHeight } = canvasWrapper;
-        if (clientWidth === width && clientHeight === height) return;
-
-        // resize renderer
-        renderer.setSize(clientWidth, clientHeight);
-
-        // resize camera
-        cam.aspect = clientWidth / clientHeight;
-        cam.updateProjectionMatrix();
-
-        width = clientWidth;
-        height = clientHeight;
-    }
-    renderer.AddPreRenderCallback(() => {
-        onResize()
-    });
-
-    const axesDisplay = new DIVEAxisCamera();
-    scene.add(axesDisplay);
-    const restoreViewport = new Vector4();
-
-    renderer.AddPostRenderCallback(() => {
-        const restoreBackground = scene.background;
-        scene.background = null;
-
-        renderer.getViewport(restoreViewport);
-        renderer.setViewport(0, 0, 150, 150);
-        renderer.autoClear = false;
-
-        axesDisplay.SetFromCameraMatrix(cam.matrix);
-
-        renderer.render(scene, axesDisplay);
-
-        renderer.setViewport(restoreViewport);
-        renderer.autoClear = true;
-
-        scene.background = restoreBackground;
-    });
-
-    renderer.StartRenderer(scene, cam);
-
-    return { canvasElement: renderer.domElement, com, resizing: { enableResize, disableResize, setRendererSize } };
+export type DIVESettings = {
+    autoResize: boolean;
+    renderer: DIVERendererSettings;
+    perspectiveCamera: DIVEPerspectiveCameraSettings;
+    orbitControls: DIVEOrbitControlsSettings;
 }
 
-export { DIVEScene, DIVEPerspectiveCamera, DIVERenderer, DIVEOrbitControls, DIVEMediaCreator, DIVEToolBox, DIVECommunication, DIVEAxisCamera, DIVEMath }
+export const DIVEDefaultSettings: DIVESettings = {
+    autoResize: true,
+    renderer: DIVERendererDefaultSettings,
+    perspectiveCamera: DIVEPerspectiveCameraDefaultSettings,
+    orbitControls: DIVEOrbitControlsDefaultSettings,
+}
+
+export class DIVE {
+    // descriptive members
+    private _settings: DIVESettings;
+    private _resizeObserverId: string;
+    private _width: number;
+    private _height: number;
+
+    // functional components
+    private renderer: DIVERenderer;
+    private scene: DIVEScene;
+    private perspectiveCamera: DIVEPerspectiveCamera;
+    private orbitControls: DIVEOrbitControls;
+    private mediaCreator: DIVEMediaCreator;
+    private toolbox: DIVEToolbox;
+    private communication: DIVECommunication;
+
+    // additional components
+    private animationSystem: DIVEAnimationSystem;
+    private axisCamera: DIVEAxisCamera;
+
+    // getters
+    public get Communication(): DIVECommunication {
+        return this.communication;
+    }
+
+    public get Canvas(): HTMLCanvasElement {
+        return this.renderer.domElement;
+    }
+
+    // setters
+    public set Settings(settings: Partial<DIVESettings>) {
+        const settingsDelta = getObjectDelta(this._settings, settings);
+
+        // apply renderer settings (we have to rebuild the renderer to apply the settings)
+        if (settingsDelta.renderer) this.renderer = new DIVERenderer(this._settings.renderer);
+
+        // apply perspective camera settings
+        if (settingsDelta.perspectiveCamera) {
+            this.perspectiveCamera.fov = settingsDelta.perspectiveCamera.fov;
+            this.perspectiveCamera.near = settingsDelta.perspectiveCamera.near;
+            this.perspectiveCamera.far = settingsDelta.perspectiveCamera.far;
+            this.perspectiveCamera.OnResize(this.renderer.domElement.width, this.renderer.domElement.height);
+        }
+        // apply orbit controls settings
+        if (settingsDelta.orbitControls) {
+            this.orbitControls.enableDamping = settingsDelta.orbitControls.enableDamping;
+            this.orbitControls.dampingFactor = settingsDelta.orbitControls.dampingFactor;
+        }
+
+        if (settingsDelta.autoResize !== this._settings.autoResize) {
+            if (settingsDelta.autoResize) {
+                this.addResizeObserver();
+            } else {
+                this.removeResizeObserver();
+            }
+        }
+
+        Object.assign(this._settings, settings);
+    }
+
+    constructor(settings?: Partial<DIVESettings>) {
+        this._settings = { ...DIVEDefaultSettings, ...(settings !== undefined ? settings : {}) };
+
+        this._resizeObserverId = '';
+        this._width = 0;
+        this._height = 0;
+
+        // initialize functional components
+        this.renderer = new DIVERenderer(this._settings.renderer);
+        this.scene = new DIVEScene();
+        this.perspectiveCamera = new DIVEPerspectiveCamera(this._settings.perspectiveCamera);
+        this.orbitControls = new DIVEOrbitControls(this.perspectiveCamera, this.renderer, this._settings.orbitControls);
+        this.mediaCreator = new DIVEMediaCreator(this.renderer, this.scene, this.orbitControls);
+        this.toolbox = new DIVEToolbox(this.scene, this.orbitControls);
+        this.communication = new DIVECommunication(this.scene, this.orbitControls, this.toolbox, this.mediaCreator);
+
+        // initialize animation system
+        this.animationSystem = new DIVEAnimationSystem();
+        this.renderer.AddPreRenderCallback(() => {
+            this.animationSystem.update();
+        })
+
+        // initialize axis camera
+        this.axisCamera = new DIVEAxisCamera();
+        this.scene.add(this.axisCamera);
+        const restoreViewport = new Vector4();
+
+        this.renderer.AddPostRenderCallback(() => {
+            const restoreBackground = this.scene.background;
+            this.scene.background = null;
+
+            this.renderer.getViewport(restoreViewport);
+            this.renderer.setViewport(0, 0, 150, 150);
+            this.renderer.autoClear = false;
+
+            this.axisCamera.SetFromCameraMatrix(this.perspectiveCamera.matrix);
+
+            this.renderer.render(this.scene, this.axisCamera);
+
+            this.renderer.setViewport(restoreViewport);
+            this.renderer.autoClear = true;
+
+            this.scene.background = restoreBackground;
+        });
+
+        // add resize observer if autoResize is enabled
+        if (this._settings.autoResize) {
+            this.addResizeObserver();
+        }
+
+        // whene everything is done, start the renderer
+        this.renderer.StartRenderer(this.scene, this.perspectiveCamera);
+    }
+
+    // methods
+    public OnResize(width: number, height: number): void {
+        // resize renderer
+        this.renderer.OnResize(width, height);
+
+        // resize camera
+        this.perspectiveCamera.OnResize(width, height);
+    }
+
+    private addResizeObserver(): void {
+        this._resizeObserverId = this.renderer.AddPreRenderCallback(() => {
+            // check if the canvas is mounted
+            const canvasWrapper = this.renderer.domElement.parentElement;
+            if (!canvasWrapper) return;
+
+            const { clientWidth, clientHeight } = canvasWrapper;
+            if (clientWidth === this._width && clientHeight === this._height) return;
+
+            this.OnResize(clientWidth, clientHeight);
+
+            this._width = clientWidth;
+            this._height = clientHeight;
+        });
+    }
+
+    private removeResizeObserver(): void {
+        this.renderer.RemovePreRenderCallback(this._resizeObserverId);
+    }
+}

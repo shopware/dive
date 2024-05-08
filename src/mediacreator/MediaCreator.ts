@@ -1,8 +1,8 @@
 import DIVEPerspectiveCamera from "../camera/PerspectiveCamera.ts";
 import DIVEScene from "../scene/Scene.ts";
-import { COMPov } from "../com/types.ts";
 import DIVERenderer from "../renderer/Renderer.ts";
 import DIVEOrbitControls from "../controls/OrbitControls.ts";
+import { Vector3Like } from "three";
 
 export default class DIVEMediaCreator {
     private renderer: DIVERenderer;
@@ -15,15 +15,19 @@ export default class DIVEMediaCreator {
         this.controller = controller;
     }
 
-    public GenerateMedia(pov: COMPov): string {
+    public GenerateMedia(position: Vector3Like, target: Vector3Like, width: number, height: number): string {
         const resetPosition = this.controller.object.position.clone();
         const resetRotation = this.controller.object.quaternion.clone();
 
-        this.controller.object.position.copy(pov.position);
-        this.controller.target.copy(pov.target);
+        this.renderer.OnResize(width, height);
+        this.controller.object.OnResize(width, height);
+
+        this.controller.object.position.copy(position);
+        this.controller.target.copy(target);
         this.controller.update();
 
-        const dataUri = this.drawCanvas();
+
+        const dataUri = this.DrawCanvas().toDataURL();
 
         this.controller.object.position.copy(resetPosition);
         this.controller.object.quaternion.copy(resetRotation);
@@ -31,12 +35,25 @@ export default class DIVEMediaCreator {
         return dataUri;
     }
 
-    private drawCanvas(): string {
+    public DrawCanvas(canvasElement?: HTMLCanvasElement): HTMLCanvasElement {
+        // save current canvas
+        const restore = this.renderer.domElement;
+        if (canvasElement) {
+            this.renderer.domElement = canvasElement;
+        }
+
         // draw canvas
         this.controller.object.layers.mask = DIVEPerspectiveCamera.LIVE_VIEW_LAYER_MASK;
         this.renderer.render(this.scene, this.controller.object);
         this.controller.object.layers.mask = DIVEPerspectiveCamera.EDITOR_VIEW_LAYER_MASK;
 
-        return this.renderer.domElement.toDataURL();
+        const returnCanvas = this.renderer.domElement;
+
+        // restore canvas
+        if (canvasElement) {
+            this.renderer.domElement = restore;
+        }
+
+        return returnCanvas;
     }
 }

@@ -2,6 +2,16 @@ import DIVESceneLight from '../SceneLight';
 import DIVECommunication from '../../com/Communication';
 import { Color } from 'three';
 
+jest.mock('../../com/Communication.ts', () => {
+    return {
+        get: jest.fn(() => {
+            return {
+                PerformAction: jest.fn(),
+            }
+        }),
+    }
+});
+
 const mockAdd = jest.fn();
 
 jest.mock('three', () => {

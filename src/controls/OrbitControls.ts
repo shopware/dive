@@ -4,6 +4,16 @@ import DIVERenderer from "../renderer/Renderer.ts";
 import { MathUtils, Vector3Like } from "three";
 import { Easing, Tween } from "@tweenjs/tween.js";
 
+export type DIVEOrbitControlsSettings = {
+    enableDamping: boolean;
+    dampingFactor: number;
+}
+
+export const DIVEOrbitControlsDefaultSettings: DIVEOrbitControlsSettings = {
+    enableDamping: true,
+    dampingFactor: 0.04,
+}
+
 export default class DIVEOrbitControls extends OrbitControls {
     public static readonly DEFAULT_ZOOM_FACTOR = 1;
 
@@ -18,7 +28,7 @@ export default class DIVEOrbitControls extends OrbitControls {
     public object: DIVEPerspectiveCamera;
     public domElement: HTMLCanvasElement;
 
-    constructor(camera: DIVEPerspectiveCamera, renderer: DIVERenderer) {
+    constructor(camera: DIVEPerspectiveCamera, renderer: DIVERenderer, settings: DIVEOrbitControlsSettings = DIVEOrbitControlsDefaultSettings) {
         super(camera, renderer.domElement);
 
         this.domElement = renderer.domElement;
@@ -29,8 +39,8 @@ export default class DIVEOrbitControls extends OrbitControls {
             this.preRenderCallback();
         });
 
-        this.enableDamping = true;
-        this.dampingFactor = 0.04;
+        this.enableDamping = settings.enableDamping;
+        this.dampingFactor = settings.dampingFactor;
     }
 
     public ZoomIn(by?: number) {

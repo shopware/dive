@@ -1,25 +1,51 @@
-import { Camera, MathUtils, NoToneMapping, PCFSoftShadowMap, Scene, WebGLRenderer } from "three";
+import { Camera, MathUtils, NoToneMapping, PCFSoftShadowMap, Scene, ShadowMapType, ToneMapping, WebGLRenderer } from "three";
+
+export type DIVERendererSettings = {
+    antialias: boolean;
+    alpha: boolean;
+    stencil: boolean;
+    shadowMapEnabled: boolean;
+    shadowMapType: ShadowMapType;
+    toneMapping: ToneMapping;
+}
+
+export const DIVERendererDefaultSettings: DIVERendererSettings = {
+    antialias: true,
+    alpha: true,
+    stencil: false,
+    shadowMapEnabled: true,
+    shadowMapType: PCFSoftShadowMap,
+    toneMapping: NoToneMapping,
+}
+
 
 export default class DIVERenderer extends WebGLRenderer {
+    // basic functionality members
     private paused: boolean = false;
     private running: boolean = false;
     private force: boolean = false;
 
+    // pre- and post-render callbacks
     private preRenderCallbacks: Map<string, () => void> = new Map<string, () => void>();
     private postRenderCallbacks: Map<string, () => void> = new Map<string, () => void>();
 
-    constructor() {
-        super({ antialias: true, alpha: true, preserveDrawingBuffer: true });
+    constructor(rendererSettings: DIVERendererSettings = DIVERendererDefaultSettings) {
+        super({
+            antialias: rendererSettings.antialias,
+            alpha: rendererSettings.alpha,
+            preserveDrawingBuffer: true
+        });
         this.setPixelRatio(window.devicePixelRatio);
 
-        this.shadowMap.enabled = true;
-        this.shadowMap.type = PCFSoftShadowMap;
+        this.shadowMap.enabled = rendererSettings.shadowMapEnabled;
+        this.shadowMap.type = rendererSettings.shadowMapType;
+
+        this.toneMapping = rendererSettings.toneMapping;
 
         this.debug.checkShaderErrors = false;
-
-        // maybe add switching tone mapping
-        this.toneMapping = NoToneMapping;
     }
+
+
 
     public StartRenderer(scene: Scene, cam: Camera): void {
         this.setAnimationLoop(() => { this.internal_render(scene, cam) });
@@ -39,10 +65,8 @@ export default class DIVERenderer extends WebGLRenderer {
         this.running = false;
     }
 
-    public ResizeRenderer(width: number, height: number): void {
+    public OnResize(width: number, height: number): void {
         this.setSize(width, height);
-
-        // resize 2D renderer as well
     }
 
     public AddPreRenderCallback(callback: () => void): string {

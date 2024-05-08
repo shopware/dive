@@ -1,6 +1,6 @@
 import DIVEOrbitControls from '../OrbitControls';
 import DIVEPerspectiveCamera from '../../camera/PerspectiveCamera';
-import DIVERenderer from '../../renderer/Renderer';
+import DIVERenderer, { DIVERendererDefaultSettings } from '../../renderer/Renderer';
 
 jest.mock('three/examples/jsm/Addons.js', () => {
     return {
@@ -92,7 +92,7 @@ const mockCamera = {
     },
     lookAt: jest.fn(),
 } as unknown as DIVEPerspectiveCamera;
-const mockRenderer: DIVERenderer = new DIVERenderer();
+const mockRenderer: DIVERenderer = new DIVERenderer(DIVERendererDefaultSettings);
 
 describe('dive/controls/DIVEOrbitControls', () => {
     afterEach(() => {

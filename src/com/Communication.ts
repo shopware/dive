@@ -7,6 +7,7 @@ import DIVEMediaCreator from "../mediacreator/MediaCreator.ts";
 import DIVEOrbitControls from "../controls/OrbitControls.ts";
 import { DIVESelectable } from "../interface/Selectable.ts";
 import DIVESelectTool from "../toolbox/select/SelectTool.ts";
+import { generateUUID } from "three/src/math/MathUtils";
 
 type EventListener<Action extends keyof Actions> = (payload: Actions[Action]['PAYLOAD']) => void;
 
@@ -19,6 +20,7 @@ export default class DIVECommunication {
         return this.__instances.find((instance) => Array.from(instance.registered.values()).find((object) => object.id === id));
     }
 
+    private id: string;
     private scene: DIVEScene;
     private controller: DIVEOrbitControls;
     private toolbox: DIVEToolBox;
@@ -30,12 +32,20 @@ export default class DIVECommunication {
     private listeners: Map<keyof Actions, EventListener<keyof Actions>[]> = new Map();
 
     constructor(scene: DIVEScene, controls: DIVEOrbitControls, toolbox: DIVEToolBox, mediaGenerator: DIVEMediaCreator) {
+        this.id = generateUUID();
         this.scene = scene;
         this.controller = controls;
         this.toolbox = toolbox;
         this.mediaGenerator = mediaGenerator;
 
         DIVECommunication.__instances.push(this);
+    }
+
+    public DestroyInstance() {
+        const existingIndex = DIVECommunication.__instances.findIndex((entry) => entry.id === this.id);
+        if (existingIndex === -1) return false;
+        DIVECommunication.__instances.splice(existingIndex, 1);
+        return true;
     }
 
     public PerformAction<Action extends keyof Actions>(action: Action, payload: Actions[Action]['PAYLOAD']): Actions[Action]['RETURN'] {
@@ -273,7 +283,8 @@ export default class DIVECommunication {
     }
 
     private moveCamera(payload: Actions['MOVE_CAMERA']['PAYLOAD']): Actions['MOVE_CAMERA']['RETURN'] {
-        let position, target = { x: 0, y: 0, z: 0 };
+        let position = { x: 0, y: 0, z: 0 };
+        let target = { x: 0, y: 0, z: 0 };
         if ('id' in payload) {
             position = (this.registered.get(payload.id) as COMPov).position;
             target = (this.registered.get(payload.id) as COMPov).target;
@@ -334,17 +345,17 @@ export default class DIVECommunication {
     }
 
     private generateMedia(payload: Actions['GENERATE_MEDIA']['PAYLOAD']): Actions['GENERATE_MEDIA']['RETURN'] {
-        const pov = this.registered.get(payload.id);
-        if (!pov) {
-            console.warn('DIVECommunication: POV not found');
-            return false;
-        }
-        if (pov.entityType !== 'pov') {
-            console.warn('DIVECommunication: Object', pov, 'is not a POV!');
-            return false;
+        let position = { x: 0, y: 0, z: 0 };
+        let target = { x: 0, y: 0, z: 0 };
+        if ('id' in payload) {
+            position = (this.registered.get(payload.id) as COMPov).position;
+            target = (this.registered.get(payload.id) as COMPov).target;
+        } else {
+            position = payload.position;
+            target = payload.target;
         }
 
-        payload.dataUri = this.mediaGenerator.GenerateMedia(pov as COMPov);
+        payload.dataUri = this.mediaGenerator.GenerateMedia(position, target, payload.width, payload.height);
 
         return true;
     }
