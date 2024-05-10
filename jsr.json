@@ -6,6 +6,7 @@
       "include": [
         "dist",
         "src",
+        "jsr.json",
         "package.json",
         "tsconfig.json",
         "yarn.lock"
