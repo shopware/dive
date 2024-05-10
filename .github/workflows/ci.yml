@@ -23,7 +23,7 @@ jobs:
       - name: Install DIVE dependencies (if cache not found)
         if: steps.yarn-cache.outputs.cache-hit != 'true'
         run: yarn
-  eslint:
+  lint:
     runs-on: ubuntu-latest
     needs: install
     steps:
@@ -42,9 +42,9 @@ jobs:
         run: yarn
       - name: Lint DIVE
         run: yarn lint
-  unit-test:
+  unit:
     runs-on: ubuntu-latest
-    needs: eslint
+    needs: lint
     steps:
       - name: Checkout DIVE
         uses: actions/checkout@main
@@ -60,10 +60,10 @@ jobs:
         if: steps.yarn-cache.outputs.cache-hit != 'true'
         run: yarn
       - name: Unit-Test DIVE (coverage)
-        run: yarn test-coverage
+        run: yarn coverage
   build:
     runs-on: ubuntu-latest
-    needs: eslint
+    needs: lint
     steps:
       - name: Checkout
         uses: actions/checkout@main
@@ -80,10 +80,9 @@ jobs:
         run: yarn
       - name: Build DIVE
         run: yarn build
-
   publish-dry-run:
     runs-on: ubuntu-latest
-    needs: [unit-test, build]
+    needs: [unit, build]
     steps:
       - name: Checkout
         uses: actions/checkout@main

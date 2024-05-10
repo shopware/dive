@@ -7,8 +7,8 @@ export default interface GENERATE_MEDIA {
     } | {
         id: string,
     }) & {
-        width: number,
-        height: number,
+        width: number, // image width in pixels
+        height: number, // image height in pixels
         dataUri: string
     },
     'RETURN': boolean,

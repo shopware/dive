@@ -2,7 +2,7 @@ import { Color, MeshStandardMaterial, MathUtils } from "three";
 import DIVEScene from "../scene/Scene.ts";
 import { Actions } from "./actions/index.ts";
 import { COMLight, COMModel, COMEntity, COMPov } from "./types.ts";
-import DIVEToolBox from "../toolbox/ToolBox.ts";
+import DIVEToolbox from "../toolbox/Toolbox.ts";
 import DIVEMediaCreator from "../mediacreator/MediaCreator.ts";
 import DIVEOrbitControls from "../controls/OrbitControls.ts";
 import { DIVESelectable } from "../interface/Selectable.ts";
@@ -22,7 +22,7 @@ export default class DIVECommunication {
     private id: string;
     private scene: DIVEScene;
     private controller: DIVEOrbitControls;
-    private toolbox: DIVEToolBox;
+    private toolbox: DIVEToolbox;
     private mediaGenerator: DIVEMediaCreator;
 
     private registered: Map<string, COMEntity> = new Map();
@@ -30,7 +30,7 @@ export default class DIVECommunication {
     // private listeners: { [key: string]: EventListener[] } = {};
     private listeners: Map<keyof Actions, EventListener<keyof Actions>[]> = new Map();
 
-    constructor(scene: DIVEScene, controls: DIVEOrbitControls, toolbox: DIVEToolBox, mediaGenerator: DIVEMediaCreator) {
+    constructor(scene: DIVEScene, controls: DIVEOrbitControls, toolbox: DIVEToolbox, mediaGenerator: DIVEMediaCreator) {
         this.id = MathUtils.generateUUID();
         this.scene = scene;
         this.controller = controls;

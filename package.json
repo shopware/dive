@@ -1,6 +1,6 @@
 {
   "name": "@shopware-ag/dive",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "Shopware Spatial Framework",
   "type": "module",
   "main": "./dist/index.js",
@@ -46,10 +46,11 @@
     "typescript-eslint": "^7.7.1"
   },
   "scripts": {
-    "build": "tsup",
+    "build": "tsup && yarn genmd",
     "lint": "eslint",
-    "test": "jest",
-    "test-coverage": "jest --coverage",
+    "unit": "jest",
+    "coverage": "jest --coverage",
+    "genmd": "node ./scripts/genmd.js",
     "publish-dry-run": "yarn dlx jsr publish --dry-run"
   },
   "packageManager": "yarn@4.1.1"

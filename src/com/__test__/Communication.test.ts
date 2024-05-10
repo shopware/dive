@@ -1,6 +1,6 @@
 import DIVECommunication from '../Communication';
 import DIVEScene from '../../scene/Scene';
-import DIVEToolBox from '../../toolbox/ToolBox';
+import DIVEToolbox from '../../toolbox/Toolbox';
 import DIVEMediaCreator from '../../mediacreator/MediaCreator';
 import '..';
 import '../types';
@@ -120,7 +120,7 @@ const mockToolBox = {
         Select: mockSelect,
     }),
     SetGizmoMode: jest.fn(),
-} as unknown as DIVEToolBox;
+} as unknown as DIVEToolbox;
 
 const mockMediaCreator = {
     GenerateMedia: jest.fn(),

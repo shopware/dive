@@ -3,7 +3,7 @@ import DIVEScene from "../scene/Scene.ts";
 import DIVEBaseTool from "./BaseTool.ts";
 import DIVESelectTool from "./select/SelectTool.ts";
 
-export default class DIVEToolBox {
+export default class DIVEToolbox {
     public static readonly DefaultTool = 'select';
 
     private activeTool: DIVEBaseTool;
