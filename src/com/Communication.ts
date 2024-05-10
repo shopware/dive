@@ -1,13 +1,12 @@
+import { Color, MeshStandardMaterial, MathUtils } from "three";
 import DIVEScene from "../scene/Scene.ts";
 import { Actions } from "./actions/index.ts";
 import { COMLight, COMModel, COMEntity, COMPov } from "./types.ts";
-import { Color, MeshStandardMaterial } from "three";
 import DIVEToolBox from "../toolbox/ToolBox.ts";
 import DIVEMediaCreator from "../mediacreator/MediaCreator.ts";
 import DIVEOrbitControls from "../controls/OrbitControls.ts";
 import { DIVESelectable } from "../interface/Selectable.ts";
 import DIVESelectTool from "../toolbox/select/SelectTool.ts";
-import { generateUUID } from "three/src/math/MathUtils";
 
 type EventListener<Action extends keyof Actions> = (payload: Actions[Action]['PAYLOAD']) => void;
 
@@ -32,7 +31,7 @@ export default class DIVECommunication {
     private listeners: Map<keyof Actions, EventListener<keyof Actions>[]> = new Map();
 
     constructor(scene: DIVEScene, controls: DIVEOrbitControls, toolbox: DIVEToolBox, mediaGenerator: DIVEMediaCreator) {
-        this.id = generateUUID();
+        this.id = MathUtils.generateUUID();
         this.scene = scene;
         this.controller = controls;
         this.toolbox = toolbox;
@@ -41,7 +40,7 @@ export default class DIVECommunication {
         DIVECommunication.__instances.push(this);
     }
 
-    public DestroyInstance() {
+    public DestroyInstance(): boolean {
         const existingIndex = DIVECommunication.__instances.findIndex((entry) => entry.id === this.id);
         if (existingIndex === -1) return false;
         DIVECommunication.__instances.splice(existingIndex, 1);
