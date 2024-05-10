@@ -5,6 +5,16 @@ import { DIVEMoveable } from '../interface/Moveable';
 import DIVECommunication from '../com/Communication';
 import type { GLTF, TransformControls } from 'three/examples/jsm/Addons.js';
 
+/**
+ * A basic model class.
+ *
+ * It does calculate it's own bounding box which is used for positioning on the floor.
+ *
+ * Can be moved and selected.
+ *
+ * @module
+ */
+
 export default class DIVEModel extends Object3D implements DIVESelectable, DIVEMoveable {
     public isSelectable: true = true;
     public isMoveable: true = true;

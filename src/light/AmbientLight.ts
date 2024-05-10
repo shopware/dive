@@ -1,6 +1,14 @@
 import { AmbientLight, Color } from 'three';
 import { PRODUCT_LAYER_MASK } from '../constant/VisibilityLayerMask';
 
+/**
+ * A basic ambient light.
+ *
+ * Can change the color, intensity, and visibility of the light.
+ *
+ * @module
+ */
+
 export default class DIVEAmbientLight extends AmbientLight {
     constructor() {
         super(0xffffff, 1);

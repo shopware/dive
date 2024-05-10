@@ -1,5 +1,11 @@
 import { DRACOLoader, GLTF, GLTFLoader } from "three/examples/jsm/Addons.js";
 
+/**
+ * A basic loading manager.
+ *
+ * @module
+ */
+
 export default class DIVELoadingManager {
     private gltfloader: GLTFLoader;
     private dracoloader: DRACOLoader;

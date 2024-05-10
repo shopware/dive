@@ -3,6 +3,12 @@ import DIVEScene from "../scene/Scene.ts";
 import DIVEBaseTool from "./BaseTool.ts";
 import DIVESelectTool from "./select/SelectTool.ts";
 
+/**
+ * A Toolbox to activate and deactivate tools to use with the pointer.
+ *
+ * @module
+ */
+
 export default class DIVEToolbox {
     public static readonly DefaultTool = 'select';
 

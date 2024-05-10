@@ -1,3 +1,7 @@
+/**
+ * Merges two class prototypes to a new one.
+ */
+
 export const applyMixins = (derivedCtor: { prototype: object }, constructors: { prototype: object }[]) => {
     constructors.forEach((baseCtor) => {
         Object.getOwnPropertyNames(baseCtor.prototype).forEach((name) => {

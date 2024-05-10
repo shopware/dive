@@ -2,6 +2,12 @@ import { GRID_SIDE_LINE_COLOR, GRID_CENTER_LINE_COLOR } from "../constant/GridCo
 import { HELPER_LAYER_MASK } from "../constant/VisibilityLayerMask.ts";
 import { GridHelper, Object3D } from "three";
 
+/**
+ * A basic grid for the scene.
+ *
+ * @module
+ */
+
 export default class DIVEGrid extends Object3D {
     constructor() {
         super();

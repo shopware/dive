@@ -2,6 +2,14 @@ import { Color, ColorRepresentation, Object3D, Scene } from 'three';
 import { COMModel, COMEntity } from '../com/types';
 import DIVERoot from './root/Root';
 
+/**
+ * A basic scene class.
+ *
+ * Comes with a root object that contains all the scene objects.
+ *
+ * @module
+ */
+
 export default class DIVEScene extends Scene {
     private root: DIVERoot;
     public get Root(): DIVERoot {

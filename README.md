@@ -1,11 +1,11 @@
 
 # About
-D.I.V.E. is a spatial framework made by and optimized for Shopware. It can be used directly integrated in a Shopware frontend such as Storefront or in any other frontend you want to use it in, it is not tied to Shopware.
+DIVE is a spatial framework made by and optimized for Shopware. It can be used directly integrated in a Shopware frontend such as Storefront or in any other frontend you want to use it in, it is not tied to Shopware.
 
-D.I.V.E. supplies your frontend application with all needed tooling to set up a basic 3D application with event-based controls called "Actions". For further information, see [Getting started](#getting-started).
+DIVE supplies your frontend application with all needed tooling to set up a basic 3D application with event-based controls called "Actions". For further information, see [Getting started](#getting-started).
 
 # Installation
-[D.I.V.E. package](https://jsr.io/@shopware-ag/dive) is hosted on [jsr](https://jsr.io/).
+[DIVE package](https://jsr.io/@shopware-ag/dive) is hosted on [jsr](https://jsr.io/).
 
 #### npm:
 ```
@@ -18,7 +18,7 @@ yarn dlx jsr add @shopware-ag/dive
 ```
 
 #### Setup in Shopware
-Don't forget to include D.I.V.E. in your webpack.config.js:
+Don't forget to include DIVE in your webpack.config.js:
 ```js
 const path = require('path');
 
@@ -70,7 +70,7 @@ import { DIVE } from '@shopware-ag/dive';
 const dive = new DIVE(); // <-- instantiate DIVE
 ```
 
-D.I.V.E. supplies your application with a HTMLCanvasElement that it uses as a render target. After instantiating, you can use the supplied canvas within you frontend code to attach it to your DOM.
+DIVE supplies your application with a HTMLCanvasElement that it uses as a render target. After instantiating, you can use the supplied canvas within you frontend code to attach it to your DOM.
 
 ```ts
 const dive = new DIVE();
@@ -79,7 +79,7 @@ const myCanvasWrapper = document.createElement('div'); // <-- create wrapper ele
 myCanvasWrapper.appendChild(dive.Canvas); // <-- reference DIVE canvas
 ```
 
-To interact with your newly created D.I.V.E. instance you have to perform actions via DIVECommunication. For further information, see [Actions](#actions).
+To interact with your newly created DIVE instance you have to perform actions via DIVECommunication. For further information, see [Actions](#actions).
 ```ts
 const dive = new DIVE();
 

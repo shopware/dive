@@ -12,6 +12,26 @@ type EventListener<Action extends keyof Actions> = (payload: Actions[Action]['PA
 
 type Unsubscribe = () => boolean;
 
+/**
+ * Main class for communicating with DIVE.
+ *
+ * You can subscribe to actions and perform them from outside and inside DIVE.
+ *
+ * ```ts
+ * import { DIVE } from "@shopware-ag/dive";
+ *
+ * const dive = new DIVE();
+ *
+ * dive.Communication.Subscribe('GET_ALL_SCENE_DATA', () => {
+ *  // do something
+ * }));
+ *
+ * dive.Communication.PerformAction('GET_ALL_SCENE_DATA', {});
+ * ```
+ *
+ * @module
+ */
+
 export default class DIVECommunication {
     private static __instances: DIVECommunication[] = [];
 

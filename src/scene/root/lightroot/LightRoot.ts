@@ -5,6 +5,12 @@ import DIVEPointLight from "../../../light/PointLight.ts";
 import type { DIVEMoveable } from "../../../interface/Moveable.ts";
 import DIVESceneLight from "../../../light/SceneLight.ts";
 
+/**
+ * A basic scene node to hold all lights.
+ *
+ * @module
+ */
+
 export default class DIVELightRoot extends Object3D {
     constructor() {
         super();

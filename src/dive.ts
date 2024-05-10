@@ -24,6 +24,29 @@ export const DIVEDefaultSettings: DIVESettings = {
     orbitControls: DIVEOrbitControlsDefaultSettings,
 }
 
+/**
+ * #### DIVE
+ * is the main class of the DIVE framework.
+ *
+ * An instance of this class delivers a complete 3D environment with a perspective camera, orbit controls, a toolbox, and a communication system.
+ * ```ts
+ * import { DIVE } from "@shopware-ag/dive";
+ *
+ * const myWrapper = document.getElementById('myWrapper');
+ *
+ * const dive = new DIVE();
+ *
+ * myWrapper.appendChild(dive.Canvas);
+ *
+ * dive.Communication.Subscribe('GET_ALL_SCENE_DATA', () => {
+ *  // do something
+ * }));
+ *
+ * dive.Communication.PerformAction('GET_ALL_SCENE_DATA', {});
+ * ```
+ * @module
+ */
+
 export default class DIVE {
     // descriptive members
     private _settings: DIVESettings;

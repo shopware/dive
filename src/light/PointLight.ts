@@ -5,6 +5,16 @@ import { DIVEMoveable } from '../interface/Moveable';
 import { DIVESelectable } from '../interface/Selectable';
 import type { TransformControls } from 'three/examples/jsm/Addons.js';
 
+/**
+ * A basic point light.
+ *
+ * Can change the color, intensity, and visibility of the light.
+ *
+ * Can be moved and selected.
+ *
+ * @module
+ */
+
 export default class DIVEPointLight extends PointLight implements DIVESelectable, DIVEMoveable {
     public isMoveable: true = true;
     public isSelectable: true = true;

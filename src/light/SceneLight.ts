@@ -1,6 +1,14 @@
 import { PRODUCT_LAYER_MASK } from "../constant/VisibilityLayerMask.ts";
 import { Color, DirectionalLight, HemisphereLight, Object3D } from "three";
 
+/**
+ * A complex scene light.
+ *
+ * Can change the color, intensity, and visibility of the light.
+ *
+ * @module
+ */
+
 export default class DIVESceneLight extends Object3D {
 
     private hemiLight: HemisphereLight;

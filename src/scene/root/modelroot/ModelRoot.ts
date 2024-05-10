@@ -5,6 +5,11 @@ import DIVELoadingManager from "../../../loadingmanager/LoadingManager.ts";
 import DIVECommunication from "../../../com/Communication.ts";
 import type { DIVEMoveable } from "../../../interface/Moveable.ts";
 
+/**
+ * A basic scene node to hold all models.
+ *
+ * @module
+ */
 export default class DIVEModelRoot extends Object3D {
     private loadingManager: DIVELoadingManager;
 

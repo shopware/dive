@@ -1,6 +1,14 @@
 import { Color, ColorRepresentation, Mesh, MeshStandardMaterial, PlaneGeometry } from "three";
 import { PRODUCT_LAYER_MASK } from "../../constant/VisibilityLayerMask.ts";
 
+/**
+ * A basic floor geometry.
+ *
+ * Can change the color and visibility of the floor.
+ *
+ * @module
+ */
+
 export default class DIVEFloor extends Mesh {
     public isFloor: true = true;
 

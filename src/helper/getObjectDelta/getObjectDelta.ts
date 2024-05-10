@@ -1,5 +1,8 @@
-export const getObjectDelta = <T extends object>(a: T, b: Partial<T>): Partial<T> => {
+/**
+ * Find the difference between two objects.
+ */
 
+export const getObjectDelta = <T extends object>(a: T, b: Partial<T>): Partial<T> => {
 
     // if a and b have no entries we have no delta
     if (Object.keys(a).length === 0 && Object.keys(b).length === 0) {

@@ -11,6 +11,14 @@ export interface DIVEObjectEventMap {
     select: object
 }
 
+/**
+ * A Tool to select and move objects in the scene.
+ *
+ * Objects have to implement the DIVESelectable interface to be selectable and DIVEMoveable to be moveable.
+ *
+ * @module
+ */
+
 export default class DIVESelectTool extends DIVEBaseTool {
     private canvas: HTMLElement;
     private scene: DIVEScene;

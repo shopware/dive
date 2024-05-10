@@ -3,6 +3,12 @@ import SpriteText from "three-spritetext";
 import { COORDINATE_LAYER_MASK } from "../constant/VisibilityLayerMask.ts";
 import { AxesColorRed, AxesColorGreen, AxesColorBlue, AxesColorRedLetter, AxesColorGreenLetter, AxesColorBlueLetter } from "../constant/AxisHelperColors.ts";
 
+/**
+ * Shows the scene axes in the bottom left corner of the screen.
+ *
+ * @module
+ */
+
 export default class DIVEAxisCamera extends OrthographicCamera {
     private axesHelper: AxesHelper;
 

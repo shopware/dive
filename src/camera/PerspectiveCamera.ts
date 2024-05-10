@@ -13,6 +13,12 @@ export const DIVEPerspectiveCameraDefaultSettings: DIVEPerspectiveCameraSettings
     far: 1000,
 }
 
+/**
+ * A Perspective camera. Can change the layer mask to show different objects.
+ *
+ * @module
+ */
+
 export default class DIVEPerspectiveCamera extends PerspectiveCamera {
     public static readonly EDITOR_VIEW_LAYER_MASK = DEFAULT_LAYER_MASK | UI_LAYER_MASK | HELPER_LAYER_MASK | PRODUCT_LAYER_MASK;
     public static readonly LIVE_VIEW_LAYER_MASK = PRODUCT_LAYER_MASK;

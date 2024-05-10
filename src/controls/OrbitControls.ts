@@ -14,6 +14,12 @@ export const DIVEOrbitControlsDefaultSettings: DIVEOrbitControlsSettings = {
     dampingFactor: 0.04,
 }
 
+/**
+ * Orbit Controls. Basic functionality to orbit around a given target point in the scene.
+ *
+ * @module
+ */
+
 export default class DIVEOrbitControls extends OrbitControls {
     public static readonly DEFAULT_ZOOM_FACTOR = 1;
 

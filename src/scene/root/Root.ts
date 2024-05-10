@@ -5,6 +5,12 @@ import { COMLight, COMModel, COMEntity } from "../../com/types.ts";
 import DIVEFloor from "../../primitive/floor/Floor.ts";
 import DIVEGrid from "../../grid/Grid.ts";
 
+/**
+ * A basic scene node to hold grid, floor and all lower level roots.
+ *
+ * @module
+ */
+
 export default class DIVERoot extends Object3D {
     private lightRoot: DIVELightRoot;
     private modelRoot: DIVEModelRoot;

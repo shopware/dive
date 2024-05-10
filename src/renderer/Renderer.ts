@@ -18,6 +18,13 @@ export const DIVERendererDefaultSettings: DIVERendererSettings = {
     toneMapping: NoToneMapping,
 }
 
+/**
+ * A changed version of the WebGLRenderer.
+ *
+ * Has to be started manually by calling StartRenderer().
+ *
+ * @module
+ */
 
 export default class DIVERenderer extends WebGLRenderer {
     // basic functionality members
@@ -45,30 +52,38 @@ export default class DIVERenderer extends WebGLRenderer {
         this.debug.checkShaderErrors = false;
     }
 
-
-
+    // Starts the renderer with the given scene and camera.
     public StartRenderer(scene: Scene, cam: Camera): void {
         this.setAnimationLoop(() => { this.internal_render(scene, cam) });
         this.running = true;
     }
 
+    // Pauses the renderer.
     public PauseRenderer(): void {
         this.paused = true;
     }
 
+    // Resumes the renderer after pausing.
     public ResumeRenderer(): void {
         this.paused = false;
     }
 
+    // Stops the renderer completely. Has to be started again with StartRenderer().
     public StopRenderer(): void {
         this.setAnimationLoop(null);
         this.running = false;
     }
 
+    // Resizes the renderer to the given width and height.
     public OnResize(width: number, height: number): void {
         this.setSize(width, height);
     }
 
+    /**
+     * Adds a callback to the render loop before actual render call.
+     * @param callback Executed before rendering.
+     * @returns uuid to remove the callback.
+     */
     public AddPreRenderCallback(callback: () => void): string {
         // add callback to renderloop
         const newUUID = MathUtils.generateUUID();
@@ -77,6 +92,11 @@ export default class DIVERenderer extends WebGLRenderer {
         return newUUID;
     }
 
+    /**
+     * Removes a callback from the render loop before actual render call.
+     * @param uuid of callback to remove.
+     * @returns if removing was successful.
+     */
     public RemovePreRenderCallback(uuid: string): boolean {
         // check if callback exists
         if (!this.preRenderCallbacks.has(uuid)) return false;
@@ -87,6 +107,11 @@ export default class DIVERenderer extends WebGLRenderer {
         return true;
     }
 
+    /**
+     * Adds a callback to the render loop after actual render call.
+     * @param callback Executed after rendering.
+     * @returns uuid to remove the callback.
+     */
     public AddPostRenderCallback(callback: () => void): string {
         // add callback to renderloop
         const newUUID = MathUtils.generateUUID();
@@ -95,6 +120,11 @@ export default class DIVERenderer extends WebGLRenderer {
         return newUUID;
     }
 
+    /**
+     * Removes a callback from the render loop after actual render call.
+     * @param uuid of callback to remove.
+     * @returns if removing was successful.
+     */
     public RemovePostRenderCallback(uuid: string): boolean {
         // check if callback exists
         if (!this.postRenderCallbacks.has(uuid)) return false;
@@ -105,15 +135,19 @@ export default class DIVERenderer extends WebGLRenderer {
         return true;
     }
 
+    /**
+     * Forces the renderer to render the next frame.
+     */
     public ForceRendering(): void {
         this.force = true;
     }
 
     /**
-     * Don't use this outside. Use StartRenderer() instead. To control renderloop you can add callbacks via AddRenderLoopCallback().
-     * @param scene
-     * @param cam
-     * @returns
+     * Internal render loop.
+     *
+     * To control renderloop you can add callbacks via AddPreRenderCallback() and AddPostRenderCallback().
+     * @param scene Scene to render.
+     * @param cam Camera to render with.
      */
     private internal_render(scene: Scene, cam: Camera): void {
         // execute background render loop callbacks

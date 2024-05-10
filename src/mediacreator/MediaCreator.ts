@@ -4,6 +4,12 @@ import DIVERenderer from "../renderer/Renderer.ts";
 import DIVEOrbitControls from "../controls/OrbitControls.ts";
 import { Vector3Like } from "three";
 
+/**
+ * Creates renderings of the current scene
+ *
+ * @module
+ */
+
 export default class DIVEMediaCreator {
     private renderer: DIVERenderer;
     private scene: DIVEScene;

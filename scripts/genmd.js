@@ -1,3 +1,7 @@
+/**
+ * This script generates a README.md file based on the interfaces defined in the source code.
+ */
+
 import { fileURLToPath, URL } from 'url';
 import fs from 'fs';
 import path from 'path';
