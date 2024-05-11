@@ -36,7 +36,7 @@ export default class DIVEToolbox {
         this.activeTool.Activate();
     }
 
-    public dispose() {
+    public dispose(): void {
         this.removeListenersCallback();
     }
 
@@ -44,7 +44,7 @@ export default class DIVEToolbox {
         return this.activeTool;
     }
 
-    public UseTool(tool: string) {
+    public UseTool(tool: string): void {
         this.activeTool.Deactivate();
         switch (tool) {
             case "select": {
@@ -58,19 +58,19 @@ export default class DIVEToolbox {
         }
     }
 
-    public SetGizmoMode(mode: 'translate' | 'rotate' | 'scale') {
+    public SetGizmoMode(mode: 'translate' | 'rotate' | 'scale'): void {
         this.selectTool.SetGizmoMode(mode);
     }
 
-    public onPointerDown(e: PointerEvent) {
+    public onPointerDown(e: PointerEvent): void {
         this.activeTool.onPointerDown(e);
     }
 
-    public onPointerUp(e: PointerEvent) {
+    public onPointerUp(e: PointerEvent): void {
         this.activeTool.onPointerUp(e);
     }
 
-    public onWheel(e: WheelEvent) {
+    public onWheel(e: WheelEvent): void {
         this.activeTool.onWheel(e);
     }
 }

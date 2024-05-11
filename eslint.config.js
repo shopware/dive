@@ -9,13 +9,18 @@ export default tseslint.config(
       'coverage',
       'node_modules',
       'dist',
-      'jest.config.cjs'
+      'jest.config.cjs',
+      '**/*.test.*',
+      '**/*.skip.*',
+      '**/*.js',
     ]
   },
   {
     rules: {
       '@typescript-eslint/prefer-as-const': 'off',
       '@typescript-eslint/no-unsafe-declaration-merging': 'off',
+      '@typescript-eslint/explicit-function-return-type': ['error', { 'allowExpressions': true }],
+      '@typescript-eslint/explicit-module-boundary-types': 'error',
     },
   }
 );

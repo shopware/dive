@@ -6,13 +6,13 @@ export default abstract class DIVEBaseTool {
         this.name = "BaseTool";
     }
 
-    public Activate() { }
+    public Activate(): void { }
 
-    public Deactivate() { }
+    public Deactivate(): void { }
 
-    public onPointerDown(e: PointerEvent) { }
+    public onPointerDown(e: PointerEvent): void { }
 
-    public onPointerUp(e: PointerEvent) { }
+    public onPointerUp(e: PointerEvent): void { }
 
-    public onWheel(e: WheelEvent) { }
+    public onWheel(e: WheelEvent): void { }
 }

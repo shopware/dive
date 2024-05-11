@@ -49,7 +49,7 @@ export default class DIVEOrbitControls extends OrbitControls {
         this.dampingFactor = settings.dampingFactor;
     }
 
-    public ZoomIn(by?: number) {
+    public ZoomIn(by?: number): void {
         const zoomBy = by || DIVEOrbitControls.DEFAULT_ZOOM_FACTOR;
         const { minDistance, maxDistance } = this;
         this.minDistance = this.maxDistance = MathUtils.clamp(this.getDistance() - zoomBy, minDistance + zoomBy, maxDistance - zoomBy);
@@ -58,7 +58,7 @@ export default class DIVEOrbitControls extends OrbitControls {
         this.maxDistance = maxDistance;
     }
 
-    public ZoomOut(by?: number) {
+    public ZoomOut(by?: number): void {
         const zoomBy = by || DIVEOrbitControls.DEFAULT_ZOOM_FACTOR;
         const { minDistance, maxDistance } = this;
         this.minDistance = this.maxDistance = MathUtils.clamp(this.getDistance() + zoomBy, minDistance + zoomBy, maxDistance - zoomBy);
@@ -138,7 +138,7 @@ export default class DIVEOrbitControls extends OrbitControls {
         }
     }
 
-    private preRenderCallback = () => {
+    private preRenderCallback = (): void => {
         if (this.locked) return;
         this.update();
     }

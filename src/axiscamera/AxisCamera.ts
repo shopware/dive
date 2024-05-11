@@ -44,7 +44,7 @@ export default class DIVEAxisCamera extends OrthographicCamera {
         this.add(this.axesHelper);
     }
 
-    public SetFromCameraMatrix(matrix: Matrix4) {
+    public SetFromCameraMatrix(matrix: Matrix4): void {
         this.axesHelper.rotation.setFromRotationMatrix(new Matrix4().extractRotation(matrix).invert());
     }
 }

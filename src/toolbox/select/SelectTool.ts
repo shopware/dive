@@ -62,9 +62,9 @@ export default class DIVESelectTool extends DIVEBaseTool {
         this.scene.add(this.gizmo);
     }
 
-    public Activate() { }
+    public Activate(): void { }
 
-    public SetGizmoMode(mode: 'translate' | 'rotate' | 'scale') {
+    public SetGizmoMode(mode: 'translate' | 'rotate' | 'scale'): void {
         this.gizmo.setMode(mode);
     }
 
@@ -84,7 +84,7 @@ export default class DIVESelectTool extends DIVEBaseTool {
         this.gizmo.detach();
     }
 
-    public onPointerUp(e: PointerEvent) {
+    public onPointerUp(e: PointerEvent): void {
         const pointerPos: Vector2 = new Vector2(e.offsetX / this.canvas.clientWidth * 2 - 1, e.offsetY / this.canvas.clientHeight * -2 + 1);
         this.raycaster.setFromCamera(pointerPos, this.controller.object);
 

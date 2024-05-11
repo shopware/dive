@@ -21,7 +21,7 @@ export default class DIVELoadingManager {
     private progress: Map<string, number> = new Map<string, number>();
 
     public async LoadGLTF(uri: string): Promise<GLTF> {
-        const progEvent = (p: ProgressEvent<EventTarget>) => {
+        const progEvent = (p: ProgressEvent<EventTarget>): void => {
             this.progress.set(uri, p.loaded / p.total);
         }
 
