@@ -1,23 +1,25 @@
 {
-    "name": "@shopware-ag/dive",
-    "version": "1.0.2",
-    "exports": "./src/index.ts",
-    "publish": {
-      "include": [
-        "src",
-        "jsr.json",
-        "package.json",
-        "tsconfig.json",
-        "yarn.lock"
-      ],
-      "exclude": [
-        "src/**/*.test.ts",
-        ".github",
-        ".gitignore",
-        ".yarnrc.yml",
-        "eslint.config.js",
-        "jest.config.cjs",
-        "tsup.config.ts"
-      ]
-    }
+  "name": "@shopware-ag/dive",
+  "version": "1.0.3",
+  "exports": "./src/index.ts",
+  "publish": {
+    "include": [
+      "src",
+      "jsr.json",
+      "LICENSE",
+      "package.json",
+      "README.md",
+      "tsconfig.json",
+      "yarn.lock"
+    ],
+    "exclude": [
+      "src/**/*.test.ts",
+      ".github",
+      ".gitignore",
+      ".yarnrc.yml",
+      "eslint.config.js",
+      "jest.config.cjs",
+      "tsup.config.ts"
+    ]
   }
+}
