@@ -1,14 +1,19 @@
 import DIVE from './dive.ts';
-import DIVECommunication, { Actions, COMPov, COMLight, COMModel, COMEntity } from './com/index.ts';
+import type { Actions } from './com/actions/index.ts';
+import type { COMPov, COMLight, COMModel, COMEntity } from './com/types.ts';
+import DIVECommunication from './com/index.ts';
 import { DIVEMath } from './math/index.ts';
 
-export {
-    DIVE,
-    DIVECommunication,
-    DIVEMath,
+export type {
     Actions,
     COMPov,
     COMLight,
     COMModel,
     COMEntity,
+};
+
+export {
+    DIVE,
+    DIVECommunication,
+    DIVEMath,
 }
