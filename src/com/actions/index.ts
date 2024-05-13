@@ -18,7 +18,7 @@ import GET_ALL_SCENE_DATA from "./scene/getallscenedata.ts";
 import SELECT_OBJECT from "./object/selectobject.ts";
 import GET_CAMERA_TRANSFORM from "./camera/getcameratransform.ts";
 
-export interface Actions {
+export type Actions = {
     GET_ALL_SCENE_DATA: GET_ALL_SCENE_DATA,
     GET_ALL_OBJECTS: GET_ALL_OBJECTS,
     GET_OBJECTS: GET_OBJECTS,
