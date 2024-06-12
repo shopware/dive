@@ -10,6 +10,10 @@ import DIVEAnimationSystem from "./animation/AnimationSystem.ts";
 import DIVEAxisCamera from "./axiscamera/AxisCamera.ts";
 import { getObjectDelta } from "./helper/getObjectDelta/getObjectDelta.ts";
 
+import type { Actions } from './com/actions/index.ts';
+import type { COMPov, COMLight, COMModel, COMEntity } from './com/types.ts';
+import { DIVEMath } from './math/index.ts';
+
 export type DIVESettings = {
     autoResize: boolean;
     renderer: DIVERendererSettings;
@@ -189,4 +193,18 @@ export default class DIVE {
     private removeResizeObserver(): void {
         this.renderer.RemovePreRenderCallback(this._resizeObserverId);
     }
+}
+
+export type {
+    Actions,
+    COMPov,
+    COMLight,
+    COMModel,
+    COMEntity,
+};
+
+export {
+    DIVE,
+    DIVECommunication,
+    DIVEMath,
 }
