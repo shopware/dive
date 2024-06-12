@@ -1,13 +1,17 @@
 {
   "name": "@shopware-ag/dive",
-  "version": "1.0.6",
+  "version": "1.0.7",
   "description": "Shopware Spatial Framework",
   "type": "module",
-  "main": "./dist/index.js",
-  "module": "./dist/index.mjs",
-  "types": "./dist/index.d.ts",
+  "main": "./build/dive.cjs",
+  "module": "./build/dive.js",
+  "types": "./build/dive.d.ts",
   "files": [
-    "dist"
+    "build",
+    "LICENSE",
+    "package.json",
+    "README.md",
+    "src"
   ],
   "keywords": [
     "dive",
@@ -47,11 +51,11 @@
   },
   "scripts": {
     "build": "tsup && yarn genmd",
+    "watch": "tsup --watch",
     "lint": "eslint",
     "unit": "jest",
     "coverage": "jest --coverage",
     "genmd": "node ./scripts/genmd.js",
-    "publish-dry-run": "yarn dlx jsr publish --dry-run"
-  },
-  "packageManager": "yarn@4.1.1"
+    "patch": "npm version patch && git push --follow-tags -m \"Release %s\""
+  }
 }

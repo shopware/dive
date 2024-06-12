@@ -20,6 +20,7 @@ export default tseslint.config(
       '**/*.test.*',
       '**/*.skip.*',
       '**/*.js',
+      '**/*.cjs',
     ]
   },
   {
