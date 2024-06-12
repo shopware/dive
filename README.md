@@ -5,16 +5,15 @@ DIVE is a spatial framework made by and optimized for Shopware. It can be used d
 DIVE supplies your frontend application with all needed tooling to set up a basic 3D application with event-based controls called "Actions". For further information, see [Getting started](#getting-started).
 
 # Installation
-[DIVE package](https://jsr.io/@shopware-ag/dive) is hosted on [jsr](https://jsr.io/).
 
 #### npm:
 ```
-npx jsr add @shopware-ag/dive
+npm install @shopware-ag/dive
 ```
 
 #### yarn:
 ```
-yarn dlx jsr add @shopware-ag/dive
+yarn add @shopware-ag/dive
 ```
 
 #### Setup in Shopware
