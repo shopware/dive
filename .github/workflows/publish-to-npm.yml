@@ -98,6 +98,13 @@ jobs:
           tag-prefix:  'v'
           target-branch: 'trunk'
           commit-message: 'CI: bumps version to {{version}}'
+          skip-push:  'true'
+      - name: Push to protected branch trunk
+        uses: CasperWA/push-protected@v2
+        with:
+          token: ${{ secrets.ACTION_AUTH_TOKEN }}
+          branch: trunk
+          unprotect_reviews: true
   publish:
     runs-on: ubuntu-latest
     needs: bump-version
