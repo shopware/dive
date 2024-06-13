@@ -55,7 +55,6 @@
     "lint": "eslint",
     "unit": "jest",
     "coverage": "jest --coverage",
-    "genmd": "node ./scripts/genmd.js",
-    "patch": "npm version patch && git push --follow-tags -m \"Release %s\""
+    "genmd": "node ./scripts/genmd.js"
   }
 }
