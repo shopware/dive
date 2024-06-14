@@ -58,9 +58,10 @@ console.log(`Name set to ${name}, email set to ${mail}`);
 
 
 await runInWorkspace('git', ['tag', `v${newVersion}`, '-a', `-m "Rollout: Version ${newVersion}"`]);
-console.log(`Tag v${newVersion} created`);
+console.log(`Tag v${newVersion} created!`);
 
 
 await runInWorkspace('git', ['add', '.']);
+console.log(`Files added!`);
 await runInWorkspace('git', ['commit', '--amend', '--no-edit']);
-await runInWorkspace('git', ['push', '--force']);
+console.log(`Commit amended!`);
