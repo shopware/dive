@@ -57,6 +57,6 @@
     "unit": "jest",
     "coverage": "jest --coverage",
     "genmd": "node ./scripts/genmd.js",
-    "bump": "node ./scripts/bump.js && git add ."
+    "bump": "node ./scripts/bump.js"
   }
 }

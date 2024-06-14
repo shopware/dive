@@ -5,6 +5,9 @@ import { EOL } from 'os';
 
 import pkgjson from '../package.json' with { type: "json" };
 
+const name = 'github-actions[bot]';
+const mail = 'f.frank@shopware.com';
+
 const current = pkgjson.version.toString();
 
 const major = current.split('.')[0];
@@ -49,4 +52,15 @@ await runInWorkspace('npm', ['version', '--allow-same-version=true', '--git-tag-
 let newVersion = parseNpmVersionOutput(execSync(`npm version --git-tag-version=false ${major}.${minor}.${(Number.parseFloat(patch)+1).toString()}`).toString());
 console.log('newVersion:', newVersion);
 
+await runInWorkspace('git', ['config', 'user.name', name]);
+await runInWorkspace('git', ['config', 'user.email', mail]);
+console.log(`Name set to ${name}, email set to ${mail}`);
+
+
 await runInWorkspace('git', ['tag', `v${newVersion}`, '-a', `-m "Rollout: Version ${newVersion}"`]);
+console.log(`Tag v${newVersion} created`);
+
+
+await runInWorkspace('git', ['add', '.']);
+await runInWorkspace('git', ['commit', '--amend', '--no-edit']);
+await runInWorkspace('git', ['push', '--force']);
