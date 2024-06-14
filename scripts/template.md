@@ -1,5 +1,5 @@
 <p align="center">
-    <img alt="DIVE logo" src="../assets/svg/dive.svg" style="width: 100%; height: auto; max-height: 500px;">
+    <img alt="DIVE logo" src="./assets/svg/dive.svg" style="width: 100%; height: auto; max-height: 500px;">
 </p>
 
 <p align="center">
