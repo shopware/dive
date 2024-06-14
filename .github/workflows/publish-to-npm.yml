@@ -101,7 +101,7 @@ jobs:
         with:
           tag-prefix:  'v'
           target-branch: 'trunk'
-          commit-message: 'DIVE[bot] deploy (v{{version}})'
+          commit-message: 'DIVE[bot] deploy {{version}}'
           skip-push:  'true'
       - name: Push to protected branch trunk
         uses: CasperWA/push-protected@v2
