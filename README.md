@@ -1,4 +1,23 @@
 
+<p align="center">
+    <img alt="DIVE logo" src="./assets/svg/dive.svg" style="width: 100%; height: auto; max-height: 500px;">
+</p>
+
+<p align="center">
+    <a href="#badge">
+        <img alt="dive: downloads" src="https://img.shields.io/npm/v/%40shopware-ag%2Fdive">
+    </a>
+    <a href="#badge">
+        <img alt="dive: downloads" src="https://img.shields.io/npm/d18m/%40shopware-ag%2Fdive">
+    </a>
+    <a href="#badge">
+        <img alt="dive: downloads" src="https://img.shields.io/npm/l/%40shopware-ag%2Fdive">
+    </a>
+    <a href="#badge">
+        <img alt="dive: downloads" src="https://img.shields.io/npm/types/%40shopware-ag%2Fdive">
+    </a>
+</p>
+
 # About
 DIVE is a spatial framework made by and optimized for Shopware. It can be used directly integrated in a Shopware frontend such as Storefront or in any other frontend you want to use it in, it is not tied to Shopware.
 
@@ -25,9 +44,9 @@ module.exports = () => {
     return {
         ...
         resolve: {
-            extensions: ['.ts', '.tsx', '.js', '.vue'],
+            extensions: ['.ts', '.cjs', '.js'],
             alias: {
-                dive: path.resolve(__dirname, 'path/to/node_modules/@shopware-ag/dive'),
+                "@shopware-ag/dive": path.resolve(__dirname, 'path/to/node_modules/@shopware-ag/dive'),
             }
         },
         ...
