@@ -96,10 +96,12 @@ jobs:
         uses:  'phips28/gh-action-bump-version@master'
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_USER: 'DIVE[bot]'
+          GITHUB_EMAIL: 'f.frank@shopware.com'
         with:
           tag-prefix:  'v'
           target-branch: 'trunk'
-          commit-message: 'CI: bumps version to {{version}}'
+          commit-message: 'DIVE[bot]: Release {{version}} [skip ci]'
           skip-push:  'true'
       - name: Push to protected branch trunk
         uses: CasperWA/push-protected@v2
