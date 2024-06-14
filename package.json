@@ -55,6 +55,7 @@
     "lint": "eslint",
     "unit": "jest",
     "coverage": "jest --coverage",
-    "genmd": "node ./scripts/genmd.js"
+    "genmd": "node ./scripts/genmd.js",
+    "bump": "node ./scripts/bump.js && git add ."
   }
 }
