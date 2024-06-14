@@ -92,15 +92,10 @@ jobs:
       - name: Install dependencies (if cache not found)
         if: steps.yarn-cache.outputs.cache-hit != 'true'
         run: yarn
-      - name:  'Automated Version Bump'
-        uses:  'phips28/gh-action-bump-version@master'
+      - name:  'Bump version'
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          tag-prefix:  'v'
-          target-branch: 'trunk'
-          commit-message: 'CI: bumps version to {{version}}'
-          skip-push:  'true'
+        run: yarn bump
       - name: Push to protected branch trunk
         uses: CasperWA/push-protected@v2
         with:
