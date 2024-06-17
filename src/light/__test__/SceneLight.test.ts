@@ -1,6 +1,6 @@
 import DIVESceneLight from '../SceneLight';
 import DIVECommunication from '../../com/Communication';
-import { Color } from 'three';
+import { Color, HemisphereLight as THREEHemisphereLight, DirectionalLight as THREEDirectionalLight, Object3D } from 'three';
 
 jest.mock('../../com/Communication.ts', () => {
     return {
@@ -57,10 +57,14 @@ jest.mock('three', () => {
             return this;
         }),
         Object3D: jest.fn(function () {
-            this.add = mockAdd;
+            this.children = [];
+            this.add = (obj: Object3D) => {
+                this.children.push(obj);
+            };
             return this;
         }),
         HemisphereLight: jest.fn(function () {
+            this.visible = true;
             this.layers = {
                 mask: 0,
             };
@@ -71,6 +75,7 @@ jest.mock('three', () => {
             return this;
         }),
         DirectionalLight: jest.fn(function () {
+            this.visible = true;
             this.layers = {
                 mask: 0,
             };
@@ -100,7 +105,7 @@ describe('dive/light/DIVESceneLight', () => {
     it('should instantiate', () => {
         const testLight = new DIVESceneLight();
         expect(testLight).toBeDefined();
-        expect(mockAdd).toHaveBeenCalledTimes(2);
+        expect(testLight.children).toHaveLength(2);
     });
 
     it('should set intensity', () => {
@@ -117,6 +122,7 @@ describe('dive/light/DIVESceneLight', () => {
     it('should set enabled', () => {
         const testLight = new DIVESceneLight();
         testLight.SetEnabled(false);
-        expect(testLight.visible).toBe(false);
+        expect(testLight.children[0].visible).toBe(false);
+        expect(testLight.children[1].visible).toBe(false);
     });
 });
