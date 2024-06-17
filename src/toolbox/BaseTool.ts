@@ -10,6 +10,8 @@ export default abstract class DIVEBaseTool {
 
     public Deactivate(): void { }
 
+    public onPointerMove(e: PointerEvent): void { }
+
     public onPointerDown(e: PointerEvent): void { }
 
     public onPointerUp(e: PointerEvent): void { }

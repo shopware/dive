@@ -6,6 +6,9 @@ import DIVEScene from "../../scene/Scene.ts";
 import { HELPER_LAYER_MASK, PRODUCT_LAYER_MASK, UI_LAYER_MASK } from "../../constant/VisibilityLayerMask.ts";
 import { DIVEMoveable } from "../../interface/Moveable.ts";
 import DIVEOrbitControls from "../../controls/OrbitControls.ts";
+import { DIVECubeSelection } from "../../selections/cubeselection/CubeSelection.ts";
+import { DIVECubeSelectionEdgeHandle } from "../../selections/cubeselection/handle/edge/CubeSelectionEdgeHandle.ts";
+import { DIVECubeSelectionPlaneHandle } from "../../selections/cubeselection/handle/plane/CubeSelectionPlaneHandle.ts";
 
 export interface DIVEObjectEventMap {
     select: object
@@ -26,6 +29,7 @@ export default class DIVESelectTool extends DIVEBaseTool {
     private raycaster: Raycaster;
     private gizmo: TransformControls;
 
+    private cube: DIVECubeSelection;
 
     constructor(scene: DIVEScene, controller: DIVEOrbitControls) {
         super();
@@ -60,6 +64,9 @@ export default class DIVESelectTool extends DIVEBaseTool {
         });
 
         this.scene.add(this.gizmo);
+
+        this.cube = new DIVECubeSelection();
+        this.scene.Root.add(this.cube);
     }
 
     public Activate(): void { }
@@ -74,14 +81,43 @@ export default class DIVESelectTool extends DIVEBaseTool {
         if ('isMoveable' in selectable) {
             const movable = selectable as (Object3D & DIVESelectable & DIVEMoveable);
             movable.gizmo = this.gizmo;
-            this.gizmo.attach(movable);
+            // this.gizmo.attach(movable);
+            this.cube.Attach(selectable as (Object3D & DIVESelectable & DIVEMoveable));
         }
+
     }
 
     public Deselect(selectable: DIVESelectable): void {
         if (selectable.onDeselect) selectable.onDeselect();
         if (('isMoveable' in selectable)) (selectable as unknown as DIVEMoveable).gizmo = null;
+
+        this.cube.Detach(selectable as (Object3D & DIVESelectable & DIVEMoveable));
         this.gizmo.detach();
+    }
+
+    private lastHover: Object3D | null = null;
+    public onPointerMove(e: PointerEvent): void {
+        const pointerPos: Vector2 = new Vector2(e.offsetX / this.canvas.clientWidth * 2 - 1, e.offsetY / this.canvas.clientHeight * -2 + 1);
+        this.raycaster.setFromCamera(pointerPos, this.controller.object);
+
+        if (this.lastHover) {
+            if ('isCubeSelection' in this.lastHover) {
+                (this.lastHover as DIVECubeSelectionEdgeHandle | DIVECubeSelectionPlaneHandle).onPointerLeave();
+            }
+        }
+        this.lastHover = null;
+
+        const first = this.raycastFirst();
+        if (first) {
+            if ('isCubeSelection' in first.object) {
+                this.lastHover = first.object as DIVECubeSelectionEdgeHandle | DIVECubeSelectionPlaneHandle;
+
+                (this.lastHover as DIVECubeSelectionEdgeHandle | DIVECubeSelectionPlaneHandle).onPointerEnter();
+
+                return;
+            }
+        }
+
     }
 
     public onPointerUp(e: PointerEvent): void {
@@ -91,7 +127,8 @@ export default class DIVESelectTool extends DIVEBaseTool {
         const first = this.raycastFirst();
         const selectable = this.findSelectableInterface(first?.object);
         if (!first || !selectable) {
-            if (this.gizmo.object) this.Deselect(this.gizmo.object as (Object3D & DIVESelectable));
+            // if (this.gizmo.object) this.Deselect(this.gizmo.object as (Object3D & DIVESelectable));
+            if (this.cube.objects.length > 0) this.cube.objects.forEach((object: Object3D) => this.Deselect(object as (Object3D & DIVESelectable)));
             return;
         }
 
