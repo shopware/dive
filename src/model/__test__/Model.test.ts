@@ -1,11 +1,32 @@
 import Model from '../Model';
 import DIVECommunication from '../../com/Communication';
 import { GLTF } from 'three/examples/jsm/Addons';
+import DIVEScene from '../../scene/Scene';
+import { Vector3, Box3 } from 'three';
+
+const intersectObjectsMock = jest.fn();
 
 jest.mock('three', () => {
     return {
         Vector3: jest.fn(function (x: number, y: number, z: number) {
-            return { x, y, z };
+            this.x = x;
+            this.y = y;
+            this.z = z;
+            this.copy = (vec3: Vector3) => {
+                this.x = vec3.x;
+                this.y = vec3.y;
+                this.z = vec3.z;
+                return this;
+            };
+            this.set = (x: number, y: number, z: number) => {
+                this.x = x;
+                this.y = y;
+                this.z = z;
+            };
+            this.clone = () => {
+                return new Vector3(this.x, this.y, this.z);
+            };
+            return this;
         }),
         Object3D: jest.fn(function () {
             this.clear = jest.fn();
@@ -31,12 +52,7 @@ jest.mock('three', () => {
                 },
             }];
             this.userData = {};
-            this.position = {
-                x: 0,
-                y: 0,
-                z: 0,
-                set: jest.fn(),
-            };
+            this.position = new Vector3();
             this.rotation = {
                 x: 0,
                 y: 0,
@@ -54,6 +70,10 @@ jest.mock('three', () => {
         Box3: jest.fn(function () {
             this.min = { x: 0, y: 0, z: 0 };
             this.expandByObject = jest.fn();
+            return this;
+        }),
+        Raycaster: jest.fn(function () {
+            this.intersectObjects = intersectObjectsMock;
             return this;
         }),
     }
@@ -149,6 +169,78 @@ describe('dive/model/DIVEModel', () => {
 
         jest.spyOn(DIVECommunication, 'get').mockReturnValueOnce(undefined);
         expect(() => model.PlaceOnFloor()).not.toThrow();
+    });
+
+    it('should drop it', () => {
+        const comMock = {
+            PerformAction: jest.fn(),
+        } as unknown as DIVECommunication;
+        jest.spyOn(DIVECommunication, 'get').mockReturnValue(comMock);
+
+        const size = {
+            x: 1,
+            y: 1,
+            z: 1,
+        };
+
+        const model = new Model();
+        model.userData.id = 'something';
+        model.position.set(0, 4, 0);
+        model['boundingBox'] = {
+            min: {
+                x: -size.x / 2 + model.position.x,
+                y: -size.y / 2 + model.position.y,
+                z: -size.z / 2 + model.position.z,
+            } as unknown as Vector3,
+            getCenter: jest.fn(() => {
+                return {
+                    x: size.x / 2,
+                    y: size.y / 2,
+                    z: size.z / 2,
+                } as unknown as Vector3;
+            }),
+        } as unknown as Box3;
+
+
+        intersectObjectsMock.mockReturnValue([{
+            point: {
+                x: 0,
+                y: 2,
+                z: 0,
+            },
+        }]);
+
+        const scene = {
+            parent: null,
+            Root: {
+                children: [
+                    model,
+                ],
+            },
+        } as unknown as DIVEScene;
+        scene.Root.parent = scene;
+
+        // test when parent is not set
+        console.warn = jest.fn();
+        expect(() => model.DropIt()).not.toThrow();
+        expect(console.warn).toHaveBeenCalledTimes(1);
+
+        model.parent = scene.Root;
+
+        expect(() => model.DropIt()).not.toThrow();
+        expect(model.position.y).toBe(1.5);
+        expect(comMock.PerformAction).toHaveBeenCalledTimes(1);
+
+        expect(() => model.DropIt()).not.toThrow();
+        expect(comMock.PerformAction).toHaveBeenCalledTimes(1);
+
+        // reset for PerformAction to be called again
+        model.position.y = 2;
+        jest.spyOn(DIVECommunication, 'get').mockReturnValueOnce(comMock);
+        expect(() => model.DropIt()).not.toThrow();
+        expect(comMock.PerformAction).toHaveBeenCalledTimes(1);
+
+
     });
 
     it('should onMove', () => {
