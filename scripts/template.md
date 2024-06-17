@@ -45,6 +45,7 @@ module.exports = () => {
         resolve: {
             extensions: ['.ts', '.cjs', '.js'],
             alias: {
+                three: path.resolve(__dirname, 'path/to/node_modules/three'),
                 "@shopware-ag/dive": path.resolve(__dirname, 'path/to/node_modules/@shopware-ag/dive'),
             }
         },
@@ -56,6 +57,7 @@ module.exports = () => {
                     test: /\.(js|ts)$/,
                     loader: 'swc-loader',
                     include: [
+                        path.resolve(__dirname, 'path/to/node_modules/three'),
                         path.resolve(__dirname, 'path/to/node_modules/@shopware-ag/dive')
                     ],
                     options: {
