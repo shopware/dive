@@ -1,7 +1,7 @@
 import { HalfFloatType, IUniform, MathUtils, Mesh, NoToneMapping, OrthographicCamera, PCFSoftShadowMap, PlaneGeometry, Raycaster, Scene, ShaderMaterial, ShadowMapType, ToneMapping, UniformsUtils, Vector2, WebGLRenderTarget, WebGLRenderer } from "three";
 import DIVEPerspectiveCamera from "../camera/PerspectiveCamera";
 import { BokehShader, BokehDepthShader } from "three/examples/jsm/shaders/BokehShader2";
-import { PRODUCT_LAYER_MASK, HELPER_LAYER_MASK } from "../constant/VisibilityLayerMask";
+import { PRODUCT_LAYER_MASK } from "../constant/VisibilityLayerMask";
 import DIVEScene from "../scene/Scene";
 
 type DIVEDOFSettings = {
@@ -306,8 +306,18 @@ export default class DIVERenderer extends WebGLRenderer {
 
     }
 
+    private smoothstep(near: number, far: number, depth: number): number {
+        const x = this.saturate((depth - near) / (far - near));
+        return x * x * (3 - 2 * x);
+
+    }
+
+    private saturate(x: number): number {
+        return Math.max(0, Math.min(1, x));
+    }
+
     private internal_dof_render(scene: DIVEScene, cam: DIVEPerspectiveCamera): void {
-        this.raycaster.layers.mask = PRODUCT_LAYER_MASK | HELPER_LAYER_MASK;
+        this.raycaster.layers.mask = PRODUCT_LAYER_MASK;
 
         const dof = this.postprocessing.dof as DIVEDOFSettings;
 
@@ -317,13 +327,9 @@ export default class DIVERenderer extends WebGLRenderer {
 
         const targetDistance = (intersects.length > 0) ? intersects[0].distance : 1000;
 
-
-
-        const sdistance = MathUtils.smoothstep(cam.near, cam.far, targetDistance);
+        const sdistance = this.smoothstep(cam.near, cam.far, targetDistance);
 
         const ldistance = this.linearize(cam, 1 - sdistance);
-
-        console.log(sdistance, ldistance);
 
         dof.bokeh_uniforms['focalDepth'].value = ldistance;
 
