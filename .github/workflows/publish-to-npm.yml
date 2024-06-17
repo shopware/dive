@@ -56,26 +56,9 @@ jobs:
         run: yarn
       - name: Unit-Test DIVE
         run: yarn unit
-  build:
-    runs-on: ubuntu-latest
-    needs: eslint
-    steps:
-      - name: Checkout
-        uses: actions/checkout@main
-      - name: Search for cached dependencies
-        uses: actions/cache@main
-        id: yarn-cache
-        with:
-          path: node_modules
-          key: node-modules-${{ runner.os }}-${{ hashFiles('yarn.lock') }}
-      - name: Install dependencies (if cache not found)
-        if: steps.yarn-cache.outputs.cache-hit != 'true'
-        run: yarn
-      - name: Build DIVE
-        run: yarn build
   publish:
     runs-on: ubuntu-latest
-    needs: [unit, build]
+    needs: unit
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -92,6 +75,8 @@ jobs:
       - name: Install dependencies (if cache not found)
         if: steps.yarn-cache.outputs.cache-hit != 'true'
         run: yarn
+      - name: Build DIVE
+        run: yarn build
       - name:  'Automated Version Bump'
         uses:  'phips28/gh-action-bump-version@master'
         env:
@@ -103,6 +88,11 @@ jobs:
           target-branch: 'trunk'
           commit-message: 'DIVE[bot]: Release {{version}} [skip ci]'
           skip-push:  'true'
+          skip-tag:  'true'
+      - name: 'Add Build files'
+        run: git add ./build -f && git add README.md -f && echo "Staged Build files. Status:" && git status && echo "Ammending commit..." && git commit --amend --no-edit && echo "Commit ammended. Status:" && git status
+      - name: 'Add tag'
+        run: git tag -a v$(node -p "require('./package.json').version") -m "Release v$(node -p "require('./package.json').version")"
       - name: Push to protected branch trunk
         uses: CasperWA/push-protected@v2
         with:
@@ -110,9 +100,11 @@ jobs:
           branch: trunk
           unprotect_reviews: true
           tags: true
+          force: true
       - name: Publish DIVE to npm
         uses: JS-DevTools/npm-publish@v3
         with:
           token: ${{ secrets.NPM_TOKEN }}
           access: "public"
+          dry-run: true
 

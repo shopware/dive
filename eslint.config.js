@@ -15,7 +15,7 @@ export default tseslint.config(
     ignores: [
       'coverage',
       'node_modules',
-      'dist',
+      'build',
       'jest.config.cjs',
       '**/*.test.*',
       '**/*.skip.*',
