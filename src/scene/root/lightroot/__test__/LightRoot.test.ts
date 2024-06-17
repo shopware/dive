@@ -74,7 +74,7 @@ describe('dive/scene/root/lightroot/DIVELightRoot', () => {
 
     it('should update basic scene light', () => {
         const lightRoot = new DIVELightRoot();
-        lightRoot.UpdateLight({ id: 'test_id', type: 'scene', name: 'test', position: undefined, enabled: true });
+        lightRoot.UpdateLight({ id: 'test_id', type: 'scene', name: 'test', position: undefined, enabled: true, visible: false });
         expect(lightRoot.children).toHaveLength(1);
         expect(lightRoot.children[0].userData.id).toBe('test_id');
     });

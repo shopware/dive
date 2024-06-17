@@ -77,6 +77,7 @@ describe('dive/scene/root/modelroot/DIVEModelRoot', () => {
         await expect(() => modelRoot.UpdateModel({
             id: 'test_id',
             uri: 'not a real uri',
+            visible: false,
         })).not.toThrow();
         expect(mock_LoadGLTF).toHaveBeenCalledTimes(1);
         expect(mock_SetModel).toHaveBeenCalledTimes(1);

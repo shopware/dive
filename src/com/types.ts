@@ -4,6 +4,7 @@ type COMBaseEntity = {
     id: string;
     name: string;
     entityType: 'pov' | 'light' | 'model';
+    visible: boolean;
 }
 export type COMPov = COMBaseEntity & {
     position: Vector3Like;

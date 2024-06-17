@@ -1,4 +1,4 @@
-import { AmbientLight, Color } from 'three';
+import { AmbientLight, Color, Object3D } from 'three';
 import { PRODUCT_LAYER_MASK } from '../constant/VisibilityLayerMask';
 
 /**
@@ -9,21 +9,28 @@ import { PRODUCT_LAYER_MASK } from '../constant/VisibilityLayerMask';
  * @module
  */
 
-export default class DIVEAmbientLight extends AmbientLight {
+export default class DIVEAmbientLight extends Object3D {
+    private _light: AmbientLight;
+
     constructor() {
-        super(0xffffff, 1);
-        this.layers.mask = PRODUCT_LAYER_MASK;
+        super();
+
+        this.name = 'DIVEAmbientLight';
+
+        this._light = new AmbientLight(0xffffff, 1);
+        this._light.layers.mask = PRODUCT_LAYER_MASK;
+        this.add(this._light);
     }
 
     public SetColor(color: Color): void {
-        this.color = color;
+        this._light.color = color;
     }
 
     public SetIntensity(intensity: number): void {
-        this.intensity = intensity;
+        this._light.intensity = intensity;
     }
 
     public SetEnabled(enabled: boolean): void {
-        this.visible = enabled;
+        this._light.visible = enabled;
     }
 }

@@ -1,6 +1,6 @@
 import DIVEPointLight from '../PointLight.ts';
 import DIVECommunication from '../../com/Communication.ts';
-import { Color } from 'three';
+import { Color, MeshBasicMaterial, Object3D, PointLight } from 'three';
 
 const mockAdd = jest.fn();
 
@@ -10,6 +10,7 @@ jest.mock('three', () => {
             return {};
         }),
         PointLight: jest.fn(function () {
+            this.visible = true;
             this.color = {};
             this.intensity = 0;
             this.layers = {
@@ -31,19 +32,30 @@ jest.mock('three', () => {
                     color: {},
                 },
             }];
-            this.userData = {};
             return this;
         }),
         SphereGeometry: jest.fn(function () {
             return this;
         }),
         MeshBasicMaterial: jest.fn(function () {
+            this.opacity = 1.0;
+            this.color = new Color();
             return this;
         }),
         Mesh: jest.fn(function () {
             this.layers = {
                 mask: 0,
             };
+            this.visible = true;
+            this.material = new MeshBasicMaterial();
+            return this;
+        }),
+        Object3D: jest.fn(function () {
+            this.children = [];
+            this.add = (obj: Object3D) => {
+                this.children.push(obj);
+            };
+            this.userData = {};
             return this;
         }),
     }
@@ -64,27 +76,28 @@ describe('dive/light/DIVEPointLight', () => {
         const testLight = new DIVEPointLight();
         testLight.userData.id = 'something';
         expect(testLight).toBeDefined();
-        expect(mockAdd).toHaveBeenCalledTimes(1);
+        expect(testLight.userData.id).toBe('something');
+        expect(testLight.children).toHaveLength(2);
     });
 
     it('should set intensity', () => {
         const testLight = new DIVEPointLight();
         testLight.SetIntensity(1.0);
-        expect(testLight.intensity).toBe(1.0);
+        expect((testLight.children[0] as PointLight).intensity).toBe(1.0);
         testLight.SetIntensity(0.6);
-        expect(testLight.intensity).toBe(0.6);
+        expect((testLight.children[0] as PointLight).intensity).toBe(0.6);
     });
 
     it('should set color', () => {
         const testLight = new DIVEPointLight();
         testLight.SetColor({ test: true } as unknown as Color);
-        expect(testLight.color).toEqual({ test: true });
+        expect((testLight.children[0] as PointLight).color).toEqual({ test: true });
     });
 
     it('should set enabled', () => {
         const testLight = new DIVEPointLight();
         testLight.SetEnabled(false);
-        expect(testLight.visible).toBe(false);
+        expect(testLight.children[0].visible).toBe(false);
     });
 
     it('should onMove', () => {

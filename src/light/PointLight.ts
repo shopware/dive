@@ -1,4 +1,4 @@
-import { PointLight, Color, SphereGeometry, MeshBasicMaterial, Mesh, FrontSide } from 'three';
+import { PointLight, Color, SphereGeometry, MeshBasicMaterial, Mesh, FrontSide, Object3D } from 'three';
 import DIVECommunication from '../com/Communication';
 import { HELPER_LAYER_MASK, PRODUCT_LAYER_MASK } from '../constant/VisibilityLayerMask';
 import { DIVEMoveable } from '../interface/Moveable';
@@ -15,46 +15,54 @@ import type { TransformControls } from 'three/examples/jsm/Addons.js';
  * @module
  */
 
-export default class DIVEPointLight extends PointLight implements DIVESelectable, DIVEMoveable {
+export default class DIVEPointLight extends Object3D implements DIVESelectable, DIVEMoveable {
     public isMoveable: true = true;
     public isSelectable: true = true;
     public gizmo: TransformControls | null = null;
 
+    private light: PointLight;
+    private mesh: Mesh;
+
     constructor() {
-        super(0xffffff, 1);
+        super();
 
-        this.layers.mask = PRODUCT_LAYER_MASK;
+        this.name = 'DIVEPointLight';
 
-        this.castShadow = true;
-        this.shadow.mapSize.width = 512;
-        this.shadow.mapSize.height = 512;
+        this.light = new PointLight(0xffffff, 1);
+
+        this.light.layers.mask = PRODUCT_LAYER_MASK;
+
+        this.light.castShadow = true;
+        this.light.shadow.mapSize.width = 512;
+        this.light.shadow.mapSize.height = 512;
+        this.add(this.light);
 
         const geoSize = 0.1;
 
         const geometry = new SphereGeometry(geoSize, geoSize * 320, geoSize * 320);
 
-        const material = new MeshBasicMaterial({ color: this.color, transparent: true, opacity: 0.8, side: FrontSide });
+        const material = new MeshBasicMaterial({ color: this.light.color, transparent: true, opacity: 0.8, side: FrontSide });
 
-        const mesh = new Mesh(geometry, material);
-        mesh.layers.mask = HELPER_LAYER_MASK;
+        this.mesh = new Mesh(geometry, material);
+        this.mesh.layers.mask = HELPER_LAYER_MASK;
 
-        this.add(mesh);
+        this.add(this.mesh);
     }
 
     public SetColor(color: Color): void {
-        this.color = color;
+        this.light.color = color;
 
-        ((this.children[0] as Mesh).material as MeshBasicMaterial).color = color;
+        (this.mesh.material as MeshBasicMaterial).color = color;
     }
 
     public SetIntensity(intensity: number): void {
-        this.intensity = intensity;
+        this.light.intensity = intensity;
 
-        ((this.children[0] as Mesh).material as MeshBasicMaterial).opacity = intensity > 0.8 ? 0.8 : intensity * 0.8;
+        (this.mesh.material as MeshBasicMaterial).opacity = intensity > 0.8 ? 0.8 : intensity * 0.8;
     }
 
     public SetEnabled(enabled: boolean): void {
-        this.visible = enabled;
+        this.light.visible = enabled;
     }
 
     public onMove(): void {
