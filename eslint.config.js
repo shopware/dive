@@ -25,6 +25,7 @@ export default tseslint.config(
   },
   {
     rules: {
+      '@typescript-eslint/no-unused-vars': 'off',
       '@typescript-eslint/prefer-as-const': 'off',
       '@typescript-eslint/no-unsafe-declaration-merging': 'off',
       '@typescript-eslint/explicit-function-return-type': ['error', { 'allowExpressions': true }],
