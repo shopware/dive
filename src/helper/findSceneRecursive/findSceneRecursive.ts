@@ -12,6 +12,5 @@ export const findSceneRecursive = (object: Object3D): DIVEScene => {
     if (object.parent) {
         return findSceneRecursive(object.parent);
     }
-    console.log(object);
     return object as DIVEScene;
 }

@@ -7,6 +7,7 @@ import DIVEMediaCreator from "../mediacreator/MediaCreator.ts";
 import DIVEOrbitControls from "../controls/OrbitControls.ts";
 import { DIVESelectable } from "../interface/Selectable.ts";
 import DIVESelectTool from "../toolbox/select/SelectTool.ts";
+import type DIVEModel from "../model/Model.ts";
 
 type EventListener<Action extends keyof Actions> = (payload: Actions[Action]['PAYLOAD']) => void;
 
@@ -101,6 +102,10 @@ export default class DIVECommunication {
             }
             case 'SET_BACKGROUND': {
                 returnValue = this.setBackground(payload as Actions['SET_BACKGROUND']['PAYLOAD']);
+                break;
+            }
+            case 'DROP_IT': {
+                returnValue = this.dropIt(payload as Actions['DROP_IT']['PAYLOAD']);
                 break;
             }
             case 'PLACE_ON_FLOOR': {
@@ -271,6 +276,16 @@ export default class DIVECommunication {
 
     private setBackground(payload: Actions['SET_BACKGROUND']['PAYLOAD']): Actions['SET_BACKGROUND']['RETURN'] {
         this.scene.SetBackground(payload.color);
+
+        return true;
+    }
+
+    private dropIt(payload: Actions['DROP_IT']['PAYLOAD']): Actions['DROP_IT']['RETURN'] {
+        const object = this.registered.get(payload.id);
+        if (!object) return false;
+
+        const model = this.scene.GetSceneObject(object) as DIVEModel;
+        model.DropIt();
 
         return true;
     }
