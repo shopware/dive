@@ -172,6 +172,7 @@ In the following you find a list of all available actions to perform on DIVEComm
 | [ZOOM_CAMERA](./src/com/actions/camera/zoomcamera.ts)                     | Zoom in or out
 | [GENERATE_MEDIA](./src/com/actions/media/generatemedia.ts)                | Generate a screenshot with the specified parameters
 | [MODEL_LOADED](./src/com/actions/object/model/modelloaded.ts)             | Is performed when a model file is completely loaded
+| [DROP_IT](./src/com/actions/object/model/dropit.ts)                       | Places the model onto the nextg underlying object's bounding box
 | [PLACE_ON_FLOOR](./src/com/actions/object/model/placeonfloor.ts)          | Set a model onto to the floor
 | [ADD_OBJECT](./src/com/actions/object/addobject.ts)                       | Add an object to the scene
 | [UPDATE_OBJECT](./src/com/actions/object/updateobject.ts)                 | Update an existing object
