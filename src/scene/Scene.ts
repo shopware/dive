@@ -23,6 +23,10 @@ export default class DIVEScene extends Scene {
         this.add(this.root);
     }
 
+    public GetBackground(): string {
+        return `#${this.background ? (this.background as Color).getHexString() : '000000'}`;
+    }
+
     public SetBackground(color: ColorRepresentation): void {
         this.background = new Color(color);
     }
