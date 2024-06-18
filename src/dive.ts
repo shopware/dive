@@ -9,6 +9,7 @@ import DIVECommunication from "./com/Communication.ts";
 import DIVEAnimationSystem from "./animation/AnimationSystem.ts";
 import DIVEAxisCamera from "./axiscamera/AxisCamera.ts";
 import { getObjectDelta } from "./helper/getObjectDelta/getObjectDelta.ts";
+import { DIVETransformGizmo } from "./gizmo/transform/TransformGizmo.ts";
 
 import type { Actions } from './com/actions/index.ts';
 import type { COMPov, COMLight, COMModel, COMEntity } from './com/types.ts';
@@ -132,6 +133,8 @@ export default class DIVE {
         this.renderer.AddPreRenderCallback(() => {
             this.animationSystem.update();
         })
+
+        this.scene.add(new DIVETransformGizmo());
 
         // initialize axis camera
         this.axisCamera = new DIVEAxisCamera();
