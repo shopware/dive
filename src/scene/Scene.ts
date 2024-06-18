@@ -24,7 +24,7 @@ export default class DIVEScene extends Scene {
     }
 
     public GetBackground(): string {
-        return `#${(this.background as Color).getHexString()}`;
+        return `#${this.background ? (this.background as Color).getHexString() : '000000'}`;
     }
 
     public SetBackground(color: ColorRepresentation): void {
