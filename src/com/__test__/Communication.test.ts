@@ -289,6 +289,47 @@ describe('dive/communication/DIVECommunication', () => {
         expect(successSet).toBe(true);
     });
 
+    it('should perform action DROP_IT with existing model', () => {
+        const payload = {
+            entityType: "model",
+            id: "model",
+            position: { x: 0, y: 0, z: 0 },
+            rotation: { x: 0, y: 0, z: 0 },
+            scale: { x: 0.01, y: 0.01, z: 0.01 },
+
+            uri: "https://threejs.org/examples/models/gltf/LittlestTokyo.glb",
+        } as COMModel;
+
+        testCom.PerformAction('ADD_OBJECT', payload);
+
+        const placeSpy = jest.spyOn(mockScene, 'GetSceneObject').mockReturnValue({
+            DropIt: jest.fn(),
+        } as unknown as Object3D);
+
+        const successPlace = testCom.PerformAction('DROP_IT', payload);
+        expect(successPlace).toBe(true);
+        expect(placeSpy).toHaveBeenCalledTimes(1);
+    });
+
+    it('should perform action DROP_IT without existing model', () => {
+        const payload = {
+            entityType: "model",
+            id: "model",
+            position: { x: 0, y: 0, z: 0 },
+            rotation: { x: 0, y: 0, z: 0 },
+            scale: { x: 0.01, y: 0.01, z: 0.01 },
+
+            uri: "https://threejs.org/examples/models/gltf/LittlestTokyo.glb",
+        };
+        const placeSpy = jest.spyOn(mockScene, 'GetSceneObject').mockReturnValue({
+            DropIt: jest.fn(),
+        } as unknown as Object3D);
+
+        const successPlace = testCom.PerformAction('DROP_IT', payload);
+        expect(successPlace).toBe(false);
+        expect(placeSpy).toHaveBeenCalledTimes(0);
+    });
+
     it('should perform action PLACE_ON_FLOOR with existing model', () => {
         const payload = {
             entityType: "model",
