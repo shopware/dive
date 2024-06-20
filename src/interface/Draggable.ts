@@ -6,17 +6,18 @@
 
 import { Object3D, Vector3 } from "three";
 
-type DragEvent = {
+export type DraggableEvent = {
     dragStart: Vector3;
+    dragCurrent: Vector3;
     dragEnd: Vector3;
     dragDelta: Vector3;
 }
 
 export interface DIVEDraggable {
     isDraggable: true;
-    onDragStart?: (e: DragEvent) => void;
-    onDrag?: (e: DragEvent) => void;
-    onDragEnd?: (e: DragEvent) => void;
+    onDragStart?: (e: DraggableEvent) => void;
+    onDrag?: (e: DraggableEvent) => void;
+    onDragEnd?: (e: DraggableEvent) => void;
 }
 
 export const isDraggable = (object: Object3D): object is Object3D & DIVEDraggable => {

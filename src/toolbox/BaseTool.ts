@@ -32,6 +32,7 @@ export default abstract class DIVEBaseTool {
     // dragging members
     protected _dragging: boolean;
     protected _dragStart: Vector3;
+    protected _dragCurrent: Vector3;
     protected _dragEnd: Vector3;
     protected _dragDelta: Vector3;
     protected _dragged: DIVEDraggable | null;
@@ -55,6 +56,7 @@ export default abstract class DIVEBaseTool {
 
         this._dragging = false;
         this._dragStart = new Vector3();
+        this._dragCurrent = new Vector3();
         this._dragEnd = new Vector3();
         this._dragDelta = new Vector3();
         this._dragged = null;
@@ -82,6 +84,9 @@ export default abstract class DIVEBaseTool {
         if (!intersect) return;
 
         this._dragStart.copy(intersect.point.clone());
+        this._dragCurrent.copy(intersect.point.clone());
+        this._dragEnd.copy(this._dragStart.clone());
+        this._dragDelta = new Vector3();
     }
 
     public onPointerDragStart(e: PointerEvent): void {
@@ -91,6 +96,7 @@ export default abstract class DIVEBaseTool {
         if (this._dragged && this._dragged.onDragStart) {
             this._dragged.onDragStart({
                 dragStart: this._dragStart,
+                dragCurrent: this._dragCurrent,
                 dragEnd: this._dragEnd,
                 dragDelta: this._dragDelta,
             });
@@ -122,12 +128,14 @@ export default abstract class DIVEBaseTool {
         const intersect = this._intersects[0];
         if (!intersect) return;
 
+        this._dragCurrent.copy(intersect.point.clone());
         this._dragEnd.copy(intersect.point.clone());
-        this._dragDelta.subVectors(this._dragEnd.clone(), this._dragStart.clone());
+        this._dragDelta.subVectors(this._dragCurrent.clone(), this._dragStart.clone());
 
         if (this._dragged && this._dragged.onDrag) {
             this._dragged.onDrag({
                 dragStart: this._dragStart,
+                dragCurrent: this._dragCurrent,
                 dragEnd: this._dragEnd,
                 dragDelta: this._dragDelta,
             });
@@ -153,17 +161,17 @@ export default abstract class DIVEBaseTool {
     }
 
     public onPointerDragEnd(e: PointerEvent): void {
-        console.log('drag end', this._dragged, this._dragDelta);
-
         const intersect = this._intersects[0];
         if (!intersect) return;
 
         this._dragEnd.copy(intersect.point.clone());
-        this._dragDelta.subVectors(this._dragEnd.clone(), this._dragStart.clone());
+        this._dragCurrent.copy(intersect.point.clone());
+        this._dragDelta.subVectors(this._dragCurrent.clone(), this._dragStart.clone());
 
         if (this._dragged && this._dragged.onDragEnd) {
             this._dragged.onDragEnd({
                 dragStart: this._dragStart,
+                dragCurrent: this._dragCurrent,
                 dragEnd: this._dragEnd,
                 dragDelta: this._dragDelta,
             });

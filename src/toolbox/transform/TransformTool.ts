@@ -66,14 +66,13 @@ export default class DIVETransformTool extends DIVEBaseTool {
 
         if (this._hovered) {
             console.log('hovered', this._hovered);
-
         }
     }
 
     public onPointerUp(e: PointerEvent): void {
         super.onPointerUp(e);
 
-        console.log('pointer up', this._hovered);
+        // console.log('pointer up', this._hovered);
         // const pointerPos: Vector2 = new Vector2(e.offsetX / this._canvas.clientWidth * 2 - 1, e.offsetY / this._canvas.clientHeight * 2 + 1);
         // this._raycaster.setFromCamera(pointerPos, this._controller.object);
 
@@ -90,7 +89,7 @@ export default class DIVETransformTool extends DIVEBaseTool {
     public onPointerMove(e: PointerEvent): void {
         super.onPointerMove(e);
 
-        const first = super.raycast(this._gizmo.children)[0];
+        const first = super.raycast(this._gizmo.gizmoNode.children)[0];
         const hoverable = this.findHoverableInterface(first?.object);
 
         if (first && hoverable) {
@@ -120,8 +119,6 @@ export default class DIVETransformTool extends DIVEBaseTool {
 
             this._hovered = null;
         }
-
-
     }
 
     private findHoverableInterface(child: Object3D): (Object3D & DIVEHoverable) | undefined {

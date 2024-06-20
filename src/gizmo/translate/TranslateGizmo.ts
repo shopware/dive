@@ -1,18 +1,18 @@
 import { Object3D, Vector3 } from "three";
 import { AxesColorBlue, AxesColorGreen, AxesColorRed } from "../../constant/AxisHelperColors";
-import { DIVEHoverable } from "../../interface/Hoverable";
 import DIVEOrbitControls from "../../controls/OrbitControls";
 import { DIVEAxisHandle } from "../handles/AxisHandle";
-import { DIVEDraggable } from "../../interface/Draggable";
+import { DIVEGizmo, DIVEGizmoAxis } from "../Gizmo";
 
-export class DIVETranslateGizmo extends Object3D implements DIVEHoverable, DIVEDraggable {
-    readonly isHoverable: true = true;
-    readonly isDraggable: true = true;
+export class DIVETranslateGizmo extends Object3D {
+    private _controller: DIVEOrbitControls;
 
     constructor(controller: DIVEOrbitControls) {
         super();
 
         this.name = "DIVETranslateGizmo";
+
+        this._controller = controller;
 
         controller.addEventListener('change', () => {
             const size = controller.getDistance() / 2.5;
@@ -24,12 +24,32 @@ export class DIVETranslateGizmo extends Object3D implements DIVEHoverable, DIVED
         this.add(new DIVEAxisHandle('z', 1, new Vector3(0, 0, 1), AxesColorBlue));
     }
 
-    public onHoverAxis(axis: 'x' | 'y' | 'z' | null): void {
-        console.log('translate: axis hovered', axis);
+    public getHandle(axis: DIVEGizmoAxis): DIVEAxisHandle {
+        switch (axis) {
+            case 'x':
+                return this.children[0] as DIVEAxisHandle;
+            case 'y':
+                return this.children[1] as DIVEAxisHandle;
+            case 'z':
+                return this.children[2] as DIVEAxisHandle;
+        }
     }
 
-    public onDrag(e): void {
-        console.log('translate: drag');
+    public onHoverAxis(): void {
+        // console.log('translate: axis hovered', axis);
+        if (!this.parent) return;
+        if (!this.parent.parent) return;
+        (this.parent.parent as DIVEGizmo).onHover('translate');
+    }
+
+    public onAxisDragStart(): void {
+        // console.log('translate: axis drag start', axis);
+        this._controller.enabled = false;
+    }
+
+    public onAxisDragEnd(): void {
+        // console.log('translate: axis drag', axis);
+        this._controller.enabled = false;
     }
 
 }
