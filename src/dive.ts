@@ -9,7 +9,6 @@ import DIVECommunication from "./com/Communication.ts";
 import DIVEAnimationSystem from "./animation/AnimationSystem.ts";
 import DIVEAxisCamera from "./axiscamera/AxisCamera.ts";
 import { getObjectDelta } from "./helper/getObjectDelta/getObjectDelta.ts";
-import { DIVETransformGizmo } from "./gizmo/transform/TransformGizmo.ts";
 
 import type { Actions } from './com/actions/index.ts';
 import type { COMPov, COMLight, COMModel, COMEntity } from './com/types.ts';
@@ -134,8 +133,6 @@ export default class DIVE {
             this.animationSystem.update();
         })
 
-        this.scene.add(new DIVETransformGizmo());
-
         // initialize axis camera
         this.axisCamera = new DIVEAxisCamera();
         this.scene.add(this.axisCamera);
@@ -166,6 +163,13 @@ export default class DIVE {
 
         // whene everything is done, start the renderer
         this.renderer.StartRenderer(this.scene, this.perspectiveCamera);
+
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        (window as any).DIVE = {
+            PrintScene: () => {
+                console.log(this.scene);
+            },
+        }
     }
 
     // methods
