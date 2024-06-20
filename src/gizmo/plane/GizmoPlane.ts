@@ -1,4 +1,5 @@
 import { Mesh, MeshBasicMaterial, Object3D, PlaneGeometry } from "three";
+import { UI_LAYER_MASK } from "../../constant/VisibilityLayerMask";
 
 export class DIVEGizmoPlane extends Object3D {
     constructor() {
@@ -16,6 +17,7 @@ export class DIVEGizmoPlane extends Object3D {
         const geo = new PlaneGeometry(100, 100, 2, 2);
 
         const mesh = new Mesh(geo, material);
+        mesh.layers.mask = UI_LAYER_MASK;
 
         this.add(mesh);
     }

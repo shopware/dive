@@ -42,14 +42,24 @@ export class DIVETranslateGizmo extends Object3D {
         (this.parent.parent as DIVEGizmo).onHover('translate');
     }
 
+
+    private startPos: Vector3 = new Vector3();
     public onAxisDragStart(): void {
         // console.log('translate: axis drag start', axis);
         this._controller.enabled = false;
+
+        this.startPos.copy(this.parent!.position.clone());
+    }
+
+    public onAxisDrag(delta: Vector3): void {
+        // console.log('translate: axis drag start', axis);
+        this.parent?.position.copy(this.startPos.clone().add(delta));
     }
 
     public onAxisDragEnd(): void {
         // console.log('translate: axis drag', axis);
         this._controller.enabled = false;
+        this.startPos.set(0, 0, 0);
     }
 
 }

@@ -65,25 +65,8 @@ export default class DIVETransformTool extends DIVEBaseTool {
         super.onPointerDown(e);
 
         if (this._hovered) {
-            console.log('hovered', this._hovered);
+            this._dragRaycastObjects = this._gizmo.gizmoPlane.children;
         }
-    }
-
-    public onPointerUp(e: PointerEvent): void {
-        super.onPointerUp(e);
-
-        // console.log('pointer up', this._hovered);
-        // const pointerPos: Vector2 = new Vector2(e.offsetX / this._canvas.clientWidth * 2 - 1, e.offsetY / this._canvas.clientHeight * 2 + 1);
-        // this._raycaster.setFromCamera(pointerPos, this._controller.object);
-
-        // const first = this.raycastFirst();
-        // const selectable = this.findSelectableInterface(first?.object);
-        // if (!first || !selectable) {
-        //     // if (this.gizmo.object) this.Deselect(this.gizmo.object as (Object3D & DIVESelectable));
-        //     return;
-        // }
-
-        // this.Select(selectable);
     }
 
     public onPointerMove(e: PointerEvent): void {
@@ -119,6 +102,25 @@ export default class DIVETransformTool extends DIVEBaseTool {
 
             this._hovered = null;
         }
+    }
+
+    public onPointerUp(e: PointerEvent): void {
+        super.onPointerUp(e);
+
+        // console.log('pointer up', this._hovered);
+        // const pointerPos: Vector2 = new Vector2(e.offsetX / this._canvas.clientWidth * 2 - 1, e.offsetY / this._canvas.clientHeight * 2 + 1);
+        // this._raycaster.setFromCamera(pointerPos, this._controller.object);
+
+        // const first = this.raycastFirst();
+        // const selectable = this.findSelectableInterface(first?.object);
+        // if (!first || !selectable) {
+        //     // if (this.gizmo.object) this.Deselect(this.gizmo.object as (Object3D & DIVESelectable));
+        //     return;
+        // }
+
+        // this.Select(selectable);
+
+        this._dragRaycastObjects = null;
     }
 
     private findHoverableInterface(child: Object3D): (Object3D & DIVEHoverable) | undefined {

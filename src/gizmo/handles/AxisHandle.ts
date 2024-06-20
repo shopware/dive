@@ -98,6 +98,7 @@ export class DIVEAxisHandle extends Object3D implements DIVEHoverable, DIVEDragg
 
         const pointOnAxis = e.dragDelta.clone().projectOnVector(this.forward);
         console.log(pointOnAxis);
+        (this.parent as DIVETranslateGizmo).onAxisDrag(pointOnAxis);
     }
 
     public onDragEnd(e: DraggableEvent): void {

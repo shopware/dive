@@ -30,6 +30,7 @@ export default abstract class DIVEBaseTool {
     protected _intersects: Intersection[];
 
     // dragging members
+    protected _dragRaycastObjects: Object3D[] | null;
     protected _dragging: boolean;
     protected _dragStart: Vector3;
     protected _dragCurrent: Vector3;
@@ -54,6 +55,7 @@ export default abstract class DIVEBaseTool {
         this._raycaster.layers.mask = PRODUCT_LAYER_MASK | UI_LAYER_MASK;
         this._intersects = [];
 
+        this._dragRaycastObjects = null;
         this._dragging = false;
         this._dragStart = new Vector3();
         this._dragCurrent = new Vector3();
@@ -125,6 +127,9 @@ export default abstract class DIVEBaseTool {
     }
 
     public onPointerDrag(e: PointerEvent): void {
+        if (this._dragRaycastObjects !== null) {
+            this._intersects = this.raycast(this._dragRaycastObjects);
+        }
         const intersect = this._intersects[0];
         if (!intersect) return;
 
