@@ -3,7 +3,7 @@ import { DIVERotateGizmo } from "./rotate/RotateGizmo";
 import { DIVETranslateGizmo } from "./translate/TranslateGizmo";
 import DIVEOrbitControls from "../controls/OrbitControls";
 import { DIVEScaleGizmo } from "./scale/ScaleGizmo";
-import { DIVEGizmoPlane as DIVEGizmoPlanes } from "./plane/GizmoPlane";
+import { DIVEGizmoPlane as DIVEGizmoPlane } from "./plane/GizmoPlane";
 
 export type DIVEGizmoMode = ('translate' | 'rotate' | 'scale');
 
@@ -27,8 +27,8 @@ export class DIVEGizmo extends Object3D {
     private _rotateGizmo: DIVERotateGizmo;
     private _scaleGizmo: DIVEScaleGizmo;
 
-    private _gizmoPlane: DIVEGizmoPlanes;
-    public get gizmoPlane(): DIVEGizmoPlanes {
+    private _gizmoPlane: DIVEGizmoPlane;
+    public get gizmoPlane(): DIVEGizmoPlane {
         return this._gizmoPlane;
     }
 
@@ -50,7 +50,7 @@ export class DIVEGizmo extends Object3D {
         this._rotateGizmo = new DIVERotateGizmo(controller);
         this._scaleGizmo = new DIVEScaleGizmo(controller);
 
-        this._gizmoPlane = new DIVEGizmoPlanes();
+        this._gizmoPlane = new DIVEGizmoPlane();
         this._gizmoPlane.visible = false;
 
         this.updateMode();

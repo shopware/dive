@@ -97,5 +97,5 @@ export class DIVEAxisHandle extends Object3D implements DIVEHoverable, DIVEDragg
     public onDragEnd(): void {
         this._lineMaterial.color = this._colorHover;
         (this.parent as DIVETranslateGizmo).onAxisDragEnd();
-    };
+    }
 }
