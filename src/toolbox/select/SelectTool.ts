@@ -1,4 +1,4 @@
-import { Object3D, Vector2 } from "three";
+import { Object3D } from "three";
 import { DIVESelectable, isSelectable } from "../../interface/Selectable.ts";
 import DIVEScene from "../../scene/Scene.ts";
 import { DIVEMoveable } from "../../interface/Moveable.ts";
@@ -32,29 +32,37 @@ export default class DIVESelectTool extends DIVETransformTool {
 
         if ('isMoveable' in selectable) {
             const movable = selectable as (Object3D & DIVESelectable & DIVEMoveable);
-            console.log(movable)
+            this._gizmo.object = movable;
         }
     }
 
     public Deselect(selectable: DIVESelectable): void {
         if (selectable.onDeselect) selectable.onDeselect();
-        if (('isMoveable' in selectable)) (selectable as unknown as DIVEMoveable).gizmo = null;
-        // this.gizmo.detach();
+        this._gizmo.object = null;
     }
 
-    public onPointerUp(e: PointerEvent): void {
-        super.onPointerUp(e);
-
-        const pointerPos: Vector2 = new Vector2(e.offsetX / this._canvas.clientWidth * 2 - 1, e.offsetY / this._canvas.clientHeight * 2 + 1);
-        this._raycaster.setFromCamera(pointerPos, this._controller.object);
+    public onClick(e: PointerEvent): void {
+        super.onClick(e);
 
         const first = this._raycaster.intersectObjects(this._scene.Root.children, true)[0];
         const selectable = this.findSelectableInterface(first?.object);
+
+        // if nothing is hit
         if (!first || !selectable) {
-            // if (this.gizmo.object) this.Deselect(this.gizmo.object as (Object3D & DIVESelectable));
+            this.Deselect(this._gizmo.object as (Object3D & DIVESelectable));
             return;
         }
 
+        if (this._gizmo.object) {
+            // do not reselect if the same object was clicked
+            if (this._gizmo.object.uuid === selectable.uuid) return;
+
+            // deselect previous object
+            this.Deselect(this._gizmo.object as (Object3D & DIVESelectable));
+        }
+
+
+        // select clicked object
         this.Select(selectable);
     }
 

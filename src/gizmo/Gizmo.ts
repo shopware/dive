@@ -16,7 +16,7 @@ export class DIVEGizmo extends Object3D {
     }
     public set mode(value: DIVEGizmoMode[]) {
         this._mode = value;
-        this.updateMode();
+        this.assemble();
     }
 
     private _gizmoNode: Object3D;
@@ -33,8 +33,15 @@ export class DIVEGizmo extends Object3D {
     }
 
     // attachment stuff
-    private _objectParent: Object3D | null;
-    private _objectNode: Object3D;
+    private _object: Object3D | null;
+    public get object(): Object3D | null {
+        return this._object;
+    }
+
+    public set object(value: Object3D | null) {
+        this._object = value;
+        this.assemble();
+    }
 
     constructor(controller: DIVEOrbitControls) {
         super();
@@ -55,49 +62,51 @@ export class DIVEGizmo extends Object3D {
         this._scaleGizmo = new DIVEScaleGizmo(controller);
 
         this._gizmoPlane = new DIVEGizmoPlane();
-        // this._gizmoPlane.visible = false;
+        this._gizmoPlane.visible = false;
 
-        this._objectParent = null;
-        this._objectNode = new Object3D();
-        this.add(this._objectNode);
-
-        this.updateMode();
-    }
-
-    public attach(object: Object3D): this {
-        this._objectParent = object.parent;
-        this._objectNode.add(object);
-        return this;
-    }
-
-    public detach(): this {
-        this._objectParent?.add(this._objectNode.children[0]);
-        this._objectParent = null;
-        return this;
+        this._object = null;
     }
 
     public onHover(mode: DIVEGizmoMode, axis: DIVEGizmoAxis, value: boolean): void {
         if (!value) return;
-        this._gizmoPlane.onHover(mode, axis);
+        this._gizmoPlane.assemble(mode, axis);
     }
 
     public onChange(position?: Vector3, rotation?: Euler, scale?: Vector3): void {
-        if (position) this.position.copy(position);
-        if (rotation) this._objectNode.rotation.copy(rotation);
-        if (scale) this._objectNode.scale.copy(scale);
+        if (this.object === null) return;
+
+        if (position) {
+            this.position.copy(position);
+            this.object.position.copy(position);
+        }
+
+        if (rotation) {
+            this.object.rotation.copy(rotation);
+        }
+
+        if (scale) {
+            this.object.scale.copy(scale);
+        }
     }
 
-    private updateMode(): void {
+    private assemble(): void {
         this._gizmoNode.clear();
+        this._gizmoPlane.clear();
+
+        if (this.object === null) return;
+
         if (this._mode.includes('translate')) {
             this._gizmoNode.add(this._translateGizmo);
         }
+
         if (this._mode.includes('rotate')) {
             this._gizmoNode.add(this._rotateGizmo);
         }
+
         if (this._mode.includes('scale')) {
             this._gizmoNode.add(this._scaleGizmo);
         }
+
         this.add(this._gizmoPlane);
     }
 }

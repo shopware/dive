@@ -44,7 +44,11 @@ export class DIVETranslateGizmo extends Object3D {
 
         if (!this.parent) return;
         if (!this.parent.parent) return;
-        this.startPos.copy(this.parent.parent.position.clone());
+
+        const object = (this.parent.parent as DIVEGizmo).object;
+        if (!object) return;
+
+        this.startPos.copy(object.position.clone());
     }
 
     public onAxisDrag(axis: DIVEAxisHandle, e: DraggableEvent): void {

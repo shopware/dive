@@ -17,14 +17,14 @@ export interface DIVEObjectEventMap {
  */
 
 export default class DIVETransformTool extends DIVEBaseTool {
-    private _gizmo: DIVEGizmo;
+    protected _gizmo: DIVEGizmo;
 
     constructor(scene: DIVEScene, controller: DIVEOrbitControls) {
         super(scene, controller);
         this.name = "DIVETransformTool";
 
         this._gizmo = new DIVEGizmo(this._controller);
-        this._gizmo.mode = ['rotate'];
+        this._gizmo.mode = ['translate'];
 
         scene.add(this._gizmo);
     }
@@ -41,14 +41,6 @@ export default class DIVETransformTool extends DIVEBaseTool {
         if (this._hovered) {
             this._dragRaycastOnObjects = this._gizmo.gizmoPlane.children;
         }
-    }
-
-    public onPointerMove(e: PointerEvent): void {
-        super.onPointerMove(e);
-    }
-
-    public onPointerUp(e: PointerEvent): void {
-        super.onPointerUp(e);
     }
 
     protected raycast(): Intersection[] {

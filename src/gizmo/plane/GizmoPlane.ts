@@ -49,7 +49,7 @@ export class DIVEGizmoPlane extends Object3D {
         this._meshZ.layers.mask = UI_LAYER_MASK;
     }
 
-    public onHover(mode: DIVEGizmoMode, axis: DIVEGizmoAxis): void {
+    public assemble(mode: DIVEGizmoMode, axis: DIVEGizmoAxis): void {
         this.clear();
 
         if (mode === 'translate' || mode === 'scale') {

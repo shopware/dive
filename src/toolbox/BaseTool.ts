@@ -27,11 +27,11 @@ export default abstract class DIVEBaseTool {
         return this._pointerPrimaryDown
             || this._pointerMiddleDown
             || this._pointerSecondaryDown;
-
     };
     protected _pointerPrimaryDown: boolean;
     protected _pointerMiddleDown: boolean;
     protected _pointerSecondaryDown: boolean;
+    protected _movedWhilePointerDown: boolean;
 
     // raycast members
     protected _raycaster: Raycaster;
@@ -46,7 +46,7 @@ export default abstract class DIVEBaseTool {
     protected _dragCurrent: Vector3;
     protected _dragEnd: Vector3;
     protected _dragDelta: Vector3;
-    protected _dragged: DIVEDraggable | null;
+    protected _draggable: DIVEDraggable | null;
     protected _dragRaycastOnObjects: Object3D[] | null;
 
     protected constructor(scene: DIVEScene, controller: DIVEOrbitControls) {
@@ -57,6 +57,7 @@ export default abstract class DIVEBaseTool {
         this._controller = controller;
 
         this._pointer = new Vector2();
+        this._movedWhilePointerDown = false;
 
         this._pointerPrimaryDown = false;
         this._pointerMiddleDown = false;
@@ -73,7 +74,7 @@ export default abstract class DIVEBaseTool {
         this._dragCurrent = new Vector3();
         this._dragEnd = new Vector3();
         this._dragDelta = new Vector3();
-        this._dragged = null;
+        this._draggable = null;
         this._dragRaycastOnObjects = null;
     }
 
@@ -93,10 +94,12 @@ export default abstract class DIVEBaseTool {
                 this._pointerSecondaryDown = true;
                 break;
         }
+
+        this._draggable = this.findDraggableInterface(this._intersects[0]?.object) || null;
     }
 
-    public onPointerDragStart(e: PointerEvent): void {
-        this._dragged = this.findDraggableInterface(this._intersects[0]?.object) || null;
+    public onDragStart(e: PointerEvent): void {
+        if (!this._draggable) return;
 
         if (this._dragRaycastOnObjects !== null) {
             this._intersects = this._raycaster.intersectObjects(this._dragRaycastOnObjects, true);
@@ -109,8 +112,8 @@ export default abstract class DIVEBaseTool {
         this._dragEnd.copy(this._dragStart.clone());
         this._dragDelta.set(0, 0, 0);
 
-        if (this._dragged && this._dragged.onDragStart) {
-            this._dragged.onDragStart({
+        if (this._draggable && this._draggable.onDragStart) {
+            this._draggable.onDragStart({
                 dragStart: this._dragStart,
                 dragCurrent: this._dragCurrent,
                 dragEnd: this._dragEnd,
@@ -126,6 +129,8 @@ export default abstract class DIVEBaseTool {
         this._pointer.x = (e.offsetX / this._canvas.clientWidth) * 2 - 1;
         this._pointer.y = -(e.offsetY / this._canvas.clientHeight) * 2 + 1;
 
+        this._movedWhilePointerDown = this._pointerAnyDown || this._movedWhilePointerDown;
+
         // set raycaster
         this._raycaster.setFromCamera(this._pointer, this._controller.object);
 
@@ -134,8 +139,7 @@ export default abstract class DIVEBaseTool {
 
         // hovering
         const hoverable = this.findHoverableInterface(this._intersects[0]?.object);
-
-        if (!this._dragging && this._intersects[0] && hoverable) {
+        if (!this._pointerAnyDown && !this._dragging && this._intersects[0] && hoverable) {
             if (!this._hovered) {
                 if (hoverable.onPointerEnter) hoverable.onPointerEnter(this._intersects[0]);
                 this._hovered = hoverable;
@@ -163,14 +167,14 @@ export default abstract class DIVEBaseTool {
         // dragging
         if (this._pointerAnyDown) {
             if (!this._dragging) {
-                this.onPointerDragStart(e);
+                this.onDragStart(e);
             }
 
-            this.onPointerDrag(e);
+            this.onDrag(e);
         }
     }
 
-    public onPointerDrag(e: PointerEvent): void {
+    public onDrag(e: PointerEvent): void {
         if (this._dragRaycastOnObjects !== null) {
             this._intersects = this._raycaster.intersectObjects(this._dragRaycastOnObjects, true);
         }
@@ -181,8 +185,8 @@ export default abstract class DIVEBaseTool {
         this._dragEnd.copy(intersect.point.clone());
         this._dragDelta.subVectors(this._dragCurrent.clone(), this._dragStart.clone());
 
-        if (this._dragged && this._dragged.onDrag) {
-            this._dragged.onDrag({
+        if (this._draggable && this._draggable.onDrag) {
+            this._draggable.onDrag({
                 dragStart: this._dragStart,
                 dragCurrent: this._dragCurrent,
                 dragEnd: this._dragEnd,
@@ -192,6 +196,16 @@ export default abstract class DIVEBaseTool {
     }
 
     public onPointerUp(e: PointerEvent): void {
+        if (this._movedWhilePointerDown) {
+            if (this._draggable) {
+                this.onDragEnd(e);
+                this._dragging = false;
+                this._draggable = null;
+            }
+        } else {
+            this.onClick(e);
+        }
+
         switch (e.button) {
             case 0:
                 this._pointerPrimaryDown = false;
@@ -204,12 +218,12 @@ export default abstract class DIVEBaseTool {
                 break;
         }
 
-        if (this._dragging) {
-            this.onPointerDragEnd(e);
-        }
+        this._movedWhilePointerDown = false;
     }
 
-    public onPointerDragEnd(e: PointerEvent): void {
+    public onClick(e: PointerEvent): void { }
+
+    public onDragEnd(e: PointerEvent): void {
         const intersect = this._intersects[0];
         if (intersect) {
             this._dragEnd.copy(intersect.point.clone());
@@ -217,8 +231,8 @@ export default abstract class DIVEBaseTool {
             this._dragDelta.subVectors(this._dragCurrent.clone(), this._dragStart.clone());
         }
 
-        if (this._dragged && this._dragged.onDragEnd) {
-            this._dragged.onDragEnd({
+        if (this._draggable && this._draggable.onDragEnd) {
+            this._draggable.onDragEnd({
                 dragStart: this._dragStart,
                 dragCurrent: this._dragCurrent,
                 dragEnd: this._dragEnd,
@@ -226,8 +240,7 @@ export default abstract class DIVEBaseTool {
             });
         }
 
-        this._dragged = null;
-        this._dragging = false;
+
         this._dragStart.set(0, 0, 0);
         this._dragCurrent.set(0, 0, 0);
         this._dragEnd.set(0, 0, 0);

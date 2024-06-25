@@ -49,7 +49,11 @@ export class DIVERotateGizmo extends Object3D {
 
         if (!this.parent) return;
         if (!this.parent.parent) return;
-        this.startRot.copy(this.parent.parent.rotation.clone());
+
+        const object = (this.parent.parent as DIVEGizmo).object;
+        if (!object) return;
+
+        this.startRot.copy(object.rotation.clone());
     }
 
     public onAxisDrag(axis: DIVERadialHandle, e: DraggableEvent): void {
