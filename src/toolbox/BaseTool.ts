@@ -14,6 +14,8 @@ export type DraggableEvent = {
 
 /* eslint-disable @typescript-eslint/no-unused-vars */
 export default abstract class DIVEBaseTool {
+    readonly POINTER_DRAG_THRESHOLD: number = 0.01;
+
     public name: string;
 
     protected _canvas: HTMLElement;
@@ -31,7 +33,8 @@ export default abstract class DIVEBaseTool {
     protected _pointerPrimaryDown: boolean;
     protected _pointerMiddleDown: boolean;
     protected _pointerSecondaryDown: boolean;
-    protected _movedWhilePointerDown: boolean;
+    protected _lastPointerDown: Vector2;
+    protected _lastPointerUp: Vector2;
 
     // raycast members
     protected _raycaster: Raycaster;
@@ -57,11 +60,13 @@ export default abstract class DIVEBaseTool {
         this._controller = controller;
 
         this._pointer = new Vector2();
-        this._movedWhilePointerDown = false;
 
         this._pointerPrimaryDown = false;
         this._pointerMiddleDown = false;
         this._pointerSecondaryDown = false;
+
+        this._lastPointerDown = new Vector2();
+        this._lastPointerUp = new Vector2();
 
         this._raycaster = new Raycaster();
         this._raycaster.layers.mask = PRODUCT_LAYER_MASK | UI_LAYER_MASK;
@@ -94,6 +99,8 @@ export default abstract class DIVEBaseTool {
                 this._pointerSecondaryDown = true;
                 break;
         }
+
+        this._lastPointerDown.copy(this._pointer);
 
         this._draggable = this.findDraggableInterface(this._intersects[0]?.object) || null;
     }
@@ -128,8 +135,6 @@ export default abstract class DIVEBaseTool {
         // update pointer
         this._pointer.x = (e.offsetX / this._canvas.clientWidth) * 2 - 1;
         this._pointer.y = -(e.offsetY / this._canvas.clientHeight) * 2 + 1;
-
-        this._movedWhilePointerDown = this._pointerAnyDown || this._movedWhilePointerDown;
 
         // set raycaster
         this._raycaster.setFromCamera(this._pointer, this._controller.object);
@@ -196,7 +201,7 @@ export default abstract class DIVEBaseTool {
     }
 
     public onPointerUp(e: PointerEvent): void {
-        if (this._movedWhilePointerDown) {
+        if (this.pointerWasDragged()) {
             if (this._draggable) {
                 this.onDragEnd(e);
                 this._dragging = false;
@@ -218,7 +223,7 @@ export default abstract class DIVEBaseTool {
                 break;
         }
 
-        this._movedWhilePointerDown = false;
+        this._lastPointerUp.copy(this._pointer);
     }
 
     public onClick(e: PointerEvent): void { }
@@ -252,6 +257,11 @@ export default abstract class DIVEBaseTool {
     protected raycast(objects?: Object3D[]): Intersection[] {
         if (objects !== undefined) return this._raycaster.intersectObjects(objects, true);
         return this._raycaster.intersectObjects(this._scene.children, true);
+    }
+
+    private pointerWasDragged(): boolean {
+        console.log(this._lastPointerDown.distanceTo(this._pointer));
+        return this._lastPointerDown.distanceTo(this._pointer) > this.POINTER_DRAG_THRESHOLD;
     }
 
     private findDraggableInterface(child: Object3D): (Object3D & DIVEDraggable) | undefined {
