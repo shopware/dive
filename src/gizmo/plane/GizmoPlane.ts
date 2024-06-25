@@ -1,10 +1,20 @@
 import { Mesh, MeshBasicMaterial, Object3D, PlaneGeometry } from "three";
 import { UI_LAYER_MASK } from "../../constant/VisibilityLayerMask";
+import { DIVEGizmoAxis, DIVEGizmoMode } from "../Gizmo";
 
 export class DIVEGizmoPlane extends Object3D {
     private _meshX: Mesh;
+    public get XPlane(): Mesh {
+        return this._meshX;
+    }
     private _meshY: Mesh;
+    public get YPlane(): Mesh {
+        return this._meshY;
+    }
     private _meshZ: Mesh;
+    public get ZPlane(): Mesh {
+        return this._meshZ;
+    }
 
     constructor() {
         super();
@@ -15,6 +25,7 @@ export class DIVEGizmoPlane extends Object3D {
             opacity: 0.15,
             depthTest: false,
             depthWrite: false,
+            side: 2,
         });
 
         const geoX = new PlaneGeometry(100, 100, 2, 2);
@@ -38,22 +49,37 @@ export class DIVEGizmoPlane extends Object3D {
         this._meshZ.layers.mask = UI_LAYER_MASK;
     }
 
-    public onHover(axis: 'x' | 'y' | 'z'): void {
+    public onHover(mode: DIVEGizmoMode, axis: DIVEGizmoAxis): void {
         this.clear();
 
-        switch (axis) {
-            case 'x':
-                this.add(this._meshY);
-                this.add(this._meshZ);
-                break;
-            case 'y':
-                this.add(this._meshX);
-                this.add(this._meshZ);
-                break;
-            case 'z':
-                this.add(this._meshX);
-                this.add(this._meshY);
-                break;
+        if (mode === 'translate' || mode === 'scale') {
+            switch (axis) {
+                case 'x':
+                    this.add(this._meshY);
+                    this.add(this._meshZ);
+                    break;
+                case 'y':
+                    this.add(this._meshX);
+                    this.add(this._meshZ);
+                    break;
+                case 'z':
+                    this.add(this._meshX);
+                    this.add(this._meshY);
+                    break;
+            }
+        } else if (mode === 'rotate') {
+            switch (axis) {
+                case 'x':
+                    this.add(this._meshX);
+                    break;
+                case 'y':
+                    this.add(this._meshY);
+                    break;
+                case 'z':
+                    this.add(this._meshZ);
+                    break;
+            }
         }
+
     }
 }

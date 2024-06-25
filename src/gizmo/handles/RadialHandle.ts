@@ -1,10 +1,15 @@
 import { Color, ColorRepresentation, Mesh, MeshBasicMaterial, Object3D, TorusGeometry, Vector3 } from "three";
 import { UI_LAYER_MASK } from "../../constant/VisibilityLayerMask";
 import { DIVEHoverable } from "../../interface/Hoverable";
-import { DIVETranslateGizmo } from "../translate/TranslateGizmo";
+import { DraggableEvent } from "../../toolbox/BaseTool";
+import { DIVERotateGizmo } from "../rotate/RotateGizmo";
+import { DIVEDraggable } from "../../interface/Draggable";
 
-export class DIVERadialHandle extends Object3D implements DIVEHoverable {
+export class DIVERadialHandle extends Object3D implements DIVEHoverable, DIVEDraggable {
     readonly isHoverable: true = true;
+    readonly isDraggable: true = true;
+
+    public parent: DIVERotateGizmo | null = null;
 
     public axis: 'x' | 'y' | 'z';
 
@@ -12,6 +17,18 @@ export class DIVERadialHandle extends Object3D implements DIVEHoverable {
     private _colorHover: Color;
 
     private _lineMaterial: MeshBasicMaterial;
+
+    public get forwardVector(): Vector3 {
+        return new Vector3(0, 0, 1).applyQuaternion(this.quaternion).normalize();
+    }
+
+    public get rightVector(): Vector3 {
+        return new Vector3(1, 0, 0).applyQuaternion(this.quaternion).normalize();
+    }
+
+    public get upVector(): Vector3 {
+        return new Vector3(0, 1, 0).applyQuaternion(this.quaternion).normalize();
+    }
 
     constructor(axis: 'x' | 'y' | 'z', arc: number, direction: Vector3, color: ColorRepresentation) {
         super();
@@ -56,20 +73,27 @@ export class DIVERadialHandle extends Object3D implements DIVEHoverable {
     }
 
     public onPointerEnter(): void {
-        this.onHover(true);
-    };
-
-    public onPointerOver(): void {
-        // this.onHover();
-    };
+        this._lineMaterial.color = this._colorHover;
+        (this.parent as DIVERotateGizmo).onHoverAxis(this.axis, true);
+    }
 
     public onPointerLeave(): void {
-        this.onHover(false);
-    };
+        this._lineMaterial.color = this._color;
+        (this.parent as DIVERotateGizmo).onHoverAxis(this.axis, false);
+    }
 
-    public onHover(value: boolean): void {
-        this._lineMaterial.color = value ? this._colorHover : this._color;
+    public onDragStart(): void {
+        this._lineMaterial.color = this._colorHover;
+        (this.parent as DIVERotateGizmo).onAxisDragStart();
+    }
 
-        (this.parent as DIVETranslateGizmo).onHoverAxis(this.axis);
+    public onDrag(e: DraggableEvent): void {
+        this._lineMaterial.color = this._colorHover;
+        (this.parent as DIVERotateGizmo).onAxisDrag(this, e);
+    }
+
+    public onDragEnd(): void {
+        this._lineMaterial.color = this._color;
+        (this.parent as DIVERotateGizmo).onAxisDragEnd();
     }
 }

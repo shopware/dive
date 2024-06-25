@@ -2,6 +2,7 @@ import DIVEBaseTool from "../BaseTool.ts";
 import DIVEScene from "../../scene/Scene.ts";
 import DIVEOrbitControls from "../../controls/OrbitControls.ts";
 import { DIVEGizmo } from "../../gizmo/Gizmo.ts";
+import { Intersection } from "three";
 
 export interface DIVEObjectEventMap {
     select: object
@@ -23,7 +24,7 @@ export default class DIVETransformTool extends DIVEBaseTool {
         this.name = "DIVETransformTool";
 
         this._gizmo = new DIVEGizmo(this._controller);
-        this._gizmo.mode = ['translate'];
+        this._gizmo.mode = ['rotate'];
 
         scene.add(this._gizmo);
     }
@@ -48,5 +49,9 @@ export default class DIVETransformTool extends DIVEBaseTool {
 
     public onPointerUp(e: PointerEvent): void {
         super.onPointerUp(e);
+    }
+
+    protected raycast(): Intersection[] {
+        return super.raycast(this._gizmo.gizmoNode.children);
     }
 }

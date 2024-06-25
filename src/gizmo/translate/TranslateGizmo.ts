@@ -8,6 +8,8 @@ import { DraggableEvent } from "../../toolbox/BaseTool";
 export class DIVETranslateGizmo extends Object3D {
     private _controller: DIVEOrbitControls;
 
+    private startPos: Vector3 = new Vector3();
+
     constructor(controller: DIVEOrbitControls) {
         super();
 
@@ -37,8 +39,6 @@ export class DIVETranslateGizmo extends Object3D {
         (this.parent.parent as DIVEGizmo).onHover('translate', axis, value);
     }
 
-
-    private startPos: Vector3 = new Vector3();
     public onAxisDragStart(): void {
         this._controller.enabled = false;
 

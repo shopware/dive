@@ -1,4 +1,4 @@
-import { Object3D, Vector3 } from "three";
+import { Euler, Object3D, Vector3 } from "three";
 import { DIVERotateGizmo } from "./rotate/RotateGizmo";
 import { DIVETranslateGizmo } from "./translate/TranslateGizmo";
 import DIVEOrbitControls from "../controls/OrbitControls";
@@ -32,6 +32,10 @@ export class DIVEGizmo extends Object3D {
         return this._gizmoPlane;
     }
 
+    // attachment stuff
+    private _objectParent: Object3D | null;
+    private _objectNode: Object3D;
+
     constructor(controller: DIVEOrbitControls) {
         super();
         this.name = "DIVEGizmo";
@@ -51,23 +55,36 @@ export class DIVEGizmo extends Object3D {
         this._scaleGizmo = new DIVEScaleGizmo(controller);
 
         this._gizmoPlane = new DIVEGizmoPlane();
-        this._gizmoPlane.visible = false;
+        // this._gizmoPlane.visible = false;
+
+        this._objectParent = null;
+        this._objectNode = new Object3D();
+        this.add(this._objectNode);
 
         this.updateMode();
     }
 
-    public onHover(mode: DIVEGizmoMode, axis: DIVEGizmoAxis, value: boolean): void {
-        switch (mode) {
-            case 'translate':
-                if (!value) break;
-                this._gizmoPlane.onHover(axis);
-                break;
-        }
-
+    public attach(object: Object3D): this {
+        this._objectParent = object.parent;
+        this._objectNode.add(object);
+        return this;
     }
 
-    public onChange(position: Vector3): void {
-        this.position.copy(position);
+    public detach(): this {
+        this._objectParent?.add(this._objectNode.children[0]);
+        this._objectParent = null;
+        return this;
+    }
+
+    public onHover(mode: DIVEGizmoMode, axis: DIVEGizmoAxis, value: boolean): void {
+        if (!value) return;
+        this._gizmoPlane.onHover(mode, axis);
+    }
+
+    public onChange(position?: Vector3, rotation?: Euler, scale?: Vector3): void {
+        if (position) this.position.copy(position);
+        if (rotation) this._objectNode.rotation.copy(rotation);
+        if (scale) this._objectNode.scale.copy(scale);
     }
 
     private updateMode(): void {
