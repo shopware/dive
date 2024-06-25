@@ -10,8 +10,6 @@ export type DIVEGizmoMode = ('translate' | 'rotate' | 'scale');
 export type DIVEGizmoAxis = 'x' | 'y' | 'z';
 
 export class DIVEGizmo extends Object3D {
-    private controller: DIVEOrbitControls;
-
     private _mode: DIVEGizmoMode[];
     public get mode(): DIVEGizmoMode[] {
         return this._mode;
@@ -38,12 +36,10 @@ export class DIVEGizmo extends Object3D {
         super();
         this.name = "DIVEGizmo";
 
-        this.controller = controller;
-
         controller.addEventListener('change', () => {
             const size = controller.getDistance() / 2.5;
             this.scale.set(size, size, size);
-        })
+        });
 
         this._mode = [];
 

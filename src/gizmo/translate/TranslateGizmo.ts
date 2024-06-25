@@ -32,7 +32,6 @@ export class DIVETranslateGizmo extends Object3D {
     }
 
     public onHoverAxis(axis: DIVEGizmoAxis, value: boolean): void {
-        // console.log('translate: axis hovered', axis);
         if (!this.parent) return;
         if (!this.parent.parent) return;
         (this.parent.parent as DIVEGizmo).onHover('translate', axis, value);
@@ -41,7 +40,6 @@ export class DIVETranslateGizmo extends Object3D {
 
     private startPos: Vector3 = new Vector3();
     public onAxisDragStart(): void {
-        // console.log('translate: axis drag start', axis);
         this._controller.enabled = false;
 
         if (!this.parent) return;
@@ -50,23 +48,16 @@ export class DIVETranslateGizmo extends Object3D {
     }
 
     public onAxisDrag(axis: DIVEAxisHandle, e: DraggableEvent): void {
-        // console.log('translate: axis drag start', axis);
-
         if (!this.parent) return;
         if (!this.parent.parent) return;
         if ('onChange' in this.parent.parent) {
-            // const forward = this.parent.parent.position.clone().add
             const delta = e.dragDelta.clone().projectOnVector(axis.forwardVector);
-            console.log('delta', delta, 'result', this.startPos.clone().add(delta));
             (this.parent.parent as DIVEGizmo).onChange(this.startPos.clone().add(delta));
         }
-
     }
 
     public onAxisDragEnd(): void {
-        // console.log('translate: axis drag', axis);
         this._controller.enabled = true;
         this.startPos.set(0, 0, 0);
     }
-
 }

@@ -30,10 +30,6 @@ export class DIVEAxisHandle extends Object3D implements DIVEHoverable, DIVEDragg
         return new Vector3(0, 1, 0).applyQuaternion(this.quaternion).normalize();
     }
 
-    // public get up(): Vector3 {
-    //     return new Vector3(0, 1, 0).applyQuaternion(this.quaternion).normalize();
-    // }
-
     constructor(axis: 'x' | 'y' | 'z', length: number, direction: Vector3, color: ColorRepresentation) {
         super();
 
@@ -67,7 +63,7 @@ export class DIVEAxisHandle extends Object3D implements DIVEHoverable, DIVEDragg
             depthWrite: false,
         });
         const colliderMesh = new Mesh(collider, colliderMaterial);
-        // colliderMesh.visible = false;
+        colliderMesh.visible = false;
         colliderMesh.layers.mask = UI_LAYER_MASK;
         colliderMesh.renderOrder = Infinity;
         colliderMesh.rotateX(Math.PI / 2);
@@ -76,8 +72,6 @@ export class DIVEAxisHandle extends Object3D implements DIVEHoverable, DIVEDragg
 
         this.rotateX(direction.y * -Math.PI / 2);
         this.rotateY(direction.x * Math.PI / 2);
-
-        // console.log(axis, this.forwardVector, this.upVector, this.rightVector);
     }
 
     public onPointerEnter(): void {
@@ -85,29 +79,20 @@ export class DIVEAxisHandle extends Object3D implements DIVEHoverable, DIVEDragg
         (this.parent as DIVETranslateGizmo).onHoverAxis(this.axis, true);
     }
 
-    public onPointerOver(): void {
-        // this.onHover();
-    }
-
     public onPointerLeave(): void {
         this._lineMaterial.color = this._color;
         (this.parent as DIVETranslateGizmo).onHoverAxis(this.axis, false);
     }
 
-    public onDragStart(e: DraggableEvent): void {
-        console.log('translate: drag start', e);
+    public onDragStart(): void {
         (this.parent as DIVETranslateGizmo).onAxisDragStart();
     }
 
     public onDrag(e: DraggableEvent): void {
-        // console.log('translate: drag', e);
-
-        // console.log(pointOnAxis);
         (this.parent as DIVETranslateGizmo).onAxisDrag(this, e);
     }
 
-    public onDragEnd(e: DraggableEvent): void {
-        console.log('translate: drag end', e);
+    public onDragEnd(): void {
         (this.parent as DIVETranslateGizmo).onAxisDragEnd();
     };
 }
