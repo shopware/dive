@@ -85,14 +85,17 @@ export class DIVEAxisHandle extends Object3D implements DIVEHoverable, DIVEDragg
     }
 
     public onDragStart(): void {
+        this._lineMaterial.color = this._colorHover;
         (this.parent as DIVETranslateGizmo).onAxisDragStart();
     }
 
     public onDrag(e: DraggableEvent): void {
+        this._lineMaterial.color = this._colorHover;
         (this.parent as DIVETranslateGizmo).onAxisDrag(this, e);
     }
 
     public onDragEnd(): void {
+        this._lineMaterial.color = this._colorHover;
         (this.parent as DIVETranslateGizmo).onAxisDragEnd();
     };
 }
