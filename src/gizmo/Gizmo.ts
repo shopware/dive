@@ -1,9 +1,9 @@
-import { Object3D } from "three";
+import { Object3D, Vector3 } from "three";
 import { DIVERotateGizmo } from "./rotate/RotateGizmo";
 import { DIVETranslateGizmo } from "./translate/TranslateGizmo";
 import DIVEOrbitControls from "../controls/OrbitControls";
 import { DIVEScaleGizmo } from "./scale/ScaleGizmo";
-import { DIVEGizmoPlane } from "./plane/GizmoPlane";
+import { DIVEGizmoPlane as DIVEGizmoPlanes } from "./plane/GizmoPlane";
 
 export type DIVEGizmoMode = ('translate' | 'rotate' | 'scale');
 
@@ -29,8 +29,8 @@ export class DIVEGizmo extends Object3D {
     private _rotateGizmo: DIVERotateGizmo;
     private _scaleGizmo: DIVEScaleGizmo;
 
-    private _gizmoPlane: DIVEGizmoPlane;
-    public get gizmoPlane(): DIVEGizmoPlane {
+    private _gizmoPlane: DIVEGizmoPlanes;
+    public get gizmoPlane(): DIVEGizmoPlanes {
         return this._gizmoPlane;
     }
 
@@ -39,6 +39,11 @@ export class DIVEGizmo extends Object3D {
         this.name = "DIVEGizmo";
 
         this.controller = controller;
+
+        controller.addEventListener('change', () => {
+            const size = controller.getDistance() / 2.5;
+            this.scale.set(size, size, size);
+        })
 
         this._mode = [];
 
@@ -49,20 +54,24 @@ export class DIVEGizmo extends Object3D {
         this._rotateGizmo = new DIVERotateGizmo(controller);
         this._scaleGizmo = new DIVEScaleGizmo(controller);
 
-        this._gizmoPlane = new DIVEGizmoPlane();
-        console.log('gizmoPlane:', this._gizmoPlane.rotation);
+        this._gizmoPlane = new DIVEGizmoPlanes();
+        this._gizmoPlane.visible = false;
 
         this.updateMode();
     }
 
-    public onHover(mode: DIVEGizmoMode): void {
+    public onHover(mode: DIVEGizmoMode, axis: DIVEGizmoAxis, value: boolean): void {
         switch (mode) {
             case 'translate':
-                const camQuat = this.controller.object.quaternion.clone();
-                this._gizmoPlane.quaternion.copy(camQuat);
+                if (!value) break;
+                this._gizmoPlane.onHover(axis);
                 break;
         }
 
+    }
+
+    public onChange(position: Vector3): void {
+        this.position.copy(position);
     }
 
     private updateMode(): void {

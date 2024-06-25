@@ -22,30 +22,6 @@ export default class DIVESelectTool extends DIVETransformTool {
     constructor(scene: DIVEScene, controller: DIVEOrbitControls) {
         super(scene, controller);
         this.name = "SelectTool";
-
-        // this.gizmo = new TransformControls(this._controller.object, this._canvas);
-
-        // this.gizmo.layers.mask = UI_LAYER_MASK;
-        // this.gizmo.getRaycaster().layers.mask = UI_LAYER_MASK & this._controller.object.layers.mask;
-        // this.gizmo.traverse((child) => {
-        //     child.layers.mask = UI_LAYER_MASK;
-        // });
-        // this.gizmo.addEventListener('objectChange', () => {
-        //     if (!this.gizmo.object) return;
-        //     if (!('onMove' in this.gizmo.object)) return;
-        //     if (typeof this.gizmo.object.onMove !== 'function') return;
-        //     this.gizmo.object.onMove();
-        // });
-
-        // this._controller.object.onSetCameraLayer = (mask: number) => {
-        //     this.gizmo.getRaycaster().layers.mask = UI_LAYER_MASK & mask;
-        // };
-
-        // this.gizmo.addEventListener('dragging-changed', function (event) {
-        //     controller.enabled = !event.value;
-        // });
-
-        // this.scene.add(this.gizmo);
     }
 
     public Activate(): void { }
@@ -57,8 +33,6 @@ export default class DIVESelectTool extends DIVETransformTool {
         if ('isMoveable' in selectable) {
             const movable = selectable as (Object3D & DIVESelectable & DIVEMoveable);
             console.log(movable)
-            // movable.gizmo = this.gizmo;
-            // this.gizmo.attach(movable);
         }
     }
 

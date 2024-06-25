@@ -4,14 +4,8 @@
  * @module
  */
 
-import { Object3D, Vector3 } from "three";
-
-export type DraggableEvent = {
-    dragStart: Vector3;
-    dragCurrent: Vector3;
-    dragEnd: Vector3;
-    dragDelta: Vector3;
-}
+import { Object3D } from "three";
+import { DraggableEvent } from "../toolbox/BaseTool";
 
 export interface DIVEDraggable {
     isDraggable: true;

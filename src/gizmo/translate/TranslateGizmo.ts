@@ -3,6 +3,7 @@ import { AxesColorBlue, AxesColorGreen, AxesColorRed } from "../../constant/Axis
 import DIVEOrbitControls from "../../controls/OrbitControls";
 import { DIVEAxisHandle } from "../handles/AxisHandle";
 import { DIVEGizmo, DIVEGizmoAxis } from "../Gizmo";
+import { DraggableEvent } from "../../toolbox/BaseTool";
 
 export class DIVETranslateGizmo extends Object3D {
     private _controller: DIVEOrbitControls;
@@ -13,11 +14,6 @@ export class DIVETranslateGizmo extends Object3D {
         this.name = "DIVETranslateGizmo";
 
         this._controller = controller;
-
-        controller.addEventListener('change', () => {
-            const size = controller.getDistance() / 2.5;
-            this.scale.set(size, size, size);
-        })
 
         this.add(new DIVEAxisHandle('x', 1, new Vector3(1, 0, 0), AxesColorRed));
         this.add(new DIVEAxisHandle('y', 1, new Vector3(0, 1, 0), AxesColorGreen));
@@ -35,11 +31,11 @@ export class DIVETranslateGizmo extends Object3D {
         }
     }
 
-    public onHoverAxis(): void {
+    public onHoverAxis(axis: DIVEGizmoAxis, value: boolean): void {
         // console.log('translate: axis hovered', axis);
         if (!this.parent) return;
         if (!this.parent.parent) return;
-        (this.parent.parent as DIVEGizmo).onHover('translate');
+        (this.parent.parent as DIVEGizmo).onHover('translate', axis, value);
     }
 
 
@@ -48,17 +44,28 @@ export class DIVETranslateGizmo extends Object3D {
         // console.log('translate: axis drag start', axis);
         this._controller.enabled = false;
 
-        this.startPos.copy(this.parent!.position.clone());
+        if (!this.parent) return;
+        if (!this.parent.parent) return;
+        this.startPos.copy(this.parent.parent.position.clone());
     }
 
-    public onAxisDrag(delta: Vector3): void {
+    public onAxisDrag(axis: DIVEAxisHandle, e: DraggableEvent): void {
         // console.log('translate: axis drag start', axis);
-        this.parent?.position.copy(this.startPos.clone().add(delta));
+
+        if (!this.parent) return;
+        if (!this.parent.parent) return;
+        if ('onChange' in this.parent.parent) {
+            // const forward = this.parent.parent.position.clone().add
+            const delta = e.dragDelta.clone().projectOnVector(axis.forwardVector);
+            console.log('delta', delta, 'result', this.startPos.clone().add(delta));
+            (this.parent.parent as DIVEGizmo).onChange(this.startPos.clone().add(delta));
+        }
+
     }
 
     public onAxisDragEnd(): void {
         // console.log('translate: axis drag', axis);
-        this._controller.enabled = false;
+        this._controller.enabled = true;
         this.startPos.set(0, 0, 0);
     }
 
