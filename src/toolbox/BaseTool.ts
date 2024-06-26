@@ -201,7 +201,7 @@ export default abstract class DIVEBaseTool {
     }
 
     public onPointerUp(e: PointerEvent): void {
-        if (this.pointerWasDragged()) {
+        if (this.pointerWasDragged() || this._dragging) {
             if (this._draggable) {
                 this.onDragEnd(e);
                 this._dragging = false;
@@ -260,7 +260,6 @@ export default abstract class DIVEBaseTool {
     }
 
     private pointerWasDragged(): boolean {
-        console.log(this._lastPointerDown.distanceTo(this._pointer));
         return this._lastPointerDown.distanceTo(this._pointer) > this.POINTER_DRAG_THRESHOLD;
     }
 
