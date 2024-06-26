@@ -9,6 +9,8 @@ export class DIVEScaleGizmo extends Object3D implements DIVEHoverable {
 
     public children: DIVEScaleHandle[];
 
+    private _controller: DIVEOrbitControls;
+
     constructor(controller: DIVEOrbitControls) {
         super();
 
@@ -16,10 +18,7 @@ export class DIVEScaleGizmo extends Object3D implements DIVEHoverable {
 
         this.children = [];
 
-        controller.addEventListener('change', () => {
-            const size = controller.getDistance() / 2.5;
-            this.scale.set(size, size, size);
-        })
+        this._controller = controller;
 
         this.add(new DIVEScaleHandle('x', 1, new Vector3(1, 0, 0), AxesColorRed));
         this.add(new DIVEScaleHandle('y', 1, new Vector3(0, 1, 0), AxesColorGreen));

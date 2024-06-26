@@ -7,11 +7,11 @@ import { DraggableEvent } from "../../toolbox/BaseTool";
 import { DIVEMath } from "../../math";
 
 export class DIVERotateGizmo extends Object3D {
+    public children: DIVERadialHandle[];
+
     private _controller: DIVEOrbitControls;
 
     private startRot: Euler = new Euler();
-
-    public children: DIVERadialHandle[];
 
     constructor(controller: DIVEOrbitControls) {
         super();
@@ -21,11 +21,6 @@ export class DIVERotateGizmo extends Object3D {
         this.children = [];
 
         this._controller = controller;
-
-        controller.addEventListener('change', () => {
-            const size = controller.getDistance() / 2.5;
-            this.scale.set(size, size, size);
-        })
 
         this.add(new DIVERadialHandle('x', 1, Math.PI / 2, new Vector3(1, 0, 0), AxesColorRed));
         this.add(new DIVERadialHandle('y', 1, -Math.PI / 2, new Vector3(0, 1, 0), AxesColorGreen));
