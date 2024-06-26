@@ -4,6 +4,7 @@ import { DIVETranslateGizmo } from "./translate/TranslateGizmo";
 import DIVEOrbitControls from "../controls/OrbitControls";
 import { DIVEScaleGizmo } from "./scale/ScaleGizmo";
 import { DIVEGizmoPlane as DIVEGizmoPlane } from "./plane/GizmoPlane";
+import { DIVESelectable } from "../interface/Selectable";
 
 export type DIVEGizmoMode = ('translate' | 'rotate' | 'scale');
 
@@ -33,12 +34,12 @@ export class DIVEGizmo extends Object3D {
     }
 
     // attachment stuff
-    private _object: Object3D | null;
-    public get object(): Object3D | null {
+    private _object: (Object3D & DIVESelectable) | null;
+    public get object(): (Object3D & DIVESelectable) | null {
         return this._object;
     }
 
-    public set object(value: Object3D | null) {
+    public set object(value: (Object3D & DIVESelectable) | null) {
         this._object = value;
         this.assemble();
     }

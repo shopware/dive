@@ -49,7 +49,9 @@ export default class DIVESelectTool extends DIVETransformTool {
 
         // if nothing is hit
         if (!first || !selectable) {
-            this.Deselect(this._gizmo.object as (Object3D & DIVESelectable));
+            if (this._gizmo.object) {
+                this.Deselect(this._gizmo.object);
+            }
             return;
         }
 
