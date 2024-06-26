@@ -87,6 +87,7 @@ export class DIVEGizmo extends Object3D {
 
         if (scale) {
             this.object.scale.copy(scale);
+            this._scaleGizmo.update(scale);
         }
     }
 
