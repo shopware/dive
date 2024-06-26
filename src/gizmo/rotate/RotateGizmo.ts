@@ -11,7 +11,7 @@ export class DIVERotateGizmo extends Object3D {
 
     private _controller: DIVEOrbitControls;
 
-    private startRot: Euler = new Euler();
+    private _startRot: Euler = new Euler();
 
     constructor(controller: DIVEOrbitControls) {
         super();
@@ -48,7 +48,7 @@ export class DIVERotateGizmo extends Object3D {
         const object = (this.parent.parent as DIVEGizmo).object;
         if (!object) return;
 
-        this.startRot.copy(object.rotation.clone());
+        this._startRot.copy(object.rotation.clone());
     }
 
     public onAxisDrag(axis: DIVERadialHandle, e: DraggableEvent): void {
@@ -59,9 +59,9 @@ export class DIVERotateGizmo extends Object3D {
             const startVector = e.dragStart.clone().sub(this.parent.parent.position).normalize();
             const signedAngle = DIVEMath.signedAngleTo(startVector, currentVector, axis.forwardVector);
             const euler = new Euler(
-                this.startRot.x + axis.forwardVector.x * signedAngle,
-                this.startRot.y + axis.forwardVector.y * signedAngle,
-                this.startRot.z + axis.forwardVector.z * signedAngle,
+                this._startRot.x + axis.forwardVector.x * signedAngle,
+                this._startRot.y + axis.forwardVector.y * signedAngle,
+                this._startRot.z + axis.forwardVector.z * signedAngle,
             );
             (this.parent.parent as DIVEGizmo).onChange(undefined, euler);
         }
@@ -69,6 +69,6 @@ export class DIVERotateGizmo extends Object3D {
 
     public onAxisDragEnd(): void {
         this._controller.enabled = true;
-        this.startRot.set(0, 0, 0);
+        this._startRot.set(0, 0, 0);
     }
 }

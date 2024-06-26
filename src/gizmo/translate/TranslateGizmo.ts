@@ -10,7 +10,7 @@ export class DIVETranslateGizmo extends Object3D {
 
     public children: DIVEAxisHandle[];
 
-    private startPos: Vector3 = new Vector3();
+    private _startPos: Vector3 = new Vector3();
 
     constructor(controller: DIVEOrbitControls) {
         super();
@@ -47,7 +47,7 @@ export class DIVETranslateGizmo extends Object3D {
         const object = (this.parent.parent as DIVEGizmo).object;
         if (!object) return;
 
-        this.startPos.copy(object.position.clone());
+        this._startPos.copy(object.position.clone());
     }
 
     public onAxisDrag(axis: DIVEAxisHandle, e: DraggableEvent): void {
@@ -55,12 +55,12 @@ export class DIVETranslateGizmo extends Object3D {
         if (!this.parent.parent) return;
         if ('onChange' in this.parent.parent) {
             const delta = e.dragDelta.clone().projectOnVector(axis.forwardVector);
-            (this.parent.parent as DIVEGizmo).onChange(this.startPos.clone().add(delta));
+            (this.parent.parent as DIVEGizmo).onChange(this._startPos.clone().add(delta));
         }
     }
 
     public onAxisDragEnd(): void {
         this._controller.enabled = true;
-        this.startPos.set(0, 0, 0);
+        this._startPos.set(0, 0, 0);
     }
 }

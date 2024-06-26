@@ -80,26 +80,36 @@ export class DIVEAxisHandle extends Object3D implements DIVEHoverable, DIVEDragg
 
     public onPointerEnter(): void {
         this._lineMaterial.color = this._colorHover;
-        (this.parent as DIVETranslateGizmo).onHoverAxis(this.axis, true);
+        if (this.parent) {
+            this.parent.onHoverAxis(this.axis, true);
+        }
     }
 
     public onPointerLeave(): void {
         this._lineMaterial.color = this._color;
-        (this.parent as DIVETranslateGizmo).onHoverAxis(this.axis, false);
+        if (this.parent) {
+            this.parent.onHoverAxis(this.axis, false);
+        }
     }
 
     public onDragStart(): void {
         this._lineMaterial.color = this._colorHover;
-        (this.parent as DIVETranslateGizmo).onAxisDragStart();
+        if (this.parent) {
+            this.parent.onAxisDragStart();
+        }
     }
 
     public onDrag(e: DraggableEvent): void {
         this._lineMaterial.color = this._colorHover;
-        (this.parent as DIVETranslateGizmo).onAxisDrag(this, e);
+        if (this.parent) {
+            this.parent.onAxisDrag(this, e);
+        }
     }
 
     public onDragEnd(): void {
         this._lineMaterial.color = this._colorHover;
-        (this.parent as DIVETranslateGizmo).onAxisDragEnd();
+        if (this.parent) {
+            this.parent.onAxisDragEnd();
+        }
     }
 }

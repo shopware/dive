@@ -76,26 +76,36 @@ export class DIVERadialHandle extends Object3D implements DIVEHoverable, DIVEDra
 
     public onPointerEnter(): void {
         this._lineMaterial.color = this._colorHover;
-        (this.parent as DIVERotateGizmo).onHoverAxis(this.axis, true);
+        if (this.parent) {
+            this.parent.onHoverAxis(this.axis, true);
+        }
     }
 
     public onPointerLeave(): void {
         this._lineMaterial.color = this._color;
-        (this.parent as DIVERotateGizmo).onHoverAxis(this.axis, false);
+        if (this.parent) {
+            this.parent.onHoverAxis(this.axis, false);
+        }
     }
 
     public onDragStart(): void {
         this._lineMaterial.color = this._colorHover;
-        (this.parent as DIVERotateGizmo).onAxisDragStart();
+        if (this.parent) {
+            this.parent.onAxisDragStart();
+        }
     }
 
     public onDrag(e: DraggableEvent): void {
         this._lineMaterial.color = this._colorHover;
-        (this.parent as DIVERotateGizmo).onAxisDrag(this, e);
+        if (this.parent) {
+            this.parent.onAxisDrag(this, e);
+        }
     }
 
     public onDragEnd(): void {
         this._lineMaterial.color = this._color;
-        (this.parent as DIVERotateGizmo).onAxisDragEnd();
+        if (this.parent) {
+            this.parent.onAxisDragEnd();
+        }
     }
 }
