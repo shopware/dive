@@ -32,17 +32,6 @@ export class DIVETranslateGizmo extends Object3D {
         });
     }
 
-    public getHandle(axis: DIVEGizmoAxis): DIVEAxisHandle {
-        switch (axis) {
-            case 'x':
-                return this.children[0] as DIVEAxisHandle;
-            case 'y':
-                return this.children[1] as DIVEAxisHandle;
-            case 'z':
-                return this.children[2] as DIVEAxisHandle;
-        }
-    }
-
     public onHoverAxis(axis: DIVEGizmoAxis, value: boolean): void {
         if (!this.parent) return;
         if (!this.parent.parent) return;

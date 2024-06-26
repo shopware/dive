@@ -38,17 +38,6 @@ export class DIVERotateGizmo extends Object3D {
         });
     }
 
-    public getHandle(axis: DIVEGizmoAxis): DIVERadialHandle {
-        switch (axis) {
-            case 'x':
-                return this.children[0] as DIVERadialHandle;
-            case 'y':
-                return this.children[1] as DIVERadialHandle;
-            case 'z':
-                return this.children[2] as DIVERadialHandle;
-        }
-    }
-
     public onHoverAxis(axis: DIVEGizmoAxis, value: boolean): void {
         if (!this.parent) return;
         if (!this.parent.parent) return;
