@@ -45,7 +45,7 @@ export class DIVEScaleHandle extends Object3D implements DIVEHoverable, DIVEDrag
         this._boxSize = boxSize;
 
         // create line
-        const lineGeo = new CylinderGeometry(0.01, 0.01, length - boxSize, 13);
+        const lineGeo = new CylinderGeometry(0.01, 0.01, length, 13);
         this._lineMaterial = new MeshBasicMaterial({
             color: color,
             depthTest: false,
@@ -55,7 +55,7 @@ export class DIVEScaleHandle extends Object3D implements DIVEHoverable, DIVEDrag
         lineMesh.layers.mask = UI_LAYER_MASK;
         lineMesh.renderOrder = Infinity;
         lineMesh.rotateX(Math.PI / 2);
-        lineMesh.translateY(length / 2);
+        lineMesh.translateY(length / 2 - boxSize / 2);
         this.add(lineMesh);
 
         // create box
