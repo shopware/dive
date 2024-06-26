@@ -8,6 +8,8 @@ import { DraggableEvent } from "../../toolbox/BaseTool";
 export class DIVETranslateGizmo extends Object3D {
     private _controller: DIVEOrbitControls;
 
+    public children: DIVEAxisHandle[];
+
     private startPos: Vector3 = new Vector3();
 
     constructor(controller: DIVEOrbitControls) {
@@ -15,11 +17,19 @@ export class DIVETranslateGizmo extends Object3D {
 
         this.name = "DIVETranslateGizmo";
 
+        this.children = [];
+
         this._controller = controller;
 
         this.add(new DIVEAxisHandle('x', 1, new Vector3(1, 0, 0), AxesColorRed));
         this.add(new DIVEAxisHandle('y', 1, new Vector3(0, 1, 0), AxesColorGreen));
         this.add(new DIVEAxisHandle('z', 1, new Vector3(0, 0, 1), AxesColorBlue));
+    }
+
+    public reset(): void {
+        this.children.forEach((child) => {
+            child.reset();
+        });
     }
 
     public getHandle(axis: DIVEGizmoAxis): DIVEAxisHandle {

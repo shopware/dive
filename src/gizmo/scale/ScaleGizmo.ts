@@ -7,10 +7,14 @@ import { DIVEScaleHandle } from "../handles/ScaleHandle";
 export class DIVEScaleGizmo extends Object3D implements DIVEHoverable {
     readonly isHoverable: true = true;
 
+    public children: DIVEScaleHandle[];
+
     constructor(controller: DIVEOrbitControls) {
         super();
 
         this.name = "DIVEScaleGizmo";
+
+        this.children = [];
 
         controller.addEventListener('change', () => {
             const size = controller.getDistance() / 2.5;
@@ -20,6 +24,12 @@ export class DIVEScaleGizmo extends Object3D implements DIVEHoverable {
         this.add(new DIVEScaleHandle('x', 1, new Vector3(1, 0, 0), AxesColorRed));
         this.add(new DIVEScaleHandle('y', 1, new Vector3(0, 1, 0), AxesColorGreen));
         this.add(new DIVEScaleHandle('z', 1, new Vector3(0, 0, 1), AxesColorBlue));
+    }
+
+    public reset(): void {
+        this.children.forEach((child) => {
+            child.reset();
+        });
     }
 
     public onHoverAxis(axis: 'x' | 'y' | 'z' | null): void {

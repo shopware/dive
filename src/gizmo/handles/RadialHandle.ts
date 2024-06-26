@@ -30,7 +30,7 @@ export class DIVERadialHandle extends Object3D implements DIVEHoverable, DIVEDra
         return new Vector3(0, 1, 0).applyQuaternion(this.quaternion).normalize();
     }
 
-    constructor(axis: 'x' | 'y' | 'z', arc: number, direction: Vector3, color: ColorRepresentation) {
+    constructor(axis: 'x' | 'y' | 'z', radius: number, arc: number, direction: Vector3, color: ColorRepresentation) {
         super();
 
         this.name = "DIVERadialHandle";
@@ -40,7 +40,7 @@ export class DIVERadialHandle extends Object3D implements DIVEHoverable, DIVEDra
         this._colorHover = this._color.clone().multiplyScalar(2);
 
         // create line
-        const lineGeo = new TorusGeometry(1, 0.01, 13, 48, arc);
+        const lineGeo = new TorusGeometry(radius, 0.01, 13, 48, arc);
         this._lineMaterial = new MeshBasicMaterial({
             color: color,
             depthTest: false,
@@ -49,11 +49,10 @@ export class DIVERadialHandle extends Object3D implements DIVEHoverable, DIVEDra
         const lineMesh = new Mesh(lineGeo, this._lineMaterial);
         lineMesh.layers.mask = UI_LAYER_MASK;
         lineMesh.renderOrder = Infinity;
-        // lineMesh.rotateX(Math.PI / 2);
         this.add(lineMesh);
 
         // create collider
-        const collider = new TorusGeometry(1, 0.1, 3, 48, arc);
+        const collider = new TorusGeometry(radius, 0.1, 3, 48, arc);
         const colliderMaterial = new MeshBasicMaterial({
             color: 0xff00ff,
             transparent: true,
@@ -62,14 +61,17 @@ export class DIVERadialHandle extends Object3D implements DIVEHoverable, DIVEDra
             depthWrite: false,
         });
         const colliderMesh = new Mesh(collider, colliderMaterial);
-        // colliderMesh.visible = false;
+        colliderMesh.visible = false;
         colliderMesh.layers.mask = UI_LAYER_MASK;
         colliderMesh.renderOrder = Infinity;
-        // colliderMesh.rotateX(Math.PI / 2);
 
         this.add(colliderMesh);
 
         this.lookAt(direction);
+    }
+
+    public reset(): void {
+        this._lineMaterial.color = this._color;
     }
 
     public onPointerEnter(): void {

@@ -11,10 +11,14 @@ export class DIVERotateGizmo extends Object3D {
 
     private startRot: Euler = new Euler();
 
+    public children: DIVERadialHandle[];
+
     constructor(controller: DIVEOrbitControls) {
         super();
 
         this.name = "DIVERotateGizmo";
+
+        this.children = [];
 
         this._controller = controller;
 
@@ -23,10 +27,17 @@ export class DIVERotateGizmo extends Object3D {
             this.scale.set(size, size, size);
         })
 
-        this.add(new DIVERadialHandle('x', Math.PI * 2, new Vector3(1, 0, 0), AxesColorRed));
-        this.add(new DIVERadialHandle('y', Math.PI * 2, new Vector3(0, 1, 0), AxesColorGreen));
-        this.add(new DIVERadialHandle('z', Math.PI * 2, new Vector3(0, 0, 1), AxesColorBlue));
+        this.add(new DIVERadialHandle('x', 1, Math.PI / 2, new Vector3(1, 0, 0), AxesColorRed));
+        this.add(new DIVERadialHandle('y', 1, -Math.PI / 2, new Vector3(0, 1, 0), AxesColorGreen));
+        this.add(new DIVERadialHandle('z', 1, Math.PI / 2, new Vector3(0, 0, 1), AxesColorBlue));
     }
+
+    public reset(): void {
+        this.children.forEach((child) => {
+            child.reset();
+        });
+    }
+
     public getHandle(axis: DIVEGizmoAxis): DIVERadialHandle {
         switch (axis) {
             case 'x':

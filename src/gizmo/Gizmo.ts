@@ -90,11 +90,19 @@ export class DIVEGizmo extends Object3D {
     }
 
     private assemble(): void {
+        // clear all children
         this._gizmoNode.clear();
         this._gizmoPlane.clear();
 
+        // reset all gizmos
+        this._translateGizmo.reset();
+        this._rotateGizmo.reset();
+        this._scaleGizmo.reset();
+
+        // check for object
         if (this.object === null) return;
 
+        // add gizmos
         if (this._mode.includes('translate')) {
             this._gizmoNode.add(this._translateGizmo);
         }
@@ -107,6 +115,7 @@ export class DIVEGizmo extends Object3D {
             this._gizmoNode.add(this._scaleGizmo);
         }
 
+        // add plane for raycasting properly while dragging
         this.add(this._gizmoPlane);
     }
 }

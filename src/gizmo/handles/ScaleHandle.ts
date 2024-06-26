@@ -67,6 +67,10 @@ export class DIVEScaleHandle extends Object3D implements DIVEHoverable {
         this.lookAt(direction);
     }
 
+    public reset(): void {
+        this._lineMaterial.color = this._color;
+    }
+
     public onPointerEnter(): void {
         this.onHover(true);
     };
