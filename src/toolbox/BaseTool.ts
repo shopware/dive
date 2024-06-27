@@ -14,7 +14,7 @@ export type DraggableEvent = {
 
 /* eslint-disable @typescript-eslint/no-unused-vars */
 export default abstract class DIVEBaseTool {
-    readonly POINTER_DRAG_THRESHOLD: number = 0.01;
+    readonly POINTER_DRAG_THRESHOLD: number = 0.001;
 
     public name: string;
 
@@ -143,7 +143,9 @@ export default abstract class DIVEBaseTool {
         // refresh intersects
         this._intersects = this.raycast(this._scene.children);
 
-            const hoverable = findHoverableInterface(this._intersects[0]?.object);
+        // handle hover
+        const hoverable = findHoverableInterface(this._intersects[0]?.object);
+        if (this._intersects[0] && hoverable) {
             if (!this._hovered) {
                 if (hoverable.onPointerEnter) hoverable.onPointerEnter(this._intersects[0]);
                 this._hovered = hoverable;
@@ -168,7 +170,7 @@ export default abstract class DIVEBaseTool {
             this._hovered = null;
         }
 
-        // dragging
+        // handle drag
         if (this._pointerAnyDown) {
             if (!this._dragging) {
                 this.onDragStart(e);
