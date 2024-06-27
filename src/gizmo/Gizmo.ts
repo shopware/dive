@@ -11,11 +11,11 @@ export type DIVEGizmoMode = ('translate' | 'rotate' | 'scale');
 export type DIVEGizmoAxis = 'x' | 'y' | 'z';
 
 export class DIVEGizmo extends Object3D {
-    private _mode: DIVEGizmoMode[];
-    public get mode(): DIVEGizmoMode[] {
+    private _mode: DIVEGizmoMode;
+    public get mode(): DIVEGizmoMode {
         return this._mode;
     }
-    public set mode(value: DIVEGizmoMode[]) {
+    public set mode(value: DIVEGizmoMode) {
         this._mode = value;
         this.assemble();
     }
@@ -53,7 +53,7 @@ export class DIVEGizmo extends Object3D {
             this.scale.set(size, size, size);
         });
 
-        this._mode = [];
+        this._mode = 'translate';
 
         this._gizmoNode = new Object3D();
         this.add(this._gizmoNode);
@@ -105,15 +105,15 @@ export class DIVEGizmo extends Object3D {
         if (this.object === null) return;
 
         // add gizmos
-        if (this._mode.includes('translate')) {
+        if (this._mode === 'translate') {
             this._gizmoNode.add(this._translateGizmo);
         }
 
-        if (this._mode.includes('rotate')) {
+        if (this._mode === 'rotate') {
             this._gizmoNode.add(this._rotateGizmo);
         }
 
-        if (this._mode.includes('scale')) {
+        if (this._mode === 'scale') {
             this._gizmoNode.add(this._scaleGizmo);
         }
 

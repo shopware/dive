@@ -24,7 +24,7 @@ export default class DIVETransformTool extends DIVEBaseTool {
         this.name = "DIVETransformTool";
 
         this._gizmo = new DIVEGizmo(this._controller);
-        this._gizmo.mode = ['translate'];
+        this._gizmo.mode = 'translate';
 
         scene.add(this._gizmo);
     }
@@ -32,7 +32,7 @@ export default class DIVETransformTool extends DIVEBaseTool {
     public Activate(): void { }
 
     public SetGizmoMode(mode: 'translate' | 'rotate' | 'scale'): void {
-        this._gizmo.mode = [mode];
+        this._gizmo.mode = mode;
     }
 
     public onPointerDown(e: PointerEvent): void {
