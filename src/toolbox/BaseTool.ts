@@ -2,8 +2,8 @@ import { Intersection, Object3D, Raycaster, Vector2, Vector3 } from "three";
 import { PRODUCT_LAYER_MASK, UI_LAYER_MASK } from "../constant/VisibilityLayerMask";
 import DIVEScene from "../scene/Scene";
 import DIVEOrbitControls from "../controls/OrbitControls";
-import { DIVEDraggable } from "../interface/Draggable";
-import { DIVEHoverable } from "../interface/Hoverable";
+import { DIVEDraggable, findDraggableInterface } from "../interface/Draggable";
+import { DIVEHoverable, findHoverableInterface } from "../interface/Hoverable";
 
 export type DraggableEvent = {
     dragStart: Vector3;
@@ -102,7 +102,7 @@ export default abstract class DIVEBaseTool {
 
         this._lastPointerDown.copy(this._pointer);
 
-        this._draggable = this.findDraggableInterface(this._intersects[0]?.object) || null;
+        this._draggable = findDraggableInterface(this._intersects[0]?.object) || null;
     }
 
     public onDragStart(e: PointerEvent): void {
@@ -143,9 +143,7 @@ export default abstract class DIVEBaseTool {
         // refresh intersects
         this._intersects = this.raycast(this._scene.children);
 
-        // hovering
-        const hoverable = this.findHoverableInterface(this._intersects[0]?.object);
-        if (!this._pointerAnyDown && !this._dragging && this._intersects[0] && hoverable) {
+            const hoverable = findHoverableInterface(this._intersects[0]?.object);
             if (!this._hovered) {
                 if (hoverable.onPointerEnter) hoverable.onPointerEnter(this._intersects[0]);
                 this._hovered = hoverable;
@@ -264,35 +262,5 @@ export default abstract class DIVEBaseTool {
 
     private pointerWasDragged(): boolean {
         return this._lastPointerDown.distanceTo(this._pointer) > this.POINTER_DRAG_THRESHOLD;
-    }
-
-    private findDraggableInterface(child: Object3D): (Object3D & DIVEDraggable) | undefined {
-        if (child === undefined) return undefined;
-
-        if (child.parent === null) {
-            // in this case it is the scene itself
-            return undefined;
-        }
-
-        if ('isDraggable' in child) {
-            return child as (Object3D & DIVEDraggable);
-        }
-
-        return this.findDraggableInterface(child.parent);
-    }
-
-    private findHoverableInterface(child: Object3D): (Object3D & DIVEHoverable) | undefined {
-        if (child === undefined) return undefined;
-
-        if (child.parent === null) {
-            // in this case it is the scene itself
-            return undefined;
-        }
-
-        if ('isHoverable' in child) {
-            return child as (Object3D & DIVEHoverable);
-        }
-
-        return this.findHoverableInterface(child.parent);
     }
 }
