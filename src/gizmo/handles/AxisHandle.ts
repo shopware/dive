@@ -15,6 +15,7 @@ export class DIVEAxisHandle extends Object3D implements DIVEHoverable, DIVEDragg
 
     private _color: Color = new Color(0xff00ff);
     private _colorHover: Color;
+    private _hovered: boolean;
 
     private _lineMaterial: MeshBasicMaterial;
 
@@ -38,6 +39,7 @@ export class DIVEAxisHandle extends Object3D implements DIVEHoverable, DIVEDragg
 
         this._color.set(color);
         this._colorHover = this._color.clone().multiplyScalar(2);
+        this._hovered = false;
 
         // create line
         const lineGeo = new CylinderGeometry(0.01, 0.01, length, 13);
@@ -80,6 +82,7 @@ export class DIVEAxisHandle extends Object3D implements DIVEHoverable, DIVEDragg
 
     public onPointerEnter(): void {
         this._lineMaterial.color = this._colorHover;
+        this._hovered = true;
         if (this.parent) {
             this.parent.onHoverAxis(this.axis, true);
         }
@@ -87,6 +90,7 @@ export class DIVEAxisHandle extends Object3D implements DIVEHoverable, DIVEDragg
 
     public onPointerLeave(): void {
         this._lineMaterial.color = this._color;
+        this._hovered = false;
         if (this.parent) {
             this.parent.onHoverAxis(this.axis, false);
         }
@@ -107,7 +111,7 @@ export class DIVEAxisHandle extends Object3D implements DIVEHoverable, DIVEDragg
     }
 
     public onDragEnd(): void {
-        this._lineMaterial.color = this._colorHover;
+        this._lineMaterial.color = this._hovered ? this._colorHover : this._color;
         if (this.parent) {
             this.parent.onAxisDragEnd();
         }
