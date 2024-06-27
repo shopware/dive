@@ -13,7 +13,7 @@ export class DIVEScaleGizmo extends Object3D implements DIVEHoverable {
 
     private _controller: DIVEOrbitControls;
 
-    private _startScale: Vector3 = new Vector3();
+    private _startScale: Vector3 | null;
 
     constructor(controller: DIVEOrbitControls) {
         super();
@@ -21,6 +21,8 @@ export class DIVEScaleGizmo extends Object3D implements DIVEHoverable {
         this.name = "DIVEScaleGizmo";
 
         this.children = [];
+
+        this._startScale = null;
 
         this._controller = controller;
 
@@ -41,32 +43,55 @@ export class DIVEScaleGizmo extends Object3D implements DIVEHoverable {
         });
     }
 
-    public onHoverAxis(axis: DIVEGizmoAxis, value: boolean): void {
-        if (!this.parent) return;
-        if (!this.parent.parent) return;
-        (this.parent.parent as DIVEGizmo).onHover('translate', axis, value);
+    private handleHighlight(axis: DIVEGizmoAxis, value: boolean, dragged: boolean): void {
+        // Set highlight state for all handles.
+        this.children.forEach((child) => {
+            if (dragged) {
+                // Dragging has priority when it comes to highlighting.
+                child.highlight = child.axis === axis && dragged;
+            } else {
+                // If nothing is dragged, decide on hovered state.
+                child.highlight = child.axis === axis && value;
+            }
+        });
     }
 
-    public onAxisDragStart(): void {
+    public onHoverAxis(handle: DIVEScaleHandle, value: boolean): void {
+        // If _startScale is set, it means there is a drag operation in progress.
+        // While dragging, we don't want to change the hover state.
+        if (this._startScale) return;
+
+        if (!this.parent) return;
+        if (!this.parent.parent) return;
+        (this.parent.parent as DIVEGizmo).onHover('translate', handle.axis, value);
+
+        this.handleHighlight(handle.axis, value, false);
+    }
+
+    public onAxisDragStart(handle: DIVEScaleHandle): void {
         if (!this.parent) return;
         if (!this.parent.parent) return;
 
         const object = (this.parent.parent as DIVEGizmo).object;
         if (!object) return;
 
-        this._startScale.copy(object.scale.clone());
+        this._startScale = object.scale.clone();
+        this.handleHighlight(handle.axis, true, true);
     }
 
     public onAxisDrag(axis: DIVEScaleHandle, e: DraggableEvent): void {
+        if (!this._startScale) return;
+
         if (!this.parent) return;
         if (!this.parent.parent) return;
-        if ('onChange' in this.parent.parent) {
-            const delta = e.dragDelta.clone().projectOnVector(axis.forwardVector);
-            (this.parent.parent as DIVEGizmo).onChange(undefined, undefined, this._startScale.clone().add(delta));
-        }
+        if (!('onChange' in this.parent.parent)) return;
+
+        const delta = e.dragDelta.clone().projectOnVector(axis.forwardVector);
+        (this.parent.parent as DIVEGizmo).onChange(undefined, undefined, this._startScale.clone().add(delta));
     }
 
-    public onAxisDragEnd(): void {
-        this._startScale.set(0, 0, 0);
+    public onAxisDragEnd(handle: DIVEScaleHandle): void {
+        this._startScale = null;
+        this.handleHighlight(handle.axis, false, false);
     }
 }

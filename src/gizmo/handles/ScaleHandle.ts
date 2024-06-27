@@ -15,6 +15,15 @@ export class DIVEScaleHandle extends Object3D implements DIVEHoverable, DIVEDrag
 
     private _color: Color = new Color(0xff00ff);
     private _colorHover: Color;
+    private _hovered: boolean;
+    private _highlight: boolean;
+    public get highlight(): boolean {
+        return this._highlight;
+    }
+    public set highlight(highlight: boolean) {
+        this._highlight = highlight;
+        this._lineMaterial.color = this._highlight || this._hovered ? this._colorHover : this._color;
+    }
 
     private _lineMaterial: MeshBasicMaterial;
 
@@ -41,11 +50,13 @@ export class DIVEScaleHandle extends Object3D implements DIVEHoverable, DIVEDrag
 
         this._color.set(color);
         this._colorHover = this._color.clone().multiplyScalar(2);
+        this._hovered = false;
+        this._highlight = false;
 
         this._boxSize = boxSize;
 
         // create line
-        const lineGeo = new CylinderGeometry(0.01, 0.01, length, 13);
+        const lineGeo = new CylinderGeometry(0.01, 0.01, length - boxSize / 2, 13);
         this._lineMaterial = new MeshBasicMaterial({
             color: color,
             depthTest: false,
@@ -55,7 +66,7 @@ export class DIVEScaleHandle extends Object3D implements DIVEHoverable, DIVEDrag
         lineMesh.layers.mask = UI_LAYER_MASK;
         lineMesh.renderOrder = Infinity;
         lineMesh.rotateX(Math.PI / 2);
-        lineMesh.translateY(length / 2 - boxSize / 2);
+        lineMesh.translateY(length / 2 - boxSize / 4);
         this.add(lineMesh);
 
         // create box
@@ -108,37 +119,34 @@ export class DIVEScaleHandle extends Object3D implements DIVEHoverable, DIVEDrag
     }
 
     public onPointerEnter(): void {
-        this._lineMaterial.color = this._colorHover;
+        this._hovered = true;
         if (this.parent) {
-            this.parent.onHoverAxis(this.axis, true);
+            this.parent.onHoverAxis(this, true);
         }
     }
 
     public onPointerLeave(): void {
-        this._lineMaterial.color = this._color;
+        this._hovered = false;
         if (this.parent) {
-            this.parent.onHoverAxis(this.axis, false);
+            this.parent.onHoverAxis(this, false);
         }
     }
 
     public onDragStart(): void {
-        this._lineMaterial.color = this._colorHover;
         if (this.parent) {
-            this.parent.onAxisDragStart();
+            this.parent.onAxisDragStart(this);
         }
     }
 
     public onDrag(e: DraggableEvent): void {
-        this._lineMaterial.color = this._colorHover;
         if (this.parent) {
             this.parent.onAxisDrag(this, e);
         }
     }
 
     public onDragEnd(): void {
-        this._lineMaterial.color = this._colorHover;
         if (this.parent) {
-            this.parent.onAxisDragEnd();
+            this.parent.onAxisDragEnd(this);
         }
     }
 }
