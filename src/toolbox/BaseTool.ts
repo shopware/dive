@@ -128,6 +128,7 @@ export default abstract class DIVEBaseTool {
             });
 
             this._dragging = true;
+            this._controller.enabled = false;
         }
     }
 
@@ -204,8 +205,6 @@ export default abstract class DIVEBaseTool {
         if (this.pointerWasDragged() || this._dragging) {
             if (this._draggable) {
                 this.onDragEnd(e);
-                this._dragging = false;
-                this._draggable = null;
             }
         } else {
             this.onClick(e);
@@ -245,11 +244,15 @@ export default abstract class DIVEBaseTool {
             });
         }
 
+        this._draggable = null;
+        this._dragging = false;
 
         this._dragStart.set(0, 0, 0);
         this._dragCurrent.set(0, 0, 0);
         this._dragEnd.set(0, 0, 0);
         this._dragDelta.set(0, 0, 0);
+
+        this._controller.enabled = true;
     }
 
     public onWheel(e: WheelEvent): void { }

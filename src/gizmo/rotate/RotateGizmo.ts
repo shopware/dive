@@ -40,8 +40,6 @@ export class DIVERotateGizmo extends Object3D {
     }
 
     public onAxisDragStart(): void {
-        this._controller.enabled = false;
-
         if (!this.parent) return;
         if (!this.parent.parent) return;
 
@@ -68,7 +66,6 @@ export class DIVERotateGizmo extends Object3D {
     }
 
     public onAxisDragEnd(): void {
-        this._controller.enabled = true;
         this._startRot.set(0, 0, 0);
     }
 }

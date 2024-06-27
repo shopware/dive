@@ -48,8 +48,6 @@ export class DIVEScaleGizmo extends Object3D implements DIVEHoverable {
     }
 
     public onAxisDragStart(): void {
-        this._controller.enabled = false;
-
         if (!this.parent) return;
         if (!this.parent.parent) return;
 
@@ -69,7 +67,6 @@ export class DIVEScaleGizmo extends Object3D implements DIVEHoverable {
     }
 
     public onAxisDragEnd(): void {
-        this._controller.enabled = true;
         this._startScale.set(0, 0, 0);
     }
 }
