@@ -10,7 +10,7 @@ export class DIVETranslateGizmo extends Object3D {
 
     public children: DIVEAxisHandle[];
 
-    private _startPos: Vector3 = new Vector3();
+    private _startPos: Vector3 | null;
 
     constructor(controller: DIVEOrbitControls) {
         super();
@@ -18,6 +18,8 @@ export class DIVETranslateGizmo extends Object3D {
         this.name = "DIVETranslateGizmo";
 
         this.children = [];
+
+        this._startPos = null;
 
         this._controller = controller;
 
@@ -32,32 +34,55 @@ export class DIVETranslateGizmo extends Object3D {
         });
     }
 
-    public onHoverAxis(axis: DIVEGizmoAxis, value: boolean): void {
-        if (!this.parent) return;
-        if (!this.parent.parent) return;
-        (this.parent.parent as DIVEGizmo).onHover('translate', axis, value);
+    private handleHighlight(axis: DIVEGizmoAxis, value: boolean, dragged: boolean): void {
+        // Set highlight state for all handles.
+        this.children.forEach((child) => {
+            if (dragged) {
+                // Dragging has priority when it comes to highlighting.
+                child.highlight = child.axis === axis && dragged;
+            } else {
+                // If nothing is dragged, decide on hovered state.
+                child.highlight = child.axis === axis && value;
+            }
+        });
     }
 
-    public onAxisDragStart(): void {
+    public onHandleHover(handle: DIVEAxisHandle, value: boolean): void {
+        // If _startPos is set, it means there is a drag operation in progress.
+        // While dragging, we don't want to change the hover state.
+        if (this._startPos) return;
+
+        if (!this.parent) return;
+        if (!this.parent.parent) return;
+        (this.parent.parent as DIVEGizmo).onHover('translate', handle.axis, value);
+
+        this.handleHighlight(handle.axis, value, false);
+    }
+
+    public onHandleDragStart(handle: DIVEAxisHandle): void {
         if (!this.parent) return;
         if (!this.parent.parent) return;
 
         const object = (this.parent.parent as DIVEGizmo).object;
         if (!object) return;
 
-        this._startPos.copy(object.position.clone());
+        this._startPos = object.position.clone();
+        this.handleHighlight(handle.axis, true, true);
     }
 
-    public onAxisDrag(axis: DIVEAxisHandle, e: DraggableEvent): void {
+    public onHandleDrag(handle: DIVEAxisHandle, e: DraggableEvent): void {
+        if (!this._startPos) return;
+
         if (!this.parent) return;
         if (!this.parent.parent) return;
-        if ('onChange' in this.parent.parent) {
-            const delta = e.dragDelta.clone().projectOnVector(axis.forwardVector);
-            (this.parent.parent as DIVEGizmo).onChange(this._startPos.clone().add(delta));
-        }
+        if (!('onChange' in this.parent.parent)) return;
+
+        const delta = e.dragDelta.clone().projectOnVector(handle.forwardVector);
+        (this.parent.parent as DIVEGizmo).onChange(this._startPos.clone().add(delta));
     }
 
-    public onAxisDragEnd(): void {
-        this._startPos.set(0, 0, 0);
+    public onHandleDragEnd(handle: DIVEAxisHandle): void {
+        this._startPos = null;
+        this.handleHighlight(handle.axis, false, false);
     }
 }
