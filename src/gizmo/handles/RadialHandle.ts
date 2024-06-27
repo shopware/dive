@@ -15,6 +15,15 @@ export class DIVERadialHandle extends Object3D implements DIVEHoverable, DIVEDra
 
     private _color: Color = new Color(0xff00ff);
     private _colorHover: Color;
+    private _hovered: boolean;
+    private _highlight: boolean;
+    public get highlight(): boolean {
+        return this._highlight;
+    }
+    public set highlight(highlight: boolean) {
+        this._highlight = highlight;
+        this._lineMaterial.color = this._highlight || this._hovered ? this._colorHover : this._color;
+    }
 
     private _lineMaterial: MeshBasicMaterial;
 
@@ -38,6 +47,8 @@ export class DIVERadialHandle extends Object3D implements DIVEHoverable, DIVEDra
 
         this._color.set(color);
         this._colorHover = this._color.clone().multiplyScalar(2);
+        this._hovered = false;
+        this._highlight = false;
 
         // create line
         const lineGeo = new TorusGeometry(radius, 0.01, 13, 48, arc);
@@ -75,37 +86,34 @@ export class DIVERadialHandle extends Object3D implements DIVEHoverable, DIVEDra
     }
 
     public onPointerEnter(): void {
-        this._lineMaterial.color = this._colorHover;
+        this._hovered = true;
         if (this.parent) {
-            this.parent.onHoverAxis(this.axis, true);
+            this.parent.onHandleHover(this, true);
         }
     }
 
     public onPointerLeave(): void {
-        this._lineMaterial.color = this._color;
+        this._hovered = false;
         if (this.parent) {
-            this.parent.onHoverAxis(this.axis, false);
+            this.parent.onHandleHover(this, false);
         }
     }
 
     public onDragStart(): void {
-        this._lineMaterial.color = this._colorHover;
         if (this.parent) {
-            this.parent.onAxisDragStart();
+            this.parent.onHandleDragStart(this);
         }
     }
 
     public onDrag(e: DraggableEvent): void {
-        this._lineMaterial.color = this._colorHover;
         if (this.parent) {
-            this.parent.onAxisDrag(this, e);
+            this.parent.onHandleDrag(this, e);
         }
     }
 
     public onDragEnd(): void {
-        this._lineMaterial.color = this._color;
         if (this.parent) {
-            this.parent.onAxisDragEnd();
+            this.parent.onHandleDragEnd(this);
         }
     }
 }

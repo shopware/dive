@@ -11,7 +11,7 @@ export class DIVERotateGizmo extends Object3D {
 
     private _controller: DIVEOrbitControls;
 
-    private _startRot: Euler = new Euler();
+    private _startRot: Euler | null;
 
     constructor(controller: DIVEOrbitControls) {
         super();
@@ -19,6 +19,8 @@ export class DIVERotateGizmo extends Object3D {
         this.name = "DIVERotateGizmo";
 
         this.children = [];
+
+        this._startRot = null;
 
         this._controller = controller;
 
@@ -33,39 +35,61 @@ export class DIVERotateGizmo extends Object3D {
         });
     }
 
-    public onHoverAxis(axis: DIVEGizmoAxis, value: boolean): void {
-        if (!this.parent) return;
-        if (!this.parent.parent) return;
-        (this.parent.parent as DIVEGizmo).onHover('rotate', axis, value);
+    private handleHighlight(axis: DIVEGizmoAxis, value: boolean, dragged: boolean): void {
+        // Set highlight state for all handles.
+        this.children.forEach((child) => {
+            if (dragged) {
+                // Dragging has priority when it comes to highlighting.
+                child.highlight = child.axis === axis && dragged;
+            } else {
+                // If nothing is dragged, decide on hovered state.
+                child.highlight = child.axis === axis && value;
+            }
+        });
     }
 
-    public onAxisDragStart(): void {
+    public onHandleHover(handle: DIVERadialHandle, value: boolean): void {
+        // If _startRot is set, it means there is a drag operation in progress.
+        // While dragging, we don't want to change the hover state.
+        if (this._startRot) return;
+
+        if (!this.parent) return;
+        if (!this.parent.parent) return;
+        (this.parent.parent as DIVEGizmo).onHover('rotate', handle.axis, value);
+
+        this.handleHighlight(handle.axis, value, false);
+    }
+
+    public onHandleDragStart(handle: DIVERadialHandle): void {
         if (!this.parent) return;
         if (!this.parent.parent) return;
 
         const object = (this.parent.parent as DIVEGizmo).object;
         if (!object) return;
 
-        this._startRot.copy(object.rotation.clone());
+        this._startRot = object.rotation.clone();
+        this.handleHighlight(handle.axis, true, true);
     }
 
-    public onAxisDrag(axis: DIVERadialHandle, e: DraggableEvent): void {
+    public onHandleDrag(handle: DIVERadialHandle, e: DraggableEvent): void {
+        if (!this._startRot) return;
         if (!this.parent) return;
         if (!this.parent.parent) return;
-        if ('onChange' in this.parent.parent) {
-            const currentVector = e.dragCurrent.clone().sub(this.parent.parent.position).normalize();
-            const startVector = e.dragStart.clone().sub(this.parent.parent.position).normalize();
-            const signedAngle = DIVEMath.signedAngleTo(startVector, currentVector, axis.forwardVector);
-            const euler = new Euler(
-                this._startRot.x + axis.forwardVector.x * signedAngle,
-                this._startRot.y + axis.forwardVector.y * signedAngle,
-                this._startRot.z + axis.forwardVector.z * signedAngle,
-            );
-            (this.parent.parent as DIVEGizmo).onChange(undefined, euler);
-        }
+        if (!('onChange' in this.parent.parent)) return;
+
+        const currentVector = e.dragCurrent.clone().sub(this.parent.parent.position).normalize();
+        const startVector = e.dragStart.clone().sub(this.parent.parent.position).normalize();
+        const signedAngle = DIVEMath.signedAngleTo(startVector, currentVector, handle.forwardVector);
+        const euler = new Euler(
+            this._startRot.x + handle.forwardVector.x * signedAngle,
+            this._startRot.y + handle.forwardVector.y * signedAngle,
+            this._startRot.z + handle.forwardVector.z * signedAngle,
+        );
+        (this.parent.parent as DIVEGizmo).onChange(undefined, euler);
     }
 
-    public onAxisDragEnd(): void {
-        this._startRot.set(0, 0, 0);
+    public onHandleDragEnd(handle: DIVERadialHandle): void {
+        this._startRot = null;
+        this.handleHighlight(handle.axis, false, false);
     }
 }
