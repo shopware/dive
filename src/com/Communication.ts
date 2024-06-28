@@ -210,12 +210,15 @@ export default class DIVECommunication {
     }
 
     private getObjects(payload: Actions['GET_OBJECTS']['PAYLOAD']): Actions['GET_OBJECTS']['RETURN'] {
+        if (payload.ids.length === 0) return [];
+
+        const objects: COMEntity[] = [];
         this.registered.forEach((object) => {
-            if (payload.ids && payload.ids.length > 0 && !payload.ids.includes(object.id)) return;
-            payload.map.set(object.id, object);
+            if (!payload.ids.includes(object.id)) return;
+            objects.push(object);
         });
 
-        return payload.map;
+        return objects;
     }
 
     private addObject(payload: Actions['ADD_OBJECT']['PAYLOAD']): Actions['ADD_OBJECT']['RETURN'] {
