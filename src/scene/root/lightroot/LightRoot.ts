@@ -2,8 +2,9 @@ import { Color, Object3D } from "three";
 import { type COMLight } from "../../../com/types.ts";
 import DIVEAmbientLight from "../../../light/AmbientLight.ts";
 import DIVEPointLight from "../../../light/PointLight.ts";
-import type { DIVEMoveable } from "../../../interface/Moveable.ts";
 import DIVESceneLight from "../../../light/SceneLight.ts";
+import { type TransformControls } from "three/examples/jsm/Addons";
+import type DIVEScene from "../../Scene.ts";
 
 /**
  * A basic scene node to hold all lights.
@@ -76,9 +77,22 @@ export default class DIVELightRoot extends Object3D {
             return;
         }
 
-        if ('isMoveable' in sceneObject) {
-            (sceneObject as unknown as DIVEMoveable).gizmo?.detach();
+        // _______________________________________________________
+        // this is only neccessary due to using the old TransformControls instead of the new DIVEGizmo
+        const findScene = (object: Object3D): DIVEScene => {
+            if (object.parent !== null) {
+                return findScene(object.parent);
+            };
+            return object as DIVEScene;
         }
+
+        const scene = findScene(sceneObject);
+        scene.children.find((object) => {
+            if ('isTransformControls' in object) {
+                (object as TransformControls).detach();
+            }
+        });
+        // _______________________________________________________
 
         this.remove(sceneObject);
     }
