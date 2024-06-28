@@ -39,11 +39,6 @@ export class DIVEGizmo extends Object3D {
         return this._object;
     }
 
-    public set object(value: (Object3D & DIVESelectable) | null) {
-        this._object = value;
-        this.assemble();
-    }
-
     constructor(controller: DIVEOrbitControls) {
         super();
         this.name = "DIVEGizmo";
@@ -66,6 +61,18 @@ export class DIVEGizmo extends Object3D {
         this._gizmoPlane.visible = false;
 
         this._object = null;
+    }
+
+    public attach(object: (Object3D & DIVESelectable)): this {
+        this._object = object;
+        this.assemble();
+        return this;
+    }
+
+    public detach(): this {
+        this._object = null;
+        this.assemble();
+        return this;
     }
 
     public onHover(mode: DIVEGizmoMode, axis: DIVEGizmoAxis, value: boolean): void {
