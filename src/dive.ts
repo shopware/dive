@@ -163,6 +163,13 @@ export default class DIVE {
 
         // whene everything is done, start the renderer
         this.renderer.StartRenderer(this.scene, this.perspectiveCamera);
+
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        (window as any).DIVE = {
+            PrintScene: () => {
+                console.log(this.scene);
+            },
+        }
     }
 
     // methods
