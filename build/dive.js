@@ -709,12 +709,22 @@ var DIVEModel = class extends Object3D5 {
   SetToWorldOrigin() {
     var _a;
     this.position.set(0, 0, 0);
-    (_a = DIVECommunication.get(this.userData.id)) == null ? void 0 : _a.PerformAction("UPDATE_OBJECT", { id: this.userData.id, position: this.position, rotation: this.rotation, scale: this.scale });
+    (_a = DIVECommunication.get(this.userData.id)) == null ? void 0 : _a.PerformAction("UPDATE_OBJECT", {
+      id: this.userData.id,
+      position: this.position,
+      rotation: this.rotation,
+      scale: this.scale
+    });
   }
   PlaceOnFloor() {
     var _a;
     this.position.y = -this.boundingBox.min.y * this.scale.y;
-    (_a = DIVECommunication.get(this.userData.id)) == null ? void 0 : _a.PerformAction("UPDATE_OBJECT", { id: this.userData.id, position: this.position, rotation: this.rotation, scale: this.scale });
+    (_a = DIVECommunication.get(this.userData.id)) == null ? void 0 : _a.PerformAction("UPDATE_OBJECT", {
+      id: this.userData.id,
+      position: this.position,
+      rotation: this.rotation,
+      scale: this.scale
+    });
   }
   DropIt() {
     var _a;
@@ -742,7 +752,12 @@ var DIVEModel = class extends Object3D5 {
   }
   onMove() {
     var _a;
-    (_a = DIVECommunication.get(this.userData.id)) == null ? void 0 : _a.PerformAction("UPDATE_OBJECT", { id: this.userData.id, position: this.position, rotation: this.rotation, scale: this.scale });
+    (_a = DIVECommunication.get(this.userData.id)) == null ? void 0 : _a.PerformAction("UPDATE_OBJECT", {
+      id: this.userData.id,
+      position: this.position,
+      rotation: this.rotation,
+      scale: this.scale
+    });
   }
   onSelect() {
     var _a;
@@ -983,6 +998,9 @@ var DIVEScene = class extends Scene2 {
     super();
     this.root = new DIVERoot();
     this.add(this.root);
+  }
+  GetBackground() {
+    return `#${this.background ? this.background.getHexString() : "000000"}`;
   }
   SetBackground(color) {
     this.background = new Color7(color);
