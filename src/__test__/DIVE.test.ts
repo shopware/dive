@@ -160,6 +160,8 @@ describe('dive/DIVE', () => {
     it('should instantiate', () => {
         const dive = new DIVE();
         expect(dive).toBeDefined();
+        expect((window as any).DIVE.PrintScene).toBeDefined();
+        expect(() => (window as any).DIVE.PrintScene()).not.toThrow();
     });
 
     it('should instantiate with settings', () => {

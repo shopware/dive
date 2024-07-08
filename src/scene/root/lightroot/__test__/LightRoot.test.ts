@@ -2,6 +2,7 @@ import { TransformControls } from 'three/examples/jsm/Addons';
 import { COMLight } from '../../../../com';
 import { DIVEMoveable } from '../../../../interface/Moveable';
 import DIVELightRoot from '../LightRoot';
+import type DIVEScene from '../../../Scene';
 
 const mock_SetPosition = jest.fn();
 const mock_SetIntensity = jest.fn();
@@ -115,6 +116,17 @@ describe('dive/scene/root/lightroot/DIVELightRoot', () => {
 
     it('should delete light', () => {
         const lightRoot = new DIVELightRoot();
+
+        const sceneParent = {
+            parent: null,
+            children: [
+                {
+                    isTransformControls: true,
+                    detach: jest.fn(),
+                }
+            ],
+        }
+        lightRoot.parent = sceneParent as unknown as DIVEScene;
         expect(() => lightRoot.DeleteLight({ id: undefined })).not.toThrow();
 
         expect(() => lightRoot.DeleteLight({ id: 'test_id' })).not.toThrow();
@@ -128,9 +140,6 @@ describe('dive/scene/root/lightroot/DIVELightRoot', () => {
 
         lightRoot.UpdateLight({ id: 'test_id', type: 'point', position: { x: 1, y: 2, z: 3 }, intensity: 0.5, color: 0x123456 });
         (lightRoot.children[0] as unknown as DIVEMoveable).isMoveable = true;
-        (lightRoot.children[0] as unknown as DIVEMoveable).gizmo = {
-            detach: jest.fn(),
-        } as unknown as TransformControls;
         expect(() => lightRoot.DeleteLight({ id: 'test_id' })).not.toThrow();
         expect(lightRoot.children).toHaveLength(0);
     });

@@ -114,8 +114,8 @@ export default abstract class DIVEBaseTool {
 
         if (this._intersects.length === 0) return;
 
-        this._dragStart.copy(this._intersects[0]?.point.clone());
-        this._dragCurrent.copy(this._intersects[0]?.point.clone());
+        this._dragStart.copy(this._intersects[0].point.clone());
+        this._dragCurrent.copy(this._intersects[0].point.clone());
         this._dragEnd.copy(this._dragStart.clone());
         this._dragDelta.set(0, 0, 0);
 

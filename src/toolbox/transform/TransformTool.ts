@@ -34,13 +34,13 @@ export default class DIVETransformTool extends DIVEBaseTool {
         this._gizmo.mode = mode;
     }
 
-    public onPointerDown(e: PointerEvent): void {
-        super.onPointerDown(e);
+    // public onPointerDown(e: PointerEvent): void {
+    //     super.onPointerDown(e);
 
-        // if (this._hovered) {
-        //     this._dragRaycastOnObjects = this._gizmo.gizmoPlane.children;
-        // }
-    }
+    //     // if (this._hovered) {
+    //     //     this._dragRaycastOnObjects = this._gizmo.gizmoPlane.children;
+    //     // }
+    // }
 
     // protected raycast(): Intersection[] {
     //     return super.raycast(this._gizmo.gizmoNode.children);

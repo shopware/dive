@@ -3,18 +3,11 @@ import DIVEScene from '../../../scene/Scene';
 import DIVEOrbitControls from '../../../controls/OrbitControls';
 import DIVEPerspectiveCamera from '../../../camera/PerspectiveCamera';
 import DIVERenderer, { DIVERendererDefaultSettings } from '../../../renderer/Renderer';
-import { DIVESelectable } from '../../../interface/Selectable';
+import { DIVESelectable, isSelectable } from '../../../interface/Selectable';
+import { type Object3D } from 'three';
 
 jest.mock('../../../renderer/Renderer', () => {
     return jest.fn(function () {
-        return this;
-    });
-});
-
-jest.mock('../../../toolbox/BaseTool', () => {
-    return jest.fn(function (cam) {
-        this.cam = cam;
-        this.add = jest.fn();
         return this;
     });
 });
@@ -60,6 +53,9 @@ const mock_intersectObjects = jest.fn().mockReturnValue([]);
 jest.mock('three', () => {
     return {
         Vector2: jest.fn(function () {
+            return this;
+        }),
+        Vector3: jest.fn(function () {
             return this;
         }),
         Raycaster: jest.fn(function () {
@@ -120,8 +116,6 @@ describe('dive/toolbox/select/DIVESelectTool', () => {
     it('should instantiate', () => {
         const selectTool = new DIVESelectTool(mockScene, mockController);
         expect(selectTool).toBeDefined();
-        expect(mockController.object.onSetCameraLayer).toBeDefined();
-        expect(() => mockController.object.onSetCameraLayer(0)).not.toThrow();
     });
 
     it('should activate', () => {
@@ -129,21 +123,23 @@ describe('dive/toolbox/select/DIVESelectTool', () => {
         expect(() => selectTool.Activate()).not.toThrow();
     });
 
-    it('should execute onPointerUp without hit', () => {
+    it('should execute onClick without hit', () => {
         const selectTool = new DIVESelectTool(mockScene, mockController);
-        expect(() => selectTool.onPointerUp({ offsetX: 0, offsetY: 0 } as PointerEvent)).not.toThrow();
+        selectTool['_gizmo'].object = {} as unknown as Object3D & DIVESelectable;
+        expect(() => selectTool.onClick({ offsetX: 0, offsetY: 0 } as PointerEvent)).not.toThrow();
     });
 
-    it('should execute onPointerUp with hit', () => {
-        mock_intersectObjects.mockReturnValueOnce([{ object: { parent: { name: 'this is the test scene root!!!', parent: null } } }]);
+    it('should execute onClick with hit', () => {
+        mock_intersectObjects.mockReturnValueOnce([{ object: { uuid: 'test', parent: { name: 'this is the test scene root!!!', parent: null } } }]);
         const selectTool = new DIVESelectTool(mockScene, mockController);
-        expect(() => selectTool.onPointerUp({ offsetX: 0, offsetY: 0 } as PointerEvent)).not.toThrow();
+        expect(() => selectTool.onClick({ offsetX: 0, offsetY: 0 } as PointerEvent)).not.toThrow();
     });
 
-    it('should execute onPointerUp with ISelectable hit', () => {
+    it('should execute onClick with same ISelectable hit', () => {
         const mock_onSelect = jest.fn();
 
         mock_intersectObjects.mockReturnValueOnce([{
+
             object: {
                 isSelectable: true,
                 onSelect: mock_onSelect,
@@ -151,14 +147,41 @@ describe('dive/toolbox/select/DIVESelectTool', () => {
                     name: 'this is the test scene root!!!',
                     parent: null,
                 },
+                uuid: 'test0',
             },
         }]);
         const selectTool = new DIVESelectTool(mockScene, mockController);
-        expect(() => selectTool.onPointerUp({ offsetX: 0, offsetY: 0 } as PointerEvent)).not.toThrow();
-        expect(mock_onSelect).toHaveBeenCalledTimes(1);
+        selectTool['_gizmo'].object = {
+            isSelectable: true,
+            uuid: 'test0',
+        } as unknown as Object3D & DIVESelectable;
+        expect(() => selectTool.onClick({ offsetX: 0, offsetY: 0 } as PointerEvent)).not.toThrow();
     });
 
-    it('should execute onPointerUp with IMovable hit', () => {
+    it('should execute onClick with ISelectable hit', () => {
+        const mock_onSelect = jest.fn();
+
+        mock_intersectObjects.mockReturnValueOnce([{
+
+            object: {
+                isSelectable: true,
+                onSelect: mock_onSelect,
+                parent: {
+                    name: 'this is the test scene root!!!',
+                    parent: null,
+                },
+                uuid: 'test0',
+            },
+        }]);
+        const selectTool = new DIVESelectTool(mockScene, mockController);
+        selectTool['_gizmo'].object = {
+            isSelectable: true,
+            uuid: 'test1',
+        } as unknown as Object3D & DIVESelectable;
+        expect(() => selectTool.onClick({ offsetX: 0, offsetY: 0 } as PointerEvent)).not.toThrow();
+    });
+
+    it('should execute onClick with IMovable hit', () => {
         const mock_onSelect = jest.fn();
 
         mock_intersectObjects.mockReturnValueOnce([{
@@ -173,15 +196,24 @@ describe('dive/toolbox/select/DIVESelectTool', () => {
             },
         }]);
         const selectTool = new DIVESelectTool(mockScene, mockController);
-        expect(() => selectTool.onPointerUp({ offsetX: 0, offsetY: 0 } as PointerEvent)).not.toThrow();
-        expect(mock_attach).toHaveBeenCalledTimes(1);
+        expect(() => selectTool.onClick({ offsetX: 0, offsetY: 0 } as PointerEvent)).not.toThrow();
     });
 
-    it('should deselect', () => {
+    it('should Select', () => {
         const selectTool = new DIVESelectTool(mockScene, mockController);
+        const mock_onSelect = jest.fn();
+        expect(() => selectTool.Select({ isSelectable: true })).not.toThrow();
+        expect(() => selectTool.Select({ isMoveable: true, onSelect: mock_onSelect } as unknown as DIVESelectable)).not.toThrow();
+        expect(mock_onSelect).toHaveBeenCalledTimes(1);
+    });
+
+    it('should Deselect', () => {
+        const selectTool = new DIVESelectTool(mockScene, mockController);
+        const mock_onDeselect = jest.fn();
         expect(() => selectTool.Deselect({ isSelectable: true })).not.toThrow();
-        expect(() => selectTool.Deselect({ isMoveable: true, onDeselect: jest.fn() } as unknown as DIVESelectable)).not.toThrow();
-    })
+        expect(() => selectTool.Deselect({ isMoveable: true, onDeselect: mock_onDeselect } as unknown as DIVESelectable)).not.toThrow();
+        expect(mock_onDeselect).toHaveBeenCalledTimes(1);
+    });
 
     it('should set gizmo mode', () => {
         const selectTool = new DIVESelectTool(mockScene, mockController);

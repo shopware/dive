@@ -510,7 +510,8 @@ describe('dive/communication/DIVECommunication', () => {
         } as COMPov;
         testCom.PerformAction('ADD_OBJECT', mock1);
 
-        let map = new Map([['test0', mock0], ['test1', mock1]]);
+        const successWithoutIds = testCom.PerformAction('GET_OBJECTS', { ids: [] });
+        expect(Array.from(successWithoutIds.values())).toStrictEqual([]);
 
         const successWithIds = testCom.PerformAction('GET_OBJECTS', { ids: ['test1'] });
         expect(Array.from(successWithIds.values())).toStrictEqual([{ entityType: "pov", id: "test1", position: { x: 0, y: 0, z: 0 }, target: { x: 0, y: 0, z: 0 } }]);

@@ -24,6 +24,7 @@ const mock_Canvas = {
 const mock_Activate = jest.fn();
 const mock_Deactivate = jest.fn();
 const mock_onPointerDown = jest.fn();
+const mock_onPointerMove = jest.fn();
 const mock_onPointerUp = jest.fn();
 const mock_onWheel = jest.fn();
 const mock_SetGizmoMode = jest.fn();
@@ -33,6 +34,7 @@ jest.mock('../select/SelectTool.ts', () => {
         this.Activate = mock_Activate;
         this.Deactivate = mock_Deactivate;
         this.onPointerDown = mock_onPointerDown;
+        this.onPointerMove = mock_onPointerMove;
         this.onPointerUp = mock_onPointerUp;
         this.onWheel = mock_onWheel;
         this.SetGizmoMode = mock_SetGizmoMode;
@@ -82,6 +84,12 @@ describe('dive/toolbox/DIVEToolBox', () => {
         const toolBox = new DIVEToolbox({} as DIVEScene, mockController);
         toolBox.onPointerDown({ type: 'pointerdown' } as PointerEvent);
         expect(mock_onPointerDown).toHaveBeenCalledTimes(1);
+    });
+
+    it('should execute pointer move event on tool', () => {
+        const toolBox = new DIVEToolbox({} as DIVEScene, mockController);
+        toolBox.onPointerMove({ type: 'pointermove' } as PointerEvent);
+        expect(mock_onPointerMove).toHaveBeenCalledTimes(1);
     });
 
     it('should execute pointer up event on tool', () => {
