@@ -407,7 +407,7 @@ var _DIVECommunication = class _DIVECommunication {
     if (!sceneObject) return false;
     if (!("isSelectable" in sceneObject)) return false;
     this.toolbox.UseTool("select");
-    this.toolbox.GetActiveTool().DetachGizmo(sceneObject);
+    this.toolbox.GetActiveTool().DetachGizmo();
     Object.assign(payload, object);
     return true;
   }
@@ -521,7 +521,7 @@ var DIVEPointLight = class extends Object3D2 {
     const geometry = new SphereGeometry(geoSize, geoSize * 320, geoSize * 320);
     const material = new MeshBasicMaterial({ color: this.light.color, transparent: true, opacity: 0.8, side: FrontSide });
     this.mesh = new Mesh(geometry, material);
-    this.mesh.layers.mask = HELPER_LAYER_MASK;
+    this.mesh.layers.mask = UI_LAYER_MASK;
     this.add(this.mesh);
   }
   SetColor(color) {
@@ -1382,6 +1382,18 @@ var DIVETransformTool = class extends DIVEBaseTool {
     this.name = "DIVETransformTool";
     this._gizmo = new TransformControls(this._controller.object, this._controller.domElement);
     this._gizmo.mode = "translate";
+    this._gizmo.addEventListener("mouseDown", () => {
+      controller.enabled = false;
+    });
+    this._gizmo.addEventListener("mouseUp", () => {
+      controller.enabled = true;
+    });
+    this._gizmo.addEventListener("objectChange", () => {
+      if (!this._gizmo.object) return;
+      if (!("isMoveable" in this._gizmo.object)) return;
+      if (!("onMove" in this._gizmo.object)) return;
+      this._gizmo.object.onMove();
+    });
     scene.add(this._gizmo);
   }
   Activate() {
