@@ -68,4 +68,12 @@ export default class DIVEPointLight extends Object3D implements DIVESelectable, 
     public onMove(): void {
         DIVECommunication.get(this.userData.id)?.PerformAction('UPDATE_OBJECT', { id: this.userData.id, position: this.position });
     }
+
+    public onSelect(): void {
+        DIVECommunication.get(this.userData.id)?.PerformAction('SELECT_OBJECT', { id: this.userData.id });
+    }
+
+    public onDeselect(): void {
+        DIVECommunication.get(this.userData.id)?.PerformAction('DESELECT_OBJECT', { id: this.userData.id });
+    }
 }

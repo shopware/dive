@@ -16,6 +16,7 @@ import UPDATE_SCENE from "./scene/updatescene.ts";
 import GENERATE_MEDIA from "./media/generatemedia.ts";
 import GET_ALL_SCENE_DATA from "./scene/getallscenedata.ts";
 import SELECT_OBJECT from "./object/selectobject.ts";
+import DESELECT_OBJECT from "./object/deselectobject.ts";
 import GET_CAMERA_TRANSFORM from "./camera/getcameratransform.ts";
 import DROP_IT from "./object/model/dropit.ts";
 
@@ -27,6 +28,7 @@ export type Actions = {
     UPDATE_OBJECT: UPDATE_OBJECT,
     DELETE_OBJECT: DELETE_OBJECT,
     SELECT_OBJECT: SELECT_OBJECT,
+    DESELECT_OBJECT: DESELECT_OBJECT,
     SET_BACKGROUND: SET_BACKGROUND,
     DROP_IT: DROP_IT,
     PLACE_ON_FLOOR: PLACE_ON_FLOOR,

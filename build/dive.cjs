@@ -292,6 +292,10 @@ var _DIVECommunication = class _DIVECommunication {
         returnValue = this.selectObject(payload);
         break;
       }
+      case "DESELECT_OBJECT": {
+        returnValue = this.deselectObject(payload);
+        break;
+      }
       case "SET_BACKGROUND": {
         returnValue = this.setBackground(payload);
         break;
@@ -427,7 +431,18 @@ var _DIVECommunication = class _DIVECommunication {
     if (!sceneObject) return false;
     if (!("isSelectable" in sceneObject)) return false;
     this.toolbox.UseTool("select");
-    this.toolbox.GetActiveTool().Select(sceneObject);
+    this.toolbox.GetActiveTool().AttachGizmo(sceneObject);
+    Object.assign(payload, object);
+    return true;
+  }
+  deselectObject(payload) {
+    const object = this.registered.get(payload.id);
+    if (!object) return false;
+    const sceneObject = this.scene.GetSceneObject(object);
+    if (!sceneObject) return false;
+    if (!("isSelectable" in sceneObject)) return false;
+    this.toolbox.UseTool("select");
+    this.toolbox.GetActiveTool().DetachGizmo(sceneObject);
     Object.assign(payload, object);
     return true;
   }
@@ -558,6 +573,14 @@ var DIVEPointLight = class extends import_three4.Object3D {
   onMove() {
     var _a;
     (_a = DIVECommunication.get(this.userData.id)) == null ? void 0 : _a.PerformAction("UPDATE_OBJECT", { id: this.userData.id, position: this.position });
+  }
+  onSelect() {
+    var _a;
+    (_a = DIVECommunication.get(this.userData.id)) == null ? void 0 : _a.PerformAction("SELECT_OBJECT", { id: this.userData.id });
+  }
+  onDeselect() {
+    var _a;
+    (_a = DIVECommunication.get(this.userData.id)) == null ? void 0 : _a.PerformAction("DESELECT_OBJECT", { id: this.userData.id });
   }
 };
 
@@ -755,6 +778,14 @@ var DIVEModel = class extends import_three7.Object3D {
   onMove() {
     var _a;
     (_a = DIVECommunication.get(this.userData.id)) == null ? void 0 : _a.PerformAction("UPDATE_OBJECT", { id: this.userData.id, position: this.position, rotation: this.rotation, scale: this.scale });
+  }
+  onSelect() {
+    var _a;
+    (_a = DIVECommunication.get(this.userData.id)) == null ? void 0 : _a.PerformAction("SELECT_OBJECT", { id: this.userData.id });
+  }
+  onDeselect() {
+    var _a;
+    (_a = DIVECommunication.get(this.userData.id)) == null ? void 0 : _a.PerformAction("DESELECT_OBJECT", { id: this.userData.id });
   }
 };
 
@@ -1414,14 +1445,20 @@ var DIVESelectTool = class extends DIVETransformTool {
   }
   Select(selectable) {
     if (selectable.onSelect) selectable.onSelect();
+    this.AttachGizmo(selectable);
+  }
+  Deselect(selectable) {
+    if (selectable.onDeselect) selectable.onDeselect();
+    this.DetachGizmo();
+  }
+  DetachGizmo() {
+    this._gizmo.detach();
+  }
+  AttachGizmo(selectable) {
     if ("isMoveable" in selectable) {
       const movable = selectable;
       this._gizmo.attach(movable);
     }
-  }
-  Deselect(selectable) {
-    if (selectable.onDeselect) selectable.onDeselect();
-    this._gizmo.detach();
   }
   onClick(e) {
     super.onClick(e);

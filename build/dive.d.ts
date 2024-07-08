@@ -354,6 +354,13 @@ interface SELECT_OBJECT {
     'RETURN': boolean;
 }
 
+interface DESELECT_OBJECT {
+    'PAYLOAD': Partial<COMEntity> & {
+        id: string;
+    };
+    'RETURN': boolean;
+}
+
 interface GET_CAMERA_TRANSFORM {
     'PAYLOAD': object;
     'RETURN': {
@@ -377,6 +384,7 @@ type Actions = {
     UPDATE_OBJECT: UPDATE_OBJECT;
     DELETE_OBJECT: DELETE_OBJECT;
     SELECT_OBJECT: SELECT_OBJECT;
+    DESELECT_OBJECT: DESELECT_OBJECT;
     SET_BACKGROUND: SET_BACKGROUND;
     DROP_IT: DROP_IT;
     PLACE_ON_FLOOR: PLACE_ON_FLOOR;
@@ -528,6 +536,7 @@ declare class DIVECommunication {
     private updateObject;
     private deleteObject;
     private selectObject;
+    private deselectObject;
     private setBackground;
     private dropIt;
     private placeOnFloor;
