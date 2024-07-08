@@ -205,16 +205,50 @@ import { PointLight, SphereGeometry, MeshBasicMaterial, Mesh, FrontSide, Object3
 
 // src/com/Communication.ts
 import { MathUtils as MathUtils2 } from "three";
+
+// src/helper/platform/platform.ts
+var getPlatform = () => {
+  if (navigator.userAgent) {
+    if (navigator.userAgent.includes("Macintosh")) return "Mac" /* MAC */;
+    if (navigator.userAgent.includes("Windows")) return "Windows" /* WINDOWS */;
+    if (navigator.userAgent.includes("Linux")) return "Linux" /* LINUX */;
+  }
+  if (navigator.platform.includes("Mac")) return "Mac" /* MAC */;
+  if (navigator.platform.includes("Win")) return "Windows" /* WINDOWS */;
+  if (navigator.platform.includes("Linux")) return "Linux" /* LINUX */;
+  return "unknown" /* UNKNOWN */;
+};
+var isMac = () => getPlatform() === "Mac" /* MAC */;
+var isWindows = () => getPlatform() === "Windows" /* WINDOWS */;
+
+// src/com/Communication.ts
 var _DIVECommunication = class _DIVECommunication {
   constructor(scene, controls, toolbox, mediaGenerator) {
+    // all registered data
     this.registered = /* @__PURE__ */ new Map();
-    // private listeners: { [key: string]: EventListener[] } = {};
+    // subscribe listeners
     this.listeners = /* @__PURE__ */ new Map();
+    // undo: stores the actions that are used to undo a certain action
+    this.undoStack = [];
+    // redo: stores the actions that are used to redo a certain action
+    this.redoStack = [];
     this.id = MathUtils2.generateUUID();
     this.scene = scene;
     this.controller = controls;
     this.toolbox = toolbox;
     this.mediaGenerator = mediaGenerator;
+    window.addEventListener("keydown", (event) => {
+      if (isMac()) {
+        if (event.metaKey && event.key === "z") {
+          event.shiftKey ? this.Redo() : this.Undo();
+        }
+      }
+      if (isWindows()) {
+        if (event.ctrlKey && event.key === "z") {
+          event.shiftKey ? this.Redo() : this.Undo();
+        }
+      }
+    });
     _DIVECommunication.__instances.push(this);
   }
   static get(id) {
@@ -226,35 +260,39 @@ var _DIVECommunication = class _DIVECommunication {
     _DIVECommunication.__instances.splice(existingIndex, 1);
     return true;
   }
-  PerformAction(action, payload) {
+  PerformAction(action, payload, options) {
+    this.redoStack = [];
+    return this.internal_perform(action, payload, options);
+  }
+  internal_perform(action, payload, options) {
     let returnValue = false;
     switch (action) {
       case "GET_ALL_SCENE_DATA": {
-        returnValue = this.getAllSceneData(payload);
+        returnValue = this.getAllSceneData(payload, options);
         break;
       }
       case "GET_ALL_OBJECTS": {
-        returnValue = this.getAllObjects(payload);
+        returnValue = this.getAllObjects(payload, options);
         break;
       }
       case "GET_OBJECTS": {
-        returnValue = this.getObjects(payload);
+        returnValue = this.getObjects(payload, options);
         break;
       }
       case "ADD_OBJECT": {
-        returnValue = this.addObject(payload);
+        returnValue = this.addObject(payload, options);
         break;
       }
       case "UPDATE_OBJECT": {
-        returnValue = this.updateObject(payload);
+        returnValue = this.updateObject(payload, options);
         break;
       }
       case "DELETE_OBJECT": {
-        returnValue = this.deleteObject(payload);
+        returnValue = this.deleteObject(payload, options);
         break;
       }
       case "SELECT_OBJECT": {
-        returnValue = this.selectObject(payload);
+        returnValue = this.selectObject(payload, options);
         break;
       }
       case "DESELECT_OBJECT": {
@@ -262,7 +300,7 @@ var _DIVECommunication = class _DIVECommunication {
         break;
       }
       case "SET_BACKGROUND": {
-        returnValue = this.setBackground(payload);
+        returnValue = this.setBackground(payload, options);
         break;
       }
       case "DROP_IT": {
@@ -270,52 +308,62 @@ var _DIVECommunication = class _DIVECommunication {
         break;
       }
       case "PLACE_ON_FLOOR": {
-        returnValue = this.placeOnFloor(payload);
+        returnValue = this.placeOnFloor(payload, options);
         break;
       }
       case "SET_CAMERA_TRANSFORM": {
-        returnValue = this.setCameraTransform(payload);
+        returnValue = this.setCameraTransform(payload, options);
         break;
       }
       case "GET_CAMERA_TRANSFORM": {
-        returnValue = this.getCameraTransform(payload);
+        returnValue = this.getCameraTransform(payload, options);
         break;
       }
       case "MOVE_CAMERA": {
-        returnValue = this.moveCamera(payload);
+        returnValue = this.moveCamera(payload, options);
         break;
       }
       case "RESET_CAMERA": {
-        returnValue = this.resetCamera(payload);
+        returnValue = this.resetCamera(payload, options);
         break;
       }
       case "SET_CAMERA_LAYER": {
-        returnValue = this.setCameraLayer(payload);
+        returnValue = this.setCameraLayer(payload, options);
         break;
       }
       case "ZOOM_CAMERA": {
-        returnValue = this.zoomCamera(payload);
+        returnValue = this.zoomCamera(payload, options);
         break;
       }
       case "SET_GIZMO_MODE": {
-        returnValue = this.setGizmoMode(payload);
+        returnValue = this.setGizmoMode(payload, options);
         break;
       }
       case "MODEL_LOADED": {
-        returnValue = this.modelLoaded(payload);
+        returnValue = this.modelLoaded(payload, options);
         break;
       }
       case "UPDATE_SCENE": {
-        returnValue = this.updateScene(payload);
+        returnValue = this.updateScene(payload, options);
         break;
       }
       case "GENERATE_MEDIA": {
-        returnValue = this.generateMedia(payload);
+        returnValue = this.generateMedia(payload, options);
         break;
       }
     }
     this.dispatch(action, payload);
     return returnValue;
+  }
+  Undo() {
+    const undoAction = this.undoStack.pop();
+    if (!undoAction) return;
+    this.internal_perform(undoAction.action, undoAction.payload, { redoable: true });
+  }
+  Redo() {
+    const redoAction = this.redoStack.pop();
+    if (!redoAction) return;
+    this.internal_perform(redoAction.action, redoAction.payload, { undoable: true });
   }
   Subscribe(type, listener) {
     if (!this.listeners.get(type)) this.listeners.set(type, []);
@@ -334,7 +382,7 @@ var _DIVECommunication = class _DIVECommunication {
     if (!listenerArray) return;
     listenerArray.forEach((listener) => listener(payload));
   }
-  getAllSceneData(payload) {
+  getAllSceneData(payload, options) {
     const sceneData = {
       name: this.scene.name,
       mediaItem: null,
@@ -353,11 +401,11 @@ var _DIVECommunication = class _DIVECommunication {
     Object.assign(payload, sceneData);
     return sceneData;
   }
-  getAllObjects(payload) {
+  getAllObjects(payload, options) {
     Object.assign(payload, this.registered);
     return this.registered;
   }
-  getObjects(payload) {
+  getObjects(payload, options) {
     if (payload.ids.length === 0) return [];
     const objects = [];
     this.registered.forEach((object) => {
@@ -366,30 +414,70 @@ var _DIVECommunication = class _DIVECommunication {
     });
     return objects;
   }
-  addObject(payload) {
+  addObject(payload, options) {
     if (this.registered.get(payload.id)) return false;
+    if (options == null ? void 0 : options.undoable) {
+      this.undoStack.push({
+        action: "DELETE_OBJECT",
+        payload: {
+          id: payload.id
+        }
+      });
+    }
+    if (options == null ? void 0 : options.redoable) {
+      this.redoStack.push({
+        action: "DELETE_OBJECT",
+        payload: {
+          id: payload.id
+        }
+      });
+    }
     this.registered.set(payload.id, payload);
     this.scene.AddSceneObject(payload);
     return true;
   }
-  updateObject(payload) {
+  updateObject(payload, options) {
     const objectToUpdate = this.registered.get(payload.id);
     if (!objectToUpdate) return false;
+    if (options == null ? void 0 : options.undoable) {
+      this.undoStack.push({
+        action: "UPDATE_OBJECT",
+        payload: __spreadValues({}, objectToUpdate)
+      });
+    }
+    if (options == null ? void 0 : options.redoable) {
+      this.redoStack.push({
+        action: "UPDATE_OBJECT",
+        payload: __spreadValues({}, objectToUpdate)
+      });
+    }
     this.registered.set(payload.id, __spreadValues(__spreadValues({}, objectToUpdate), payload));
     const updatedObject = this.registered.get(payload.id);
     this.scene.UpdateSceneObject(updatedObject);
     Object.assign(payload, updatedObject);
     return true;
   }
-  deleteObject(payload) {
+  deleteObject(payload, options) {
     const deletedObject = this.registered.get(payload.id);
     if (!deletedObject) return false;
+    if (options == null ? void 0 : options.undoable) {
+      this.undoStack.push({
+        action: "ADD_OBJECT",
+        payload: __spreadValues({}, deletedObject)
+      });
+    }
+    if (options == null ? void 0 : options.redoable) {
+      this.redoStack.push({
+        action: "ADD_OBJECT",
+        payload: __spreadValues({}, deletedObject)
+      });
+    }
     Object.assign(payload, deletedObject);
     this.registered.delete(payload.id);
     this.scene.DeleteSceneObject(deletedObject);
     return true;
   }
-  selectObject(payload) {
+  selectObject(payload, options) {
     const object = this.registered.get(payload.id);
     if (!object) return false;
     const sceneObject = this.scene.GetSceneObject(object);
@@ -411,29 +499,70 @@ var _DIVECommunication = class _DIVECommunication {
     Object.assign(payload, object);
     return true;
   }
-  setBackground(payload) {
+  setBackground(payload, options) {
+    if (options == null ? void 0 : options.undoable) {
+      this.undoStack.push({
+        action: "SET_BACKGROUND",
+        payload: {
+          color: this.scene.GetBackground()
+        }
+      });
+    }
+    if (options == null ? void 0 : options.redoable) {
+      this.redoStack.push({
+        action: "SET_BACKGROUND",
+        payload: {
+          color: this.scene.GetBackground()
+        }
+      });
+    }
     this.scene.SetBackground(payload.color);
     return true;
   }
-  dropIt(payload) {
+  dropIt(payload, options) {
     const object = this.registered.get(payload.id);
     if (!object) return false;
+    if (options == null ? void 0 : options.undoable) {
+      this.undoStack.push({
+        action: "UPDATE_OBJECT",
+        payload: __spreadValues({}, object)
+      });
+    }
+    if (options == null ? void 0 : options.redoable) {
+      this.redoStack.push({
+        action: "DROP_IT",
+        payload: __spreadValues({}, object)
+      });
+    }
     const model = this.scene.GetSceneObject(object);
     model.DropIt();
     return true;
   }
-  placeOnFloor(payload) {
-    if (!this.registered.get(payload.id)) return false;
+  placeOnFloor(payload, options) {
+    const objectToPlaceOnFloor = this.registered.get(payload.id);
+    if (!objectToPlaceOnFloor) return false;
+    if (options == null ? void 0 : options.undoable) {
+      this.undoStack.push({
+        action: "UPDATE_OBJECT",
+        payload: __spreadValues({}, objectToPlaceOnFloor)
+      });
+    }
+    if (options == null ? void 0 : options.redoable) {
+      this.redoStack.push({
+        action: "PLACE_ON_FLOOR",
+        payload: __spreadValues({}, objectToPlaceOnFloor)
+      });
+    }
     this.scene.PlaceOnFloor(payload);
     return true;
   }
-  setCameraTransform(payload) {
+  setCameraTransform(payload, options) {
     this.controller.object.position.copy(payload.position);
     this.controller.target.copy(payload.target);
     this.controller.update();
     return true;
   }
-  getCameraTransform(payload) {
+  getCameraTransform(payload, options) {
     const transform = {
       position: this.controller.object.position.clone(),
       target: this.controller.target.clone()
@@ -441,7 +570,7 @@ var _DIVECommunication = class _DIVECommunication {
     Object.assign(payload, transform);
     return transform;
   }
-  moveCamera(payload) {
+  moveCamera(payload, options) {
     let position = { x: 0, y: 0, z: 0 };
     let target = { x: 0, y: 0, z: 0 };
     if ("id" in payload) {
@@ -454,28 +583,50 @@ var _DIVECommunication = class _DIVECommunication {
     this.controller.MoveTo(position, target, payload.duration, payload.locked);
     return true;
   }
-  setCameraLayer(payload) {
+  setCameraLayer(payload, options) {
     this.controller.object.SetCameraLayer(payload.layer);
     return true;
   }
-  resetCamera(payload) {
+  resetCamera(payload, options) {
     this.controller.RevertLast(payload.duration);
     return true;
   }
-  zoomCamera(payload) {
+  zoomCamera(payload, options) {
     if (payload.direction === "IN") this.controller.ZoomIn(payload.by);
     if (payload.direction === "OUT") this.controller.ZoomOut(payload.by);
     return true;
   }
-  setGizmoMode(payload) {
+  setGizmoMode(payload, options) {
     this.toolbox.SetGizmoMode(payload.mode);
     return true;
   }
-  modelLoaded(payload) {
+  modelLoaded(payload, options) {
     this.registered.get(payload.id).loaded = true;
     return true;
   }
-  updateScene(payload) {
+  updateScene(payload, options) {
+    if (options == null ? void 0 : options.undoable) {
+      this.undoStack.push({
+        action: "UPDATE_SCENE",
+        payload: {
+          name: this.scene.name,
+          backgroundColor: this.scene.GetBackground(),
+          floorEnabled: this.scene.Root.Floor.visible,
+          floorColor: "#" + this.scene.Root.Floor.material.color.getHexString()
+        }
+      });
+    }
+    if (options == null ? void 0 : options.redoable) {
+      this.redoStack.push({
+        action: "UPDATE_SCENE",
+        payload: {
+          name: this.scene.name,
+          backgroundColor: this.scene.GetBackground(),
+          floorEnabled: this.scene.Root.Floor.visible,
+          floorColor: "#" + this.scene.Root.Floor.material.color.getHexString()
+        }
+      });
+    }
     if (payload.name !== void 0) this.scene.name = payload.name;
     if (payload.backgroundColor !== void 0) this.scene.SetBackground(payload.backgroundColor);
     if (payload.floorEnabled !== void 0) this.scene.Root.Floor.SetVisibility(payload.floorEnabled);
@@ -486,7 +637,7 @@ var _DIVECommunication = class _DIVECommunication {
     payload.floorColor = "#" + this.scene.Root.Floor.material.color.getHexString();
     return true;
   }
-  generateMedia(payload) {
+  generateMedia(payload, options) {
     let position = { x: 0, y: 0, z: 0 };
     let target = { x: 0, y: 0, z: 0 };
     if ("id" in payload) {

@@ -20,6 +20,14 @@ import DESELECT_OBJECT from "./object/deselectobject.ts";
 import GET_CAMERA_TRANSFORM from "./camera/getcameratransform.ts";
 import DROP_IT from "./object/model/dropit.ts";
 
+export type ActionOptions = {
+    undoable?: boolean,
+}
+
+export type InternalActionOptions = {
+    redoable?: boolean,
+} & ActionOptions;
+
 export type Actions = {
     GET_ALL_SCENE_DATA: GET_ALL_SCENE_DATA,
     GET_ALL_OBJECTS: GET_ALL_OBJECTS,
