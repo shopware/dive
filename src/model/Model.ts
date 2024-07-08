@@ -59,12 +59,22 @@ export default class DIVEModel extends Object3D implements DIVESelectable, DIVEM
 
     public SetToWorldOrigin(): void {
         this.position.set(0, 0, 0);
-        DIVECommunication.get(this.userData.id)?.PerformAction('UPDATE_OBJECT', { id: this.userData.id, position: this.position, rotation: this.rotation, scale: this.scale });
+        DIVECommunication.get(this.userData.id)?.PerformAction('UPDATE_OBJECT', {
+            id: this.userData.id,
+            position: this.position,
+            rotation: this.rotation,
+            scale: this.scale,
+        });
     }
 
     public PlaceOnFloor(): void {
         this.position.y = -this.boundingBox.min.y * this.scale.y;
-        DIVECommunication.get(this.userData.id)?.PerformAction('UPDATE_OBJECT', { id: this.userData.id, position: this.position, rotation: this.rotation, scale: this.scale });
+        DIVECommunication.get(this.userData.id)?.PerformAction('UPDATE_OBJECT', {
+            id: this.userData.id,
+            position: this.position,
+            rotation: this.rotation,
+            scale: this.scale,
+        });
     }
 
     public DropIt(): void {
@@ -101,7 +111,12 @@ export default class DIVEModel extends Object3D implements DIVESelectable, DIVEM
     }
 
     public onMove(): void {
-        DIVECommunication.get(this.userData.id)?.PerformAction('UPDATE_OBJECT', { id: this.userData.id, position: this.position, rotation: this.rotation, scale: this.scale });
+        DIVECommunication.get(this.userData.id)?.PerformAction('UPDATE_OBJECT', {
+            id: this.userData.id,
+            position: this.position,
+            rotation: this.rotation,
+            scale: this.scale,
+        });
     }
 
     public onSelect(): void {
