@@ -1,6 +1,6 @@
 import { PointLight, Color, SphereGeometry, MeshBasicMaterial, Mesh, FrontSide, Object3D } from 'three';
 import DIVECommunication from '../com/Communication';
-import { HELPER_LAYER_MASK, PRODUCT_LAYER_MASK } from '../constant/VisibilityLayerMask';
+import { PRODUCT_LAYER_MASK, UI_LAYER_MASK } from '../constant/VisibilityLayerMask';
 import { DIVEMoveable } from '../interface/Moveable';
 import { DIVESelectable } from '../interface/Selectable';
 import type { TransformControls } from 'three/examples/jsm/Addons.js';
@@ -44,7 +44,7 @@ export default class DIVEPointLight extends Object3D implements DIVESelectable, 
         const material = new MeshBasicMaterial({ color: this.light.color, transparent: true, opacity: 0.8, side: FrontSide });
 
         this.mesh = new Mesh(geometry, material);
-        this.mesh.layers.mask = HELPER_LAYER_MASK;
+        this.mesh.layers.mask = UI_LAYER_MASK;
 
         this.add(this.mesh);
     }
