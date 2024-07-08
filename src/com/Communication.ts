@@ -69,6 +69,7 @@ export default class DIVECommunication {
 
         window.addEventListener('keydown', (event) => {
             if (isMac()) {
+                console.log(event.metaKey, event.key, event.shiftKey)
                 if (event.metaKey && event.key === 'z') {
                     event.shiftKey ? this.Redo() : this.Undo();
                 }
@@ -93,11 +94,16 @@ export default class DIVECommunication {
 
     public PerformAction<Action extends keyof Actions>(action: Action, payload: Actions[Action]['PAYLOAD'], options?: ActionOptions): Actions[Action]['RETURN'] {
         this.redoStack = [];
-        return this.internal_perform(action, payload, options);
+        const defaultActionOptions = {
+            undoable: true,
+        };
+        return this.internal_perform(action, payload, options || defaultActionOptions);
     }
 
     public internal_perform<Action extends keyof Actions>(action: Action, payload: Actions[Action]['PAYLOAD'], options?: InternalActionOptions): Actions[Action]['RETURN'] {
         let returnValue: Actions[Action]['RETURN'] = false;
+
+        console.log(action, payload, options);
 
         switch (action) {
             case 'GET_ALL_SCENE_DATA': {
@@ -137,7 +143,7 @@ export default class DIVECommunication {
                 break;
             }
             case 'DROP_IT': {
-                returnValue = this.dropIt(payload as Actions['DROP_IT']['PAYLOAD']);
+                returnValue = this.dropIt(payload as Actions['DROP_IT']['PAYLOAD'], options);
                 break;
             }
             case 'PLACE_ON_FLOOR': {
@@ -194,6 +200,8 @@ export default class DIVECommunication {
     public Undo(): void {
         const undoAction = this.undoStack.pop();
         if (!undoAction) return;
+
+        console.log(undoAction)
 
         this.internal_perform(undoAction.action, undoAction.payload, { redoable: true });
     }
@@ -475,6 +483,26 @@ export default class DIVECommunication {
     }
 
     private setCameraTransform(payload: Actions['SET_CAMERA_TRANSFORM']['PAYLOAD'], options?: InternalActionOptions): Actions['SET_CAMERA_TRANSFORM']['RETURN'] {
+        if (options?.undoable) {
+            this.undoStack.push({
+                action: 'SET_CAMERA_TRANSFORM',
+                payload: {
+                    position: this.controller.object.position.clone(),
+                    target: this.controller.target.clone(),
+                },
+            });
+        }
+
+        if (options?.redoable) {
+            this.redoStack.push({
+                action: 'SET_CAMERA_TRANSFORM',
+                payload: {
+                    position: this.controller.object.position.clone(),
+                    target: this.controller.target.clone(),
+                },
+            });
+        }
+
         this.controller.object.position.copy(payload.position);
         this.controller.target.copy(payload.target);
         this.controller.update();

@@ -239,6 +239,7 @@ var _DIVECommunication = class _DIVECommunication {
     this.mediaGenerator = mediaGenerator;
     window.addEventListener("keydown", (event) => {
       if (isMac()) {
+        console.log(event.metaKey, event.key, event.shiftKey);
         if (event.metaKey && event.key === "z") {
           event.shiftKey ? this.Redo() : this.Undo();
         }
@@ -262,10 +263,14 @@ var _DIVECommunication = class _DIVECommunication {
   }
   PerformAction(action, payload, options) {
     this.redoStack = [];
-    return this.internal_perform(action, payload, options);
+    const defaultActionOptions = {
+      undoable: true
+    };
+    return this.internal_perform(action, payload, options || defaultActionOptions);
   }
   internal_perform(action, payload, options) {
     let returnValue = false;
+    console.log(action, payload, options);
     switch (action) {
       case "GET_ALL_SCENE_DATA": {
         returnValue = this.getAllSceneData(payload, options);
@@ -304,7 +309,7 @@ var _DIVECommunication = class _DIVECommunication {
         break;
       }
       case "DROP_IT": {
-        returnValue = this.dropIt(payload);
+        returnValue = this.dropIt(payload, options);
         break;
       }
       case "PLACE_ON_FLOOR": {
@@ -358,6 +363,7 @@ var _DIVECommunication = class _DIVECommunication {
   Undo() {
     const undoAction = this.undoStack.pop();
     if (!undoAction) return;
+    console.log(undoAction);
     this.internal_perform(undoAction.action, undoAction.payload, { redoable: true });
   }
   Redo() {
@@ -557,6 +563,24 @@ var _DIVECommunication = class _DIVECommunication {
     return true;
   }
   setCameraTransform(payload, options) {
+    if (options == null ? void 0 : options.undoable) {
+      this.undoStack.push({
+        action: "SET_CAMERA_TRANSFORM",
+        payload: {
+          position: this.controller.object.position.clone(),
+          target: this.controller.target.clone()
+        }
+      });
+    }
+    if (options == null ? void 0 : options.redoable) {
+      this.redoStack.push({
+        action: "SET_CAMERA_TRANSFORM",
+        payload: {
+          position: this.controller.object.position.clone(),
+          target: this.controller.target.clone()
+        }
+      });
+    }
     this.controller.object.position.copy(payload.position);
     this.controller.target.copy(payload.target);
     this.controller.update();
