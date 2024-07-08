@@ -3,7 +3,8 @@ import { COMModel } from "../../../com/types.ts";
 import Model from "../../../model/Model.ts";
 import DIVELoadingManager from "../../../loadingmanager/LoadingManager.ts";
 import DIVECommunication from "../../../com/Communication.ts";
-import type { DIVEMoveable } from "../../../interface/Moveable.ts";
+import { type TransformControls } from "three/examples/jsm/Addons";
+import type DIVEScene from "../../Scene.ts";
 
 /**
  * A basic scene node to hold all models.
@@ -65,9 +66,22 @@ export default class DIVEModelRoot extends Object3D {
             return;
         }
 
-        if ('isMoveable' in sceneObject) {
-            (sceneObject as unknown as DIVEMoveable).gizmo?.detach();
+        // _______________________________________________________
+        // this is only neccessary due to using the old TransformControls instead of the new DIVEGizmo
+        const findScene = (object: Object3D): DIVEScene => {
+            if (object.parent !== null) {
+                return findScene(object.parent);
+            };
+            return object as DIVEScene;
         }
+
+        const scene = findScene(sceneObject);
+        scene.children.find((object) => {
+            if ('isTransformControls' in object) {
+                (object as TransformControls).detach();
+            }
+        });
+        // _______________________________________________________
 
         this.remove(sceneObject);
     }

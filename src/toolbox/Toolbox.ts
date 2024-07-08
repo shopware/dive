@@ -21,11 +21,13 @@ export default class DIVEToolbox {
     constructor(scene: DIVEScene, controller: DIVEOrbitControls) {
         this.selectTool = new DIVESelectTool(scene, controller);
 
+        controller.domElement.addEventListener('pointermove', this.onPointerMove.bind(this));
         controller.domElement.addEventListener('pointerdown', this.onPointerDown.bind(this));
         controller.domElement.addEventListener('pointerup', this.onPointerUp.bind(this));
         controller.domElement.addEventListener('wheel', this.onWheel.bind(this));
 
         this.removeListenersCallback = () => {
+            controller.domElement.removeEventListener('pointermove', this.onPointerMove.bind(this));
             controller.domElement.removeEventListener('pointerdown', this.onPointerDown.bind(this));
             controller.domElement.removeEventListener('pointerup', this.onPointerUp.bind(this));
             controller.domElement.removeEventListener('wheel', this.onWheel.bind(this));
@@ -60,6 +62,10 @@ export default class DIVEToolbox {
 
     public SetGizmoMode(mode: 'translate' | 'rotate' | 'scale'): void {
         this.selectTool.SetGizmoMode(mode);
+    }
+
+    public onPointerMove(e: PointerEvent): void {
+        this.activeTool.onPointerMove(e);
     }
 
     public onPointerDown(e: PointerEvent): void {

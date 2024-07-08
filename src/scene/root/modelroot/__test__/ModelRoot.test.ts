@@ -1,7 +1,7 @@
 import DIVEModelRoot from '../ModelRoot';
 import DIVECommunication from '../../../../com/Communication';
-import { TransformControls } from 'three/examples/jsm/Addons';
 import { DIVEMoveable } from '../../../../interface/Moveable';
+import type DIVEScene from '../../../Scene';
 
 const mock_LoadGLTF = jest.fn().mockResolvedValue({});
 const mock_SetPosition = jest.fn();
@@ -154,6 +154,18 @@ describe('dive/scene/root/modelroot/DIVEModelRoot', () => {
 
     it('should delete model', async () => {
         const modelRoot = new DIVEModelRoot();
+
+        const sceneParent = {
+            parent: null,
+            children: [
+                {
+                    isTransformControls: true,
+                    detach: jest.fn(),
+                }
+            ],
+        }
+        modelRoot.parent = sceneParent as unknown as DIVEScene;
+
         expect(() => modelRoot.DeleteModel({ id: undefined })).not.toThrow();
         expect(consoleWarnSpy).toHaveBeenCalled();
         consoleWarnSpy.mockClear();
@@ -167,19 +179,6 @@ describe('dive/scene/root/modelroot/DIVEModelRoot', () => {
             scale: { x: 1, y: 2, z: 3 },
         })).not.toThrow();
         (modelRoot.children[0] as unknown as DIVEMoveable).isMoveable = true;
-        expect(() => modelRoot.DeleteModel({ id: 'test_id' })).not.toThrow();
-
-        await expect(() => modelRoot.UpdateModel({
-            id: 'test_id',
-            uri: 'not a real uri',
-            position: { x: 1, y: 2, z: 3 },
-            rotation: { x: 1, y: 2, z: 3 },
-            scale: { x: 1, y: 2, z: 3 },
-        })).not.toThrow();
-        (modelRoot.children[0] as unknown as DIVEMoveable).isMoveable = true;
-        (modelRoot.children[0] as unknown as DIVEMoveable).gizmo = {
-            detach: jest.fn(),
-        } as unknown as TransformControls;
         expect(() => modelRoot.DeleteModel({ id: 'test_id' })).not.toThrow();
         expect(modelRoot.children).toHaveLength(0);
     });

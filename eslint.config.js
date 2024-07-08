@@ -29,7 +29,8 @@ export default tseslint.config(
       '@typescript-eslint/no-unsafe-declaration-merging': 'off',
       '@typescript-eslint/explicit-function-return-type': ['error', { 'allowExpressions': true }],
       '@typescript-eslint/explicit-module-boundary-types': 'error',
-      "@typescript-eslint/consistent-type-exports": "error"
+      '@typescript-eslint/consistent-type-exports': 'error',
+      'no-case-declarations': 'off'
     },
   }
 );
