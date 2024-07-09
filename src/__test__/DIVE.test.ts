@@ -161,6 +161,7 @@ describe('dive/DIVE', () => {
         const dive = new DIVE();
         expect(dive).toBeDefined();
         expect((window as any).DIVE.PrintScene).toBeDefined();
+        console.log = jest.fn();
         expect(() => (window as any).DIVE.PrintScene()).not.toThrow();
     });
 
