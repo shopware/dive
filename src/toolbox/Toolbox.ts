@@ -21,16 +21,21 @@ export default class DIVEToolbox {
     constructor(scene: DIVEScene, controller: DIVEOrbitControls) {
         this.selectTool = new DIVESelectTool(scene, controller);
 
-        controller.domElement.addEventListener('pointermove', this.onPointerMove.bind(this));
-        controller.domElement.addEventListener('pointerdown', this.onPointerDown.bind(this));
-        controller.domElement.addEventListener('pointerup', this.onPointerUp.bind(this));
-        controller.domElement.addEventListener('wheel', this.onWheel.bind(this));
+        const pointerMove = this.onPointerMove.bind(this);
+        const pointerDown = this.onPointerDown.bind(this);
+        const pointerUp = this.onPointerUp.bind(this);
+        const wheel = this.onWheel.bind(this);
+
+        controller.domElement.addEventListener('pointermove', pointerMove);
+        controller.domElement.addEventListener('pointerdown', pointerDown);
+        controller.domElement.addEventListener('pointerup', pointerUp);
+        controller.domElement.addEventListener('wheel', wheel);
 
         this.removeListenersCallback = () => {
-            controller.domElement.removeEventListener('pointermove', this.onPointerMove.bind(this));
-            controller.domElement.removeEventListener('pointerdown', this.onPointerDown.bind(this));
-            controller.domElement.removeEventListener('pointerup', this.onPointerUp.bind(this));
-            controller.domElement.removeEventListener('wheel', this.onWheel.bind(this));
+            controller.domElement.removeEventListener('pointermove', pointerMove);
+            controller.domElement.removeEventListener('pointerdown', pointerDown);
+            controller.domElement.removeEventListener('pointerup', pointerUp);
+            controller.domElement.removeEventListener('wheel', wheel);
         };
 
         // default tool
