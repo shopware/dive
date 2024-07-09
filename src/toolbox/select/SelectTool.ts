@@ -30,15 +30,24 @@ export default class DIVESelectTool extends DIVETransformTool {
     public Select(selectable: DIVESelectable): void {
         if (selectable.onSelect) selectable.onSelect();
 
-        if ('isMoveable' in selectable) {
-            const movable = selectable as (Object3D & DIVESelectable & DIVEMoveable);
-            this._gizmo.attach(movable);
-        }
+        this.AttachGizmo(selectable);
     }
 
     public Deselect(selectable: DIVESelectable): void {
         if (selectable.onDeselect) selectable.onDeselect();
+
+        this.DetachGizmo();
+    }
+
+    public DetachGizmo(): void {
         this._gizmo.detach();
+    }
+
+    public AttachGizmo(selectable: DIVESelectable): void {
+        if ('isMoveable' in selectable) {
+            const movable = selectable as (Object3D & DIVESelectable & DIVEMoveable);
+            this._gizmo.attach(movable);
+        }
     }
 
     public onClick(e: PointerEvent): void {
