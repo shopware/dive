@@ -180,6 +180,5 @@ In the following you find a list of all available actions to perform on DIVEComm
 | [ZOOM_CAMERA](./src/com/actions/camera/zoomcamera.ts)                     | Zoom in or out
 | [SET_GIZMO_MODE](./src/com/actions/toolbox/select/setgizmomode.ts)        | Set gizmo mode
 | [MODEL_LOADED](./src/com/actions/object/model/modelloaded.ts)             | Is performed when a model file is completely loaded
-
 | [UPDATE_SCENE](./src/com/actions/scene/updatescene.ts)                    | Update scene data
 | [GENERATE_MEDIA](./src/com/actions/media/generatemedia.ts)                | Generate a screenshot with the specified parameters
