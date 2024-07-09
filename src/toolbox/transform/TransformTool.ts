@@ -3,6 +3,7 @@ import DIVEScene from "../../scene/Scene.ts";
 import DIVEOrbitControls from "../../controls/OrbitControls.ts";
 import { TransformControls } from "three/examples/jsm/Addons";
 import { type DIVEMoveable } from "../../interface/Moveable.ts";
+import { DIVECubeSelection } from "../../selections/cubeselection/CubeSelection.ts";
 
 export interface DIVEObjectEventMap {
     select: object
@@ -18,6 +19,8 @@ export interface DIVEObjectEventMap {
 
 export default class DIVETransformTool extends DIVEBaseTool {
     protected _gizmo: TransformControls;
+
+    protected cube: DIVECubeSelection;
 
     constructor(scene: DIVEScene, controller: DIVEOrbitControls) {
         super(scene, controller);
@@ -42,6 +45,9 @@ export default class DIVETransformTool extends DIVEBaseTool {
         });
 
         scene.add(this._gizmo);
+
+        this.cube = new DIVECubeSelection();
+        scene.Root.add(this.cube);
     }
 
     public Activate(): void { }

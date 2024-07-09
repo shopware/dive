@@ -162,22 +162,24 @@ In the following you find a list of all available actions to perform on DIVEComm
 | Action                                                                    | Description
 | :---                                                                      | :---
 | [GET_ALL_SCENE_DATA](./src/com/actions/scene/getallscenedata.ts)          | Return all scene data that is currently set
-| [SET_BACKGROUND](./src/com/actions/scene/setbackground.ts)                | Set a background color
-| [UPDATE_SCENE](./src/com/actions/scene/updatescene.ts)                    | Update scene data
-| [GET_CAMERA_TRANSFORM](./src/com/actions/camera/getcameratransform.ts)    | Return currenty camera transformation
-| [MOVE_CAMERA](./src/com/actions/camera/movecamera.ts)                     | Move camera to a specific position or the position of a previously defined POV (with an animation)
-| [RESET_CAMERA](./src/com/actions/camera/resetcamera.ts)                   | Reset camera to original position after MOVE_CAMERA was performed
-| [SET_CAMERA_LAYER](./src/com/actions/camera/setcameralayer.ts)            | Set camera layer to switch between live view and editor view
-| [SET_CAMERA_TRANSFORM](./src/com/actions/camera/setcameratransform.ts)    | Set camera transformation (w/o animation, used to initially set up camera)
-| [ZOOM_CAMERA](./src/com/actions/camera/zoomcamera.ts)                     | Zoom in or out
-| [GENERATE_MEDIA](./src/com/actions/media/generatemedia.ts)                | Generate a screenshot with the specified parameters
-| [MODEL_LOADED](./src/com/actions/object/model/modelloaded.ts)             | Is performed when a model file is completely loaded
-| [DROP_IT](./src/com/actions/object/model/dropit.ts)                       | Places the model onto the nextg underlying object's bounding box
+| [GET_ALL_OBJECTS](./src/com/actions/object/getallobjects.ts)              | Return a map of all objects
+| [GET_OBJECTS](./src/com/actions/object/getobjects.ts)                     | Return an array of all objects with given ids
 | [PLACE_ON_FLOOR](./src/com/actions/object/model/placeonfloor.ts)          | Set a model onto to the floor
 | [ADD_OBJECT](./src/com/actions/object/addobject.ts)                       | Add an object to the scene
 | [UPDATE_OBJECT](./src/com/actions/object/updateobject.ts)                 | Update an existing object
 | [DELETE_OBJECT](./src/com/actions/object/deleteobject.ts)                 | Delete an existing object
-| [GET_ALL_OBJECTS](./src/com/actions/object/getallobjects.ts)              | Return a map of all objects
-| [GET_OBJECTS](./src/com/actions/object/getobjects.ts)                     | Return a map of all objects (with the opportunity to filter for ids)
 | [SELECT_OBJECT](./src/com/actions/object/selectobject.ts)                 | Select an existing object in the scene
+| [DESELECT_OBJECT](./src/com/actions/object/deselectobject.ts)             | Deselect an existing object in the scene
+| [SET_BACKGROUND](./src/com/actions/scene/setbackground.ts)                | Set a background color
+| [DROP_IT](./src/com/actions/object/model/dropit.ts)                       | Places the model onto the next underlying object's bounding box
+| [PLACE_ON_FLOOR](./src/com/actions/object/model/placeonfloor.ts)          | Places the model onto the floor (zero plane)
+| [SET_CAMERA_TRANSFORM](./src/com/actions/camera/setcameratransform.ts)    | Set camera transformation (w/o animation, used to initially set up camera)
+| [GET_CAMERA_TRANSFORM](./src/com/actions/camera/getcameratransform.ts)    | Return currenty camera transformation
+| [MOVE_CAMERA](./src/com/actions/camera/movecamera.ts)                     | Move camera to a specific position or the position of a previously defined POV (with an animation)
+| [RESET_CAMERA](./src/com/actions/camera/resetcamera.ts)                   | Reset camera to original position after MOVE_CAMERA was performed
+| [SET_CAMERA_LAYER](./src/com/actions/camera/setcameralayer.ts)            | Set camera layer to switch between live view and editor view
+| [ZOOM_CAMERA](./src/com/actions/camera/zoomcamera.ts)                     | Zoom in or out
 | [SET_GIZMO_MODE](./src/com/actions/toolbox/select/setgizmomode.ts)        | Set gizmo mode
+| [MODEL_LOADED](./src/com/actions/object/model/modelloaded.ts)             | Is performed when a model file is completely loaded
+| [UPDATE_SCENE](./src/com/actions/scene/updatescene.ts)                    | Update scene data
+| [GENERATE_MEDIA](./src/com/actions/media/generatemedia.ts)                | Generate a screenshot with the specified parameters
