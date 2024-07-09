@@ -2,6 +2,7 @@ import DIVEBaseTool from "../BaseTool.ts";
 import DIVEScene from "../../scene/Scene.ts";
 import DIVEOrbitControls from "../../controls/OrbitControls.ts";
 import { TransformControls } from "three/examples/jsm/Addons";
+import { type DIVEMoveable } from "../../interface/Moveable.ts";
 
 export interface DIVEObjectEventMap {
     select: object
@@ -24,6 +25,21 @@ export default class DIVETransformTool extends DIVEBaseTool {
 
         this._gizmo = new TransformControls(this._controller.object, this._controller.domElement);
         this._gizmo.mode = 'translate';
+
+        this._gizmo.addEventListener('mouseDown', () => {
+            controller.enabled = false;
+        });
+
+        this._gizmo.addEventListener('mouseUp', () => {
+            controller.enabled = true;
+        });
+
+        this._gizmo.addEventListener('objectChange', () => {
+            if (!this._gizmo.object) return;
+            if (!('isMoveable' in this._gizmo.object)) return;
+            if (!('onMove' in this._gizmo.object)) return;
+            (this._gizmo.object as DIVEMoveable).onMove!();
+        });
 
         scene.add(this._gizmo);
     }
