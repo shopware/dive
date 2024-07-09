@@ -113,11 +113,13 @@ const mockController = {
     RevertLast: jest.fn(),
 } as unknown as DIVEOrbitControls;
 
-const mockSelect = jest.fn();
+const mockAttach = jest.fn();
+const mockDetach = jest.fn();
 const mockToolBox = {
     UseTool: jest.fn(),
     GetActiveTool: jest.fn().mockReturnValue({
-        Select: mockSelect,
+        AttachGizmo: mockAttach,
+        DetachGizmo: mockDetach,
     }),
     SetGizmoMode: jest.fn(),
 } as unknown as DIVEToolbox;
@@ -540,7 +542,33 @@ describe('dive/communication/DIVECommunication', () => {
         jest.spyOn(mockScene, 'GetSceneObject').mockReturnValueOnce({ isSelectable: true } as unknown as Object3D);
         const success3 = testCom.PerformAction('SELECT_OBJECT', { id: 'test0' });
         expect(success3).toBe(true);
-        expect(mockSelect).toHaveBeenCalledTimes(1);
+        expect(mockAttach).toHaveBeenCalledTimes(1);
+    });
+
+    it('should perform action DESELECT_OBJECT', () => {
+        const success0 = testCom.PerformAction('DESELECT_OBJECT', { id: 'test0' });
+        expect(success0).toBe(false);
+
+        const mock0 = {
+            entityType: "pov",
+            id: "test0",
+            position: { x: 0, y: 0, z: 0 },
+            target: { x: 0, y: 0, z: 0 },
+        } as COMPov;
+        testCom.PerformAction('ADD_OBJECT', mock0);
+
+        jest.spyOn(mockScene, 'GetSceneObject').mockReturnValueOnce(undefined);
+        const success1 = testCom.PerformAction('DESELECT_OBJECT', { id: 'test0' });
+        expect(success1).toBe(false);
+
+        jest.spyOn(mockScene, 'GetSceneObject').mockReturnValueOnce({} as unknown as Object3D);
+        const success2 = testCom.PerformAction('DESELECT_OBJECT', { id: 'test0' });
+        expect(success2).toBe(false);
+
+        jest.spyOn(mockScene, 'GetSceneObject').mockReturnValueOnce({ isSelectable: true } as unknown as Object3D);
+        const success3 = testCom.PerformAction('DESELECT_OBJECT', { id: 'test0' });
+        expect(success3).toBe(true);
+        expect(mockDetach).toHaveBeenCalledTimes(1);
     });
 
     it('should perform action SET_CAMERA_TRANSFORM', () => {
