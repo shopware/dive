@@ -291,7 +291,7 @@ export default class DIVECommunication {
         if (!('isSelectable' in sceneObject)) return false;
 
         this.toolbox.UseTool('select');
-        (this.toolbox.GetActiveTool() as DIVESelectTool).DetachGizmo();
+        (this.toolbox.GetActiveTool() as DIVESelectTool).DetachGizmo(sceneObject as DIVESelectable);
 
         // copy object to payload to use later
         Object.assign(payload, object);

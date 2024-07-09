@@ -1,14 +1,9 @@
-import { Object3D, Raycaster, Vector2 } from "three";
+import { Object3D } from "three";
 import { DIVESelectable, isSelectable } from "../../interface/Selectable.ts";
 import DIVEScene from "../../scene/Scene.ts";
 import { DIVEMoveable } from "../../interface/Moveable.ts";
 import DIVEOrbitControls from "../../controls/OrbitControls.ts";
 import DIVETransformTool from "../transform/TransformTool.ts";
-import { DIVECubeSelection } from "../../selections/cubeselection/CubeSelection.ts";
-import { DIVECubeSelectionEdgeHandle } from "../../selections/cubeselection/handle/edge/CubeSelectionEdgeHandle.ts";
-import { DIVECubeSelectionPlaneHandle } from "../../selections/cubeselection/handle/plane/CubeSelectionPlaneHandle.ts";
-import { TransformControls } from "three/examples/jsm/Addons";
-import { PRODUCT_LAYER_MASK, HELPER_LAYER_MASK, UI_LAYER_MASK } from "../../constant/VisibilityLayerMask.ts";
 
 export interface DIVEObjectEventMap {
     select: object
@@ -23,50 +18,9 @@ export interface DIVEObjectEventMap {
  */
 
 export default class DIVESelectTool extends DIVETransformTool {
-    private canvas: HTMLElement;
-    private scene: DIVEScene;
-    private controller: DIVEOrbitControls;
-    private raycaster: Raycaster;
-    private gizmo: TransformControls;
-
-    private cube: DIVECubeSelection;
-
     constructor(scene: DIVEScene, controller: DIVEOrbitControls) {
         super(scene, controller);
         this.name = "SelectTool";
-
-        this.canvas = controller.domElement;
-        this.scene = scene;
-        this.controller = controller;
-        this.raycaster = new Raycaster();
-        this.raycaster.layers.mask = PRODUCT_LAYER_MASK | HELPER_LAYER_MASK;
-
-        this.gizmo = new TransformControls(this.controller.object, this.canvas);
-
-        this.gizmo.layers.mask = UI_LAYER_MASK;
-        this.gizmo.getRaycaster().layers.mask = UI_LAYER_MASK & this.controller.object.layers.mask;
-        this.gizmo.traverse((child) => {
-            child.layers.mask = UI_LAYER_MASK;
-        });
-        this.gizmo.addEventListener('objectChange', () => {
-            if (!this.gizmo.object) return;
-            if (!('onMove' in this.gizmo.object)) return;
-            if (typeof this.gizmo.object.onMove !== 'function') return;
-            this.gizmo.object.onMove();
-        });
-
-        this.controller.object.onSetCameraLayer = (mask: number) => {
-            this.gizmo.getRaycaster().layers.mask = UI_LAYER_MASK & mask;
-        };
-
-        this.gizmo.addEventListener('dragging-changed', function (event) {
-            controller.enabled = !event.value;
-        });
-
-        this.scene.add(this.gizmo);
-
-        this.cube = new DIVECubeSelection();
-        this.scene.Root.add(this.cube);
     }
 
     public Activate(): void { }
@@ -89,32 +43,30 @@ export default class DIVESelectTool extends DIVETransformTool {
         this.cube.Detach(selectable as (Object3D & DIVESelectable & DIVEMoveable));
     }
 
-    private lastHover: Object3D | null = null;
-    public onPointerMove(e: PointerEvent): void {
-        const pointerPos: Vector2 = new Vector2(e.offsetX / this.canvas.clientWidth * 2 - 1, e.offsetY / this.canvas.clientHeight * -2 + 1);
-        this.raycaster.setFromCamera(pointerPos, this.controller.object);
+    // private lastHover: Object3D | null = null;
+    // public onPointerMove(): void {
+    //     if (this.lastHover) {
+    //         if ('isCubeSelection' in this.lastHover) {
+    //             (this.lastHover as DIVECubeSelectionEdgeHandle | DIVECubeSelectionPlaneHandle).onPointerLeave();
+    //         }
+    //     }
+    //     this.lastHover = null;
 
-        if (this.lastHover) {
-            if ('isCubeSelection' in this.lastHover) {
-                (this.lastHover as DIVECubeSelectionEdgeHandle | DIVECubeSelectionPlaneHandle).onPointerLeave();
-            }
-        }
-        this.lastHover = null;
+    //     const first = this.raycast()[0];
+    //     if (first) {
+    //         if ('isCubeSelection' in first.object) {
+    //             this.lastHover = first.object as DIVECubeSelectionEdgeHandle | DIVECubeSelectionPlaneHandle;
 
-        const first = this.raycast()[0];
-        if (first) {
-            if ('isCubeSelection' in first.object) {
-                this.lastHover = first.object as DIVECubeSelectionEdgeHandle | DIVECubeSelectionPlaneHandle;
+    //             (this.lastHover as DIVECubeSelectionEdgeHandle | DIVECubeSelectionPlaneHandle).onPointerEnter();
 
-                (this.lastHover as DIVECubeSelectionEdgeHandle | DIVECubeSelectionPlaneHandle).onPointerEnter();
+    //             return;
+    //         }
+    //     }
 
-                return;
-            }
-        }
-
-    }
+    // }
 
     public AttachGizmo(selectable: DIVESelectable): void {
+
         if ('isMoveable' in selectable) {
             const movable = selectable as (Object3D & DIVESelectable & DIVEMoveable);
             // this._gizmo.attach(movable);
@@ -127,6 +79,8 @@ export default class DIVESelectTool extends DIVETransformTool {
 
         const first = this._raycaster.intersectObjects(this._scene.Root.children, true)[0];
         const selectable = this.findSelectableInterface(first?.object);
+
+        console.log(first, selectable);
 
         // if nothing is hit
         if (!first || !selectable) {

@@ -170,6 +170,9 @@ export default class DIVE {
                 console.log(this.scene);
             },
         }
+
+        // eslint-disable-next-line @typescript-eslint/no-var-requires
+        console.log(`DIVE v${require('../package.json').version} initialized`);
     }
 
     // methods
