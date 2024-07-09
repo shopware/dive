@@ -75,8 +75,6 @@ jobs:
       - name: Install dependencies (if cache not found)
         if: steps.yarn-cache.outputs.cache-hit != 'true'
         run: yarn
-      - name: Build DIVE
-        run: yarn build
       - name:  'Automated Version Bump'
         uses:  'phips28/gh-action-bump-version@master'
         env:
@@ -84,15 +82,10 @@ jobs:
           GITHUB_USER: 'DIVE[bot]'
           GITHUB_EMAIL: 'f.frank@shopware.com'
         with:
-          tag-prefix:  'v'
           target-branch: 'trunk'
           commit-message: 'DIVE[bot]: Release {{version}} [skip ci]'
           skip-push:  'true'
           skip-tag:  'true'
-      - name: 'Add Build files'
-        run: git add ./build -f && git add README.md -f && echo "Staged Build files. Status:" && git status && echo "Ammending commit..." && git commit --amend --no-edit && echo "Commit ammended. Status:" && git status
-      - name: 'Add tag'
-        run: git tag -a v$(node -p "require('./package.json').version") -m "Release v$(node -p "require('./package.json').version")"
       - name: Push to protected branch trunk
         uses: CasperWA/push-protected@v2
         with:
@@ -101,6 +94,18 @@ jobs:
           unprotect_reviews: true
           tags: true
           force: true
+
+      - name: 'Create release branch'
+        run: git checkout -b release/v$(node -p "require('./package.json').version")
+      - name: Build DIVE
+        run: yarn build
+      - name: 'Add Build files'
+        run: git add ./build -f && git add README.md -f && echo "Staged Build files. Status:" && git status && echo "Committing ..." && git commit -m "Release v$(node -p "require('./package.json').version")" && echo "Committed. Status:" && git status
+      - name: 'Add tag'
+        run: git tag -a v$(node -p "require('./package.json').version") -m "Release v$(node -p "require('./package.json').version")"
+      - name: 'Push to release branch'
+        run: git push origin release/v$(node -p "require('./package.json').version")
+
       - name: Publish DIVE to npm
         uses: JS-DevTools/npm-publish@v3
         with:
