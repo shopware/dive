@@ -293,4 +293,24 @@ describe('dive/model/DIVEModel', () => {
         jest.spyOn(DIVECommunication, 'get').mockReturnValueOnce(undefined);
         expect(() => model.onMove()).not.toThrow();
     });
+
+    it('should onSelect', () => {
+        const testLight = new Model();
+        testLight.userData.id = 'something';
+
+        expect(() => testLight.onSelect()).not.toThrow();
+
+        jest.spyOn(DIVECommunication, 'get').mockReturnValueOnce(undefined);
+        expect(() => testLight.onSelect()).not.toThrow();
+    });
+
+    it('should onDeselect', () => {
+        const testLight = new Model();
+        testLight.userData.id = 'something';
+
+        expect(() => testLight.onDeselect()).not.toThrow();
+
+        jest.spyOn(DIVECommunication, 'get').mockReturnValueOnce(undefined);
+        expect(() => testLight.onDeselect()).not.toThrow();
+    });
 });

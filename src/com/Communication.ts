@@ -100,6 +100,10 @@ export default class DIVECommunication {
                 returnValue = this.selectObject(payload as Actions['SELECT_OBJECT']['PAYLOAD']);
                 break;
             }
+            case 'DESELECT_OBJECT': {
+                returnValue = this.deselectObject(payload as Actions['DESELECT_OBJECT']['PAYLOAD']);
+                break;
+            }
             case 'SET_BACKGROUND': {
                 returnValue = this.setBackground(payload as Actions['SET_BACKGROUND']['PAYLOAD']);
                 break;
@@ -269,7 +273,25 @@ export default class DIVECommunication {
         if (!('isSelectable' in sceneObject)) return false;
 
         this.toolbox.UseTool('select');
-        (this.toolbox.GetActiveTool() as DIVESelectTool).Select(sceneObject as DIVESelectable);
+        (this.toolbox.GetActiveTool() as DIVESelectTool).AttachGizmo(sceneObject as DIVESelectable);
+
+        // copy object to payload to use later
+        Object.assign(payload, object);
+
+        return true;
+    }
+
+    private deselectObject(payload: Actions['DESELECT_OBJECT']['PAYLOAD']): Actions['DESELECT_OBJECT']['RETURN'] {
+        const object = this.registered.get(payload.id);
+        if (!object) return false;
+
+        const sceneObject = this.scene.GetSceneObject(object);
+        if (!sceneObject) return false;
+
+        if (!('isSelectable' in sceneObject)) return false;
+
+        this.toolbox.UseTool('select');
+        (this.toolbox.GetActiveTool() as DIVESelectTool).DetachGizmo();
 
         // copy object to payload to use later
         Object.assign(payload, object);

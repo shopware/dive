@@ -103,4 +103,12 @@ export default class DIVEModel extends Object3D implements DIVESelectable, DIVEM
     public onMove(): void {
         DIVECommunication.get(this.userData.id)?.PerformAction('UPDATE_OBJECT', { id: this.userData.id, position: this.position, rotation: this.rotation, scale: this.scale });
     }
+
+    public onSelect(): void {
+        DIVECommunication.get(this.userData.id)?.PerformAction('SELECT_OBJECT', { id: this.userData.id });
+    }
+
+    public onDeselect(): void {
+        DIVECommunication.get(this.userData.id)?.PerformAction('DESELECT_OBJECT', { id: this.userData.id });
+    }
 }
