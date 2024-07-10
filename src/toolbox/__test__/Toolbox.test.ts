@@ -28,7 +28,7 @@ const mock_onPointerMove = jest.fn();
 const mock_onPointerUp = jest.fn();
 const mock_onWheel = jest.fn();
 const mock_SetGizmoMode = jest.fn();
-const mock_SetGizmoActive = jest.fn();
+const mock_SetGizmoVisible = jest.fn();
 
 jest.mock('../select/SelectTool.ts', () => {
     return jest.fn(function () {
@@ -39,7 +39,7 @@ jest.mock('../select/SelectTool.ts', () => {
         this.onPointerUp = mock_onPointerUp;
         this.onWheel = mock_onWheel;
         this.SetGizmoMode = mock_SetGizmoMode;
-        this.SetGizmoActive = mock_SetGizmoActive;
+        this.SetGizmoVisible = mock_SetGizmoVisible;
         return this;
     });
 });
@@ -119,7 +119,7 @@ describe('dive/toolbox/DIVEToolBox', () => {
 
     it('should set gizmo active', () => {
         const toolBox = new DIVEToolbox({} as DIVEScene, mockController);
-        toolBox.SetGizmoActive(true);
-        expect(mock_SetGizmoActive).toHaveBeenCalledTimes(1);
+        toolBox.SetGizmoVisible(true);
+        expect(mock_SetGizmoVisible).toHaveBeenCalledTimes(1);
     });
 });

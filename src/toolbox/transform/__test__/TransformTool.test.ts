@@ -134,11 +134,11 @@ describe('dive/toolbox/select/DIVETransformTool', () => {
 
     it('should set gizmo active', () => {
         const transformTool = new DIVETransformTool(mockScene, mockController);
-        expect(() => transformTool.SetGizmoActive(true)).not.toThrow();
+        expect(() => transformTool.SetGizmoVisible(true)).not.toThrow();
 
         expect(mockScene.add).toBeCalled();
 
         mockScene.children.includes = jest.fn().mockReturnValue(true);
-        expect(() => transformTool.SetGizmoActive(false)).not.toThrow();
+        expect(() => transformTool.SetGizmoVisible(false)).not.toThrow();
     });
 });

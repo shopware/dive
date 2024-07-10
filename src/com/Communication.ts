@@ -144,8 +144,8 @@ export default class DIVECommunication {
                 returnValue = this.setGizmoMode(payload as Actions['SET_GIZMO_MODE']['PAYLOAD']);
                 break;
             }
-            case 'SET_GIZMO_ACTIVE': {
-                returnValue = this.setGizmoActive(payload as Actions['SET_GIZMO_ACTIVE']['PAYLOAD']);
+            case 'SET_GIZMO_VISIBLE': {
+                returnValue = this.setGizmoVisible(payload as Actions['SET_GIZMO_VISIBLE']['PAYLOAD']);
                 break;
             }
             case 'MODEL_LOADED': {
@@ -384,8 +384,8 @@ export default class DIVECommunication {
         return true;
     }
 
-    private setGizmoActive(payload: Actions['SET_GIZMO_ACTIVE']['PAYLOAD']): Actions['SET_GIZMO_ACTIVE']['RETURN'] {
-        this.toolbox.SetGizmoActive(payload);
+    private setGizmoVisible(payload: Actions['SET_GIZMO_VISIBLE']['PAYLOAD']): Actions['SET_GIZMO_VISIBLE']['RETURN'] {
+        this.toolbox.SetGizmoVisible(payload);
         return payload;
     }
 

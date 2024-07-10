@@ -47,7 +47,7 @@ export default class DIVESelectTool extends DIVETransformTool {
         if ('isMoveable' in selectable) {
             const movable = selectable as (Object3D & DIVESelectable & DIVEMoveable);
             this._gizmo.attach(movable);
-            this.SetGizmoActive(movable.visible);
+            this.SetGizmoVisible(movable.visible);
         }
     }
 
