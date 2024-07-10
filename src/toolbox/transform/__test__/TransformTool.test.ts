@@ -41,9 +41,11 @@ jest.mock('../../../controls/OrbitControls', () => {
 jest.mock('../../../scene/Scene', () => {
     return jest.fn(function () {
         this.add = jest.fn();
+        this.remove = jest.fn();
         this.Root = {
             children: [],
         }
+        this.children = [];
         return this;
     });
 });
@@ -128,5 +130,15 @@ describe('dive/toolbox/select/DIVETransformTool', () => {
     it('should set gizmo mode', () => {
         const transformTool = new DIVETransformTool(mockScene, mockController);
         expect(() => transformTool.SetGizmoMode('translate')).not.toThrow();
+    });
+
+    it('should set gizmo active', () => {
+        const transformTool = new DIVETransformTool(mockScene, mockController);
+        expect(() => transformTool.SetGizmoActive(true)).not.toThrow();
+
+        expect(mockScene.add).toBeCalled();
+
+        mockScene.children.includes = jest.fn().mockReturnValue(true);
+        expect(() => transformTool.SetGizmoActive(false)).not.toThrow();
     });
 });

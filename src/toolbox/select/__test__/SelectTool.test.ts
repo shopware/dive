@@ -41,6 +41,7 @@ jest.mock('../../../controls/OrbitControls', () => {
 jest.mock('../../../scene/Scene', () => {
     return jest.fn(function () {
         this.add = jest.fn();
+        this.children = [];
         this.Root = {
             children: [],
         }
@@ -130,7 +131,15 @@ describe('dive/toolbox/select/DIVESelectTool', () => {
     });
 
     it('should execute onClick with hit', () => {
-        mock_intersectObjects.mockReturnValueOnce([{ object: { uuid: 'test', parent: { name: 'this is the test scene root!!!', parent: null } } }]);
+        mock_intersectObjects.mockReturnValueOnce(
+          [{
+              object: {
+                  uuid: 'test',
+                  visible: true,
+                  parent: { name: 'this is the test scene root!!!', parent: null }
+              }
+          }]
+        );
         const selectTool = new DIVESelectTool(mockScene, mockController);
         expect(() => selectTool.onClick({ offsetX: 0, offsetY: 0 } as PointerEvent)).not.toThrow();
     });
@@ -139,10 +148,10 @@ describe('dive/toolbox/select/DIVESelectTool', () => {
         const mock_onSelect = jest.fn();
 
         mock_intersectObjects.mockReturnValueOnce([{
-
             object: {
                 isSelectable: true,
                 onSelect: mock_onSelect,
+                visible: true,
                 parent: {
                     name: 'this is the test scene root!!!',
                     parent: null,
@@ -152,6 +161,7 @@ describe('dive/toolbox/select/DIVESelectTool', () => {
         }]);
         const selectTool = new DIVESelectTool(mockScene, mockController);
         selectTool['_gizmo'].object = {
+            visible: true,
             isSelectable: true,
             uuid: 'test0',
         } as unknown as Object3D & DIVESelectable;
@@ -162,10 +172,10 @@ describe('dive/toolbox/select/DIVESelectTool', () => {
         const mock_onSelect = jest.fn();
 
         mock_intersectObjects.mockReturnValueOnce([{
-
             object: {
                 isSelectable: true,
                 onSelect: mock_onSelect,
+                visible: true,
                 parent: {
                     name: 'this is the test scene root!!!',
                     parent: null,

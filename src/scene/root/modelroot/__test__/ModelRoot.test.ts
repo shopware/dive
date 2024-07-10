@@ -45,6 +45,7 @@ jest.mock('../../../../model/Model.ts', () => {
         this.SetPosition = mock_SetPosition;
         this.SetRotation = mock_SetRotation;
         this.SetScale = mock_SetScale;
+        this.SetVisibility = jest.fn();
         this.PlaceOnFloor = mock_PlaceOnFloor;
         this.removeFromParent = jest.fn();
         return this;
