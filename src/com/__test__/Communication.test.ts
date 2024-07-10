@@ -123,7 +123,7 @@ const mockToolBox = {
         DetachGizmo: mockDetach,
     }),
     SetGizmoMode: jest.fn(),
-    SetGizmoVisible: jest.fn(),
+    SetGizmoVisibility: jest.fn(),
 } as unknown as DIVEToolbox;
 
 const mockMediaCreator = {
@@ -616,11 +616,11 @@ describe('dive/communication/DIVECommunication', () => {
         expect(success).toBe(true);
     });
 
-    it('should perform action SET_GIZMO_VISIBLE', () => {
-        let visibility = testCom.PerformAction('SET_GIZMO_VISIBLE', true);
+    it('should perform action SET_GIZMO_VISIBILITY', () => {
+        let visibility = testCom.PerformAction('SET_GIZMO_VISIBILITY', true);
         expect(visibility).toBe(true);
 
-        visibility = testCom.PerformAction('SET_GIZMO_VISIBLE', false);
+        visibility = testCom.PerformAction('SET_GIZMO_VISIBILITY', false);
         expect(visibility).toBe(false);
     });
 

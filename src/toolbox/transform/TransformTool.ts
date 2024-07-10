@@ -50,7 +50,7 @@ export default class DIVETransformTool extends DIVEBaseTool {
         this._gizmo.mode = mode;
     }
 
-    public SetGizmoVisible(active: boolean): void {
+    public SetGizmoVisibility(active: boolean): void {
         const contains = this._scene.children.includes(this._gizmo);
         if (active && !contains) {
             this._scene.add(this._gizmo);

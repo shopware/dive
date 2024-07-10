@@ -69,8 +69,8 @@ export default class DIVEToolbox {
         this.selectTool.SetGizmoMode(mode);
     }
 
-    public SetGizmoVisible(active: boolean): void {
-        this.selectTool.SetGizmoVisible(active);
+    public SetGizmoVisibility(active: boolean): void {
+        this.selectTool.SetGizmoVisibility(active);
     }
 
     public onPointerMove(e: PointerEvent): void {

@@ -1,4 +1,4 @@
-export default interface SET_GIZMO_VISIBLE {
+export default interface SET_GIZMO_VISIBILITY {
     'PAYLOAD': boolean,
     'RETURN': boolean,
 }
