@@ -57,6 +57,12 @@ export default class DIVEModel extends Object3D implements DIVESelectable, DIVEM
         this.scale.set(scale.x, scale.y, scale.z);
     }
 
+    public SetVisibility(visible: boolean): void {
+        this.traverse((child) => {
+            child.visible = visible;
+        });
+    }
+
     public SetToWorldOrigin(): void {
         this.position.set(0, 0, 0);
         DIVECommunication.get(this.userData.id)?.PerformAction('UPDATE_OBJECT', { id: this.userData.id, position: this.position, rotation: this.rotation, scale: this.scale });

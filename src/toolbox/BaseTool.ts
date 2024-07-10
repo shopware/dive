@@ -258,8 +258,8 @@ export default abstract class DIVEBaseTool {
     public onWheel(e: WheelEvent): void { }
 
     protected raycast(objects?: Object3D[]): Intersection[] {
-        if (objects !== undefined) return this._raycaster.intersectObjects(objects, true);
-        return this._raycaster.intersectObjects(this._scene.children, true);
+        if (objects !== undefined) return this._raycaster.intersectObjects(objects, true).filter(i => i.object.visible);
+        return this._raycaster.intersectObjects(this._scene.children, true).filter(i => i.object.visible);
     }
 
     private pointerWasDragged(): boolean {

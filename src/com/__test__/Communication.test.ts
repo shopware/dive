@@ -23,6 +23,7 @@ import '../actions/scene/getallscenedata';
 import '../actions/scene/setbackground';
 import '../actions/scene/updatescene';
 import '../actions/toolbox/select/setgizmomode';
+import '../actions/toolbox/transform/setgizmovisible';
 import '../actions/camera/getcameratransform';
 import DIVEOrbitControls from '../../controls/OrbitControls';
 import { COMLight, COMModel, COMPov } from '../types';
@@ -122,6 +123,7 @@ const mockToolBox = {
         DetachGizmo: mockDetach,
     }),
     SetGizmoMode: jest.fn(),
+    SetGizmoVisibility: jest.fn(),
 } as unknown as DIVEToolbox;
 
 const mockMediaCreator = {
@@ -612,6 +614,14 @@ describe('dive/communication/DIVECommunication', () => {
             mode: 'translate',
         });
         expect(success).toBe(true);
+    });
+
+    it('should perform action SET_GIZMO_VISIBILITY', () => {
+        let visibility = testCom.PerformAction('SET_GIZMO_VISIBILITY', true);
+        expect(visibility).toBe(true);
+
+        visibility = testCom.PerformAction('SET_GIZMO_VISIBILITY', false);
+        expect(visibility).toBe(false);
     });
 
     it('should perform action MODEL_LOADED', () => {

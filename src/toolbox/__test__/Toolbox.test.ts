@@ -28,6 +28,7 @@ const mock_onPointerMove = jest.fn();
 const mock_onPointerUp = jest.fn();
 const mock_onWheel = jest.fn();
 const mock_SetGizmoMode = jest.fn();
+const mock_SetGizmoVisibility = jest.fn();
 
 jest.mock('../select/SelectTool.ts', () => {
     return jest.fn(function () {
@@ -38,6 +39,7 @@ jest.mock('../select/SelectTool.ts', () => {
         this.onPointerUp = mock_onPointerUp;
         this.onWheel = mock_onWheel;
         this.SetGizmoMode = mock_SetGizmoMode;
+        this.SetGizmoVisibility = mock_SetGizmoVisibility;
         return this;
     });
 });
@@ -113,5 +115,11 @@ describe('dive/toolbox/DIVEToolBox', () => {
         const toolBox = new DIVEToolbox({} as DIVEScene, mockController);
         toolBox.SetGizmoMode('translate');
         expect(mock_SetGizmoMode).toHaveBeenCalledTimes(1);
+    });
+
+    it('should set gizmo active', () => {
+        const toolBox = new DIVEToolbox({} as DIVEScene, mockController);
+        toolBox.SetGizmoVisibility(true);
+        expect(mock_SetGizmoVisibility).toHaveBeenCalledTimes(1);
     });
 });

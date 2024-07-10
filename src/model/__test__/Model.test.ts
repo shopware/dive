@@ -64,6 +64,7 @@ jest.mock('three', () => {
             }
             this.add = jest.fn();
             this.children = [{
+                visible: true,
                 material: {
                     color: {},
                 },
@@ -86,6 +87,9 @@ jest.mock('three', () => {
                 return vec3;
             };
             this.mesh = new Mesh();
+            this.traverse = jest.fn((callback) => {
+                callback(this.children[0])
+            });
             return this;
         }),
         Box3: jest.fn(function () {
@@ -194,6 +198,11 @@ describe('dive/model/DIVEModel', () => {
     it('should set scale', () => {
         const model = new Model();
         expect(() => model.SetScale({ x: 1, y: 1, z: 1 })).not.toThrow();
+    });
+
+    it('should set visibility', () => {
+        const model = new Model();
+        expect(() => model.SetVisibility(true)).not.toThrow();
     });
 
     it('should set to world origin', () => {

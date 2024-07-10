@@ -134,6 +134,7 @@ describe('dive/toolbox/DIVEBaseTool', () => {
                     object: {
                         uuid: 'uuid',
                         isHoverable: true,
+                        visible: true,
                     } as Object3D & DIVEHoverable
                 }
             ]
@@ -158,6 +159,7 @@ describe('dive/toolbox/DIVEBaseTool', () => {
                     object: {
                         uuid: 'uuid',
                         isHoverable: true,
+                        visible: true,
                         onPointerEnter() {
                             return;
                         },
@@ -183,6 +185,7 @@ describe('dive/toolbox/DIVEBaseTool', () => {
                     object: {
                         uuid: 'uuid',
                         isHoverable: true,
+                        visible: true,
                         onPointerOver() {
                             return;
                         }
@@ -193,6 +196,7 @@ describe('dive/toolbox/DIVEBaseTool', () => {
 
         toolBox['_hovered'] = {
             uuid: 'uuid',
+            visible: true,
             onPointerLeave() {
                 return;
             },
@@ -215,6 +219,7 @@ describe('dive/toolbox/DIVEBaseTool', () => {
                     object: {
                         uuid: 'uuid2',
                         isHoverable: true,
+                        visible: true,
                         onPointerEnter() {
                             return;
                         },
@@ -225,6 +230,7 @@ describe('dive/toolbox/DIVEBaseTool', () => {
 
         toolBox['_hovered'] = {
             uuid: 'uuid',
+            visible: true,
             onPointerLeave() {
                 return;
             },

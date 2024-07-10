@@ -47,13 +47,14 @@ export default class DIVESelectTool extends DIVETransformTool {
         if ('isMoveable' in selectable) {
             const movable = selectable as (Object3D & DIVESelectable & DIVEMoveable);
             this._gizmo.attach(movable);
+            this.SetGizmoVisibility(movable.visible);
         }
     }
 
     public onClick(e: PointerEvent): void {
         super.onClick(e);
 
-        const first = this._raycaster.intersectObjects(this._scene.Root.children, true)[0];
+        const first = this._raycaster.intersectObjects(this._scene.Root.children, true).filter((intersect) => intersect.object.visible )[0];
         const selectable = this.findSelectableInterface(first?.object);
 
         // if nothing is hit
