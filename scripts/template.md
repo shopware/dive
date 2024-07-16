@@ -76,6 +76,18 @@ module.exports = () => {
 };
 ```
 
+# Quick View
+QuickView is used to quickly display your assets with as few lines of code as possible. Simply call the static ``QuickView()`` method (with your data-uri as a parameter) to create an instance of DIVE with your asset to use in further code.
+```ts
+import { DIVE } from '@shopware-ag/dive';
+
+const dive = DIVE.QuickView('your/asset/uri.glb'); // <-- call QuickView()
+
+const myCanvasWrapper = document.createElement('div');
+myCanvasWrapper.appendChild(dive.Canvas);
+
+```
+
 # Getting started
 Import:
 ```ts

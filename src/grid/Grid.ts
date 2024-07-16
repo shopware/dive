@@ -19,4 +19,8 @@ export default class DIVEGrid extends Object3D {
 
         this.add(grid);
     }
+
+    public SetVisibility(visible: boolean): void {
+        this.visible = visible;
+    }
 }

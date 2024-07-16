@@ -26,14 +26,30 @@ import '../actions/toolbox/select/setgizmomode';
 import '../actions/toolbox/transform/setgizmovisible';
 import '../actions/camera/getcameratransform';
 import DIVEOrbitControls from '../../controls/OrbitControls';
+import DIVERenderer from '../../renderer/Renderer';
 import { COMLight, COMModel, COMPov } from '../types';
-import { Object3D } from 'three';
+import { Object3D, Quaternion } from 'three';
 
 jest.mock('three/src/math/MathUtils', () => {
     return {
         generateUUID: jest.fn().mockReturnValue('uuid'),
     }
 });
+
+jest.mock('../../mediacreator/MediaCreator', () => {
+    return {
+        default: jest.fn(function () {
+            this.GenerateMedia = jest.fn();
+
+            return this;
+        }),
+    }
+});
+
+const mockRenderer = {
+    render: jest.fn(),
+    OnResize: jest.fn(),
+} as unknown as DIVERenderer;
 
 const mockScene = {
     SetBackground: jest.fn(),
@@ -56,7 +72,10 @@ const mockScene = {
             },
             SetVisibility: jest.fn(),
             SetColor: jest.fn(),
-        }
+        },
+        Grid: {
+            SetVisibility: jest.fn(),
+        },
     },
 } as unknown as DIVEScene;
 
@@ -108,7 +127,19 @@ const mockController = {
             clone: jest.fn().mockReturnValue({ x: 1, y: 2, z: 3 }),
             copy: jest.fn(),
         },
+        quaternion: {
+            x: 1,
+            y: 2,
+            z: 3,
+            w: 4,
+            clone: jest.fn().mockReturnValue({ x: 1, y: 2, z: 3, w: 4 }),
+            copy: jest.fn(),
+        },
         SetCameraLayer: jest.fn(),
+        OnResize: jest.fn(),
+        layers: {
+            mask: 1,
+        },
     },
     MoveTo: jest.fn(),
     RevertLast: jest.fn(),
@@ -126,15 +157,12 @@ const mockToolBox = {
     SetGizmoVisibility: jest.fn(),
 } as unknown as DIVEToolbox;
 
-const mockMediaCreator = {
-    GenerateMedia: jest.fn(),
-} as unknown as DIVEMediaCreator;
 let testCom: DIVECommunication;
 
 
 describe('dive/communication/DIVECommunication', () => {
     beforeEach(() => {
-        testCom = new DIVECommunication(mockScene, mockController, mockToolBox, mockMediaCreator);
+        testCom = new DIVECommunication(mockRenderer, mockScene, mockController, mockToolBox);
     });
 
     afterEach(() => {
@@ -647,6 +675,7 @@ describe('dive/communication/DIVECommunication', () => {
             backgroundColor: 'ffffff',
             floorEnabled: true,
             floorColor: 'ffffff',
+            gridEnabled: true,
         });
         expect(success0).toBe(true);
 
@@ -655,6 +684,7 @@ describe('dive/communication/DIVECommunication', () => {
             backgroundColor: undefined,
             floorEnabled: undefined,
             floorColor: undefined,
+            gridEnabled: undefined,
         });
         expect(success1).toBe(true);
     });

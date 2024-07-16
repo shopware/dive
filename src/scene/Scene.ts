@@ -19,6 +19,8 @@ export default class DIVEScene extends Scene {
     constructor() {
         super();
 
+        this.background = new Color(0xffffff);
+
         this.root = new DIVERoot();
         this.add(this.root);
     }

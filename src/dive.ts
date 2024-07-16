@@ -13,9 +13,11 @@ import { getObjectDelta } from "./helper/getObjectDelta/getObjectDelta.ts";
 import type { Actions } from './com/actions/index.ts';
 import type { COMPov, COMLight, COMModel, COMEntity } from './com/types.ts';
 import { DIVEMath } from './math/index.ts';
+import { generateUUID } from "three/src/math/MathUtils";
 
 export type DIVESettings = {
     autoResize: boolean;
+    displayAxes: boolean;
     renderer: DIVERendererSettings;
     perspectiveCamera: DIVEPerspectiveCameraSettings;
     orbitControls: DIVEOrbitControlsSettings;
@@ -23,6 +25,7 @@ export type DIVESettings = {
 
 export const DIVEDefaultSettings: DIVESettings = {
     autoResize: true,
+    displayAxes: false,
     renderer: DIVERendererDefaultSettings,
     perspectiveCamera: DIVEPerspectiveCameraDefaultSettings,
     orbitControls: DIVEOrbitControlsDefaultSettings,
@@ -52,6 +55,64 @@ export const DIVEDefaultSettings: DIVESettings = {
  */
 
 export default class DIVE {
+    // static members
+    public static QuickView(uri: string): DIVE {
+        const dive = new DIVE();
+
+        dive.Communication.PerformAction('SET_CAMERA_TRANSFORM', {
+            position: { x: 0, y: 2, z: 2 },
+            target: { x: 0, y: 0.5, z: 0 },
+        });
+
+        // generate scene light id
+        const lightid = generateUUID();
+
+        // add scene light
+        dive.Communication.PerformAction('ADD_OBJECT', {
+            entityType: 'light',
+            type: 'scene',
+            name: 'light',
+            id: lightid,
+            enabled: true,
+            visible: true,
+            intensity: 1,
+            color: 0xffffff,
+        });
+
+        // generate model id
+        const modelid = generateUUID();
+
+        // add loaded listener
+        dive.Communication.Subscribe('MODEL_LOADED', (data) => {
+            if (data.id !== modelid) return;
+            dive.Communication.PerformAction('PLACE_ON_FLOOR', {
+                id: modelid,
+            });
+        })
+
+        // instantiate model
+        dive.Communication.PerformAction('ADD_OBJECT', {
+            entityType: 'model',
+            name: 'object',
+            id: modelid,
+            position: { x: 0, y: 0, z: 0 },
+            rotation: { x: 0, y: 0, z: 0 },
+            scale: { x: 1, y: 1, z: 1 },
+            uri: uri,
+            visible: true,
+            loaded: false,
+        });
+
+        // set scene properties
+        dive.Communication.PerformAction('UPDATE_SCENE', {
+            backgroundColor: 0xffffff,
+            gridEnabled: false,
+            floorColor: 0xffffff,
+        })
+
+        return dive;
+    }
+
     // descriptive members
     private _settings: DIVESettings;
     private _resizeObserverId: string;
@@ -135,26 +196,28 @@ export default class DIVE {
 
         // initialize axis camera
         this.axisCamera = new DIVEAxisCamera();
-        this.scene.add(this.axisCamera);
-        const restoreViewport = new Vector4();
+        if (this._settings.displayAxes) {
+            this.scene.add(this.axisCamera);
+            const restoreViewport = new Vector4();
 
-        this.renderer.AddPostRenderCallback(() => {
-            const restoreBackground = this.scene.background;
-            this.scene.background = null;
+            this.renderer.AddPostRenderCallback(() => {
+                const restoreBackground = this.scene.background;
+                this.scene.background = null;
 
-            this.renderer.getViewport(restoreViewport);
-            this.renderer.setViewport(0, 0, 150, 150);
-            this.renderer.autoClear = false;
+                this.renderer.getViewport(restoreViewport);
+                this.renderer.setViewport(0, 0, 150, 150);
+                this.renderer.autoClear = false;
 
-            this.axisCamera.SetFromCameraMatrix(this.perspectiveCamera.matrix);
+                this.axisCamera.SetFromCameraMatrix(this.perspectiveCamera.matrix);
 
-            this.renderer.render(this.scene, this.axisCamera);
+                this.renderer.render(this.scene, this.axisCamera);
 
-            this.renderer.setViewport(restoreViewport);
-            this.renderer.autoClear = true;
+                this.renderer.setViewport(restoreViewport);
+                this.renderer.autoClear = true;
 
-            this.scene.background = restoreBackground;
-        });
+                this.scene.background = restoreBackground;
+            });
+        }
 
         // add resize observer if autoResize is enabled
         if (this._settings.autoResize) {

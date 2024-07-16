@@ -30,6 +30,12 @@ jest.mock('three', () => {
     }
 });
 
+jest.mock('three/src/math/MathUtils', () => {
+    return {
+        generateUUID: () => { return 'test_uuid'; },
+    }
+});
+
 jest.mock('../renderer/Renderer.ts', () => {
     return jest.fn(function () {
         this.domElement = {

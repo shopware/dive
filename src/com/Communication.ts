@@ -398,6 +398,8 @@ export default class DIVECommunication {
         if (payload.name !== undefined) this.scene.name = payload.name;
         if (payload.backgroundColor !== undefined) this.scene.SetBackground(payload.backgroundColor);
 
+        if (payload.gridEnabled !== undefined) this.scene.Root.Grid.SetVisibility(payload.gridEnabled);
+
         if (payload.floorEnabled !== undefined) this.scene.Root.Floor.SetVisibility(payload.floorEnabled);
         if (payload.floorColor !== undefined) this.scene.Root.Floor.SetColor(payload.floorColor);
 
@@ -406,6 +408,7 @@ export default class DIVECommunication {
         // TODO optmize this
         payload.name = this.scene.name;
         payload.backgroundColor = '#' + (this.scene.background as Color).getHexString();
+        payload.gridEnabled = this.scene.Root.Grid.visible;
         payload.floorEnabled = this.scene.Root.Floor.visible;
         payload.floorColor = '#' + (this.scene.Root.Floor.material as MeshStandardMaterial).color.getHexString();
 
