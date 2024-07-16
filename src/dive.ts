@@ -126,7 +126,7 @@ export default class DIVE {
     private communication: DIVECommunication;
 
     // additional components
-    private animationSystem: DIVEAnimationSystem;
+    private animationSystem: DIVEAnimationSystem | null;
     private axisCamera: DIVEAxisCamera | null;
 
     // getters
@@ -192,10 +192,7 @@ export default class DIVE {
         this.communication = new DIVECommunication(this.renderer, this.scene, this.orbitControls, this.toolbox);
 
         // initialize animation system
-        this.animationSystem = new DIVEAnimationSystem();
-        this.renderer.AddPreRenderCallback(() => {
-            this.animationSystem.update();
-        })
+        this.animationSystem = null;
 
         // initialize axis camera
         if (this._settings.displayAxes) {
