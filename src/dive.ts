@@ -1,4 +1,3 @@
-import { Vector4 } from "three";
 import DIVERenderer, { DIVERendererDefaultSettings, DIVERendererSettings } from "./renderer/Renderer.ts";
 import DIVEScene from "./scene/Scene.ts";
 import DIVEPerspectiveCamera, { DIVEPerspectiveCameraDefaultSettings, DIVEPerspectiveCameraSettings } from "./camera/PerspectiveCamera.ts";
@@ -87,7 +86,7 @@ export default class DIVE {
             dive.Communication.PerformAction('PLACE_ON_FLOOR', {
                 id: modelid,
             });
-        })
+        });
 
         // instantiate model
         dive.Communication.PerformAction('ADD_OBJECT', {
@@ -128,7 +127,7 @@ export default class DIVE {
 
     // additional components
     private animationSystem: DIVEAnimationSystem;
-    private axisCamera: DIVEAxisCamera;
+    private axisCamera: DIVEAxisCamera | null;
 
     // getters
     public get Communication(): DIVECommunication {
@@ -167,6 +166,13 @@ export default class DIVE {
             }
         }
 
+        if (settingsDelta.displayAxes) {
+            this.axisCamera = new DIVEAxisCamera(this.renderer, this.scene, this.orbitControls);
+        } else {
+            this.axisCamera?.Dispose();
+            this.axisCamera = null;
+        }
+
         Object.assign(this._settings, settings);
     }
 
@@ -192,28 +198,10 @@ export default class DIVE {
         })
 
         // initialize axis camera
-        this.axisCamera = new DIVEAxisCamera();
         if (this._settings.displayAxes) {
-            this.scene.add(this.axisCamera);
-            const restoreViewport = new Vector4();
-
-            this.renderer.AddPostRenderCallback(() => {
-                const restoreBackground = this.scene.background;
-                this.scene.background = null;
-
-                this.renderer.getViewport(restoreViewport);
-                this.renderer.setViewport(0, 0, 150, 150);
-                this.renderer.autoClear = false;
-
-                this.axisCamera.SetFromCameraMatrix(this.perspectiveCamera.matrix);
-
-                this.renderer.render(this.scene, this.axisCamera);
-
-                this.renderer.setViewport(restoreViewport);
-                this.renderer.autoClear = true;
-
-                this.scene.background = restoreBackground;
-            });
+            this.axisCamera = new DIVEAxisCamera(this.renderer, this.scene, this.orbitControls);
+        } else {
+            this.axisCamera = null;
         }
 
         // add resize observer if autoResize is enabled

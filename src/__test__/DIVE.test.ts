@@ -36,6 +36,18 @@ jest.mock('three/src/math/MathUtils', () => {
     }
 });
 
+jest.mock('../com/Communication.ts', () => {
+    return jest.fn(function () {
+        this.PerformAction = jest.fn();
+        this.Subscribe = jest.fn((action: string, callback: (data: { id: string }) => void) => {
+            callback({ id: 'incorrect id' });
+            callback({ id: 'test_uuid' });
+        });
+
+        return this;
+    });
+});
+
 jest.mock('../renderer/Renderer.ts', () => {
     return jest.fn(function () {
         this.domElement = {
@@ -158,11 +170,17 @@ jest.mock('../axiscamera/AxisCamera.ts', () => {
         }
         this.removeFromParent = jest.fn();
         this.SetFromCameraMatrix = jest.fn();
+        this.Dispose = jest.fn();
         return this;
     });
 });
 
 describe('dive/DIVE', () => {
+    it('should QuickView', () => {
+        const dive = DIVE.QuickView('test_uri');
+        expect(dive).toBeDefined();
+    });
+
     it('should instantiate', () => {
         const dive = new DIVE();
         expect(dive).toBeDefined();
@@ -174,6 +192,7 @@ describe('dive/DIVE', () => {
     it('should instantiate with settings', () => {
         const settings = {
             autoResize: false,
+            displayAxes: true,
             renderer: {
                 antialias: false,
                 alpha: false,
@@ -215,6 +234,7 @@ describe('dive/DIVE', () => {
         const dive = new DIVE();
         dive.Settings = {
             autoResize: false,
+            displayAxes: true,
             renderer: {
                 antialias: false,
                 alpha: false,
