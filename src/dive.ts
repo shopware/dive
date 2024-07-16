@@ -3,7 +3,6 @@ import DIVERenderer, { DIVERendererDefaultSettings, DIVERendererSettings } from 
 import DIVEScene from "./scene/Scene.ts";
 import DIVEPerspectiveCamera, { DIVEPerspectiveCameraDefaultSettings, DIVEPerspectiveCameraSettings } from "./camera/PerspectiveCamera.ts";
 import DIVEOrbitControls, { DIVEOrbitControlsDefaultSettings, DIVEOrbitControlsSettings } from "./controls/OrbitControls.ts";
-import DIVEMediaCreator from "./mediacreator/MediaCreator.ts";
 import DIVEToolbox from "./toolbox/Toolbox.ts";
 import DIVECommunication from "./com/Communication.ts";
 import DIVEAnimationSystem from "./animation/AnimationSystem.ts";
@@ -124,7 +123,6 @@ export default class DIVE {
     private scene: DIVEScene;
     private perspectiveCamera: DIVEPerspectiveCamera;
     private orbitControls: DIVEOrbitControls;
-    private mediaCreator: DIVEMediaCreator;
     private toolbox: DIVEToolbox;
     private communication: DIVECommunication;
 
@@ -184,9 +182,8 @@ export default class DIVE {
         this.scene = new DIVEScene();
         this.perspectiveCamera = new DIVEPerspectiveCamera(this._settings.perspectiveCamera);
         this.orbitControls = new DIVEOrbitControls(this.perspectiveCamera, this.renderer, this._settings.orbitControls);
-        this.mediaCreator = new DIVEMediaCreator(this.renderer, this.scene, this.orbitControls);
         this.toolbox = new DIVEToolbox(this.scene, this.orbitControls);
-        this.communication = new DIVECommunication(this.scene, this.orbitControls, this.toolbox, this.mediaCreator);
+        this.communication = new DIVECommunication(this.renderer, this.scene, this.orbitControls, this.toolbox);
 
         // initialize animation system
         this.animationSystem = new DIVEAnimationSystem();

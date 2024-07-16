@@ -1,13 +1,17 @@
-import { Color, MeshStandardMaterial, MathUtils } from "three";
-import DIVEScene from "../scene/Scene.ts";
 import { Actions } from "./actions/index.ts";
-import { COMLight, COMModel, COMEntity, COMPov } from "./types.ts";
-import DIVEToolbox from "../toolbox/Toolbox.ts";
-import DIVEMediaCreator from "../mediacreator/MediaCreator.ts";
-import DIVEOrbitControls from "../controls/OrbitControls.ts";
-import { DIVESelectable } from "../interface/Selectable.ts";
-import DIVESelectTool from "../toolbox/select/SelectTool.ts";
+import { generateUUID } from 'three/src/math/MathUtils';
+
+// type imports
+import { type Color, type MeshStandardMaterial } from "three";
+import { type COMLight, type COMModel, type COMEntity, type COMPov } from "./types.ts";
+import type DIVEScene from "../scene/Scene.ts";
+import type DIVEToolbox from "../toolbox/Toolbox.ts";
+import type DIVEMediaCreator from "../mediacreator/MediaCreator.ts";
+import type DIVEOrbitControls from "../controls/OrbitControls.ts";
+import type DIVESelectTool from "../toolbox/select/SelectTool.ts";
 import type DIVEModel from "../model/Model.ts";
+import type DIVERenderer from "../renderer/Renderer.ts";
+import { type DIVESelectable } from "../interface/Selectable.ts";
 
 type EventListener<Action extends keyof Actions> = (payload: Actions[Action]['PAYLOAD']) => void;
 
@@ -41,22 +45,32 @@ export default class DIVECommunication {
     }
 
     private id: string;
+    private renderer: DIVERenderer;
     private scene: DIVEScene;
     private controller: DIVEOrbitControls;
     private toolbox: DIVEToolbox;
-    private mediaGenerator: DIVEMediaCreator;
+
+    private _mediaGenerator: DIVEMediaCreator | null;
+    private get mediaGenerator(): DIVEMediaCreator {
+        if (!this._mediaGenerator) {
+            const DIVEMediaCreator = require('../mediacreator/MediaCreator.ts').default as typeof import('../mediacreator/MediaCreator.ts').default;
+            this._mediaGenerator = new DIVEMediaCreator(this.renderer, this.scene, this.controller);
+        }
+        return this._mediaGenerator;
+    }
 
     private registered: Map<string, COMEntity> = new Map();
 
     // private listeners: { [key: string]: EventListener[] } = {};
     private listeners: Map<keyof Actions, EventListener<keyof Actions>[]> = new Map();
 
-    constructor(scene: DIVEScene, controls: DIVEOrbitControls, toolbox: DIVEToolbox, mediaGenerator: DIVEMediaCreator) {
-        this.id = MathUtils.generateUUID();
+    constructor(renderer: DIVERenderer, scene: DIVEScene, controls: DIVEOrbitControls, toolbox: DIVEToolbox) {
+        this.id = generateUUID();
+        this.renderer = renderer;
         this.scene = scene;
         this.controller = controls;
         this.toolbox = toolbox;
-        this.mediaGenerator = mediaGenerator;
+        this._mediaGenerator = null;
 
         DIVECommunication.__instances.push(this);
     }
