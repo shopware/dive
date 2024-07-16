@@ -217,6 +217,13 @@ export default class DIVE {
         }
     }
 
+    public Dispose(): void {
+        this.removeResizeObserver();
+        this.renderer.Dispose();
+        this.axisCamera?.Dispose();
+        this.communication.DestroyInstance();
+    }
+
     // methods
     public OnResize(width: number, height: number): void {
         // resize renderer

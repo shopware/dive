@@ -43,6 +43,7 @@ jest.mock('../com/Communication.ts', () => {
             callback({ id: 'incorrect id' });
             callback({ id: 'test_uuid' });
         });
+        this.DestroyInstance = jest.fn();
 
         return this;
     });
@@ -71,7 +72,7 @@ jest.mock('../renderer/Renderer.ts', () => {
         this.render = jest.fn();
         this.StartRenderer = jest.fn();
         this.OnResize = jest.fn();
-
+        this.Dispose = jest.fn();
         return this;
     });
 });
@@ -187,6 +188,17 @@ describe('dive/DIVE', () => {
         expect((window as any).DIVE.PrintScene).toBeDefined();
         console.log = jest.fn();
         expect(() => (window as any).DIVE.PrintScene()).not.toThrow();
+    });
+
+    it('should dispose', () => {
+        let dive = new DIVE();
+        expect(() => dive.Dispose()).not.toThrow();
+
+        const settings = {
+            displayAxes: true,
+        }
+        dive = new DIVE(settings);
+        expect(() => dive.Dispose()).not.toThrow();
     });
 
     it('should instantiate with settings', () => {

@@ -52,6 +52,12 @@ export default class DIVERenderer extends WebGLRenderer {
         this.debug.checkShaderErrors = false;
     }
 
+    // Stops renderings and disposes the renderer.
+    public Dispose(): void {
+        this.StopRenderer();
+        this.dispose();
+    }
+
     // Starts the renderer with the given scene and camera.
     public StartRenderer(scene: Scene, cam: Camera): void {
         this.setAnimationLoop(() => { this.internal_render(scene, cam) });
