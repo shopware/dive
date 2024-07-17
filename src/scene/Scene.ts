@@ -1,5 +1,5 @@
-import { Color, ColorRepresentation, Object3D, Scene } from 'three';
-import { COMModel, COMEntity } from '../com/types';
+import { Color, Scene, type Box3, type ColorRepresentation, type Object3D } from 'three';
+import { type COMModel, type COMEntity } from '../com/types';
 import DIVERoot from './root/Root';
 
 /**
@@ -27,6 +27,10 @@ export default class DIVEScene extends Scene {
 
     public SetBackground(color: ColorRepresentation): void {
         this.background = new Color(color);
+    }
+
+    public ComputeSceneBB(): Box3 {
+        return this.Root.ComputeSceneBB();
     }
 
     public GetSceneObject(object: Partial<COMEntity>): Object3D | undefined {

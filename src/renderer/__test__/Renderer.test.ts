@@ -1,6 +1,6 @@
-import DIVEPerspectiveCamera from '../../camera/PerspectiveCamera';
-import DIVEScene from '../../scene/Scene';
-import DIVERenderer, { DIVERendererDefaultSettings } from '../Renderer';
+import type DIVEPerspectiveCamera from '../../camera/PerspectiveCamera';
+import type DIVEScene from '../../scene/Scene';
+import { DIVERenderer, DIVERendererDefaultSettings } from '../Renderer';
 
 /**
  * @jest-environment jsdom

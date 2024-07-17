@@ -26,7 +26,7 @@ export const DIVERendererDefaultSettings: DIVERendererSettings = {
  * @module
  */
 
-export default class DIVERenderer extends WebGLRenderer {
+export class DIVERenderer extends WebGLRenderer {
     // basic functionality members
     private paused: boolean = false;
     private running: boolean = false;

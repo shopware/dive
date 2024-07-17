@@ -38,7 +38,10 @@ jest.mock('three/src/math/MathUtils', () => {
 
 jest.mock('../com/Communication.ts', () => {
     return jest.fn(function () {
-        this.PerformAction = jest.fn();
+        this.PerformAction = jest.fn().mockReturnValue({
+            position: { x: 0, y: 0, z: 0 },
+            target: { x: 0, y: 0, z: 0 },
+        });
         this.Subscribe = jest.fn((action: string, callback: (data: { id: string }) => void) => {
             callback({ id: 'incorrect id' });
             callback({ id: 'test_uuid' });
@@ -50,31 +53,33 @@ jest.mock('../com/Communication.ts', () => {
 });
 
 jest.mock('../renderer/Renderer.ts', () => {
-    return jest.fn(function () {
-        this.domElement = {
-            clientWidth: 800,
-            clientHeight: 600,
-            style: {
-                position: 'absolute',
-            },
-        };
-        this.domElement.parentElement = this.domElement;
-        this.AddPreRenderCallback = (callback: () => void) => {
-            callback();
-        };
-        this.RemovePreRenderCallback = jest.fn();
-        this.AddPostRenderCallback = (callback: () => void) => {
-            callback();
-        };
-        this.getViewport = jest.fn();
-        this.setViewport = jest.fn();
-        this.autoClear = false;
-        this.render = jest.fn();
-        this.StartRenderer = jest.fn();
-        this.OnResize = jest.fn();
-        this.Dispose = jest.fn();
-        return this;
-    });
+    return {
+        DIVERenderer: jest.fn(function () {
+            this.domElement = {
+                clientWidth: 800,
+                clientHeight: 600,
+                style: {
+                    position: 'absolute',
+                },
+            };
+            this.domElement.parentElement = this.domElement;
+            this.AddPreRenderCallback = (callback: () => void) => {
+                callback();
+            };
+            this.RemovePreRenderCallback = jest.fn();
+            this.AddPostRenderCallback = (callback: () => void) => {
+                callback();
+            };
+            this.getViewport = jest.fn();
+            this.setViewport = jest.fn();
+            this.autoClear = false;
+            this.render = jest.fn();
+            this.StartRenderer = jest.fn();
+            this.OnResize = jest.fn();
+            this.Dispose = jest.fn();
+            return this;
+        }),
+    }
 });
 
 jest.mock('../scene/Scene.ts', () => {

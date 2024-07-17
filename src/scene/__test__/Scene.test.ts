@@ -17,6 +17,7 @@ jest.mock('../root/Root', () => {
         this.PlaceOnFloor = mock_PlaceOnFloor;
         this.GetSceneObject = mock_GetSceneObject;
         this.removeFromParent = jest.fn();
+        this.ComputeSceneBB = jest.fn();
         return this;
     });
 });
@@ -36,6 +37,11 @@ describe('dive/scene/DIVEScene', () => {
         const scene = new DIVEScene();
         scene.SetBackground(0x123456);
         expect((scene.background as Color).getHex()).toBe(0x123456);
+    });
+
+    it('should ComputeSceneBB', () => {
+        const scene = new DIVEScene();
+        expect(() => scene.ComputeSceneBB()).not.toThrow();
     });
 
     it('should add object', () => {

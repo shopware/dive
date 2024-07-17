@@ -1,5 +1,5 @@
 import DIVEMediaCreator from '../MediaCreator';
-import DIVERenderer from '../../renderer/Renderer';
+import { DIVERenderer } from '../../renderer/Renderer';
 import DIVEScene from '../../scene/Scene';
 import DIVEPerspectiveCamera, { DIVEPerspectiveCameraDefaultSettings } from '../../camera/PerspectiveCamera';
 import { COMPov } from '../../com';
@@ -71,14 +71,16 @@ jest.mock('../../controls/OrbitControls', () => {
 });
 
 jest.mock('../../renderer/Renderer', () => {
-    return jest.fn(function () {
-        this.domElement = {
-            toDataURL: mock_toDataURL,
-        }
-        this.render = mock_render;
-        this.OnResize = jest.fn();
-        return this;
-    });
+    return {
+        DIVERenderer: jest.fn(function () {
+            this.domElement = {
+                toDataURL: mock_toDataURL,
+            }
+            this.render = mock_render;
+            this.OnResize = jest.fn();
+            return this;
+        })
+    }
 });
 
 let mediaCreator: DIVEMediaCreator;

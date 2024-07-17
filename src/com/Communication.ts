@@ -9,7 +9,7 @@ import type DIVEToolbox from "../toolbox/Toolbox.ts";
 import type DIVEMediaCreator from "../mediacreator/MediaCreator.ts";
 import type DIVEOrbitControls from "../controls/OrbitControls.ts";
 import type DIVEModel from "../model/Model.ts";
-import type DIVERenderer from "../renderer/Renderer.ts";
+import { type DIVERenderer } from "../renderer/Renderer.ts";
 import { type DIVESelectable } from "../interface/Selectable.ts";
 import { isSelectTool } from "../toolbox/select/SelectTool.ts";
 
@@ -144,6 +144,10 @@ export default class DIVECommunication {
             }
             case 'RESET_CAMERA': {
                 returnValue = this.resetCamera(payload as Actions['RESET_CAMERA']['PAYLOAD']);
+                break;
+            }
+            case 'COMPUTE_ENCOMPASSING_VIEW': {
+                returnValue = this.computeEncompassingView(payload as Actions['COMPUTE_ENCOMPASSING_VIEW']['PAYLOAD']);
                 break;
             }
             case 'SET_CAMERA_LAYER': {
@@ -388,6 +392,15 @@ export default class DIVECommunication {
         this.controller.RevertLast(payload.duration);
 
         return true;
+    }
+
+    private computeEncompassingView(payload: Actions['COMPUTE_ENCOMPASSING_VIEW']['PAYLOAD']): Actions['COMPUTE_ENCOMPASSING_VIEW']['RETURN'] {
+        const sceneBB = this.scene.ComputeSceneBB();
+
+        const transform = this.controller.ComputeEncompassingView(sceneBB);
+        Object.assign(payload, transform);
+
+        return transform;
     }
 
     private zoomCamera(payload: Actions['ZOOM_CAMERA']['PAYLOAD']): Actions['ZOOM_CAMERA']['RETURN'] {

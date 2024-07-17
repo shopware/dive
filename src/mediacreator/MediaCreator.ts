@@ -1,6 +1,6 @@
 import DIVEPerspectiveCamera from "../camera/PerspectiveCamera.ts";
 import DIVEScene from "../scene/Scene.ts";
-import DIVERenderer from "../renderer/Renderer.ts";
+import { DIVERenderer } from "../renderer/Renderer.ts";
 import DIVEOrbitControls from "../controls/OrbitControls.ts";
 import { Vector3Like } from "three";
 

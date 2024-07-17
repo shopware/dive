@@ -1,4 +1,4 @@
-import DIVERenderer, { DIVERendererDefaultSettings, DIVERendererSettings } from "./renderer/Renderer.ts";
+import { DIVERenderer, DIVERendererDefaultSettings, DIVERendererSettings } from "./renderer/Renderer.ts";
 import DIVEScene from "./scene/Scene.ts";
 import DIVEPerspectiveCamera, { DIVEPerspectiveCameraDefaultSettings, DIVEPerspectiveCameraSettings } from "./camera/PerspectiveCamera.ts";
 import DIVEOrbitControls, { DIVEOrbitControlsDefaultSettings, DIVEOrbitControlsSettings } from "./controls/OrbitControls.ts";
@@ -86,6 +86,13 @@ export default class DIVE {
             dive.Communication.PerformAction('PLACE_ON_FLOOR', {
                 id: modelid,
             });
+
+            const transform = dive.Communication.PerformAction('COMPUTE_ENCOMPASSING_VIEW', {});
+
+            dive.Communication.PerformAction('SET_CAMERA_TRANSFORM', {
+                position: transform.position,
+                target: transform.target,
+            });
         });
 
         // instantiate model
@@ -106,7 +113,7 @@ export default class DIVE {
             backgroundColor: 0xffffff,
             gridEnabled: false,
             floorColor: 0xffffff,
-        })
+        });
 
         return dive;
     }

@@ -20,6 +20,7 @@ import DESELECT_OBJECT from "./object/deselectobject.ts";
 import GET_CAMERA_TRANSFORM from "./camera/getcameratransform.ts";
 import DROP_IT from "./object/model/dropit.ts";
 import SET_GIZMO_VISIBILITY from "./toolbox/transform/setgizmovisible.js";
+import COMPUTE_ENCOMPASSING_VIEW from "./camera/computeencompassingview.ts";
 
 export type Actions = {
     GET_ALL_SCENE_DATA: GET_ALL_SCENE_DATA,
@@ -37,6 +38,7 @@ export type Actions = {
     GET_CAMERA_TRANSFORM: GET_CAMERA_TRANSFORM,
     MOVE_CAMERA: MOVE_CAMERA,
     RESET_CAMERA: RESET_CAMERA,
+    COMPUTE_ENCOMPASSING_VIEW: COMPUTE_ENCOMPASSING_VIEW,
     SET_CAMERA_LAYER: SET_CAMERA_LAYER,
     ZOOM_CAMERA: ZOOM_CAMERA,
     SET_GIZMO_MODE: SET_GIZMO_MODE,

@@ -1,10 +1,9 @@
-import DIVETransformTool from '../TransformTool';
+import DIVETransformTool, { isTransformTool } from '../TransformTool';
 import DIVEScene from '../../../scene/Scene';
 import DIVEOrbitControls from '../../../controls/OrbitControls';
 import DIVEPerspectiveCamera from '../../../camera/PerspectiveCamera';
-import DIVERenderer, { DIVERendererDefaultSettings } from '../../../renderer/Renderer';
-import { type Object3D } from 'three';
-import { type DIVEMoveable } from '../../../interface/Moveable';
+import { DIVERenderer } from '../../../renderer/Renderer';
+import { type DIVEBaseTool } from '../../BaseTool';
 
 jest.mock('../../../renderer/Renderer', () => {
     return jest.fn(function () {
@@ -112,11 +111,29 @@ jest.mock('three/examples/jsm/Addons.js', () => {
 });
 
 const mockCamera: DIVEPerspectiveCamera = {} as DIVEPerspectiveCamera;
-const mockRenderer: DIVERenderer = new DIVERenderer(DIVERendererDefaultSettings);
+const mockRenderer = {
+    render: jest.fn(),
+    OnResize: jest.fn(),
+    getViewport: jest.fn(),
+    setViewport: jest.fn(),
+    AddPreRenderCallback: jest.fn((callback) => {
+        callback();
+    }),
+    AddPostRenderCallback: jest.fn((callback) => {
+        callback();
+    }),
+    RemovePreRenderCallback: jest.fn(),
+    RemovePostRenderCallback: jest.fn(),
+} as unknown as DIVERenderer;
 const mockScene: DIVEScene = new DIVEScene();
 const mockController: DIVEOrbitControls = new DIVEOrbitControls(mockCamera, mockRenderer);
 
 describe('dive/toolbox/select/DIVETransformTool', () => {
+    it('should test if it is SelectTool', () => {
+        const selectTool = { isTransformTool: true } as unknown as DIVEBaseTool;
+        expect(isTransformTool(selectTool)).toBeDefined();
+    });
+
     it('should instantiate', () => {
         const transformTool = new DIVETransformTool(mockScene, mockController);
         expect(transformTool).toBeDefined();

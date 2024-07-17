@@ -2,7 +2,7 @@ import { AxesHelper, Color, Material, Matrix4, OrthographicCamera, Vector4 } fro
 import SpriteText from "three-spritetext";
 import { COORDINATE_LAYER_MASK } from "../constant/VisibilityLayerMask.ts";
 import { AxesColorRed, AxesColorGreen, AxesColorBlue, AxesColorRedLetter, AxesColorGreenLetter, AxesColorBlueLetter } from "../constant/AxisHelperColors.ts";
-import DIVERenderer from "../renderer/Renderer.ts";
+import { DIVERenderer } from "../renderer/Renderer.ts";
 import DIVEScene from "../scene/Scene.ts";
 import DIVEOrbitControls from "../controls/OrbitControls.ts";
 

@@ -1,4 +1,4 @@
-import DIVERenderer from '../../renderer/Renderer';
+import { DIVERenderer } from '../../renderer/Renderer';
 import DIVEAnimationSystem from '../AnimationSystem';
 
 jest.mock('@tweenjs/tween.js', () => {

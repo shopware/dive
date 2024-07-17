@@ -1,11 +1,10 @@
 
+import { DIVEBaseTool } from '../BaseTool';
+import type DIVEOrbitControls from '../../controls/OrbitControls';
+import type DIVEScene from '../../scene/Scene';
 import { type Object3D, type Vector3 } from 'three';
-import DIVEOrbitControls from '../../controls/OrbitControls';
-import DIVEScene from '../../scene/Scene';
-import DIVEBaseTool from '../BaseTool';
-import DIVEToolbox from '../Toolbox';
 import { type DIVEHoverable } from '../../interface/Hoverable';
-import { DIVEDraggable } from '../../interface/Draggable';
+import { type DIVEDraggable } from '../../interface/Draggable';
 
 /**
  * @jest-environment jsdom
@@ -47,8 +46,8 @@ describe('dive/toolbox/DIVEBaseTool', () => {
     });
 
     it('should instantiate', () => {
-        const toolBox = new abstractWrapper(mockScene, mockController);
-        expect(toolBox).toBeDefined();
+        const baseTool = new abstractWrapper(mockScene, mockController);
+        expect(baseTool).toBeDefined();
     });
 
     it('should raycast', () => {

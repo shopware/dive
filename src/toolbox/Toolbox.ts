@@ -3,7 +3,7 @@ import type DIVEScene from "../scene/Scene.ts";
 import { type DIVEBaseTool } from "./BaseTool.ts";
 import { type DIVESelectTool } from "./select/SelectTool.ts";
 
-type ToolType = 'select' | 'none';
+export type ToolType = 'select' | 'none';
 
 /**
  * A Toolbox to activate and deactivate tools to use with the pointer.
