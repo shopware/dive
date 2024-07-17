@@ -8,10 +8,10 @@ import type DIVEScene from "../scene/Scene.ts";
 import type DIVEToolbox from "../toolbox/Toolbox.ts";
 import type DIVEMediaCreator from "../mediacreator/MediaCreator.ts";
 import type DIVEOrbitControls from "../controls/OrbitControls.ts";
-import type DIVESelectTool from "../toolbox/select/SelectTool.ts";
 import type DIVEModel from "../model/Model.ts";
 import type DIVERenderer from "../renderer/Renderer.ts";
 import { type DIVESelectable } from "../interface/Selectable.ts";
+import { isSelectTool } from "../toolbox/select/SelectTool.ts";
 
 type EventListener<Action extends keyof Actions> = (payload: Actions[Action]['PAYLOAD']) => void;
 
@@ -290,8 +290,10 @@ export default class DIVECommunication {
 
         if (!('isSelectable' in sceneObject)) return false;
 
-        this.toolbox.UseTool('select');
-        (this.toolbox.GetActiveTool() as DIVESelectTool).AttachGizmo(sceneObject as DIVESelectable);
+        const activeTool = this.toolbox.GetActiveTool();
+        if (activeTool && isSelectTool(activeTool)) {
+            activeTool.AttachGizmo(sceneObject as DIVESelectable);
+        }
 
         // copy object to payload to use later
         Object.assign(payload, object);
@@ -308,8 +310,10 @@ export default class DIVECommunication {
 
         if (!('isSelectable' in sceneObject)) return false;
 
-        this.toolbox.UseTool('select');
-        (this.toolbox.GetActiveTool() as DIVESelectTool).DetachGizmo();
+        const activeTool = this.toolbox.GetActiveTool();
+        if (activeTool && isSelectTool(activeTool)) {
+            activeTool.DetachGizmo();
+        }
 
         // copy object to payload to use later
         Object.assign(payload, object);

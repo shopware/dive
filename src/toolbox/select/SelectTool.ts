@@ -1,9 +1,14 @@
-import { Object3D } from "three";
-import { DIVESelectable, findSelectableInterface } from "../../interface/Selectable.ts";
+import { type Object3D } from "three";
 import DIVEScene from "../../scene/Scene.ts";
-import { DIVEMoveable } from "../../interface/Moveable.ts";
-import DIVEOrbitControls from "../../controls/OrbitControls.ts";
 import DIVETransformTool from "../transform/TransformTool.ts";
+import type DIVEOrbitControls from "../../controls/OrbitControls.ts";
+import { type DIVESelectable, findSelectableInterface } from "../../interface/Selectable.ts";
+import { type DIVEMoveable } from "../../interface/Moveable.ts";
+import { type DIVEBaseTool } from "../BaseTool.ts";
+
+export const isSelectTool = (tool: DIVEBaseTool): tool is DIVESelectTool => {
+    return (tool as DIVESelectTool).isSelectTool !== undefined;
+}
 
 export interface DIVEObjectEventMap {
     select: object
@@ -17,7 +22,8 @@ export interface DIVEObjectEventMap {
  * @module
  */
 
-export default class DIVESelectTool extends DIVETransformTool {
+export class DIVESelectTool extends DIVETransformTool {
+    readonly isSelectTool: boolean = true;
 
     constructor(scene: DIVEScene, controller: DIVEOrbitControls) {
         super(scene, controller);

@@ -13,7 +13,7 @@ export type DraggableEvent = {
 }
 
 /* eslint-disable @typescript-eslint/no-unused-vars */
-export default abstract class DIVEBaseTool {
+export abstract class DIVEBaseTool {
     readonly POINTER_DRAG_THRESHOLD: number = 0.001;
 
     public name: string;
