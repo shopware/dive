@@ -10,7 +10,7 @@ import { Vector3Like } from "three";
  * @module
  */
 
-export default class DIVEMediaCreator {
+export class DIVEMediaCreator {
     private renderer: DIVERenderer;
     private scene: DIVEScene;
     private controller: DIVEOrbitControls;

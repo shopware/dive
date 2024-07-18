@@ -1,4 +1,4 @@
-import DIVEMediaCreator from '../MediaCreator';
+import { DIVEMediaCreator } from '../MediaCreator';
 import { DIVERenderer } from '../../renderer/Renderer';
 import DIVEScene from '../../scene/Scene';
 import DIVEPerspectiveCamera, { DIVEPerspectiveCameraDefaultSettings } from '../../camera/PerspectiveCamera';

@@ -6,9 +6,9 @@ import { type Color, type MeshStandardMaterial } from "three";
 import { type COMLight, type COMModel, type COMEntity, type COMPov } from "./types.ts";
 import type DIVEScene from "../scene/Scene.ts";
 import type DIVEToolbox from "../toolbox/Toolbox.ts";
-import type DIVEMediaCreator from "../mediacreator/MediaCreator.ts";
 import type DIVEOrbitControls from "../controls/OrbitControls.ts";
 import type DIVEModel from "../model/Model.ts";
+import { type DIVEMediaCreator } from "../mediacreator/MediaCreator.ts";
 import { type DIVERenderer } from "../renderer/Renderer.ts";
 import { type DIVESelectable } from "../interface/Selectable.ts";
 import { isSelectTool } from "../toolbox/select/SelectTool.ts";
@@ -53,7 +53,7 @@ export default class DIVECommunication {
     private _mediaGenerator: DIVEMediaCreator | null;
     private get mediaGenerator(): DIVEMediaCreator {
         if (!this._mediaGenerator) {
-            const DIVEMediaCreator = require('../mediacreator/MediaCreator.ts').default as typeof import('../mediacreator/MediaCreator.ts').default;
+            const DIVEMediaCreator = require('../mediacreator/MediaCreator.ts').default as typeof import('../mediacreator/MediaCreator.ts').DIVEMediaCreator;
             this._mediaGenerator = new DIVEMediaCreator(this.renderer, this.scene, this.controller);
         }
         return this._mediaGenerator;
