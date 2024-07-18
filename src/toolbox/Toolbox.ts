@@ -39,7 +39,7 @@ export default class DIVEToolbox {
         this._activeTool = null;
     }
 
-    public dispose(): void {
+    public Dispose(): void {
         this.removeEventListeners();
     }
 
