@@ -55,7 +55,7 @@ describe('dive/toolbox/DIVEToolBox', () => {
 
     it('should dispose', () => {
         const toolBox = new DIVEToolbox({} as DIVEScene, mockController);
-        toolBox.dispose();
+        toolBox.Dispose();
         expect(mock_removeEventListener).toHaveBeenCalled();
     });
 

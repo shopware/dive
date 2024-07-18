@@ -155,6 +155,7 @@ jest.mock('../toolbox/Toolbox.ts', () => {
         this.userData = {
             id: undefined,
         }
+        this.Dispose = jest.fn();
         this.removeFromParent = jest.fn();
         return this;
     });

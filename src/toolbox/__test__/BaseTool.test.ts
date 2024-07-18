@@ -50,6 +50,16 @@ describe('dive/toolbox/DIVEBaseTool', () => {
         expect(baseTool).toBeDefined();
     });
 
+    it('should Activate', () => {
+        const baseTool = new abstractWrapper(mockScene, mockController);
+        expect(() => baseTool.Activate()).not.toThrow();
+    });
+
+    it('should Deactivate', () => {
+        const baseTool = new abstractWrapper(mockScene, mockController);
+        expect(() => baseTool.Deactivate()).not.toThrow();
+    });
+
     it('should raycast', () => {
         const toolBox = new abstractWrapper(mockScene, mockController);
         expect(() => toolBox['raycast']()).not.toThrow();
@@ -62,7 +72,24 @@ describe('dive/toolbox/DIVEBaseTool', () => {
         expect(toolBox['_pointerAnyDown']).toBeDefined();
         expect(toolBox['_pointerAnyDown']).toBe(false);
 
+        toolBox['_pointerPrimaryDown'] = false;
+        toolBox['_pointerMiddleDown'] = false;
+        toolBox['_pointerSecondaryDown'] = false;
+        expect(toolBox['_pointerAnyDown']).toBe(false);
+
         toolBox['_pointerPrimaryDown'] = true;
+        toolBox['_pointerMiddleDown'] = false;
+        toolBox['_pointerSecondaryDown'] = false;
+        expect(toolBox['_pointerAnyDown']).toBe(true);
+
+        toolBox['_pointerPrimaryDown'] = false;
+        toolBox['_pointerMiddleDown'] = true;
+        toolBox['_pointerSecondaryDown'] = false;
+        expect(toolBox['_pointerAnyDown']).toBe(true);
+
+        toolBox['_pointerPrimaryDown'] = false;
+        toolBox['_pointerMiddleDown'] = false;
+        toolBox['_pointerSecondaryDown'] = true;
         expect(toolBox['_pointerAnyDown']).toBe(true);
     });
 
@@ -387,8 +414,18 @@ describe('dive/toolbox/DIVEBaseTool', () => {
         expect(() => toolBox.onDrag({} as PointerEvent)).not.toThrow();
     });
 
+    it('should execute onCLick correctly', () => {
+        const toolBox = new abstractWrapper(mockScene, mockController);
+        expect(() => toolBox.onClick({} as PointerEvent)).not.toThrow();
+    });
+
     it('should execute onDragEnd correctly', () => {
         const toolBox = new abstractWrapper(mockScene, mockController);
         expect(() => toolBox.onDragEnd({} as PointerEvent)).not.toThrow();
+    });
+
+    it('should execute onWheel correctly', () => {
+        const toolBox = new abstractWrapper(mockScene, mockController);
+        expect(() => toolBox.onWheel({} as WheelEvent)).not.toThrow();
     });
 });
