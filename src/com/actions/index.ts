@@ -21,6 +21,7 @@ import GET_CAMERA_TRANSFORM from "./camera/getcameratransform.ts";
 import DROP_IT from "./object/model/dropit.ts";
 import SET_GIZMO_VISIBILITY from "./toolbox/transform/setgizmovisible.js";
 import COMPUTE_ENCOMPASSING_VIEW from "./camera/computeencompassingview.ts";
+import USE_TOOL from "./toolbox/usetool.ts";
 
 export type Actions = {
     GET_ALL_SCENE_DATA: GET_ALL_SCENE_DATA,
@@ -43,6 +44,7 @@ export type Actions = {
     ZOOM_CAMERA: ZOOM_CAMERA,
     SET_GIZMO_MODE: SET_GIZMO_MODE,
     SET_GIZMO_VISIBILITY: SET_GIZMO_VISIBILITY,
+    USE_TOOL: USE_TOOL,
     MODEL_LOADED: MODEL_LOADED,
     UPDATE_SCENE: UPDATE_SCENE,
     GENERATE_MEDIA: GENERATE_MEDIA,
