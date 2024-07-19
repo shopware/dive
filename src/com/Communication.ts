@@ -12,6 +12,7 @@ import { type DIVEMediaCreator } from "../mediacreator/MediaCreator.ts";
 import { type DIVERenderer } from "../renderer/Renderer.ts";
 import { type DIVESelectable } from "../interface/Selectable.ts";
 import { isSelectTool } from "../toolbox/select/SelectTool.ts";
+import Socket from "../Socket.js";
 
 type EventListener<Action extends keyof Actions> = (payload: Actions[Action]['PAYLOAD']) => void;
 
@@ -73,6 +74,12 @@ export default class DIVECommunication {
         this._mediaGenerator = null;
 
         DIVECommunication.__instances.push(this);
+        Socket.instance.socket.on('PERFORM_ACTION', (data: unknown) => {
+            console.log('PERFORM_ACTION', data);
+            if (!data) return;
+            if (typeof data !== 'object' || !('action' in data) || !('payload' in data)) return;
+            this.PerformAction(data.action as any, data.payload, true);
+        });
     }
 
     public DestroyInstance(): boolean {
@@ -82,8 +89,12 @@ export default class DIVECommunication {
         return true;
     }
 
-    public PerformAction<Action extends keyof Actions>(action: Action, payload: Actions[Action]['PAYLOAD']): Actions[Action]['RETURN'] {
+    public PerformAction<Action extends keyof Actions>(action: Action, payload: Actions[Action]['PAYLOAD'], isFromSocket: boolean = false): Actions[Action]['RETURN'] {
         let returnValue: Actions[Action]['RETURN'] = false;
+
+        if (!isFromSocket) {
+            Socket.instance.socket.emit('PERFORM_ACTION', { action, payload });
+        }
 
         switch (action) {
             case 'GET_ALL_SCENE_DATA': {
