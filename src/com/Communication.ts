@@ -75,7 +75,7 @@ export default class DIVECommunication {
 
         DIVECommunication.__instances.push(this);
         Socket.instance.socket.on('PERFORM_ACTION', (data: unknown) => {
-            console.log('PERFORM_ACTION', data);
+            console.log('GET', data);
             if (!data) return;
             if (typeof data !== 'object' || !('action' in data) || !('payload' in data)) return;
             this.PerformAction(data.action as any, data.payload, true);
@@ -94,6 +94,7 @@ export default class DIVECommunication {
 
         if (!isFromSocket) {
             Socket.instance.socket.emit('PERFORM_ACTION', { action, payload });
+            console.log('SEND', { action, payload });
         }
 
         switch (action) {

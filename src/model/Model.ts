@@ -50,6 +50,7 @@ export default class DIVEModel extends Object3D implements DIVESelectable, DIVEM
     }
 
     public SetRotation(rotation: Vector3Like): void {
+        console.log('SetRotation', rotation);
         this.rotation.setFromVector3(new Vector3(rotation.x, rotation.y, rotation.z));
     }
 
