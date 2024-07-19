@@ -43,6 +43,12 @@ jest.mock('three', () => {
                 this.z += vec3.z;
                 return this;
             };
+            this.sub = (vec3: Vector3) => {
+                this.x -= vec3.x;
+                this.y -= vec3.y;
+                this.z -= vec3.z;
+                return this;
+            };
             return this;
         }),
         Object3D: jest.fn(function () {
@@ -63,6 +69,7 @@ jest.mock('three', () => {
                 },
             }
             this.add = jest.fn();
+            this.sub = jest.fn();
             this.children = [{
                 visible: true,
                 material: {
@@ -278,7 +285,7 @@ describe('dive/model/DIVEModel', () => {
         model.parent = scene.Root;
 
         expect(() => model.DropIt()).not.toThrow();
-        expect(model.position.y).toBe(1.5);
+        expect(model.position.y).toBe(2.5);
         expect(comMock.PerformAction).toHaveBeenCalledTimes(1);
 
         expect(() => model.DropIt()).not.toThrow();

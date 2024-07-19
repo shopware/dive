@@ -97,7 +97,7 @@ export default class DIVEModel extends Object3D implements DIVESelectable, DIVEM
             const worldPos = mesh.localToWorld(meshBB.max.clone());
 
             const oldPos = this.position.clone();
-            const newPos = this.position.clone().setY(worldPos.y).add(new Vector3(0, bottomY, 0));
+            const newPos = this.position.clone().setY(worldPos.y).sub(new Vector3(0, bottomY, 0));
             this.position.copy(newPos);
 
             // if the position changed, update the object in communication
