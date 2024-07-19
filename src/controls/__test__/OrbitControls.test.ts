@@ -1,6 +1,7 @@
 import DIVEOrbitControls from '../OrbitControls';
-import DIVEPerspectiveCamera from '../../camera/PerspectiveCamera';
-import DIVERenderer, { DIVERendererDefaultSettings } from '../../renderer/Renderer';
+import type DIVEPerspectiveCamera from '../../camera/PerspectiveCamera';
+import { DIVERenderer } from '../../renderer/Renderer';
+import { Box3 } from 'three';
 
 jest.mock('three/examples/jsm/Addons.js', () => {
     return {
@@ -88,11 +89,32 @@ const moveToDuration = 1000;
 
 const mockCamera = {
     position: {
-        clone: jest.fn(),
+        clone: jest.fn(() => {
+            return mockCamera.position;
+        }),
+        normalize: jest.fn(() => {
+            return mockCamera.position;
+        }),
+        multiplyScalar: jest.fn(() => {
+            return mockCamera.position;
+        }),
     },
     lookAt: jest.fn(),
 } as unknown as DIVEPerspectiveCamera;
-const mockRenderer: DIVERenderer = new DIVERenderer(DIVERendererDefaultSettings);
+const mockRenderer = {
+    render: jest.fn(),
+    OnResize: jest.fn(),
+    getViewport: jest.fn(),
+    setViewport: jest.fn(),
+    AddPreRenderCallback: jest.fn((callback) => {
+        callback();
+    }),
+    AddPostRenderCallback: jest.fn((callback) => {
+        callback();
+    }),
+    RemovePreRenderCallback: jest.fn(),
+    RemovePostRenderCallback: jest.fn(),
+} as unknown as DIVERenderer;
 
 describe('dive/controls/DIVEOrbitControls', () => {
     afterEach(() => {
@@ -102,6 +124,11 @@ describe('dive/controls/DIVEOrbitControls', () => {
     it('should instantiate', () => {
         const controller = new DIVEOrbitControls(mockCamera, mockRenderer);
         expect(controller).toBeDefined();
+    });
+
+    it('should compute encompassing view', () => {
+        const controller = new DIVEOrbitControls(mockCamera, mockRenderer);
+        expect(() => controller.ComputeEncompassingView(new Box3())).not.toThrow();
     });
 
     it('should zoom in with default value', () => {

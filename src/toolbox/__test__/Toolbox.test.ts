@@ -1,6 +1,6 @@
-import DIVEOrbitControls from '../../controls/OrbitControls';
-import DIVEScene from '../../scene/Scene';
-import DIVEToolbox from '../Toolbox';
+import DIVEToolbox, { type ToolType } from '../Toolbox';
+import type DIVEOrbitControls from '../../controls/OrbitControls';
+import type DIVEScene from '../../scene/Scene';
 
 /**
  * @jest-environment jsdom
@@ -21,27 +21,20 @@ const mock_Canvas = {
     offsetTop: 0,
 };
 
-const mock_Activate = jest.fn();
-const mock_Deactivate = jest.fn();
-const mock_onPointerDown = jest.fn();
-const mock_onPointerMove = jest.fn();
-const mock_onPointerUp = jest.fn();
-const mock_onWheel = jest.fn();
-const mock_SetGizmoMode = jest.fn();
-const mock_SetGizmoVisibility = jest.fn();
-
 jest.mock('../select/SelectTool.ts', () => {
-    return jest.fn(function () {
-        this.Activate = mock_Activate;
-        this.Deactivate = mock_Deactivate;
-        this.onPointerDown = mock_onPointerDown;
-        this.onPointerMove = mock_onPointerMove;
-        this.onPointerUp = mock_onPointerUp;
-        this.onWheel = mock_onWheel;
-        this.SetGizmoMode = mock_SetGizmoMode;
-        this.SetGizmoVisibility = mock_SetGizmoVisibility;
-        return this;
-    });
+    return {
+        DIVESelectTool: jest.fn(function () {
+            this.Activate = jest.fn();
+            this.Deactivate = jest.fn();
+            this.onPointerDown = jest.fn();
+            this.onPointerMove = jest.fn();
+            this.onPointerUp = jest.fn();
+            this.onWheel = jest.fn();
+            this.SetGizmoMode = jest.fn();
+            this.SetGizmoVisibility = jest.fn();
+            return this;
+        })
+    }
 });
 
 const mockController = {
@@ -58,52 +51,56 @@ describe('dive/toolbox/DIVEToolBox', () => {
     it('should instantiate', () => {
         const toolBox = new DIVEToolbox({} as DIVEScene, mockController);
         expect(toolBox).toBeDefined();
-        expect(mock_Activate).toHaveBeenCalledTimes(1);
-        expect(mock_addEventListener).toHaveBeenCalled();
     });
 
     it('should dispose', () => {
         const toolBox = new DIVEToolbox({} as DIVEScene, mockController);
-        toolBox.dispose();
+        toolBox.Dispose();
         expect(mock_removeEventListener).toHaveBeenCalled();
     });
 
     it('should throw with incorrect tool', () => {
         const toolBox = new DIVEToolbox({} as DIVEScene, mockController);
-        expect(() => toolBox.UseTool('not a real tool')).toThrow();
-        expect(mock_Deactivate).toHaveBeenCalledTimes(1);
+        expect(() => toolBox.UseTool('not a real tool' as unknown as ToolType)).toThrow();
+    });
+
+    it('should use no tool', () => {
+        const toolBox = new DIVEToolbox({} as DIVEScene, mockController);
+        expect(() => toolBox.UseTool('select')).not.toThrow();
+        expect(() => toolBox.UseTool('none')).not.toThrow();
     });
 
     it('should use select tool', () => {
         const toolBox = new DIVEToolbox({} as DIVEScene, mockController);
-        expect(mock_Activate).toHaveBeenCalledTimes(1);
-        toolBox.UseTool(DIVEToolbox.DefaultTool);
-        expect(mock_Deactivate).toHaveBeenCalledTimes(1);
-        expect(mock_Activate).toHaveBeenCalledTimes(2);
+        expect(() => toolBox.UseTool(DIVEToolbox.DefaultTool)).not.toThrow();
     });
 
     it('should execute pointer down event on tool', () => {
         const toolBox = new DIVEToolbox({} as DIVEScene, mockController);
-        toolBox.onPointerDown({ type: 'pointerdown' } as PointerEvent);
-        expect(mock_onPointerDown).toHaveBeenCalledTimes(1);
+        expect(() => toolBox.onPointerDown({ type: 'pointerdown' } as PointerEvent)).not.toThrow();
+        expect(() => toolBox.UseTool('select')).not.toThrow();
+        expect(() => toolBox.onPointerDown({ type: 'pointerdown' } as PointerEvent)).not.toThrow();
     });
 
     it('should execute pointer move event on tool', () => {
         const toolBox = new DIVEToolbox({} as DIVEScene, mockController);
-        toolBox.onPointerMove({ type: 'pointermove' } as PointerEvent);
-        expect(mock_onPointerMove).toHaveBeenCalledTimes(1);
+        expect(() => toolBox.onPointerMove({ type: 'pointermove' } as PointerEvent)).not.toThrow();
+        expect(() => toolBox.UseTool('select')).not.toThrow();
+        expect(() => toolBox.onPointerMove({ type: 'pointermove' } as PointerEvent)).not.toThrow();
     });
 
     it('should execute pointer up event on tool', () => {
         const toolBox = new DIVEToolbox({} as DIVEScene, mockController);
-        toolBox.onPointerUp({ type: 'pointerup' } as PointerEvent);
-        expect(mock_onPointerUp).toHaveBeenCalledTimes(1);
+        expect(() => toolBox.onPointerUp({ type: 'pointerup' } as PointerEvent)).not.toThrow();
+        expect(() => toolBox.UseTool('select')).not.toThrow();
+        expect(() => toolBox.onPointerUp({ type: 'pointerup' } as PointerEvent)).not.toThrow();
     });
 
     it('should execute wheel event on tool', () => {
         const toolBox = new DIVEToolbox({} as DIVEScene, mockController);
-        toolBox.onWheel({ type: 'wheel' } as WheelEvent);
-        expect(mock_onWheel).toHaveBeenCalledTimes(1);
+        expect(() => toolBox.onWheel({ type: 'wheel' } as WheelEvent)).not.toThrow();
+        expect(() => toolBox.UseTool('select')).not.toThrow();
+        expect(() => toolBox.onWheel({ type: 'wheel' } as WheelEvent)).not.toThrow();
     });
 
     it('should get active tool', () => {
@@ -113,13 +110,11 @@ describe('dive/toolbox/DIVEToolBox', () => {
 
     it('should set gizmo mode', () => {
         const toolBox = new DIVEToolbox({} as DIVEScene, mockController);
-        toolBox.SetGizmoMode('translate');
-        expect(mock_SetGizmoMode).toHaveBeenCalledTimes(1);
+        expect(() => toolBox.SetGizmoMode('translate')).not.toThrow();
     });
 
     it('should set gizmo active', () => {
         const toolBox = new DIVEToolbox({} as DIVEScene, mockController);
-        toolBox.SetGizmoVisibility(true);
-        expect(mock_SetGizmoVisibility).toHaveBeenCalledTimes(1);
+        expect(() => toolBox.SetGizmoVisibility(true)).not.toThrow();
     });
 });

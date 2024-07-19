@@ -1,6 +1,6 @@
 import DIVEPerspectiveCamera from "../camera/PerspectiveCamera.ts";
 import DIVEScene from "../scene/Scene.ts";
-import DIVERenderer from "../renderer/Renderer.ts";
+import { DIVERenderer } from "../renderer/Renderer.ts";
 import DIVEOrbitControls from "../controls/OrbitControls.ts";
 import { Vector3Like } from "three";
 
@@ -10,7 +10,7 @@ import { Vector3Like } from "three";
  * @module
  */
 
-export default class DIVEMediaCreator {
+export class DIVEMediaCreator {
     private renderer: DIVERenderer;
     private scene: DIVEScene;
     private controller: DIVEOrbitControls;

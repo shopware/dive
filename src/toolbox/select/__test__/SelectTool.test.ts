@@ -1,10 +1,11 @@
-import DIVESelectTool from '../SelectTool';
+import { DIVESelectTool, isSelectTool } from '../SelectTool';
 import DIVEScene from '../../../scene/Scene';
 import DIVEOrbitControls from '../../../controls/OrbitControls';
-import DIVEPerspectiveCamera from '../../../camera/PerspectiveCamera';
-import DIVERenderer, { DIVERendererDefaultSettings } from '../../../renderer/Renderer';
-import { DIVESelectable, isSelectable } from '../../../interface/Selectable';
+import { DIVERenderer, DIVERendererDefaultSettings } from '../../../renderer/Renderer';
+import { DIVESelectable } from '../../../interface/Selectable';
+import type DIVEPerspectiveCamera from '../../../camera/PerspectiveCamera';
 import { type Object3D } from 'three';
+import { type DIVEBaseTool } from '../../BaseTool';
 
 jest.mock('../../../renderer/Renderer', () => {
     return jest.fn(function () {
@@ -109,11 +110,19 @@ jest.mock('three/examples/jsm/Addons.js', () => {
 });
 
 const mockCamera: DIVEPerspectiveCamera = {} as DIVEPerspectiveCamera;
-const mockRenderer: DIVERenderer = new DIVERenderer(DIVERendererDefaultSettings);
+const mockRenderer = {
+    render: jest.fn(),
+    OnResize: jest.fn(),
+} as unknown as DIVERenderer;
 const mockScene: DIVEScene = new DIVEScene();
 const mockController: DIVEOrbitControls = new DIVEOrbitControls(mockCamera, mockRenderer);
 
 describe('dive/toolbox/select/DIVESelectTool', () => {
+    it('should test if it is SelectTool', () => {
+        const selectTool = { isSelectTool: true } as unknown as DIVEBaseTool;
+        expect(isSelectTool(selectTool)).toBeDefined();
+    });
+
     it('should instantiate', () => {
         const selectTool = new DIVESelectTool(mockScene, mockController);
         expect(selectTool).toBeDefined();
@@ -132,13 +141,13 @@ describe('dive/toolbox/select/DIVESelectTool', () => {
 
     it('should execute onClick with hit', () => {
         mock_intersectObjects.mockReturnValueOnce(
-          [{
-              object: {
-                  uuid: 'test',
-                  visible: true,
-                  parent: { name: 'this is the test scene root!!!', parent: null }
-              }
-          }]
+            [{
+                object: {
+                    uuid: 'test',
+                    visible: true,
+                    parent: { name: 'this is the test scene root!!!', parent: null }
+                }
+            }]
         );
         const selectTool = new DIVESelectTool(mockScene, mockController);
         expect(() => selectTool.onClick({ offsetX: 0, offsetY: 0 } as PointerEvent)).not.toThrow();

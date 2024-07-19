@@ -1,4 +1,4 @@
-import { Object3D } from "three";
+import { Box3, Object3D } from "three";
 import DIVELightRoot from "./lightroot/LightRoot.ts";
 import DIVEModelRoot from "./modelroot/ModelRoot.ts";
 import { COMLight, COMModel, COMEntity } from "../../com/types.ts";
@@ -37,6 +37,16 @@ export default class DIVERoot extends Object3D {
         this.add(this.floor);
         this.grid = new DIVEGrid();
         this.add(this.grid);
+    }
+
+    public ComputeSceneBB(): Box3 {
+        const bb = new Box3();
+        this.modelRoot.traverse((object: Object3D) => {
+            if ('isObject3D' in object) {
+                bb.expandByObject(object);
+            }
+        });
+        return bb;
     }
 
     public GetSceneObject(object: Partial<COMEntity>): Object3D | undefined {

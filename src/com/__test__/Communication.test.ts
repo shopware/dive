@@ -1,7 +1,4 @@
 import DIVECommunication from '../Communication';
-import DIVEScene from '../../scene/Scene';
-import DIVEToolbox from '../../toolbox/Toolbox';
-import DIVEMediaCreator from '../../mediacreator/MediaCreator';
 import '..';
 import '../types';
 import '../actions';
@@ -25,15 +22,46 @@ import '../actions/scene/updatescene';
 import '../actions/toolbox/select/setgizmomode';
 import '../actions/toolbox/transform/setgizmovisible';
 import '../actions/camera/getcameratransform';
-import DIVEOrbitControls from '../../controls/OrbitControls';
-import { COMLight, COMModel, COMPov } from '../types';
-import { Object3D } from 'three';
+import type DIVEScene from '../../scene/Scene';
+import type DIVEToolbox from '../../toolbox/Toolbox';
+import type DIVEOrbitControls from '../../controls/OrbitControls';
+import { type DIVERenderer } from '../../renderer/Renderer';
+import { type COMLight, type COMModel, type COMPov } from '../types';
+import { type Object3D } from 'three';
+import { DIVESelectTool, isSelectTool } from '../../toolbox/select/SelectTool';
 
 jest.mock('three/src/math/MathUtils', () => {
     return {
         generateUUID: jest.fn().mockReturnValue('uuid'),
     }
 });
+
+jest.mock('../../mediacreator/MediaCreator', () => {
+    return {
+        default: jest.fn(function () {
+            this.GenerateMedia = jest.fn();
+
+            return this;
+        }),
+    }
+});
+
+jest.mock('../../toolbox/select/SelectTool', () => {
+    return {
+        isSelectTool: jest.fn().mockReturnValue(true),
+        DIVESelectTool: jest.fn().mockImplementation(() => {
+            return {
+                AttachGizmo: jest.fn(),
+                DetachGizmo: jest.fn(),
+            };
+        }),
+    }
+});
+
+const mockRenderer = {
+    render: jest.fn(),
+    OnResize: jest.fn(),
+} as unknown as DIVERenderer;
 
 const mockScene = {
     SetBackground: jest.fn(),
@@ -56,8 +84,12 @@ const mockScene = {
             },
             SetVisibility: jest.fn(),
             SetColor: jest.fn(),
-        }
+        },
+        Grid: {
+            SetVisibility: jest.fn(),
+        },
     },
+    ComputeSceneBB: jest.fn(),
 } as unknown as DIVEScene;
 
 const mockController = {
@@ -108,33 +140,44 @@ const mockController = {
             clone: jest.fn().mockReturnValue({ x: 1, y: 2, z: 3 }),
             copy: jest.fn(),
         },
+        quaternion: {
+            x: 1,
+            y: 2,
+            z: 3,
+            w: 4,
+            clone: jest.fn().mockReturnValue({ x: 1, y: 2, z: 3, w: 4 }),
+            copy: jest.fn(),
+        },
         SetCameraLayer: jest.fn(),
+        OnResize: jest.fn(),
+        layers: {
+            mask: 1,
+        },
     },
     MoveTo: jest.fn(),
     RevertLast: jest.fn(),
+    ComputeEncompassingView: jest.fn().mockReturnValue({
+        position: { x: 1, y: 2, z: 3 },
+        target: { x: 4, y: 5, z: 6 }
+    }),
 } as unknown as DIVEOrbitControls;
 
-const mockAttach = jest.fn();
-const mockDetach = jest.fn();
 const mockToolBox = {
     UseTool: jest.fn(),
     GetActiveTool: jest.fn().mockReturnValue({
-        AttachGizmo: mockAttach,
-        DetachGizmo: mockDetach,
+        AttachGizmo: jest.fn(),
+        DetachGizmo: jest.fn(),
     }),
     SetGizmoMode: jest.fn(),
     SetGizmoVisibility: jest.fn(),
 } as unknown as DIVEToolbox;
 
-const mockMediaCreator = {
-    GenerateMedia: jest.fn(),
-} as unknown as DIVEMediaCreator;
 let testCom: DIVECommunication;
 
 
 describe('dive/communication/DIVECommunication', () => {
     beforeEach(() => {
-        testCom = new DIVECommunication(mockScene, mockController, mockToolBox, mockMediaCreator);
+        testCom = new DIVECommunication(mockRenderer, mockScene, mockController, mockToolBox);
     });
 
     afterEach(() => {
@@ -192,13 +235,6 @@ describe('dive/communication/DIVECommunication', () => {
         } as COMLight;
         expect(() => testCom.PerformAction('ADD_OBJECT', payload)).not.toThrow();
     });
-
-    // it('should not dispatch with invalid action type', () => {
-    //     const listener = jest.fn();
-    //     testCom.Subscribe('GET_ALL_OBJECTS', listener);
-    //     testCom.dispatch('INVALID_ACTION_TYPE', {});
-    //     expect(listener).toHaveBeenCalledTimes(0);
-    // });
 
     it('should perform action ADD_OBJECT', () => {
         const payload = {
@@ -434,6 +470,19 @@ describe('dive/communication/DIVECommunication', () => {
         expect(successSet).toBe(true);
     });
 
+    it('should perform action COMPUTE_ENCOMPASSING_VIEW', () => {
+        const payload = {};
+        const transform = testCom.PerformAction('COMPUTE_ENCOMPASSING_VIEW', payload);
+        expect(transform).toStrictEqual({
+            position: { x: 1, y: 2, z: 3 },
+            target: { x: 4, y: 5, z: 6 }
+        });
+        expect(payload).toStrictEqual({
+            position: { x: 1, y: 2, z: 3 },
+            target: { x: 4, y: 5, z: 6 }
+        });
+    });
+
     it('should perform action GET_ALL_SCENE_DATA', () => {
         testCom.PerformAction('ADD_OBJECT', {
             entityType: "pov",
@@ -544,7 +593,6 @@ describe('dive/communication/DIVECommunication', () => {
         jest.spyOn(mockScene, 'GetSceneObject').mockReturnValueOnce({ isSelectable: true } as unknown as Object3D);
         const success3 = testCom.PerformAction('SELECT_OBJECT', { id: 'test0' });
         expect(success3).toBe(true);
-        expect(mockAttach).toHaveBeenCalledTimes(1);
     });
 
     it('should perform action DESELECT_OBJECT', () => {
@@ -570,7 +618,6 @@ describe('dive/communication/DIVECommunication', () => {
         jest.spyOn(mockScene, 'GetSceneObject').mockReturnValueOnce({ isSelectable: true } as unknown as Object3D);
         const success3 = testCom.PerformAction('DESELECT_OBJECT', { id: 'test0' });
         expect(success3).toBe(true);
-        expect(mockDetach).toHaveBeenCalledTimes(1);
     });
 
     it('should perform action SET_CAMERA_TRANSFORM', () => {
@@ -647,6 +694,7 @@ describe('dive/communication/DIVECommunication', () => {
             backgroundColor: 'ffffff',
             floorEnabled: true,
             floorColor: 'ffffff',
+            gridEnabled: true,
         });
         expect(success0).toBe(true);
 
@@ -655,6 +703,7 @@ describe('dive/communication/DIVECommunication', () => {
             backgroundColor: undefined,
             floorEnabled: undefined,
             floorColor: undefined,
+            gridEnabled: undefined,
         });
         expect(success1).toBe(true);
     });

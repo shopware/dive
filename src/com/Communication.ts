@@ -1,13 +1,17 @@
-import { Color, MeshStandardMaterial, MathUtils } from "three";
-import DIVEScene from "../scene/Scene.ts";
 import { Actions } from "./actions/index.ts";
-import { COMLight, COMModel, COMEntity, COMPov } from "./types.ts";
-import DIVEToolbox from "../toolbox/Toolbox.ts";
-import DIVEMediaCreator from "../mediacreator/MediaCreator.ts";
-import DIVEOrbitControls from "../controls/OrbitControls.ts";
-import { DIVESelectable } from "../interface/Selectable.ts";
-import DIVESelectTool from "../toolbox/select/SelectTool.ts";
+import { generateUUID } from 'three/src/math/MathUtils';
+
+// type imports
+import { type Color, type MeshStandardMaterial } from "three";
+import { type COMLight, type COMModel, type COMEntity, type COMPov } from "./types.ts";
+import type DIVEScene from "../scene/Scene.ts";
+import type DIVEToolbox from "../toolbox/Toolbox.ts";
+import type DIVEOrbitControls from "../controls/OrbitControls.ts";
 import type DIVEModel from "../model/Model.ts";
+import { type DIVEMediaCreator } from "../mediacreator/MediaCreator.ts";
+import { type DIVERenderer } from "../renderer/Renderer.ts";
+import { type DIVESelectable } from "../interface/Selectable.ts";
+import { isSelectTool } from "../toolbox/select/SelectTool.ts";
 
 type EventListener<Action extends keyof Actions> = (payload: Actions[Action]['PAYLOAD']) => void;
 
@@ -41,22 +45,32 @@ export default class DIVECommunication {
     }
 
     private id: string;
+    private renderer: DIVERenderer;
     private scene: DIVEScene;
     private controller: DIVEOrbitControls;
     private toolbox: DIVEToolbox;
-    private mediaGenerator: DIVEMediaCreator;
+
+    private _mediaGenerator: DIVEMediaCreator | null;
+    private get mediaGenerator(): DIVEMediaCreator {
+        if (!this._mediaGenerator) {
+            const DIVEMediaCreator = require('../mediacreator/MediaCreator.ts').default as typeof import('../mediacreator/MediaCreator.ts').DIVEMediaCreator;
+            this._mediaGenerator = new DIVEMediaCreator(this.renderer, this.scene, this.controller);
+        }
+        return this._mediaGenerator;
+    }
 
     private registered: Map<string, COMEntity> = new Map();
 
     // private listeners: { [key: string]: EventListener[] } = {};
     private listeners: Map<keyof Actions, EventListener<keyof Actions>[]> = new Map();
 
-    constructor(scene: DIVEScene, controls: DIVEOrbitControls, toolbox: DIVEToolbox, mediaGenerator: DIVEMediaCreator) {
-        this.id = MathUtils.generateUUID();
+    constructor(renderer: DIVERenderer, scene: DIVEScene, controls: DIVEOrbitControls, toolbox: DIVEToolbox) {
+        this.id = generateUUID();
+        this.renderer = renderer;
         this.scene = scene;
         this.controller = controls;
         this.toolbox = toolbox;
-        this.mediaGenerator = mediaGenerator;
+        this._mediaGenerator = null;
 
         DIVECommunication.__instances.push(this);
     }
@@ -130,6 +144,10 @@ export default class DIVECommunication {
             }
             case 'RESET_CAMERA': {
                 returnValue = this.resetCamera(payload as Actions['RESET_CAMERA']['PAYLOAD']);
+                break;
+            }
+            case 'COMPUTE_ENCOMPASSING_VIEW': {
+                returnValue = this.computeEncompassingView(payload as Actions['COMPUTE_ENCOMPASSING_VIEW']['PAYLOAD']);
                 break;
             }
             case 'SET_CAMERA_LAYER': {
@@ -276,8 +294,10 @@ export default class DIVECommunication {
 
         if (!('isSelectable' in sceneObject)) return false;
 
-        this.toolbox.UseTool('select');
-        (this.toolbox.GetActiveTool() as DIVESelectTool).AttachGizmo(sceneObject as DIVESelectable);
+        const activeTool = this.toolbox.GetActiveTool();
+        if (activeTool && isSelectTool(activeTool)) {
+            activeTool.AttachGizmo(sceneObject as DIVESelectable);
+        }
 
         // copy object to payload to use later
         Object.assign(payload, object);
@@ -294,8 +314,10 @@ export default class DIVECommunication {
 
         if (!('isSelectable' in sceneObject)) return false;
 
-        this.toolbox.UseTool('select');
-        (this.toolbox.GetActiveTool() as DIVESelectTool).DetachGizmo();
+        const activeTool = this.toolbox.GetActiveTool();
+        if (activeTool && isSelectTool(activeTool)) {
+            activeTool.DetachGizmo();
+        }
 
         // copy object to payload to use later
         Object.assign(payload, object);
@@ -372,6 +394,15 @@ export default class DIVECommunication {
         return true;
     }
 
+    private computeEncompassingView(payload: Actions['COMPUTE_ENCOMPASSING_VIEW']['PAYLOAD']): Actions['COMPUTE_ENCOMPASSING_VIEW']['RETURN'] {
+        const sceneBB = this.scene.ComputeSceneBB();
+
+        const transform = this.controller.ComputeEncompassingView(sceneBB);
+        Object.assign(payload, transform);
+
+        return transform;
+    }
+
     private zoomCamera(payload: Actions['ZOOM_CAMERA']['PAYLOAD']): Actions['ZOOM_CAMERA']['RETURN'] {
         if (payload.direction === 'IN') this.controller.ZoomIn(payload.by);
         if (payload.direction === 'OUT') this.controller.ZoomOut(payload.by);
@@ -398,6 +429,8 @@ export default class DIVECommunication {
         if (payload.name !== undefined) this.scene.name = payload.name;
         if (payload.backgroundColor !== undefined) this.scene.SetBackground(payload.backgroundColor);
 
+        if (payload.gridEnabled !== undefined) this.scene.Root.Grid.SetVisibility(payload.gridEnabled);
+
         if (payload.floorEnabled !== undefined) this.scene.Root.Floor.SetVisibility(payload.floorEnabled);
         if (payload.floorColor !== undefined) this.scene.Root.Floor.SetColor(payload.floorColor);
 
@@ -406,6 +439,7 @@ export default class DIVECommunication {
         // TODO optmize this
         payload.name = this.scene.name;
         payload.backgroundColor = '#' + (this.scene.background as Color).getHexString();
+        payload.gridEnabled = this.scene.Root.Grid.visible;
         payload.floorEnabled = this.scene.Root.Floor.visible;
         payload.floorColor = '#' + (this.scene.Root.Floor.material as MeshStandardMaterial).color.getHexString();
 

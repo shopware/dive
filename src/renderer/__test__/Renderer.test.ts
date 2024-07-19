@@ -1,6 +1,6 @@
-import DIVEPerspectiveCamera from '../../camera/PerspectiveCamera';
-import DIVEScene from '../../scene/Scene';
-import DIVERenderer, { DIVERendererDefaultSettings } from '../Renderer';
+import type DIVEPerspectiveCamera from '../../camera/PerspectiveCamera';
+import type DIVEScene from '../../scene/Scene';
+import { DIVERenderer, DIVERendererDefaultSettings } from '../Renderer';
 
 /**
  * @jest-environment jsdom
@@ -20,6 +20,7 @@ jest.mock('three', () => {
                     position: 'absolute',
                 },
             };
+            this.dispose = jest.fn();
             this.debug = {
                 checkShaderErrors: true,
             };
@@ -43,12 +44,20 @@ let renderer: DIVERenderer;
 describe('dive/renderer/DIVERenderer', () => {
     beforeEach(() => {
         jest.clearAllMocks();
-        renderer = new DIVERenderer(DIVERendererDefaultSettings);
+        renderer = new DIVERenderer();
     });
 
     it('should instantiate', () => {
         expect(renderer).toBeDefined();
-        renderer = new DIVERenderer();
+    });
+
+    it('should instantiate with settings parameter', () => {
+        renderer = new DIVERenderer(DIVERendererDefaultSettings);
+        expect(renderer).toBeDefined();
+    });
+
+    it('should dispose', () => {
+        renderer.Dispose();
     });
 
     it('should start render', () => {

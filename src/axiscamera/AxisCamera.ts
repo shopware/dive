@@ -1,7 +1,10 @@
-import { AxesHelper, Color, Material, Matrix4, OrthographicCamera } from "three";
+import { AxesHelper, Color, Material, Matrix4, OrthographicCamera, Vector4 } from "three";
 import SpriteText from "three-spritetext";
 import { COORDINATE_LAYER_MASK } from "../constant/VisibilityLayerMask.ts";
 import { AxesColorRed, AxesColorGreen, AxesColorBlue, AxesColorRedLetter, AxesColorGreenLetter, AxesColorBlueLetter } from "../constant/AxisHelperColors.ts";
+import { DIVERenderer } from "../renderer/Renderer.ts";
+import DIVEScene from "../scene/Scene.ts";
+import DIVEOrbitControls from "../controls/OrbitControls.ts";
 
 /**
  * Shows the scene axes in the bottom left corner of the screen.
@@ -12,7 +15,12 @@ import { AxesColorRed, AxesColorGreen, AxesColorBlue, AxesColorRedLetter, AxesCo
 export default class DIVEAxisCamera extends OrthographicCamera {
     private axesHelper: AxesHelper;
 
-    constructor() {
+    private _renderer: DIVERenderer;
+    private _scene: DIVEScene;
+
+    private _renderCallbackId: string;
+
+    constructor(renderer: DIVERenderer, scene: DIVEScene, controls: DIVEOrbitControls) {
         super(-1, 1, 1, -1, 0.1, 100);
 
         this.layers.mask = COORDINATE_LAYER_MASK;
@@ -42,6 +50,36 @@ export default class DIVEAxisCamera extends OrthographicCamera {
         this.axesHelper.add(z);
 
         this.add(this.axesHelper);
+
+        // attach everything to current scene and render cycle
+        this._renderer = renderer;
+        this._scene = scene;
+        this._scene.add(this);
+
+        const restoreViewport = new Vector4();
+
+        this._renderCallbackId = renderer.AddPostRenderCallback(() => {
+            const restoreBackground = scene.background;
+            scene.background = null;
+
+            renderer.getViewport(restoreViewport);
+            renderer.setViewport(0, 0, 150, 150);
+            renderer.autoClear = false;
+
+            this.SetFromCameraMatrix(controls.object.matrix);
+
+            renderer.render(scene, this);
+
+            renderer.setViewport(restoreViewport);
+            renderer.autoClear = true;
+
+            scene.background = restoreBackground;
+        });
+    }
+
+    public Dispose(): void {
+        this._renderer.RemovePostRenderCallback(this._renderCallbackId);
+        this._scene.remove(this);
     }
 
     public SetFromCameraMatrix(matrix: Matrix4): void {

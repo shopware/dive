@@ -1,11 +1,10 @@
 
+import { DIVEBaseTool } from '../BaseTool';
+import type DIVEOrbitControls from '../../controls/OrbitControls';
+import type DIVEScene from '../../scene/Scene';
 import { type Object3D, type Vector3 } from 'three';
-import DIVEOrbitControls from '../../controls/OrbitControls';
-import DIVEScene from '../../scene/Scene';
-import DIVEBaseTool from '../BaseTool';
-import DIVEToolbox from '../Toolbox';
 import { type DIVEHoverable } from '../../interface/Hoverable';
-import { DIVEDraggable } from '../../interface/Draggable';
+import { type DIVEDraggable } from '../../interface/Draggable';
 
 /**
  * @jest-environment jsdom
@@ -47,8 +46,18 @@ describe('dive/toolbox/DIVEBaseTool', () => {
     });
 
     it('should instantiate', () => {
-        const toolBox = new abstractWrapper(mockScene, mockController);
-        expect(toolBox).toBeDefined();
+        const baseTool = new abstractWrapper(mockScene, mockController);
+        expect(baseTool).toBeDefined();
+    });
+
+    it('should Activate', () => {
+        const baseTool = new abstractWrapper(mockScene, mockController);
+        expect(() => baseTool.Activate()).not.toThrow();
+    });
+
+    it('should Deactivate', () => {
+        const baseTool = new abstractWrapper(mockScene, mockController);
+        expect(() => baseTool.Deactivate()).not.toThrow();
     });
 
     it('should raycast', () => {
@@ -63,7 +72,24 @@ describe('dive/toolbox/DIVEBaseTool', () => {
         expect(toolBox['_pointerAnyDown']).toBeDefined();
         expect(toolBox['_pointerAnyDown']).toBe(false);
 
+        toolBox['_pointerPrimaryDown'] = false;
+        toolBox['_pointerMiddleDown'] = false;
+        toolBox['_pointerSecondaryDown'] = false;
+        expect(toolBox['_pointerAnyDown']).toBe(false);
+
         toolBox['_pointerPrimaryDown'] = true;
+        toolBox['_pointerMiddleDown'] = false;
+        toolBox['_pointerSecondaryDown'] = false;
+        expect(toolBox['_pointerAnyDown']).toBe(true);
+
+        toolBox['_pointerPrimaryDown'] = false;
+        toolBox['_pointerMiddleDown'] = true;
+        toolBox['_pointerSecondaryDown'] = false;
+        expect(toolBox['_pointerAnyDown']).toBe(true);
+
+        toolBox['_pointerPrimaryDown'] = false;
+        toolBox['_pointerMiddleDown'] = false;
+        toolBox['_pointerSecondaryDown'] = true;
         expect(toolBox['_pointerAnyDown']).toBe(true);
     });
 
@@ -388,8 +414,18 @@ describe('dive/toolbox/DIVEBaseTool', () => {
         expect(() => toolBox.onDrag({} as PointerEvent)).not.toThrow();
     });
 
+    it('should execute onCLick correctly', () => {
+        const toolBox = new abstractWrapper(mockScene, mockController);
+        expect(() => toolBox.onClick({} as PointerEvent)).not.toThrow();
+    });
+
     it('should execute onDragEnd correctly', () => {
         const toolBox = new abstractWrapper(mockScene, mockController);
         expect(() => toolBox.onDragEnd({} as PointerEvent)).not.toThrow();
+    });
+
+    it('should execute onWheel correctly', () => {
+        const toolBox = new abstractWrapper(mockScene, mockController);
+        expect(() => toolBox.onWheel({} as WheelEvent)).not.toThrow();
     });
 });

@@ -1,7 +1,7 @@
 import { OrbitControls } from "three/examples/jsm/Addons.js";
 import DIVEPerspectiveCamera from "../camera/PerspectiveCamera.ts";
-import DIVERenderer from "../renderer/Renderer.ts";
-import { MathUtils, Vector3Like } from "three";
+import { DIVERenderer } from "../renderer/Renderer.ts";
+import { type Box3, MathUtils, Vector3, Vector3Like } from "three";
 import { Easing, Tween } from "@tweenjs/tween.js";
 
 export type DIVEOrbitControlsSettings = {
@@ -47,6 +47,18 @@ export default class DIVEOrbitControls extends OrbitControls {
 
         this.enableDamping = settings.enableDamping;
         this.dampingFactor = settings.dampingFactor;
+    }
+
+    public ComputeEncompassingView(bb: Box3): { position: Vector3Like, target: Vector3Like } {
+        const center = bb.getCenter(new Vector3());
+        const size = bb.getSize(new Vector3());
+        const distance = Math.max(size.x, size.y, size.z) * 1.25;
+        const direction = this.object.position.clone().normalize();
+
+        return {
+            position: direction.multiplyScalar(distance),
+            target: center,
+        };
     }
 
     public ZoomIn(by?: number): void {

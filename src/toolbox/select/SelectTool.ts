@@ -1,9 +1,14 @@
-import { Object3D } from "three";
-import { DIVESelectable, isSelectable } from "../../interface/Selectable.ts";
+import { type Object3D } from "three";
 import DIVEScene from "../../scene/Scene.ts";
-import { DIVEMoveable } from "../../interface/Moveable.ts";
-import DIVEOrbitControls from "../../controls/OrbitControls.ts";
 import DIVETransformTool from "../transform/TransformTool.ts";
+import type DIVEOrbitControls from "../../controls/OrbitControls.ts";
+import { type DIVESelectable, findSelectableInterface } from "../../interface/Selectable.ts";
+import { type DIVEMoveable } from "../../interface/Moveable.ts";
+import { type DIVEBaseTool } from "../BaseTool.ts";
+
+export const isSelectTool = (tool: DIVEBaseTool): tool is DIVESelectTool => {
+    return (tool as DIVESelectTool).isSelectTool !== undefined;
+}
 
 export interface DIVEObjectEventMap {
     select: object
@@ -17,7 +22,8 @@ export interface DIVEObjectEventMap {
  * @module
  */
 
-export default class DIVESelectTool extends DIVETransformTool {
+export class DIVESelectTool extends DIVETransformTool {
+    readonly isSelectTool: boolean = true;
 
     constructor(scene: DIVEScene, controller: DIVEOrbitControls) {
         super(scene, controller);
@@ -39,10 +45,6 @@ export default class DIVESelectTool extends DIVETransformTool {
         this.DetachGizmo();
     }
 
-    public DetachGizmo(): void {
-        this._gizmo.detach();
-    }
-
     public AttachGizmo(selectable: DIVESelectable): void {
         if ('isMoveable' in selectable) {
             const movable = selectable as (Object3D & DIVESelectable & DIVEMoveable);
@@ -51,11 +53,15 @@ export default class DIVESelectTool extends DIVETransformTool {
         }
     }
 
+    public DetachGizmo(): void {
+        this._gizmo.detach();
+    }
+
     public onClick(e: PointerEvent): void {
         super.onClick(e);
 
-        const first = this._raycaster.intersectObjects(this._scene.Root.children, true).filter((intersect) => intersect.object.visible )[0];
-        const selectable = this.findSelectableInterface(first?.object);
+        const first = this._raycaster.intersectObjects(this._scene.Root.children, true).filter((intersect) => intersect.object.visible)[0];
+        const selectable = findSelectableInterface(first?.object);
 
         // if nothing is hit
         if (!first || !selectable) {
@@ -76,22 +82,5 @@ export default class DIVESelectTool extends DIVETransformTool {
 
         // select clicked object
         this.Select(selectable);
-    }
-
-    private findSelectableInterface(child: Object3D): (Object3D & DIVESelectable) | undefined {
-        if (child === undefined) return undefined;
-
-        if (child.parent === null) {
-            // in this case it is the scene itself
-            return undefined;
-        }
-
-        if (isSelectable(child)) {
-            // in this case it is the Selectable
-            return child;
-        }
-
-        // search recursively in parent
-        return this.findSelectableInterface(child.parent);
     }
 }

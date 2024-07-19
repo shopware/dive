@@ -1,9 +1,7 @@
-import { Vector4 } from "three";
-import DIVERenderer, { DIVERendererDefaultSettings, DIVERendererSettings } from "./renderer/Renderer.ts";
+import { DIVERenderer, DIVERendererDefaultSettings, DIVERendererSettings } from "./renderer/Renderer.ts";
 import DIVEScene from "./scene/Scene.ts";
 import DIVEPerspectiveCamera, { DIVEPerspectiveCameraDefaultSettings, DIVEPerspectiveCameraSettings } from "./camera/PerspectiveCamera.ts";
 import DIVEOrbitControls, { DIVEOrbitControlsDefaultSettings, DIVEOrbitControlsSettings } from "./controls/OrbitControls.ts";
-import DIVEMediaCreator from "./mediacreator/MediaCreator.ts";
 import DIVEToolbox from "./toolbox/Toolbox.ts";
 import DIVECommunication from "./com/Communication.ts";
 import DIVEAnimationSystem from "./animation/AnimationSystem.ts";
@@ -13,9 +11,11 @@ import { getObjectDelta } from "./helper/getObjectDelta/getObjectDelta.ts";
 import type { Actions } from './com/actions/index.ts';
 import type { COMPov, COMLight, COMModel, COMEntity } from './com/types.ts';
 import { DIVEMath } from './math/index.ts';
+import { generateUUID } from "three/src/math/MathUtils";
 
 export type DIVESettings = {
     autoResize: boolean;
+    displayAxes: boolean;
     renderer: DIVERendererSettings;
     perspectiveCamera: DIVEPerspectiveCameraSettings;
     orbitControls: DIVEOrbitControlsSettings;
@@ -23,6 +23,7 @@ export type DIVESettings = {
 
 export const DIVEDefaultSettings: DIVESettings = {
     autoResize: true,
+    displayAxes: false,
     renderer: DIVERendererDefaultSettings,
     perspectiveCamera: DIVEPerspectiveCameraDefaultSettings,
     orbitControls: DIVEOrbitControlsDefaultSettings,
@@ -52,6 +53,71 @@ export const DIVEDefaultSettings: DIVESettings = {
  */
 
 export default class DIVE {
+    // static members
+    public static QuickView(uri: string): DIVE {
+        const dive = new DIVE();
+
+        dive.Communication.PerformAction('SET_CAMERA_TRANSFORM', {
+            position: { x: 0, y: 2, z: 2 },
+            target: { x: 0, y: 0.5, z: 0 },
+        });
+
+        // generate scene light id
+        const lightid = generateUUID();
+
+        // add scene light
+        dive.Communication.PerformAction('ADD_OBJECT', {
+            entityType: 'light',
+            type: 'scene',
+            name: 'light',
+            id: lightid,
+            enabled: true,
+            visible: true,
+            intensity: 1,
+            color: 0xffffff,
+        });
+
+        // generate model id
+        const modelid = generateUUID();
+
+        // add loaded listener
+        dive.Communication.Subscribe('MODEL_LOADED', (data) => {
+            if (data.id !== modelid) return;
+            dive.Communication.PerformAction('PLACE_ON_FLOOR', {
+                id: modelid,
+            });
+
+            const transform = dive.Communication.PerformAction('COMPUTE_ENCOMPASSING_VIEW', {});
+
+            dive.Communication.PerformAction('SET_CAMERA_TRANSFORM', {
+                position: transform.position,
+                target: transform.target,
+            });
+        });
+
+        // instantiate model
+        dive.Communication.PerformAction('ADD_OBJECT', {
+            entityType: 'model',
+            name: 'object',
+            id: modelid,
+            position: { x: 0, y: 0, z: 0 },
+            rotation: { x: 0, y: 0, z: 0 },
+            scale: { x: 1, y: 1, z: 1 },
+            uri: uri,
+            visible: true,
+            loaded: false,
+        });
+
+        // set scene properties
+        dive.Communication.PerformAction('UPDATE_SCENE', {
+            backgroundColor: 0xffffff,
+            gridEnabled: false,
+            floorColor: 0xffffff,
+        });
+
+        return dive;
+    }
+
     // descriptive members
     private _settings: DIVESettings;
     private _resizeObserverId: string;
@@ -63,13 +129,12 @@ export default class DIVE {
     private scene: DIVEScene;
     private perspectiveCamera: DIVEPerspectiveCamera;
     private orbitControls: DIVEOrbitControls;
-    private mediaCreator: DIVEMediaCreator;
     private toolbox: DIVEToolbox;
     private communication: DIVECommunication;
 
     // additional components
-    private animationSystem: DIVEAnimationSystem;
-    private axisCamera: DIVEAxisCamera;
+    private animationSystem: DIVEAnimationSystem | null;
+    private axisCamera: DIVEAxisCamera | null;
 
     // getters
     public get Communication(): DIVECommunication {
@@ -108,6 +173,13 @@ export default class DIVE {
             }
         }
 
+        if (settingsDelta.displayAxes) {
+            this.axisCamera = new DIVEAxisCamera(this.renderer, this.scene, this.orbitControls);
+        } else {
+            this.axisCamera?.Dispose();
+            this.axisCamera = null;
+        }
+
         Object.assign(this._settings, settings);
     }
 
@@ -123,38 +195,18 @@ export default class DIVE {
         this.scene = new DIVEScene();
         this.perspectiveCamera = new DIVEPerspectiveCamera(this._settings.perspectiveCamera);
         this.orbitControls = new DIVEOrbitControls(this.perspectiveCamera, this.renderer, this._settings.orbitControls);
-        this.mediaCreator = new DIVEMediaCreator(this.renderer, this.scene, this.orbitControls);
         this.toolbox = new DIVEToolbox(this.scene, this.orbitControls);
-        this.communication = new DIVECommunication(this.scene, this.orbitControls, this.toolbox, this.mediaCreator);
+        this.communication = new DIVECommunication(this.renderer, this.scene, this.orbitControls, this.toolbox);
 
         // initialize animation system
-        this.animationSystem = new DIVEAnimationSystem();
-        this.renderer.AddPreRenderCallback(() => {
-            this.animationSystem.update();
-        })
+        this.animationSystem = null;
 
         // initialize axis camera
-        this.axisCamera = new DIVEAxisCamera();
-        this.scene.add(this.axisCamera);
-        const restoreViewport = new Vector4();
-
-        this.renderer.AddPostRenderCallback(() => {
-            const restoreBackground = this.scene.background;
-            this.scene.background = null;
-
-            this.renderer.getViewport(restoreViewport);
-            this.renderer.setViewport(0, 0, 150, 150);
-            this.renderer.autoClear = false;
-
-            this.axisCamera.SetFromCameraMatrix(this.perspectiveCamera.matrix);
-
-            this.renderer.render(this.scene, this.axisCamera);
-
-            this.renderer.setViewport(restoreViewport);
-            this.renderer.autoClear = true;
-
-            this.scene.background = restoreBackground;
-        });
+        if (this._settings.displayAxes) {
+            this.axisCamera = new DIVEAxisCamera(this.renderer, this.scene, this.orbitControls);
+        } else {
+            this.axisCamera = null;
+        }
 
         // add resize observer if autoResize is enabled
         if (this._settings.autoResize) {
@@ -170,6 +222,14 @@ export default class DIVE {
                 console.log(this.scene);
             },
         }
+    }
+
+    public Dispose(): void {
+        this.removeResizeObserver();
+        this.renderer.Dispose();
+        this.axisCamera?.Dispose();
+        this.toolbox.Dispose();
+        this.communication.DestroyInstance();
     }
 
     // methods

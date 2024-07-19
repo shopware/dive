@@ -26,7 +26,7 @@ export const DIVERendererDefaultSettings: DIVERendererSettings = {
  * @module
  */
 
-export default class DIVERenderer extends WebGLRenderer {
+export class DIVERenderer extends WebGLRenderer {
     // basic functionality members
     private paused: boolean = false;
     private running: boolean = false;
@@ -50,6 +50,12 @@ export default class DIVERenderer extends WebGLRenderer {
         this.toneMapping = rendererSettings.toneMapping;
 
         this.debug.checkShaderErrors = false;
+    }
+
+    // Stops renderings and disposes the renderer.
+    public Dispose(): void {
+        this.StopRenderer();
+        this.dispose();
     }
 
     // Starts the renderer with the given scene and camera.

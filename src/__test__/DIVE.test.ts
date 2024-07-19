@@ -30,32 +30,56 @@ jest.mock('three', () => {
     }
 });
 
-jest.mock('../renderer/Renderer.ts', () => {
+jest.mock('three/src/math/MathUtils', () => {
+    return {
+        generateUUID: () => { return 'test_uuid'; },
+    }
+});
+
+jest.mock('../com/Communication.ts', () => {
     return jest.fn(function () {
-        this.domElement = {
-            clientWidth: 800,
-            clientHeight: 600,
-            style: {
-                position: 'absolute',
-            },
-        };
-        this.domElement.parentElement = this.domElement;
-        this.AddPreRenderCallback = (callback: () => void) => {
-            callback();
-        };
-        this.RemovePreRenderCallback = jest.fn();
-        this.AddPostRenderCallback = (callback: () => void) => {
-            callback();
-        };
-        this.getViewport = jest.fn();
-        this.setViewport = jest.fn();
-        this.autoClear = false;
-        this.render = jest.fn();
-        this.StartRenderer = jest.fn();
-        this.OnResize = jest.fn();
+        this.PerformAction = jest.fn().mockReturnValue({
+            position: { x: 0, y: 0, z: 0 },
+            target: { x: 0, y: 0, z: 0 },
+        });
+        this.Subscribe = jest.fn((action: string, callback: (data: { id: string }) => void) => {
+            callback({ id: 'incorrect id' });
+            callback({ id: 'test_uuid' });
+        });
+        this.DestroyInstance = jest.fn();
 
         return this;
     });
+});
+
+jest.mock('../renderer/Renderer.ts', () => {
+    return {
+        DIVERenderer: jest.fn(function () {
+            this.domElement = {
+                clientWidth: 800,
+                clientHeight: 600,
+                style: {
+                    position: 'absolute',
+                },
+            };
+            this.domElement.parentElement = this.domElement;
+            this.AddPreRenderCallback = (callback: () => void) => {
+                callback();
+            };
+            this.RemovePreRenderCallback = jest.fn();
+            this.AddPostRenderCallback = (callback: () => void) => {
+                callback();
+            };
+            this.getViewport = jest.fn();
+            this.setViewport = jest.fn();
+            this.autoClear = false;
+            this.render = jest.fn();
+            this.StartRenderer = jest.fn();
+            this.OnResize = jest.fn();
+            this.Dispose = jest.fn();
+            return this;
+        }),
+    }
 });
 
 jest.mock('../scene/Scene.ts', () => {
@@ -131,6 +155,7 @@ jest.mock('../toolbox/Toolbox.ts', () => {
         this.userData = {
             id: undefined,
         }
+        this.Dispose = jest.fn();
         this.removeFromParent = jest.fn();
         return this;
     });
@@ -152,11 +177,17 @@ jest.mock('../axiscamera/AxisCamera.ts', () => {
         }
         this.removeFromParent = jest.fn();
         this.SetFromCameraMatrix = jest.fn();
+        this.Dispose = jest.fn();
         return this;
     });
 });
 
 describe('dive/DIVE', () => {
+    it('should QuickView', () => {
+        const dive = DIVE.QuickView('test_uri');
+        expect(dive).toBeDefined();
+    });
+
     it('should instantiate', () => {
         const dive = new DIVE();
         expect(dive).toBeDefined();
@@ -165,9 +196,21 @@ describe('dive/DIVE', () => {
         expect(() => (window as any).DIVE.PrintScene()).not.toThrow();
     });
 
+    it('should dispose', () => {
+        let dive = new DIVE();
+        expect(() => dive.Dispose()).not.toThrow();
+
+        const settings = {
+            displayAxes: true,
+        }
+        dive = new DIVE(settings);
+        expect(() => dive.Dispose()).not.toThrow();
+    });
+
     it('should instantiate with settings', () => {
         const settings = {
             autoResize: false,
+            displayAxes: true,
             renderer: {
                 antialias: false,
                 alpha: false,
@@ -209,6 +252,7 @@ describe('dive/DIVE', () => {
         const dive = new DIVE();
         dive.Settings = {
             autoResize: false,
+            displayAxes: true,
             renderer: {
                 antialias: false,
                 alpha: false,

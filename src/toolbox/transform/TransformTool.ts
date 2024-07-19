@@ -1,8 +1,12 @@
-import DIVEBaseTool from "../BaseTool.ts";
+import { DIVEBaseTool } from "../BaseTool.ts";
 import DIVEScene from "../../scene/Scene.ts";
 import DIVEOrbitControls from "../../controls/OrbitControls.ts";
 import { TransformControls } from "three/examples/jsm/Addons";
 import { type DIVEMoveable } from "../../interface/Moveable.ts";
+
+export const isTransformTool = (tool: DIVEBaseTool): tool is DIVETransformTool => {
+    return (tool as DIVETransformTool).isTransformTool !== undefined;
+}
 
 export interface DIVEObjectEventMap {
     select: object
@@ -17,6 +21,8 @@ export interface DIVEObjectEventMap {
  */
 
 export default class DIVETransformTool extends DIVEBaseTool {
+    readonly isTransformTool: boolean = true;
+
     protected _gizmo: TransformControls;
 
     constructor(scene: DIVEScene, controller: DIVEOrbitControls) {

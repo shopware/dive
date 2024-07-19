@@ -16,4 +16,11 @@ describe('dive/grid/DIVEGrid', () => {
         expect((grid.children[0] as GridHelper).material.depthTest).toBe(false);
         expect((grid.children[0] as GridHelper).layers.mask).toBe(HELPER_LAYER_MASK);
     });
+
+    it('should set visibility', () => {
+        grid.SetVisibility(false);
+        expect(grid.visible).toBe(false);
+        grid.SetVisibility(true);
+        expect(grid.visible).toBe(true);
+    });
 });
