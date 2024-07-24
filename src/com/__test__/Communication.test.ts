@@ -28,7 +28,6 @@ import type DIVEOrbitControls from '../../controls/OrbitControls';
 import { type DIVERenderer } from '../../renderer/Renderer';
 import { type COMLight, type COMModel, type COMPov } from '../types';
 import { type Object3D } from 'three';
-import { DIVESelectTool, isSelectTool } from '../../toolbox/select/SelectTool';
 
 jest.mock('three/src/math/MathUtils', () => {
     return {
@@ -38,7 +37,7 @@ jest.mock('three/src/math/MathUtils', () => {
 
 jest.mock('../../mediacreator/MediaCreator', () => {
     return {
-        default: jest.fn(function () {
+        DIVEMediaCreator: jest.fn(function () {
             this.GenerateMedia = jest.fn();
 
             return this;
