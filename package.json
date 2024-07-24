@@ -1,6 +1,6 @@
 {
   "name": "@shopware-ag/dive",
-  "version": "1.6.2",
+  "version": "1.6.3",
   "description": "Shopware Spatial Framework",
   "type": "module",
   "main": "./build/dive.cjs",
