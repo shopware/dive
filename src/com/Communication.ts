@@ -53,7 +53,7 @@ export default class DIVECommunication {
     private _mediaGenerator: DIVEMediaCreator | null;
     private get mediaGenerator(): DIVEMediaCreator {
         if (!this._mediaGenerator) {
-            const DIVEMediaCreator = require('../mediacreator/MediaCreator.ts').default as typeof import('../mediacreator/MediaCreator.ts').DIVEMediaCreator;
+            const DIVEMediaCreator = require('../mediacreator/MediaCreator.ts').DIVEMediaCreator as typeof import('../mediacreator/MediaCreator.ts').DIVEMediaCreator;
             this._mediaGenerator = new DIVEMediaCreator(this.renderer, this.scene, this.controller);
         }
         return this._mediaGenerator;
