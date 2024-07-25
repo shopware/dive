@@ -6,6 +6,15 @@ import { DIVESelectable } from '../../../interface/Selectable';
 import type DIVEPerspectiveCamera from '../../../camera/PerspectiveCamera';
 import { type Object3D } from 'three';
 import { type DIVEBaseTool } from '../../BaseTool';
+import { DIVEAnimationSystem } from '../../../animation/AnimationSystem';
+import { Tween } from '@tweenjs/tween.js';
+
+jest.mock('@tweenjs/tween.js', () => {
+    return {
+        Tween: jest.fn(() => { }),
+        update: jest.fn(),
+    }
+});
 
 jest.mock('../../../renderer/Renderer', () => {
     return jest.fn(function () {
@@ -37,6 +46,22 @@ jest.mock('../../../controls/OrbitControls', () => {
         };
         return this;
     });
+});
+
+
+jest.mock('../../../animation/AnimationSystem', () => {
+    return {
+        DIVEAnimationSystem: jest.fn(function () {
+            this.domElement = {
+                style: {},
+            };
+            this.Animate = <T extends object>(obj: T) => {
+                return new Tween<T>(obj);
+            };
+
+            return this;
+        }),
+    }
 });
 
 jest.mock('../../../scene/Scene', () => {
@@ -115,7 +140,8 @@ const mockRenderer = {
     OnResize: jest.fn(),
 } as unknown as DIVERenderer;
 const mockScene: DIVEScene = new DIVEScene();
-const mockController: DIVEOrbitControls = new DIVEOrbitControls(mockCamera, mockRenderer);
+const mockAnimSystem = new DIVEAnimationSystem(mockRenderer);
+const mockController: DIVEOrbitControls = new DIVEOrbitControls(mockCamera, mockRenderer, mockAnimSystem);
 
 describe('dive/toolbox/select/DIVESelectTool', () => {
     it('should test if it is SelectTool', () => {

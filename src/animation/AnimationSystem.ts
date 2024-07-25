@@ -1,4 +1,4 @@
-import { update as updateTween } from "@tweenjs/tween.js";
+import { Tween, update as updateTween } from "@tweenjs/tween.js";
 import { DIVERenderer } from "../renderer/Renderer";
 
 /**
@@ -8,7 +8,7 @@ import { DIVERenderer } from "../renderer/Renderer";
  * @module
  */
 
-export default class DIVEAnimationSystem {
+export class DIVEAnimationSystem {
     private _renderer: DIVERenderer;
     private _rendererCallbackId: string;
 
@@ -16,7 +16,7 @@ export default class DIVEAnimationSystem {
         this._renderer = renderer;
 
         this._rendererCallbackId = this._renderer.AddPreRenderCallback(() => {
-            this.update();
+            this.Update();
         })
     }
 
@@ -24,7 +24,11 @@ export default class DIVEAnimationSystem {
         this._renderer.RemovePreRenderCallback(this._rendererCallbackId);
     }
 
-    public update(): void {
+    public Update(): void {
         updateTween();
+    }
+
+    public Animate<T extends object>(object: T): Tween<T> {
+        return new Tween<T>(object);
     }
 }

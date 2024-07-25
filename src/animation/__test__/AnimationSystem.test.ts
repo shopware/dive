@@ -1,8 +1,9 @@
 import { DIVERenderer } from '../../renderer/Renderer';
-import DIVEAnimationSystem from '../AnimationSystem';
+import { DIVEAnimationSystem } from '../AnimationSystem';
 
 jest.mock('@tweenjs/tween.js', () => {
     return {
+        Tween: jest.fn(() => { }),
         update: jest.fn(),
     }
 });
@@ -28,9 +29,15 @@ describe('dive/animation/DIVEAnimationSystem', () => {
         expect(anim).toBeDefined();
     });
 
+    it('should Animate', () => {
+        const anim = new DIVEAnimationSystem(mockRenderer);
+        const tween = anim.Animate({});
+        expect(tween).toBeDefined();
+    });
+
     it('should update', () => {
         const anim = new DIVEAnimationSystem(mockRenderer);
-        expect(() => anim.update()).not.toThrow();
+        expect(() => anim.Update()).not.toThrow();
     });
 
     it('should dispose', () => {

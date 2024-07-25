@@ -4,6 +4,7 @@ import DIVEScene from '../../scene/Scene';
 import DIVEPerspectiveCamera, { DIVEPerspectiveCameraDefaultSettings } from '../../camera/PerspectiveCamera';
 import { COMPov } from '../../com';
 import DIVEOrbitControls from '../../controls/OrbitControls';
+import { DIVEAnimationSystem } from '../../animation/AnimationSystem';
 
 /**
  * @jest-environment jsdom
@@ -83,12 +84,29 @@ jest.mock('../../renderer/Renderer', () => {
     }
 });
 
+jest.mock('../../animation/AnimationSystem', () => {
+    return {
+        DIVEAnimationSystem: jest.fn(function () {
+            this.domElement = {
+                toDataURL: mock_toDataURL,
+            }
+            this.render = mock_render;
+            this.OnResize = jest.fn();
+            this.AddPreRenderCallback = jest.fn((callback) => {
+                callback();
+                return 'id';
+            });
+            return this;
+        })
+    }
+});
+
 let mediaCreator: DIVEMediaCreator;
 
 describe('dive/mediacreator/DIVEMediaCreator', () => {
     beforeEach(() => {
         jest.clearAllMocks();
-        mediaCreator = new DIVEMediaCreator(new DIVERenderer(), new DIVEScene(), new DIVEOrbitControls(new DIVEPerspectiveCamera(DIVEPerspectiveCameraDefaultSettings), new DIVERenderer()));
+        mediaCreator = new DIVEMediaCreator(new DIVERenderer(), new DIVEScene(), new DIVEOrbitControls(new DIVEPerspectiveCamera(DIVEPerspectiveCameraDefaultSettings), new DIVERenderer(), new DIVEAnimationSystem(new DIVERenderer())));
     });
 
     it('should instantiate', () => {

@@ -4,7 +4,7 @@ import DIVEPerspectiveCamera, { DIVEPerspectiveCameraDefaultSettings, DIVEPerspe
 import DIVEOrbitControls, { DIVEOrbitControlsDefaultSettings, DIVEOrbitControlsSettings } from "./controls/OrbitControls.ts";
 import DIVEToolbox from "./toolbox/Toolbox.ts";
 import DIVECommunication from "./com/Communication.ts";
-import DIVEAnimationSystem from "./animation/AnimationSystem.ts";
+import { DIVEAnimationSystem } from "./animation/AnimationSystem.ts";
 import DIVEAxisCamera from "./axiscamera/AxisCamera.ts";
 import { getObjectDelta } from "./helper/getObjectDelta/getObjectDelta.ts";
 
@@ -133,7 +133,7 @@ export default class DIVE {
     private communication: DIVECommunication;
 
     // additional components
-    private animationSystem: DIVEAnimationSystem | null;
+    private animationSystem: DIVEAnimationSystem;
     private axisCamera: DIVEAxisCamera | null;
 
     // getters
@@ -194,12 +194,14 @@ export default class DIVE {
         this.renderer = new DIVERenderer(this._settings.renderer);
         this.scene = new DIVEScene();
         this.perspectiveCamera = new DIVEPerspectiveCamera(this._settings.perspectiveCamera);
-        this.orbitControls = new DIVEOrbitControls(this.perspectiveCamera, this.renderer, this._settings.orbitControls);
+
+        // initialize animation system
+        this.animationSystem = new DIVEAnimationSystem(this.renderer);
+
+        this.orbitControls = new DIVEOrbitControls(this.perspectiveCamera, this.renderer, this.animationSystem, this._settings.orbitControls);
         this.toolbox = new DIVEToolbox(this.scene, this.orbitControls);
         this.communication = new DIVECommunication(this.renderer, this.scene, this.orbitControls, this.toolbox);
 
-        // initialize animation system
-        this.animationSystem = null;
 
         // initialize axis camera
         if (this._settings.displayAxes) {
@@ -228,6 +230,7 @@ export default class DIVE {
         this.removeResizeObserver();
         this.renderer.Dispose();
         this.axisCamera?.Dispose();
+        this.animationSystem.Dispose();
         this.toolbox.Dispose();
         this.communication.DestroyInstance();
     }

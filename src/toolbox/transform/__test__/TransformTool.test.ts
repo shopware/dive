@@ -4,6 +4,15 @@ import DIVEOrbitControls from '../../../controls/OrbitControls';
 import DIVEPerspectiveCamera from '../../../camera/PerspectiveCamera';
 import { DIVERenderer } from '../../../renderer/Renderer';
 import { type DIVEBaseTool } from '../../BaseTool';
+import { Tween } from '@tweenjs/tween.js';
+import { DIVEAnimationSystem } from '../../../animation/AnimationSystem';
+
+jest.mock('@tweenjs/tween.js', () => {
+    return {
+        Tween: jest.fn(() => { }),
+        update: jest.fn(),
+    }
+});
 
 jest.mock('../../../renderer/Renderer', () => {
     return jest.fn(function () {
@@ -47,6 +56,21 @@ jest.mock('../../../scene/Scene', () => {
         this.children = [];
         return this;
     });
+});
+
+jest.mock('../../../animation/AnimationSystem', () => {
+    return {
+        DIVEAnimationSystem: jest.fn(function () {
+            this.domElement = {
+                style: {},
+            };
+            this.Animate = <T extends object>(obj: T) => {
+                return new Tween<T>(obj);
+            };
+
+            return this;
+        }),
+    }
 });
 
 const mock_intersectObjects = jest.fn().mockReturnValue([]);
@@ -126,7 +150,8 @@ const mockRenderer = {
     RemovePostRenderCallback: jest.fn(),
 } as unknown as DIVERenderer;
 const mockScene: DIVEScene = new DIVEScene();
-const mockController: DIVEOrbitControls = new DIVEOrbitControls(mockCamera, mockRenderer);
+const mockAnimSystem = new DIVEAnimationSystem(mockRenderer);
+const mockController: DIVEOrbitControls = new DIVEOrbitControls(mockCamera, mockRenderer, mockAnimSystem);
 
 describe('dive/toolbox/select/DIVETransformTool', () => {
     it('should test if it is SelectTool', () => {
