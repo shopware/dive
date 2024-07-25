@@ -2,7 +2,8 @@ import { OrbitControls } from "three/examples/jsm/Addons.js";
 import DIVEPerspectiveCamera from "../camera/PerspectiveCamera.ts";
 import { DIVERenderer } from "../renderer/Renderer.ts";
 import { type Box3, MathUtils, Vector3, Vector3Like } from "three";
-import { Easing, Tween } from "@tweenjs/tween.js";
+import { Easing } from "@tweenjs/tween.js";
+import { type DIVEAnimationSystem } from "../animation/AnimationSystem.ts";
 
 export type DIVEOrbitControlsSettings = {
     enableDamping: boolean;
@@ -23,6 +24,8 @@ export const DIVEOrbitControlsDefaultSettings: DIVEOrbitControlsSettings = {
 export default class DIVEOrbitControls extends OrbitControls {
     public static readonly DEFAULT_ZOOM_FACTOR = 1;
 
+    private _animationSystem: DIVEAnimationSystem;
+
     private last: { pos: Vector3Like, target: Vector3Like } | null = null;
 
     private animating: boolean = false;
@@ -34,8 +37,10 @@ export default class DIVEOrbitControls extends OrbitControls {
     public object: DIVEPerspectiveCamera;
     public domElement: HTMLCanvasElement;
 
-    constructor(camera: DIVEPerspectiveCamera, renderer: DIVERenderer, settings: DIVEOrbitControlsSettings = DIVEOrbitControlsDefaultSettings) {
+    constructor(camera: DIVEPerspectiveCamera, renderer: DIVERenderer, animationSystem: DIVEAnimationSystem, settings: DIVEOrbitControlsSettings = DIVEOrbitControlsDefaultSettings) {
         super(camera, renderer.domElement);
+
+        this._animationSystem = animationSystem;
 
         this.domElement = renderer.domElement;
 
@@ -93,12 +98,12 @@ export default class DIVEOrbitControls extends OrbitControls {
         this.locked = lock;
         this.enabled = false;
 
-        const tweenPos = new Tween(this.object.position)
+        const tweenPos = this._animationSystem.Animate(this.object.position)
             .to(toPosition, duration)
             .easing(Easing.Quadratic.Out)
             .start();
 
-        const tweenQuat = new Tween(this.target)
+        const tweenQuat = this._animationSystem.Animate(this.target)
             .to(toTarget, duration)
             .easing(Easing.Quadratic.Out)
             .onUpdate(() => {
@@ -126,12 +131,12 @@ export default class DIVEOrbitControls extends OrbitControls {
 
         const { pos, target } = this.last!;
 
-        const tweenPos = new Tween(this.object.position)
+        const tweenPos = this._animationSystem.Animate(this.object.position)
             .to(pos, duration)
             .easing(Easing.Quadratic.Out)
             .start();
 
-        const tweenQuat = new Tween(this.target)
+        const tweenQuat = this._animationSystem.Animate(this.target)
             .to(target, duration)
             .easing(Easing.Quadratic.Out)
             .onUpdate(() => {
