@@ -426,7 +426,6 @@ export default class DIVECommunication {
     }
 
     private setGizmoVisibility(payload: Actions['SET_GIZMO_VISIBILITY']['PAYLOAD']): Actions['SET_GIZMO_VISIBILITY']['RETURN'] {
-        console.log('setGizmoVisibility', payload);
         this.toolbox.SetGizmoVisibility(payload);
         return payload;
     }

@@ -137,6 +137,7 @@ jest.mock('../controls/OrbitControls.ts', () => {
             id: undefined,
         }
         this.removeFromParent = jest.fn();
+        this.Dispose = jest.fn();
         return this;
     });
 });
