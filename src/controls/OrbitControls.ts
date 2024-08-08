@@ -37,6 +37,8 @@ export default class DIVEOrbitControls extends OrbitControls {
     public object: DIVEPerspectiveCamera;
     public domElement: HTMLCanvasElement;
 
+    private _removePreRenderCallback: () => void = () => { };
+
     constructor(camera: DIVEPerspectiveCamera, renderer: DIVERenderer, animationSystem: DIVEAnimationSystem, settings: DIVEOrbitControlsSettings = DIVEOrbitControlsDefaultSettings) {
         super(camera, renderer.domElement);
 
@@ -46,12 +48,21 @@ export default class DIVEOrbitControls extends OrbitControls {
 
         this.object = camera;
 
-        renderer.AddPreRenderCallback(() => {
+        const id = renderer.AddPreRenderCallback(() => {
             this.preRenderCallback();
         });
 
+        this._removePreRenderCallback = () => {
+            renderer.RemovePreRenderCallback(id);
+        }
+
         this.enableDamping = settings.enableDamping;
         this.dampingFactor = settings.dampingFactor;
+    }
+
+    public Dispose(): void {
+        this._removePreRenderCallback();
+        this.dispose();
     }
 
     public ComputeEncompassingView(bb: Box3): { position: Vector3Like, target: Vector3Like } {
