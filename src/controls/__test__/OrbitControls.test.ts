@@ -152,6 +152,11 @@ describe('dive/controls/DIVEOrbitControls', () => {
         expect(controller).toBeDefined();
     });
 
+    it('should dispose', () => {
+        const controller = new DIVEOrbitControls(mockCamera, mockRenderer, mockAnimSystem);
+        expect(() => controller.Dispose()).not.toThrow();
+    });
+
     it('should compute encompassing view', () => {
         const controller = new DIVEOrbitControls(mockCamera, mockRenderer, mockAnimSystem);
         expect(() => controller.ComputeEncompassingView(new Box3())).not.toThrow();

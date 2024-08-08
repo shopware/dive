@@ -41,10 +41,16 @@ export default class DIVECommunication {
     private static __instances: DIVECommunication[] = [];
 
     public static get(id: string): DIVECommunication | undefined {
+        const fromComID = this.__instances.find((instance) => instance.id === id);
+        if (fromComID) return fromComID;
         return this.__instances.find((instance) => Array.from(instance.registered.values()).find((object) => object.id === id));
     }
 
-    private id: string;
+    private _id: string;
+    public get id(): string {
+        return this._id;
+    }
+
     private renderer: DIVERenderer;
     private scene: DIVEScene;
     private controller: DIVEOrbitControls;
@@ -65,7 +71,7 @@ export default class DIVECommunication {
     private listeners: Map<keyof Actions, EventListener<keyof Actions>[]> = new Map();
 
     constructor(renderer: DIVERenderer, scene: DIVEScene, controls: DIVEOrbitControls, toolbox: DIVEToolbox) {
-        this.id = generateUUID();
+        this._id = generateUUID();
         this.renderer = renderer;
         this.scene = scene;
         this.controller = controls;

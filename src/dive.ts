@@ -229,6 +229,7 @@ export default class DIVE {
     public Dispose(): void {
         this.removeResizeObserver();
         this.renderer.Dispose();
+        this.orbitControls.Dispose();
         this.axisCamera?.Dispose();
         this.animationSystem.Dispose();
         this.toolbox.Dispose();

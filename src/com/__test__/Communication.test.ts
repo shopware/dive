@@ -186,8 +186,17 @@ describe('dive/communication/DIVECommunication', () => {
 
     it('should instantiate', () => {
         expect(testCom).toBeDefined();
-        expect(() => DIVECommunication.get('id')).not.toThrow();
         expect(DIVECommunication['__instances']).toHaveLength(1);
+    });
+
+    it('should get instance', () => {
+        expect(testCom).toBeDefined();
+        expect(DIVECommunication.get(testCom.id)).toBeDefined();
+
+        testCom.PerformAction('ADD_OBJECT', {
+            id: 'someID',
+        } as COMModel);
+        expect(DIVECommunication.get('someID')).toBeDefined();
     });
 
     it('should destroy instance', () => {
@@ -668,6 +677,14 @@ describe('dive/communication/DIVECommunication', () => {
 
         visibility = testCom.PerformAction('SET_GIZMO_VISIBILITY', false);
         expect(visibility).toBe(false);
+    });
+
+    it('should perform action USE_TOOL', () => {
+        let success = testCom.PerformAction('USE_TOOL', { tool: 'select' });
+        expect(success).toBe(true);
+
+        success = testCom.PerformAction('USE_TOOL', { tool: 'none' });
+        expect(success).toBe(true);
     });
 
     it('should perform action MODEL_LOADED', () => {
