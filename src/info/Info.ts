@@ -123,4 +123,12 @@ export class DIVEInfo {
         // Default to false if none of the conditions are met
         return false;
     }
+
+    public static get isMobile(): boolean {
+        return this.GetSystem() === "Android" || this.GetSystem() === "iOS";
+    }
+
+    public static get isDesktop(): boolean {
+        return !this.isMobile;
+    }
 }
