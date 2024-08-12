@@ -230,10 +230,20 @@ describe('dive/info/DIVEInfo', () => {
         expect(supports).toBe(false);
     });
 
+    it('should support ARQuickLook with feature detection', () => {
+        mockNavigator({
+            userAgent: 'Mozilla/5.0 (iPhone; CPU iPhone OS 15_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/15.1 Mobile/15E148 Safari/604.'
+        });
+        jest.spyOn(document, 'createElement').mockReturnValue({ relList: { supports: () => true } } as unknown as HTMLAnchorElement);
+        const supports = DIVEInfo.GetSupportsARQuickLook();
+        expect(supports).toBe(true);
+    });
+
     it('should support ARQuickLook (iPhone, iOS 15, Safari)', () => {
         mockNavigator({
             userAgent: 'Mozilla/5.0 (iPhone; CPU iPhone OS 15_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/15.1 Mobile/15E148 Safari/604.'
         });
+        jest.spyOn(document, 'createElement').mockReturnValue({ relList: { supports: () => false } } as unknown as HTMLAnchorElement);
         const supports = DIVEInfo.GetSupportsARQuickLook();
         expect(supports).toBe(true);
     });
@@ -242,6 +252,7 @@ describe('dive/info/DIVEInfo', () => {
         mockNavigator({
             userAgent: 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) GSA/277.0.555192628 Mobile/15E148 Safari/604.'
         });
+        jest.spyOn(document, 'createElement').mockReturnValue({ relList: { supports: () => false } } as unknown as HTMLAnchorElement);
         const supports = DIVEInfo.GetSupportsARQuickLook();
         expect(supports).toBe(true);
     });
@@ -250,6 +261,7 @@ describe('dive/info/DIVEInfo', () => {
         mockNavigator({
             userAgent: 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) CriOS/126.0.6478.153 Mobile/15E148 Safari/604.'
         });
+        jest.spyOn(document, 'createElement').mockReturnValue({ relList: { supports: () => false } } as unknown as HTMLAnchorElement);
         const supports = DIVEInfo.GetSupportsARQuickLook();
         expect(supports).toBe(true);
     });
@@ -258,6 +270,7 @@ describe('dive/info/DIVEInfo', () => {
         mockNavigator({
             userAgent: 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_1 like Mac OS X) AppleWebKit/605.1.11 (KHTML, like Gecko) Version/11.1 Mobile/11E148 CriOS/604.'
         });
+        jest.spyOn(document, 'createElement').mockReturnValue({ relList: { supports: () => false } } as unknown as HTMLAnchorElement);
         const supports = DIVEInfo.GetSupportsARQuickLook();
         expect(supports).toBe(true);
     });
@@ -266,6 +279,7 @@ describe('dive/info/DIVEInfo', () => {
         mockNavigator({
             userAgent: 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_1 like Mac OS X) AppleWebKit/605.1.11 (KHTML, like Gecko) Version/11.1 Mobile/11E148 FxiOS/604.'
         });
+        jest.spyOn(document, 'createElement').mockReturnValue({ relList: { supports: () => false } } as unknown as HTMLAnchorElement);
         const supports = DIVEInfo.GetSupportsARQuickLook();
         expect(supports).toBe(true);
     });
@@ -274,6 +288,7 @@ describe('dive/info/DIVEInfo', () => {
         mockNavigator({
             userAgent: 'Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Mobile Safari/537.3'
         });
+        jest.spyOn(document, 'createElement').mockReturnValue({ relList: { supports: () => false } } as unknown as HTMLAnchorElement);
         const supports = DIVEInfo.GetSupportsARQuickLook();
         expect(supports).toBe(false);
     });
@@ -282,6 +297,7 @@ describe('dive/info/DIVEInfo', () => {
         mockNavigator({
             userAgent: 'Mozilla/5.0 (iPhone; CPU iPhone OS like Mac OS X) AppleWebKit/605.1.11 (KHTML, like Gecko) Version/11.1 Mobile/11E148 Safari/604.'
         });
+        jest.spyOn(document, 'createElement').mockReturnValue({ relList: { supports: () => false } } as unknown as HTMLAnchorElement);
         const supports = DIVEInfo.GetSupportsARQuickLook();
         expect(supports).toBe(false);
     });
@@ -290,6 +306,7 @@ describe('dive/info/DIVEInfo', () => {
         mockNavigator({
             userAgent: 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_1 like Mac OS X)'
         });
+        jest.spyOn(document, 'createElement').mockReturnValue({ relList: { supports: () => false } } as unknown as HTMLAnchorElement);
         const supports = DIVEInfo.GetSupportsARQuickLook();
         expect(supports).toBe(false);
     });
@@ -298,7 +315,44 @@ describe('dive/info/DIVEInfo', () => {
         mockNavigator({
             userAgent: 'Mozilla/5.0 (iPhone; CPU iPhone OS 11_1 like Mac OS X) AppleWebKit/605.1.11 (KHTML, like Gecko) Version/11.1 Mobile/11E148 Safari/604.'
         });
+        jest.spyOn(document, 'createElement').mockReturnValue({ relList: { supports: () => false } } as unknown as HTMLAnchorElement);
         const supports = DIVEInfo.GetSupportsARQuickLook();
         expect(supports).toBe(false);
+    });
+
+    it('should be mobile (iOS)', () => {
+        jest.spyOn(DIVEInfo, 'GetSystem').mockReturnValue('iOS');
+        expect(DIVEInfo.isMobile).toBe(true);
+        expect(DIVEInfo.isDesktop).toBe(false);
+    });
+
+    it('should be mobile (Android)', () => {
+        jest.spyOn(DIVEInfo, 'GetSystem').mockReturnValue('Android');
+        expect(DIVEInfo.isMobile).toBe(true);
+        expect(DIVEInfo.isDesktop).toBe(false);
+    });
+
+    it('should be desktop (Windows)', () => {
+        jest.spyOn(DIVEInfo, 'GetSystem').mockReturnValue('Windows');
+        expect(DIVEInfo.isMobile).toBe(false);
+        expect(DIVEInfo.isDesktop).toBe(true);
+    });
+
+    it('should be desktop (MacOS)', () => {
+        jest.spyOn(DIVEInfo, 'GetSystem').mockReturnValue('MacOS');
+        expect(DIVEInfo.isMobile).toBe(false);
+        expect(DIVEInfo.isDesktop).toBe(true);
+    });
+
+    it('should be desktop (Linux)', () => {
+        jest.spyOn(DIVEInfo, 'GetSystem').mockReturnValue('Linux');
+        expect(DIVEInfo.isMobile).toBe(false);
+        expect(DIVEInfo.isDesktop).toBe(true);
+    });
+
+    it('should be desktop (Unknown)', () => {
+        jest.spyOn(DIVEInfo, 'GetSystem').mockReturnValue('Unknown');
+        expect(DIVEInfo.isMobile).toBe(false);
+        expect(DIVEInfo.isDesktop).toBe(true);
     });
 });
