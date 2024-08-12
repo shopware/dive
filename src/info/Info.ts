@@ -90,10 +90,15 @@ export class DIVEInfo {
                     resolve(false);
                 });
         });
-
     }
 
     public static GetSupportsARQuickLook(): boolean {
+        const a = document.createElement("a");
+        if (a.relList.supports("ar")) {
+            return true;
+        }
+
+        // fallback check
         const userAgent = navigator.userAgent;
 
         // Check if the device is running iOS
