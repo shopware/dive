@@ -1,42 +1,10 @@
 export class DIVEInfo {
     private static _supportsWebXR: boolean | null = null;
 
-    public static GetBrowser(): string {
-        const userAgent = navigator.userAgent;
-        if (userAgent.indexOf("Firefox") > -1) {
-            return "Firefox";
-        } else if (userAgent.indexOf("SamsungBrowser") > -1) {
-            return "Samsung Internet";
-        } else if (userAgent.indexOf("Opera") > -1 || userAgent.indexOf("OPR") > -1) {
-            return "Opera";
-        } else if (userAgent.indexOf("Trident") > -1) {
-            return "Internet Explorer";
-        } else if (userAgent.indexOf("Edge") > -1) {
-            return "Edge";
-        } else if (userAgent.indexOf("Chrome") > -1) {
-            return "Chrome";
-        } else if (userAgent.indexOf("Safari") > -1 && userAgent.indexOf("Chrome") === -1) {
-            return "Safari";
-        } else {
-            return "Unknown";
-        }
-    }
-
-    public static GetBrowserVersion(): string {
-        const userAgent = navigator.userAgent;
-        const match = userAgent.match(/(firefox|msie|trident|chrome|safari|opr|edge|samsungbrowser)\/?\s*(\d+)/i) || [];
-        let version = match[2];
-        if (/trident/i.test(match[1])) {
-            const rv = userAgent.match(/rv:(\d+)/) || [];
-            version = rv[1];
-        }
-        if (match[1] === 'Chrome') {
-            const temp = userAgent.match(/\b(OPR|Edge)\/(\d+)/);
-            if (temp != null) version = temp[2];
-        }
-        return version || "Unknown";
-    }
-
+    /**
+     *
+     * @returns The system the user is using. Possible values are "Android", "iOS", "Windows", "MacOS", "Linux" or "Unknown".
+     */
     public static GetSystem(): string {
         const platform = navigator.platform;
         if (/Android/.test(navigator.userAgent)) {
@@ -54,15 +22,9 @@ export class DIVEInfo {
         }
     }
 
-    public static GetSystemVersion(): string {
-        const userAgent = navigator.userAgent;
-        const match = userAgent.match(/(Windows NT|Mac OS X|Android|CPU iPhone OS|CPU OS|Linux) ([\d._]+)/);
-        if (match) {
-            return match[2].replace(/_/g, '.');
-        }
-        return "Unknown";
-    }
-
+    /**
+     * @returns A promise that resolves to a boolean indicating whether the user's device supports WebXR.
+     */
     public static async GetSupportsWebXR(): Promise<boolean> {
         return new Promise((resolve) => {
             if (this._supportsWebXR !== null) {
@@ -92,6 +54,9 @@ export class DIVEInfo {
         });
     }
 
+    /**
+     * @returns A boolean indicating whether the user's device supports AR Quick Look.
+     */
     public static GetSupportsARQuickLook(): boolean {
         const a = document.createElement("a");
         if (a.relList.supports("ar")) {
@@ -132,11 +97,34 @@ export class DIVEInfo {
         return false;
     }
 
+    /**
+     * @returns A boolean indicating whether the user's device is a mobile device.
+     */
     public static get isMobile(): boolean {
         return this.GetSystem() === "Android" || this.GetSystem() === "iOS";
     }
 
+    /**
+     * @returns A boolean indicating whether the user's device is a desktop device.
+     */
     public static get isDesktop(): boolean {
         return !this.isMobile;
+    }
+
+    /**
+     * @returns A promise that resolves to a boolean indicating whether the user's device is capable of AR.
+     */
+    public static get isARCapable(): Promise<boolean> {
+        return new Promise((resolve) => {
+            const supportsARQL = this.GetSupportsARQuickLook();
+            if (supportsARQL) {
+                resolve(true);
+                return;
+            }
+
+            this.GetSupportsWebXR().then((supportsWebXR) => {
+                resolve(supportsWebXR);
+            });
+        });
     }
 }
