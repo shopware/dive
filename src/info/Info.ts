@@ -26,32 +26,22 @@ export class DIVEInfo {
      * @returns A promise that resolves to a boolean indicating whether the user's device supports WebXR.
      */
     public static async GetSupportsWebXR(): Promise<boolean> {
-        return new Promise((resolve) => {
-            if (this._supportsWebXR !== null) {
-                resolve(this._supportsWebXR);
-                return;
-            }
+        if (this._supportsWebXR !== null) {
+            return this._supportsWebXR;
+        }
 
-            if (!navigator.xr) {
-                this._supportsWebXR = false;
-                resolve(false);
-                return;
-            }
-            // Check if immersive-vr session mode is supported
-            navigator.xr.isSessionSupported('immersive-ar')
-                .then((supported) => {
-                    if (supported) {
-                        this._supportsWebXR = true;
-                        resolve(true);
-                    } else {
-                        this._supportsWebXR = false;
-                        resolve(false);
-                    }
-                }).catch(() => {
-                    this._supportsWebXR = false;
-                    resolve(false);
-                });
-        });
+        if (!navigator.xr) {
+            this._supportsWebXR = false;
+            return this._supportsWebXR;
+        }
+        // Check if immersive-vr session mode is supported
+        try {
+            const supported = await navigator.xr.isSessionSupported('immersive-ar');
+            this._supportsWebXR = supported;
+        } catch (error) {
+            this._supportsWebXR = false;
+        }
+        return this._supportsWebXR;
     }
 
     /**
@@ -114,17 +104,11 @@ export class DIVEInfo {
     /**
      * @returns A promise that resolves to a boolean indicating whether the user's device is capable of AR.
      */
-    public static get isARCapable(): Promise<boolean> {
-        return new Promise((resolve) => {
-            const supportsARQL = this.GetSupportsARQuickLook();
-            if (supportsARQL) {
-                resolve(true);
-                return;
-            }
+    public static async GetIsARCapable(): Promise<boolean> {
+        if (this.GetSupportsARQuickLook()) {
+            return true;
+        }
 
-            this.GetSupportsWebXR().then((supportsWebXR) => {
-                resolve(supportsWebXR);
-            });
-        });
+        return await this.GetSupportsWebXR();
     }
 }

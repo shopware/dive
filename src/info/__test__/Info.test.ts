@@ -250,18 +250,18 @@ describe('dive/info/DIVEInfo', () => {
     it('should be capable of AR (ARQuickLook)', async () => {
         jest.spyOn(DIVEInfo, 'GetSupportsARQuickLook').mockReturnValue(true);
         jest.spyOn(DIVEInfo, 'GetSupportsWebXR').mockResolvedValue(false);
-        expect(await DIVEInfo.isARCapable).toBe(true);
+        expect(await DIVEInfo.GetIsARCapable()).toBe(true);
     });
 
     it('should be capable of AR (WebXR)', async () => {
         jest.spyOn(DIVEInfo, 'GetSupportsARQuickLook').mockReturnValue(false);
         jest.spyOn(DIVEInfo, 'GetSupportsWebXR').mockResolvedValue(true);
-        expect(await DIVEInfo.isARCapable).toBe(true);
+        expect(await DIVEInfo.GetIsARCapable()).toBe(true);
     });
 
     it('should not be capable of AR', async () => {
         jest.spyOn(DIVEInfo, 'GetSupportsARQuickLook').mockReturnValue(false);
         jest.spyOn(DIVEInfo, 'GetSupportsWebXR').mockResolvedValue(false);
-        expect(await DIVEInfo.isARCapable).toBe(false);
+        expect(await DIVEInfo.GetIsARCapable()).toBe(false);
     });
 });
