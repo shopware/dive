@@ -71,6 +71,7 @@ export class DIVEInfo {
             }
 
             if (!navigator.xr) {
+                this._supportsWebXR = false;
                 resolve(false);
                 return;
             }
@@ -81,9 +82,11 @@ export class DIVEInfo {
                         this._supportsWebXR = true;
                         resolve(true);
                     } else {
+                        this._supportsWebXR = false;
                         resolve(false);
                     }
                 }).catch(() => {
+                    this._supportsWebXR = false;
                     resolve(false);
                 });
         });
