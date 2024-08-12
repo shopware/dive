@@ -114,18 +114,9 @@ export class DIVEInfo {
             return false;
         }
 
-        // Check for specific browser
-        const isSafari = /^((?!chrome|android).)*safari/i.test(userAgent);
-        const isChrome = /CriOS/.test(userAgent);
-        const isFirefox = /FxiOS/.test(userAgent);
-
-        // QuickLook should be supported in Safari on iOS 10+
-        if (isSafari) {
-            return true;
-        }
-
-        // For Chrome and Firefox, it may vary, but generally should work the same as Safari on iOS 10+
-        if ((isChrome || isFirefox)) {
+        // Check for supported browser
+        const isSupportedBrowser = /^((?!chrome|android).)*safari|CriOS|FxiOS/i.test(userAgent);
+        if (isSupportedBrowser) {
             return true;
         }
 
