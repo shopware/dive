@@ -244,6 +244,11 @@ describe('dive/DIVE', () => {
         expect(dive.Communication).toBeDefined();
     });
 
+    it('should have Info', () => {
+        const dive = new DIVE();
+        expect(dive.Info).toBeDefined();
+    });
+
     it('should resize', () => {
         const dive = new DIVE();
         expect(() => dive.OnResize(800, 600)).not.toThrow();

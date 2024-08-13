@@ -4,16 +4,13 @@
 
 <p align="center">
     <a href="#badge">
-        <img alt="dive: downloads" src="https://img.shields.io/npm/v/%40shopware-ag%2Fdive">
+        <img alt="dive: npm" src="https://img.shields.io/npm/v/%40shopware-ag%2Fdive">
     </a>
     <a href="#badge">
-        <img alt="dive: downloads" src="https://img.shields.io/npm/d18m/%40shopware-ag%2Fdive">
+        <img alt="dive: licenst" src="https://img.shields.io/npm/l/%40shopware-ag%2Fdive">
     </a>
     <a href="#badge">
-        <img alt="dive: downloads" src="https://img.shields.io/npm/l/%40shopware-ag%2Fdive">
-    </a>
-    <a href="#badge">
-        <img alt="dive: downloads" src="https://img.shields.io/npm/types/%40shopware-ag%2Fdive">
+        <img alt="dive: types" src="https://img.shields.io/npm/types/%40shopware-ag%2Fdive">
     </a>
 </p>
 
@@ -168,14 +165,14 @@ com.PerformAction('SET_CAMERA_TRANSFORM', {
 unsubscribe(); // <-- execute unsubscribe callback when done
 ```
 
-In the following you find a list of all available actions to perform on DIVECommunication class via `com.PerformAction()`.
+# Actions (List)
+In the following you find a list of all available actions to perform on DIVECommunication class via [`com.PerformAction()`](https://github.com/shopware/dive/blob/2e193c58843939ce07a1d35bfbd5b3c9d26eeeca/src/com/Communication.ts#L85).
 
 | Action                                                                                | Description
 |:--------------------------------------------------------------------------------------| :---
 | [GET_ALL_SCENE_DATA](./src/com/actions/scene/getallscenedata.ts)                      | Return all scene data that is currently set
 | [GET_ALL_OBJECTS](./src/com/actions/object/getallobjects.ts)                          | Return a map of all objects
 | [GET_OBJECTS](./src/com/actions/object/getobjects.ts)                                 | Return an array of all objects with given ids
-| [PLACE_ON_FLOOR](./src/com/actions/object/model/placeonfloor.ts)                      | Set a model onto to the floor
 | [ADD_OBJECT](./src/com/actions/object/addobject.ts)                                   | Add an object to the scene
 | [UPDATE_OBJECT](./src/com/actions/object/updateobject.ts)                             | Update an existing object
 | [DELETE_OBJECT](./src/com/actions/object/deleteobject.ts)                             | Delete an existing object
@@ -193,6 +190,7 @@ In the following you find a list of all available actions to perform on DIVEComm
 | [ZOOM_CAMERA](./src/com/actions/camera/zoomcamera.ts)                                 | Zoom in or out
 | [SET_GIZMO_MODE](./src/com/actions/toolbox/select/setgizmomode.ts)                    | Set gizmo mode
 | [SET_GIZMO_VISIBILITY](./src/com/actions/toolbox/select/setgizmovisibility.ts)        | Set gizmo visibility
+| [USE_TOOL](./src/com/actions/toolbox/usetool.ts)                                      | Use a specific tool
 | [MODEL_LOADED](./src/com/actions/object/model/modelloaded.ts)                         | Is performed when a model file is completely loaded
 | [UPDATE_SCENE](./src/com/actions/scene/updatescene.ts)                                | Update scene data
 | [GENERATE_MEDIA](./src/com/actions/media/generatemedia.ts)                            | Generate a screenshot with the specified parameters

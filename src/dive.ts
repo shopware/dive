@@ -12,6 +12,7 @@ import type { Actions } from './com/actions/index.ts';
 import type { COMPov, COMLight, COMModel, COMEntity } from './com/types.ts';
 import { DIVEMath } from './math/index.ts';
 import { generateUUID } from "three/src/math/MathUtils";
+import { DIVEInfo } from "./info/Info.ts";
 
 export type DIVESettings = {
     autoResize: boolean;
@@ -143,6 +144,10 @@ export default class DIVE {
 
     public get Canvas(): HTMLCanvasElement {
         return this.renderer.domElement;
+    }
+
+    public get Info(): DIVEInfo {
+        return DIVEInfo;
     }
 
     // setters
