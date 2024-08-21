@@ -1,4 +1,4 @@
-import { OrbitControls } from "three/examples/jsm/Addons.js";
+import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
 import DIVEPerspectiveCamera from "../camera/PerspectiveCamera.ts";
 import { DIVERenderer } from "../renderer/Renderer.ts";
 import { type Box3, MathUtils, Vector3, Vector3Like } from "three";

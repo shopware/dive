@@ -12,7 +12,7 @@ jest.mock('@tweenjs/tween.js', () => {
     }
 });
 
-jest.mock('three/examples/jsm/Addons.js', () => {
+jest.mock('three/examples/jsm/controls/OrbitControls', () => {
     return {
         OrbitControls: jest.fn(function () {
             this.enableDamping = true;
@@ -42,14 +42,13 @@ jest.mock('three/examples/jsm/Addons.js', () => {
                 MIDDLE: 1,
                 RIGHT: 2,
             };
-            this.target = {
-                set: jest.fn(),
-            };
             this.update = jest.fn();
             this.dispose = jest.fn();
             this.getDistance = jest.fn();
             this.target = {
                 clone: jest.fn(),
+                set: jest.fn(),
+                copy: jest.fn(),
             };
             return this;
         }),
@@ -122,6 +121,9 @@ const mockCamera = {
         multiplyScalar: jest.fn(() => {
             return mockCamera.position;
         }),
+        set: jest.fn(() => {
+            return mockCamera.position;
+        }),
     },
     lookAt: jest.fn(),
 } as unknown as DIVEPerspectiveCamera;
@@ -148,7 +150,15 @@ describe('dive/controls/DIVEOrbitControls', () => {
     });
 
     it('should instantiate', () => {
-        const controller = new DIVEOrbitControls(mockCamera, mockRenderer, mockAnimSystem);
+        const controller = new DIVEOrbitControls(mockCamera, mockRenderer, mockAnimSystem, {});
+        expect(controller).toBeDefined();
+    });
+
+    it('should instantiate with settings', () => {
+        const controller = new DIVEOrbitControls(mockCamera, mockRenderer, mockAnimSystem, {
+            enableDamping: false,
+            dampingFactor: 0.5,
+        });
         expect(controller).toBeDefined();
     });
 

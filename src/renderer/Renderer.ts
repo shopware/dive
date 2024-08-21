@@ -40,17 +40,17 @@ export class DIVERenderer extends WebGLRenderer {
 
     constructor(rendererSettings: Partial<DIVERendererSettings> = DIVERendererDefaultSettings) {
         super({
-            antialias: rendererSettings.antialias || false,
-            alpha: rendererSettings.alpha || false,
+            antialias: rendererSettings.antialias || DIVERendererDefaultSettings.antialias,
+            alpha: rendererSettings.alpha || DIVERendererDefaultSettings.alpha,
             preserveDrawingBuffer: true,
             canvas: rendererSettings.canvas,
         });
         this.setPixelRatio(window.devicePixelRatio);
 
-        this.shadowMap.enabled = rendererSettings.shadowMapEnabled || false;
-        this.shadowMap.type = rendererSettings.shadowMapType || PCFSoftShadowMap;
+        this.shadowMap.enabled = rendererSettings.shadowMapEnabled || DIVERendererDefaultSettings.shadowMapEnabled;
+        this.shadowMap.type = rendererSettings.shadowMapType || DIVERendererDefaultSettings.shadowMapType;
 
-        this.toneMapping = rendererSettings.toneMapping || NoToneMapping;
+        this.toneMapping = rendererSettings.toneMapping || DIVERendererDefaultSettings.toneMapping;
 
         this.debug.checkShaderErrors = false;
     }
