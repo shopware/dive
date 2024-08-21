@@ -17,9 +17,9 @@ import { DIVEInfo } from "./info/Info.ts";
 export type DIVESettings = {
     autoResize: boolean;
     displayAxes: boolean;
-    renderer: DIVERendererSettings;
-    perspectiveCamera: DIVEPerspectiveCameraSettings;
-    orbitControls: DIVEOrbitControlsSettings;
+    renderer: Partial<DIVERendererSettings>;
+    perspectiveCamera: Partial<DIVEPerspectiveCameraSettings>;
+    orbitControls: Partial<DIVEOrbitControlsSettings>;
 }
 
 export const DIVEDefaultSettings: DIVESettings = {
@@ -159,15 +159,15 @@ export default class DIVE {
 
         // apply perspective camera settings
         if (settingsDelta.perspectiveCamera) {
-            this.perspectiveCamera.fov = settingsDelta.perspectiveCamera.fov;
-            this.perspectiveCamera.near = settingsDelta.perspectiveCamera.near;
-            this.perspectiveCamera.far = settingsDelta.perspectiveCamera.far;
+            if (settingsDelta.perspectiveCamera.fov !== undefined) this.perspectiveCamera.fov = settingsDelta.perspectiveCamera.fov;
+            if (settingsDelta.perspectiveCamera.near !== undefined) this.perspectiveCamera.near = settingsDelta.perspectiveCamera.near;
+            if (settingsDelta.perspectiveCamera.far !== undefined) this.perspectiveCamera.far = settingsDelta.perspectiveCamera.far;
             this.perspectiveCamera.OnResize(this.renderer.domElement.width, this.renderer.domElement.height);
         }
         // apply orbit controls settings
         if (settingsDelta.orbitControls) {
-            this.orbitControls.enableDamping = settingsDelta.orbitControls.enableDamping;
-            this.orbitControls.dampingFactor = settingsDelta.orbitControls.dampingFactor;
+            if (settingsDelta.orbitControls.enableDamping !== undefined) this.orbitControls.enableDamping = settingsDelta.orbitControls.enableDamping;
+            if (settingsDelta.orbitControls.dampingFactor !== undefined) this.orbitControls.dampingFactor = settingsDelta.orbitControls.dampingFactor;
         }
 
         if (settingsDelta.autoResize !== this._settings.autoResize) {
@@ -229,6 +229,8 @@ export default class DIVE {
                 console.log(this.scene);
             },
         }
+
+        console.log('DIVE initialized');
     }
 
     public Dispose(): void {

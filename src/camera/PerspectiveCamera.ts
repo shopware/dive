@@ -25,8 +25,13 @@ export default class DIVEPerspectiveCamera extends PerspectiveCamera {
 
     public onSetCameraLayer: (mask: number) => void = () => { };
 
-    constructor(settings: DIVEPerspectiveCameraSettings = DIVEPerspectiveCameraDefaultSettings) {
-        super(settings.fov, 1, settings.near, settings.far);
+    constructor(settings: Partial<DIVEPerspectiveCameraSettings> = DIVEPerspectiveCameraDefaultSettings) {
+        super(
+            settings.fov || DIVEPerspectiveCameraDefaultSettings.fov,
+            1,
+            settings.near || DIVEPerspectiveCameraDefaultSettings.near,
+            settings.far || DIVEPerspectiveCameraDefaultSettings.far
+        );
 
         this.layers.mask = DIVEPerspectiveCamera.EDITOR_VIEW_LAYER_MASK;
     }

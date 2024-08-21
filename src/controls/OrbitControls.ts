@@ -39,7 +39,7 @@ export default class DIVEOrbitControls extends OrbitControls {
 
     private _removePreRenderCallback: () => void = () => { };
 
-    constructor(camera: DIVEPerspectiveCamera, renderer: DIVERenderer, animationSystem: DIVEAnimationSystem, settings: DIVEOrbitControlsSettings = DIVEOrbitControlsDefaultSettings) {
+    constructor(camera: DIVEPerspectiveCamera, renderer: DIVERenderer, animationSystem: DIVEAnimationSystem, settings: Partial<DIVEOrbitControlsSettings> = DIVEOrbitControlsDefaultSettings) {
         super(camera, renderer.domElement);
 
         this._animationSystem = animationSystem;
@@ -56,8 +56,13 @@ export default class DIVEOrbitControls extends OrbitControls {
             renderer.RemovePreRenderCallback(id);
         }
 
-        this.enableDamping = settings.enableDamping;
-        this.dampingFactor = settings.dampingFactor;
+        this.enableDamping = settings.enableDamping || DIVEOrbitControlsDefaultSettings.enableDamping;
+        this.dampingFactor = settings.dampingFactor || DIVEOrbitControlsDefaultSettings.dampingFactor;
+
+        // initialize camera transformation
+        this.object.position.set(0, 2, 2);
+        this.target.copy({ x: 0, y: 0.5, z: 0 });
+        this.update();
     }
 
     public Dispose(): void {
