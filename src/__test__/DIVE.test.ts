@@ -183,6 +183,8 @@ jest.mock('../axiscamera/AxisCamera.ts', () => {
     });
 });
 
+console.log = jest.fn();
+
 describe('dive/DIVE', () => {
     it('should QuickView', () => {
         const dive = DIVE.QuickView('test_uri');
@@ -193,7 +195,6 @@ describe('dive/DIVE', () => {
         const dive = new DIVE();
         expect(dive).toBeDefined();
         expect((window as any).DIVE.PrintScene).toBeDefined();
-        console.log = jest.fn();
         expect(() => (window as any).DIVE.PrintScene()).not.toThrow();
     });
 

@@ -48,7 +48,18 @@ describe('dive/renderer/DIVERenderer', () => {
     });
 
     it('should instantiate', () => {
+        renderer = new DIVERenderer({});
         expect(renderer).toBeDefined();
+    });
+
+    it('should instantiate', () => {
+        renderer = new DIVERenderer({
+            alpha: true,
+            shadowMapEnabled: true,
+            shadowMapType: 1,
+            toneMapping: 1,
+            antialias: true,
+        });
     });
 
     it('should instantiate with settings parameter', () => {

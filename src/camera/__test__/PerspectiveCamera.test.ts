@@ -5,11 +5,20 @@ let cam: DIVEPerspectiveCamera;
 describe('dive/camera/DIVEPerspectiveCamera', () => {
     beforeEach(() => {
         jest.clearAllMocks();
-        cam = new DIVEPerspectiveCamera(DIVEPerspectiveCameraDefaultSettings);
+        cam = new DIVEPerspectiveCamera();
     });
 
     it('should instantiate', () => {
-        cam = new DIVEPerspectiveCamera();
+        cam = new DIVEPerspectiveCamera({});
+        expect(cam).toBeDefined();
+    });
+
+    it('should instantiate with settings', () => {
+        cam = new DIVEPerspectiveCamera({
+            fov: 45,
+            near: 0.1,
+            far: 100,
+        });
         expect(cam).toBeDefined();
     });
 

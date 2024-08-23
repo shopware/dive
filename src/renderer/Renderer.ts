@@ -7,6 +7,7 @@ export type DIVERendererSettings = {
     shadowMapEnabled: boolean;
     shadowMapType: ShadowMapType;
     toneMapping: ToneMapping;
+    canvas?: HTMLCanvasElement;
 }
 
 export const DIVERendererDefaultSettings: DIVERendererSettings = {
@@ -16,6 +17,7 @@ export const DIVERendererDefaultSettings: DIVERendererSettings = {
     shadowMapEnabled: true,
     shadowMapType: PCFSoftShadowMap,
     toneMapping: NoToneMapping,
+    canvas: undefined,
 }
 
 /**
@@ -36,18 +38,19 @@ export class DIVERenderer extends WebGLRenderer {
     private preRenderCallbacks: Map<string, () => void> = new Map<string, () => void>();
     private postRenderCallbacks: Map<string, () => void> = new Map<string, () => void>();
 
-    constructor(rendererSettings: DIVERendererSettings = DIVERendererDefaultSettings) {
+    constructor(rendererSettings: Partial<DIVERendererSettings> = DIVERendererDefaultSettings) {
         super({
-            antialias: rendererSettings.antialias,
-            alpha: rendererSettings.alpha,
-            preserveDrawingBuffer: true
+            antialias: rendererSettings.antialias || DIVERendererDefaultSettings.antialias,
+            alpha: rendererSettings.alpha || DIVERendererDefaultSettings.alpha,
+            preserveDrawingBuffer: true,
+            canvas: rendererSettings.canvas,
         });
         this.setPixelRatio(window.devicePixelRatio);
 
-        this.shadowMap.enabled = rendererSettings.shadowMapEnabled;
-        this.shadowMap.type = rendererSettings.shadowMapType;
+        this.shadowMap.enabled = rendererSettings.shadowMapEnabled || DIVERendererDefaultSettings.shadowMapEnabled;
+        this.shadowMap.type = rendererSettings.shadowMapType || DIVERendererDefaultSettings.shadowMapType;
 
-        this.toneMapping = rendererSettings.toneMapping;
+        this.toneMapping = rendererSettings.toneMapping || DIVERendererDefaultSettings.toneMapping;
 
         this.debug.checkShaderErrors = false;
     }

@@ -7,7 +7,7 @@
         <img alt="dive: npm" src="https://img.shields.io/npm/v/%40shopware-ag%2Fdive">
     </a>
     <a href="#badge">
-        <img alt="dive: licenst" src="https://img.shields.io/npm/l/%40shopware-ag%2Fdive">
+        <img alt="dive: license" src="https://img.shields.io/npm/l/%40shopware-ag%2Fdive">
     </a>
     <a href="#badge">
         <img alt="dive: types" src="https://img.shields.io/npm/types/%40shopware-ag%2Fdive">
