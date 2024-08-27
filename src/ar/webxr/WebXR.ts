@@ -36,6 +36,7 @@ export class DIVEWebXR {
 
     // placement members
     private static _handOffset = new Vector3(0, -0.05, -0.25)
+    private static _raycastHitCounter = 0;
     private static _placed = false;
 
     public static async Launch(renderer: DIVERenderer, scene: DIVEScene, controller: DIVEOrbitControls): Promise<void> {
@@ -157,11 +158,10 @@ export class DIVEWebXR {
         this._currentSession = null;
     }
 
-    private static hitCounter = 0;
     private static onHitFound(pose: XRPose): void {
-        this.hitCounter++;
+        this._raycastHitCounter++;
 
-        if (!this._placed && this.hitCounter > 50) {
+        if (!this._placed && this._raycastHitCounter > 50) {
             this.placeObjects(pose);
         }
 
@@ -173,7 +173,7 @@ export class DIVEWebXR {
     }
 
     private static onHitLost(): void {
-        this.hitCounter = 0;
+        this._raycastHitCounter = 0;
 
         if (this._crosshair) {
             this._crosshair.visible = false;
