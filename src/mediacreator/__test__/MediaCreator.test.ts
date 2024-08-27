@@ -14,9 +14,16 @@ const mock_render = jest.fn();
 const mock_toDataURL = jest.fn();
 
 jest.mock('../../scene/Scene', () => {
-    return jest.fn(() => {
-        return {};
-    });
+    return {
+        DIVEScene: jest.fn(function () {
+            this.add = jest.fn();
+            this.children = [];
+            this.Root = {
+                children: [],
+            }
+            return this;
+        })
+    }
 });
 
 jest.mock('../../camera/PerspectiveCamera', () => {
