@@ -1,5 +1,3 @@
-
-
 export class DIVEEventExecutor<T> {
     private _listeners: Map<keyof T, ((payload: T[keyof T]) => void)[]> = new Map();
 
