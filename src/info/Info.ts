@@ -1,7 +1,8 @@
 export enum WebXRUnsupportedReason {
-    "NO_HTTPS" = 0,
-    "IMMERSIVE_AR_NOT_SUPPORTED_BY_DEVICE" = 1,
-    "AR_SESSION_NOT_ALLOWED" = 2,
+    "UNKNWON_ERROR" = 0,
+    "NO_HTTPS" = 1,
+    "IMMERSIVE_AR_NOT_SUPPORTED_BY_DEVICE" = 2,
+    "AR_SESSION_NOT_ALLOWED" = 3,
 }
 
 export class DIVEInfo {
@@ -38,9 +39,15 @@ export class DIVEInfo {
         }
 
         // check if XRSystem is available && if https enabled
-        if (!navigator.xr && window.isSecureContext === false) {
+        if (!navigator.xr) {
             this._supportsWebXR = false;
-            this._webXRUnsupportedReason = WebXRUnsupportedReason.NO_HTTPS;
+
+            if (window.isSecureContext === false) {
+                this._webXRUnsupportedReason = WebXRUnsupportedReason.NO_HTTPS;
+            } else {
+                this._webXRUnsupportedReason = WebXRUnsupportedReason.UNKNWON_ERROR;
+            }
+
             return this._supportsWebXR;
         }
 
