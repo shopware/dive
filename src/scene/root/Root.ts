@@ -25,6 +25,10 @@ export default class DIVERoot extends Object3D {
         return this.grid;
     }
 
+    public get ModelRoot(): DIVEModelRoot {
+        return this.modelRoot;
+    }
+
     constructor() {
         super();
         this.name = "Root";
