@@ -4,6 +4,7 @@ import { DIVEScene } from "../../../scene/Scene";
 import { DIVEWebXRCrosshair } from "../crosshair/WebXRCrosshair";
 import { DIVEHitResult, DIVEWebXRRaycaster } from "../raycaster/WebXRRaycaster";
 import { DIVEWebXROrigin } from "../origin/WebXROrigin";
+import { DIVEWebXRTouchscreenControls } from "../touchscreencontrols/WebXRTouchscreenControls";
 
 export class DIVEWebXRController extends Object3D {
     // general members
@@ -19,9 +20,11 @@ export class DIVEWebXRController extends Object3D {
     private _crosshair: DIVEWebXRCrosshair;
 
     // controller members
+    private _touchscreenControls: DIVEWebXRTouchscreenControls;
     private _handNodeInitialPosition = new Vector3();
     private _xrCamera: WebXRArrayCamera;
     private _placed: boolean;
+    private _hasTouchInput: boolean;
 
     constructor(session: XRSession, renderer: DIVERenderer, scene: DIVEScene) {
         super();
@@ -31,6 +34,7 @@ export class DIVEWebXRController extends Object3D {
         this._currentSession = session;
 
         this._placed = false;
+        this._hasTouchInput = false;
 
         this._xrRaycaster = new DIVEWebXRRaycaster(session, renderer, scene);
         this._origin = new DIVEWebXROrigin(this._currentSession, this._renderer, ['plane']);
@@ -39,6 +43,14 @@ export class DIVEWebXRController extends Object3D {
         this._crosshair.visible = false;
 
         this._xrCamera = this._renderer.xr.getCamera();
+
+        this._touchscreenControls = new DIVEWebXRTouchscreenControls(this._renderer);
+        this._touchscreenControls.Subscribe('TOUCH_START', () => {
+            this._hasTouchInput = true;
+        });
+        this._touchscreenControls.Subscribe('TOUCH_END', () => {
+            this._hasTouchInput = false;
+        });
 
         this._scene.XRRoot.XRHandNode.position.set(0, -0.05, -0.25);
         this._handNodeInitialPosition = this._scene.XRRoot.XRHandNode.position.clone();
@@ -75,10 +87,8 @@ export class DIVEWebXRController extends Object3D {
             }
         }
 
-        if (this._placed) {
-            if (this._xrRaycaster) {
-                this._xrRaycaster.Update(frame);
-            }
+        if (this._placed && this._hasTouchInput) {
+            this._xrRaycaster.Update(frame);
         }
     }
 
