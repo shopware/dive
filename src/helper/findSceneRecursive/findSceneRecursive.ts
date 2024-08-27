@@ -1,5 +1,5 @@
-import type { Object3D } from 'three';
-import type DIVEScene from '../../scene/Scene';
+import { type Object3D } from 'three';
+import { type DIVEScene } from '../../scene/Scene';
 
 /**
  * Find the scene object of an object.

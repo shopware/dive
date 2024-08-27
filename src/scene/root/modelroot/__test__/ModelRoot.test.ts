@@ -1,7 +1,7 @@
 import DIVEModelRoot from '../ModelRoot';
 import DIVECommunication from '../../../../com/Communication';
 import { DIVEMoveable } from '../../../../interface/Moveable';
-import type DIVEScene from '../../../Scene';
+import { type DIVEScene } from '../../../Scene';
 
 const mock_LoadGLTF = jest.fn().mockResolvedValue({});
 const mock_SetPosition = jest.fn();

@@ -1,5 +1,5 @@
 import { Color } from 'three';
-import DIVEScene from '../Scene';
+import { DIVEScene } from '../Scene';
 import { COMEntity } from '../../com';
 
 const mock_UpdateSceneObject = jest.fn();

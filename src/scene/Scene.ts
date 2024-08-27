@@ -10,7 +10,7 @@ import DIVERoot from './root/Root';
  * @module
  */
 
-export default class DIVEScene extends Scene {
+export class DIVEScene extends Scene {
     private root: DIVERoot;
     public get Root(): DIVERoot {
         return this.root;

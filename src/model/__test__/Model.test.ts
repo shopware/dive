@@ -1,7 +1,7 @@
 import Model from '../Model';
 import DIVECommunication from '../../com/Communication';
 import { GLTF } from 'three/examples/jsm/Addons';
-import DIVEScene from '../../scene/Scene';
+import { type DIVEScene } from '../../scene/Scene';
 import { Vector3, Box3, Mesh } from 'three';
 
 const intersectObjectsMock = jest.fn();

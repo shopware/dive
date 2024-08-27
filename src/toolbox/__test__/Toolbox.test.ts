@@ -1,6 +1,6 @@
 import DIVEToolbox, { type ToolType } from '../Toolbox';
 import type DIVEOrbitControls from '../../controls/OrbitControls';
-import type DIVEScene from '../../scene/Scene';
+import { type DIVEScene } from '../../scene/Scene';
 
 /**
  * @jest-environment jsdom

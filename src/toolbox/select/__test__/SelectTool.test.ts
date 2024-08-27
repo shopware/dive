@@ -1,5 +1,5 @@
 import { DIVESelectTool, isSelectTool } from '../SelectTool';
-import DIVEScene from '../../../scene/Scene';
+import { DIVEScene } from '../../../scene/Scene';
 import DIVEOrbitControls from '../../../controls/OrbitControls';
 import { DIVERenderer, DIVERendererDefaultSettings } from '../../../renderer/Renderer';
 import { DIVESelectable } from '../../../interface/Selectable';

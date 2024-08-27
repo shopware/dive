@@ -1,6 +1,6 @@
 import { DIVEMediaCreator } from '../MediaCreator';
 import { DIVERenderer } from '../../renderer/Renderer';
-import DIVEScene from '../../scene/Scene';
+import { DIVEScene } from '../../scene/Scene';
 import DIVEPerspectiveCamera, { DIVEPerspectiveCameraDefaultSettings } from '../../camera/PerspectiveCamera';
 import { COMPov } from '../../com';
 import DIVEOrbitControls from '../../controls/OrbitControls';

@@ -4,7 +4,7 @@ import Model from "../../../model/Model.ts";
 import DIVELoadingManager from "../../../loadingmanager/LoadingManager.ts";
 import DIVECommunication from "../../../com/Communication.ts";
 import { type TransformControls } from "three/examples/jsm/Addons";
-import type DIVEScene from "../../Scene.ts";
+import { type DIVEScene } from "../../Scene.ts";
 
 /**
  * A basic scene node to hold all models.

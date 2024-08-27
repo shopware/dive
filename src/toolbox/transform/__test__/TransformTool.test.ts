@@ -1,5 +1,5 @@
 import DIVETransformTool, { isTransformTool } from '../TransformTool';
-import DIVEScene from '../../../scene/Scene';
+import { DIVEScene } from '../../../scene/Scene';
 import DIVEOrbitControls from '../../../controls/OrbitControls';
 import DIVEPerspectiveCamera from '../../../camera/PerspectiveCamera';
 import { DIVERenderer } from '../../../renderer/Renderer';

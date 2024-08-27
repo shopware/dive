@@ -4,7 +4,7 @@ import DIVEAmbientLight from "../../../light/AmbientLight.ts";
 import DIVEPointLight from "../../../light/PointLight.ts";
 import DIVESceneLight from "../../../light/SceneLight.ts";
 import { type TransformControls } from "three/examples/jsm/Addons";
-import type DIVEScene from "../../Scene.ts";
+import { type DIVEScene } from "../../Scene.ts";
 
 /**
  * A basic scene node to hold all lights.

@@ -1,5 +1,5 @@
 import type DIVEPerspectiveCamera from '../../camera/PerspectiveCamera';
-import type DIVEScene from '../../scene/Scene';
+import { type DIVEScene } from '../../scene/Scene';
 import { DIVERenderer, DIVERendererDefaultSettings } from '../Renderer';
 
 /**
