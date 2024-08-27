@@ -1,9 +1,10 @@
-import { Mesh, MeshBasicMaterial, RingGeometry, type Vector3 } from "three";
+import { type Vector3 } from "three";
 import DIVEOrbitControls from "../../controls/OrbitControls";
 import { type DIVERenderer } from "../../renderer/Renderer";
 import { type DIVEScene } from "../../scene/Scene";
 import { Overlay } from "./overlay/Overlay";
 import { DIVEWebXRRaycaster } from "./raycaster/WebXRRaycaster";
+import { DIVEWebXRCrosshair } from "./crosshair/WebXRCrosshair";
 
 export class DIVEWebXR {
     private static _renderer: DIVERenderer;
@@ -25,23 +26,14 @@ export class DIVEWebXR {
         domOverlay: { root: {} as HTMLElement },
     };
     private static _raycaster: DIVEWebXRRaycaster | null = null;
-
-    private static _crosshair: Mesh | null = null;
-
-    private static initializeCrosshair(): Mesh {
-        const geometry = new RingGeometry(0.08, 0.10, 32).rotateX(-Math.PI / 2);
-        const material = new MeshBasicMaterial();
-        const mesh = new Mesh(geometry, material);
-        mesh.matrixAutoUpdate = false;
-        mesh.visible = false;
-        return mesh;
-    }
+    private static _crosshair: DIVEWebXRCrosshair | null = null;
 
     public static async Launch(renderer: DIVERenderer, scene: DIVEScene, controller: DIVEOrbitControls): Promise<void> {
         this._renderer = renderer;
         this._scene = scene;
         this._controller = controller;
 
+        // setting camera reset values
         this._cameraPosition = this._controller.object.position.clone();
         this._cameraTarget = this._controller.target.clone();
 
@@ -98,8 +90,9 @@ export class DIVEWebXR {
     private static async _onSessionStarted(): Promise<void> {
         if (!this._currentSession) return;
 
-        // initialize reticle
-        this._crosshair = this.initializeCrosshair();
+        // initialize crosshair
+        this._crosshair = new DIVEWebXRCrosshair();
+        this._crosshair.visible = false;
         this._scene.XRRoot.add(this._crosshair);
 
         // initialize raycaster
@@ -132,8 +125,9 @@ export class DIVEWebXR {
     private static _onSessionEnded(): void {
         if (!this._currentSession) return;
 
+        // remove crosshair
         if (this._crosshair) {
-            this._scene.remove(this._crosshair);
+            this._scene.XRRoot.remove(this._crosshair);
         }
 
         if (this._raycaster) {
@@ -172,13 +166,17 @@ export class DIVEWebXR {
     }
 
     private static onHitFound(pose: XRPose): void {
+        console.log('Hit found');
+
         if (!this._crosshair) return;
 
         this._crosshair.visible = true;
-        this._crosshair.matrix.fromArray(pose.transform.matrix);
+        this._crosshair.UpdateFromPose(pose);
     }
 
     private static onHitLost(): void {
+        console.log('Hit lost');
+
         if (!this._crosshair) return;
 
         this._crosshair.visible = false;
