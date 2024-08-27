@@ -130,26 +130,31 @@ export class DIVEWebXR {
             this._scene.XRRoot.remove(this._crosshair);
         }
 
+        // properly dispose raycaster
         if (this._raycaster) {
             this._raycaster.Dispose();
         }
 
+        // remove Update() callback
         if (this._renderCallbackId) {
             this._renderer.RemovePreRenderCallback(this._renderCallbackId);
             this._renderCallbackId = null;
         }
 
+        // disable XR on renderer to restore canvas rendering
         this._renderer.xr.enabled = false;
 
         // resize renderer
         const canvasWrapper = this._renderer.domElement.parentElement;
-        if (!canvasWrapper) return;
+        if (canvasWrapper) {
+            const { clientWidth, clientHeight } = canvasWrapper;
+            this._renderer.OnResize(clientWidth, clientHeight);
 
-        const { clientWidth, clientHeight } = canvasWrapper;
-        this._renderer.OnResize(clientWidth, clientHeight);
+            // resize camera
+            this._controller.object.OnResize(clientWidth, clientHeight);
+        }
 
         // reset camera
-        this._controller.object.OnResize(clientWidth, clientHeight);
         this._controller.object.position.copy(this._cameraPosition);
         this._controller.target.copy(this._cameraTarget);
 
@@ -157,7 +162,7 @@ export class DIVEWebXR {
         this._cameraPosition.set(0, 0, 0);
         this._cameraTarget.set(0, 0, 0);
 
-        // dispose scene
+        // dispose xr scene
         this._scene.DisposeXR();
 
         this._currentSession.removeEventListener('end', this._onSessionEnded);
