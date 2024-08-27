@@ -80,8 +80,8 @@ export class DIVEWebXRController extends Object3D {
                 this._xrRaycaster.Update(frame);
             }
         }
-
     }
+
     private onHitFound(hit: DIVEHitResult): void {
         if (this._crosshair) {
             this._crosshair.visible = true;
