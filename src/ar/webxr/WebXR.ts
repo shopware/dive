@@ -33,6 +33,8 @@ export class DIVEWebXR {
         const session = await navigator.xr.requestSession('immersive-ar', this._options);
         session.addEventListener('end', () => {
             this._onSessionEnded();
+            renderer.xr.enabled = false;
+            scene.DisposeXR();
         });
 
         // add end session event listener
