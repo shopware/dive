@@ -137,6 +137,11 @@ describe('DIVE/scene/root/DIVERoot', () => {
         expect(root.Grid).toBeDefined();
     });
 
+    it('should have ModelRoot', () => {
+        const root = new DIVERoot();
+        expect(root.ModelRoot).toBeDefined();
+    });
+
     it('should ComputeSceneBB', () => {
         const root = new DIVERoot();
         const bb = root.ComputeSceneBB();

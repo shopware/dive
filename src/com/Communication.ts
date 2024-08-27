@@ -69,7 +69,7 @@ export default class DIVECommunication {
     private _ar: DIVEAR | null;
     private get ar(): DIVEAR {
         if (!this._ar) {
-            const DIVEAR = require('../ar/AR.ts').default as typeof import('../ar/AR.ts').DIVEAR;
+            const DIVEAR = require('../ar/AR.ts').DIVEAR as typeof import('../ar/AR.ts').DIVEAR;
             this._ar = new DIVEAR(this.renderer, this.scene);
         }
         return this._ar;
