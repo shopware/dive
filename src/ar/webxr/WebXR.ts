@@ -18,6 +18,7 @@ export class DIVEWebXR {
             return Promise.reject();
         }
 
+        // setup current instance
         renderer.xr.enabled = true;
         scene.InitXR(renderer);
 
@@ -34,12 +35,12 @@ export class DIVEWebXR {
             this._onSessionEnded();
         });
 
+        // add end session event listener
         DIVEWebXR._overlay.CloseButton.addEventListener('click', () => session.end());
 
+        // build up session
         renderer.xr.setReferenceSpaceType(this._referenceSpaceType);
-
         await renderer.xr.setSession(session);
-
         DIVEWebXR._overlay.Element.style.display = '';
         this._currentSession = session;
 
