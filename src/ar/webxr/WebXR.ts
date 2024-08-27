@@ -1,13 +1,14 @@
 import { type DIVERenderer } from "../../renderer/Renderer";
-import { CloseButton } from "./closebutton/CloseButton";
+import { Overlay } from "./overlay/Overlay";
 
 export class DIVEWebXR {
     private static _currentSession: XRSession | null = null;
     private static _referenceSpaceType: XRReferenceSpaceType = 'viewer';
+    private static _overlay: Overlay | null = null;
     private static _options = {
-        requiredFeatures: ['hit-test'],
-        optionalFeatures: ['dom-overlay'],
-        domOverlay: { root: CloseButton.Create(this._currentSession, false) },
+        requiredFeatures: ['local', 'hit-test'],
+        optionalFeatures: ['light-estimation', 'local-floor', 'dom-overlay'],
+        domOverlay: { root: {} as HTMLElement },
     };
 
     public static async Launch(renderer: DIVERenderer): Promise<void> {
@@ -18,15 +19,26 @@ export class DIVEWebXR {
 
         renderer.xr.enabled = true;
 
+        // creating overlay
+        if (!DIVEWebXR._overlay) {
+            const overlay = new Overlay();
+            DIVEWebXR._overlay = overlay;
+        }
+        DIVEWebXR._options.domOverlay = { root: DIVEWebXR._overlay.Element };
+
         // request session
         const session = await navigator.xr.requestSession('immersive-ar', this._options);
-        session.addEventListener('end', this._onSessionEnded);
+        session.addEventListener('end', () => {
+            this._onSessionEnded();
+        });
+
+        DIVEWebXR._overlay.CloseButton.addEventListener('click', () => session.end());
 
         renderer.xr.setReferenceSpaceType(this._referenceSpaceType);
 
         await renderer.xr.setSession(session);
 
-        this._options.domOverlay.root.style.display = '';
+        DIVEWebXR._overlay.Element.style.display = '';
         this._currentSession = session;
 
         return Promise.resolve();
@@ -36,7 +48,7 @@ export class DIVEWebXR {
         if (!this._currentSession) return;
 
         this._currentSession.removeEventListener('end', this._onSessionEnded);
-        this._options.domOverlay.root.style.display = 'none';
+        DIVEWebXR._overlay!.Element.style.display = 'none';
         this._currentSession = null;
     }
 }

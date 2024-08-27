@@ -33,7 +33,7 @@ export class DIVEAR {
         if (system === 'Android') {
             const support = await DIVEInfo.GetSupportsWebXR();
             if (!support) {
-                console.log('WebXR not supported');
+                console.log('WebXR not supported. Reason: ' + DIVEInfo.GetWebXRUnsupportedReason());
                 return Promise.reject();
             }
 
