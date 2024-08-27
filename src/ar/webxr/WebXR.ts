@@ -1,4 +1,5 @@
 import { type DIVERenderer } from "../../renderer/Renderer";
+import { CloseButton } from "./closebutton/CloseButton";
 
 export class DIVEWebXR {
     private static _currentSession: XRSession | null = null;
@@ -6,7 +7,7 @@ export class DIVEWebXR {
     private static _options = {
         requiredFeatures: ['hit-test'],
         optionalFeatures: ['dom-overlay'],
-        domOverlay: { root: document.body }
+        domOverlay: { root: CloseButton.Create(this._currentSession, false) },
     };
 
     public static async Launch(renderer: DIVERenderer): Promise<void> {
@@ -26,7 +27,6 @@ export class DIVEWebXR {
         await renderer.xr.setSession(session);
 
         this._options.domOverlay.root.style.display = '';
-
         this._currentSession = session;
 
         return Promise.resolve();
@@ -36,9 +36,7 @@ export class DIVEWebXR {
         if (!this._currentSession) return;
 
         this._currentSession.removeEventListener('end', this._onSessionEnded);
-
         this._options.domOverlay.root.style.display = 'none';
-
         this._currentSession = null;
     }
 }
