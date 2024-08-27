@@ -16,37 +16,44 @@ export class DIVEWebXROrigin {
     private _hitTestResultBuffer: XRHitTestResult[];
     private _raycastHitCounter: number = 0;
 
-    private _originSet: boolean;
+    private _originSet: Promise<boolean>;
+    private _originSetResolve: (value: boolean) => void = () => { };
+    public get originSet(): Promise<boolean> {
+        return this._originSet;
+    }
 
-    private _matrix: Promise<Matrix4>;
-    public get matrix(): Promise<Matrix4> {
+    private _matrix: Matrix4;
+    public get matrix(): Matrix4 {
         return this._matrix;
     }
-    private _matrixExecutor: { resolve: (value: Matrix4) => void, reject: (reason?: unknown) => void } = { resolve: () => { }, reject: () => { } };
-
-    private _originPosition: Promise<Vector3>;
-    public get originPosition(): Promise<Vector3> {
-        return this._originPosition;
+    private set matrix(value: Matrix4) {
+        this._matrix = value;
+        this._matrix.decompose(this._position, this._quaternion, this._scale);
     }
-    private _originPositionExecutor: { resolve: (value: Vector3) => void, reject: (reason?: unknown) => void } = { resolve: () => { }, reject: () => { } };
 
-    private _originQuaternion: Promise<Quaternion>;
-    public get originQuaternion(): Promise<Quaternion> {
-        return this._originQuaternion;
+    private _position: Vector3;
+    public get position(): Vector3 {
+        return this._position;
     }
-    private _originQuaternionExecutor: { resolve: (value: Quaternion) => void, reject: (reason?: unknown) => void } = { resolve: () => { }, reject: () => { } };
 
-    private _originScale: Promise<Vector3>;
-    public get originScale(): Promise<Vector3> {
-        return this._originScale;
+    private _quaternion: Quaternion;
+    public get quaternion(): Quaternion {
+        return this._quaternion;
     }
-    private _originScaleExecutor: { resolve: (value: Vector3) => void, reject: (reason?: unknown) => void } = { resolve: () => { }, reject: () => { } };
+
+    private _scale: Vector3;
+    public get scale(): Vector3 {
+        return this._scale;
+    }
 
     constructor(session: XRSession, renderer: DIVERenderer, entityTypes?: XRHitTestTrackableType[]) {
         this._renderer = renderer;
         this._session = session;
 
-        this._originSet = false;
+        this._originSet = new Promise<boolean>((resolve) => {
+            this._originSetResolve = resolve;
+        });
+
         this._requesting = false;
         this._initialized = false;
 
@@ -58,44 +65,20 @@ export class DIVEWebXROrigin {
         this._hitTestResultBuffer = [];
 
         // set up promises and executors
-        this._matrix = new Promise<Matrix4>((resolve, reject) => {
-            this._matrixExecutor = { resolve: resolve, reject: reject };
-        });
-        this._originPosition = new Promise<Vector3>((resolve, reject) => {
-            this._originPositionExecutor = { resolve: resolve, reject: reject };
-        });
-        this._originQuaternion = new Promise<Quaternion>((resolve, reject) => {
-            this._originQuaternionExecutor = { resolve: resolve, reject: reject };
-        });
-        this._originScale = new Promise<Vector3>((resolve, reject) => {
-            this._originScaleExecutor = { resolve: resolve, reject: reject };
-        });
+        this._matrix = new Matrix4();
+        this._position = new Vector3();
+        this._quaternion = new Quaternion();
+        this._scale = new Vector3();
 
         // when origin is set, decompose matrix into position, quaternion and scale
-        this.matrix.then((matrix) => {
-            // create holders for position, quaternion and scale
-            const position: Vector3 = new Vector3();
-            const quaternion: Quaternion = new Quaternion();
-            const scale: Vector3 = new Vector3();
-
+        this._originSet.then(() => {
             // decompose matrix into position, quaternion and scale
-            matrix.decompose(position, quaternion, scale);
-
-            // resolve promises
-            this._originPositionExecutor.resolve(position);
-            this._originQuaternionExecutor.resolve(quaternion);
-            this._originScaleExecutor.resolve(scale);
-
-            this._originSet = true;
-
-            this._referenceSpaceBuffer = null;
-            this._hitTestSource?.cancel();
-            this._hitTestSource = null;
+            this._matrix.decompose(this._position, this._quaternion, this._scale);
         });
     }
 
     public async Init(): Promise<this> {
-        if (this._originSet) {
+        if (this._initialized) {
             return Promise.resolve(this);
         }
 
@@ -107,10 +90,6 @@ export class DIVEWebXROrigin {
         if (this._requesting) {
             console.error("DIVEWebXROrigin: Currently initializing! Aborting initialization...");
             return Promise.reject();
-        }
-
-        if (this._initialized) {
-            return Promise.resolve(this);
         }
 
         this._requesting = true;
@@ -127,11 +106,26 @@ export class DIVEWebXROrigin {
         return Promise.resolve(this);
     }
 
+    public Dispose(): void {
+        this._initialized = false;
+        this._requesting = false;
+
+        this._hitTestSource?.cancel();
+
+        this._hitTestSource = null;
+        this._hitTestResultBuffer = [];
+
+        this._matrix = new Matrix4();
+        this._position = new Vector3();
+        this._quaternion = new Quaternion();
+        this._scale = new Vector3();
+    }
+
     public Update(frame: XRFrame): void {
         if (!this._initialized) return;
 
         if (!this._hitTestSource) {
-            throw new Error("DIVEWebXRRaycaster: Critical Error: HitTestSource not available but Raycaster is initialized!");
+            throw new Error("DIVEWebXRRaycaster: Critical Error: HitTestSource not available but WebXROrigin is initialized!");
         }
 
         // get hit test results
@@ -163,8 +157,10 @@ export class DIVEWebXROrigin {
     private onHitFound(pose: XRPose): void {
         this._raycastHitCounter++;
 
+        this.matrix.fromArray(pose.transform.matrix);
+
         if (this._raycastHitCounter > 50) {
-            this._matrixExecutor.resolve(new Matrix4().fromArray(pose.transform.matrix));
+            this._originSetResolve(true);
         }
     }
 
