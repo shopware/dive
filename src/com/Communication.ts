@@ -199,6 +199,11 @@ export default class DIVECommunication {
                 returnValue = this.generateMedia(payload as Actions['GENERATE_MEDIA']['PAYLOAD']);
                 break;
             }
+            case 'LAUNCH_AR': {
+                this.ar.Launch();
+                returnValue = true;
+                break;
+            }
         }
 
         this.dispatch(action, payload);
