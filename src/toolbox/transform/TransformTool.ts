@@ -47,7 +47,7 @@ export default class DIVETransformTool extends DIVEBaseTool {
             (this._gizmo.object as DIVEMoveable).onMove!();
         });
 
-        scene.add(this._gizmo);
+        this._scene.Root.HelperRoot.add(this._gizmo);
     }
 
     public Activate(): void { }
@@ -59,7 +59,7 @@ export default class DIVETransformTool extends DIVEBaseTool {
     public SetGizmoVisibility(active: boolean): void {
         const contains = this._scene.children.includes(this._gizmo);
         if (active && !contains) {
-            this._scene.add(this._gizmo);
+            this._scene.Root.HelperRoot.add(this._gizmo);
         } else if (!active && contains) {
             this._scene.remove(this._gizmo);
         }

@@ -124,7 +124,6 @@ describe('DIVE/scene/root/DIVERoot', () => {
     it('should instantiate', () => {
         const root = new DIVERoot();
         expect(root).toBeDefined();
-        expect(root.add).toHaveBeenCalledTimes(4);
     });
 
     it('should have Floor', () => {
@@ -140,6 +139,16 @@ describe('DIVE/scene/root/DIVERoot', () => {
     it('should have ModelRoot', () => {
         const root = new DIVERoot();
         expect(root.ModelRoot).toBeDefined();
+    });
+
+    it('should have LightRoot', () => {
+        const root = new DIVERoot();
+        expect(root.LightRoot).toBeDefined();
+    });
+
+    it('should have HelperRoot', () => {
+        const root = new DIVERoot();
+        expect(root.HelperRoot).toBeDefined();
     });
 
     it('should ComputeSceneBB', () => {
