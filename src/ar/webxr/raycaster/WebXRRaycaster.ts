@@ -12,8 +12,9 @@ export type DIVEHitResult = {
     point: Vector3;
     matrix: Matrix4;
     object?: Mesh;
-}
-type DIVEWebXREvents = {
+};
+
+export type DIVEWebXRRaycasterEvents = {
     'AR_HIT_FOUND': {
         hit: DIVEHitResult;
     },
@@ -24,7 +25,7 @@ type DIVEWebXREvents = {
     'SCENE_HIT_LOST': undefined;
 };
 
-export class DIVEWebXRRaycaster extends DIVEEventExecutor<DIVEWebXREvents> {
+export class DIVEWebXRRaycaster extends DIVEEventExecutor<DIVEWebXRRaycasterEvents> {
     private _session: XRSession;
 
     private _initialized: boolean = false;
