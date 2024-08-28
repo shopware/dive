@@ -13,16 +13,18 @@ export type DIVEHitResult = {
     matrix: Matrix4;
     object?: Mesh;
 }
-
 type DIVEWebXREvents = {
-    'HIT_FOUND': {
+    'AR_HIT_FOUND': {
         hit: DIVEHitResult;
     },
-    'HIT_LOST': undefined;
+    'AR_HIT_LOST': undefined;
+    'SCENE_HIT_FOUND': {
+        hit: DIVEHitResult;
+    };
+    'SCENE_HIT_LOST': undefined;
 };
 
 export class DIVEWebXRRaycaster extends DIVEEventExecutor<DIVEWebXREvents> {
-    private _renderer: DIVERenderer;
     private _session: XRSession;
 
     private _initialized: boolean = false;
@@ -30,7 +32,8 @@ export class DIVEWebXRRaycaster extends DIVEEventExecutor<DIVEWebXREvents> {
     private _threeRaycaster: DIVEWebXRRaycasterTHREE;
     private _arRaycaster: DIVEWebXRRaycasterAR;
 
-    private _hitResultBuffer: DIVEHitResult[] = [];
+    private _arHitResultBuffer: DIVEHitResult[] = [];
+    private _sceneHitResultBuffer: DIVEHitResult[] = [];
 
     // buffers
     private _hasHit: boolean = false;
@@ -39,7 +42,6 @@ export class DIVEWebXRRaycaster extends DIVEEventExecutor<DIVEWebXREvents> {
         super();
 
         this._session = session;
-        this._renderer = renderer;
 
         this._threeRaycaster = new DIVEWebXRRaycasterTHREE(renderer, scene);
         this._arRaycaster = new DIVEWebXRRaycasterAR(session, renderer);
@@ -71,42 +73,55 @@ export class DIVEWebXRRaycaster extends DIVEEventExecutor<DIVEWebXREvents> {
         return Promise.resolve(this);
     }
 
-    public Update(frame: XRFrame): void {
-        if (!this._initialized) return;
-
-        // check for scene hits
-        this._hitResultBuffer = this._threeRaycaster.GetIntersections();
-        if (this._hitResultBuffer.length > 0) {
-            // scene hit found
-            this.onHitFound(this._hitResultBuffer[0]);
-            // early return to prevent ar raycaster from overriding scene hit
-            return;
-        } else {
-            // scene hit nothing
-            this.onHitLost();
-        }
-
+    public GetARIntersections(frame: XRFrame): DIVEHitResult[] {
         // check for ar hits
-        this._hitResultBuffer = this._arRaycaster.GetIntersections(frame);
-        if (this._hitResultBuffer.length > 0) {
+        this._arHitResultBuffer = this._arRaycaster.GetIntersections(frame);
+        if (this._arHitResultBuffer.length > 0) {
             // hit found
-            this.onHitFound(this._hitResultBuffer[0]);
+            this.onARHitFound(this._arHitResultBuffer[0]);
 
         } else {
             // hit nothing
-            this.onHitLost();
+            this.onARHitLost();
         }
+        return this._arHitResultBuffer;
     }
 
-    private onHitFound(hit: DIVEHitResult): void {
+    public GetSceneIntersections(): DIVEHitResult[] {
+        // check for scene hits
+        this._sceneHitResultBuffer = this._threeRaycaster.GetIntersections();
+        if (this._sceneHitResultBuffer.length > 0) {
+            // scene hit found
+            this.onSceneHitFound(this._sceneHitResultBuffer[0]);
+            // early return to prevent ar raycaster from overriding scene hit
+        } else {
+            // scene hit nothing
+            this.onSceneHitLost();
+        }
+        return this._sceneHitResultBuffer;
+    }
+
+    private onARHitFound(hit: DIVEHitResult): void {
         this._hasHit = true;
-        this.dispatch('HIT_FOUND', { hit });
+        this.dispatch('AR_HIT_FOUND', { hit });
     }
 
-    private onHitLost(): void {
+    private onARHitLost(): void {
         if (!this._hasHit) return;
 
         this._hasHit = false;
-        this.dispatch('HIT_LOST');
+        this.dispatch('AR_HIT_LOST');
+    }
+
+    private onSceneHitFound(hit: DIVEHitResult): void {
+        this._hasHit = true;
+        this.dispatch('SCENE_HIT_FOUND', { hit });
+    }
+
+    private onSceneHitLost(): void {
+        if (!this._hasHit) return;
+
+        this._hasHit = false;
+        this.dispatch('SCENE_HIT_LOST');
     }
 }

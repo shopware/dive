@@ -1,6 +1,6 @@
 import { Matrix4, Vector3 } from "three";
-import { DIVERenderer } from "../../../../renderer/Renderer";
-import { DIVEHitResult } from "../WebXRRaycaster";
+import { type DIVERenderer } from "../../../../renderer/Renderer";
+import { type DIVEHitResult } from "../WebXRRaycaster";
 
 export class DIVEWebXRRaycasterAR {
     private _session: XRSession;
@@ -22,7 +22,10 @@ export class DIVEWebXRRaycasterAR {
     }
 
     public Dispose(): void {
-        // dispose code here
+        this._transientHitTestSource?.cancel();
+        this._transientHitTestSource = undefined;
+
+        this._initialized = false;
     }
 
     public async Init(): Promise<this> {

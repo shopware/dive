@@ -19,7 +19,7 @@ export class DIVEWebXR {
     private static _renderCallbackId: string | null = null;
 
     // setup members
-    private static _currentSession: XRSession | null = null;
+    private static _session: XRSession | null = null;
     private static _referenceSpaceType: XRReferenceSpaceType = 'local';
     private static _overlay: Overlay | null = null;
     private static _options = {
@@ -66,7 +66,7 @@ export class DIVEWebXR {
         renderer.xr.setReferenceSpaceType(this._referenceSpaceType);
         await renderer.xr.setSession(session);
         DIVEWebXR._overlay.Element.style.display = '';
-        this._currentSession = session;
+        this._session = session;
 
         // add end session event listener
         DIVEWebXR._overlay.CloseButton.addEventListener('click', () => this.End());
@@ -78,7 +78,7 @@ export class DIVEWebXR {
     }
 
     public static Update(_time: DOMHighResTimeStamp, frame: XRFrame): void {
-        if (!this._currentSession) return;
+        if (!this._session) return;
 
         if (this._xrController) {
             this._xrController.Update(frame);
@@ -86,19 +86,19 @@ export class DIVEWebXR {
     }
 
     public static End(): void {
-        if (!this._currentSession) return;
-        this._currentSession.end();
+        if (!this._session) return;
+        this._session.end();
     }
 
     private static async _onSessionStarted(): Promise<void> {
-        if (!this._currentSession) return;
+        if (!this._session) return;
 
         // add update callback to render loop
         this._renderCallbackId = this._renderer.AddPreRenderCallback((time: DOMHighResTimeStamp, frame: XRFrame) => {
             this.Update(time, frame);
         });
 
-        this._xrController = new DIVEWebXRController(this._currentSession, this._renderer, this._scene);
+        this._xrController = new DIVEWebXRController(this._session, this._renderer, this._scene);
         await this._xrController.Init().catch(() => {
             this.End();
         });
@@ -107,7 +107,7 @@ export class DIVEWebXR {
     }
 
     private static _onSessionEnded(): void {
-        if (!this._currentSession) return;
+        if (!this._session) return;
 
         if (this._xrController) {
             this._xrController.Dispose();
@@ -143,8 +143,8 @@ export class DIVEWebXR {
         // dispose xr scene
         this._scene.DisposeXR();
 
-        this._currentSession.removeEventListener('end', this._onSessionEnded);
+        this._session.removeEventListener('end', this._onSessionEnded);
         DIVEWebXR._overlay!.Element.style.display = 'none';
-        this._currentSession = null;
+        this._session = null;
     }
 }
