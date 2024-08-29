@@ -3,19 +3,22 @@ import { DIVEEventExecutor } from "../../../events/EventExecutor";
 
 export type DIVETouchscreenEvents = {
     'TOUCH_START': {
-        index: number,
-        current: Vector2,
+        touches: {
+            current: Vector2,
+        }[],
         touchCount: number,
     },
     'TOUCH_MOVE': {
-        index: number,
-        current: Vector2,
-        delta: Vector2,
+        touches: {
+            current: Vector2,
+            delta: Vector2,
+        }[],
         touchCount: number,
     },
     'TOUCH_END': {
-        index: number,
-        current: Vector2,
+        touches: {
+            current: Vector2,
+        }[],
         touchCount: number,
     },
     'ROTATE_START': {
@@ -103,114 +106,164 @@ export class DIVEWebXRTouchscreenControls extends DIVEEventExecutor<DIVETouchscr
     }
 
     private onTouchStart(event: TouchEvent): void {
-        this._touches[0].start.set(event.touches[0].clientX, event.touches[0].clientY);
-
         this._touchCount = event.touches.length;
-        // this.startRaycastPosition = null;
-        // this.startObjectPosition.set(0, 0, 0);
 
-        if (event.touches.length === 2) {
+        this._touches[0].start.set(event.touches[0].clientX, event.touches[0].clientY);
+        this._touches[0].current.set(event.touches[0].clientX, event.touches[0].clientY);
+        this._touches[0].delta.set(0, 0);
+
+        if (this._touchCount > 1) {
             this._touches[1].start.set(event.touches[1].clientX, event.touches[1].clientY);
+            this._touches[1].current.set(event.touches[1].clientX, event.touches[1].clientY);
+            this._touches[1].delta.set(0, 0);
+        }
 
+        if (this._touchCount === 2) {
             this.handleRotateStart();
             this.handlePinchStart();
         }
-    }
-
-    private onTouchMove(event: TouchEvent): void {
-        this._touches[0].current.set(event.touches[0].clientX, event.touches[0].clientY);
-        this._touches[0].delta.copy(this._touches[0].current.clone().sub(this._touches[0].start));
-
-        if (event.touches.length === 2) {
-            this._touches[1].current.set(event.touches[1].clientX, event.touches[1].clientY);
-            this._touches[1].delta.copy(this._touches[1].current.clone().sub(this._touches[1].start));
-
-            this.handleRotateMoved();
-            this.handlePinchMoved();
-        }
-
-        this.dispatch('TOUCH_MOVE', {
-            index: this._touchCount,
-            current: this._touches[this._touchCount].current.clone(),
-            delta: this._touches[this._touchCount].delta.clone(),
-            touchCount: this._touchCount,
-        });
-
-        if (this._handleRotateMoved) {
-            this.dispatch('ROTATE_MOVE', {
-                current: this._lastAngle,
-                delta: this._angleDelta,
-            });
-        }
-
-        if (this._handlePinchMoved) {
-            this.dispatch('PINCH_MOVE', {
-                current: this._currentScale - this._scaleDistanceStart,
-                delta: this._deltaScale,
-            });
-        }
-    }
-
-    private onTouchEnd(event: TouchEvent): void {
-        this._touchCount = event.touches.length;
-        if (this._touchCount > 0) {
-            this.handleRotateEnded();
-            this.handlePinchEnded();
-        }
-    }
-
-    private onSessionSelectStart(): void {
-        this.dispatch('TOUCH_START', {
-            index: this._touchCount,
-            current: this._touches[this._touchCount].start.clone(),
-            touchCount: this._touchCount,
-        });
 
         if (this._handleRotateStarted) {
             this.dispatch('ROTATE_START', {
                 current: 0,
             });
+            this._handleRotateStarted = false;
         }
 
         if (this._handlePinchStarted) {
             this.dispatch('PINCH_START', {
                 current: 0,
             });
+            this._handlePinchStarted = false;
         }
     }
 
-    private onSessionSelectEnd(): void {
-        this.dispatch('TOUCH_END', {
-            index: this._touchCount,
-            current: this._touches[this._touchCount].current.clone(),
-            touchCount: this._touchCount,
-        });
+    private onTouchMove(event: TouchEvent): void {
+        this._touchCount = event.touches.length;
+
+        this._touches[0].start.set(event.touches[0].clientX, event.touches[0].clientY);
+        this._touches[0].current.set(event.touches[0].clientX, event.touches[0].clientY);
+        this._touches[0].delta.copy(this._touches[0].current.clone().sub(this._touches[0].start));
+
+        if (this._touchCount > 1) {
+            this._touches[1].start.set(event.touches[1].clientX, event.touches[1].clientY);
+            this._touches[1].current.set(event.touches[1].clientX, event.touches[1].clientY);
+            this._touches[1].delta.copy(this._touches[1].current.clone().sub(this._touches[1].start));
+        }
+
+        if (this._touchCount === 2) {
+            this.handleRotateMoved();
+            this.handlePinchMoved();
+        }
+
+        if (this._touchCount === 1) {
+            this.dispatch('TOUCH_MOVE', {
+                touches: [
+                    {
+                        current: this._touches[0].current.clone(),
+                        delta: this._touches[0].delta.clone(),
+                    },
+                    {
+                        current: this._touches[1].current.clone(),
+                        delta: this._touches[1].delta.clone(),
+                    }
+                ],
+                touchCount: this._touchCount,
+            });
+        }
+
+        if (this._touchCount === 2) {
+            if (this._handleRotateMoved) {
+                this.dispatch('ROTATE_MOVE', {
+                    current: this._lastAngle,
+                    delta: this._angleDelta,
+                });
+                this._handleRotateMoved = false;
+            }
+
+            if (this._handlePinchMoved) {
+                this.dispatch('PINCH_MOVE', {
+                    current: this._currentScale - this._scaleDistanceStart,
+                    delta: this._deltaScale,
+                });
+                this._handlePinchMoved = false;
+            }
+        }
+    }
+
+    private onTouchEnd(event: TouchEvent): void {
+        this._touchCount = event.touches.length;
+
+        if (this._touchCount === 0) {
+            this._touches[0].start.set(0, 0);
+            this._touches[0].current.set(0, 0);
+            this._touches[0].delta.set(0, 0);
+        }
+
+        if (this._touchCount === 1) {
+            this.handleRotateEnded();
+            this.handlePinchEnded();
+
+            this._touches[1].start.set(0, 0);
+            this._touches[1].current.set(0, 0);
+            this._touches[1].delta.set(0, 0);
+        }
 
         if (this._handleRotateEnded) {
             this.dispatch('ROTATE_END', {
                 current: this._lastAngle,
             });
+            this._handleRotateEnded = false;
         }
 
         if (this._handlePinchEnded) {
             this.dispatch('PINCH_END', {
                 current: this._currentScale - this._scaleDistanceStart,
             });
+            this._handlePinchEnded = false;
         }
+    }
+
+    private onSessionSelectStart(): void {
+        this.dispatch('TOUCH_START', {
+            touches: [
+                {
+                    current: this._touches[0].current.clone(),
+                },
+                {
+                    current: this._touches[1].current.clone(),
+                }
+            ],
+            touchCount: this._touchCount,
+        });
+    }
+
+    private onSessionSelectEnd(): void {
+        this.dispatch('TOUCH_END', {
+            touches: [
+                {
+                    current: this._touches[0].current.clone(),
+                },
+                {
+                    current: this._touches[1].current.clone(),
+                }
+            ],
+            touchCount: this._touchCount,
+        });
     }
 
     // rotation handler
     private handleRotateStart(): void {
         this._handleRotateStarted = true;
-
-        this._startAngle = this._touches[1].start.clone().sub(this._touches[0].start).angle(); //+ this.lastAngle;
+        this._startAngle = this._touches[1].start.clone().sub(this._touches[0].current).angle() //+ this._lastAngle;
+        // console.log('start', this._startAngle);
     }
 
     private handleRotateMoved(): void {
         this._handleRotateMoved = true;
-
-        this._angleDelta = this._touches[1].current.clone().sub(this._touches[0].current).angle() - this._startAngle;
-        // this.quaternion.copy(this.bufferQuaternion.setFromAxisAngle(this.worldDown, angleDelta * 3));
+        const currentAngle = this._touches[1].current.clone().sub(this._touches[0].current).angle();
+        this._angleDelta = currentAngle - this._startAngle;
+        // console.log('current', currentAngle, 'delta', this._angleDelta);
         this._lastAngle = this._angleDelta * -1;
     }
 
