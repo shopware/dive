@@ -207,7 +207,6 @@ export class DIVEWebXRController extends Object3D {
     }
 
     private onRotateMove(payload: DIVETouchscreenEvents['ROTATE_MOVE']): void {
-        // console.log('delta', payload.delta);
         this._touchQuaterion.setFromAxisAngle(new Vector3(0, -1, 0), payload.delta * 3);
         this._touchQuaterion.multiply(this._startTouchQuaternion);
         this.updateObject();
@@ -216,12 +215,10 @@ export class DIVEWebXRController extends Object3D {
     private _startTouchScale: number = 1;
     private onPinchStart(): void {
         this._startTouchScale = this._touchScale;
-        console.log('_startTouchScale', this._startTouchScale);
     }
 
     private onPinchMove(payload: DIVETouchscreenEvents['PINCH_MOVE']): void {
         this._touchScale = this._startTouchScale * payload.current;
-        // console.log('scale', this._touchScale, 'delta', payload.delta);
         this.updateObject();
     }
 
