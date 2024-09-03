@@ -13,6 +13,7 @@ import type { COMPov, COMLight, COMModel, COMEntity } from './com/types.ts';
 import { DIVEMath } from './math/index.ts';
 import { generateUUID } from "three/src/math/MathUtils";
 import { DIVEInfo } from "./info/Info.ts";
+import { GLTFExporter, OBJLoader } from "three/examples/jsm/Addons";
 
 export type DIVESettings = {
     autoResize: boolean;
@@ -54,6 +55,41 @@ export const DIVEDefaultSettings: DIVESettings = {
  */
 
 export default class DIVE {
+    public static async QuickViewBase64(base64: string): Promise<DIVE> {
+        // convert base64 to array buffer
+        const binaryString = atob(base64);
+        const bytes = new Uint8Array(binaryString.length);
+        for (let i = 0; i < binaryString.length; i++) {
+            bytes[i] = binaryString.charCodeAt(i);
+        }
+        const buffer = bytes.buffer;
+
+
+        let blob = new Blob([buffer], { type: 'application/octet-stream' });
+        // createUrl from blob
+        let url = URL.createObjectURL(blob);
+
+        console.log('stream blob:', url);
+
+        const group = await new OBJLoader().loadAsync(url);
+
+        group.rotateX(-Math.PI / 2);
+
+        console.log('group:', group);
+
+        const gltfbuffer = await new GLTFExporter().parseAsync(group, { binary: true }) as ArrayBuffer;
+
+        console.log('gltfbuffer:', gltfbuffer);
+
+        blob = new Blob([gltfbuffer], { type: 'application/octet-stream' });
+
+        url = URL.createObjectURL(blob);
+
+        console.log('.obj blob:', url);
+
+        return DIVE.QuickView(url);
+    }
+
     // static members
     public static QuickView(uri: string): DIVE {
         const dive = new DIVE();
