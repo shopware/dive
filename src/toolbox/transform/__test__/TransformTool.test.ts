@@ -1,5 +1,5 @@
 import DIVETransformTool, { isTransformTool } from '../TransformTool';
-import DIVEScene from '../../../scene/Scene';
+import { DIVEScene } from '../../../scene/Scene';
 import DIVEOrbitControls from '../../../controls/OrbitControls';
 import DIVEPerspectiveCamera from '../../../camera/PerspectiveCamera';
 import { DIVERenderer } from '../../../renderer/Renderer';
@@ -47,15 +47,18 @@ jest.mock('../../../controls/OrbitControls', () => {
 });
 
 jest.mock('../../../scene/Scene', () => {
-    return jest.fn(function () {
-        this.add = jest.fn();
-        this.remove = jest.fn();
-        this.Root = {
-            children: [],
-        }
-        this.children = [];
-        return this;
-    });
+    return {
+        DIVEScene: jest.fn(function () {
+            this.Root = {
+                HelperRoot: {
+                    children: [],
+                    add: jest.fn(),
+                    remove: jest.fn(),
+                }
+            }
+            return this;
+        })
+    }
 });
 
 jest.mock('../../../animation/AnimationSystem', () => {
@@ -97,7 +100,7 @@ jest.mock('three', () => {
 const mock_attach = jest.fn();
 const mock_detach = jest.fn();
 
-jest.mock('three/examples/jsm/Addons.js', () => {
+jest.mock('three/examples/jsm/controls/TransformControls', () => {
     return {
         TransformControls: jest.fn(function () {
             this.addEventListener = (type: string, callback: (e: object) => void) => {
@@ -178,9 +181,7 @@ describe('dive/toolbox/select/DIVETransformTool', () => {
         const transformTool = new DIVETransformTool(mockScene, mockController);
         expect(() => transformTool.SetGizmoVisibility(true)).not.toThrow();
 
-        expect(mockScene.add).toBeCalled();
-
-        mockScene.children.includes = jest.fn().mockReturnValue(true);
+        mockScene.Root.HelperRoot.children.includes = jest.fn().mockReturnValue(true);
         expect(() => transformTool.SetGizmoVisibility(false)).not.toThrow();
     });
 });

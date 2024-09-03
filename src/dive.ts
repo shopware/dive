@@ -1,5 +1,5 @@
 import { DIVERenderer, DIVERendererDefaultSettings, DIVERendererSettings } from "./renderer/Renderer.ts";
-import DIVEScene from "./scene/Scene.ts";
+import { DIVEScene } from "./scene/Scene.ts";
 import DIVEPerspectiveCamera, { DIVEPerspectiveCameraDefaultSettings, DIVEPerspectiveCameraSettings } from "./camera/PerspectiveCamera.ts";
 import DIVEOrbitControls, { DIVEOrbitControlsDefaultSettings, DIVEOrbitControlsSettings } from "./controls/OrbitControls.ts";
 import DIVEToolbox from "./toolbox/Toolbox.ts";

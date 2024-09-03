@@ -1,6 +1,8 @@
 import { Color, Scene, type Box3, type ColorRepresentation, type Object3D } from 'three';
 import { type COMModel, type COMEntity } from '../com/types';
 import DIVERoot from './root/Root';
+import { DIVEXRRoot } from './xrroot/XRRoot';
+import { type DIVERenderer } from '../renderer/Renderer';
 
 /**
  * A basic scene class.
@@ -10,10 +12,15 @@ import DIVERoot from './root/Root';
  * @module
  */
 
-export default class DIVEScene extends Scene {
-    private root: DIVERoot;
+export class DIVEScene extends Scene {
+    private _root: DIVERoot;
     public get Root(): DIVERoot {
-        return this.root;
+        return this._root;
+    }
+
+    private _xrRoot: DIVEXRRoot;
+    public get XRRoot(): DIVEXRRoot {
+        return this._xrRoot;
     }
 
     constructor() {
@@ -21,8 +28,24 @@ export default class DIVEScene extends Scene {
 
         this.background = new Color(0xffffff);
 
-        this.root = new DIVERoot();
-        this.add(this.root);
+        this._root = new DIVERoot();
+        this.add(this._root);
+
+        this._xrRoot = new DIVEXRRoot(this);
+        this._xrRoot.visible = false;
+        this.add(this._xrRoot);
+    }
+
+    public InitXR(renderer: DIVERenderer): void {
+        this._root.visible = false;
+        this._xrRoot.visible = true;
+        this._xrRoot.InitLightEstimation(renderer);
+    }
+
+    public DisposeXR(): void {
+        this._root.visible = true;
+        this._xrRoot.visible = false;
+        this._xrRoot.DisposeLightEstimation();
     }
 
     public SetBackground(color: ColorRepresentation): void {

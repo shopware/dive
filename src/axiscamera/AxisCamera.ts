@@ -3,7 +3,7 @@ import SpriteText from "three-spritetext";
 import { COORDINATE_LAYER_MASK } from "../constant/VisibilityLayerMask.ts";
 import { AxesColorRed, AxesColorGreen, AxesColorBlue, AxesColorRedLetter, AxesColorGreenLetter, AxesColorBlueLetter } from "../constant/AxisHelperColors.ts";
 import { DIVERenderer } from "../renderer/Renderer.ts";
-import DIVEScene from "../scene/Scene.ts";
+import { type DIVEScene } from "../scene/Scene.ts";
 import DIVEOrbitControls from "../controls/OrbitControls.ts";
 
 /**
@@ -54,7 +54,7 @@ export default class DIVEAxisCamera extends OrthographicCamera {
         // attach everything to current scene and render cycle
         this._renderer = renderer;
         this._scene = scene;
-        this._scene.add(this);
+        this._scene.Root.HelperRoot.add(this);
 
         const restoreViewport = new Vector4();
 
@@ -79,7 +79,7 @@ export default class DIVEAxisCamera extends OrthographicCamera {
 
     public Dispose(): void {
         this._renderer.RemovePostRenderCallback(this._renderCallbackId);
-        this._scene.remove(this);
+        this._scene.Root.HelperRoot.remove(this);
     }
 
     public SetFromCameraMatrix(matrix: Matrix4): void {

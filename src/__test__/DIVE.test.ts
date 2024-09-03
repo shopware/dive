@@ -83,23 +83,25 @@ jest.mock('../renderer/Renderer.ts', () => {
 });
 
 jest.mock('../scene/Scene.ts', () => {
-    return jest.fn(function () {
-        this.add = jest.fn();
-        this.isObject3D = true;
-        this.parent = null;
-        this.dispatchEvent = jest.fn();
-        this.position = {
-            set: jest.fn(),
-        }
-        this.SetIntensity = jest.fn();
-        this.SetEnabled = jest.fn();
-        this.SetColor = jest.fn();
-        this.userData = {
-            id: undefined,
-        }
-        this.removeFromParent = jest.fn();
-        return this;
-    });
+    return {
+        DIVEScene: jest.fn(function () {
+            this.add = jest.fn();
+            this.isObject3D = true;
+            this.parent = null;
+            this.dispatchEvent = jest.fn();
+            this.position = {
+                set: jest.fn(),
+            }
+            this.SetIntensity = jest.fn();
+            this.SetEnabled = jest.fn();
+            this.SetColor = jest.fn();
+            this.userData = {
+                id: undefined,
+            }
+            this.removeFromParent = jest.fn();
+            return this;
+        })
+    }
 });
 
 jest.mock('../camera/PerspectiveCamera.ts', () => {

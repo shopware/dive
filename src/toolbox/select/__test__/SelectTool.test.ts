@@ -1,5 +1,5 @@
 import { DIVESelectTool, isSelectTool } from '../SelectTool';
-import DIVEScene from '../../../scene/Scene';
+import { DIVEScene } from '../../../scene/Scene';
 import DIVEOrbitControls from '../../../controls/OrbitControls';
 import { DIVERenderer, DIVERendererDefaultSettings } from '../../../renderer/Renderer';
 import { DIVESelectable } from '../../../interface/Selectable';
@@ -65,14 +65,19 @@ jest.mock('../../../animation/AnimationSystem', () => {
 });
 
 jest.mock('../../../scene/Scene', () => {
-    return jest.fn(function () {
-        this.add = jest.fn();
-        this.children = [];
-        this.Root = {
-            children: [],
-        }
-        return this;
-    });
+    return {
+        DIVEScene: jest.fn(function () {
+            this.Root = {
+                HelperRoot: {
+                    children: [],
+                    add: jest.fn(),
+                    remove: jest.fn(),
+                }
+            }
+
+            return this;
+        })
+    }
 });
 
 const mock_intersectObjects = jest.fn().mockReturnValue([]);
@@ -99,7 +104,7 @@ jest.mock('three', () => {
 const mock_attach = jest.fn();
 const mock_detach = jest.fn();
 
-jest.mock('three/examples/jsm/Addons.js', () => {
+jest.mock('three/examples/jsm/controls/TransformControls', () => {
     return {
         TransformControls: jest.fn(function () {
             this.addEventListener = (type: string, callback: (e: object) => void) => {

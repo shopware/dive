@@ -48,4 +48,6 @@ export type Actions = {
     MODEL_LOADED: MODEL_LOADED,
     UPDATE_SCENE: UPDATE_SCENE,
     GENERATE_MEDIA: GENERATE_MEDIA,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    LAUNCH_AR: any,
 };

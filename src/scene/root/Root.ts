@@ -16,6 +16,7 @@ export default class DIVERoot extends Object3D {
     private modelRoot: DIVEModelRoot;
     private floor: DIVEFloor;
     private grid: DIVEGrid;
+    private helperRoot: Object3D;
 
     public get Floor(): DIVEFloor {
         return this.floor;
@@ -25,18 +26,37 @@ export default class DIVERoot extends Object3D {
         return this.grid;
     }
 
+    public get HelperRoot(): Object3D {
+        return this.helperRoot;
+    }
+
+    public get ModelRoot(): DIVEModelRoot {
+        return this.modelRoot;
+    }
+
+    public get LightRoot(): DIVELightRoot {
+        return this.lightRoot;
+    }
+
     constructor() {
         super();
         this.name = "Root";
 
         this.lightRoot = new DIVELightRoot();
         this.add(this.lightRoot);
+
         this.modelRoot = new DIVEModelRoot();
         this.add(this.modelRoot);
+
         this.floor = new DIVEFloor();
         this.add(this.floor);
+
         this.grid = new DIVEGrid();
         this.add(this.grid);
+
+        this.helperRoot = new Object3D();
+        this.helperRoot.name = "HelperRoot";
+        this.add(this.helperRoot);
     }
 
     public ComputeSceneBB(): Box3 {

@@ -4,7 +4,7 @@ import { generateUUID } from 'three/src/math/MathUtils';
 // type imports
 import { type Color, type MeshStandardMaterial } from "three";
 import { type COMLight, type COMModel, type COMEntity, type COMPov } from "./types.ts";
-import type DIVEScene from "../scene/Scene.ts";
+import { type DIVEScene } from "../scene/Scene.ts";
 import type DIVEToolbox from "../toolbox/Toolbox.ts";
 import type DIVEOrbitControls from "../controls/OrbitControls.ts";
 import type DIVEModel from "../model/Model.ts";
@@ -12,6 +12,7 @@ import { type DIVEMediaCreator } from "../mediacreator/MediaCreator.ts";
 import { type DIVERenderer } from "../renderer/Renderer.ts";
 import { type DIVESelectable } from "../interface/Selectable.ts";
 import { isSelectTool } from "../toolbox/select/SelectTool.ts";
+import { DIVEAR } from "../ar/AR.ts";
 
 type EventListener<Action extends keyof Actions> = (payload: Actions[Action]['PAYLOAD']) => void;
 
@@ -65,6 +66,15 @@ export default class DIVECommunication {
         return this._mediaGenerator;
     }
 
+    private _ar: DIVEAR | null;
+    private get ar(): DIVEAR {
+        if (!this._ar) {
+            const DIVEAR = require('../ar/AR.ts').DIVEAR as typeof import('../ar/AR.ts').DIVEAR;
+            this._ar = new DIVEAR(this.renderer, this.scene, this.controller);
+        }
+        return this._ar;
+    }
+
     private registered: Map<string, COMEntity> = new Map();
 
     // private listeners: { [key: string]: EventListener[] } = {};
@@ -77,6 +87,7 @@ export default class DIVECommunication {
         this.controller = controls;
         this.toolbox = toolbox;
         this._mediaGenerator = null;
+        this._ar = null;
 
         DIVECommunication.__instances.push(this);
     }
@@ -186,6 +197,11 @@ export default class DIVECommunication {
             }
             case 'GENERATE_MEDIA': {
                 returnValue = this.generateMedia(payload as Actions['GENERATE_MEDIA']['PAYLOAD']);
+                break;
+            }
+            case 'LAUNCH_AR': {
+                this.ar.Launch();
+                returnValue = true;
                 break;
             }
         }

@@ -1,6 +1,7 @@
 import { Color } from 'three';
-import DIVEScene from '../Scene';
+import { DIVEScene } from '../Scene';
 import { COMEntity } from '../../com';
+import { DIVERenderer } from '../../renderer/Renderer';
 
 const mock_UpdateSceneObject = jest.fn();
 const mock_DeleteSceneObject = jest.fn();
@@ -9,6 +10,7 @@ const mock_GetSceneObject = jest.fn();
 
 jest.mock('../root/Root', () => {
     return jest.fn(function () {
+        this.visible = true;
         this.isObject3D = true;
         this.parent = null;
         this.dispatchEvent = jest.fn();
@@ -22,6 +24,32 @@ jest.mock('../root/Root', () => {
     });
 });
 
+jest.mock('../xrroot/XRRoot', () => {
+    return {
+        DIVEXRRoot: jest.fn(function (scene: DIVEScene) {
+            this.visible = true;
+            this.isObject3D = true;
+            this.parent = null;
+            this.dispatchEvent = jest.fn();
+            this.removeFromParent = jest.fn();
+            this.visible = true;
+            this.InitLightEstimation = jest.fn();
+            this.DisposeLightEstimation = jest.fn();
+            return this;
+        }),
+    };
+});
+
+jest.mock('../../renderer/Renderer.ts', () => {
+    return {
+        DIVERenderer: jest.fn(function () {
+
+        }),
+    }
+});
+
+const mockRenderer = new DIVERenderer();
+
 describe('dive/scene/DIVEScene', () => {
     afterEach(() => {
         jest.clearAllMocks();
@@ -30,7 +58,26 @@ describe('dive/scene/DIVEScene', () => {
     it('should instantiate', () => {
         const scene = new DIVEScene();
         expect(scene).toBeDefined();
-        expect(scene.children).toHaveLength(1);
+    });
+
+    it('should have Root', () => {
+        const scene = new DIVEScene();
+        expect(scene.Root).toBeDefined();
+    });
+
+    it('should have XRRoot', () => {
+        const scene = new DIVEScene();
+        expect(scene.XRRoot).toBeDefined();
+    });
+
+    it('should InitXR', () => {
+        const scene = new DIVEScene();
+        expect(() => scene.InitXR(mockRenderer)).not.toThrow();
+    });
+
+    it('should DisposeXR', () => {
+        const scene = new DIVEScene();
+        expect(() => scene.DisposeXR()).not.toThrow();
     });
 
     it('should set background color', () => {

@@ -1,8 +1,8 @@
 import { DIVEBaseTool } from "../BaseTool.ts";
-import DIVEScene from "../../scene/Scene.ts";
-import DIVEOrbitControls from "../../controls/OrbitControls.ts";
-import { TransformControls } from "three/examples/jsm/Addons";
+import { type DIVEScene } from "../../scene/Scene.ts";
+import type DIVEOrbitControls from "../../controls/OrbitControls.ts";
 import { type DIVEMoveable } from "../../interface/Moveable.ts";
+import { TransformControls } from "three/examples/jsm/controls/TransformControls";
 
 export const isTransformTool = (tool: DIVEBaseTool): tool is DIVETransformTool => {
     return (tool as DIVETransformTool).isTransformTool !== undefined;
@@ -47,7 +47,7 @@ export default class DIVETransformTool extends DIVEBaseTool {
             (this._gizmo.object as DIVEMoveable).onMove!();
         });
 
-        scene.add(this._gizmo);
+        this._scene.Root.HelperRoot.add(this._gizmo);
     }
 
     public Activate(): void { }
@@ -57,11 +57,11 @@ export default class DIVETransformTool extends DIVEBaseTool {
     }
 
     public SetGizmoVisibility(active: boolean): void {
-        const contains = this._scene.children.includes(this._gizmo);
+        const contains = this._scene.Root.HelperRoot.children.includes(this._gizmo);
         if (active && !contains) {
-            this._scene.add(this._gizmo);
+            this._scene.Root.HelperRoot.add(this._gizmo);
         } else if (!active && contains) {
-            this._scene.remove(this._gizmo);
+            this._scene.Root.HelperRoot.remove(this._gizmo);
         }
     }
 
