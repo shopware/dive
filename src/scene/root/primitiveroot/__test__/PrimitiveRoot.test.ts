@@ -2,6 +2,7 @@ import DIVECommunication from '../../../../com/Communication';
 import { DIVEPrimitiveRoot } from '../PrimitiveRoot';
 import type DIVEScene from '../../../Scene';
 import { type DIVEMoveable } from '../../../../interface/Moveable';
+import { type DIVEPrimitiveGeometry } from '../../../../primitive/Primitive';
 
 const mock_SetPosition = jest.fn();
 const mock_SetRotation = jest.fn();
@@ -49,105 +50,98 @@ jest.mock('../../../../primitive/Primitive.ts', () => {
 jest.spyOn(DIVECommunication, 'get').mockReturnValue({ PerformAction: jest.fn() } as unknown as DIVECommunication);
 
 const consoleWarnSpy = jest.spyOn(console, 'warn').mockImplementation(() => { });
+let primitiveRoot = new DIVEPrimitiveRoot();
 
 describe('dive/scene/root/modelroot/DIVEPrimitiveRoot', () => {
     beforeEach(() => {
         consoleWarnSpy.mockClear();
+
+        primitiveRoot = new DIVEPrimitiveRoot();
     });
 
     it('should instantiate', () => {
-        const modelRoot = new DIVEPrimitiveRoot();
-        expect(modelRoot).toBeDefined();
+        expect(primitiveRoot).toBeDefined();
     });
 
     it('should not add incorrect model', async () => {
-        const modelRoot = new DIVEPrimitiveRoot();
-        await expect(() => modelRoot.UpdatePrimitive({ id: undefined })).not.toThrow();
+        await expect(() => primitiveRoot.UpdatePrimitive({ id: undefined })).not.toThrow();
         expect(consoleWarnSpy).toHaveBeenCalled();
-        expect(modelRoot.children).toHaveLength(0);
+        expect(primitiveRoot.children).toHaveLength(0);
     });
 
     it('should add basic primitive', async () => {
-        const modelRoot = new DIVEPrimitiveRoot();
-        await expect(() => modelRoot.UpdatePrimitive({
+        await expect(() => primitiveRoot.UpdatePrimitive({
             id: 'test_id',
-            uri: 'not a real uri',
+            geometry: {} as DIVEPrimitiveGeometry,
             visible: false,
         })).not.toThrow();
         expect(mock_SetBufferGeometry).toHaveBeenCalledTimes(1);
-        expect(modelRoot.children).toHaveLength(1);
-        expect(modelRoot.children[0].userData.id).toBe('test_id');
+        expect(primitiveRoot.children).toHaveLength(1);
+        expect(primitiveRoot.children[0].userData.id).toBe('test_id');
     });
 
     it('should add configured model', async () => {
-        const modelRoot = new DIVEPrimitiveRoot();
-        modelRoot.userData.id = 'something';
-        await expect(() => modelRoot.UpdatePrimitive({
+        primitiveRoot.userData.id = 'something';
+        await expect(() => primitiveRoot.UpdatePrimitive({
             id: 'test_id',
-            uri: 'not a real uri',
             position: { x: 1, y: 2, z: 3 },
             rotation: { x: 1, y: 2, z: 3 },
             scale: { x: 1, y: 2, z: 3 },
+            geometry: {} as DIVEPrimitiveGeometry,
         })).not.toThrow();
 
         jest.spyOn(DIVECommunication, 'get').mockReturnValueOnce(undefined);
-        await expect(() => modelRoot.UpdatePrimitive({
+        await expect(() => primitiveRoot.UpdatePrimitive({
             id: 'test_id',
-            uri: 'not a real uri',
             position: { x: 1, y: 2, z: 3 },
             rotation: { x: 1, y: 2, z: 3 },
             scale: { x: 1, y: 2, z: 3 },
         })).not.toThrow();
 
-        expect(modelRoot.children).toHaveLength(1);
+        expect(primitiveRoot.children).toHaveLength(1);
         expect(mock_SetPosition).toHaveBeenCalledTimes(2);
         expect(mock_SetRotation).toHaveBeenCalledTimes(2);
         expect(mock_SetScale).toHaveBeenCalledTimes(2);
     });
 
     it('should not place incorrect model on floor', async () => {
-        const modelRoot = new DIVEPrimitiveRoot();
-        expect(() => modelRoot.PlaceOnFloor({ id: undefined })).not.toThrow();
+        expect(() => primitiveRoot.PlaceOnFloor({ id: undefined })).not.toThrow();
         expect(consoleWarnSpy).toHaveBeenCalled();
         expect(mock_PlaceOnFloor).toHaveBeenCalledTimes(0);
     });
 
     it('should not place non-existing model on floor', async () => {
-        const modelRoot = new DIVEPrimitiveRoot();
-        modelRoot.PlaceOnFloor({ id: 'test_id' });
+        primitiveRoot.PlaceOnFloor({ id: 'test_id' });
         expect(mock_PlaceOnFloor).toHaveBeenCalledTimes(0);
     });
 
     it('should place model on floor', async () => {
-        const modelRoot = new DIVEPrimitiveRoot();
-        await modelRoot.UpdatePrimitive({
+        await primitiveRoot.UpdatePrimitive({
             id: 'test_id',
-            uri: 'not a real uri',
             position: { x: 1, y: 2, z: 3 },
             rotation: { x: 1, y: 2, z: 3 },
             scale: { x: 1, y: 2, z: 3 },
+            geometry: {} as DIVEPrimitiveGeometry,
         });
-        modelRoot.PlaceOnFloor({ id: 'test_id' });
+        primitiveRoot.PlaceOnFloor({ id: 'test_id' });
         expect(mock_PlaceOnFloor).toHaveBeenCalledTimes(1);
     });
 
-    it('should get model', async () => {
-        const modelRoot = new DIVEPrimitiveRoot();
-        expect(() => modelRoot.GetPrimitive({ id: undefined })).not.toThrow();
+    it('should get primitive', async () => {
+        expect(() => primitiveRoot.GetPrimitive({ id: undefined })).not.toThrow();
         expect(consoleWarnSpy).toHaveBeenCalled();
-        expect(modelRoot.GetPrimitive({ id: 'test_id' })).toBeUndefined();
-        await expect(() => modelRoot.UpdatePrimitive({
+        expect(primitiveRoot.GetPrimitive({ id: 'test_id' })).toBeUndefined();
+        await expect(() => primitiveRoot.UpdatePrimitive({
             id: 'test_id',
-            uri: 'not a real uri',
             position: { x: 1, y: 2, z: 3 },
             rotation: { x: 1, y: 2, z: 3 },
             scale: { x: 1, y: 2, z: 3 },
+            geometry: {} as DIVEPrimitiveGeometry,
         })).not.toThrow();
-        expect(modelRoot.GetPrimitive({ id: 'test_id' })).toBeDefined();
+        expect(primitiveRoot.GetPrimitive({ id: 'test_id' })).toBeDefined();
     });
 
-    it('should delete model', async () => {
-        const modelRoot = new DIVEPrimitiveRoot();
+    it('should delete primitive', async () => {
 
         const sceneParent = {
             parent: null,
@@ -158,22 +152,22 @@ describe('dive/scene/root/modelroot/DIVEPrimitiveRoot', () => {
                 }
             ],
         }
-        modelRoot.parent = sceneParent as unknown as DIVEScene;
+        primitiveRoot.parent = sceneParent as unknown as DIVEScene;
 
-        expect(() => modelRoot.DeletePrimitive({ id: undefined })).not.toThrow();
+        expect(() => primitiveRoot.DeletePrimitive({ id: undefined })).not.toThrow();
         expect(consoleWarnSpy).toHaveBeenCalled();
         consoleWarnSpy.mockClear();
-        expect(() => modelRoot.DeletePrimitive({ id: 'test_id' })).not.toThrow();
+        expect(() => primitiveRoot.DeletePrimitive({ id: 'test_id' })).not.toThrow();
         expect(consoleWarnSpy).toHaveBeenCalled();
-        await expect(() => modelRoot.UpdatePrimitive({
+        await expect(() => primitiveRoot.UpdatePrimitive({
             id: 'test_id',
-            uri: 'not a real uri',
             position: { x: 1, y: 2, z: 3 },
             rotation: { x: 1, y: 2, z: 3 },
             scale: { x: 1, y: 2, z: 3 },
+            geometry: {} as DIVEPrimitiveGeometry,
         })).not.toThrow();
-        (modelRoot.children[0] as unknown as DIVEMoveable).isMoveable = true;
-        expect(() => modelRoot.DeletePrimitive({ id: 'test_id' })).not.toThrow();
-        expect(modelRoot.children).toHaveLength(0);
+        (primitiveRoot.children[0] as unknown as DIVEMoveable).isMoveable = true;
+        expect(() => primitiveRoot.DeletePrimitive({ id: 'test_id' })).not.toThrow();
+        expect(primitiveRoot.children).toHaveLength(0);
     });
 });

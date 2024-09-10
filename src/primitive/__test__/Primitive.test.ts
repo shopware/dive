@@ -1,8 +1,7 @@
-import { DIVEPrimitive } from '../Primitive';
+import { DIVEPrimitive, DIVEPrimitiveGeometry } from '../Primitive';
 import DIVECommunication from '../../com/Communication';
-import { GLTF } from 'three/examples/jsm/Addons';
-import DIVEScene from '../../scene/Scene';
-import { Vector3, Box3, Mesh, BufferGeometry } from 'three';
+import { Vector3, Box3, Mesh } from 'three';
+import type DIVEScene from '../../scene/Scene';
 
 const intersectObjectsMock = jest.fn();
 
@@ -137,6 +136,26 @@ jest.mock('three', () => {
             return this;
         }),
         BufferGeometry: jest.fn(function () {
+            this.setAttribute = jest.fn();
+            this.setIndex = jest.fn();
+            return this;
+        }),
+        CylinderGeometry: jest.fn(function () {
+            return {};
+        }),
+        SphereGeometry: jest.fn(function () {
+            return {};
+        }),
+        BoxGeometry: jest.fn(function () {
+            return {};
+        }),
+        ConeGeometry: jest.fn(function () {
+            return {};
+        }),
+        Float32BufferAttribute: jest.fn(function () {
+            return {};
+        }),
+        Uint32BufferAttribute: jest.fn(function () {
             return {};
         }),
     }
@@ -170,7 +189,7 @@ describe('dive/primitive/DIVEPrimitive', () => {
     });
 
     it('should set geometry', () => {
-        const bufferGeometry = new BufferGeometry();
+        const bufferGeometry = {} as DIVEPrimitiveGeometry;
         expect(() => primitive.SetBufferGeometry(bufferGeometry)).not.toThrow();
     });
 
@@ -187,31 +206,28 @@ describe('dive/primitive/DIVEPrimitive', () => {
     });
 
     it('should set visibility', () => {
-        const model = new DIVEPrimitive();
-        expect(() => model.SetVisibility(true)).not.toThrow();
+        expect(() => primitive.SetVisibility(true)).not.toThrow();
     });
 
     it('should set to world origin', () => {
-        const model = new DIVEPrimitive();
-        model.userData.id = 'something';
+        primitive.userData.id = 'something';
 
-        expect(() => model.SetToWorldOrigin()).not.toThrow();
-        expect(model.position.x).toBe(0);
-        expect(model.position.y).toBe(0);
-        expect(model.position.z).toBe(0);
+        expect(() => primitive.SetToWorldOrigin()).not.toThrow();
+        expect(primitive.position.x).toBe(0);
+        expect(primitive.position.y).toBe(0);
+        expect(primitive.position.z).toBe(0);
 
         jest.spyOn(DIVECommunication, 'get').mockReturnValueOnce(undefined);
-        expect(() => model.SetToWorldOrigin()).not.toThrow();
+        expect(() => primitive.SetToWorldOrigin()).not.toThrow();
     });
 
     it('should place on floor', () => {
-        const model = new DIVEPrimitive();
-        model.userData.id = 'something';
+        primitive.userData.id = 'something';
 
-        expect(() => model.PlaceOnFloor()).not.toThrow();
+        expect(() => primitive.PlaceOnFloor()).not.toThrow();
 
         jest.spyOn(DIVECommunication, 'get').mockReturnValueOnce(undefined);
-        expect(() => model.PlaceOnFloor()).not.toThrow();
+        expect(() => primitive.PlaceOnFloor()).not.toThrow();
     });
 
     it('should drop it', () => {
@@ -226,10 +242,9 @@ describe('dive/primitive/DIVEPrimitive', () => {
             z: 1,
         };
 
-        const model = new DIVEPrimitive();
-        model.userData.id = 'something';
-        model.position.set(0, 4, 0);
-        model['_boundingBox'] = {
+        primitive.userData.id = 'something';
+        primitive.position.set(0, 4, 0);
+        primitive['_boundingBox'] = {
             min: new Vector3(-size.x / 2, -size.y / 2, -size.z / 2),
             max: new Vector3(size.x / 2, size.y / 2, size.z / 2),
             getCenter: jest.fn(() => {
@@ -250,7 +265,7 @@ describe('dive/primitive/DIVEPrimitive', () => {
             parent: null,
             Root: {
                 children: [
-                    model,
+                    primitive,
                 ],
             },
         } as unknown as DIVEScene;
@@ -258,54 +273,118 @@ describe('dive/primitive/DIVEPrimitive', () => {
 
         // test when parent is not set
         console.warn = jest.fn();
-        expect(() => model.DropIt()).not.toThrow();
+        expect(() => primitive.DropIt()).not.toThrow();
         expect(console.warn).toHaveBeenCalledTimes(1);
 
-        model.parent = scene.Root;
+        primitive.parent = scene.Root;
 
-        expect(() => model.DropIt()).not.toThrow();
-        expect(model.position.y).toBe(2.5);
+        expect(() => primitive.DropIt()).not.toThrow();
+        expect(primitive.position.y).toBe(2.5);
         expect(comMock.PerformAction).toHaveBeenCalledTimes(1);
 
-        expect(() => model.DropIt()).not.toThrow();
+        expect(() => primitive.DropIt()).not.toThrow();
         expect(comMock.PerformAction).toHaveBeenCalledTimes(1);
 
         // reset for PerformAction to be called again
-        model.position.y = 2;
+        primitive.position.y = 2;
         jest.spyOn(DIVECommunication, 'get').mockReturnValueOnce(undefined);
-        expect(() => model.DropIt()).not.toThrow();
+        expect(() => primitive.DropIt()).not.toThrow();
         expect(comMock.PerformAction).toHaveBeenCalledTimes(1);
 
 
     });
 
     it('should onMove', () => {
-        const model = new DIVEPrimitive();
-        model.userData.id = 'something';
+        primitive.userData.id = 'something';
 
-        expect(() => model.onMove()).not.toThrow();
+        expect(() => primitive.onMove()).not.toThrow();
 
         jest.spyOn(DIVECommunication, 'get').mockReturnValueOnce(undefined);
-        expect(() => model.onMove()).not.toThrow();
+        expect(() => primitive.onMove()).not.toThrow();
     });
 
     it('should onSelect', () => {
-        const testLight = new DIVEPrimitive();
-        testLight.userData.id = 'something';
+        primitive.userData.id = 'something';
 
-        expect(() => testLight.onSelect()).not.toThrow();
+        expect(() => primitive.onSelect()).not.toThrow();
 
         jest.spyOn(DIVECommunication, 'get').mockReturnValueOnce(undefined);
-        expect(() => testLight.onSelect()).not.toThrow();
+        expect(() => primitive.onSelect()).not.toThrow();
     });
 
     it('should onDeselect', () => {
-        const testLight = new DIVEPrimitive();
-        testLight.userData.id = 'something';
+        primitive.userData.id = 'something';
 
-        expect(() => testLight.onDeselect()).not.toThrow();
+        expect(() => primitive.onDeselect()).not.toThrow();
 
         jest.spyOn(DIVECommunication, 'get').mockReturnValueOnce(undefined);
-        expect(() => testLight.onDeselect()).not.toThrow();
+        expect(() => primitive.onDeselect()).not.toThrow();
+    });
+
+    it('should set geometry', () => {
+        primitive.userData.id = 'something';
+
+        // cylinder
+        const cylinder = {
+            name: 'cylinder',
+            width: 1,
+            height: 1.5,
+            depth: 1,
+        } as DIVEPrimitiveGeometry;
+        expect(() => primitive.SetBufferGeometry(cylinder)).not.toThrow();
+
+        // sphere
+        const sphere = {
+            name: 'sphere',
+            width: 1,
+            height: 1,
+            depth: 1,
+        } as DIVEPrimitiveGeometry;
+        expect(() => primitive.SetBufferGeometry(sphere)).not.toThrow();
+
+        // pyramid
+        const pyramid = {
+            name: 'pyramid',
+            width: 1,
+            height: 1.5,
+            depth: 1,
+        } as DIVEPrimitiveGeometry;
+        expect(() => primitive.SetBufferGeometry(pyramid)).not.toThrow();
+
+        // box
+        const box = {
+            name: 'box',
+            width: 1,
+            height: 1,
+            depth: 1,
+        } as DIVEPrimitiveGeometry;
+        expect(() => primitive.SetBufferGeometry(box)).not.toThrow();
+
+        // cone
+        const cone = {
+            name: 'cone',
+            width: 1,
+            height: 1.5,
+            depth: 1,
+        } as DIVEPrimitiveGeometry;
+        expect(() => primitive.SetBufferGeometry(cone)).not.toThrow();
+
+        // wall
+        const wall = {
+            name: 'wall',
+            width: 1,
+            height: 1.5,
+            depth: 0.1,
+        } as DIVEPrimitiveGeometry;
+        expect(() => primitive.SetBufferGeometry(wall)).not.toThrow();
+
+        // plane
+        const plane = {
+            name: 'plane',
+            width: 1,
+            height: 0.1,
+            depth: 1,
+        } as DIVEPrimitiveGeometry;
+        expect(() => primitive.SetBufferGeometry(plane)).not.toThrow();
     });
 });

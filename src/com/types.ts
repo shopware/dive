@@ -3,7 +3,7 @@ import { Vector3Like } from "three";
 type COMBaseEntity = {
     id: string;
     name: string;
-    entityType: 'pov' | 'light' | 'model';
+    entityType: 'pov' | 'light' | 'model' | 'primitive';
     visible: boolean;
 }
 export type COMPov = COMBaseEntity & {
@@ -29,10 +29,15 @@ export type COMModel = COMBaseEntity & {
 };
 
 export type COMPrimitive = COMBaseEntity & {
-    uri: string;
     position: Vector3Like;
     rotation: Vector3Like;
     scale: Vector3Like;
+    geometry: {
+        name: string
+        width: number;
+        height: number;
+        depth: number;
+    };
 };
 
 export type COMEntity = COMPov | COMLight | COMModel | COMPrimitive;

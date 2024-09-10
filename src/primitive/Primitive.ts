@@ -1,10 +1,17 @@
-import { Box3, BufferGeometry, Mesh, Object3D, Raycaster, Vector3, Vector3Like } from 'three';
+import { Box3, BoxGeometry, BufferGeometry, CylinderGeometry, Float32BufferAttribute, Mesh, Object3D, Raycaster, SphereGeometry, Uint32BufferAttribute, Vector3, Vector3Like } from 'three';
 import DIVECommunication from '../com/Communication';
 import { PRODUCT_LAYER_MASK } from '../constant/VisibilityLayerMask';
 import { findSceneRecursive } from '../helper/findSceneRecursive/findSceneRecursive';
 import { type DIVESelectable } from '../interface/Selectable';
 import { type DIVEMoveable } from '../interface/Moveable';
 import { type TransformControls } from 'three/examples/jsm/controls/TransformControls';
+
+export type DIVEPrimitiveGeometry = {
+    name: string
+    width: number;
+    height: number;
+    depth: number;
+};
 
 /**
  * A basic model class.
@@ -39,10 +46,10 @@ export class DIVEPrimitive extends Object3D implements DIVESelectable, DIVEMovea
         this._boundingBox = new Box3();
     }
 
-    public SetBufferGeometry(geometry: BufferGeometry): void {
+    public SetBufferGeometry(geometry: DIVEPrimitiveGeometry): void {
         this.clear();
 
-        this._mesh.geometry = geometry;
+        this._mesh.geometry = this.assembleGeometry(geometry);
         this._boundingBox.setFromObject(this._mesh);
     }
 
@@ -117,5 +124,77 @@ export class DIVEPrimitive extends Object3D implements DIVESelectable, DIVEMovea
 
     public onDeselect(): void {
         DIVECommunication.get(this.userData.id)?.PerformAction('DESELECT_OBJECT', { id: this.userData.id });
+    }
+
+    private assembleGeometry(geometry: DIVEPrimitiveGeometry): BufferGeometry {
+        switch (geometry.name) {
+            case 'cylinder':
+                return this.createCylinderGeometry(geometry);
+            case 'sphere':
+                return this.createSphereGeometry(geometry);
+            case 'pyramid':
+                return this.createPyramidGeometry(geometry);
+            case 'box':
+                return this.createBoxGeometry(geometry);
+            case 'cone':
+                return this.createConeGeometry(geometry);
+            case 'wall':
+                return this.createWallGeometry(geometry);
+            case 'plane':
+                return this.createPlaneGeometry(geometry);
+            default:
+                return new BufferGeometry();
+        }
+    }
+
+    private createCylinderGeometry(geometry: DIVEPrimitiveGeometry): BufferGeometry {
+        const geo = new CylinderGeometry(geometry.width * 2, geometry.width * 2, geometry.height, 64);
+        return geo;
+    }
+
+    private createSphereGeometry(geometry: DIVEPrimitiveGeometry): BufferGeometry {
+        const geo = new SphereGeometry(geometry.width * 2, 64);
+        return geo;
+    }
+
+    private createPyramidGeometry(geometry: DIVEPrimitiveGeometry): BufferGeometry {
+        const geo = new BufferGeometry();
+        const { width, height, depth } = geometry;
+        geo.setAttribute('position', new Float32BufferAttribute([
+            width / 2, 0, depth / 2, // right back
+            width / 2, 0, -depth / 2, // right front
+            -width / 2, 0, -depth / 2, // left front
+            -width / 2, 0, depth / 2, // left back
+            0, height, 0, // top
+        ], 3));
+        geo.setIndex(new Uint32BufferAttribute([
+            1, 0, 4,
+            2, 1, 4,
+            3, 2, 4,
+            3, 0, 4,
+            0, 1, 2,
+            0, 2, 3,
+        ], 1));
+        return geo;
+    }
+
+    private createBoxGeometry(geometry: DIVEPrimitiveGeometry): BufferGeometry {
+        const geo = new BoxGeometry(geometry.width, geometry.height, geometry.depth);
+        return geo;
+    }
+
+    private createConeGeometry(geometry: DIVEPrimitiveGeometry): BufferGeometry {
+        const geo = new CylinderGeometry(0, geometry.width * 2, geometry.height, 64);
+        return geo;
+    }
+
+    private createWallGeometry(geometry: DIVEPrimitiveGeometry): BufferGeometry {
+        const geo = new BoxGeometry(geometry.width, geometry.height, geometry.depth, 16);
+        return geo;
+    }
+
+    private createPlaneGeometry(geometry: DIVEPrimitiveGeometry): BufferGeometry {
+        const geo = new BoxGeometry(geometry.width, geometry.height, geometry.depth);
+        return geo;
     }
 }
