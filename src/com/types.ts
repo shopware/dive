@@ -28,4 +28,11 @@ export type COMModel = COMBaseEntity & {
     loaded: boolean;
 };
 
-export type COMEntity = COMPov | COMLight | COMModel;
+export type COMPrimitive = COMBaseEntity & {
+    uri: string;
+    position: Vector3Like;
+    rotation: Vector3Like;
+    scale: Vector3Like;
+};
+
+export type COMEntity = COMPov | COMLight | COMModel | COMPrimitive;
