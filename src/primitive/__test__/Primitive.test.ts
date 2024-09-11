@@ -1,8 +1,8 @@
 import { DIVEPrimitive } from '../Primitive';
 import DIVECommunication from '../../com/Communication';
-import { Vector3, Box3, Mesh } from 'three';
+import { Vector3, Box3, Mesh, type Texture, type MeshStandardMaterial } from 'three';
 import type DIVEScene from '../../scene/Scene';
-import { type COMGeometry } from '../../com/types';
+import { type COMMaterial, type COMGeometry } from '../../com/types';
 
 const intersectObjectsMock = jest.fn();
 
@@ -158,6 +158,17 @@ jest.mock('three', () => {
         }),
         Uint32BufferAttribute: jest.fn(function () {
             return {};
+        }),
+        MeshStandardMaterial: jest.fn(function () {
+            this.color = {};
+            this.roughness = 0;
+            this.roughnessMap = null;
+            this.metalness = 0;
+            this.metalnessMap = null;
+            return this;
+        }),
+        Color: jest.fn(function () {
+            return this;
         }),
     }
 });
@@ -387,5 +398,37 @@ describe('dive/primitive/DIVEPrimitive', () => {
             depth: 1,
         } as COMGeometry;
         expect(() => primitive.SetGeometry(plane)).not.toThrow();
+    });
+
+    it('should set material', () => {
+        const material = (primitive['_mesh'].material as MeshStandardMaterial);
+
+        // apply invalid material should not crash
+        expect(() => primitive.SetMaterial({} as COMMaterial)).not.toThrow();
+        expect(material).toBeDefined();
+
+        expect(() => primitive.SetMaterial({
+            color: 0xffffff,
+            roughness: 0,
+            roughnessMap: null,
+            metalness: 1,
+            metalnessMap: null,
+        } as COMMaterial)).not.toThrow();
+        expect(material.roughness).toBe(0);
+        expect(material.roughnessMap).toBeUndefined();
+        expect(material.metalness).toBe(1);
+        expect(material.metalnessMap).toBeUndefined();
+
+        expect(() => primitive.SetMaterial({
+            color: 0xff00ff,
+            roughness: 0,
+            roughnessMap: 'this is a Texture' as unknown as Texture,
+            metalness: 1,
+            metalnessMap: 'this is a Texture' as unknown as Texture,
+        } as COMMaterial)).not.toThrow();
+        expect(material.roughness).toBe(1);
+        expect(material.roughnessMap).toBeDefined();
+        expect(material.metalness).toBe(0);
+        expect(material.metalnessMap).toBeDefined();
     });
 });

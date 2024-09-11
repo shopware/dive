@@ -66,7 +66,7 @@ export class DIVEPrimitive extends Object3D implements DIVESelectable, DIVEMovea
     }
 
     public SetMaterial(material: COMMaterial): void {
-        const primitiveMaterial = new MeshStandardMaterial();
+        const primitiveMaterial = this._mesh.material as MeshStandardMaterial;
 
         primitiveMaterial.color = new Color(material.color);
 
@@ -81,7 +81,7 @@ export class DIVEPrimitive extends Object3D implements DIVESelectable, DIVEMovea
         // if there is a metalness map, use it, otherwise use the metalness value
         if (material.metalnessMap) {
             primitiveMaterial.metalnessMap = material.metalnessMap;
-            primitiveMaterial.metalness = 1.0;
+            primitiveMaterial.metalness = 0.0;
         } else {
             primitiveMaterial.metalness = material.metalness;
         }
