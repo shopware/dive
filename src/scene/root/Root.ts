@@ -1,10 +1,10 @@
 import { Box3, Object3D } from "three";
 import DIVELightRoot from "./lightroot/LightRoot.ts";
 import DIVEModelRoot from "./modelroot/ModelRoot.ts";
-import { COMLight, COMModel, COMEntity, COMPrimitive } from "../../com/types.ts";
+import { DIVEPrimitiveRoot } from "./primitiveroot/PrimitiveRoot.ts";
+import { type COMLight, type COMModel, type COMEntity, type COMPrimitive } from "../../com/types.ts";
 import DIVEFloor from "../../primitive/floor/Floor.ts";
 import DIVEGrid from "../../grid/Grid.ts";
-import { DIVEPrimitiveRoot } from "./primitiveroot/PrimitiveRoot.ts";
 
 /**
  * A basic scene node to hold grid, floor and all lower level roots.
