@@ -54,6 +54,11 @@ export default class DIVERoot extends Object3D {
                 bb.expandByObject(object);
             }
         });
+        this.primitiveRoot.traverse((object: Object3D) => {
+            if ('isObject3D' in object) {
+                bb.expandByObject(object);
+            }
+        });
         return bb;
     }
 

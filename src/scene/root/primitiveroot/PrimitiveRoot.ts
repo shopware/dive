@@ -5,7 +5,7 @@ import { type COMPrimitive } from "../../../com/types.ts";
 import { type TransformControls } from "three/examples/jsm/controls/TransformControls";
 
 /**
- * A basic scene node to hold all models.
+ * A basic scene node to hold all primitives.
  *
  * @module
  */
@@ -52,7 +52,7 @@ export class DIVEPrimitiveRoot extends Object3D {
 
         const sceneObject = this.children.find(object3D => object3D.userData.id === object.id);
         if (!sceneObject) {
-            console.warn(`PrimititveRoot.DeletePrimitive: Model with id ${object.id} not found`);
+            console.warn(`PrimititveRoot.DeletePrimitive: Primitive with id ${object.id} not found`);
             return;
         }
 

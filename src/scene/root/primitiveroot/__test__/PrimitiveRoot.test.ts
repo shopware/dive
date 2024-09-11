@@ -12,7 +12,7 @@ const mock_SetBufferGeometry = jest.fn();
 
 jest.mock('../../../../com/types.ts', () => {
     return {
-        COMModel: {},
+        COMPrimitive: {},
     }
 });
 
@@ -52,7 +52,7 @@ jest.spyOn(DIVECommunication, 'get').mockReturnValue({ PerformAction: jest.fn() 
 const consoleWarnSpy = jest.spyOn(console, 'warn').mockImplementation(() => { });
 let primitiveRoot = new DIVEPrimitiveRoot();
 
-describe('dive/scene/root/modelroot/DIVEPrimitiveRoot', () => {
+describe('dive/scene/root/primitiveroot/DIVEPrimitiveRoot', () => {
     beforeEach(() => {
         consoleWarnSpy.mockClear();
 
@@ -63,7 +63,7 @@ describe('dive/scene/root/modelroot/DIVEPrimitiveRoot', () => {
         expect(primitiveRoot).toBeDefined();
     });
 
-    it('should not add incorrect model', async () => {
+    it('should not add incorrect primitive', async () => {
         await expect(() => primitiveRoot.UpdatePrimitive({ id: undefined })).not.toThrow();
         expect(consoleWarnSpy).toHaveBeenCalled();
         expect(primitiveRoot.children).toHaveLength(0);
@@ -80,7 +80,7 @@ describe('dive/scene/root/modelroot/DIVEPrimitiveRoot', () => {
         expect(primitiveRoot.children[0].userData.id).toBe('test_id');
     });
 
-    it('should add configured model', async () => {
+    it('should add configured primitive', async () => {
         primitiveRoot.userData.id = 'something';
         await expect(() => primitiveRoot.UpdatePrimitive({
             id: 'test_id',
@@ -104,18 +104,18 @@ describe('dive/scene/root/modelroot/DIVEPrimitiveRoot', () => {
         expect(mock_SetScale).toHaveBeenCalledTimes(2);
     });
 
-    it('should not place incorrect model on floor', async () => {
+    it('should not place incorrect primitive on floor', async () => {
         expect(() => primitiveRoot.PlaceOnFloor({ id: undefined })).not.toThrow();
         expect(consoleWarnSpy).toHaveBeenCalled();
         expect(mock_PlaceOnFloor).toHaveBeenCalledTimes(0);
     });
 
-    it('should not place non-existing model on floor', async () => {
+    it('should not place non-existing primitive on floor', async () => {
         primitiveRoot.PlaceOnFloor({ id: 'test_id' });
         expect(mock_PlaceOnFloor).toHaveBeenCalledTimes(0);
     });
 
-    it('should place model on floor', async () => {
+    it('should place primitive on floor', async () => {
         await primitiveRoot.UpdatePrimitive({
             id: 'test_id',
             position: { x: 1, y: 2, z: 3 },
