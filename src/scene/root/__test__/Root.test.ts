@@ -1,6 +1,6 @@
 import DIVERoot from '../Root';
 import { type Vector3, type Object3D } from 'three';
-import { type COMPrimitive, type COMLight, type COMModel, type COMPov } from '../../../com';
+import { type COMPrimitive, type COMLight, type COMModel, type COMPov } from '../../../com/types';
 
 const mock_UpdateObject = jest.fn();
 const mock_DeleteObject = jest.fn();

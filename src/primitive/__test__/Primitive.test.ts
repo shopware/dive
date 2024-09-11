@@ -1,7 +1,8 @@
-import { DIVEPrimitive, DIVEPrimitiveGeometry } from '../Primitive';
+import { DIVEPrimitive } from '../Primitive';
 import DIVECommunication from '../../com/Communication';
 import { Vector3, Box3, Mesh } from 'three';
 import type DIVEScene from '../../scene/Scene';
+import { type COMGeometry } from '../../com/types';
 
 const intersectObjectsMock = jest.fn();
 
@@ -189,8 +190,8 @@ describe('dive/primitive/DIVEPrimitive', () => {
     });
 
     it('should set geometry', () => {
-        const bufferGeometry = {} as DIVEPrimitiveGeometry;
-        expect(() => primitive.SetBufferGeometry(bufferGeometry)).not.toThrow();
+        const bufferGeometry = {} as COMGeometry;
+        expect(() => primitive.SetGeometry(bufferGeometry)).not.toThrow();
     });
 
     it('should set position', () => {
@@ -330,8 +331,8 @@ describe('dive/primitive/DIVEPrimitive', () => {
             width: 1,
             height: 1.5,
             depth: 1,
-        } as DIVEPrimitiveGeometry;
-        expect(() => primitive.SetBufferGeometry(cylinder)).not.toThrow();
+        } as COMGeometry;
+        expect(() => primitive.SetGeometry(cylinder)).not.toThrow();
 
         // sphere
         const sphere = {
@@ -339,8 +340,8 @@ describe('dive/primitive/DIVEPrimitive', () => {
             width: 1,
             height: 1,
             depth: 1,
-        } as DIVEPrimitiveGeometry;
-        expect(() => primitive.SetBufferGeometry(sphere)).not.toThrow();
+        } as COMGeometry;
+        expect(() => primitive.SetGeometry(sphere)).not.toThrow();
 
         // pyramid
         const pyramid = {
@@ -348,8 +349,8 @@ describe('dive/primitive/DIVEPrimitive', () => {
             width: 1,
             height: 1.5,
             depth: 1,
-        } as DIVEPrimitiveGeometry;
-        expect(() => primitive.SetBufferGeometry(pyramid)).not.toThrow();
+        } as COMGeometry;
+        expect(() => primitive.SetGeometry(pyramid)).not.toThrow();
 
         // box
         const box = {
@@ -357,8 +358,8 @@ describe('dive/primitive/DIVEPrimitive', () => {
             width: 1,
             height: 1,
             depth: 1,
-        } as DIVEPrimitiveGeometry;
-        expect(() => primitive.SetBufferGeometry(box)).not.toThrow();
+        } as COMGeometry;
+        expect(() => primitive.SetGeometry(box)).not.toThrow();
 
         // cone
         const cone = {
@@ -366,8 +367,8 @@ describe('dive/primitive/DIVEPrimitive', () => {
             width: 1,
             height: 1.5,
             depth: 1,
-        } as DIVEPrimitiveGeometry;
-        expect(() => primitive.SetBufferGeometry(cone)).not.toThrow();
+        } as COMGeometry;
+        expect(() => primitive.SetGeometry(cone)).not.toThrow();
 
         // wall
         const wall = {
@@ -375,8 +376,8 @@ describe('dive/primitive/DIVEPrimitive', () => {
             width: 1,
             height: 1.5,
             depth: 0.1,
-        } as DIVEPrimitiveGeometry;
-        expect(() => primitive.SetBufferGeometry(wall)).not.toThrow();
+        } as COMGeometry;
+        expect(() => primitive.SetGeometry(wall)).not.toThrow();
 
         // plane
         const plane = {
@@ -384,7 +385,7 @@ describe('dive/primitive/DIVEPrimitive', () => {
             width: 1,
             height: 0.1,
             depth: 1,
-        } as DIVEPrimitiveGeometry;
-        expect(() => primitive.SetBufferGeometry(plane)).not.toThrow();
+        } as COMGeometry;
+        expect(() => primitive.SetGeometry(plane)).not.toThrow();
     });
 });

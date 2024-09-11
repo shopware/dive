@@ -1,4 +1,4 @@
-import { Vector3Like } from "three";
+import { type Texture, type Vector3Like } from "three";
 
 type COMBaseEntity = {
     id: string;
@@ -28,16 +28,27 @@ export type COMModel = COMBaseEntity & {
     loaded: boolean;
 };
 
+export type COMGeometry = {
+    name: string
+    width: number;
+    height: number;
+    depth: number;
+}
+
+export type COMMaterial = {
+    color: string | number;
+    roughness: number;
+    roughnessMap: Texture | null;
+    metalness: number;
+    metalnessMap: Texture | null;
+}
+
 export type COMPrimitive = COMBaseEntity & {
     position: Vector3Like;
     rotation: Vector3Like;
     scale: Vector3Like;
-    geometry: {
-        name: string
-        width: number;
-        height: number;
-        depth: number;
-    };
+    geometry: COMGeometry;
+    material: COMMaterial;
 };
 
 export type COMEntity = COMPov | COMLight | COMModel | COMPrimitive;

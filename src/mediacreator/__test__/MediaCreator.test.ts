@@ -2,7 +2,7 @@ import { DIVEMediaCreator } from '../MediaCreator';
 import { DIVERenderer } from '../../renderer/Renderer';
 import DIVEScene from '../../scene/Scene';
 import DIVEPerspectiveCamera, { DIVEPerspectiveCameraDefaultSettings } from '../../camera/PerspectiveCamera';
-import { COMPov } from '../../com';
+import { type COMPov } from '../../com/types';
 import DIVEOrbitControls from '../../controls/OrbitControls';
 import { DIVEAnimationSystem } from '../../animation/AnimationSystem';
 

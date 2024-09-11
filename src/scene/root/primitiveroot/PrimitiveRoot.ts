@@ -1,7 +1,7 @@
 import { Object3D } from "three";
 import { DIVEPrimitive } from "../../../primitive/Primitive.ts";
 import type DIVEScene from "../../Scene.ts";
-import { type COMPrimitive } from "../../../com/types.ts";
+import { type COMPrimitive } from "../../../com/types";
 import { type TransformControls } from "three/examples/jsm/controls/TransformControls";
 
 /**
@@ -32,7 +32,7 @@ export class DIVEPrimitiveRoot extends Object3D {
         let sceneObject = this.children.find(object3D => object3D.userData.id === object.id);
         if (!sceneObject && object.geometry !== undefined) {
             const primitive = new DIVEPrimitive();
-            primitive.SetBufferGeometry(object.geometry);
+            primitive.SetGeometry(object.geometry);
             sceneObject = primitive;
             sceneObject.userData.id = object.id;
             this.add(sceneObject);

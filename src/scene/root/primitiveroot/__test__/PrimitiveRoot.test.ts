@@ -2,13 +2,13 @@ import DIVECommunication from '../../../../com/Communication';
 import { DIVEPrimitiveRoot } from '../PrimitiveRoot';
 import type DIVEScene from '../../../Scene';
 import { type DIVEMoveable } from '../../../../interface/Moveable';
-import { type DIVEPrimitiveGeometry } from '../../../../primitive/Primitive';
+import { type COMGeometry } from '../../../../com/types';
 
 const mock_SetPosition = jest.fn();
 const mock_SetRotation = jest.fn();
 const mock_SetScale = jest.fn();
 const mock_PlaceOnFloor = jest.fn();
-const mock_SetBufferGeometry = jest.fn();
+const mock_SetGeometry = jest.fn();
 
 jest.mock('../../../../com/types.ts', () => {
     return {
@@ -35,7 +35,7 @@ jest.mock('../../../../primitive/Primitive.ts', () => {
             this.userData = {
                 id: undefined,
             };
-            this.SetBufferGeometry = mock_SetBufferGeometry;
+            this.SetGeometry = mock_SetGeometry;
             this.SetPosition = mock_SetPosition;
             this.SetRotation = mock_SetRotation;
             this.SetScale = mock_SetScale;
@@ -72,10 +72,10 @@ describe('dive/scene/root/primitiveroot/DIVEPrimitiveRoot', () => {
     it('should add basic primitive', async () => {
         await expect(() => primitiveRoot.UpdatePrimitive({
             id: 'test_id',
-            geometry: {} as DIVEPrimitiveGeometry,
+            geometry: {} as COMGeometry,
             visible: false,
         })).not.toThrow();
-        expect(mock_SetBufferGeometry).toHaveBeenCalledTimes(1);
+        expect(mock_SetGeometry).toHaveBeenCalledTimes(1);
         expect(primitiveRoot.children).toHaveLength(1);
         expect(primitiveRoot.children[0].userData.id).toBe('test_id');
     });
@@ -87,7 +87,7 @@ describe('dive/scene/root/primitiveroot/DIVEPrimitiveRoot', () => {
             position: { x: 1, y: 2, z: 3 },
             rotation: { x: 1, y: 2, z: 3 },
             scale: { x: 1, y: 2, z: 3 },
-            geometry: {} as DIVEPrimitiveGeometry,
+            geometry: {} as COMGeometry,
         })).not.toThrow();
 
         jest.spyOn(DIVECommunication, 'get').mockReturnValueOnce(undefined);
@@ -121,7 +121,7 @@ describe('dive/scene/root/primitiveroot/DIVEPrimitiveRoot', () => {
             position: { x: 1, y: 2, z: 3 },
             rotation: { x: 1, y: 2, z: 3 },
             scale: { x: 1, y: 2, z: 3 },
-            geometry: {} as DIVEPrimitiveGeometry,
+            geometry: {} as COMGeometry,
         });
         primitiveRoot.PlaceOnFloor({ id: 'test_id' });
         expect(mock_PlaceOnFloor).toHaveBeenCalledTimes(1);
@@ -136,7 +136,7 @@ describe('dive/scene/root/primitiveroot/DIVEPrimitiveRoot', () => {
             position: { x: 1, y: 2, z: 3 },
             rotation: { x: 1, y: 2, z: 3 },
             scale: { x: 1, y: 2, z: 3 },
-            geometry: {} as DIVEPrimitiveGeometry,
+            geometry: {} as COMGeometry,
         })).not.toThrow();
         expect(primitiveRoot.GetPrimitive({ id: 'test_id' })).toBeDefined();
     });
@@ -164,7 +164,7 @@ describe('dive/scene/root/primitiveroot/DIVEPrimitiveRoot', () => {
             position: { x: 1, y: 2, z: 3 },
             rotation: { x: 1, y: 2, z: 3 },
             scale: { x: 1, y: 2, z: 3 },
-            geometry: {} as DIVEPrimitiveGeometry,
+            geometry: {} as COMGeometry,
         })).not.toThrow();
         (primitiveRoot.children[0] as unknown as DIVEMoveable).isMoveable = true;
         expect(() => primitiveRoot.DeletePrimitive({ id: 'test_id' })).not.toThrow();

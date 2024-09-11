@@ -1,8 +1,7 @@
-import { TransformControls } from 'three/examples/jsm/Addons';
-import { COMLight } from '../../../../com';
-import { DIVEMoveable } from '../../../../interface/Moveable';
 import DIVELightRoot from '../LightRoot';
 import type DIVEScene from '../../../Scene';
+import { type COMLight } from '../../../../com/types';
+import { type DIVEMoveable } from '../../../../interface/Moveable';
 
 const mock_SetPosition = jest.fn();
 const mock_SetIntensity = jest.fn();

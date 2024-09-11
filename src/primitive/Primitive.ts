@@ -1,17 +1,11 @@
-import { Box3, BoxGeometry, BufferGeometry, CylinderGeometry, Float32BufferAttribute, Mesh, Object3D, Raycaster, SphereGeometry, Uint32BufferAttribute, Vector3, Vector3Like } from 'three';
+import { Box3, BoxGeometry, BufferGeometry, Color, CylinderGeometry, Float32BufferAttribute, Mesh, MeshStandardMaterial, Object3D, Raycaster, SphereGeometry, Uint32BufferAttribute, Vector3, Vector3Like } from 'three';
 import DIVECommunication from '../com/Communication';
 import { PRODUCT_LAYER_MASK } from '../constant/VisibilityLayerMask';
 import { findSceneRecursive } from '../helper/findSceneRecursive/findSceneRecursive';
 import { type DIVESelectable } from '../interface/Selectable';
 import { type DIVEMoveable } from '../interface/Moveable';
 import { type TransformControls } from 'three/examples/jsm/controls/TransformControls';
-
-export type DIVEPrimitiveGeometry = {
-    name: string
-    width: number;
-    height: number;
-    depth: number;
-};
+import { type COMGeometry, type COMMaterial } from '../com/types';
 
 /**
  * A basic model class.
@@ -46,7 +40,7 @@ export class DIVEPrimitive extends Object3D implements DIVESelectable, DIVEMovea
         this._boundingBox = new Box3();
     }
 
-    public SetBufferGeometry(geometry: DIVEPrimitiveGeometry): void {
+    public SetGeometry(geometry: COMGeometry): void {
         this.clear();
 
         this._mesh.geometry = this.assembleGeometry(geometry);
@@ -69,6 +63,28 @@ export class DIVEPrimitive extends Object3D implements DIVESelectable, DIVEMovea
         this.traverse((child) => {
             child.visible = visible;
         });
+    }
+
+    public SetMaterial(material: COMMaterial): void {
+        const primitiveMaterial = new MeshStandardMaterial();
+
+        primitiveMaterial.color = new Color(material.color);
+
+        // if there is a roughness map, use it, otherwise use the roughness value
+        if (material.roughnessMap) {
+            primitiveMaterial.roughnessMap = material.roughnessMap;
+            primitiveMaterial.roughness = 1.0;
+        } else {
+            primitiveMaterial.roughness = material.roughness;
+        }
+
+        // if there is a metalness map, use it, otherwise use the metalness value
+        if (material.metalnessMap) {
+            primitiveMaterial.metalnessMap = material.metalnessMap;
+            primitiveMaterial.metalness = 1.0;
+        } else {
+            primitiveMaterial.metalness = material.metalness;
+        }
     }
 
     public SetToWorldOrigin(): void {
@@ -126,7 +142,7 @@ export class DIVEPrimitive extends Object3D implements DIVESelectable, DIVEMovea
         DIVECommunication.get(this.userData.id)?.PerformAction('DESELECT_OBJECT', { id: this.userData.id });
     }
 
-    private assembleGeometry(geometry: DIVEPrimitiveGeometry): BufferGeometry {
+    private assembleGeometry(geometry: COMGeometry): BufferGeometry {
         switch (geometry.name) {
             case 'cylinder':
                 return this.createCylinderGeometry(geometry);
@@ -147,17 +163,17 @@ export class DIVEPrimitive extends Object3D implements DIVESelectable, DIVEMovea
         }
     }
 
-    private createCylinderGeometry(geometry: DIVEPrimitiveGeometry): BufferGeometry {
+    private createCylinderGeometry(geometry: COMGeometry): BufferGeometry {
         const geo = new CylinderGeometry(geometry.width * 2, geometry.width * 2, geometry.height, 64);
         return geo;
     }
 
-    private createSphereGeometry(geometry: DIVEPrimitiveGeometry): BufferGeometry {
+    private createSphereGeometry(geometry: COMGeometry): BufferGeometry {
         const geo = new SphereGeometry(geometry.width * 2, 64);
         return geo;
     }
 
-    private createPyramidGeometry(geometry: DIVEPrimitiveGeometry): BufferGeometry {
+    private createPyramidGeometry(geometry: COMGeometry): BufferGeometry {
         const geo = new BufferGeometry();
         const { width, height, depth } = geometry;
         geo.setAttribute('position', new Float32BufferAttribute([
@@ -178,22 +194,22 @@ export class DIVEPrimitive extends Object3D implements DIVESelectable, DIVEMovea
         return geo;
     }
 
-    private createBoxGeometry(geometry: DIVEPrimitiveGeometry): BufferGeometry {
+    private createBoxGeometry(geometry: COMGeometry): BufferGeometry {
         const geo = new BoxGeometry(geometry.width, geometry.height, geometry.depth);
         return geo;
     }
 
-    private createConeGeometry(geometry: DIVEPrimitiveGeometry): BufferGeometry {
+    private createConeGeometry(geometry: COMGeometry): BufferGeometry {
         const geo = new CylinderGeometry(0, geometry.width * 2, geometry.height, 64);
         return geo;
     }
 
-    private createWallGeometry(geometry: DIVEPrimitiveGeometry): BufferGeometry {
+    private createWallGeometry(geometry: COMGeometry): BufferGeometry {
         const geo = new BoxGeometry(geometry.width, geometry.height, geometry.depth, 16);
         return geo;
     }
 
-    private createPlaneGeometry(geometry: DIVEPrimitiveGeometry): BufferGeometry {
+    private createPlaneGeometry(geometry: COMGeometry): BufferGeometry {
         const geo = new BoxGeometry(geometry.width, geometry.height, geometry.depth);
         return geo;
     }
