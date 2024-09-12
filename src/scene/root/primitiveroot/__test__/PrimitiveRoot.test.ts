@@ -2,13 +2,14 @@ import DIVECommunication from '../../../../com/Communication';
 import { DIVEPrimitiveRoot } from '../PrimitiveRoot';
 import type DIVEScene from '../../../Scene';
 import { type DIVEMoveable } from '../../../../interface/Moveable';
-import { type COMGeometry } from '../../../../com/types';
+import { type COMMaterial, type COMGeometry } from '../../../../com/types';
 
 const mock_SetPosition = jest.fn();
 const mock_SetRotation = jest.fn();
 const mock_SetScale = jest.fn();
 const mock_PlaceOnFloor = jest.fn();
 const mock_SetGeometry = jest.fn();
+const mock_SetMaterial = jest.fn();
 
 jest.mock('../../../../com/types.ts', () => {
     return {
@@ -36,6 +37,7 @@ jest.mock('../../../../primitive/Primitive.ts', () => {
                 id: undefined,
             };
             this.SetGeometry = mock_SetGeometry;
+            this.SetMaterial = mock_SetMaterial;
             this.SetPosition = mock_SetPosition;
             this.SetRotation = mock_SetRotation;
             this.SetScale = mock_SetScale;
@@ -64,13 +66,13 @@ describe('dive/scene/root/primitiveroot/DIVEPrimitiveRoot', () => {
     });
 
     it('should not add incorrect primitive', async () => {
-        await expect(() => primitiveRoot.UpdatePrimitive({ id: undefined })).not.toThrow();
+        expect(() => primitiveRoot.UpdatePrimitive({ id: undefined })).not.toThrow();
         expect(consoleWarnSpy).toHaveBeenCalled();
         expect(primitiveRoot.children).toHaveLength(0);
     });
 
     it('should add basic primitive', async () => {
-        await expect(() => primitiveRoot.UpdatePrimitive({
+        expect(() => primitiveRoot.UpdatePrimitive({
             id: 'test_id',
             geometry: {} as COMGeometry,
             visible: false,
@@ -82,26 +84,32 @@ describe('dive/scene/root/primitiveroot/DIVEPrimitiveRoot', () => {
 
     it('should add configured primitive', async () => {
         primitiveRoot.userData.id = 'something';
-        await expect(() => primitiveRoot.UpdatePrimitive({
+        expect(() => primitiveRoot.UpdatePrimitive({
             id: 'test_id',
             position: { x: 1, y: 2, z: 3 },
             rotation: { x: 1, y: 2, z: 3 },
             scale: { x: 1, y: 2, z: 3 },
             geometry: {} as COMGeometry,
+            material: {} as COMMaterial,
         })).not.toThrow();
 
         jest.spyOn(DIVECommunication, 'get').mockReturnValueOnce(undefined);
-        await expect(() => primitiveRoot.UpdatePrimitive({
+        expect(() => primitiveRoot.UpdatePrimitive({
             id: 'test_id',
             position: { x: 1, y: 2, z: 3 },
             rotation: { x: 1, y: 2, z: 3 },
             scale: { x: 1, y: 2, z: 3 },
-        })).not.toThrow();
+            geometry: {} as COMGeometry,
+            material: {} as COMMaterial,
+        }
+        )).not.toThrow();
 
         expect(primitiveRoot.children).toHaveLength(1);
         expect(mock_SetPosition).toHaveBeenCalledTimes(2);
         expect(mock_SetRotation).toHaveBeenCalledTimes(2);
         expect(mock_SetScale).toHaveBeenCalledTimes(2);
+        expect(mock_SetGeometry).toHaveBeenCalledTimes(2);
+        expect(mock_SetMaterial).toHaveBeenCalledTimes(2);
     });
 
     it('should not place incorrect primitive on floor', async () => {
@@ -116,7 +124,7 @@ describe('dive/scene/root/primitiveroot/DIVEPrimitiveRoot', () => {
     });
 
     it('should place primitive on floor', async () => {
-        await primitiveRoot.UpdatePrimitive({
+        primitiveRoot.UpdatePrimitive({
             id: 'test_id',
             position: { x: 1, y: 2, z: 3 },
             rotation: { x: 1, y: 2, z: 3 },
@@ -131,7 +139,7 @@ describe('dive/scene/root/primitiveroot/DIVEPrimitiveRoot', () => {
         expect(() => primitiveRoot.GetPrimitive({ id: undefined })).not.toThrow();
         expect(consoleWarnSpy).toHaveBeenCalled();
         expect(primitiveRoot.GetPrimitive({ id: 'test_id' })).toBeUndefined();
-        await expect(() => primitiveRoot.UpdatePrimitive({
+        expect(() => primitiveRoot.UpdatePrimitive({
             id: 'test_id',
             position: { x: 1, y: 2, z: 3 },
             rotation: { x: 1, y: 2, z: 3 },
@@ -159,7 +167,7 @@ describe('dive/scene/root/primitiveroot/DIVEPrimitiveRoot', () => {
         consoleWarnSpy.mockClear();
         expect(() => primitiveRoot.DeletePrimitive({ id: 'test_id' })).not.toThrow();
         expect(consoleWarnSpy).toHaveBeenCalled();
-        await expect(() => primitiveRoot.UpdatePrimitive({
+        expect(() => primitiveRoot.UpdatePrimitive({
             id: 'test_id',
             position: { x: 1, y: 2, z: 3 },
             rotation: { x: 1, y: 2, z: 3 },
