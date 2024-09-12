@@ -42,6 +42,7 @@ export class DIVEPrimitiveRoot extends Object3D {
         if (object.rotation !== undefined) (sceneObject as DIVEPrimitive).SetRotation(object.rotation);
         if (object.scale !== undefined) (sceneObject as DIVEPrimitive).SetScale(object.scale);
         if (object.visible !== undefined) (sceneObject as DIVEPrimitive).SetVisibility(object.visible);
+        if (object.material !== undefined) (sceneObject as DIVEPrimitive).SetMaterial(object.material);
     }
 
     public DeletePrimitive(object: Partial<COMPrimitive>): void {
