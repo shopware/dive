@@ -17,7 +17,7 @@ export class DIVEPrimitiveRoot extends Object3D {
 
     public GetPrimitive(object: Partial<COMPrimitive>): Object3D | undefined {
         if (object.id === undefined) {
-            console.warn('PrimititveRoot.GetPrimitive: object.id is undefined')
+            console.warn('PrimitiveRoot.GetPrimitive: object.id is undefined')
             return undefined;
         }
         return this.children.find(object3D => object3D.userData.id === object.id);
@@ -25,7 +25,7 @@ export class DIVEPrimitiveRoot extends Object3D {
 
     public UpdatePrimitive(object: Partial<COMPrimitive>): void {
         if (object.id === undefined) {
-            console.warn('PrimititveRoot.UpdatePrimitive: object.id is undefined')
+            console.warn('PrimitiveRoot.UpdatePrimitive: object.id is undefined')
             return;
         }
 
@@ -46,13 +46,13 @@ export class DIVEPrimitiveRoot extends Object3D {
 
     public DeletePrimitive(object: Partial<COMPrimitive>): void {
         if (object.id === undefined) {
-            console.warn(`PrimititveRoot.DeletePrimitive: object.id is undefined`)
+            console.warn(`PrimitiveRoot.DeletePrimitive: object.id is undefined`)
             return;
         }
 
         const sceneObject = this.children.find(object3D => object3D.userData.id === object.id);
         if (!sceneObject) {
-            console.warn(`PrimititveRoot.DeletePrimitive: Primitive with id ${object.id} not found`);
+            console.warn(`PrimitiveRoot.DeletePrimitive: Primitive with id ${object.id} not found`);
             return;
         }
 
@@ -77,7 +77,7 @@ export class DIVEPrimitiveRoot extends Object3D {
     }
 
     public PlaceOnFloor(object: Partial<COMPrimitive>): void {
-        if (object.id === undefined) console.warn('PrimititveRoot.PlaceOnFloor: object.id is undefined');
+        if (object.id === undefined) console.warn('PrimitiveRoot.PlaceOnFloor: object.id is undefined');
 
         const sceneObject = this.children.find(object3D => object3D.userData.id === object.id);
         if (!sceneObject) return;
