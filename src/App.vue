@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import {onMounted, onUnmounted, ref} from "vue";
+import { DIVE } from "@shopware-ag/dive";
 import steps from "./assets/steps.json";
 import Sound from "./util/sound.ts";
 
@@ -106,6 +107,10 @@ function keyEventListener(e: KeyboardEvent) {
 }
 
 onMounted(() => {
+  const DIVEinstance = DIVE.QuickView("/public/models/exported_cube.glb");
+  const mainCanvasWrapper = document.getElementById('MainCanvas');
+  DIVEinstance.Communication.PerformAction('UPDATE_SCENE', {floorEnabled: false});
+  mainCanvasWrapper?.appendChild(DIVEinstance.Canvas);
   window.document.addEventListener('keydown', keyEventListener);
 });
 
@@ -115,8 +120,8 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <main v-if="started">
-    <div class="main-canvas">
+  <main v-if="true">
+    <div id="MainCanvas">
       Main Canvas
     </div>
     <div class="overlay" :class="{ 'active': overlay }">
@@ -145,7 +150,7 @@ main {
   height: 100vh;
 }
 
-.main-canvas {
+#MainCanvas {
   width: 100%;
   height: 100%;
 }
