@@ -164,13 +164,11 @@ export class DIVEPrimitive extends Object3D implements DIVESelectable, DIVEMovea
     }
 
     private createCylinderGeometry(geometry: COMGeometry): BufferGeometry {
-        const geo = new CylinderGeometry(geometry.width * 2, geometry.width * 2, geometry.height, 64);
-        return geo;
+        return new CylinderGeometry(geometry.width * 2, geometry.width * 2, geometry.height, 64);
     }
 
     private createSphereGeometry(geometry: COMGeometry): BufferGeometry {
-        const geo = new SphereGeometry(geometry.width * 2, 64);
-        return geo;
+        return new SphereGeometry(geometry.width * 2, 64);
     }
 
     private createPyramidGeometry(geometry: COMGeometry): BufferGeometry {
@@ -195,22 +193,18 @@ export class DIVEPrimitive extends Object3D implements DIVESelectable, DIVEMovea
     }
 
     private createBoxGeometry(geometry: COMGeometry): BufferGeometry {
-        const geo = new BoxGeometry(geometry.width, geometry.height, geometry.depth);
-        return geo;
+        return new BoxGeometry(geometry.width, geometry.height, geometry.depth);
     }
 
     private createConeGeometry(geometry: COMGeometry): BufferGeometry {
-        const geo = new CylinderGeometry(0, geometry.width * 2, geometry.height, 64);
-        return geo;
+        return new CylinderGeometry(0, geometry.width * 2, geometry.height, 64);
     }
 
     private createWallGeometry(geometry: COMGeometry): BufferGeometry {
-        const geo = new BoxGeometry(geometry.width, geometry.height, geometry.depth, 16);
-        return geo;
+        return new BoxGeometry(geometry.width, geometry.height, geometry.depth, 16);
     }
 
     private createPlaneGeometry(geometry: COMGeometry): BufferGeometry {
-        const geo = new BoxGeometry(geometry.width, geometry.height, geometry.depth);
-        return geo;
+        return new BoxGeometry(geometry.width, geometry.height, geometry.depth);
     }
 }
