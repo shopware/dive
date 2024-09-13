@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted, onUnmounted, ref, onUpdated, watchEffect, computed } from "vue";
+import { onUnmounted, ref, watchEffect, computed } from "vue";
 import { DIVE } from "@shopware-ag/dive";
 import steps from "./assets/steps.json";
 import Sound from "./util/sound.ts";
@@ -124,7 +124,7 @@ watchEffect(() => {
     diveInstance = DIVE.QuickView("/public/models/exported_cube.glb");
     const mainCanvasWrapper = document.getElementById('MainCanvas');
     diveInstance.Communication.PerformAction('UPDATE_SCENE', { floorEnabled: false });
-    mainCanvasWrapper.appendChild(diveInstance.Canvas);
+    mainCanvasWrapper?.appendChild(diveInstance.Canvas);
     window.document.addEventListener('keydown', keyEventListener);
   }
 }, { flush: 'post' });
