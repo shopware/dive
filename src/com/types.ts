@@ -38,6 +38,7 @@ export type COMGeometry = {
 
 export type COMMaterial = {
     color: string | number;
+    map?: Texture;
     roughness: number;
     roughnessMap?: Texture;
     metalness: number;

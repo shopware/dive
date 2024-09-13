@@ -69,12 +69,14 @@ export class DIVEPrimitive extends Object3D implements DIVESelectable, DIVEMovea
         const primitiveMaterial = this._mesh.material as MeshStandardMaterial;
 
         primitiveMaterial.color = new Color(material.color);
+        primitiveMaterial.map = material.map || null;
 
         // if there is a roughness map, use it, otherwise use the roughness value
         if (material.roughnessMap) {
             primitiveMaterial.roughnessMap = material.roughnessMap;
             primitiveMaterial.roughness = 1.0;
         } else {
+            primitiveMaterial.roughnessMap = null;
             primitiveMaterial.roughness = material.roughness;
         }
 
@@ -83,6 +85,7 @@ export class DIVEPrimitive extends Object3D implements DIVESelectable, DIVEMovea
             primitiveMaterial.metalnessMap = material.metalnessMap;
             primitiveMaterial.metalness = 0.0;
         } else {
+            primitiveMaterial.metalnessMap = null;
             primitiveMaterial.metalness = material.metalness;
         }
     }

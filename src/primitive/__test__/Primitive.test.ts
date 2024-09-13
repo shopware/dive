@@ -413,9 +413,9 @@ describe('dive/primitive/DIVEPrimitive', () => {
             metalness: 1,
         } as COMMaterial)).not.toThrow();
         expect(material.roughness).toBe(0);
-        expect(material.roughnessMap).toBeUndefined();
+        expect(material.roughnessMap).toBeNull();
         expect(material.metalness).toBe(1);
-        expect(material.metalnessMap).toBeUndefined();
+        expect(material.metalnessMap).toBeNull();
 
         expect(() => primitive.SetMaterial({
             color: 0xff00ff,

@@ -350,9 +350,9 @@ describe('dive/model/DIVEModel', () => {
             metalness: 1,
         } as COMMaterial)).not.toThrow();
         expect((model['_material'] as MeshStandardMaterial).roughness).toBe(0);
-        expect((model['_material'] as MeshStandardMaterial).roughnessMap).toBeUndefined();
+        expect((model['_material'] as MeshStandardMaterial).roughnessMap).toBeNull();
         expect((model['_material'] as MeshStandardMaterial).metalness).toBe(1);
-        expect((model['_material'] as MeshStandardMaterial).metalnessMap).toBeUndefined();
+        expect((model['_material'] as MeshStandardMaterial).metalnessMap).toBeNull();
 
         expect(() => model.SetMaterial({
             color: 0xff00ff,

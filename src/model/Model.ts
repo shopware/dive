@@ -88,12 +88,14 @@ export default class DIVEModel extends Object3D implements DIVESelectable, DIVEM
         }
 
         this._material.color = new Color(material.color);
+        this._material.map = material.map || null;
 
         // if there is a roughness map, use it, otherwise use the roughness value
         if (material.roughnessMap) {
             this._material.roughnessMap = material.roughnessMap;
             this._material.roughness = 1.0;
         } else {
+            this._material.roughnessMap = null;
             this._material.roughness = material.roughness;
         }
 
@@ -102,6 +104,7 @@ export default class DIVEModel extends Object3D implements DIVESelectable, DIVEM
             this._material.metalnessMap = material.metalnessMap;
             this._material.metalness = 0.0;
         } else {
+            this._material.metalnessMap = null;
             this._material.metalness = material.metalness;
         }
 
