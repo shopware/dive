@@ -2,67 +2,81 @@
   {
     "title": "Stage 1",
     "description": "Geometry - Model Without Material",
-    "sound": "transition_1.mp3",
-    "duration": 3,
+    "sound": "stage_1.mp3",
+    "duration": 4,
     "voice": [{
       "text": "Let's begin by looking at a basic 3D model without any material applied.",
-      "duration": 8
+      "duration": 4.5,
+      "sound": "stage_1_1.mp3"
     }, {
       "text": "What you see here is the raw geometry of the object, rendered flat.",
-      "duration": 8
+      "duration": 4.5,
+      "sound": "stage_1_2.mp3"
     }, {
       "text": "This means that the renderer is only displaying the shape and silhouette, with no lighting or material details affecting the appearance.",
-      "duration": 15
+      "duration": 7,
+      "sound": "stage_1_3.mp3"
     }, {
       "text": "All we see is the model’s geometry, which consists of vertices, edges, and faces that form the surface.",
-      "duration": 12
+      "duration": 7,
+      "sound": "stage_1_4.mp3"
     }, {
       "text": "This is the foundation of any 3D rendering, as everything else is built upon this basic mesh structure.",
-      "duration": 12
+      "duration": 6,
+      "sound": "stage_1_5.mp3"
     }]
   }, {
     "title": "Stage 2",
     "description": "Vertex Color",
-    "sound": "transition_2.mp3",
+    "sound": "stage_2.mp3",
     "duration": 5,
     "voice": [{
       "text": "Now, we apply vertex color to the model.",
-      "duration": 3
+      "duration": 3,
+      "sound": "stage_2_1.mp3"
     }, {
       "text": "Vertex coloring is one of the simplest methods for adding color information to a 3D object.",
-      "duration": 8
+      "duration": 5.5,
+      "sound": "stage_2_2.mp3"
     }, {
       "text": "In this approach, colors are assigned to the individual vertices of the geometry.",
-      "duration": 9
+      "duration": 5.5,
+      "sound": "stage_2_3.mp3"
     }, {
       "text": "The color at any point on the surface is interpolated based on the colors of the surrounding vertices.",
-      "duration": 12
+      "duration": 6.5,
+      "sound": "stage_2_4.mp3"
     }, {
       "text": "This can give us basic color and shading, but it lacks any realistic interaction with light, as it doesn't take into account how light behaves on different materials.",
-      "duration": 18
+      "duration": 10,
+      "sound": "stage_2_5.mp3"
     }]
   }, {
     "title": "Stage 3",
     "description": "Albedo Map",
-    "sound": "transition_3.mp3",
+    "sound": "stage_3.mp3",
     "duration": 5,
     "voice": [{
       "text": "Now, we move on to the albedo map.",
-      "duration": 5
+      "duration": 3,
+      "sound": "stage_3_1.mp3"
     }, {
       "text": "The albedo map is a texture that defines the base color of the surface, independent of any lighting or shading.",
-      "duration": 12
+      "duration": 7,
+      "sound": "stage_3_2.mp3"
     }, {
       "text": "It provides the color information for the model, determining how the object will appear under neutral lighting conditions.",
-      "duration": 14
+      "duration": 6.5,
+      "sound": "stage_3_3.mp3"
     }, {
       "text": "The albedo map doesn’t account for shadows or highlights—it’s just the raw color values of the surface material, like the paint on an object before any lighting is applied.",
-      "duration": 20
+      "duration": 10,
+      "sound": "stage_3_4.mp3"
     }]
   }, {
     "title": "Stage 4",
     "description": "Normal Map",
-    "sound": "transition_4.mp3",
+    "sound": "stage_4.mp3",
     "duration": 5,
     "voice": [{
       "text": "Next, we apply a normal map to the model.",
