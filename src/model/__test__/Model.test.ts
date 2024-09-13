@@ -2,7 +2,8 @@ import Model from '../Model';
 import DIVECommunication from '../../com/Communication';
 import { GLTF } from 'three/examples/jsm/Addons';
 import DIVEScene from '../../scene/Scene';
-import { Vector3, Box3, Mesh } from 'three';
+import { Vector3, Box3, Mesh, MeshStandardMaterial, type Texture, Color } from 'three';
+import { type COMMaterial } from '../../com/types';
 
 const intersectObjectsMock = jest.fn();
 
@@ -135,6 +136,17 @@ jest.mock('three', () => {
             };
             return this;
         }),
+        MeshStandardMaterial: jest.fn(function () {
+            this.color = new Color();
+            this.roughness = 1;
+            this.roughnessMap = undefined;
+            this.metalness = 0;
+            this.metalnessMap = undefined;
+            return this;
+        }),
+        Color: jest.fn(function () {
+            return this;
+        }),
     }
 });
 
@@ -150,12 +162,14 @@ jest.mock('../../com/Communication.ts', () => {
 
 const gltf = {
     scene: {
+        isMesh: true,
         isObject3D: true,
         parent: null,
         dispatchEvent: jest.fn(),
         layers: {
             mask: 0,
         },
+        material: {},
         updateWorldMatrix: jest.fn(),
         children: [
             {
@@ -166,6 +180,7 @@ const gltf = {
                 },
                 children: [],
                 updateWorldMatrix: jest.fn(),
+                isMesh: true,
             },
         ],
         traverse: function (callback: (object: object) => void) {
@@ -177,43 +192,42 @@ const gltf = {
 
 jest.spyOn(DIVECommunication, 'get').mockReturnValue({ PerformAction: jest.fn() } as unknown as DIVECommunication);
 
+let model: Model;
+
 describe('dive/model/DIVEModel', () => {
+    beforeEach(() => {
+        model = new Model();
+    });
+
     afterEach(() => {
         jest.clearAllMocks();
     });
 
     it('should instantiate', () => {
-        const model = new Model();
         expect(model).toBeDefined();
     });
 
     it('should set model', () => {
-        const model = new Model();
         expect(() => model.SetModel(gltf)).not.toThrow();
     });
 
     it('should set position', () => {
-        const model = new Model();
         expect(() => model.SetPosition({ x: 0, y: 0, z: 0 })).not.toThrow();
     });
 
     it('should set rotation', () => {
-        const model = new Model();
         expect(() => model.SetRotation({ x: 0, y: 0, z: 0 })).not.toThrow();
     });
 
     it('should set scale', () => {
-        const model = new Model();
         expect(() => model.SetScale({ x: 1, y: 1, z: 1 })).not.toThrow();
     });
 
     it('should set visibility', () => {
-        const model = new Model();
         expect(() => model.SetVisibility(true)).not.toThrow();
     });
 
     it('should set to world origin', () => {
-        const model = new Model();
         model.userData.id = 'something';
 
         expect(() => model.SetToWorldOrigin()).not.toThrow();
@@ -226,7 +240,6 @@ describe('dive/model/DIVEModel', () => {
     });
 
     it('should place on floor', () => {
-        const model = new Model();
         model.userData.id = 'something';
 
         expect(() => model.PlaceOnFloor()).not.toThrow();
@@ -247,7 +260,6 @@ describe('dive/model/DIVEModel', () => {
             z: 1,
         };
 
-        const model = new Model();
         model.userData.id = 'something';
         model.position.set(0, 4, 0);
         model['boundingBox'] = {
@@ -301,7 +313,6 @@ describe('dive/model/DIVEModel', () => {
     });
 
     it('should onMove', () => {
-        const model = new Model();
         model.userData.id = 'something';
 
         expect(() => model.onMove()).not.toThrow();
@@ -311,22 +322,60 @@ describe('dive/model/DIVEModel', () => {
     });
 
     it('should onSelect', () => {
-        const testLight = new Model();
-        testLight.userData.id = 'something';
+        model.userData.id = 'something';
 
-        expect(() => testLight.onSelect()).not.toThrow();
+        expect(() => model.onSelect()).not.toThrow();
 
         jest.spyOn(DIVECommunication, 'get').mockReturnValueOnce(undefined);
-        expect(() => testLight.onSelect()).not.toThrow();
+        expect(() => model.onSelect()).not.toThrow();
     });
 
     it('should onDeselect', () => {
-        const testLight = new Model();
-        testLight.userData.id = 'something';
+        model.userData.id = 'something';
 
-        expect(() => testLight.onDeselect()).not.toThrow();
+        expect(() => model.onDeselect()).not.toThrow();
 
         jest.spyOn(DIVECommunication, 'get').mockReturnValueOnce(undefined);
-        expect(() => testLight.onDeselect()).not.toThrow();
+        expect(() => model.onDeselect()).not.toThrow();
+    });
+
+    it('should set material', () => {
+        // apply invalid material should not crash
+        expect(() => model.SetMaterial({} as COMMaterial)).not.toThrow();
+        expect(model['_material']).not.toBeNull();
+
+        expect(() => model.SetMaterial({
+            color: 0xffffff,
+            roughness: 0,
+            metalness: 1,
+        } as COMMaterial)).not.toThrow();
+        expect((model['_material'] as MeshStandardMaterial).roughness).toBe(0);
+        expect((model['_material'] as MeshStandardMaterial).roughnessMap).toBeUndefined();
+        expect((model['_material'] as MeshStandardMaterial).metalness).toBe(1);
+        expect((model['_material'] as MeshStandardMaterial).metalnessMap).toBeUndefined();
+
+        expect(() => model.SetMaterial({
+            color: 0xff00ff,
+            roughness: 0,
+            roughnessMap: 'this is a Texture' as unknown as Texture,
+            metalness: 1,
+            metalnessMap: 'this is a Texture' as unknown as Texture,
+        } as COMMaterial)).not.toThrow();
+        expect((model['_material'] as MeshStandardMaterial).roughness).toBe(1);
+        expect((model['_material'] as MeshStandardMaterial).roughnessMap).toBeDefined();
+        expect((model['_material'] as MeshStandardMaterial).metalness).toBe(0);
+        expect((model['_material'] as MeshStandardMaterial).metalnessMap).toBeDefined();
+    });
+
+    it('should set model material when material already set before', () => {
+        model.SetMaterial({ roughness: 0.5 } as COMMaterial);
+        expect(() => model.SetModel(gltf)).not.toThrow();
+        expect((model['_mesh']?.material as MeshStandardMaterial).roughness).toBe(0.5);
+    });
+
+    it('should set material to model when model already set before', () => {
+        model.SetModel(gltf);
+        expect(() => model.SetMaterial({ roughness: 0.5 } as COMMaterial)).not.toThrow();
+        expect((model['_mesh']?.material as MeshStandardMaterial).roughness).toBe(0.5);
     });
 });

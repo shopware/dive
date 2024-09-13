@@ -46,14 +46,14 @@ export default class DIVEModel extends Object3D implements DIVESelectable, DIVEM
             this.boundingBox.expandByObject(child);
 
             // only search for first mesh for now
-            if (!this._mesh && child instanceof Mesh) {
-                this._mesh = child;
+            if (!this._mesh && 'isMesh' in child) {
+                this._mesh = child as Mesh;
 
                 // if the material is already set, use it, otherwise set it from the model's material
                 if (this._material) {
                     this._mesh.material = this._material;
                 } else {
-                    this._material = child.material as MeshStandardMaterial;
+                    this._material = (child as Mesh).material as MeshStandardMaterial;
                 }
             }
         });
@@ -80,6 +80,8 @@ export default class DIVEModel extends Object3D implements DIVESelectable, DIVEM
     }
 
     public SetMaterial(material: COMMaterial): void {
+        console.error('HERE', this._mesh);
+
         // if there is no material, create a new one
         if (!this._material) {
             this._material = new MeshStandardMaterial();
@@ -104,6 +106,7 @@ export default class DIVEModel extends Object3D implements DIVESelectable, DIVEM
         }
 
         // if the mesh is already set, update the material
+
         if (this._mesh) {
             this._mesh.material = this._material;
         }
