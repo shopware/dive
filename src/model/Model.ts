@@ -79,40 +79,44 @@ export default class DIVEModel extends Object3D implements DIVESelectable, DIVEM
         });
     }
 
-    public SetMaterial(material: COMMaterial): void {
-        console.error('HERE', this._mesh);
-
+    public SetMaterial(material: Partial<COMMaterial>): void {
         // if there is no material, create a new one
         if (!this._material) {
             this._material = new MeshStandardMaterial();
         }
 
-        this._material.color = new Color(material.color);
-        this._material.map = material.map || null;
+        // apply color if supplied
+        if (material.color !== undefined) this._material.color = new Color(material.color);
 
-        // if there is a roughness map, use it, otherwise use the roughness value
-        if (material.roughnessMap) {
+        // apply albedo map if supplied
+        if (material.map !== undefined) this._material.map = material.map;
+
+        // set roughness value
+        // if supplied, apply roughness map
+        // if we applied a roughness map, set roughness to 1.0
+        if (material.roughness !== undefined) this._material.roughness = material.roughness;
+        if (material.roughnessMap !== undefined) {
             this._material.roughnessMap = material.roughnessMap;
-            this._material.roughness = 1.0;
-        } else {
-            this._material.roughnessMap = null;
-            this._material.roughness = material.roughness;
+
+            if (this._material.roughnessMap) {
+                this._material.roughness = 1.0;
+            }
         }
 
-        // if there is a metalness map, use it, otherwise use the metalness value
-        if (material.metalnessMap) {
+        // set metalness value
+        // if supplied, apply metalness map
+        // if we applied a metalness map, set metalness to 1.0
+        if (material.metalness !== undefined) this._material.metalness = material.metalness;
+        if (material.metalnessMap !== undefined) {
             this._material.metalnessMap = material.metalnessMap;
-            this._material.metalness = 0.0;
-        } else {
-            this._material.metalnessMap = null;
-            this._material.metalness = material.metalness;
+
+            if (this._material.metalnessMap) {
+                this._material.metalness = 1.0;
+            }
         }
 
         // if the mesh is already set, update the material
-
-        if (this._mesh) {
-            this._mesh.material = this._material;
-        }
+        if (this._mesh) this._mesh.material = this._material;
     }
 
     public SetToWorldOrigin(): void {

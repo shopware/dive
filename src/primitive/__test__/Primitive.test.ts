@@ -413,20 +413,21 @@ describe('dive/primitive/DIVEPrimitive', () => {
             metalness: 1,
         } as COMMaterial)).not.toThrow();
         expect(material.roughness).toBe(0);
-        expect(material.roughnessMap).toBeNull();
+        expect(material.roughnessMap).toBeUndefined();
         expect(material.metalness).toBe(1);
-        expect(material.metalnessMap).toBeNull();
+        expect(material.metalnessMap).toBeUndefined();
 
         expect(() => primitive.SetMaterial({
             color: 0xff00ff,
+            map: 'This_Is_A_Texture' as unknown as Texture,
             roughness: 0,
-            roughnessMap: 'this is a Texture' as unknown as Texture,
+            roughnessMap: 'This_Is_A_Texture' as unknown as Texture,
             metalness: 1,
-            metalnessMap: 'this is a Texture' as unknown as Texture,
+            metalnessMap: 'This_Is_A_Texture' as unknown as Texture,
         } as COMMaterial)).not.toThrow();
         expect(material.roughness).toBe(1);
         expect(material.roughnessMap).toBeDefined();
-        expect(material.metalness).toBe(0);
+        expect(material.metalness).toBe(1);
         expect(material.metalnessMap).toBeDefined();
     });
 });
