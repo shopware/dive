@@ -65,26 +65,41 @@ export class DIVEPrimitive extends Object3D implements DIVESelectable, DIVEMovea
         });
     }
 
-    public SetMaterial(material: COMMaterial): void {
+    public SetMaterial(material: Partial<COMMaterial>): void {
         const primitiveMaterial = this._mesh.material as MeshStandardMaterial;
 
-        primitiveMaterial.color = new Color(material.color);
+        // apply color if supplied
+        if (material.color !== undefined) primitiveMaterial.color = new Color(material.color);
 
-        // if there is a roughness map, use it, otherwise use the roughness value
-        if (material.roughnessMap) {
+        // apply albedo map if supplied
+        if (material.map !== undefined) primitiveMaterial.map = material.map;
+
+        // set roughness value
+        // if supplied, apply roughness map
+        // if we applied a roughness map, set roughness to 1.0
+        if (material.roughness !== undefined) primitiveMaterial.roughness = material.roughness;
+        if (material.roughnessMap !== undefined) {
             primitiveMaterial.roughnessMap = material.roughnessMap;
-            primitiveMaterial.roughness = 1.0;
-        } else {
-            primitiveMaterial.roughness = material.roughness;
+
+            if (primitiveMaterial.roughnessMap) {
+                primitiveMaterial.roughness = 1.0;
+            }
         }
 
-        // if there is a metalness map, use it, otherwise use the metalness value
-        if (material.metalnessMap) {
+        // set metalness value
+        // if supplied, apply metalness map
+        // if we applied a metalness map, set metalness to 1.0
+        if (material.metalness !== undefined) primitiveMaterial.metalness = material.metalness;
+        if (material.metalnessMap !== undefined) {
             primitiveMaterial.metalnessMap = material.metalnessMap;
-            primitiveMaterial.metalness = 0.0;
-        } else {
-            primitiveMaterial.metalness = material.metalness;
+
+            if (primitiveMaterial.metalnessMap) {
+                primitiveMaterial.metalness = 1.0;
+            }
         }
+
+        // if the mesh is already set, update the material
+        if (this._mesh) this._mesh.material = primitiveMaterial;
     }
 
     public SetToWorldOrigin(): void {
