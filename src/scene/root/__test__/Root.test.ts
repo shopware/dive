@@ -1,13 +1,10 @@
 import DIVERoot from '../Root';
 import { type Vector3, type Object3D } from 'three';
-import { type COMLight, type COMModel, type COMPov } from '../../../com';
+import { type COMPrimitive, type COMLight, type COMModel, type COMPov } from '../../../com/types';
 
-const mock_UpdateLight = jest.fn();
-const mock_UpdateModel = jest.fn();
-const mock_GetLight = jest.fn();
-const mock_GetModel = jest.fn();
-const mock_DeleteLight = jest.fn();
-const mock_DeleteModel = jest.fn();
+const mock_UpdateObject = jest.fn();
+const mock_DeleteObject = jest.fn();
+const mock_GetObject = jest.fn();
 const mock_PlaceOnFloor = jest.fn();
 
 jest.mock('three', () => {
@@ -91,9 +88,9 @@ jest.mock('../lightroot/LightRoot', () => {
         this.isObject3D = true;
         this.parent = null;
         this.dispatchEvent = jest.fn();
-        this.UpdateLight = mock_UpdateLight;
-        this.DeleteLight = mock_DeleteLight;
-        this.GetLight = mock_GetLight;
+        this.UpdateLight = mock_UpdateObject;
+        this.DeleteLight = mock_DeleteObject;
+        this.GetLight = mock_GetObject;
         this.removeFromParent = jest.fn();
         return this;
     });
@@ -104,16 +101,35 @@ jest.mock('../modelroot/ModelRoot', () => {
         this.isObject3D = true;
         this.parent = null;
         this.dispatchEvent = jest.fn();
-        this.UpdateModel = mock_UpdateModel;
-        this.DeleteModel = mock_DeleteModel;
+        this.UpdateModel = mock_UpdateObject;
+        this.DeleteModel = mock_DeleteObject;
         this.PlaceOnFloor = mock_PlaceOnFloor;
-        this.GetModel = mock_GetModel;
+        this.GetModel = mock_GetObject;
         this.removeFromParent = jest.fn();
         this.traverse = jest.fn((callback: (object: Object3D) => void) => {
             callback(this);
         });
         return this;
     });
+});
+
+jest.mock('../primitiveroot/PrimitiveRoot', () => {
+    return {
+        DIVEPrimitiveRoot: jest.fn(function () {
+            this.isObject3D = true;
+            this.parent = null;
+            this.dispatchEvent = jest.fn();
+            this.UpdatePrimitive = mock_UpdateObject;
+            this.DeletePrimitive = mock_DeleteObject;
+            this.PlaceOnFloor = mock_PlaceOnFloor;
+            this.GetPrimitive = mock_GetObject;
+            this.removeFromParent = jest.fn();
+            this.traverse = jest.fn((callback: (object: Object3D) => void) => {
+                callback(this);
+            });
+            return this;
+        }),
+    };
 });
 
 describe('DIVE/scene/root/DIVERoot', () => {
@@ -124,7 +140,7 @@ describe('DIVE/scene/root/DIVERoot', () => {
     it('should instantiate', () => {
         const root = new DIVERoot();
         expect(root).toBeDefined();
-        expect(root.add).toHaveBeenCalledTimes(4);
+        expect(root.add).toHaveBeenCalledTimes(5);
     });
 
     it('should have Floor', () => {
@@ -145,51 +161,79 @@ describe('DIVE/scene/root/DIVERoot', () => {
 
     it('should add object', () => {
         const root = new DIVERoot();
+        expect(() => root.AddSceneObject({ entityType: 'pov' } as COMPov)).not.toThrow();
+        expect(mock_UpdateObject).toHaveBeenCalledTimes(0);
+
         root.AddSceneObject({ entityType: 'light' } as COMLight);
-        expect(mock_UpdateLight).toHaveBeenCalledTimes(1);
+        expect(mock_UpdateObject).toHaveBeenCalledTimes(1);
 
         root.AddSceneObject({ entityType: 'model' } as COMModel);
-        expect(mock_UpdateModel).toHaveBeenCalledTimes(1);
+        expect(mock_UpdateObject).toHaveBeenCalledTimes(2);
 
-        expect(() => root.AddSceneObject({ entityType: 'pov' } as COMPov)).not.toThrow();
+        root.AddSceneObject({ entityType: 'primitive' } as COMPrimitive);
+        expect(mock_UpdateObject).toHaveBeenCalledTimes(3);
     });
 
     it('should update object', () => {
         const root = new DIVERoot();
 
+        expect(() => root.UpdateSceneObject({ entityType: 'pov' })).not.toThrow();
+        expect(mock_UpdateObject).toHaveBeenCalledTimes(0);
+
         root.UpdateSceneObject({ entityType: 'light' });
-        expect(mock_UpdateLight).toHaveBeenCalledTimes(1);
+        expect(mock_UpdateObject).toHaveBeenCalledTimes(1);
 
         root.UpdateSceneObject({ entityType: 'model' });
-        expect(mock_UpdateModel).toHaveBeenCalledTimes(1);
+        expect(mock_UpdateObject).toHaveBeenCalledTimes(2);
 
-        expect(() => root.UpdateSceneObject({ entityType: 'pov' })).not.toThrow();
+        root.UpdateSceneObject({ entityType: 'primitive' });
+        expect(mock_UpdateObject).toHaveBeenCalledTimes(3);
     });
 
     it('should delete object', () => {
         const root = new DIVERoot();
 
         root.DeleteSceneObject({ entityType: 'light' });
-        expect(mock_DeleteLight).toHaveBeenCalledTimes(1);
+        expect(mock_DeleteObject).toHaveBeenCalledTimes(1);
 
         root.DeleteSceneObject({ entityType: 'model' });
-        expect(mock_DeleteModel).toHaveBeenCalledTimes(1);
+        expect(mock_DeleteObject).toHaveBeenCalledTimes(2);
+
+        root.DeleteSceneObject({ entityType: 'primitive' });
+        expect(mock_DeleteObject).toHaveBeenCalledTimes(3);
 
         expect(() => root.DeleteSceneObject({ entityType: 'pov' })).not.toThrow();
     });
 
     it('should place model on floor', () => {
         const root = new DIVERoot();
+
+        root.PlaceOnFloor({ entityType: 'pov' });
+        expect(mock_PlaceOnFloor).toHaveBeenCalledTimes(0);
+
+        root.PlaceOnFloor({ entityType: 'light' });
+        expect(mock_PlaceOnFloor).toHaveBeenCalledTimes(0);
+
         root.PlaceOnFloor({ entityType: 'model' });
         expect(mock_PlaceOnFloor).toHaveBeenCalledTimes(1);
+
+        root.PlaceOnFloor({ entityType: 'primitive' });
+        expect(mock_PlaceOnFloor).toHaveBeenCalledTimes(2);
     });
 
     it('should get scene object', () => {
         const scene = new DIVERoot();
-        scene.GetSceneObject({ entityType: 'model' });
-        expect(mock_GetModel).toHaveBeenCalledTimes(1);
-        scene.GetSceneObject({ entityType: 'light' });
-        expect(mock_GetLight).toHaveBeenCalledTimes(1);
+
         expect(scene.GetSceneObject({ entityType: 'pov' })).toBeUndefined();
+        expect(mock_GetObject).toHaveBeenCalledTimes(0);
+
+        scene.GetSceneObject({ entityType: 'light' });
+        expect(mock_GetObject).toHaveBeenCalledTimes(1);
+
+        scene.GetSceneObject({ entityType: 'model' });
+        expect(mock_GetObject).toHaveBeenCalledTimes(2);
+
+        scene.GetSceneObject({ entityType: 'primitive' });
+        expect(mock_GetObject).toHaveBeenCalledTimes(3);
     });
 });

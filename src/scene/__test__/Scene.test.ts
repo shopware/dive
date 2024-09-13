@@ -1,6 +1,6 @@
-import { Color } from 'three';
 import DIVEScene from '../Scene';
-import { COMEntity } from '../../com';
+import { type Color } from 'three';
+import { type COMEntity } from '../../com/types';
 
 const mock_UpdateSceneObject = jest.fn();
 const mock_DeleteSceneObject = jest.fn();
