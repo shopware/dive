@@ -121,7 +121,7 @@ onUnmounted(() => {
 
 watchEffect(() => {
   if (started.value && !diveInstance) {
-    diveInstance = DIVE.QuickView("./public/models/exported_cube.glb");
+    diveInstance = DIVE.QuickView("./models/exported_cube.glb");
     const mainCanvasWrapper = document.getElementById('MainCanvas');
     diveInstance.Communication.PerformAction('UPDATE_SCENE', { floorEnabled: false });
     mainCanvasWrapper?.appendChild(diveInstance.Canvas);
