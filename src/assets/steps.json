@@ -3,7 +3,7 @@
     "title": "Stage 1",
     "description": "Geometry - Model Without Material",
     "sound": "transition_1.mp3",
-    "duration": 7,
+    "duration": 3,
     "voice": [{
       "text": "Let's begin by looking at a basic 3D model without any material applied.",
       "duration": 8

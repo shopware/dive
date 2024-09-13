@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import {computed, onMounted, onUnmounted, ref} from "vue";
+import { onMounted, onUnmounted, ref, onUpdated, watchEffect, computed } from "vue";
 import { DIVE } from "@shopware-ag/dive";
 import steps from "./assets/steps.json";
 import Sound from "./util/sound.ts";
@@ -17,6 +17,7 @@ interface step {
 }
 
 const started = ref<boolean>(false);
+let diveInstance = null as DIVE | null;
 
 const step = ref<number>(0);
 const overlay = ref<boolean>(false);
@@ -113,39 +114,66 @@ function keyEventListener(e: KeyboardEvent) {
   }
 }
 
-onMounted(() => {
-  const DIVEinstance = DIVE.QuickView("/public/models/exported_cube.glb");
-  const mainCanvasWrapper = document.getElementById('MainCanvas');
-  DIVEinstance.Communication.PerformAction('UPDATE_SCENE', {floorEnabled: false});
-  mainCanvasWrapper?.appendChild(DIVEinstance.Canvas);
-  window.document.addEventListener('keydown', keyEventListener);
-});
 
 onUnmounted(() => {
   window.document.removeEventListener('keydown', keyEventListener);
 });
+
+watchEffect(() => {
+  if (started.value && !diveInstance) {
+    diveInstance = DIVE.QuickView("/public/models/exported_cube.glb");
+    const mainCanvasWrapper = document.getElementById('MainCanvas');
+    diveInstance.Communication.PerformAction('UPDATE_SCENE', { floorEnabled: false });
+    mainCanvasWrapper.appendChild(diveInstance.Canvas);
+    window.document.addEventListener('keydown', keyEventListener);
+  }
+}, { flush: 'post' });
+
+watchEffect(() => {
+  switch (step.value) {
+    case 0:
+      // diveInstance.Communication.PerformAction('UPDATE_SCENE', {});
+      break;
+    case 1:
+      // diveInstance.Communication.PerformAction('UPDATE_SCENE', {});
+      break;
+    case 2:
+      // diveInstance.Communication.PerformAction('UPDATE_SCENE', {});
+      break;
+    case 3:
+      // diveInstance.Communication.PerformAction('UPDATE_SCENE', {});
+      break;
+    case 4:
+      // diveInstance.Communication.PerformAction('UPDATE_SCENE', {});
+      break;
+    case 5:
+      // diveInstance.Communication.PerformAction('UPDATE_SCENE', {});
+      break;
+  }
+});
+
 </script>
 
 <template>
-  <main v-if="true">
+  <main v-if="started">
     <div id="MainCanvas">
-      Main Canvas
     </div>
     <div class="overlay" :class="{ 'active': overlay }">
-      <h1>{{steps[step].title}}</h1>
-      <p>{{steps[step].description}}</p>
+      <h1>{{ steps[step].title }}</h1>
+      <p>{{ steps[step].description }}</p>
     </div>
     <div class="voice">
-      <div class="voiceline" :class="{'active': currentVoice !== null}">
-        <p>{{(currentVoice !== null && steps[step]?.voice[currentVoice]?.text) || ''}}</p>
+      <div class="voiceline" :class="{ 'active': currentVoice !== null }">
+        <p>{{ (currentVoice !== null && steps[step]?.voice[currentVoice]?.text) || '' }}</p>
         <div class="progress">
-          <div class="progress-bar" :style="{width: voiceProgressPercentage + '%'}"></div>
+          <div class="progress-bar" :style="{ width: voiceProgressPercentage + '%' }"></div>
         </div>
         <span class="close" @click="stopVoice">x</span>
       </div>
     </div>
     <div class="slider">
-      <span class="step" :class="{'current': index === step}" v-for="(_s, index) in steps" :key="index" @click="onSelectStep(index)">{{index + 1}}</span>
+      <span class="step" :class="{ 'current': index === step }" v-for="(_s, index) in steps" :key="index"
+        @click="onSelectStep(index)">{{ index + 1 }}</span>
     </div>
   </main>
   <div v-else class="start-screen">
