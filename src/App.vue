@@ -52,16 +52,19 @@ function playSound(track: string) {
 const step = ref<number>(0);
 const overlay = ref<boolean>(false);
 const currentVoice = ref<number | null>(null);
-
+const voiceProgress = ref<number>(0);
 
 let voiceTimeout: number | null = null;
+let voiceProgressInterval: number | null = null;
 let overlayTimeout: number | null = null;
 
 function onSelectStep(index: number) {
   if (voiceTimeout) { clearTimeout(voiceTimeout); }
   if (overlayTimeout) { clearTimeout(overlayTimeout); }
+  if (voiceProgressInterval) { clearInterval(voiceProgressInterval); }
   step.value = index;
   overlay.value = true;
+  currentVoice.value = null;
   const sound = steps[step.value].sound;
   if (sound) {
     playSound(sound);
@@ -69,11 +72,13 @@ function onSelectStep(index: number) {
   overlayTimeout = setTimeout(() => {
     overlay.value = false;
     startVoice();
-  }, 1000);
+  }, 500);
 }
 
 function startVoice(index: number = 0) {
   if (voiceTimeout) { clearTimeout(voiceTimeout); }
+  if (voiceProgressInterval) { clearInterval(voiceProgressInterval); }
+  voiceProgress.value = 0;
   currentVoice.value = index;
   const sound = steps[step.value].voice[index].sound;
   if (sound) {
@@ -86,6 +91,12 @@ function startVoice(index: number = 0) {
       currentVoice.value = null;
     }
   }, steps[step.value].voice[index].duration * 1000);
+  voiceProgressInterval = setInterval(() => {
+    voiceProgress.value += 0.1;
+    if (voiceProgress.value >= steps[step.value].voice[index].duration) {
+      voiceProgress.value = 0;
+    }
+  }, 100);
 }
 </script>
 
@@ -99,7 +110,10 @@ function startVoice(index: number = 0) {
       <p>{{steps[step].description}}</p>
     </div>
     <div class="voice">
-      <p :class="{'active': currentVoice !== null}">{{(currentVoice && steps[step]?.voice[currentVoice]?.text) || ''}}</p>
+      <div class="voiceline" :class="{'active': currentVoice !== null}">
+        <p>{{(currentVoice !== null && steps[step]?.voice[currentVoice]?.text) || ''}}</p>
+        <progress v-if="currentVoice !== null" :max="steps[step]?.voice[currentVoice]?.duration" :value="voiceProgress"></progress>
+      </div>
     </div>
     <div class="slider">
       <span class="step" v-for="(_s, index) in steps" :key="index" @click="onSelectStep(index)">{{index + 1}}</span>
@@ -153,17 +167,44 @@ main {
   padding-bottom: 60px;
 }
 
-.voice p {
+.voiceline {
   background-color: #00000099;
   color: #fff;
-  padding: 10px 20px;
-  border-radius: 20px;
   opacity: 0;
   transition: opacity 0.5s;
 }
 
-.voice p.active {
+.voiceline.active {
   opacity: 1;
+}
+
+.voiceline p {
+  margin: 0;
+  padding: 10px;
+  padding-bottom: 0;
+}
+
+.voiceline progress {
+  width: 100%;
+  height: 5px;
+  border-radius: 0;
+  background-color: #00000000;
+  color: #fff;
+  border: none;
+  appearance: none;
+  outline: none;
+}
+
+.voiceline progress::-webkit-progress-bar {
+  background-color: #00000000;
+}
+
+.voiceline progress::-webkit-progress-value {
+  background-color: #fff;
+}
+
+.voiceline progress::-moz-progress-bar {
+  background-color: #fff;
 }
 
 .slider {
