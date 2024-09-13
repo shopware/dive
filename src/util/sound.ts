@@ -1,7 +1,10 @@
 export default class Sound {
   private static stopCallback: (() => void) | null = null;
 
-  private static stopCurrentAudio() {
+  /**
+   * Stop the current audio
+   */
+  public static stopCurrentAudio() {
     if (Sound.stopCallback) {
       Sound.stopCallback();
       Sound.stopCallback = null;

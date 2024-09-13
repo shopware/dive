@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import {ref} from "vue";
+import {onMounted, onUnmounted, ref} from "vue";
 import steps from "./assets/steps.json";
 import Sound from "./util/sound.ts";
 
@@ -14,6 +14,8 @@ interface step {
     duration: number;
   }[];
 }
+
+const started = ref<boolean>(false);
 
 const step = ref<number>(0);
 const overlay = ref<boolean>(false);
@@ -43,7 +45,6 @@ async function onSelectStep(index: number) {
   }, steps[step.value].duration * 1000);
 }
 
-
 async function startVoice(index: number = 0) {
   if (voiceTimeout) { clearTimeout(voiceTimeout); }
   if (voiceProgressInterval) { clearInterval(voiceProgressInterval); }
@@ -69,10 +70,52 @@ async function startVoice(index: number = 0) {
     }
   }, 100);
 }
+
+function stopVoice() {
+  if (voiceTimeout) { clearTimeout(voiceTimeout); }
+  if (voiceProgressInterval) { clearInterval(voiceProgressInterval); }
+  currentVoice.value = null;
+  voiceProgress.value = 0;
+  Sound.stopCurrentAudio();
+}
+
+function start() {
+  if (started.value) {
+    return;
+  }
+  started.value = true;
+  onSelectStep(0);
+}
+
+function keyEventListener(e: KeyboardEvent) {
+  switch (e.key) {
+    case 'ArrowRight':
+      onSelectStep(step.value + 1);
+      break;
+    case 'ArrowLeft':
+      onSelectStep(step.value - 1);
+      break;
+    case 'Space':
+    case 'Enter':
+      start();
+      break;
+    case 'Escape':
+      stopVoice();
+      break;
+  }
+}
+
+onMounted(() => {
+  window.document.addEventListener('keydown', keyEventListener);
+});
+
+onUnmounted(() => {
+  window.document.removeEventListener('keydown', keyEventListener);
+});
 </script>
 
 <template>
-  <main>
+  <main v-if="started">
     <div class="main-canvas">
       Main Canvas
     </div>
@@ -84,13 +127,16 @@ async function startVoice(index: number = 0) {
       <div class="voiceline" :class="{'active': currentVoice !== null}">
         <p>{{(currentVoice !== null && steps[step]?.voice[currentVoice]?.text) || ''}}</p>
         <progress v-if="currentVoice !== null" :max="steps[step]?.voice[currentVoice]?.duration" :value="voiceProgress"></progress>
+        <span class="close" @click="stopVoice">x</span>
       </div>
     </div>
     <div class="slider">
       <span class="step" v-for="(_s, index) in steps" :key="index" @click="onSelectStep(index)">{{index + 1}}</span>
     </div>
   </main>
-
+  <div v-else class="start-screen">
+    <button @click="start">Start</button>
+  </div>
 </template>
 
 <style scoped>
@@ -143,6 +189,7 @@ main {
   color: #fff;
   opacity: 0;
   transition: opacity 0.5s;
+  position: relative;
 }
 
 .voiceline.active {
@@ -178,6 +225,22 @@ main {
   background-color: #fff;
 }
 
+.voiceline span.close {
+  position: absolute;
+  display: block;
+  top: 0;
+  right: 0;
+  transform: translate(50%, -50%);
+  width: 25px;
+  height: 25px;
+  background-color: #000;
+  color: #fff;
+  text-align: center;
+  line-height: 25px;
+  border-radius: 50%;
+  cursor: pointer;
+}
+
 .slider {
   position: fixed;
   width: 100%;
@@ -200,5 +263,21 @@ main {
   line-height: 30px;
   cursor: pointer;
   border-radius: 50%;
+}
+
+.start-screen {
+  width: 100%;
+  height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.start-screen button {
+  padding: 10px 20px;
+  background-color: #000;
+  color: #fff;
+  border: none;
+  cursor: pointer;
 }
 </style>
