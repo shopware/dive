@@ -1,6 +1,17 @@
 <script setup lang="ts">
 import {ref} from "vue";
 
+interface step {
+  title: string;
+  description: string;
+  sound?: string;
+  voice: {
+    text: string;
+    sound?: string;
+    duration: number;
+  }[];
+}
+
 const steps = [
   {
     title: "Step 1",
@@ -31,7 +42,7 @@ const steps = [
       duration: 5
     }]
   }
-];
+] as step[];
 
 function playSound(track: string) {
   const audio = new Audio(`./voicelines/${track}`);
@@ -43,16 +54,17 @@ const overlay = ref<boolean>(false);
 const currentVoice = ref<number | null>(null);
 
 
-let voiceTimeout: NodeJS.Timeout | null = null;
-let overlayTimeout: NodeJS.Timeout | null = null;
+let voiceTimeout: number | null = null;
+let overlayTimeout: number | null = null;
 
 function onSelectStep(index: number) {
   if (voiceTimeout) { clearTimeout(voiceTimeout); }
   if (overlayTimeout) { clearTimeout(overlayTimeout); }
   step.value = index;
   overlay.value = true;
-  if (steps[step.value].sound) {
-    playSound(steps[step.value].sound);
+  const sound = steps[step.value].sound;
+  if (sound) {
+    playSound(sound);
   }
   overlayTimeout = setTimeout(() => {
     overlay.value = false;
@@ -63,8 +75,9 @@ function onSelectStep(index: number) {
 function startVoice(index: number = 0) {
   if (voiceTimeout) { clearTimeout(voiceTimeout); }
   currentVoice.value = index;
-  if (steps[step.value].voice[index].sound) {
-    playSound(steps[step.value].voice[index].sound);
+  const sound = steps[step.value].voice[index].sound;
+  if (sound) {
+    playSound(sound);
   }
   voiceTimeout = setTimeout(() => {
     if (index < steps[step.value].voice.length - 1) {
@@ -86,10 +99,10 @@ function startVoice(index: number = 0) {
       <p>{{steps[step].description}}</p>
     </div>
     <div class="voice">
-      <p :class="{'active': currentVoice !== null}">{{steps[step]?.voice[currentVoice]?.text || ''}}</p>
+      <p :class="{'active': currentVoice !== null}">{{(currentVoice && steps[step]?.voice[currentVoice]?.text) || ''}}</p>
     </div>
     <div class="slider">
-      <span class="step" v-for="(s, index) in steps" :key="index" @click="onSelectStep(index)">{{index + 1}}</span>
+      <span class="step" v-for="(_s, index) in steps" :key="index" @click="onSelectStep(index)">{{index + 1}}</span>
     </div>
   </main>
 
