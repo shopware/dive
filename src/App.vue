@@ -1,52 +1,18 @@
 <script setup lang="ts">
 import {ref} from "vue";
+import steps from "./assets/steps.json";
+import Sound from "./util/sound.ts";
 
 interface step {
   title: string;
   description: string;
   sound?: string;
+  duration: number;
   voice: {
     text: string;
     sound?: string;
     duration: number;
   }[];
-}
-
-const steps = [
-  {
-    title: "Step 1",
-    description: "This is step 1",
-    sound: 'transition_1.mp3',
-    voice: [{
-      text: 'Welcome to the tutorial',
-      sound: 'voice_1_1.mp3',
-      duration: 5
-    }, {
-      text: 'This is the first step',
-      sound: 'voice_1_2.mp3',
-      duration: 5
-    }]
-  }, {
-    title: "Step 2",
-    description: "This is step 2",
-    sound: 'transition_2.mp3',
-    voice: [{
-      text: 'This is the second step',
-      duration: 5
-    }]
-  }, {
-    title: "Step 3",
-    description: "This is step 3",
-    voice: [{
-      text: 'This is the third step',
-      duration: 5
-    }]
-  }
-] as step[];
-
-function playSound(track: string) {
-  const audio = new Audio(`./voicelines/${track}`);
-  audio.play();
 }
 
 const step = ref<number>(0);
@@ -58,31 +24,36 @@ let voiceTimeout: number | null = null;
 let voiceProgressInterval: number | null = null;
 let overlayTimeout: number | null = null;
 
-function onSelectStep(index: number) {
+async function onSelectStep(index: number) {
   if (voiceTimeout) { clearTimeout(voiceTimeout); }
   if (overlayTimeout) { clearTimeout(overlayTimeout); }
   if (voiceProgressInterval) { clearInterval(voiceProgressInterval); }
   step.value = index;
   overlay.value = true;
   currentVoice.value = null;
-  const sound = steps[step.value].sound;
-  if (sound) {
-    playSound(sound);
+  const currentStep = steps[step.value] as step;
+  try {
+    await Sound.playAudio(`./voicelines/${currentStep.sound}`);
+  } catch (e) {
+    Sound.readTTS(currentStep.title + '. ' + currentStep.description);
   }
   overlayTimeout = setTimeout(() => {
     overlay.value = false;
     startVoice();
-  }, 500);
+  }, steps[step.value].duration * 1000);
 }
 
-function startVoice(index: number = 0) {
+
+async function startVoice(index: number = 0) {
   if (voiceTimeout) { clearTimeout(voiceTimeout); }
   if (voiceProgressInterval) { clearInterval(voiceProgressInterval); }
   voiceProgress.value = 0;
   currentVoice.value = index;
-  const sound = steps[step.value].voice[index].sound;
-  if (sound) {
-    playSound(sound);
+  const currentVoiceStep = steps[step.value].voice[index] as step['voice'][0];
+  try {
+    await Sound.playAudio(`./voicelines/${currentVoiceStep.sound}`)
+  } catch (e) {
+    Sound.readTTS(currentVoiceStep.text);
   }
   voiceTimeout = setTimeout(() => {
     if (index < steps[step.value].voice.length - 1) {

@@ -1,0 +1,126 @@
+[
+  {
+    "title": "Stage 1",
+    "description": "Geometry - Model Without Material",
+    "sound": "transition_1.mp3",
+    "duration": 7,
+    "voice": [{
+      "text": "Let's begin by looking at a basic 3D model without any material applied.",
+      "duration": 8
+    }, {
+      "text": "What you see here is the raw geometry of the object, rendered flat.",
+      "duration": 8
+    }, {
+      "text": "This means that the renderer is only displaying the shape and silhouette, with no lighting or material details affecting the appearance.",
+      "duration": 15
+    }, {
+      "text": "All we see is the model’s geometry, which consists of vertices, edges, and faces that form the surface.",
+      "duration": 12
+    }, {
+      "text": "This is the foundation of any 3D rendering, as everything else is built upon this basic mesh structure.",
+      "duration": 12
+    }]
+  }, {
+    "title": "Stage 2",
+    "description": "Vertex Color",
+    "sound": "transition_2.mp3",
+    "duration": 5,
+    "voice": [{
+      "text": "Now, we apply vertex color to the model.",
+      "duration": 3
+    }, {
+      "text": "Vertex coloring is one of the simplest methods for adding color information to a 3D object.",
+      "duration": 8
+    }, {
+      "text": "In this approach, colors are assigned to the individual vertices of the geometry.",
+      "duration": 9
+    }, {
+      "text": "The color at any point on the surface is interpolated based on the colors of the surrounding vertices.",
+      "duration": 12
+    }, {
+      "text": "This can give us basic color and shading, but it lacks any realistic interaction with light, as it doesn't take into account how light behaves on different materials.",
+      "duration": 18
+    }]
+  }, {
+    "title": "Stage 3",
+    "description": "Albedo Map",
+    "sound": "transition_3.mp3",
+    "duration": 5,
+    "voice": [{
+      "text": "Now, we move on to the albedo map.",
+      "duration": 5
+    }, {
+      "text": "The albedo map is a texture that defines the base color of the surface, independent of any lighting or shading.",
+      "duration": 12
+    }, {
+      "text": "It provides the color information for the model, determining how the object will appear under neutral lighting conditions.",
+      "duration": 14
+    }, {
+      "text": "The albedo map doesn’t account for shadows or highlights—it’s just the raw color values of the surface material, like the paint on an object before any lighting is applied.",
+      "duration": 20
+    }]
+  }, {
+    "title": "Stage 4",
+    "description": "Normal Map",
+    "sound": "transition_4.mp3",
+    "duration": 5,
+    "voice": [{
+      "text": "Next, we apply a normal map to the model.",
+      "duration": 7
+    }, {
+      "text": "A normal map is a texture that stores information about the direction of each polygon of an object, but without actually altering the geometry.",
+      "duration": 15
+    }, {
+      "text": "By using this map, we can simulate small surface details like bumps, grooves, or texture that affect how light interacts with the model.",
+      "duration": 18
+    }, {
+      "text": "These details make the surface look much more complex than it actually is, while keeping the geometry simple.",
+      "duration": 15
+    }, {
+      "text": "This enhances the lighting realism, giving the illusion of depth and texture.",
+      "duration": 10
+    }]
+  }, {
+    "title": "Stage 5",
+    "description": "Metallic Map",
+    "sound": "transition_5.mp3",
+    "duration": 5,
+    "voice": [{
+      "text": "Now, we move on to the metallic map.",
+      "duration": 6
+    }, {
+      "text": "The metallic map defines which parts of the model are metallic and which are non-metallic, or dielectric.",
+      "duration": 14
+    }, {
+      "text": "In PBR, metallic surfaces interact with light differently than non-metallic ones.",
+      "duration": 10
+    }, {
+      "text": "Metals reflect more light and tend to absorb specific wavelengths, resulting in a colored reflection, while non-metals scatter light diffusely.",
+      "duration": 18
+    }, {
+      "text": "The metallic map helps simulate realistic materials like metal, plastic, or wood by specifying which areas behave like metals.",
+      "duration": 15
+    }]
+  }, {
+    "title": "Stage 6",
+    "description": "Roughness Map",
+    "sound": "transition_6.mp3",
+    "duration": 5,
+    "voice": [{
+      "text": "Finally, we apply a roughness map.",
+      "duration": 6
+    }, {
+      "text": "The roughness map controls how rough or smooth the surface of the model appears.",
+      "duration": 10
+    }, {
+      "text": "A smooth surface, like polished glass, reflects light sharply, creating clear, sharp reflections.",
+      "duration": 12
+    }, {
+      "text": "A rough surface, like worn wood or brushed metal, scatters light in many directions, resulting in more diffuse and blurred reflections.",
+      "duration": 18
+    }, {
+      "text": "This map is crucial for achieving realistic surface details because it determines how light behaves at the micro-surface level, adding another layer of realism to the rendering.",
+      "duration": 20
+    }]
+  }
+]
