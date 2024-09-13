@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import {onMounted, onUnmounted, ref} from "vue";
+import {computed, onMounted, onUnmounted, ref} from "vue";
 import { DIVE } from "@shopware-ag/dive";
 import steps from "./assets/steps.json";
 import Sound from "./util/sound.ts";
@@ -22,6 +22,13 @@ const step = ref<number>(0);
 const overlay = ref<boolean>(false);
 const currentVoice = ref<number | null>(null);
 const voiceProgress = ref<number>(0);
+
+const voiceProgressPercentage = computed(() => {
+  if (currentVoice.value === null) {
+    return 0;
+  }
+  return (voiceProgress.value / steps[step.value].voice[currentVoice.value as number].duration) * 100;
+});
 
 let voiceTimeout: number | null = null;
 let voiceProgressInterval: number | null = null;
@@ -131,12 +138,14 @@ onUnmounted(() => {
     <div class="voice">
       <div class="voiceline" :class="{'active': currentVoice !== null}">
         <p>{{(currentVoice !== null && steps[step]?.voice[currentVoice]?.text) || ''}}</p>
-        <progress v-if="currentVoice !== null" :max="steps[step]?.voice[currentVoice]?.duration" :value="voiceProgress"></progress>
+        <div class="progress">
+          <div class="progress-bar" :style="{width: voiceProgressPercentage + '%'}"></div>
+        </div>
         <span class="close" @click="stopVoice">x</span>
       </div>
     </div>
     <div class="slider">
-      <span class="step" v-for="(_s, index) in steps" :key="index" @click="onSelectStep(index)">{{index + 1}}</span>
+      <span class="step" :class="{'current': index === step}" v-for="(_s, index) in steps" :key="index" @click="onSelectStep(index)">{{index + 1}}</span>
     </div>
   </main>
   <div v-else class="start-screen">
@@ -204,30 +213,22 @@ main {
 .voiceline p {
   margin: 0;
   padding: 10px;
-  padding-bottom: 0;
 }
 
-.voiceline progress {
+.voiceline .progress {
   width: 100%;
   height: 5px;
   border-radius: 0;
   background-color: #00000000;
-  color: #fff;
   border: none;
   appearance: none;
   outline: none;
 }
 
-.voiceline progress::-webkit-progress-bar {
-  background-color: #00000000;
-}
-
-.voiceline progress::-webkit-progress-value {
-  background-color: #fff;
-}
-
-.voiceline progress::-moz-progress-bar {
-  background-color: #fff;
+.voiceline .progress .progress-bar {
+  height: 100%;
+  background-color: #444;
+  transition: width 0.1s linear;
 }
 
 .voiceline span.close {
@@ -268,6 +269,11 @@ main {
   line-height: 30px;
   cursor: pointer;
   border-radius: 50%;
+}
+
+.step.current {
+  background-color: #fff;
+  color: #000;
 }
 
 .start-screen {
