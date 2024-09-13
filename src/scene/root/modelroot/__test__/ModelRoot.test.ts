@@ -2,6 +2,7 @@ import DIVEModelRoot from '../ModelRoot';
 import DIVECommunication from '../../../../com/Communication';
 import { DIVEMoveable } from '../../../../interface/Moveable';
 import type DIVEScene from '../../../Scene';
+import { type COMMaterial } from '../../../../com/types';
 
 const mock_LoadGLTF = jest.fn().mockResolvedValue({});
 const mock_SetPosition = jest.fn();
@@ -46,6 +47,7 @@ jest.mock('../../../../model/Model.ts', () => {
         this.SetRotation = mock_SetRotation;
         this.SetScale = mock_SetScale;
         this.SetVisibility = jest.fn();
+        this.SetMaterial = jest.fn();
         this.PlaceOnFloor = mock_PlaceOnFloor;
         this.removeFromParent = jest.fn();
         return this;
@@ -95,6 +97,7 @@ describe('dive/scene/root/modelroot/DIVEModelRoot', () => {
             position: { x: 1, y: 2, z: 3 },
             rotation: { x: 1, y: 2, z: 3 },
             scale: { x: 1, y: 2, z: 3 },
+            material: {} as COMMaterial,
         })).not.toThrow();
 
         jest.spyOn(DIVECommunication, 'get').mockReturnValueOnce(undefined);

@@ -162,9 +162,9 @@ jest.mock('three', () => {
         MeshStandardMaterial: jest.fn(function () {
             this.color = {};
             this.roughness = 0;
-            this.roughnessMap = null;
+            this.roughnessMap = undefined;
             this.metalness = 0;
-            this.metalnessMap = null;
+            this.metalnessMap = undefined;
             return this;
         }),
         Color: jest.fn(function () {
@@ -410,9 +410,7 @@ describe('dive/primitive/DIVEPrimitive', () => {
         expect(() => primitive.SetMaterial({
             color: 0xffffff,
             roughness: 0,
-            roughnessMap: null,
             metalness: 1,
-            metalnessMap: null,
         } as COMMaterial)).not.toThrow();
         expect(material.roughness).toBe(0);
         expect(material.roughnessMap).toBeUndefined();
