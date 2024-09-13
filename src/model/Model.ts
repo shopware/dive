@@ -1,10 +1,11 @@
-import { Box3, type Mesh, Object3D, Raycaster, Vector3, Vector3Like } from 'three';
+import { Box3, Color, Mesh, MeshStandardMaterial, Object3D, Raycaster, Vector3, Vector3Like } from 'three';
 import { DIVESelectable } from '../interface/Selectable';
 import { PRODUCT_LAYER_MASK } from '../constant/VisibilityLayerMask';
 import { DIVEMoveable } from '../interface/Moveable';
 import DIVECommunication from '../com/Communication';
 import type { GLTF, TransformControls } from 'three/examples/jsm/Addons.js';
 import { findSceneRecursive } from '../helper/findSceneRecursive/findSceneRecursive';
+import { type COMMaterial } from '../com/types';
 
 /**
  * A basic model class.
@@ -23,6 +24,9 @@ export default class DIVEModel extends Object3D implements DIVESelectable, DIVEM
 
     private boundingBox: Box3;
 
+    private _mesh: Mesh | null = null;
+    private _material: MeshStandardMaterial | null = null;
+
     constructor() {
         super();
 
@@ -40,6 +44,18 @@ export default class DIVEModel extends Object3D implements DIVESelectable, DIVEM
 
             child.layers.mask = this.layers.mask;
             this.boundingBox.expandByObject(child);
+
+            // only search for first mesh for now
+            if (!this._mesh && child instanceof Mesh) {
+                this._mesh = child;
+
+                // if the material is already set, use it, otherwise set it from the model's material
+                if (this._material) {
+                    this._mesh.material = this._material;
+                } else {
+                    this._material = child.material as MeshStandardMaterial;
+                }
+            }
         });
 
         this.add(gltf.scene);
@@ -61,6 +77,36 @@ export default class DIVEModel extends Object3D implements DIVESelectable, DIVEM
         this.traverse((child) => {
             child.visible = visible;
         });
+    }
+
+    public SetMaterial(material: COMMaterial): void {
+        // if there is no material, create a new one
+        if (!this._material) {
+            this._material = new MeshStandardMaterial();
+        }
+
+        this._material.color = new Color(material.color);
+
+        // if there is a roughness map, use it, otherwise use the roughness value
+        if (material.roughnessMap) {
+            this._material.roughnessMap = material.roughnessMap;
+            this._material.roughness = 1.0;
+        } else {
+            this._material.roughness = material.roughness;
+        }
+
+        // if there is a metalness map, use it, otherwise use the metalness value
+        if (material.metalnessMap) {
+            this._material.metalnessMap = material.metalnessMap;
+            this._material.metalness = 0.0;
+        } else {
+            this._material.metalness = material.metalness;
+        }
+
+        // if the mesh is already set, update the material
+        if (this._mesh) {
+            this._mesh.material = this._material;
+        }
     }
 
     public SetToWorldOrigin(): void {

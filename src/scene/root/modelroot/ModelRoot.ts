@@ -52,6 +52,7 @@ export default class DIVEModelRoot extends Object3D {
         if (object.rotation !== undefined) (sceneObject as Model).SetRotation(object.rotation);
         if (object.scale !== undefined) (sceneObject as Model).SetScale(object.scale);
         if (object.visible !== undefined) (sceneObject as Model).SetVisibility(object.visible);
+        if (object.material !== undefined) (sceneObject as Model).SetMaterial(object.material);
     }
 
     public DeleteModel(object: Partial<COMModel>): void {

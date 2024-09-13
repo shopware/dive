@@ -26,6 +26,7 @@ export type COMModel = COMBaseEntity & {
     rotation: Vector3Like;
     scale: Vector3Like;
     loaded: boolean;
+    material?: COMMaterial;
 };
 
 export type COMGeometry = {
@@ -38,9 +39,9 @@ export type COMGeometry = {
 export type COMMaterial = {
     color: string | number;
     roughness: number;
-    roughnessMap: Texture | null;
+    roughnessMap?: Texture;
     metalness: number;
-    metalnessMap: Texture | null;
+    metalnessMap?: Texture;
 }
 
 export type COMPrimitive = COMBaseEntity & {
