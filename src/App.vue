@@ -1,8 +1,9 @@
 <script setup lang="ts">
-import { onUnmounted, ref, watchEffect, computed } from "vue";
-import { DIVE } from "@shopware-ag/dive";
+import { onMounted, onUnmounted, ref, onUpdated, watchEffect, computed } from "vue";
+import { COMEntity, DIVE } from "@shopware-ag/dive";
 import steps from "./assets/steps.json";
 import Sound from "./util/sound.ts";
+import * as THREE from 'three';
 
 interface step {
   title: string;
@@ -18,6 +19,25 @@ interface step {
 
 const started = ref<boolean>(false);
 let diveInstance = null as DIVE | null;
+
+let textureAlbedo: THREE.Texture | null = null;
+let textureNormal: THREE.Texture | null = null;
+let textureMetalness: THREE.Texture | null = null;
+let textureRoughness: THREE.Texture | null = null;
+
+const texturesLoaded = ref<boolean>(false);
+Promise.all([
+  new THREE.TextureLoader().loadAsync('../assets/image/albedo.png'),
+  new THREE.TextureLoader().loadAsync('../assets/image/normal.png'),
+  new THREE.TextureLoader().loadAsync('../assets/image/metalness.png'),
+  new THREE.TextureLoader().loadAsync('../assets/image/roughness.png')
+]).then((textures: [THREE.Texture, THREE.Texture, THREE.Texture, THREE.Texture]) => {
+  textureAlbedo = textures[0];
+  textureNormal = textures[1];
+  textureMetalness = textures[2];
+  textureRoughness = textures[3];
+  texturesLoaded.value = true;
+});
 
 const step = ref<number>(0);
 const overlay = ref<boolean>(false);
@@ -119,35 +139,116 @@ onUnmounted(() => {
   window.document.removeEventListener('keydown', keyEventListener);
 });
 
+let model: COMEntity | null = null;
+
 watchEffect(() => {
-  if (started.value && !diveInstance) {
-    diveInstance = DIVE.QuickView("./models/exported_cube.glb");
+  console.log('started', started.value, diveInstance, texturesLoaded.value);
+  if (started.value && !diveInstance && texturesLoaded.value) {
+    diveInstance = DIVE.QuickView("/models/GDIsMyPassion.glb");
     const mainCanvasWrapper = document.getElementById('MainCanvas');
     diveInstance.Communication.PerformAction('UPDATE_SCENE', { floorEnabled: false });
+    const map = diveInstance.Communication.PerformAction('GET_ALL_OBJECTS', new Map());
+    const [light, cubeModel] = map.values();
+    model = cubeModel;
+
+    diveInstance.Communication.PerformAction('UPDATE_OBJECT', {
+      id: model.id,
+      material: {
+        color: 0x999999,
+        map: null,
+        roughnessMap: null,
+        metalnessMap: null,
+      }
+    });
+
     mainCanvasWrapper?.appendChild(diveInstance.Canvas);
     window.document.addEventListener('keydown', keyEventListener);
   }
 }, { flush: 'post' });
 
 watchEffect(() => {
+  console.log(step.value);
+  if (!diveInstance) return;
+  if (!model) return;
+
   switch (step.value) {
-    case 0:
-      // diveInstance.Communication.PerformAction('UPDATE_SCENE', {});
+    case 0: // geometry only
+      diveInstance.Communication.PerformAction('UPDATE_OBJECT', {
+        id: model.id,
+        material: {
+          color: 0x999999,
+          vertexColors: false,
+          map: null,
+          normalMap: null,
+          roughnessMap: null,
+          metalnessMap: null,
+        }
+      });
       break;
-    case 1:
-      // diveInstance.Communication.PerformAction('UPDATE_SCENE', {});
+    case 1: // vertex colors
+      diveInstance.Communication.PerformAction('UPDATE_OBJECT', {
+        id: model.id,
+        material: {
+          color: 0xffffff,
+          vertexColors: true,
+          map: null,
+          normalMap: null,
+          roughnessMap: null,
+          metalnessMap: null,
+        }
+      });
       break;
-    case 2:
-      // diveInstance.Communication.PerformAction('UPDATE_SCENE', {});
+    case 2: // albedo
+      diveInstance.Communication.PerformAction('UPDATE_OBJECT', {
+        id: model.id,
+        material: {
+          color: 0xffffff,
+          vertexColors: false,
+          map: textureAlbedo,
+          normalMap: null,
+          roughnessMap: null,
+          metalnessMap: null,
+        }
+      });
       break;
-    case 3:
-      // diveInstance.Communication.PerformAction('UPDATE_SCENE', {});
+    case 3: // normal
+      diveInstance.Communication.PerformAction('UPDATE_OBJECT', {
+        id: model.id,
+        material: {
+          color: 0xffffff,
+          vertexColors: false,
+          map: textureAlbedo,
+          normalMap: textureNormal,
+          metalnessMap: null,
+          roughnessMap: null,
+        }
+      });
       break;
-    case 4:
-      // diveInstance.Communication.PerformAction('UPDATE_SCENE', {});
+    case 4: // metalness
+      diveInstance.Communication.PerformAction('UPDATE_OBJECT', {
+        id: model.id,
+        material: {
+          color: 0xffffff,
+          vertexColors: false,
+          map: textureAlbedo,
+          normalMap: textureNormal,
+          metalnessMap: textureMetalness,
+          roughnessMap: null,
+        }
+      });
       break;
     case 5:
-      // diveInstance.Communication.PerformAction('UPDATE_SCENE', {});
+      diveInstance.Communication.PerformAction('UPDATE_OBJECT', {
+        id: model.id,
+        material: {
+          color: 0xffffff,
+          vertexColors: false,
+          map: textureAlbedo,
+          normalMap: textureNormal,
+          metalnessMap: textureMetalness,
+          roughnessMap: textureRoughness,
+        }
+      });
       break;
   }
 });
