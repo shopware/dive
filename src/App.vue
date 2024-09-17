@@ -1,9 +1,9 @@
 <script setup lang="ts">
-import { onMounted, onUnmounted, ref, onUpdated, watchEffect, computed } from "vue";
+import { onUnmounted, ref, watchEffect, computed } from "vue";
 import { COMEntity, DIVE } from "@shopware-ag/dive";
 import steps from "./assets/steps.json";
 import Sound from "./util/sound.ts";
-import * as THREE from 'three';
+import { TextureLoader, type Texture } from 'three';
 
 interface step {
   title: string;
@@ -20,18 +20,18 @@ interface step {
 const started = ref<boolean>(false);
 let diveInstance = null as DIVE | null;
 
-let textureAlbedo: THREE.Texture | null = null;
-let textureNormal: THREE.Texture | null = null;
-let textureMetalness: THREE.Texture | null = null;
-let textureRoughness: THREE.Texture | null = null;
+let textureAlbedo: Texture | null = null;
+let textureNormal: Texture | null = null;
+let textureMetalness: Texture | null = null;
+let textureRoughness: Texture | null = null;
 
 const texturesLoaded = ref<boolean>(false);
 Promise.all([
-  new THREE.TextureLoader().loadAsync('../assets/image/albedo.png'),
-  new THREE.TextureLoader().loadAsync('../assets/image/normal.png'),
-  new THREE.TextureLoader().loadAsync('../assets/image/metalness.png'),
-  new THREE.TextureLoader().loadAsync('../assets/image/roughness.png')
-]).then((textures: [THREE.Texture, THREE.Texture, THREE.Texture, THREE.Texture]) => {
+  new TextureLoader().loadAsync('../assets/image/albedo.png'),
+  new TextureLoader().loadAsync('../assets/image/normal.png'),
+  new TextureLoader().loadAsync('../assets/image/metalness.png'),
+  new TextureLoader().loadAsync('../assets/image/roughness.png')
+]).then((textures: [Texture, Texture, Texture, Texture]) => {
   textureAlbedo = textures[0];
   textureNormal = textures[1];
   textureMetalness = textures[2];
@@ -148,7 +148,7 @@ watchEffect(() => {
     const mainCanvasWrapper = document.getElementById('MainCanvas');
     diveInstance.Communication.PerformAction('UPDATE_SCENE', { floorEnabled: false });
     const map = diveInstance.Communication.PerformAction('GET_ALL_OBJECTS', new Map());
-    const [light, cubeModel] = map.values();
+    const [_, cubeModel] = map.values();
     model = cubeModel;
 
     diveInstance.Communication.PerformAction('UPDATE_OBJECT', {
