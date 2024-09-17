@@ -27,10 +27,10 @@ let textureRoughness: Texture | null = null;
 
 const texturesLoaded = ref<boolean>(false);
 Promise.all([
-  new TextureLoader().loadAsync('../assets/image/albedo.png'),
-  new TextureLoader().loadAsync('../assets/image/normal.png'),
-  new TextureLoader().loadAsync('../assets/image/metalness.png'),
-  new TextureLoader().loadAsync('../assets/image/roughness.png')
+  new TextureLoader().loadAsync('/image/albedo.png'),
+  new TextureLoader().loadAsync('/image/normal.png'),
+  new TextureLoader().loadAsync('/image/metalness.png'),
+  new TextureLoader().loadAsync('/image/roughness.png')
 ]).then((textures: [Texture, Texture, Texture, Texture]) => {
   textureAlbedo = textures[0];
   textureNormal = textures[1];
