@@ -85,16 +85,32 @@ export default class DIVEModel extends Object3D implements DIVESelectable, DIVEM
             this._material = new MeshStandardMaterial();
         }
 
+        if (material.vertexColors !== undefined) {
+            this._material.vertexColors = material.vertexColors;
+        }
+
         // apply color if supplied
-        if (material.color !== undefined) this._material.color = new Color(material.color);
+        if (material.color !== undefined) {
+            this._material.color = new Color(material.color);
+        }
 
         // apply albedo map if supplied
-        if (material.map !== undefined) this._material.map = material.map;
+        if (material.map !== undefined) {
+            this._material.map = material.map;
+        }
+
+        // apply normal map
+        if (material.normalMap !== undefined) {
+            this._material.normalMap = material.normalMap;
+        }
 
         // set roughness value
         // if supplied, apply roughness map
         // if we applied a roughness map, set roughness to 1.0
-        if (material.roughness !== undefined) this._material.roughness = material.roughness;
+        if (material.roughness !== undefined) {
+            this._material.roughness = material.roughness;
+        }
+
         if (material.roughnessMap !== undefined) {
             this._material.roughnessMap = material.roughnessMap;
 
@@ -106,7 +122,10 @@ export default class DIVEModel extends Object3D implements DIVESelectable, DIVEM
         // set metalness value
         // if supplied, apply metalness map
         // if we applied a metalness map, set metalness to 1.0
-        if (material.metalness !== undefined) this._material.metalness = material.metalness;
+        if (material.metalness !== undefined) {
+            this._material.metalness = material.metalness;
+        }
+
         if (material.metalnessMap !== undefined) {
             this._material.metalnessMap = material.metalnessMap;
 
@@ -116,7 +135,10 @@ export default class DIVEModel extends Object3D implements DIVESelectable, DIVEM
         }
 
         // if the mesh is already set, update the material
-        if (this._mesh) this._mesh.material = this._material;
+        if (this._mesh) {
+            this._mesh.material = this._material;
+            this._mesh.material.needsUpdate = true;
+        }
     }
 
     public SetToWorldOrigin(): void {
