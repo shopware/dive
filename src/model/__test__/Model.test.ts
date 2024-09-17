@@ -356,7 +356,9 @@ describe('dive/model/DIVEModel', () => {
 
         expect(() => model.SetMaterial({
             color: 0xff00ff,
+            vertexColors: true,
             map: 'This_Is_A_Texture' as unknown as Texture,
+            normalMap: 'This_Is_A_Texture' as unknown as Texture,
             roughness: 0,
             roughnessMap: 'This_Is_A_Texture' as unknown as Texture,
             metalness: 1,
