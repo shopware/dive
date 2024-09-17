@@ -9,7 +9,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@shopware-ag/dive": "^1.10.0",
+    "@shopware-ag/dive": "^1.12.0",
     "vue": "^3.4.37"
   },
   "devDependencies": {
