@@ -142,7 +142,6 @@ onUnmounted(() => {
 let model: COMEntity | null = null;
 
 watchEffect(() => {
-  console.log('started', started.value, diveInstance, texturesLoaded.value);
   if (started.value && !diveInstance && texturesLoaded.value) {
     diveInstance = DIVE.QuickView("/models/GDIsMyPassion.glb");
     const mainCanvasWrapper = document.getElementById('MainCanvas');
@@ -155,8 +154,12 @@ watchEffect(() => {
       id: model.id,
       material: {
         color: 0x999999,
+        vertexColors: false,
         map: null,
+        normalMap: null,
+        roughness: 1,
         roughnessMap: null,
+        metalness: 0,
         metalnessMap: null,
       }
     });
@@ -167,7 +170,7 @@ watchEffect(() => {
 }, { flush: 'post' });
 
 watchEffect(() => {
-  console.log(step.value);
+  console.log('Step ', step.value);
   if (!diveInstance) return;
   if (!model) return;
 
@@ -180,8 +183,10 @@ watchEffect(() => {
           vertexColors: false,
           map: null,
           normalMap: null,
-          roughnessMap: null,
+          metalness: 0,
           metalnessMap: null,
+          roughness: 1,
+          roughnessMap: null,
         }
       });
       break;
@@ -193,8 +198,10 @@ watchEffect(() => {
           vertexColors: true,
           map: null,
           normalMap: null,
-          roughnessMap: null,
+          metalness: 0,
           metalnessMap: null,
+          roughness: 1,
+          roughnessMap: null,
         }
       });
       break;
@@ -206,8 +213,10 @@ watchEffect(() => {
           vertexColors: false,
           map: textureAlbedo,
           normalMap: null,
-          roughnessMap: null,
+          metalness: 0,
           metalnessMap: null,
+          roughness: 1,
+          roughnessMap: null,
         }
       });
       break;
@@ -219,7 +228,9 @@ watchEffect(() => {
           vertexColors: false,
           map: textureAlbedo,
           normalMap: textureNormal,
+          metalness: 0,
           metalnessMap: null,
+          roughness: 1,
           roughnessMap: null,
         }
       });
@@ -233,6 +244,7 @@ watchEffect(() => {
           map: textureAlbedo,
           normalMap: textureNormal,
           metalnessMap: textureMetalness,
+          roughness: 1,
           roughnessMap: null,
         }
       });
