@@ -139,25 +139,31 @@ jest.mock('three', () => {
         BufferGeometry: jest.fn(function () {
             this.setAttribute = jest.fn();
             this.setIndex = jest.fn();
+            this.translate = jest.fn();
             return this;
         }),
         CylinderGeometry: jest.fn(function () {
-            return {};
+            this.translate = jest.fn();
+            return this;
         }),
         SphereGeometry: jest.fn(function () {
-            return {};
+            this.translate = jest.fn();
+            return this;
         }),
         BoxGeometry: jest.fn(function () {
-            return {};
+            this.translate = jest.fn();
+            return this;
         }),
         ConeGeometry: jest.fn(function () {
-            return {};
+            this.rotateY = jest.fn();
+            this.translate = jest.fn();
+            return this;
         }),
         Float32BufferAttribute: jest.fn(function () {
-            return {};
+            return this;
         }),
         Uint32BufferAttribute: jest.fn(function () {
-            return {};
+            return this;
         }),
         MeshStandardMaterial: jest.fn(function () {
             this.color = {};
@@ -390,6 +396,13 @@ describe('dive/primitive/DIVEPrimitive', () => {
         } as COMGeometry;
         expect(() => primitive.SetGeometry(wall)).not.toThrow();
 
+        const wallWithoutDepth = {
+            name: 'wall',
+            width: 1,
+            height: 1.5,
+        } as COMGeometry;
+        expect(() => primitive.SetGeometry(wallWithoutDepth)).not.toThrow();
+
         // plane
         const plane = {
             name: 'plane',
@@ -407,27 +420,30 @@ describe('dive/primitive/DIVEPrimitive', () => {
         expect(() => primitive.SetMaterial({} as COMMaterial)).not.toThrow();
         expect(material).toBeDefined();
 
+
         expect(() => primitive.SetMaterial({
             color: 0xffffff,
             roughness: 0,
             metalness: 1,
         } as COMMaterial)).not.toThrow();
-        expect(material.roughness).toBe(0);
-        expect(material.roughnessMap).toBeUndefined();
-        expect(material.metalness).toBe(1);
-        expect(material.metalnessMap).toBeUndefined();
+        expect((material as MeshStandardMaterial).roughness).toBe(0);
+        expect((material as MeshStandardMaterial).roughnessMap).toBeUndefined();
+        expect((material as MeshStandardMaterial).metalness).toBe(1);
+        expect((material as MeshStandardMaterial).metalnessMap).toBeUndefined();
 
         expect(() => primitive.SetMaterial({
             color: 0xff00ff,
+            vertexColors: true,
             map: 'This_Is_A_Texture' as unknown as Texture,
+            normalMap: 'This_Is_A_Texture' as unknown as Texture,
             roughness: 0,
             roughnessMap: 'This_Is_A_Texture' as unknown as Texture,
             metalness: 1,
             metalnessMap: 'This_Is_A_Texture' as unknown as Texture,
         } as COMMaterial)).not.toThrow();
-        expect(material.roughness).toBe(1);
-        expect(material.roughnessMap).toBeDefined();
-        expect(material.metalness).toBe(1);
-        expect(material.metalnessMap).toBeDefined();
+        expect((material as MeshStandardMaterial).roughness).toBe(1);
+        expect((material as MeshStandardMaterial).roughnessMap).toBeDefined();
+        expect((material as MeshStandardMaterial).metalness).toBe(0);
+        expect((material as MeshStandardMaterial).metalnessMap).toBeDefined();
     });
 });

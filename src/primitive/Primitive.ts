@@ -1,4 +1,4 @@
-import { Box3, BoxGeometry, BufferGeometry, Color, CylinderGeometry, Float32BufferAttribute, Mesh, MeshStandardMaterial, Object3D, Raycaster, SphereGeometry, Uint32BufferAttribute, Vector3, Vector3Like } from 'three';
+import { Box3, BoxGeometry, BufferGeometry, Color, ConeGeometry, CylinderGeometry, Mesh, MeshStandardMaterial, Object3D, Raycaster, SphereGeometry, Vector3, Vector3Like } from 'three';
 import DIVECommunication from '../com/Communication';
 import { PRODUCT_LAYER_MASK } from '../constant/VisibilityLayerMask';
 import { findSceneRecursive } from '../helper/findSceneRecursive/findSceneRecursive';
@@ -35,14 +35,13 @@ export class DIVEPrimitive extends Object3D implements DIVESelectable, DIVEMovea
         this._mesh.layers.mask = PRODUCT_LAYER_MASK;
         this._mesh.castShadow = true;
         this._mesh.receiveShadow = true;
+        this._mesh.material = new MeshStandardMaterial();
         this.add(this._mesh);
 
         this._boundingBox = new Box3();
     }
 
     public SetGeometry(geometry: COMGeometry): void {
-        this.clear();
-
         this._mesh.geometry = this.assembleGeometry(geometry);
         this._boundingBox.setFromObject(this._mesh);
     }
@@ -68,16 +67,32 @@ export class DIVEPrimitive extends Object3D implements DIVESelectable, DIVEMovea
     public SetMaterial(material: Partial<COMMaterial>): void {
         const primitiveMaterial = this._mesh.material as MeshStandardMaterial;
 
+        if (material.vertexColors !== undefined) {
+            primitiveMaterial.vertexColors = material.vertexColors;
+        }
+
         // apply color if supplied
-        if (material.color !== undefined) primitiveMaterial.color = new Color(material.color);
+        if (material.color !== undefined) {
+            primitiveMaterial.color = new Color(material.color);
+        }
 
         // apply albedo map if supplied
-        if (material.map !== undefined) primitiveMaterial.map = material.map;
+        if (material.map !== undefined) {
+            primitiveMaterial.map = material.map;
+        }
+
+        // apply normal map
+        if (material.normalMap !== undefined) {
+            primitiveMaterial.normalMap = material.normalMap;
+        }
 
         // set roughness value
         // if supplied, apply roughness map
         // if we applied a roughness map, set roughness to 1.0
-        if (material.roughness !== undefined) primitiveMaterial.roughness = material.roughness;
+        if (material.roughness !== undefined) {
+            primitiveMaterial.roughness = material.roughness;
+        }
+
         if (material.roughnessMap !== undefined) {
             primitiveMaterial.roughnessMap = material.roughnessMap;
 
@@ -89,12 +104,15 @@ export class DIVEPrimitive extends Object3D implements DIVESelectable, DIVEMovea
         // set metalness value
         // if supplied, apply metalness map
         // if we applied a metalness map, set metalness to 1.0
-        if (material.metalness !== undefined) primitiveMaterial.metalness = material.metalness;
+        if (material.metalness !== undefined) {
+            primitiveMaterial.metalness = material.metalness;
+        }
+
         if (material.metalnessMap !== undefined) {
             primitiveMaterial.metalnessMap = material.metalnessMap;
 
             if (primitiveMaterial.metalnessMap) {
-                primitiveMaterial.metalness = 1.0;
+                primitiveMaterial.metalness = 0.0;
             }
         }
 
@@ -179,47 +197,44 @@ export class DIVEPrimitive extends Object3D implements DIVESelectable, DIVEMovea
     }
 
     private createCylinderGeometry(geometry: COMGeometry): BufferGeometry {
-        return new CylinderGeometry(geometry.width * 2, geometry.width * 2, geometry.height, 64);
+        const geo = new CylinderGeometry(geometry.width / 2, geometry.width / 2, geometry.height, 64);
+        geo.translate(0, geometry.height / 2, 0);
+        return geo;
     }
 
     private createSphereGeometry(geometry: COMGeometry): BufferGeometry {
-        return new SphereGeometry(geometry.width * 2, 64);
+        const geo = new SphereGeometry(geometry.width / 2, 256, 256);
+        return geo;
     }
 
     private createPyramidGeometry(geometry: COMGeometry): BufferGeometry {
-        const geo = new BufferGeometry();
-        const { width, height, depth } = geometry;
-        geo.setAttribute('position', new Float32BufferAttribute([
-            width / 2, 0, depth / 2, // right back
-            width / 2, 0, -depth / 2, // right front
-            -width / 2, 0, -depth / 2, // left front
-            -width / 2, 0, depth / 2, // left back
-            0, height, 0, // top
-        ], 3));
-        geo.setIndex(new Uint32BufferAttribute([
-            1, 0, 4,
-            2, 1, 4,
-            3, 2, 4,
-            3, 0, 4,
-            0, 1, 2,
-            0, 2, 3,
-        ], 1));
+        const geo = new ConeGeometry(geometry.width / 2, geometry.height, 4, 1, true);
+        geo.rotateY(Math.PI / 4);
+        geo.translate(0, geometry.height / 2, 0);
         return geo;
     }
 
     private createBoxGeometry(geometry: COMGeometry): BufferGeometry {
-        return new BoxGeometry(geometry.width, geometry.height, geometry.depth);
+        const geo = new BoxGeometry(geometry.width, geometry.height, geometry.depth);
+        geo.translate(0, geometry.height / 2, 0);
+        return geo;
     }
 
     private createConeGeometry(geometry: COMGeometry): BufferGeometry {
-        return new CylinderGeometry(0, geometry.width * 2, geometry.height, 64);
+        const geo = new ConeGeometry(geometry.width / 2, geometry.height, 256);
+        geo.translate(0, geometry.height / 2, 0);
+        return geo;
     }
 
     private createWallGeometry(geometry: COMGeometry): BufferGeometry {
-        return new BoxGeometry(geometry.width, geometry.height, geometry.depth, 16);
+        const geo = new BoxGeometry(geometry.width, geometry.height, geometry.depth || 0.05, 16);
+        geo.translate(0, geometry.height / 2, 0);
+        return geo;
     }
 
     private createPlaneGeometry(geometry: COMGeometry): BufferGeometry {
-        return new BoxGeometry(geometry.width, geometry.height, geometry.depth);
+        const geo = new BoxGeometry(geometry.width, geometry.height, geometry.depth);
+        geo.translate(0, geometry.height / 2, 0);
+        return geo;
     }
 }

@@ -9,7 +9,7 @@ import DIVEAxisCamera from "./axiscamera/AxisCamera.ts";
 import { getObjectDelta } from "./helper/getObjectDelta/getObjectDelta.ts";
 
 import type { Actions } from './com/actions/index.ts';
-import type { COMPov, COMLight, COMModel, COMEntity } from './com/types.ts';
+import type { COMPov, COMLight, COMModel, COMEntity, COMPrimitive } from './com/types.ts';
 import { DIVEMath } from './math/index.ts';
 import { generateUUID } from "three/src/math/MathUtils";
 import { DIVEInfo } from "./info/Info.ts";
@@ -278,6 +278,7 @@ export type {
     COMPov,
     COMLight,
     COMModel,
+    COMPrimitive,
     COMEntity,
 };
 
