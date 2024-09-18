@@ -8,7 +8,7 @@ import { GridHelper, Object3D } from "three";
  * @module
  */
 
-export default class DIVEGrid extends Object3D {
+export class DIVEGrid extends Object3D {
     constructor() {
         super();
         this.name = 'Grid';

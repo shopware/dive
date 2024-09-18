@@ -1,14 +1,16 @@
 import DIVESceneLight from '../SceneLight';
-import DIVECommunication from '../../com/Communication';
+import { DIVECommunication } from '../../com/Communication';
 import { Color, HemisphereLight as THREEHemisphereLight, DirectionalLight as THREEDirectionalLight, Object3D } from 'three';
 
 jest.mock('../../com/Communication.ts', () => {
     return {
-        get: jest.fn(() => {
-            return {
-                PerformAction: jest.fn(),
-            }
-        }),
+        DIVECommunication: {
+            get: jest.fn(() => {
+                return {
+                    PerformAction: jest.fn(),
+                }
+            }),
+        },
     }
 });
 

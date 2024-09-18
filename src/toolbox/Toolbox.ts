@@ -1,5 +1,5 @@
 import type DIVEOrbitControls from "../controls/OrbitControls.ts";
-import type DIVEScene from "../scene/Scene.ts";
+import type { DIVEScene } from "../scene/Scene.ts";
 import { type DIVEBaseTool } from "./BaseTool.ts";
 import { type DIVESelectTool } from "./select/SelectTool.ts";
 

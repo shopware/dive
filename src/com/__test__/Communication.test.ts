@@ -1,5 +1,4 @@
-import DIVECommunication from '../Communication';
-import '..';
+import { DIVECommunication } from '../Communication';
 import '../types';
 import '../actions';
 import '../actions/camera/movecamera';
@@ -22,7 +21,7 @@ import '../actions/scene/updatescene';
 import '../actions/toolbox/select/setgizmomode';
 import '../actions/toolbox/transform/setgizmovisible';
 import '../actions/camera/getcameratransform';
-import type DIVEScene from '../../scene/Scene';
+import type { DIVEScene } from '../../scene/Scene';
 import type DIVEToolbox from '../../toolbox/Toolbox';
 import type DIVEOrbitControls from '../../controls/OrbitControls';
 import { type DIVERenderer } from '../../renderer/Renderer';
@@ -73,20 +72,21 @@ const mockScene = {
         getHexString: jest.fn().mockReturnValue('ffffff'),
     },
     Root: {
-        Floor: {
-            isFloor: true,
-            visible: true,
-            material: {
-                color: {
-                    getHexString: jest.fn().mockReturnValue('ffffff'),
-                },
+
+    },
+    Floor: {
+        isFloor: true,
+        visible: true,
+        material: {
+            color: {
+                getHexString: jest.fn().mockReturnValue('ffffff'),
             },
-            SetVisibility: jest.fn(),
-            SetColor: jest.fn(),
         },
-        Grid: {
-            SetVisibility: jest.fn(),
-        },
+        SetVisibility: jest.fn(),
+        SetColor: jest.fn(),
+    },
+    Grid: {
+        SetVisibility: jest.fn(),
     },
     ComputeSceneBB: jest.fn(),
 } as unknown as DIVEScene;

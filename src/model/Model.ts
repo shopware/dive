@@ -1,8 +1,8 @@
-import { Box3, Color, Mesh, MeshStandardMaterial, Object3D, Raycaster, Vector3, Vector3Like } from 'three';
+import { Box3, Mesh, MeshStandardMaterial, Object3D, Raycaster, Vector3, Vector3Like } from 'three';
 import { DIVESelectable } from '../interface/Selectable';
 import { PRODUCT_LAYER_MASK } from '../constant/VisibilityLayerMask';
 import { DIVEMoveable } from '../interface/Moveable';
-import DIVECommunication from '../com/Communication';
+import { DIVECommunication } from '../com/Communication';
 import type { GLTF, TransformControls } from 'three/examples/jsm/Addons.js';
 import { findSceneRecursive } from '../helper/findSceneRecursive/findSceneRecursive';
 import { type COMMaterial } from '../com/types';
@@ -17,7 +17,7 @@ import { type COMMaterial } from '../com/types';
  * @module
  */
 
-export default class DIVEModel extends Object3D implements DIVESelectable, DIVEMoveable {
+export class DIVEModel extends Object3D implements DIVESelectable, DIVEMoveable {
     public isSelectable: true = true;
     public isMoveable: true = true;
     public gizmo: TransformControls | null = null;
@@ -91,7 +91,7 @@ export default class DIVEModel extends Object3D implements DIVESelectable, DIVEM
 
         // apply color if supplied
         if (material.color !== undefined) {
-            this._material.color = new Color(material.color);
+            this._material.color.set(material.color);
         }
 
         // apply albedo map if supplied
@@ -137,7 +137,6 @@ export default class DIVEModel extends Object3D implements DIVESelectable, DIVEM
         // if the mesh is already set, update the material
         if (this._mesh) {
             this._mesh.material = this._material;
-            this._mesh.material.needsUpdate = true;
         }
     }
 

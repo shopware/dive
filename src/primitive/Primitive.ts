@@ -1,5 +1,5 @@
 import { Box3, BoxGeometry, BufferGeometry, Color, ConeGeometry, CylinderGeometry, Mesh, MeshStandardMaterial, Object3D, Raycaster, SphereGeometry, Vector3, Vector3Like } from 'three';
-import DIVECommunication from '../com/Communication';
+import { DIVECommunication } from '../com/Communication';
 import { PRODUCT_LAYER_MASK } from '../constant/VisibilityLayerMask';
 import { findSceneRecursive } from '../helper/findSceneRecursive/findSceneRecursive';
 import { type DIVESelectable } from '../interface/Selectable';

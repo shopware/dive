@@ -1,4 +1,4 @@
-import DIVEGrid from '../Grid.ts';
+import { DIVEGrid } from '../Grid.ts';
 import { HELPER_LAYER_MASK } from "../../constant/VisibilityLayerMask.ts";
 import { GridHelper } from 'three';
 

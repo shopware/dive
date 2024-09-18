@@ -1,6 +1,8 @@
 import { Color, Scene, type Box3, type ColorRepresentation, type Object3D } from 'three';
 import { type COMModel, type COMEntity } from '../com/types';
-import DIVERoot from './root/Root';
+import { DIVERoot } from './root/Root';
+import { DIVEGrid } from '../grid/Grid';
+import { DIVEFloor } from '../primitive/floor/Floor';
 
 /**
  * A basic scene class.
@@ -10,10 +12,21 @@ import DIVERoot from './root/Root';
  * @module
  */
 
-export default class DIVEScene extends Scene {
+export class DIVEScene extends Scene {
     private root: DIVERoot;
+    private floor: DIVEFloor;
+    private grid: DIVEGrid;
+
     public get Root(): DIVERoot {
         return this.root;
+    }
+
+    public get Floor(): DIVEFloor {
+        return this.floor;
+    }
+
+    public get Grid(): DIVEGrid {
+        return this.grid;
     }
 
     constructor() {
@@ -23,6 +36,12 @@ export default class DIVEScene extends Scene {
 
         this.root = new DIVERoot();
         this.add(this.root);
+
+        this.floor = new DIVEFloor();
+        this.add(this.floor);
+
+        this.grid = new DIVEGrid();
+        this.add(this.grid);
     }
 
     public SetBackground(color: ColorRepresentation): void {
@@ -38,7 +57,7 @@ export default class DIVEScene extends Scene {
     }
 
     public AddSceneObject(object: COMEntity): void {
-        this.Root.UpdateSceneObject(object);
+        this.Root.AddSceneObject(object);
     }
 
     public UpdateSceneObject(object: Partial<COMEntity>): void {

@@ -1,4 +1,4 @@
-import DIVELoadingManager from '../LoadingManager';
+import { DIVELoadingManager } from '../LoadingManager';
 
 const mock_setDRACOLoader = jest.fn();
 const mock_setDecoderPath = jest.fn();

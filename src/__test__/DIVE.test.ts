@@ -37,19 +37,21 @@ jest.mock('three/src/math/MathUtils', () => {
 });
 
 jest.mock('../com/Communication.ts', () => {
-    return jest.fn(function () {
-        this.PerformAction = jest.fn().mockReturnValue({
-            position: { x: 0, y: 0, z: 0 },
-            target: { x: 0, y: 0, z: 0 },
-        });
-        this.Subscribe = jest.fn((action: string, callback: (data: { id: string }) => void) => {
-            callback({ id: 'incorrect id' });
-            callback({ id: 'test_uuid' });
-        });
-        this.DestroyInstance = jest.fn();
+    return {
+        DIVECommunication: jest.fn(function () {
+            this.PerformAction = jest.fn().mockReturnValue({
+                position: { x: 0, y: 0, z: 0 },
+                target: { x: 0, y: 0, z: 0 },
+            });
+            this.Subscribe = jest.fn((action: string, callback: (data: { id: string }) => void) => {
+                callback({ id: 'incorrect id' });
+                callback({ id: 'test_uuid' });
+            });
+            this.DestroyInstance = jest.fn();
 
-        return this;
-    });
+            return this;
+        })
+    };
 });
 
 jest.mock('../renderer/Renderer.ts', () => {
@@ -83,23 +85,25 @@ jest.mock('../renderer/Renderer.ts', () => {
 });
 
 jest.mock('../scene/Scene.ts', () => {
-    return jest.fn(function () {
-        this.add = jest.fn();
-        this.isObject3D = true;
-        this.parent = null;
-        this.dispatchEvent = jest.fn();
-        this.position = {
-            set: jest.fn(),
-        }
-        this.SetIntensity = jest.fn();
-        this.SetEnabled = jest.fn();
-        this.SetColor = jest.fn();
-        this.userData = {
-            id: undefined,
-        }
-        this.removeFromParent = jest.fn();
-        return this;
-    });
+    return {
+        DIVEScene: jest.fn(function () {
+            this.add = jest.fn();
+            this.isObject3D = true;
+            this.parent = null;
+            this.dispatchEvent = jest.fn();
+            this.position = {
+                set: jest.fn(),
+            }
+            this.SetIntensity = jest.fn();
+            this.SetEnabled = jest.fn();
+            this.SetColor = jest.fn();
+            this.userData = {
+                id: undefined,
+            }
+            this.removeFromParent = jest.fn();
+            return this;
+        })
+    };
 });
 
 jest.mock('../camera/PerspectiveCamera.ts', () => {

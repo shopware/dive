@@ -1,7 +1,7 @@
 
 import { DIVEBaseTool } from '../BaseTool';
 import type DIVEOrbitControls from '../../controls/OrbitControls';
-import type DIVEScene from '../../scene/Scene';
+import type { DIVEScene } from '../../scene/Scene';
 import { type Object3D, type Vector3 } from 'three';
 import { type DIVEHoverable } from '../../interface/Hoverable';
 import { type DIVEDraggable } from '../../interface/Draggable';

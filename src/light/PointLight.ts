@@ -1,5 +1,5 @@
 import { PointLight, Color, SphereGeometry, MeshBasicMaterial, Mesh, FrontSide, Object3D } from 'three';
-import DIVECommunication from '../com/Communication';
+import { DIVECommunication } from '../com/Communication';
 import { PRODUCT_LAYER_MASK, UI_LAYER_MASK } from '../constant/VisibilityLayerMask';
 import { DIVEMoveable } from '../interface/Moveable';
 import { DIVESelectable } from '../interface/Selectable';

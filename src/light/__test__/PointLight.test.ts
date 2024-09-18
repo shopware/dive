@@ -1,5 +1,5 @@
 import DIVEPointLight from '../PointLight.ts';
-import DIVECommunication from '../../com/Communication.ts';
+import { DIVECommunication } from '../../com/Communication.ts';
 import { Color, MeshBasicMaterial, Object3D, PointLight } from 'three';
 
 const mockAdd = jest.fn();
@@ -63,11 +63,13 @@ jest.mock('three', () => {
 
 jest.mock('../../com/Communication.ts', () => {
     return {
-        get: jest.fn(() => {
-            return {
-                PerformAction: jest.fn(),
-            }
-        }),
+        DIVECommunication: {
+            get: jest.fn(() => {
+                return {
+                    PerformAction: jest.fn(),
+                }
+            }),
+        },
     }
 });
 

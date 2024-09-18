@@ -4,10 +4,10 @@ import { generateUUID } from 'three/src/math/MathUtils';
 // type imports
 import { type Color, type MeshStandardMaterial } from "three";
 import { type COMLight, type COMModel, type COMEntity, type COMPov } from "./types.ts";
-import type DIVEScene from "../scene/Scene.ts";
+import { type DIVEScene } from "../scene/Scene.ts";
 import type DIVEToolbox from "../toolbox/Toolbox.ts";
 import type DIVEOrbitControls from "../controls/OrbitControls.ts";
-import type DIVEModel from "../model/Model.ts";
+import { type DIVEModel } from "../model/Model.ts";
 import { type DIVEMediaCreator } from "../mediacreator/MediaCreator.ts";
 import { type DIVERenderer } from "../renderer/Renderer.ts";
 import { type DIVESelectable } from "../interface/Selectable.ts";
@@ -37,7 +37,7 @@ type Unsubscribe = () => boolean;
  * @module
  */
 
-export default class DIVECommunication {
+export class DIVECommunication {
     private static __instances: DIVECommunication[] = [];
 
     public static get(id: string): DIVECommunication | undefined {
@@ -225,8 +225,8 @@ export default class DIVECommunication {
             name: this.scene.name,
             mediaItem: null,
             backgroundColor: '#' + (this.scene.background as Color).getHexString(),
-            floorEnabled: this.scene.Root.Floor.visible,
-            floorColor: '#' + (this.scene.Root.Floor.material as MeshStandardMaterial).color.getHexString(),
+            floorEnabled: this.scene.Floor.visible,
+            floorColor: '#' + (this.scene.Floor.material as MeshStandardMaterial).color.getHexString(),
             userCamera: {
                 position: this.controller.object.position.clone(),
                 target: this.controller.target.clone(),
@@ -444,19 +444,19 @@ export default class DIVECommunication {
         if (payload.name !== undefined) this.scene.name = payload.name;
         if (payload.backgroundColor !== undefined) this.scene.SetBackground(payload.backgroundColor);
 
-        if (payload.gridEnabled !== undefined) this.scene.Root.Grid.SetVisibility(payload.gridEnabled);
+        if (payload.gridEnabled !== undefined) this.scene.Grid.SetVisibility(payload.gridEnabled);
 
-        if (payload.floorEnabled !== undefined) this.scene.Root.Floor.SetVisibility(payload.floorEnabled);
-        if (payload.floorColor !== undefined) this.scene.Root.Floor.SetColor(payload.floorColor);
+        if (payload.floorEnabled !== undefined) this.scene.Floor.SetVisibility(payload.floorEnabled);
+        if (payload.floorColor !== undefined) this.scene.Floor.SetColor(payload.floorColor);
 
 
         // fill payload with current values
         // TODO optmize this
         payload.name = this.scene.name;
         payload.backgroundColor = '#' + (this.scene.background as Color).getHexString();
-        payload.gridEnabled = this.scene.Root.Grid.visible;
-        payload.floorEnabled = this.scene.Root.Floor.visible;
-        payload.floorColor = '#' + (this.scene.Root.Floor.material as MeshStandardMaterial).color.getHexString();
+        payload.gridEnabled = this.scene.Grid.visible;
+        payload.floorEnabled = this.scene.Floor.visible;
+        payload.floorColor = '#' + (this.scene.Floor.material as MeshStandardMaterial).color.getHexString();
 
         return true;
     }
@@ -478,3 +478,4 @@ export default class DIVECommunication {
     }
 }
 
+export type { Actions } from './actions/index.ts';
