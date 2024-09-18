@@ -200,13 +200,13 @@ describe('DIVE/scene/root/DIVERoot', () => {
 
         expect(() => root.AddSceneObject({ id: undefined, name: 'model', entityType: 'model', visible: true } as unknown as COMModel)).not.toThrow();
         expect(() => root.AddSceneObject({ id: 'id', name: 'model', entityType: 'model', visible: true } as COMModel)).not.toThrow();
-        expect(() => root.AddSceneObject({ id: 'id', name: 'model', entityType: 'model', visible: true, uri: 'uri', position: { x: 0, y: 0, z: 0 }, rotation: { x: 0, y: 0, z: 0 }, scale: { x: 1, y: 1, z: 1 }, material: {} } as COMModel)).not.toThrow();
+        expect(() => root.AddSceneObject({ id: 'id_uri0', name: 'model', entityType: 'model', visible: true, uri: 'uri', position: { x: 0, y: 0, z: 0 }, rotation: { x: 0, y: 0, z: 0 }, scale: { x: 1, y: 1, z: 1 }, material: {} } as COMModel)).not.toThrow();
         jest.spyOn(DIVECommunication, 'get').mockReturnValueOnce(undefined);
-        expect(() => root.AddSceneObject({ id: 'id', name: 'model', entityType: 'model', visible: true, uri: 'uri', position: { x: 0, y: 0, z: 0 }, rotation: { x: 0, y: 0, z: 0 }, scale: { x: 1, y: 1, z: 1 }, material: {} } as COMModel)).not.toThrow();
+        expect(() => root.AddSceneObject({ id: 'id_uri1', name: 'model', entityType: 'model', visible: true, uri: 'uri', position: { x: 0, y: 0, z: 0 }, rotation: { x: 0, y: 0, z: 0 }, scale: { x: 1, y: 1, z: 1 }, material: {} } as COMModel)).not.toThrow();
 
         expect(() => root.AddSceneObject({ id: undefined, name: 'primitive', entityType: 'primitive', visible: true } as unknown as COMPrimitive)).not.toThrow();
-        expect(() => root.AddSceneObject({ id: 'id', name: 'primitive', entityType: 'primitive', visible: true } as COMPrimitive)).not.toThrow();
-        expect(() => root.AddSceneObject({ id: 'id', name: 'primitive', entityType: 'primitive', visible: true, material: {} } as COMPrimitive)).not.toThrow();
+        expect(() => root.AddSceneObject({ id: 'id0', name: 'primitive', entityType: 'primitive', visible: true } as COMPrimitive)).not.toThrow();
+        expect(() => root.AddSceneObject({ id: 'id1', name: 'primitive', entityType: 'primitive', visible: true, material: {} } as COMPrimitive)).not.toThrow();
     });
 
     it('should update object', () => {

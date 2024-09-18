@@ -10,5 +10,8 @@ export class DIVEGroup extends Object3D implements DIVESelectable, DIVEMoveable 
         super();
     }
 
-    // public AttachObject()
+    public AddObject(): this {
+        // this.attach(object);
+        return this;
+    }
 }
