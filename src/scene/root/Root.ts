@@ -9,7 +9,7 @@ import { DIVEPrimitive } from "../../primitive/Primitive.ts";
 
 import { type DIVEScene } from "../Scene.ts";
 import { type TransformControls } from "three/examples/jsm/controls/TransformControls";
-import { type COMLight, type COMModel, type COMEntity, type COMPrimitive } from "../../com/types.ts";
+import { type COMLight, type COMModel, type COMEntity, type COMPrimitive } from "../../com/types";
 
 /**
  * A basic scene node to hold grid, floor and all lower level roots.

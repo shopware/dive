@@ -145,6 +145,7 @@ jest.mock('three', () => {
             return this;
         }),
         Color: jest.fn(function () {
+            this.set = jest.fn();
             return this;
         }),
     }

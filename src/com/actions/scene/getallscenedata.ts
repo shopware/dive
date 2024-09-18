@@ -1,5 +1,5 @@
 import { Vector3Like } from "three";
-import { COMLight, COMModel, COMPov } from "../../types.ts";
+import { COMLight, COMModel, COMPov } from "../../types";
 
 type SceneData = {
     name: string,

@@ -3,7 +3,7 @@ import { generateUUID } from 'three/src/math/MathUtils';
 
 // type imports
 import { type Color, type MeshStandardMaterial } from "three";
-import { type COMLight, type COMModel, type COMEntity, type COMPov } from "./types.ts";
+import { type COMLight, type COMModel, type COMEntity, type COMPov } from "./types";
 import { type DIVEScene } from "../scene/Scene.ts";
 import type DIVEToolbox from "../toolbox/Toolbox.ts";
 import type DIVEOrbitControls from "../controls/OrbitControls.ts";
