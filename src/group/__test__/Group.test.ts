@@ -62,7 +62,9 @@ describe('dive/group/DIVEGroup', () => {
     });
 
     it('should add an object', () => {
-        expect(() => group.AddObject()).not.toThrow();
-        expect(group.AddObject()).toBe(group);
+        const mockObject = new DIVEGroup();
+
+        expect(() => group.AddObject(mockObject)).not.toThrow();
+        expect(group.AddObject(mockObject)).toBe(group);
     });
 });

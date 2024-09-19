@@ -9,7 +9,8 @@ import { DIVEPrimitive } from "../../primitive/Primitive.ts";
 
 import { type DIVEScene } from "../Scene.ts";
 import { type TransformControls } from "three/examples/jsm/controls/TransformControls";
-import { type COMLight, type COMModel, type COMEntity, type COMPrimitive } from "../../com/types";
+import { type COMLight, type COMModel, type COMEntity, type COMPrimitive, type COMEntityType } from "../../com/types";
+import { type DIVESceneObject } from "../../types";
 
 /**
  * A basic scene node to hold grid, floor and all lower level roots.
@@ -38,12 +39,8 @@ export class DIVERoot extends Object3D {
         return bb;
     }
 
-    public GetSceneObject(object: Partial<COMEntity>): Object3D | undefined {
-        if (object.id === undefined) {
-            console.warn('Root.GetSceneObject: object.id is undefined');
-            return undefined;
-        }
-        return this.children.find(object3D => object3D.userData.id === object.id);
+    public GetSceneObject<T extends DIVESceneObject>(object: Partial<COMEntity> & { id: string }): T | undefined {
+        return this.children.find(object3D => object3D.userData.id === object.id) as T | undefined;
     }
 
     public AddSceneObject(object: COMEntity): void {
@@ -52,61 +49,61 @@ export class DIVERoot extends Object3D {
                 break;
             }
             case "light": {
-                this.updateLight(object as COMLight);
+                this.updateLight(object);
                 break;
             }
             case "model": {
-                this.updateModel(object as COMModel);
+                this.updateModel(object);
                 break;
             }
             case "primitive": {
-                this.updatePrimitive(object as COMPrimitive);
+                this.updatePrimitive(object);
                 break;
             }
         }
     }
 
-    public UpdateSceneObject(object: Partial<COMEntity>): void {
+    public UpdateSceneObject(object: Partial<COMEntity> & { id: string, entityType: COMEntityType }): void {
         switch (object.entityType) {
             case "pov": {
                 break;
             }
             case "light": {
-                this.updateLight(object as COMLight);
+                this.updateLight(object);
                 break;
             }
             case "model": {
-                this.updateModel(object as COMModel);
+                this.updateModel(object);
                 break;
             }
             case "primitive": {
-                this.updatePrimitive(object as COMPrimitive);
+                this.updatePrimitive(object);
                 break;
             }
         }
     }
 
-    public DeleteSceneObject(object: Partial<COMEntity>): void {
+    public DeleteSceneObject(object: Partial<COMEntity> & { id: string }): void {
         switch (object.entityType) {
             case "pov": {
                 break;
             }
             case "light": {
-                this.deleteLight(object as COMLight);
+                this.deleteLight(object);
                 break;
             }
             case "model": {
-                this.deleteModel(object as COMModel);
+                this.deleteModel(object);
                 break;
             }
             case "primitive": {
-                this.deletePrimitive(object as COMPrimitive);
+                this.deletePrimitive(object);
                 break;
             }
         }
     }
 
-    public PlaceOnFloor(object: Partial<COMEntity>): void {
+    public PlaceOnFloor(object: Partial<COMEntity> & { id: string }): void {
         switch (object.entityType) {
             case "pov":
             case "light": {
@@ -120,13 +117,7 @@ export class DIVERoot extends Object3D {
         }
     }
 
-    private updateLight(light: Partial<COMLight>): void {
-        // update scene here for light
-        if (light.id === undefined) {
-            console.warn(`LightRoot.UpdateLight: light.id is undefined`)
-            return;
-        }
-
+    private updateLight(light: Partial<COMLight> & { id: string }): void {
         let sceneObject = this.GetSceneObject(light);
         if (!sceneObject) {
             switch (light.type) {
@@ -143,7 +134,7 @@ export class DIVERoot extends Object3D {
                     break;
                 }
                 default: {
-                    console.warn(`LightRoot.UpdateLight: Unknown light type: ${light.type}`);
+                    console.warn(`Root.updateLight: Unknown light type: ${light.type}`);
                     return;
                 }
             }
@@ -159,12 +150,7 @@ export class DIVERoot extends Object3D {
         if (light.visible !== undefined && light.visible !== null) (sceneObject as (DIVEAmbientLight | DIVEPointLight)).visible = light.visible;
     }
 
-    private updateModel(model: Partial<COMModel>): void {
-        if (model.id === undefined) {
-            console.warn('ModelRoot.UpdateModel: object.id is undefined')
-            return;
-        }
-
+    private updateModel(model: Partial<COMModel> & { id: string }): void {
         let sceneObject = this.children.find(object3D => object3D.userData.id === model.id);
         if (!sceneObject) {
             const created = new DIVEModel();
@@ -187,12 +173,7 @@ export class DIVERoot extends Object3D {
         if (model.material !== undefined) (sceneObject as DIVEModel).SetMaterial(model.material);
     }
 
-    private updatePrimitive(primitive: Partial<COMPrimitive>): void {
-        if (primitive.id === undefined) {
-            console.warn('PrimitiveRoot.UpdatePrimitive: object.id is undefined')
-            return;
-        }
-
+    private updatePrimitive(primitive: Partial<COMPrimitive> & { id: string }): void {
         let sceneObject = this.children.find(object3D => object3D.userData.id === primitive.id);
         if (!sceneObject) {
             const created = new DIVEPrimitive();
@@ -209,15 +190,10 @@ export class DIVERoot extends Object3D {
         if (primitive.material !== undefined) (sceneObject as DIVEPrimitive).SetMaterial(primitive.material);
     }
 
-    private deleteLight(light: Partial<COMLight>): void {
-        if (light.id === undefined) {
-            console.warn('LightRoot.DeleteLight: light.id is undefined')
-            return;
-        }
-
+    private deleteLight(light: Partial<COMLight> & { id: string }): void {
         const sceneObject = this.children.find(object3D => object3D.userData.id === light.id);
         if (!sceneObject) {
-            console.warn(`LightRoot.DeleteLight: Light with id ${light.id} not found`);
+            console.warn(`Root.deleteLight: Light with id ${light.id} not found`);
             return;
         }
 
@@ -241,15 +217,10 @@ export class DIVERoot extends Object3D {
         this.remove(sceneObject);
     }
 
-    private deleteModel(model: Partial<COMModel>): void {
-        if (model.id === undefined) {
-            console.warn(`ModelRoot.DeleteModel: object.id is undefined`)
-            return;
-        }
-
+    private deleteModel(model: Partial<COMModel> & { id: string }): void {
         const sceneObject = this.children.find(object3D => object3D.userData.id === model.id);
         if (!sceneObject) {
-            console.warn(`ModelRoot.DeleteModel: Model with id ${model.id} not found`);
+            console.warn(`Root.deleteModel: Model with id ${model.id} not found`);
             return;
         }
 
@@ -273,15 +244,10 @@ export class DIVERoot extends Object3D {
         this.remove(sceneObject);
     }
 
-    private deletePrimitive(primitive: Partial<COMPrimitive>): void {
-        if (primitive.id === undefined) {
-            console.warn(`PrimitiveRoot.DeletePrimitive: object.id is undefined`)
-            return;
-        }
-
+    private deletePrimitive(primitive: Partial<COMPrimitive> & { id: string }): void {
         const sceneObject = this.children.find(object3D => object3D.userData.id === primitive.id);
         if (!sceneObject) {
-            console.warn(`PrimitiveRoot.DeletePrimitive: Primitive with id ${primitive.id} not found`);
+            console.warn(`Root.deletePrimitive: Primitive with id ${primitive.id} not found`);
             return;
         }
 
@@ -305,9 +271,7 @@ export class DIVERoot extends Object3D {
         this.remove(sceneObject);
     }
 
-    private placeOnFloor(object: Partial<COMEntity>): void {
-        if (object.id === undefined) console.warn('Root.placeOnFloor: object.id is undefined');
-
+    private placeOnFloor(object: Partial<COMEntity> & { id: string }): void {
         const sceneObject = this.children.find(object3D => object3D.userData.id === object.id);
         if (!sceneObject) return;
 

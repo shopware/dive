@@ -66,25 +66,25 @@ describe('dive/scene/DIVEScene', () => {
 
     it('should update object', () => {
         const scene = new DIVEScene();
-        scene.UpdateSceneObject({});
+        scene.UpdateSceneObject({} as COMEntity);
         expect(mock_UpdateSceneObject).toHaveBeenCalledTimes(1);
     });
 
     it('should remove object', () => {
         const scene = new DIVEScene();
-        scene.DeleteSceneObject({});
+        scene.DeleteSceneObject({} as COMEntity);
         expect(mock_DeleteSceneObject).toHaveBeenCalledTimes(1);
     });
 
     it('should place object on floor', () => {
         const scene = new DIVEScene();
-        scene.PlaceOnFloor({});
+        scene.PlaceOnFloor({} as COMEntity);
         expect(mock_PlaceOnFloor).toHaveBeenCalledTimes(1);
     });
 
     it('should get scene object', () => {
         const scene = new DIVEScene();
-        scene.GetSceneObject({});
+        scene.GetSceneObject({} as COMEntity);
         expect(mock_GetSceneObject).toHaveBeenCalledTimes(1);
     });
 });

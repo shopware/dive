@@ -1,5 +1,6 @@
 import { Actions } from "./actions/index.ts";
 import { generateUUID } from 'three/src/math/MathUtils';
+import { isSelectTool } from "../toolbox/select/SelectTool.ts";
 
 // type imports
 import { type Color, type MeshStandardMaterial } from "three";
@@ -11,7 +12,6 @@ import { type DIVEModel } from "../model/Model.ts";
 import { type DIVEMediaCreator } from "../mediacreator/MediaCreator.ts";
 import { type DIVERenderer } from "../renderer/Renderer.ts";
 import { type DIVESelectable } from "../interface/Selectable.ts";
-import { isSelectTool } from "../toolbox/select/SelectTool.ts";
 
 type EventListener<Action extends keyof Actions> = (payload: Actions[Action]['PAYLOAD']) => void;
 
@@ -186,6 +186,10 @@ export class DIVECommunication {
             }
             case 'GENERATE_MEDIA': {
                 returnValue = this.generateMedia(payload as Actions['GENERATE_MEDIA']['PAYLOAD']);
+                break;
+            }
+            case 'SET_PARENT': {
+                returnValue = this.setParent(payload as Actions['SET_PARENT']['PAYLOAD']);
                 break;
             }
         }
@@ -474,6 +478,44 @@ export class DIVECommunication {
 
         payload.dataUri = this.mediaGenerator.GenerateMedia(position, target, payload.width, payload.height);
 
+        return true;
+    }
+
+    private setParent(payload: Actions['SET_PARENT']['PAYLOAD']): Actions['SET_PARENT']['RETURN'] {
+        const object = this.registered.get(payload.object.id);
+        if (!object) return false;
+
+        const sceneObject = this.scene.GetSceneObject(object);
+        if (!sceneObject) return false;
+
+        if (payload.parent === null) {
+            // detach from current parent
+            this.scene.Root.attach(sceneObject);
+            return true;
+        }
+
+        if (payload.object.id === payload.parent.id) {
+            // cannot attach object to itself
+            return false;
+        }
+
+        const parent = this.registered.get(payload.parent.id);
+        if (!parent) {
+            // detach from current parent
+            this.scene.Root.attach(sceneObject);
+            return true;
+        }
+
+        // attach to new parent
+        const parentObject = this.scene.GetSceneObject(parent);
+        if (!parentObject) {
+            // detach from current parent
+            this.scene.Root.attach(sceneObject);
+            return true;
+        }
+
+        // attach to new parent
+        parentObject.attach(sceneObject);
         return true;
     }
 }

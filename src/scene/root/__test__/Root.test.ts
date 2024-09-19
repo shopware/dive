@@ -148,14 +148,11 @@ jest.mock('../../../primitive/Primitive.ts', () => {
     };
 });
 
-const consoleWarnSpy = jest.spyOn(console, 'warn').mockImplementation(() => { });
-
 let root: DIVERoot;
 
 describe('DIVE/scene/root/DIVERoot', () => {
     beforeEach(() => {
         root = new DIVERoot();
-        consoleWarnSpy.mockClear();
     });
 
     afterEach(() => {
@@ -172,8 +169,6 @@ describe('DIVE/scene/root/DIVERoot', () => {
     });
 
     it('should get scene object', async () => {
-        expect(() => root.GetSceneObject({ id: undefined })).not.toThrow();
-        expect(consoleWarnSpy).toHaveBeenCalled();
         expect(root.GetSceneObject({ id: 'test_id' })).toBeUndefined();
         expect(() => root.AddSceneObject({
             id: 'test_id',
@@ -184,6 +179,7 @@ describe('DIVE/scene/root/DIVERoot', () => {
             scale: { x: 1, y: 2, z: 3 },
             geometry: {} as COMGeometry,
             visible: true,
+            parent: null,
         })).not.toThrow();
         expect(root.GetSceneObject({ id: 'test_id' })).toBeDefined();
     });

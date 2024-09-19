@@ -5,6 +5,8 @@ import { type COMLight } from "./COMLight";
 import { type COMPov } from "./COMPov";
 import { type COMGeometry } from "./COMGeometry";
 import { type COMMaterial } from "./COMMaterial";
+import { type COMGroup } from "./COMGroup";
+import { type COMEntityType } from "./COMEntityType";
 
 export type {
     COMEntity,
@@ -14,4 +16,6 @@ export type {
     COMPov,
     COMGeometry,
     COMMaterial,
+    COMGroup,
+    COMEntityType,
 }

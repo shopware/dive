@@ -76,6 +76,7 @@ export default class DIVE {
             visible: true,
             intensity: 1,
             color: 0xffffff,
+            parent: null,
         });
 
         // generate model id
@@ -107,6 +108,7 @@ export default class DIVE {
             uri: uri,
             visible: true,
             loaded: false,
+            parent: null,
         });
 
         // set scene properties

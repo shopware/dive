@@ -1,8 +1,9 @@
-import { Color, Scene, type Box3, type ColorRepresentation, type Object3D } from 'three';
-import { type COMModel, type COMEntity } from '../com/types';
+import { Color, Scene, type Box3, type ColorRepresentation } from 'three';
+import { type COMModel, type COMEntity, type COMEntityType } from '../com/types';
 import { DIVERoot } from './root/Root';
 import { DIVEGrid } from '../grid/Grid';
 import { DIVEFloor } from '../primitive/floor/Floor';
+import { type DIVESceneObject } from '../types';
 
 /**
  * A basic scene class.
@@ -52,23 +53,23 @@ export class DIVEScene extends Scene {
         return this.Root.ComputeSceneBB();
     }
 
-    public GetSceneObject(object: Partial<COMEntity>): Object3D | undefined {
-        return this.Root.GetSceneObject(object);
+    public GetSceneObject<T extends DIVESceneObject>(object: Partial<COMEntity> & { id: string }): T | undefined {
+        return this.Root.GetSceneObject<T>(object);
     }
 
     public AddSceneObject(object: COMEntity): void {
         this.Root.AddSceneObject(object);
     }
 
-    public UpdateSceneObject(object: Partial<COMEntity>): void {
+    public UpdateSceneObject(object: Partial<COMEntity> & { id: string, entityType: COMEntityType }): void {
         this.Root.UpdateSceneObject(object);
     }
 
-    public DeleteSceneObject(object: Partial<COMEntity>): void {
+    public DeleteSceneObject(object: Partial<COMEntity> & { id: string }): void {
         this.Root.DeleteSceneObject(object);
     }
 
-    public PlaceOnFloor(object: Partial<COMModel>): void {
+    public PlaceOnFloor(object: Partial<COMModel> & { id: string }): void {
         this.Root.PlaceOnFloor(object);
     }
 }

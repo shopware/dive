@@ -1,6 +1,9 @@
+import { COMEntityType } from "./COMEntityType";
+
 export type COMBaseEntity = {
     id: string;
     name: string;
-    entityType: 'pov' | 'light' | 'model' | 'primitive';
+    entityType: COMEntityType;
     visible: boolean;
+    parent: Partial<COMBaseEntity> & { id: string } | null;
 }

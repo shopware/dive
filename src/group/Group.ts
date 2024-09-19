@@ -1,6 +1,7 @@
 import { Object3D } from "three";
-import { DIVEMoveable } from "../interface/Moveable";
-import { DIVESelectable } from "../interface/Selectable";
+import { type DIVEMoveable } from "../interface/Moveable";
+import { type DIVESelectable } from "../interface/Selectable";
+import { type DIVESceneObject } from "../types";
 
 export class DIVEGroup extends Object3D implements DIVESelectable, DIVEMoveable {
     public isSelectable: true = true;
@@ -10,8 +11,8 @@ export class DIVEGroup extends Object3D implements DIVESelectable, DIVEMoveable 
         super();
     }
 
-    public AddObject(): this {
-        // this.attach(object);
+    public AddObject(object: DIVESceneObject): this {
+        this.attach(object);
         return this;
     }
 }
