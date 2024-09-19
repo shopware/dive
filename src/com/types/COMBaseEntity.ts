@@ -5,5 +5,5 @@ export type COMBaseEntity = {
     name: string;
     entityType: COMEntityType;
     visible: boolean;
-    parent: Partial<COMBaseEntity> & { id: string } | null;
+    parent?: Partial<COMBaseEntity> & { id: string } | null;
 }

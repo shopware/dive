@@ -524,6 +524,7 @@ describe('dive/communication/DIVECommunication', () => {
                 id: "pov",
                 position: { x: 0, y: 0, z: 0 },
                 target: { x: 0, y: 0, z: 0 },
+                parent: null,
             }],
             floorColor: "#ffffff",
             floorEnabled: true,
@@ -533,6 +534,7 @@ describe('dive/communication/DIVECommunication', () => {
                 type: "ambient",
                 intensity: 0.5,
                 color: 'white',
+                parent: null,
             }],
             mediaItem: null,
             name: undefined,
@@ -542,7 +544,7 @@ describe('dive/communication/DIVECommunication', () => {
                 position: { x: 0, y: 0, z: 0 },
                 rotation: { x: 0, y: 0, z: 0 },
                 scale: { x: 0.01, y: 0.01, z: 0.01 },
-
+                parent: null,
                 uri: "https://threejs.org/examples/models/gltf/LittlestTokyo.glb",
             }],
             spotmarks: [],
@@ -574,7 +576,7 @@ describe('dive/communication/DIVECommunication', () => {
         expect(Array.from(successWithoutIds.values())).toStrictEqual([]);
 
         const successWithIds = testCom.PerformAction('GET_OBJECTS', { ids: ['test1'] });
-        expect(Array.from(successWithIds.values())).toStrictEqual([{ entityType: "pov", id: "test1", position: { x: 0, y: 0, z: 0 }, target: { x: 0, y: 0, z: 0 } }]);
+        expect(Array.from(successWithIds.values())).toStrictEqual([{ entityType: "pov", id: "test1", position: { x: 0, y: 0, z: 0 }, target: { x: 0, y: 0, z: 0 }, parent: null }]);
     });
 
     it('should perform action SELECT_OBJECT', () => {
