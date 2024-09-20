@@ -164,16 +164,20 @@ export class DIVERoot extends Object3D {
         if (light.color !== undefined && light.color !== null) (sceneObject as (DIVEAmbientLight | DIVEPointLight)).SetColor(new Color(light.color));
         if (light.visible !== undefined && light.visible !== null) (sceneObject as (DIVEAmbientLight | DIVEPointLight)).visible = light.visible;
 
-        if (light.parent !== null) {
-            const parent = this.children.find(object3D => object3D.userData.id === light.parent!.id);
+        if (light.parent) {
+            const parent = this.GetSceneObject<DIVESceneObject>(light.parent);
             if (parent) {
-                parent.attach(sceneObject);
+                if ('AddObject' in parent) {
+                    parent.AddObject(sceneObject);
+                } else {
+                    parent.attach(sceneObject);
+                }
             }
         }
     }
 
     private updateModel(model: Partial<COMModel> & { id: string }): void {
-        let sceneObject = this.children.find(object3D => object3D.userData.id === model.id);
+        let sceneObject = this.GetSceneObject<DIVESceneObject>(model);
         if (!sceneObject) {
             const created = new DIVEModel();
             created.name = model.name || 'Model';
@@ -195,16 +199,20 @@ export class DIVERoot extends Object3D {
         if (model.visible !== undefined) (sceneObject as DIVEModel).SetVisibility(model.visible);
         if (model.material !== undefined) (sceneObject as DIVEModel).SetMaterial(model.material);
 
-        if (model.parent !== null) {
-            const parent = this.children.find(object3D => object3D.userData.id === model.parent!.id);
+        if (model.parent) {
+            const parent = this.GetSceneObject<DIVESceneObject>(model.parent);
             if (parent) {
-                parent.attach(sceneObject);
+                if ('AddObject' in parent) {
+                    parent.AddObject(sceneObject);
+                } else {
+                    parent.attach(sceneObject);
+                }
             }
         }
     }
 
     private updatePrimitive(primitive: Partial<COMPrimitive> & { id: string }): void {
-        let sceneObject = this.children.find(object3D => object3D.userData.id === primitive.id);
+        let sceneObject = this.GetSceneObject<DIVESceneObject>(primitive);
         if (!sceneObject) {
             const created = new DIVEPrimitive();
             created.name = primitive.name || 'Primitive';
@@ -220,16 +228,20 @@ export class DIVERoot extends Object3D {
         if (primitive.visible !== undefined) (sceneObject as DIVEPrimitive).SetVisibility(primitive.visible);
         if (primitive.material !== undefined) (sceneObject as DIVEPrimitive).SetMaterial(primitive.material);
 
-        if (primitive.parent !== null) {
-            const parent = this.children.find(object3D => object3D.userData.id === primitive.parent!.id);
+        if (primitive.parent) {
+            const parent = this.GetSceneObject<DIVESceneObject>(primitive.parent);
             if (parent) {
-                parent.attach(sceneObject);
+                if ('AddObject' in parent) {
+                    parent.AddObject(sceneObject);
+                } else {
+                    parent.attach(sceneObject);
+                }
             }
         }
     }
 
     private updateGroup(group: Partial<COMGroup> & { id: string }): void {
-        let sceneObject = this.children.find(object3D => object3D.userData.id === group.id);
+        let sceneObject = this.GetSceneObject<DIVESceneObject>(group);
         if (!sceneObject) {
             const created = new DIVEGroup();
             created.name = group.name || 'Group';
@@ -243,10 +255,14 @@ export class DIVERoot extends Object3D {
         if (group.scale !== undefined) (sceneObject as DIVEPrimitive).SetScale(group.scale);
         if (group.visible !== undefined) (sceneObject as DIVEPrimitive).SetVisibility(group.visible);
 
-        if (group.parent !== null) {
-            const parent = this.children.find(object3D => object3D.userData.id === group.parent!.id);
+        if (group.parent) {
+            const parent = this.GetSceneObject<DIVESceneObject>(group.parent);
             if (parent) {
-                parent.attach(sceneObject);
+                if ('AddObject' in parent) {
+                    parent.AddObject(sceneObject);
+                } else {
+                    parent.attach(sceneObject);
+                }
             }
         }
     }
