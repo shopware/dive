@@ -19,6 +19,7 @@ export class DIVEGroup extends Object3D implements DIVESelectable, DIVEMoveable 
         this._bb = new Box3();
 
         this._boxMesh = new Mesh(new BoxGeometry(0, 0, 0), new MeshBasicMaterial({ color: 0xff0000, wireframe: true }));
+        this._boxMesh.visible = false;
         this.add(this._boxMesh);
     }
 
@@ -36,8 +37,13 @@ export class DIVEGroup extends Object3D implements DIVESelectable, DIVEMoveable 
 
     public SetVisibility(visible: boolean): void {
         this.traverse((child) => {
+            if (child.uuid === this._boxMesh.uuid) return;
             child.visible = visible;
         });
+    }
+
+    public SetBoundingBoxVisibility(visible: boolean): void {
+        this._boxMesh.visible = visible;
     }
 
     public AddObject(object: DIVESceneObject): this {
@@ -77,7 +83,6 @@ export class DIVEGroup extends Object3D implements DIVESelectable, DIVEMoveable 
         });
 
         return this._bb.getCenter(new Vector3());
-
     }
 
     private updateBoxMesh(): void {

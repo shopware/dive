@@ -254,6 +254,7 @@ export class DIVERoot extends Object3D {
         if (group.rotation !== undefined) (sceneObject as DIVEPrimitive).SetRotation(group.rotation);
         if (group.scale !== undefined) (sceneObject as DIVEPrimitive).SetScale(group.scale);
         if (group.visible !== undefined) (sceneObject as DIVEPrimitive).SetVisibility(group.visible);
+        if (group.bbVisible !== undefined) (sceneObject as DIVEGroup).SetBoundingBoxVisibility(group.bbVisible);
 
         if (group.parent) {
             const parent = this.GetSceneObject<DIVESceneObject>(group.parent);
