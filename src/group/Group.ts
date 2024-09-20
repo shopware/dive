@@ -1,4 +1,4 @@
-import { Object3D, Vector3, type Vector3Like } from "three";
+import { Box3, BoxGeometry, Mesh, MeshBasicMaterial, Object3D, Vector3, type Vector3Like } from "three";
 import { type DIVEMoveable } from "../interface/Moveable";
 import { type DIVESelectable } from "../interface/Selectable";
 import { type DIVESceneObject } from "../types";
@@ -8,8 +8,18 @@ export class DIVEGroup extends Object3D implements DIVESelectable, DIVEMoveable 
     readonly isSelectable: true = true;
     readonly isMoveable: true = true;
 
+    private _bb: Box3;
+    private _boxMesh: Mesh;
+
     constructor() {
         super();
+
+        this.name = 'DIVEGroup';
+
+        this._bb = new Box3();
+
+        this._boxMesh = new Mesh(new BoxGeometry(0, 0, 0), new MeshBasicMaterial({ color: 0xff0000, wireframe: true }));
+        this.add(this._boxMesh);
     }
 
     public SetPosition(position: Vector3Like): void {
@@ -31,7 +41,37 @@ export class DIVEGroup extends Object3D implements DIVESelectable, DIVEMoveable 
     }
 
     public AddObject(object: DIVESceneObject): this {
+        // attach (insted of add) object to keep it's world position
         this.attach(object);
+
+        // store all children's world positions
+        const childrensWorldPositions = this.children.map((child) => child.getWorldPosition(new Vector3()));
+
+        // clear bounding box and refill with current children
+        this._bb.makeEmpty();
+        this.children.forEach((child) => {
+            if (child.uuid === this._boxMesh.uuid) return;
+            this._bb.expandByObject(child);
+        });
+
+        // calculate new center and set it as the group's position
+        const bbcenter = this._bb.getCenter(new Vector3());
+        this.position.copy(bbcenter);
+
+        // set childrens's positions so their world positions are kept
+        this.children.forEach((child, i) => {
+            if (child.uuid === this._boxMesh.uuid) return;
+            child.position.copy(this.worldToLocal(childrensWorldPositions[i]));
+        });
+
+        // update box mesh
+        this.updateBoxMesh();
+
         return this;
+    }
+
+    private updateBoxMesh(): void {
+        this._boxMesh.geometry = new BoxGeometry(this._bb.max.x - this._bb.min.x, this._bb.max.y - this._bb.min.y, this._bb.max.z - this._bb.min.z);
+
     }
 }
