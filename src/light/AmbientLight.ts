@@ -10,6 +10,9 @@ import { PRODUCT_LAYER_MASK } from '../constant/VisibilityLayerMask';
  */
 
 export default class DIVEAmbientLight extends Object3D {
+    readonly isDIVELight: true = true;
+    readonly isDIVEAmbientLight: true = true;
+
     private _light: AmbientLight;
 
     constructor() {

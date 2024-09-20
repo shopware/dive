@@ -18,8 +18,9 @@ import { type COMGeometry, type COMMaterial } from '../com/types';
  */
 
 export class DIVEPrimitive extends Object3D implements DIVESelectable, DIVEMoveable {
-    public isSelectable: true = true;
-    public isMoveable: true = true;
+    readonly isDIVEPrimitive: true = true;
+    readonly isSelectable: true = true;
+    readonly isMoveable: true = true;
 
     public gizmo: TransformControls | null = null;
 

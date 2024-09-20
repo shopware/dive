@@ -18,8 +18,10 @@ import { type COMMaterial } from '../com/types';
  */
 
 export class DIVEModel extends Object3D implements DIVESelectable, DIVEMoveable {
-    public isSelectable: true = true;
-    public isMoveable: true = true;
+    readonly isDIVEModel: true = true;
+    readonly isSelectable: true = true;
+    readonly isMoveable: true = true;
+
     public gizmo: TransformControls | null = null;
 
     private boundingBox: Box3;

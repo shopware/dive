@@ -16,8 +16,11 @@ import type { TransformControls } from 'three/examples/jsm/Addons.js';
  */
 
 export default class DIVEPointLight extends Object3D implements DIVESelectable, DIVEMoveable {
-    public isMoveable: true = true;
-    public isSelectable: true = true;
+    readonly isDIVELight: true = true;
+    readonly isDIVEPointLight: true = true;
+    readonly isMoveable: true = true;
+    readonly isSelectable: true = true;
+
     public gizmo: TransformControls | null = null;
 
     private light: PointLight;

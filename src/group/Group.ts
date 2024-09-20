@@ -4,8 +4,9 @@ import { type DIVESelectable } from "../interface/Selectable";
 import { type DIVESceneObject } from "../types";
 
 export class DIVEGroup extends Object3D implements DIVESelectable, DIVEMoveable {
-    public isSelectable: true = true;
-    public isMoveable: true = true;
+    readonly isDIVEGroup: true = true;
+    readonly isSelectable: true = true;
+    readonly isMoveable: true = true;
 
     constructor() {
         super();

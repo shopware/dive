@@ -20,8 +20,9 @@ import { DIVEGroup } from "../../group/Group.ts";
  */
 
 export class DIVERoot extends Object3D {
-    private loadingManager: DIVELoadingManager;
+    readonly isDIVERoot: true = true;
 
+    private loadingManager: DIVELoadingManager;
 
     constructor() {
         super();

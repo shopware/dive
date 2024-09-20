@@ -10,6 +10,8 @@ import { Color, DirectionalLight, HemisphereLight, Object3D } from "three";
  */
 
 export default class DIVESceneLight extends Object3D {
+    readonly isDIVELight: true = true;
+    readonly isDIVESceneLight: true = true;
 
     private _hemiLight: HemisphereLight;
     private _dirLight: DirectionalLight;
