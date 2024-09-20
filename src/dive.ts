@@ -8,9 +8,6 @@ import { DIVEAnimationSystem } from "./animation/AnimationSystem.ts";
 import DIVEAxisCamera from "./axiscamera/AxisCamera.ts";
 import { getObjectDelta } from "./helper/getObjectDelta/getObjectDelta.ts";
 
-import type { Actions } from './com/actions/index.ts';
-import type { COMPov, COMLight, COMModel, COMEntity, COMPrimitive } from './com/types';
-import { DIVEMath } from './math/index.ts';
 import { generateUUID } from "three/src/math/MathUtils";
 import { DIVEInfo } from "./info/Info.ts";
 
@@ -273,17 +270,13 @@ export default class DIVE {
     }
 }
 
-export type {
-    Actions,
-    COMPov,
-    COMLight,
-    COMModel,
-    COMPrimitive,
-    COMEntity,
-};
-
 export {
     DIVE,
     DIVECommunication,
-    DIVEMath,
 }
+
+export * from './math/index.ts';
+
+export type * from './com/actions/index.ts';
+export type * from './com/types';
+
