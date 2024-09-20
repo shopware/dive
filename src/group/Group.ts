@@ -45,17 +45,10 @@ export class DIVEGroup extends Object3D implements DIVESelectable, DIVEMoveable 
         this.attach(object);
 
         // store all children's world positions
-        const childrensWorldPositions = this.children.map((child) => child.getWorldPosition(new Vector3()));
-
-        // clear bounding box and refill with current children
-        this._bb.makeEmpty();
-        this.children.forEach((child) => {
-            if (child.uuid === this._boxMesh.uuid) return;
-            this._bb.expandByObject(child);
-        });
+        const childrensWorldPositions: Vector3[] = this.children.map((child) => child.getWorldPosition(new Vector3()));
 
         // calculate new center and set it as the group's position
-        const bbcenter = this._bb.getCenter(new Vector3());
+        const bbcenter = this.updateBB();
         this.position.copy(bbcenter);
 
         // set childrens's positions so their world positions are kept
@@ -70,8 +63,24 @@ export class DIVEGroup extends Object3D implements DIVESelectable, DIVEMoveable 
         return this;
     }
 
+    // TODO: Implement RemoveObject method and recalculate center
+
+    /**
+     * Updates the bounding box of the group.
+     * @returns {Vector3} The new center of the bounding box.
+     */
+    private updateBB(): Vector3 {
+        this._bb.makeEmpty();
+        this.children.forEach((child) => {
+            if (child.uuid === this._boxMesh.uuid) return;
+            this._bb.expandByObject(child);
+        });
+
+        return this._bb.getCenter(new Vector3());
+
+    }
+
     private updateBoxMesh(): void {
         this._boxMesh.geometry = new BoxGeometry(this._bb.max.x - this._bb.min.x, this._bb.max.y - this._bb.min.y, this._bb.max.z - this._bb.min.z);
-
     }
 }
