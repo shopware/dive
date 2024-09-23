@@ -257,13 +257,22 @@ export class DIVERoot extends Object3D {
         if (group.bbVisible !== undefined) (sceneObject as DIVEGroup).SetBoundingBoxVisibility(group.bbVisible);
 
         if (group.parent) {
+            // remove from old parent (if parent is DIVEGroup)
+            if (sceneObject.parent && 'isDIVEGroup' in sceneObject.parent) {
+                (sceneObject.parent as DIVEGroup).RemoveObject(sceneObject);
+            }
+
             const parent = this.GetSceneObject<DIVESceneObject>(group.parent);
             if (parent) {
+                // attach to new parent (if exists in scene)
                 if ('AddObject' in parent) {
                     parent.AddObject(sceneObject);
                 } else {
                     parent.attach(sceneObject);
                 }
+            } else {
+                // attach to root if no parent is found
+                this.attach(sceneObject);
             }
         }
     }

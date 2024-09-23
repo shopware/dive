@@ -50,6 +50,33 @@ export class DIVEGroup extends Object3D implements DIVESelectable, DIVEMoveable 
         // attach (insted of add) object to keep it's world position
         this.attach(object);
 
+        // set position to it's bb's center
+        this.recalculatePosition();
+
+        // update box mesh
+        this.updateBoxMesh();
+
+        return this;
+    }
+
+    public RemoveObject(object: DIVESceneObject): this {
+        // removes object from group while keeping it's world position
+        this.remove(object);
+
+        // set position to it's bb's center
+        this.recalculatePosition();
+
+        // update box mesh
+        this.updateBoxMesh();
+
+        return this;
+    }
+
+    /**
+     * Recalculates the position of the group based on it's bounding box.
+     * Children's world positions are kept.
+     */
+    private recalculatePosition(): void {
         // store all children's world positions
         const childrensWorldPositions: Vector3[] = this.children.map((child) => child.getWorldPosition(new Vector3()));
 
@@ -62,14 +89,7 @@ export class DIVEGroup extends Object3D implements DIVESelectable, DIVEMoveable 
             if (child.uuid === this._boxMesh.uuid) return;
             child.position.copy(this.worldToLocal(childrensWorldPositions[i]));
         });
-
-        // update box mesh
-        this.updateBoxMesh();
-
-        return this;
     }
-
-    // TODO: Implement RemoveObject method and recalculate center
 
     /**
      * Updates the bounding box of the group.
