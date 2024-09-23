@@ -46,9 +46,9 @@ export class DIVEGroup extends Object3D implements DIVESelectable, DIVEMoveable 
         this._boxMesh.visible = visible;
     }
 
-    public AddObject(object: DIVESceneObject): this {
+    public attach(object: DIVESceneObject): this {
         // attach (insted of add) object to keep it's world position
-        this.attach(object);
+        super.attach(object);
 
         // set position to it's bb's center
         this.recalculatePosition();
@@ -59,9 +59,9 @@ export class DIVEGroup extends Object3D implements DIVESelectable, DIVEMoveable 
         return this;
     }
 
-    public RemoveObject(object: DIVESceneObject): this {
+    public remove(object: DIVESceneObject): this {
         // removes object from group while keeping it's world position
-        this.remove(object);
+        super.remove(object);
 
         // set position to it's bb's center
         this.recalculatePosition();

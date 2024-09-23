@@ -484,7 +484,7 @@ describe('DIVE/scene/root/DIVERoot', () => {
                 userData: {
                     id: 'id_groupparent',
                 },
-                AddObject: jest.fn(),
+                attach: jest.fn(),
                 parent: root,
                 children: [],
             } as unknown as Object3D,
@@ -503,7 +503,7 @@ describe('DIVE/scene/root/DIVERoot', () => {
                 SetVisibility: jest.fn(),
                 parent: {
                     isDIVEGroup: true,
-                    RemoveObject: jest.fn(),
+                    remove: jest.fn(),
                 },
                 children: [],
             } as unknown as Object3D

@@ -54,14 +54,14 @@ describe('dive/group/DIVEGroup', () => {
     it('should add an object', () => {
         const mockObject = new DIVEGroup();
 
-        expect(() => group.AddObject(mockObject)).not.toThrow();
+        expect(() => group.attach(mockObject)).not.toThrow();
         expect(group.children).toContain(mockObject);
     });
 
     it('should remove an object', () => {
         const mockObject = new DIVEGroup();
 
-        expect(() => group.RemoveObject(mockObject)).not.toThrow();
+        expect(() => group.remove(mockObject)).not.toThrow();
         expect(group.children).not.toContain(mockObject);
     });
 });

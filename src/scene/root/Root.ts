@@ -322,8 +322,8 @@ export class DIVERoot extends Object3D {
         const sceneObject = this.GetSceneObject<DIVESceneObject>(object);
         if (!sceneObject) return;
 
-        if (sceneObject.parent && 'isDIVEGroup' in sceneObject.parent) {
-            (sceneObject.parent as DIVEGroup).RemoveObject(sceneObject);
+        if (sceneObject.parent) {
+            sceneObject.parent.remove(sceneObject);
         }
 
         if (object.parent !== null) {
@@ -331,11 +331,8 @@ export class DIVERoot extends Object3D {
             if (!parent) return;
 
             // attach to new parent (if exists in scene)
-            if ('AddObject' in parent) {
-                parent.AddObject(sceneObject);
-            } else {
-                parent.attach(sceneObject);
-            }
+            parent.attach(sceneObject);
+
         } else {
             // attach to root if no parent is found
             this.attach(sceneObject);
