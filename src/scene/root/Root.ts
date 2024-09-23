@@ -172,13 +172,13 @@ export class DIVERoot extends Object3D {
             sceneObject = created;
             sceneObject.userData.id = model.id;
             this.add(sceneObject);
+        }
 
-            if (model.uri !== undefined) {
-                this.loadingManager.LoadGLTF(model.uri).then((gltf) => {
-                    (sceneObject as DIVEModel).SetModel(gltf);
-                    DIVECommunication.get(model.id!)?.PerformAction('MODEL_LOADED', { id: model.id! });
-                });
-            }
+        if (model.uri !== undefined) {
+            this.loadingManager.LoadGLTF(model.uri).then((gltf) => {
+                (sceneObject as DIVEModel).SetModel(gltf);
+                DIVECommunication.get(model.id!)?.PerformAction('MODEL_LOADED', { id: model.id! });
+            });
         }
 
         if (model.name !== undefined) sceneObject.name = model.name;
