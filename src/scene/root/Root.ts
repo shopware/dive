@@ -9,7 +9,7 @@ import { DIVEPrimitive } from "../../primitive/Primitive.ts";
 
 import { type DIVEScene } from "../Scene.ts";
 import { type TransformControls } from "three/examples/jsm/controls/TransformControls";
-import { type COMLight, type COMModel, type COMEntity, type COMPrimitive, type COMEntityType, type COMGroup } from "../../com/types";
+import { type COMLight, type COMModel, type COMEntity, type COMPrimitive, type COMGroup } from "../../com/types";
 import { type DIVESceneObject } from "../../types";
 import { DIVEGroup } from "../../group/Group.ts";
 
@@ -69,7 +69,7 @@ export class DIVERoot extends Object3D {
         }
     }
 
-    public UpdateSceneObject(object: Partial<COMEntity> & { id: string, entityType: COMEntityType }): void {
+    public UpdateSceneObject(object: Partial<COMEntity> & { id: string }): void {
         switch (object.entityType) {
             case "pov": {
                 break;

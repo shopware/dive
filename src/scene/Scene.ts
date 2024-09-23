@@ -1,5 +1,5 @@
 import { Color, Scene, type Box3, type ColorRepresentation } from 'three';
-import { type COMModel, type COMEntity, type COMEntityType } from '../com/types';
+import { type COMModel, type COMEntity } from '../com/types';
 import { DIVERoot } from './root/Root';
 import { DIVEGrid } from '../grid/Grid';
 import { DIVEFloor } from '../primitive/floor/Floor';
@@ -61,7 +61,7 @@ export class DIVEScene extends Scene {
         this.Root.AddSceneObject(object);
     }
 
-    public UpdateSceneObject(object: Partial<COMEntity> & { id: string, entityType: COMEntityType }): void {
+    public UpdateSceneObject(object: Partial<COMEntity> & { id: string }): void {
         this.Root.UpdateSceneObject(object);
     }
 

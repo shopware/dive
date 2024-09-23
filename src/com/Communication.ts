@@ -280,7 +280,7 @@ export class DIVECommunication {
         this.registered.set(payload.id, { ...objectToUpdate, ...payload });
 
         const updatedObject = this.registered.get(payload.id)!;
-        this.scene.UpdateSceneObject(updatedObject);
+        this.scene.UpdateSceneObject(payload);
 
         Object.assign(payload, updatedObject);
 
