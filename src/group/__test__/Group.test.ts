@@ -14,36 +14,6 @@ jest.mock('../../com/Communication.ts', () => {
     }
 });
 
-const gltf = {
-    scene: {
-        isMesh: true,
-        isObject3D: true,
-        parent: null,
-        dispatchEvent: jest.fn(),
-        layers: {
-            mask: 0,
-        },
-        material: {},
-        updateWorldMatrix: jest.fn(),
-        children: [
-            {
-                castShadow: false,
-                receiveShadow: false,
-                layers: {
-                    mask: 0,
-                },
-                children: [],
-                updateWorldMatrix: jest.fn(),
-                isMesh: true,
-            },
-        ],
-        traverse: function (callback: (object: object) => void) {
-            callback(this);
-        },
-        removeFromParent: jest.fn(),
-    },
-} as unknown as GLTF;
-
 jest.spyOn(DIVECommunication, 'get').mockReturnValue({ PerformAction: jest.fn() } as unknown as DIVECommunication);
 
 let group: DIVEGroup;
@@ -61,10 +31,37 @@ describe('dive/group/DIVEGroup', () => {
         expect(group).toBeDefined();
     });
 
+    it('should set position', () => {
+        expect(() => group.SetPosition({ x: 0, y: 0, z: 0 })).not.toThrow();
+    });
+
+    it('should set rotation', () => {
+        expect(() => group.SetRotation({ x: 0, y: 0, z: 0 })).not.toThrow();
+    });
+
+    it('should set scale', () => {
+        expect(() => group.SetScale({ x: 1, y: 1, z: 1 })).not.toThrow();
+    });
+
+    it('should set visibility', () => {
+        expect(() => group.SetVisibility(true)).not.toThrow();
+    });
+
+    it('should set bounding box visibility', () => {
+        expect(() => group.SetBoundingBoxVisibility(true)).not.toThrow();
+    });
+
     it('should add an object', () => {
         const mockObject = new DIVEGroup();
 
         expect(() => group.AddObject(mockObject)).not.toThrow();
-        expect(group.AddObject(mockObject)).toBe(group);
+        expect(group.children).toContain(mockObject);
+    });
+
+    it('should remove an object', () => {
+        const mockObject = new DIVEGroup();
+
+        expect(() => group.RemoveObject(mockObject)).not.toThrow();
+        expect(group.children).not.toContain(mockObject);
     });
 });
