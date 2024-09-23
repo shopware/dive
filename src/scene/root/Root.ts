@@ -152,7 +152,6 @@ export class DIVERoot extends Object3D {
                     return;
                 }
             }
-            sceneObject.name = light.name || 'Light';
             sceneObject.userData.id = light.id;
             this.add(sceneObject);
         }
@@ -163,24 +162,13 @@ export class DIVERoot extends Object3D {
         if (light.enabled !== undefined && light.enabled !== null) (sceneObject as (DIVEAmbientLight | DIVEPointLight)).SetEnabled(light.enabled);
         if (light.color !== undefined && light.color !== null) (sceneObject as (DIVEAmbientLight | DIVEPointLight)).SetColor(new Color(light.color));
         if (light.visible !== undefined && light.visible !== null) (sceneObject as (DIVEAmbientLight | DIVEPointLight)).visible = light.visible;
-
-        if (light.parent) {
-            const parent = this.GetSceneObject<DIVESceneObject>(light.parent);
-            if (parent) {
-                if ('AddObject' in parent) {
-                    parent.AddObject(sceneObject);
-                } else {
-                    parent.attach(sceneObject);
-                }
-            }
-        }
+        if (light.parent !== undefined) this.setParent({ ...light, parent: light.parent });
     }
 
     private updateModel(model: Partial<COMModel> & { id: string }): void {
         let sceneObject = this.GetSceneObject<DIVESceneObject>(model);
         if (!sceneObject) {
             const created = new DIVEModel();
-            created.name = model.name || 'Model';
             sceneObject = created;
             sceneObject.userData.id = model.id;
             this.add(sceneObject);
@@ -193,92 +181,54 @@ export class DIVERoot extends Object3D {
             }
         }
 
+        if (model.name !== undefined) sceneObject.name = model.name;
         if (model.position !== undefined) (sceneObject as DIVEModel).SetPosition(model.position);
         if (model.rotation !== undefined) (sceneObject as DIVEModel).SetRotation(model.rotation);
         if (model.scale !== undefined) (sceneObject as DIVEModel).SetScale(model.scale);
         if (model.visible !== undefined) (sceneObject as DIVEModel).SetVisibility(model.visible);
         if (model.material !== undefined) (sceneObject as DIVEModel).SetMaterial(model.material);
-
-        if (model.parent) {
-            const parent = this.GetSceneObject<DIVESceneObject>(model.parent);
-            if (parent) {
-                if ('AddObject' in parent) {
-                    parent.AddObject(sceneObject);
-                } else {
-                    parent.attach(sceneObject);
-                }
-            }
-        }
+        if (model.parent !== undefined) this.setParent({ ...model, parent: model.parent });
     }
 
     private updatePrimitive(primitive: Partial<COMPrimitive> & { id: string }): void {
         let sceneObject = this.GetSceneObject<DIVESceneObject>(primitive);
         if (!sceneObject) {
             const created = new DIVEPrimitive();
-            created.name = primitive.name || 'Primitive';
             sceneObject = created;
             sceneObject.userData.id = primitive.id;
             this.add(sceneObject);
         }
 
+        if (primitive.name !== undefined) sceneObject.name = primitive.name;
         if (primitive.geometry !== undefined) (sceneObject as DIVEPrimitive).SetGeometry(primitive.geometry);
         if (primitive.position !== undefined) (sceneObject as DIVEPrimitive).SetPosition(primitive.position);
         if (primitive.rotation !== undefined) (sceneObject as DIVEPrimitive).SetRotation(primitive.rotation);
         if (primitive.scale !== undefined) (sceneObject as DIVEPrimitive).SetScale(primitive.scale);
         if (primitive.visible !== undefined) (sceneObject as DIVEPrimitive).SetVisibility(primitive.visible);
         if (primitive.material !== undefined) (sceneObject as DIVEPrimitive).SetMaterial(primitive.material);
-
-        if (primitive.parent) {
-            const parent = this.GetSceneObject<DIVESceneObject>(primitive.parent);
-            if (parent) {
-                if ('AddObject' in parent) {
-                    parent.AddObject(sceneObject);
-                } else {
-                    parent.attach(sceneObject);
-                }
-            }
-        }
+        if (primitive.parent !== undefined) this.setParent({ ...primitive, parent: primitive.parent });
     }
 
     private updateGroup(group: Partial<COMGroup> & { id: string }): void {
         let sceneObject = this.GetSceneObject<DIVESceneObject>(group);
         if (!sceneObject) {
             const created = new DIVEGroup();
-            created.name = group.name || 'Group';
             sceneObject = created;
             sceneObject.userData.id = group.id;
             this.add(sceneObject);
         }
 
+        if (group.name !== undefined) sceneObject.name = group.name;
         if (group.position !== undefined) (sceneObject as DIVEPrimitive).SetPosition(group.position);
         if (group.rotation !== undefined) (sceneObject as DIVEPrimitive).SetRotation(group.rotation);
         if (group.scale !== undefined) (sceneObject as DIVEPrimitive).SetScale(group.scale);
         if (group.visible !== undefined) (sceneObject as DIVEPrimitive).SetVisibility(group.visible);
         if (group.bbVisible !== undefined) (sceneObject as DIVEGroup).SetBoundingBoxVisibility(group.bbVisible);
-
-        if (group.parent) {
-            // remove from old parent (if parent is DIVEGroup)
-            if (sceneObject.parent && 'isDIVEGroup' in sceneObject.parent) {
-                (sceneObject.parent as DIVEGroup).RemoveObject(sceneObject);
-            }
-
-            const parent = this.GetSceneObject<DIVESceneObject>(group.parent);
-            if (parent) {
-                // attach to new parent (if exists in scene)
-                if ('AddObject' in parent) {
-                    parent.AddObject(sceneObject);
-                } else {
-                    parent.attach(sceneObject);
-                }
-            } else {
-                // attach to root if no parent is found
-                this.attach(sceneObject);
-            }
-        }
+        if (group.parent !== undefined) this.setParent({ ...group, parent: group.parent });
     }
 
     private deleteLight(light: Partial<COMLight> & { id: string }): void {
-        const sceneObject = this.children.find(object3D => object3D.userData.id === light.id);
+        const sceneObject = this.GetSceneObject(light);
         if (!sceneObject) {
             console.warn(`Root.deleteLight: Light with id ${light.id} not found`);
             return;
@@ -286,14 +236,7 @@ export class DIVERoot extends Object3D {
 
         // _______________________________________________________
         // this is only neccessary due to using the old TransformControls instead of the new DIVEGizmo
-        const findScene = (object: Object3D): DIVEScene => {
-            if (object.parent !== null) {
-                return findScene(object.parent);
-            };
-            return object as DIVEScene;
-        }
-
-        const scene = findScene(sceneObject);
+        const scene = this.findScene(sceneObject);
         scene.children.find((object) => {
             if ('isTransformControls' in object) {
                 (object as TransformControls).detach();
@@ -305,7 +248,7 @@ export class DIVERoot extends Object3D {
     }
 
     private deleteModel(model: Partial<COMModel> & { id: string }): void {
-        const sceneObject = this.children.find(object3D => object3D.userData.id === model.id);
+        const sceneObject = this.GetSceneObject(model);
         if (!sceneObject) {
             console.warn(`Root.deleteModel: Model with id ${model.id} not found`);
             return;
@@ -313,14 +256,7 @@ export class DIVERoot extends Object3D {
 
         // _______________________________________________________
         // this is only neccessary due to using the old TransformControls instead of the new DIVEGizmo
-        const findScene = (object: Object3D): DIVEScene => {
-            if (object.parent !== null) {
-                return findScene(object.parent);
-            };
-            return object as DIVEScene;
-        }
-
-        const scene = findScene(sceneObject);
+        const scene = this.findScene(sceneObject);
         scene.children.find((object) => {
             if ('isTransformControls' in object) {
                 (object as TransformControls).detach();
@@ -332,7 +268,7 @@ export class DIVERoot extends Object3D {
     }
 
     private deletePrimitive(primitive: Partial<COMPrimitive> & { id: string }): void {
-        const sceneObject = this.children.find(object3D => object3D.userData.id === primitive.id);
+        const sceneObject = this.GetSceneObject(primitive);
         if (!sceneObject) {
             console.warn(`Root.deletePrimitive: Primitive with id ${primitive.id} not found`);
             return;
@@ -340,14 +276,7 @@ export class DIVERoot extends Object3D {
 
         // _______________________________________________________
         // this is only neccessary due to using the old TransformControls instead of the new DIVEGizmo
-        const findScene = (object: Object3D): DIVEScene => {
-            if (object.parent !== null) {
-                return findScene(object.parent);
-            };
-            return object as DIVEScene;
-        }
-
-        const scene = findScene(sceneObject);
+        const scene = this.findScene(sceneObject);
         scene.children.find((object) => {
             if ('isTransformControls' in object) {
                 (object as TransformControls).detach();
@@ -359,22 +288,15 @@ export class DIVERoot extends Object3D {
     }
 
     private deleteGroup(group: Partial<COMGroup> & { id: string }): void {
-        const sceneObject = this.children.find(object3D => object3D.userData.id === group.id);
+        const sceneObject = this.GetSceneObject(group);
         if (!sceneObject) {
-            console.warn(`Root.deletePrimitive: Primitive with id ${group.id} not found`);
+            console.warn(`Root.deleteGroup: Group with id ${group.id} not found`);
             return;
         }
 
         // _______________________________________________________
         // this is only neccessary due to using the old TransformControls instead of the new DIVEGizmo
-        const findScene = (object: Object3D): DIVEScene => {
-            if (object.parent !== null) {
-                return findScene(object.parent);
-            };
-            return object as DIVEScene;
-        }
-
-        const scene = findScene(sceneObject);
+        const scene = this.findScene(sceneObject);
         scene.children.find((object) => {
             if ('isTransformControls' in object) {
                 (object as TransformControls).detach();
@@ -390,9 +312,40 @@ export class DIVERoot extends Object3D {
     }
 
     private placeOnFloor(object: Partial<COMEntity> & { id: string }): void {
-        const sceneObject = this.children.find(object3D => object3D.userData.id === object.id);
+        const sceneObject = this.GetSceneObject(object);
         if (!sceneObject) return;
 
         (sceneObject as DIVEModel | DIVEPrimitive).PlaceOnFloor();
+    }
+
+    private setParent(object: Partial<COMEntity> & { id: string, parent: (Partial<COMEntity> & { id: string }) | null }): void {
+        const sceneObject = this.GetSceneObject<DIVESceneObject>(object);
+        if (!sceneObject) return;
+
+        if (sceneObject.parent && 'isDIVEGroup' in sceneObject.parent) {
+            (sceneObject.parent as DIVEGroup).RemoveObject(sceneObject);
+        }
+
+        if (object.parent !== null) {
+            const parent = this.GetSceneObject<DIVESceneObject>(object.parent);
+            if (!parent) return;
+
+            // attach to new parent (if exists in scene)
+            if ('AddObject' in parent) {
+                parent.AddObject(sceneObject);
+            } else {
+                parent.attach(sceneObject);
+            }
+        } else {
+            // attach to root if no parent is found
+            this.attach(sceneObject);
+        }
+    }
+
+    private findScene(object: Object3D): DIVEScene {
+        if (object.parent !== null) {
+            return this.findScene(object.parent);
+        };
+        return object as DIVEScene;
     }
 }
