@@ -22,6 +22,7 @@ import DROP_IT from "./object/model/dropit.ts";
 import SET_GIZMO_VISIBILITY from "./toolbox/transform/setgizmovisible.js";
 import COMPUTE_ENCOMPASSING_VIEW from "./camera/computeencompassingview.ts";
 import USE_TOOL from "./toolbox/usetool.ts";
+import SET_PARENT from "./object/setparent.ts";
 
 export type Actions = {
     GET_ALL_SCENE_DATA: GET_ALL_SCENE_DATA,
@@ -48,4 +49,5 @@ export type Actions = {
     MODEL_LOADED: MODEL_LOADED,
     UPDATE_SCENE: UPDATE_SCENE,
     GENERATE_MEDIA: GENERATE_MEDIA,
+    SET_PARENT: SET_PARENT,
 };

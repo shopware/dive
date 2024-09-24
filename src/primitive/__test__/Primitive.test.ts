@@ -1,7 +1,7 @@
 import { DIVEPrimitive } from '../Primitive';
-import DIVECommunication from '../../com/Communication';
+import { DIVECommunication } from '../../com/Communication';
 import { Vector3, Box3, Mesh, type Texture, type MeshStandardMaterial } from 'three';
-import type DIVEScene from '../../scene/Scene';
+import type { DIVEScene } from '../../scene/Scene';
 import { type COMMaterial, type COMGeometry } from '../../com/types';
 
 const intersectObjectsMock = jest.fn();
@@ -181,11 +181,13 @@ jest.mock('three', () => {
 
 jest.mock('../../com/Communication.ts', () => {
     return {
-        get: jest.fn(() => {
-            return {
-                PerformAction: jest.fn(),
-            }
-        }),
+        DIVECommunication: {
+            get: jest.fn(() => {
+                return {
+                    PerformAction: jest.fn(),
+                }
+            }),
+        },
     }
 });
 

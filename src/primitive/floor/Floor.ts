@@ -9,7 +9,7 @@ import { PRODUCT_LAYER_MASK } from "../../constant/VisibilityLayerMask.ts";
  * @module
  */
 
-export default class DIVEFloor extends Mesh {
+export class DIVEFloor extends Mesh {
     public isFloor: true = true;
 
     constructor() {

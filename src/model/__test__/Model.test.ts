@@ -1,7 +1,7 @@
-import Model from '../Model';
-import DIVECommunication from '../../com/Communication';
+import { DIVEModel } from '../Model';
+import { DIVECommunication } from '../../com/Communication';
 import { GLTF } from 'three/examples/jsm/Addons';
-import DIVEScene from '../../scene/Scene';
+import { DIVEScene } from '../../scene/Scene';
 import { Vector3, Box3, Mesh, MeshStandardMaterial, type Texture, Color } from 'three';
 import { type COMMaterial } from '../../com/types';
 
@@ -145,6 +145,7 @@ jest.mock('three', () => {
             return this;
         }),
         Color: jest.fn(function () {
+            this.set = jest.fn();
             return this;
         }),
     }
@@ -152,11 +153,13 @@ jest.mock('three', () => {
 
 jest.mock('../../com/Communication.ts', () => {
     return {
-        get: jest.fn(() => {
-            return {
-                PerformAction: jest.fn(),
-            }
-        }),
+        DIVECommunication: {
+            get: jest.fn(() => {
+                return {
+                    PerformAction: jest.fn(),
+                }
+            }),
+        },
     }
 });
 
@@ -192,11 +195,11 @@ const gltf = {
 
 jest.spyOn(DIVECommunication, 'get').mockReturnValue({ PerformAction: jest.fn() } as unknown as DIVECommunication);
 
-let model: Model;
+let model: DIVEModel;
 
 describe('dive/model/DIVEModel', () => {
     beforeEach(() => {
-        model = new Model();
+        model = new DIVEModel();
     });
 
     afterEach(() => {

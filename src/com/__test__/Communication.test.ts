@@ -1,5 +1,4 @@
-import DIVECommunication from '../Communication';
-import '..';
+import { DIVECommunication } from '../Communication';
 import '../types';
 import '../actions';
 import '../actions/camera/movecamera';
@@ -22,12 +21,12 @@ import '../actions/scene/updatescene';
 import '../actions/toolbox/select/setgizmomode';
 import '../actions/toolbox/transform/setgizmovisible';
 import '../actions/camera/getcameratransform';
-import type DIVEScene from '../../scene/Scene';
+import type { DIVEScene } from '../../scene/Scene';
 import type DIVEToolbox from '../../toolbox/Toolbox';
 import type DIVEOrbitControls from '../../controls/OrbitControls';
 import { type DIVERenderer } from '../../renderer/Renderer';
-import { type COMLight, type COMModel, type COMPov } from '../types';
-import { type Object3D } from 'three';
+import { type COMEntity, type COMEntityType, type COMLight, type COMModel, type COMPov } from '../types';
+import { type DIVESceneObject } from '../../types';
 
 jest.mock('three/src/math/MathUtils', () => {
     return {
@@ -68,25 +67,29 @@ const mockScene = {
     UpdateSceneObject: jest.fn(),
     DeleteSceneObject: jest.fn(),
     PlaceOnFloor: jest.fn(),
-    GetSceneObject: jest.fn(),
+    GetSceneObject: jest.fn().mockReturnValue({
+        attach: jest.fn(),
+        DropIt: jest.fn(),
+    }),
     background: {
         getHexString: jest.fn().mockReturnValue('ffffff'),
     },
     Root: {
-        Floor: {
-            isFloor: true,
-            visible: true,
-            material: {
-                color: {
-                    getHexString: jest.fn().mockReturnValue('ffffff'),
-                },
+        attach: jest.fn(),
+    },
+    Floor: {
+        isFloor: true,
+        visible: true,
+        material: {
+            color: {
+                getHexString: jest.fn().mockReturnValue('ffffff'),
             },
-            SetVisibility: jest.fn(),
-            SetColor: jest.fn(),
         },
-        Grid: {
-            SetVisibility: jest.fn(),
-        },
+        SetVisibility: jest.fn(),
+        SetColor: jest.fn(),
+    },
+    Grid: {
+        SetVisibility: jest.fn(),
     },
     ComputeSceneBB: jest.fn(),
 } as unknown as DIVEScene;
@@ -350,9 +353,7 @@ describe('dive/communication/DIVECommunication', () => {
 
         testCom.PerformAction('ADD_OBJECT', payload);
 
-        const placeSpy = jest.spyOn(mockScene, 'GetSceneObject').mockReturnValue({
-            DropIt: jest.fn(),
-        } as unknown as Object3D);
+        const placeSpy = jest.spyOn(mockScene, 'GetSceneObject');
 
         const successPlace = testCom.PerformAction('DROP_IT', payload);
         expect(successPlace).toBe(true);
@@ -369,9 +370,7 @@ describe('dive/communication/DIVECommunication', () => {
 
             uri: "https://threejs.org/examples/models/gltf/LittlestTokyo.glb",
         };
-        const placeSpy = jest.spyOn(mockScene, 'GetSceneObject').mockReturnValue({
-            DropIt: jest.fn(),
-        } as unknown as Object3D);
+        const placeSpy = jest.spyOn(mockScene, 'GetSceneObject');
 
         const successPlace = testCom.PerformAction('DROP_IT', payload);
         expect(successPlace).toBe(false);
@@ -400,7 +399,7 @@ describe('dive/communication/DIVECommunication', () => {
 
     it('should perform action PLACE_ON_FLOOR without existing model', () => {
         const payload = {
-            entityType: "model",
+            entityType: "model" as COMEntityType,
             id: "model",
             position: { x: 0, y: 0, z: 0 },
             rotation: { x: 0, y: 0, z: 0 },
@@ -525,6 +524,7 @@ describe('dive/communication/DIVECommunication', () => {
                 id: "pov",
                 position: { x: 0, y: 0, z: 0 },
                 target: { x: 0, y: 0, z: 0 },
+                parent: null,
             }],
             floorColor: "#ffffff",
             floorEnabled: true,
@@ -534,6 +534,7 @@ describe('dive/communication/DIVECommunication', () => {
                 type: "ambient",
                 intensity: 0.5,
                 color: 'white',
+                parent: null,
             }],
             mediaItem: null,
             name: undefined,
@@ -543,7 +544,7 @@ describe('dive/communication/DIVECommunication', () => {
                 position: { x: 0, y: 0, z: 0 },
                 rotation: { x: 0, y: 0, z: 0 },
                 scale: { x: 0.01, y: 0.01, z: 0.01 },
-
+                parent: null,
                 uri: "https://threejs.org/examples/models/gltf/LittlestTokyo.glb",
             }],
             spotmarks: [],
@@ -575,7 +576,7 @@ describe('dive/communication/DIVECommunication', () => {
         expect(Array.from(successWithoutIds.values())).toStrictEqual([]);
 
         const successWithIds = testCom.PerformAction('GET_OBJECTS', { ids: ['test1'] });
-        expect(Array.from(successWithIds.values())).toStrictEqual([{ entityType: "pov", id: "test1", position: { x: 0, y: 0, z: 0 }, target: { x: 0, y: 0, z: 0 } }]);
+        expect(Array.from(successWithIds.values())).toStrictEqual([{ entityType: "pov", id: "test1", position: { x: 0, y: 0, z: 0 }, target: { x: 0, y: 0, z: 0 }, parent: null }]);
     });
 
     it('should perform action SELECT_OBJECT', () => {
@@ -594,11 +595,11 @@ describe('dive/communication/DIVECommunication', () => {
         const success1 = testCom.PerformAction('SELECT_OBJECT', { id: 'test0' });
         expect(success1).toBe(false);
 
-        jest.spyOn(mockScene, 'GetSceneObject').mockReturnValueOnce({} as unknown as Object3D);
+        jest.spyOn(mockScene, 'GetSceneObject').mockReturnValueOnce({} as unknown as DIVESceneObject);
         const success2 = testCom.PerformAction('SELECT_OBJECT', { id: 'test0' });
         expect(success2).toBe(false);
 
-        jest.spyOn(mockScene, 'GetSceneObject').mockReturnValueOnce({ isSelectable: true } as unknown as Object3D);
+        jest.spyOn(mockScene, 'GetSceneObject').mockReturnValueOnce({ isSelectable: true } as unknown as DIVESceneObject);
         const success3 = testCom.PerformAction('SELECT_OBJECT', { id: 'test0' });
         expect(success3).toBe(true);
     });
@@ -619,11 +620,11 @@ describe('dive/communication/DIVECommunication', () => {
         const success1 = testCom.PerformAction('DESELECT_OBJECT', { id: 'test0' });
         expect(success1).toBe(false);
 
-        jest.spyOn(mockScene, 'GetSceneObject').mockReturnValueOnce({} as unknown as Object3D);
+        jest.spyOn(mockScene, 'GetSceneObject').mockReturnValueOnce({} as unknown as DIVESceneObject);
         const success2 = testCom.PerformAction('DESELECT_OBJECT', { id: 'test0' });
         expect(success2).toBe(false);
 
-        jest.spyOn(mockScene, 'GetSceneObject').mockReturnValueOnce({ isSelectable: true } as unknown as Object3D);
+        jest.spyOn(mockScene, 'GetSceneObject').mockReturnValueOnce({ isSelectable: true } as unknown as DIVESceneObject);
         const success3 = testCom.PerformAction('DESELECT_OBJECT', { id: 'test0' });
         expect(success3).toBe(true);
     });
@@ -749,5 +750,84 @@ describe('dive/communication/DIVECommunication', () => {
             dataUri: '',
         });
         expect(success1).toBe(true);
+    });
+
+    it('should perform action SET_PARENT', () => {
+        const object = {
+            id: "object",
+        } as COMEntity;
+        testCom.PerformAction('ADD_OBJECT', object);
+
+        const objectNotRegistered = {
+            id: "objectNotRegistered",
+        } as COMEntity;
+
+        const parent0 = {
+            id: "parent0",
+        } as COMEntity;
+        testCom.PerformAction('ADD_OBJECT', parent0);
+
+        const parent1 = {
+            id: "parent1",
+        } as COMEntity;
+        testCom.PerformAction('ADD_OBJECT', parent1);
+
+        const parentNotRegistered = {
+            id: "parentNotRegistered",
+        } as COMEntity;
+
+        const attachNotRegisteredObject = testCom.PerformAction('SET_PARENT', {
+            object: objectNotRegistered,
+            parent: null,
+        });
+        expect(attachNotRegisteredObject).toBe(false);
+
+        jest.spyOn(mockScene, 'GetSceneObject').mockImplementationOnce(() => {
+            return undefined;
+        })
+        const attachNonSceneObject = testCom.PerformAction('SET_PARENT', {
+            object: object,
+            parent: null,
+        });
+        expect(attachNonSceneObject).toBe(false);
+
+        const attachToNull = testCom.PerformAction('SET_PARENT', {
+            object: object,
+            parent: null,
+        });
+        expect(attachToNull).toBe(true);
+
+        const attachToItself = testCom.PerformAction('SET_PARENT', {
+            object: object,
+            parent: object,
+        });
+        expect(attachToItself).toBe(false);
+
+        const attachToNotRegsiteredParent = testCom.PerformAction('SET_PARENT', {
+            object: object,
+            parent: parentNotRegistered,
+        });
+        expect(attachToNotRegsiteredParent).toBe(true);
+
+        jest.spyOn(mockScene, 'GetSceneObject').mockImplementationOnce(() => {
+            return {
+                DropIt: jest.fn(),
+                attach: jest.fn(),
+            } as unknown as DIVESceneObject;
+        }).mockImplementationOnce(() => {
+            return undefined;
+        });
+
+        const attachtoNonSceneParent = testCom.PerformAction('SET_PARENT', {
+            object: object,
+            parent: parent1,
+        });
+        expect(attachtoNonSceneParent).toBe(true);
+
+        const attachToValidParent = testCom.PerformAction('SET_PARENT', {
+            object: object,
+            parent: parent1,
+        });
+        expect(attachToValidParent).toBe(true);
     });
 });

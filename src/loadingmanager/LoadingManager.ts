@@ -6,7 +6,7 @@ import { DRACOLoader, GLTF, GLTFLoader } from "three/examples/jsm/Addons.js";
  * @module
  */
 
-export default class DIVELoadingManager {
+export class DIVELoadingManager {
     private gltfloader: GLTFLoader;
     private dracoloader: DRACOLoader;
     // ... maybe extend with other loaders later

@@ -1,5 +1,5 @@
 import DIVETransformTool, { isTransformTool } from '../TransformTool';
-import DIVEScene from '../../../scene/Scene';
+import { DIVEScene } from '../../../scene/Scene';
 import DIVEOrbitControls from '../../../controls/OrbitControls';
 import DIVEPerspectiveCamera from '../../../camera/PerspectiveCamera';
 import { DIVERenderer } from '../../../renderer/Renderer';
@@ -47,15 +47,17 @@ jest.mock('../../../controls/OrbitControls', () => {
 });
 
 jest.mock('../../../scene/Scene', () => {
-    return jest.fn(function () {
-        this.add = jest.fn();
-        this.remove = jest.fn();
-        this.Root = {
-            children: [],
-        }
-        this.children = [];
-        return this;
-    });
+    return {
+        DIVEScene: jest.fn(function () {
+            this.add = jest.fn();
+            this.remove = jest.fn();
+            this.Root = {
+                children: [],
+            }
+            this.children = [];
+            return this;
+        })
+    };
 });
 
 jest.mock('../../../animation/AnimationSystem', () => {

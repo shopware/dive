@@ -1,5 +1,5 @@
 import { MeshStandardMaterial } from 'three';
-import DIVEFloor from '../Floor';
+import { DIVEFloor } from '../Floor';
 
 describe('dive/primitive/floor/DIVEFloor', () => {
     it('should instantiate', () => {
