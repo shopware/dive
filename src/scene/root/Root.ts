@@ -234,15 +234,7 @@ export class DIVERoot extends Object3D {
             return;
         }
 
-        // _______________________________________________________
-        // this is only neccessary due to using the old TransformControls instead of the new DIVEGizmo
-        const scene = this.findScene(sceneObject);
-        scene.children.find((object) => {
-            if ('isTransformControls' in object) {
-                (object as TransformControls).detach();
-            }
-        });
-        // _______________________________________________________
+        this.detachTransformControls(sceneObject);
 
         this.remove(sceneObject);
     }
@@ -254,15 +246,7 @@ export class DIVERoot extends Object3D {
             return;
         }
 
-        // _______________________________________________________
-        // this is only neccessary due to using the old TransformControls instead of the new DIVEGizmo
-        const scene = this.findScene(sceneObject);
-        scene.children.find((object) => {
-            if ('isTransformControls' in object) {
-                (object as TransformControls).detach();
-            }
-        });
-        // _______________________________________________________
+        this.detachTransformControls(sceneObject);
 
         this.remove(sceneObject);
     }
@@ -274,15 +258,7 @@ export class DIVERoot extends Object3D {
             return;
         }
 
-        // _______________________________________________________
-        // this is only neccessary due to using the old TransformControls instead of the new DIVEGizmo
-        const scene = this.findScene(sceneObject);
-        scene.children.find((object) => {
-            if ('isTransformControls' in object) {
-                (object as TransformControls).detach();
-            }
-        });
-        // _______________________________________________________
+        this.detachTransformControls(sceneObject);
 
         this.remove(sceneObject);
     }
@@ -294,15 +270,7 @@ export class DIVERoot extends Object3D {
             return;
         }
 
-        // _______________________________________________________
-        // this is only neccessary due to using the old TransformControls instead of the new DIVEGizmo
-        const scene = this.findScene(sceneObject);
-        scene.children.find((object) => {
-            if ('isTransformControls' in object) {
-                (object as TransformControls).detach();
-            }
-        });
-        // _______________________________________________________
+        this.detachTransformControls(sceneObject);
 
         for (let i = sceneObject.children.length - 1; i >= 0; i--) {
             this.attach(sceneObject.children[i]);
@@ -337,6 +305,15 @@ export class DIVERoot extends Object3D {
             // attach to root if no parent is found
             this.attach(sceneObject);
         }
+    }
+
+    private detachTransformControls(object: Object3D): void {
+        // this is only neccessary due to using the old TransformControls instead of the new DIVEGizmo
+        this.findScene(object).children.find((object) => {
+            if ('isTransformControls' in object) {
+                (object as TransformControls).detach();
+            }
+        });
     }
 
     private findScene(object: Object3D): DIVEScene {
