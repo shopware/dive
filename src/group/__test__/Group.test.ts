@@ -56,6 +56,9 @@ describe('dive/group/DIVEGroup', () => {
 
         expect(() => group.attach(mockObject)).not.toThrow();
         expect(group.children).toContain(mockObject);
+
+        jest.spyOn(DIVECommunication, 'get').mockReturnValueOnce(undefined);
+        expect(() => group.attach(mockObject)).not.toThrow();
     });
 
     it('should remove an object', () => {
@@ -63,5 +66,35 @@ describe('dive/group/DIVEGroup', () => {
 
         expect(() => group.remove(mockObject)).not.toThrow();
         expect(group.children).not.toContain(mockObject);
+
+        jest.spyOn(DIVECommunication, 'get').mockReturnValueOnce(undefined);
+        expect(() => group.remove(mockObject)).not.toThrow();
+    });
+
+    it('should onMove', () => {
+        group.userData.id = 'something';
+
+        expect(() => group.onMove()).not.toThrow();
+
+        jest.spyOn(DIVECommunication, 'get').mockReturnValueOnce(undefined);
+        expect(() => group.onMove()).not.toThrow();
+    });
+
+    it('should onSelect', () => {
+        group.userData.id = 'something';
+
+        expect(() => group.onSelect()).not.toThrow();
+
+        jest.spyOn(DIVECommunication, 'get').mockReturnValueOnce(undefined);
+        expect(() => group.onSelect()).not.toThrow();
+    });
+
+    it('should onDeselect', () => {
+        group.userData.id = 'something';
+
+        expect(() => group.onDeselect()).not.toThrow();
+
+        jest.spyOn(DIVECommunication, 'get').mockReturnValueOnce(undefined);
+        expect(() => group.onDeselect()).not.toThrow();
     });
 });

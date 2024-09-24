@@ -2,6 +2,7 @@ import { Box3, BoxGeometry, Mesh, MeshBasicMaterial, Object3D, Vector3, type Vec
 import { type DIVEMoveable } from "../interface/Moveable";
 import { type DIVESelectable } from "../interface/Selectable";
 import { type DIVESceneObject } from "../types";
+import { DIVECommunication } from "../com/Communication";
 
 export class DIVEGroup extends Object3D implements DIVESelectable, DIVEMoveable {
     readonly isDIVEGroup: true = true;
@@ -89,6 +90,8 @@ export class DIVEGroup extends Object3D implements DIVESelectable, DIVEMoveable 
             if (child.uuid === this._boxMesh.uuid) return;
             child.position.copy(this.worldToLocal(childrensWorldPositions[i]));
         });
+
+        DIVECommunication.get(this.userData.id)?.PerformAction('UPDATE_OBJECT', { id: this.userData.id, position: this.position });
     }
 
     /**
@@ -107,5 +110,17 @@ export class DIVEGroup extends Object3D implements DIVESelectable, DIVEMoveable 
 
     private updateBoxMesh(): void {
         this._boxMesh.geometry = new BoxGeometry(this._bb.max.x - this._bb.min.x, this._bb.max.y - this._bb.min.y, this._bb.max.z - this._bb.min.z);
+    }
+
+    public onMove(): void {
+        DIVECommunication.get(this.userData.id)?.PerformAction('UPDATE_OBJECT', { id: this.userData.id, position: this.position, rotation: this.rotation, scale: this.scale });
+    }
+
+    public onSelect(): void {
+        DIVECommunication.get(this.userData.id)?.PerformAction('SELECT_OBJECT', { id: this.userData.id });
+    }
+
+    public onDeselect(): void {
+        DIVECommunication.get(this.userData.id)?.PerformAction('DESELECT_OBJECT', { id: this.userData.id });
     }
 }
