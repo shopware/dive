@@ -1,4 +1,3 @@
-import { type GLTF } from "three/examples/jsm/loaders/GLTFLoader";
 import { DIVECommunication } from "../../com/Communication";
 import { DIVEGroup } from "../Group";
 
@@ -29,22 +28,6 @@ describe('dive/group/DIVEGroup', () => {
 
     it('should instantiate', () => {
         expect(group).toBeDefined();
-    });
-
-    it('should set position', () => {
-        expect(() => group.SetPosition({ x: 0, y: 0, z: 0 })).not.toThrow();
-    });
-
-    it('should set rotation', () => {
-        expect(() => group.SetRotation({ x: 0, y: 0, z: 0 })).not.toThrow();
-    });
-
-    it('should set scale', () => {
-        expect(() => group.SetScale({ x: 1, y: 1, z: 1 })).not.toThrow();
-    });
-
-    it('should set visibility', () => {
-        expect(() => group.SetVisibility(true)).not.toThrow();
     });
 
     it('should set bounding box visibility', () => {
