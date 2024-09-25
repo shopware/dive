@@ -84,18 +84,14 @@ export class DIVEGroup extends DIVENode {
     }
 
     private updateBoxMesh(): void {
+        this._boxMesh.quaternion.copy(this.quaternion.clone().invert());
+        this._boxMesh.scale.set(1 / this.scale.x, 1 / this.scale.y, 1 / this.scale.z);
         this._boxMesh.geometry = new BoxGeometry(this._boundingBox.max.x - this._boundingBox.min.x, this._boundingBox.max.y - this._boundingBox.min.y, this._boundingBox.max.z - this._boundingBox.min.z);
     }
 
     public onMove(): void {
-        DIVECommunication.get(this.userData.id)?.PerformAction('UPDATE_OBJECT', { id: this.userData.id, position: this.position, rotation: this.rotation, scale: this.scale });
-    }
-
-    public onSelect(): void {
-        DIVECommunication.get(this.userData.id)?.PerformAction('SELECT_OBJECT', { id: this.userData.id });
-    }
-
-    public onDeselect(): void {
-        DIVECommunication.get(this.userData.id)?.PerformAction('DESELECT_OBJECT', { id: this.userData.id });
+        super.onMove();
+        this.updateBB();
+        this.updateBoxMesh();
     }
 }
