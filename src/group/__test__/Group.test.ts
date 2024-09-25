@@ -80,4 +80,13 @@ describe('dive/group/DIVEGroup', () => {
         jest.spyOn(DIVECommunication, 'get').mockReturnValueOnce(undefined);
         expect(() => group.onDeselect()).not.toThrow();
     });
+
+    it('should onMove', () => {
+        group.userData.id = 'something';
+
+        expect(() => group.onMove()).not.toThrow();
+
+        jest.spyOn(DIVECommunication, 'get').mockReturnValueOnce(undefined);
+        expect(() => group.onMove()).not.toThrow();
+    });
 });
