@@ -1,15 +1,11 @@
-import { Box3, BoxGeometry, Mesh, MeshBasicMaterial, Object3D, Vector3, type Vector3Like } from "three";
-import { type DIVEMoveable } from "../interface/Moveable";
-import { type DIVESelectable } from "../interface/Selectable";
-import { type DIVESceneObject } from "../types";
+import { BoxGeometry, Mesh, MeshBasicMaterial, Vector3 } from "three";
+import { DIVENode } from "../node/Node";
 import { DIVECommunication } from "../com/Communication";
+import { type DIVESceneObject } from "../types";
 
-export class DIVEGroup extends Object3D implements DIVESelectable, DIVEMoveable {
+export class DIVEGroup extends DIVENode {
     readonly isDIVEGroup: true = true;
-    readonly isSelectable: true = true;
-    readonly isMoveable: true = true;
 
-    private _bb: Box3;
     private _boxMesh: Mesh;
 
     constructor() {
@@ -17,30 +13,9 @@ export class DIVEGroup extends Object3D implements DIVESelectable, DIVEMoveable 
 
         this.name = 'DIVEGroup';
 
-        this._bb = new Box3();
-
         this._boxMesh = new Mesh(new BoxGeometry(0, 0, 0), new MeshBasicMaterial({ color: 0xff0000, wireframe: true }));
         this._boxMesh.visible = false;
         this.add(this._boxMesh);
-    }
-
-    public SetPosition(position: Vector3Like): void {
-        this.position.set(position.x, position.y, position.z);
-    }
-
-    public SetRotation(rotation: Vector3Like): void {
-        this.rotation.setFromVector3(new Vector3(rotation.x, rotation.y, rotation.z));
-    }
-
-    public SetScale(scale: Vector3Like): void {
-        this.scale.set(scale.x, scale.y, scale.z);
-    }
-
-    public SetVisibility(visible: boolean): void {
-        this.traverse((child) => {
-            if (child.uuid === this._boxMesh.uuid) return;
-            child.visible = visible;
-        });
     }
 
     public SetBoundingBoxVisibility(visible: boolean): void {
@@ -99,28 +74,24 @@ export class DIVEGroup extends Object3D implements DIVESelectable, DIVEMoveable 
      * @returns {Vector3} The new center of the bounding box.
      */
     private updateBB(): Vector3 {
-        this._bb.makeEmpty();
+        this._boundingBox.makeEmpty();
         this.children.forEach((child) => {
             if (child.uuid === this._boxMesh.uuid) return;
-            this._bb.expandByObject(child);
+            this._boundingBox.expandByObject(child);
         });
 
-        return this._bb.getCenter(new Vector3());
+        return this._boundingBox.getCenter(new Vector3());
     }
 
     private updateBoxMesh(): void {
-        this._boxMesh.geometry = new BoxGeometry(this._bb.max.x - this._bb.min.x, this._bb.max.y - this._bb.min.y, this._bb.max.z - this._bb.min.z);
+        this._boxMesh.quaternion.copy(this.quaternion.clone().invert());
+        this._boxMesh.scale.set(1 / this.scale.x, 1 / this.scale.y, 1 / this.scale.z);
+        this._boxMesh.geometry = new BoxGeometry(this._boundingBox.max.x - this._boundingBox.min.x, this._boundingBox.max.y - this._boundingBox.min.y, this._boundingBox.max.z - this._boundingBox.min.z);
     }
 
     public onMove(): void {
-        DIVECommunication.get(this.userData.id)?.PerformAction('UPDATE_OBJECT', { id: this.userData.id, position: this.position, rotation: this.rotation, scale: this.scale });
-    }
-
-    public onSelect(): void {
-        DIVECommunication.get(this.userData.id)?.PerformAction('SELECT_OBJECT', { id: this.userData.id });
-    }
-
-    public onDeselect(): void {
-        DIVECommunication.get(this.userData.id)?.PerformAction('DESELECT_OBJECT', { id: this.userData.id });
+        super.onMove();
+        this.updateBB();
+        this.updateBoxMesh();
     }
 }

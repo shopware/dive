@@ -214,34 +214,6 @@ describe('dive/model/DIVEModel', () => {
         expect(() => model.SetModel(gltf)).not.toThrow();
     });
 
-    it('should set position', () => {
-        expect(() => model.SetPosition({ x: 0, y: 0, z: 0 })).not.toThrow();
-    });
-
-    it('should set rotation', () => {
-        expect(() => model.SetRotation({ x: 0, y: 0, z: 0 })).not.toThrow();
-    });
-
-    it('should set scale', () => {
-        expect(() => model.SetScale({ x: 1, y: 1, z: 1 })).not.toThrow();
-    });
-
-    it('should set visibility', () => {
-        expect(() => model.SetVisibility(true)).not.toThrow();
-    });
-
-    it('should set to world origin', () => {
-        model.userData.id = 'something';
-
-        expect(() => model.SetToWorldOrigin()).not.toThrow();
-        expect(model.position.x).toBe(0);
-        expect(model.position.y).toBe(0);
-        expect(model.position.z).toBe(0);
-
-        jest.spyOn(DIVECommunication, 'get').mockReturnValueOnce(undefined);
-        expect(() => model.SetToWorldOrigin()).not.toThrow();
-    });
-
     it('should place on floor', () => {
         model.userData.id = 'something';
 
@@ -265,7 +237,7 @@ describe('dive/model/DIVEModel', () => {
 
         model.userData.id = 'something';
         model.position.set(0, 4, 0);
-        model['boundingBox'] = {
+        model['_boundingBox'] = {
             min: new Vector3(-size.x / 2, -size.y / 2, -size.z / 2),
             max: new Vector3(size.x / 2, size.y / 2, size.z / 2),
             getCenter: jest.fn(() => {
@@ -313,33 +285,6 @@ describe('dive/model/DIVEModel', () => {
         expect(comMock.PerformAction).toHaveBeenCalledTimes(1);
 
 
-    });
-
-    it('should onMove', () => {
-        model.userData.id = 'something';
-
-        expect(() => model.onMove()).not.toThrow();
-
-        jest.spyOn(DIVECommunication, 'get').mockReturnValueOnce(undefined);
-        expect(() => model.onMove()).not.toThrow();
-    });
-
-    it('should onSelect', () => {
-        model.userData.id = 'something';
-
-        expect(() => model.onSelect()).not.toThrow();
-
-        jest.spyOn(DIVECommunication, 'get').mockReturnValueOnce(undefined);
-        expect(() => model.onSelect()).not.toThrow();
-    });
-
-    it('should onDeselect', () => {
-        model.userData.id = 'something';
-
-        expect(() => model.onDeselect()).not.toThrow();
-
-        jest.spyOn(DIVECommunication, 'get').mockReturnValueOnce(undefined);
-        expect(() => model.onDeselect()).not.toThrow();
     });
 
     it('should set material', () => {

@@ -213,34 +213,6 @@ describe('dive/primitive/DIVEPrimitive', () => {
         expect(() => primitive.SetGeometry(bufferGeometry)).not.toThrow();
     });
 
-    it('should set position', () => {
-        expect(() => primitive.SetPosition({ x: 0, y: 0, z: 0 })).not.toThrow();
-    });
-
-    it('should set rotation', () => {
-        expect(() => primitive.SetRotation({ x: 0, y: 0, z: 0 })).not.toThrow();
-    });
-
-    it('should set scale', () => {
-        expect(() => primitive.SetScale({ x: 1, y: 1, z: 1 })).not.toThrow();
-    });
-
-    it('should set visibility', () => {
-        expect(() => primitive.SetVisibility(true)).not.toThrow();
-    });
-
-    it('should set to world origin', () => {
-        primitive.userData.id = 'something';
-
-        expect(() => primitive.SetToWorldOrigin()).not.toThrow();
-        expect(primitive.position.x).toBe(0);
-        expect(primitive.position.y).toBe(0);
-        expect(primitive.position.z).toBe(0);
-
-        jest.spyOn(DIVECommunication, 'get').mockReturnValueOnce(undefined);
-        expect(() => primitive.SetToWorldOrigin()).not.toThrow();
-    });
-
     it('should place on floor', () => {
         primitive.userData.id = 'something';
 
@@ -312,33 +284,6 @@ describe('dive/primitive/DIVEPrimitive', () => {
         expect(comMock.PerformAction).toHaveBeenCalledTimes(1);
 
 
-    });
-
-    it('should onMove', () => {
-        primitive.userData.id = 'something';
-
-        expect(() => primitive.onMove()).not.toThrow();
-
-        jest.spyOn(DIVECommunication, 'get').mockReturnValueOnce(undefined);
-        expect(() => primitive.onMove()).not.toThrow();
-    });
-
-    it('should onSelect', () => {
-        primitive.userData.id = 'something';
-
-        expect(() => primitive.onSelect()).not.toThrow();
-
-        jest.spyOn(DIVECommunication, 'get').mockReturnValueOnce(undefined);
-        expect(() => primitive.onSelect()).not.toThrow();
-    });
-
-    it('should onDeselect', () => {
-        primitive.userData.id = 'something';
-
-        expect(() => primitive.onDeselect()).not.toThrow();
-
-        jest.spyOn(DIVECommunication, 'get').mockReturnValueOnce(undefined);
-        expect(() => primitive.onDeselect()).not.toThrow();
     });
 
     it('should set geometry', () => {
