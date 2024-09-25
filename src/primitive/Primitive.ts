@@ -1,10 +1,8 @@
-import { Box3, BoxGeometry, BufferGeometry, Color, ConeGeometry, CylinderGeometry, Mesh, MeshStandardMaterial, Object3D, Raycaster, SphereGeometry, Vector3, Vector3Like } from 'three';
+import { BoxGeometry, BufferGeometry, Color, ConeGeometry, CylinderGeometry, Mesh, MeshStandardMaterial, Raycaster, SphereGeometry, Vector3 } from 'three';
 import { DIVECommunication } from '../com/Communication';
 import { PRODUCT_LAYER_MASK } from '../constant/VisibilityLayerMask';
 import { findSceneRecursive } from '../helper/findSceneRecursive/findSceneRecursive';
-import { type DIVESelectable } from '../interface/Selectable';
-import { type DIVEMoveable } from '../interface/Moveable';
-import { type TransformControls } from 'three/examples/jsm/controls/TransformControls';
+import { DIVENode } from '../node/Node';
 import { type COMGeometry, type COMMaterial } from '../com/types';
 
 /**
@@ -17,20 +15,13 @@ import { type COMGeometry, type COMMaterial } from '../com/types';
  * @module
  */
 
-export class DIVEPrimitive extends Object3D implements DIVESelectable, DIVEMoveable {
+export class DIVEPrimitive extends DIVENode {
     readonly isDIVEPrimitive: true = true;
-    readonly isSelectable: true = true;
-    readonly isMoveable: true = true;
-
-    public gizmo: TransformControls | null = null;
 
     private _mesh: Mesh;
-    private _boundingBox: Box3;
 
     constructor() {
         super();
-
-        this.layers.mask = PRODUCT_LAYER_MASK;
 
         this._mesh = new Mesh();
         this._mesh.layers.mask = PRODUCT_LAYER_MASK;
@@ -38,31 +29,11 @@ export class DIVEPrimitive extends Object3D implements DIVESelectable, DIVEMovea
         this._mesh.receiveShadow = true;
         this._mesh.material = new MeshStandardMaterial();
         this.add(this._mesh);
-
-        this._boundingBox = new Box3();
     }
 
     public SetGeometry(geometry: COMGeometry): void {
         this._mesh.geometry = this.assembleGeometry(geometry);
         this._boundingBox.setFromObject(this._mesh);
-    }
-
-    public SetPosition(position: Vector3Like): void {
-        this.position.set(position.x, position.y, position.z);
-    }
-
-    public SetRotation(rotation: Vector3Like): void {
-        this.rotation.setFromVector3(new Vector3(rotation.x, rotation.y, rotation.z));
-    }
-
-    public SetScale(scale: Vector3Like): void {
-        this.scale.set(scale.x, scale.y, scale.z);
-    }
-
-    public SetVisibility(visible: boolean): void {
-        this.traverse((child) => {
-            child.visible = visible;
-        });
     }
 
     public SetMaterial(material: Partial<COMMaterial>): void {
@@ -121,11 +92,6 @@ export class DIVEPrimitive extends Object3D implements DIVESelectable, DIVEMovea
         if (this._mesh) this._mesh.material = primitiveMaterial;
     }
 
-    public SetToWorldOrigin(): void {
-        this.position.set(0, 0, 0);
-        DIVECommunication.get(this.userData.id)?.PerformAction('UPDATE_OBJECT', { id: this.userData.id, position: this.position, rotation: this.rotation, scale: this.scale });
-    }
-
     public PlaceOnFloor(): void {
         this.position.y = -this._boundingBox.min.y * this.scale.y;
         DIVECommunication.get(this.userData.id)?.PerformAction('UPDATE_OBJECT', { id: this.userData.id, position: this.position, rotation: this.rotation, scale: this.scale });
@@ -162,18 +128,6 @@ export class DIVEPrimitive extends Object3D implements DIVESelectable, DIVEMovea
             if (this.position.y === oldPos.y) return;
             DIVECommunication.get(this.userData.id)?.PerformAction('UPDATE_OBJECT', { id: this.userData.id, position: this.position, rotation: this.rotation, scale: this.scale });
         }
-    }
-
-    public onMove(): void {
-        DIVECommunication.get(this.userData.id)?.PerformAction('UPDATE_OBJECT', { id: this.userData.id, position: this.position, rotation: this.rotation, scale: this.scale });
-    }
-
-    public onSelect(): void {
-        DIVECommunication.get(this.userData.id)?.PerformAction('SELECT_OBJECT', { id: this.userData.id });
-    }
-
-    public onDeselect(): void {
-        DIVECommunication.get(this.userData.id)?.PerformAction('DESELECT_OBJECT', { id: this.userData.id });
     }
 
     private assembleGeometry(geometry: COMGeometry): BufferGeometry {
