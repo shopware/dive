@@ -28,7 +28,7 @@ export class DIVENode extends Object3D implements DIVESelectable, DIVEMoveable {
     }
 
     public SetRotation(rotation: Vector3Like): void {
-        this.rotation.setFromVector3(new Vector3(rotation.x, rotation.y, rotation.z));
+        this.rotation.set(rotation.x, rotation.y, rotation.z);
     }
 
     public SetScale(scale: Vector3Like): void {
