@@ -1,9 +1,7 @@
 import { DIVENode } from '../Node';
 import { DIVECommunication } from '../../com/Communication';
-import { GLTF } from 'three/examples/jsm/Addons';
-import { DIVEScene } from '../../scene/Scene';
-import { Vector3, Box3, Mesh, MeshStandardMaterial, type Texture, Color } from 'three';
-import { type COMMaterial } from '../../com/types';
+import { GLTF } from 'three/examples/jsm/loaders/GLTFLoader';
+import { Vector3, Box3, Mesh, Color, Euler } from 'three';
 
 const intersectObjectsMock = jest.fn();
 
@@ -52,6 +50,10 @@ jest.mock('three', () => {
             };
             return this;
         }),
+        Euler: jest.fn(function () {
+            this.set = jest.fn();
+            return this;
+        }),
         Object3D: jest.fn(function () {
             this.clear = jest.fn();
             this.color = {};
@@ -79,18 +81,8 @@ jest.mock('three', () => {
             }];
             this.userData = {};
             this.position = new Vector3();
-            this.rotation = {
-                x: 0,
-                y: 0,
-                z: 0,
-                setFromVector3: jest.fn(),
-            };
-            this.scale = {
-                x: 1,
-                y: 1,
-                z: 1,
-                set: jest.fn(),
-            };
+            this.rotation = new Euler();
+            this.scale = new Vector3(1, 1, 1);
             this.localToWorld = (vec3: Vector3) => {
                 return vec3;
             };
@@ -162,36 +154,6 @@ jest.mock('../../com/Communication.ts', () => {
         },
     }
 });
-
-const gltf = {
-    scene: {
-        isMesh: true,
-        isObject3D: true,
-        parent: null,
-        dispatchEvent: jest.fn(),
-        layers: {
-            mask: 0,
-        },
-        material: {},
-        updateWorldMatrix: jest.fn(),
-        children: [
-            {
-                castShadow: false,
-                receiveShadow: false,
-                layers: {
-                    mask: 0,
-                },
-                children: [],
-                updateWorldMatrix: jest.fn(),
-                isMesh: true,
-            },
-        ],
-        traverse: function (callback: (object: object) => void) {
-            callback(this);
-        },
-        removeFromParent: jest.fn(),
-    },
-} as unknown as GLTF;
 
 jest.spyOn(DIVECommunication, 'get').mockReturnValue({ PerformAction: jest.fn() } as unknown as DIVECommunication);
 

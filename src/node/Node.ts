@@ -1,4 +1,4 @@
-import { Box3, Object3D, Vector3, type Vector3Like } from "three";
+import { Box3, Object3D, type Vector3Like } from "three";
 import { PRODUCT_LAYER_MASK } from "../constant/VisibilityLayerMask";
 import { DIVECommunication } from "../com/Communication";
 
@@ -36,9 +36,7 @@ export class DIVENode extends Object3D implements DIVESelectable, DIVEMoveable {
     }
 
     public SetVisibility(visible: boolean): void {
-        this.traverse((child) => {
-            child.visible = visible;
-        });
+        this.visible = visible;
     }
 
     public SetToWorldOrigin(): void {
