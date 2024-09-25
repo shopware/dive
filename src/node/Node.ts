@@ -13,14 +13,14 @@ export class DIVENode extends Object3D implements DIVESelectable, DIVEMoveable {
 
     public gizmo: TransformControls | null = null;
 
-    protected boundingBox: Box3;
+    protected _boundingBox: Box3;
 
     constructor() {
         super();
 
         this.layers.mask = PRODUCT_LAYER_MASK;
 
-        this.boundingBox = new Box3();
+        this._boundingBox = new Box3();
     }
 
     public SetPosition(position: Vector3Like): void {

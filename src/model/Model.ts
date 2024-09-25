@@ -1,11 +1,10 @@
-import { Box3, Mesh, MeshStandardMaterial, Object3D, Raycaster, Vector3, Vector3Like } from 'three';
-import { DIVESelectable } from '../interface/Selectable';
+import { Mesh, MeshStandardMaterial, Raycaster, Vector3 } from 'three';
 import { PRODUCT_LAYER_MASK } from '../constant/VisibilityLayerMask';
-import { DIVEMoveable } from '../interface/Moveable';
 import { DIVECommunication } from '../com/Communication';
-import type { GLTF, TransformControls } from 'three/examples/jsm/Addons.js';
+import type { GLTF } from 'three/examples/jsm/Addons.js';
 import { findSceneRecursive } from '../helper/findSceneRecursive/findSceneRecursive';
 import { type COMMaterial } from '../com/types';
+import { DIVENode } from '../node/Node';
 
 /**
  * A basic model class.
@@ -17,25 +16,11 @@ import { type COMMaterial } from '../com/types';
  * @module
  */
 
-export class DIVEModel extends Object3D implements DIVESelectable, DIVEMoveable {
+export class DIVEModel extends DIVENode {
     readonly isDIVEModel: true = true;
-    readonly isSelectable: true = true;
-    readonly isMoveable: true = true;
-
-    public gizmo: TransformControls | null = null;
-
-    private boundingBox: Box3;
 
     private _mesh: Mesh | null = null;
     private _material: MeshStandardMaterial | null = null;
-
-    constructor() {
-        super();
-
-        this.layers.mask = PRODUCT_LAYER_MASK;
-
-        this.boundingBox = new Box3();
-    }
 
     public SetModel(gltf: GLTF): void {
         this.clear();
@@ -45,7 +30,7 @@ export class DIVEModel extends Object3D implements DIVESelectable, DIVEMoveable 
             child.receiveShadow = true;
 
             child.layers.mask = this.layers.mask;
-            this.boundingBox.expandByObject(child);
+            this._boundingBox.expandByObject(child);
 
             // only search for first mesh for now
             if (!this._mesh && 'isMesh' in child) {
@@ -61,24 +46,6 @@ export class DIVEModel extends Object3D implements DIVESelectable, DIVEMoveable 
         });
 
         this.add(gltf.scene);
-    }
-
-    public SetPosition(position: Vector3Like): void {
-        this.position.set(position.x, position.y, position.z);
-    }
-
-    public SetRotation(rotation: Vector3Like): void {
-        this.rotation.setFromVector3(new Vector3(rotation.x, rotation.y, rotation.z));
-    }
-
-    public SetScale(scale: Vector3Like): void {
-        this.scale.set(scale.x, scale.y, scale.z);
-    }
-
-    public SetVisibility(visible: boolean): void {
-        this.traverse((child) => {
-            child.visible = visible;
-        });
     }
 
     public SetMaterial(material: Partial<COMMaterial>): void {
@@ -142,13 +109,8 @@ export class DIVEModel extends Object3D implements DIVESelectable, DIVEMoveable 
         }
     }
 
-    public SetToWorldOrigin(): void {
-        this.position.set(0, 0, 0);
-        DIVECommunication.get(this.userData.id)?.PerformAction('UPDATE_OBJECT', { id: this.userData.id, position: this.position, rotation: this.rotation, scale: this.scale });
-    }
-
     public PlaceOnFloor(): void {
-        this.position.y = -this.boundingBox.min.y * this.scale.y;
+        this.position.y = -this._boundingBox.min.y * this.scale.y;
         DIVECommunication.get(this.userData.id)?.PerformAction('UPDATE_OBJECT', { id: this.userData.id, position: this.position, rotation: this.rotation, scale: this.scale });
     }
 
@@ -159,8 +121,8 @@ export class DIVEModel extends Object3D implements DIVESelectable, DIVEMoveable 
         }
 
         // calculate the bottom center of the bounding box
-        const bottomY = this.boundingBox.min.y * this.scale.y;
-        const bbBottomCenter = this.localToWorld(this.boundingBox.getCenter(new Vector3()).multiply(this.scale));
+        const bottomY = this._boundingBox.min.y * this.scale.y;
+        const bbBottomCenter = this.localToWorld(this._boundingBox.getCenter(new Vector3()).multiply(this.scale));
         bbBottomCenter.y = bottomY + this.position.y;
 
         // set up raycaster and raycast all scene objects (product layer)
@@ -183,17 +145,5 @@ export class DIVEModel extends Object3D implements DIVESelectable, DIVEMoveable 
             if (this.position.y === oldPos.y) return;
             DIVECommunication.get(this.userData.id)?.PerformAction('UPDATE_OBJECT', { id: this.userData.id, position: this.position, rotation: this.rotation, scale: this.scale });
         }
-    }
-
-    public onMove(): void {
-        DIVECommunication.get(this.userData.id)?.PerformAction('UPDATE_OBJECT', { id: this.userData.id, position: this.position, rotation: this.rotation, scale: this.scale });
-    }
-
-    public onSelect(): void {
-        DIVECommunication.get(this.userData.id)?.PerformAction('SELECT_OBJECT', { id: this.userData.id });
-    }
-
-    public onDeselect(): void {
-        DIVECommunication.get(this.userData.id)?.PerformAction('DESELECT_OBJECT', { id: this.userData.id });
     }
 }
