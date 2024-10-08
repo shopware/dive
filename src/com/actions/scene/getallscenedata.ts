@@ -1,5 +1,5 @@
 import { Vector3Like } from "three";
-import { COMLight, COMModel, COMPov } from "../../types";
+import { COMLight, COMModel, COMPov, COMPrimitive } from "../../types";
 
 type SceneData = {
     name: string,
