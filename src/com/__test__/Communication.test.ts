@@ -25,7 +25,7 @@ import type { DIVEScene } from '../../scene/Scene';
 import type DIVEToolbox from '../../toolbox/Toolbox';
 import type DIVEOrbitControls from '../../controls/OrbitControls';
 import { type DIVERenderer } from '../../renderer/Renderer';
-import { type COMEntity, type COMEntityType, type COMLight, type COMModel, type COMPov } from '../types';
+import { type COMEntity, type COMEntityType, type COMLight, type COMModel, type COMPov, type COMPrimitive } from '../types';
 import { type DIVESceneObject } from '../../types';
 
 jest.mock('three/src/math/MathUtils', () => {
@@ -547,6 +547,7 @@ describe('dive/communication/DIVECommunication', () => {
                 parent: null,
                 uri: "https://threejs.org/examples/models/gltf/LittlestTokyo.glb",
             }],
+            primitives: [],
             spotmarks: [],
             userCamera: {
                 position: { x: 1, y: 2, z: 3 },
