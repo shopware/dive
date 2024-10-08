@@ -239,7 +239,7 @@ export class DIVECommunication {
             lights: Array.from(this.registered.values()).filter((object) => object.entityType === 'light') as COMLight[],
             objects: Array.from(this.registered.values()).filter((object) => object.entityType === 'model') as COMModel[],
             cameras: Array.from(this.registered.values()).filter((object) => object.entityType === 'pov') as COMPov[],
-            primitives: Array.from(this.registered.values()).filter((object) => object.entityType === 'primitives') as COMPrimitive[],
+            primitives: Array.from(this.registered.values()).filter((object) => object.entityType === 'primitive') as COMPrimitive[],
         };
         Object.assign(payload, sceneData);
         return sceneData;
