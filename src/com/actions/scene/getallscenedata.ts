@@ -14,7 +14,8 @@ type SceneData = {
     spotmarks: object[],
     lights: COMLight[],
     objects: COMModel[],
-    cameras: COMPov[],
+    cameras: COMPov[],,
+    primitives: COMPrimitive[];
 };
 
 export default interface GET_ALL_SCENE_DATA {
