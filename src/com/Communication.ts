@@ -12,6 +12,8 @@ import { type DIVEModel } from "../model/Model.ts";
 import { type DIVEMediaCreator } from "../mediacreator/MediaCreator.ts";
 import { type DIVERenderer } from "../renderer/Renderer.ts";
 import { type DIVESelectable } from "../interface/Selectable.ts";
+import { Action } from "./Action.ts";
+import { AddObjectAction } from "./action/AddObject.ts";
 
 type EventListener<Action extends keyof Actions> = (payload: Actions[Action]['PAYLOAD']) => void;
 
@@ -37,13 +39,13 @@ type Unsubscribe = () => boolean;
  * @module
  */
 
-export class DIVECommunication {
+export class DIVECommunication implements DIVECommunication_exposed {
     private static __instances: DIVECommunication[] = [];
 
     public static get(id: string): DIVECommunication | undefined {
         const fromComID = this.__instances.find((instance) => instance.id === id);
         if (fromComID) return fromComID;
-        return this.__instances.find((instance) => Array.from(instance.registered.values()).find((object) => object.id === id));
+        return this.__instances.find((instance) => Array.from(instance._registered.values()).find((object) => object.id === id));
     }
 
     private _id: string;
@@ -51,32 +53,55 @@ export class DIVECommunication {
         return this._id;
     }
 
-    private renderer: DIVERenderer;
-    private scene: DIVEScene;
-    private controller: DIVEOrbitControls;
-    private toolbox: DIVEToolbox;
+    protected _renderer: DIVERenderer;
+    public get renderer(): DIVERenderer {
+        return this._renderer;
+    }
 
-    private _mediaGenerator: DIVEMediaCreator | null;
-    private get mediaGenerator(): DIVEMediaCreator {
+    protected _scene: DIVEScene;
+    public get scene(): DIVEScene {
+        return this._scene;
+    }
+
+    protected _controller: DIVEOrbitControls;
+    public get controller(): DIVEOrbitControls {
+        return this._controller;
+    }
+    protected _toolbox: DIVEToolbox;
+    public get toolbox(): DIVEToolbox {
+        return this._toolbox;
+    }
+
+    protected _mediaGenerator: DIVEMediaCreator | null;
+    public get mediaGenerator(): DIVEMediaCreator {
         if (!this._mediaGenerator) {
             const DIVEMediaCreator = require('../mediacreator/MediaCreator.ts').DIVEMediaCreator as typeof import('../mediacreator/MediaCreator.ts').DIVEMediaCreator;
-            this._mediaGenerator = new DIVEMediaCreator(this.renderer, this.scene, this.controller);
+            this._mediaGenerator = new DIVEMediaCreator(this._renderer, this._scene, this._controller);
         }
         return this._mediaGenerator;
     }
 
-    private registered: Map<string, COMEntity> = new Map();
+    protected _registered: Map<string, COMEntity> = new Map();
+    public get registered(): Map<string, COMEntity> {
+        return this._registered;
+    }
 
     // private listeners: { [key: string]: EventListener[] } = {};
     private listeners: Map<keyof Actions, EventListener<keyof Actions>[]> = new Map();
 
     constructor(renderer: DIVERenderer, scene: DIVEScene, controls: DIVEOrbitControls, toolbox: DIVEToolbox) {
         this._id = generateUUID();
-        this.renderer = renderer;
-        this.scene = scene;
-        this.controller = controls;
-        this.toolbox = toolbox;
+        this._renderer = renderer;
+        this._scene = scene;
+        this._controller = controls;
+        this._toolbox = toolbox;
         this._mediaGenerator = null;
+
+        Object.defineProperty(this, "scene", {
+            get: function () {
+                return this._scene;
+            },
+        });
 
         DIVECommunication.__instances.push(this);
     }
@@ -88,8 +113,16 @@ export class DIVECommunication {
         return true;
     }
 
+    public ExecuteAction(action: Action): Promise<void> {
+        return action.execute();
+    }
+
     public PerformAction<Action extends keyof Actions>(action: Action, payload: Actions[Action]['PAYLOAD']): Actions[Action]['RETURN'] {
         let returnValue: Actions[Action]['RETURN'] = false;
+
+        const addObjectAction = new AddObjectAction(this, {} as COMEntity);
+
+        this.ExecuteAction(addObjectAction)
 
         switch (action) {
             case 'GET_ALL_SCENE_DATA': {
@@ -226,34 +259,34 @@ export class DIVECommunication {
 
     private getAllSceneData(payload: Actions['GET_ALL_SCENE_DATA']['PAYLOAD']): Actions['GET_ALL_SCENE_DATA']['RETURN'] {
         const sceneData = {
-            name: this.scene.name,
+            name: this._scene.name,
             mediaItem: null,
-            backgroundColor: '#' + (this.scene.background as Color).getHexString(),
-            floorEnabled: this.scene.Floor.visible,
-            floorColor: '#' + (this.scene.Floor.material as MeshStandardMaterial).color.getHexString(),
+            backgroundColor: '#' + (this._scene.background as Color).getHexString(),
+            floorEnabled: this._scene.Floor.visible,
+            floorColor: '#' + (this._scene.Floor.material as MeshStandardMaterial).color.getHexString(),
             userCamera: {
-                position: this.controller.object.position.clone(),
-                target: this.controller.target.clone(),
+                position: this._controller.object.position.clone(),
+                target: this._controller.target.clone(),
             },
             spotmarks: [],
-            lights: Array.from(this.registered.values()).filter((object) => object.entityType === 'light') as COMLight[],
-            objects: Array.from(this.registered.values()).filter((object) => object.entityType === 'model') as COMModel[],
-            cameras: Array.from(this.registered.values()).filter((object) => object.entityType === 'pov') as COMPov[],
+            lights: Array.from(this._registered.values()).filter((object) => object.entityType === 'light') as COMLight[],
+            objects: Array.from(this._registered.values()).filter((object) => object.entityType === 'model') as COMModel[],
+            cameras: Array.from(this._registered.values()).filter((object) => object.entityType === 'pov') as COMPov[],
         };
         Object.assign(payload, sceneData);
         return sceneData;
     }
 
     private getAllObjects(payload: Actions['GET_ALL_OBJECTS']['PAYLOAD']): Actions['GET_ALL_OBJECTS']['RETURN'] {
-        Object.assign(payload, this.registered);
-        return this.registered;
+        Object.assign(payload, this._registered);
+        return this._registered;
     }
 
     private getObjects(payload: Actions['GET_OBJECTS']['PAYLOAD']): Actions['GET_OBJECTS']['RETURN'] {
         if (payload.ids.length === 0) return [];
 
         const objects: COMEntity[] = [];
-        this.registered.forEach((object) => {
+        this._registered.forEach((object) => {
             if (!payload.ids.includes(object.id)) return;
             objects.push(object);
         });
@@ -262,25 +295,25 @@ export class DIVECommunication {
     }
 
     private addObject(payload: Actions['ADD_OBJECT']['PAYLOAD']): Actions['ADD_OBJECT']['RETURN'] {
-        if (this.registered.get(payload.id)) return false;
+        if (this._registered.get(payload.id)) return false;
 
         if (payload.parent === undefined) payload.parent = null;
 
-        this.registered.set(payload.id, payload);
+        this._registered.set(payload.id, payload);
 
-        this.scene.AddSceneObject(payload);
+        this._scene.AddSceneObject(payload);
 
         return true;
     }
 
     private updateObject(payload: Actions['UPDATE_OBJECT']['PAYLOAD']): Actions['UPDATE_OBJECT']['RETURN'] {
-        const objectToUpdate = this.registered.get(payload.id);
+        const objectToUpdate = this._registered.get(payload.id);
         if (!objectToUpdate) return false;
 
-        this.registered.set(payload.id, { ...objectToUpdate, ...payload });
+        this._registered.set(payload.id, { ...objectToUpdate, ...payload });
 
-        const updatedObject = this.registered.get(payload.id)!;
-        this.scene.UpdateSceneObject({ ...payload, id: updatedObject.id, entityType: updatedObject.entityType });
+        const updatedObject = this._registered.get(payload.id)!;
+        this._scene.UpdateSceneObject({ ...payload, id: updatedObject.id, entityType: updatedObject.entityType });
 
         Object.assign(payload, updatedObject);
 
@@ -288,29 +321,29 @@ export class DIVECommunication {
     }
 
     private deleteObject(payload: Actions['DELETE_OBJECT']['PAYLOAD']): Actions['DELETE_OBJECT']['RETURN'] {
-        const deletedObject = this.registered.get(payload.id);
+        const deletedObject = this._registered.get(payload.id);
         if (!deletedObject) return false;
 
         // copy object to payload to use later
         Object.assign(payload, deletedObject);
 
-        this.registered.delete(payload.id);
+        this._registered.delete(payload.id);
 
-        this.scene.DeleteSceneObject(deletedObject);
+        this._scene.DeleteSceneObject(deletedObject);
 
         return true;
     }
 
     private selectObject(payload: Actions['SELECT_OBJECT']['PAYLOAD']): Actions['SELECT_OBJECT']['RETURN'] {
-        const object = this.registered.get(payload.id);
+        const object = this._registered.get(payload.id);
         if (!object) return false;
 
-        const sceneObject = this.scene.GetSceneObject(object);
+        const sceneObject = this._scene.GetSceneObject(object);
         if (!sceneObject) return false;
 
         if (!('isSelectable' in sceneObject)) return false;
 
-        const activeTool = this.toolbox.GetActiveTool();
+        const activeTool = this._toolbox.GetActiveTool();
         if (activeTool && isSelectTool(activeTool)) {
             activeTool.AttachGizmo(sceneObject as DIVESelectable);
         }
@@ -322,15 +355,15 @@ export class DIVECommunication {
     }
 
     private deselectObject(payload: Actions['DESELECT_OBJECT']['PAYLOAD']): Actions['DESELECT_OBJECT']['RETURN'] {
-        const object = this.registered.get(payload.id);
+        const object = this._registered.get(payload.id);
         if (!object) return false;
 
-        const sceneObject = this.scene.GetSceneObject(object);
+        const sceneObject = this._scene.GetSceneObject(object);
         if (!sceneObject) return false;
 
         if (!('isSelectable' in sceneObject)) return false;
 
-        const activeTool = this.toolbox.GetActiveTool();
+        const activeTool = this._toolbox.GetActiveTool();
         if (activeTool && isSelectTool(activeTool)) {
             activeTool.DetachGizmo();
         }
@@ -342,41 +375,41 @@ export class DIVECommunication {
     }
 
     private setBackground(payload: Actions['SET_BACKGROUND']['PAYLOAD']): Actions['SET_BACKGROUND']['RETURN'] {
-        this.scene.SetBackground(payload.color);
+        this._scene.SetBackground(payload.color);
 
         return true;
     }
 
     private dropIt(payload: Actions['DROP_IT']['PAYLOAD']): Actions['DROP_IT']['RETURN'] {
-        const object = this.registered.get(payload.id);
+        const object = this._registered.get(payload.id);
         if (!object) return false;
 
-        const model = this.scene.GetSceneObject(object) as DIVEModel;
+        const model = this._scene.GetSceneObject(object) as DIVEModel;
         model.DropIt();
 
         return true;
     }
 
     private placeOnFloor(payload: Actions['PLACE_ON_FLOOR']['PAYLOAD']): Actions['PLACE_ON_FLOOR']['RETURN'] {
-        if (!this.registered.get(payload.id)) return false;
+        if (!this._registered.get(payload.id)) return false;
 
-        this.scene.PlaceOnFloor(payload);
+        this._scene.PlaceOnFloor(payload);
 
         return true;
     }
 
     private setCameraTransform(payload: Actions['SET_CAMERA_TRANSFORM']['PAYLOAD']): Actions['SET_CAMERA_TRANSFORM']['RETURN'] {
-        this.controller.object.position.copy(payload.position);
-        this.controller.target.copy(payload.target);
-        this.controller.update();
+        this._controller.object.position.copy(payload.position);
+        this._controller.target.copy(payload.target);
+        this._controller.update();
 
         return true;
     }
 
     private getCameraTransform(payload: Actions['GET_CAMERA_TRANSFORM']['PAYLOAD']): Actions['GET_CAMERA_TRANSFORM']['RETURN'] {
         const transform = {
-            position: this.controller.object.position.clone(),
-            target: this.controller.target.clone()
+            position: this._controller.object.position.clone(),
+            target: this._controller.target.clone()
         };
         Object.assign(payload, transform);
 
@@ -387,82 +420,82 @@ export class DIVECommunication {
         let position = { x: 0, y: 0, z: 0 };
         let target = { x: 0, y: 0, z: 0 };
         if ('id' in payload) {
-            position = (this.registered.get(payload.id) as COMPov).position;
-            target = (this.registered.get(payload.id) as COMPov).target;
+            position = (this._registered.get(payload.id) as COMPov).position;
+            target = (this._registered.get(payload.id) as COMPov).target;
         } else {
             position = payload.position;
             target = payload.target;
         }
-        this.controller.MoveTo(position, target, payload.duration, payload.locked);
+        this._controller.MoveTo(position, target, payload.duration, payload.locked);
 
         return true;
     }
 
     private setCameraLayer(payload: Actions['SET_CAMERA_LAYER']['PAYLOAD']): Actions['SET_CAMERA_LAYER']['RETURN'] {
-        this.controller.object.SetCameraLayer(payload.layer);
+        this._controller.object.SetCameraLayer(payload.layer);
 
         return true;
     }
 
     private resetCamera(payload: Actions['RESET_CAMERA']['PAYLOAD']): Actions['RESET_CAMERA']['RETURN'] {
-        this.controller.RevertLast(payload.duration);
+        this._controller.RevertLast(payload.duration);
 
         return true;
     }
 
     private computeEncompassingView(payload: Actions['COMPUTE_ENCOMPASSING_VIEW']['PAYLOAD']): Actions['COMPUTE_ENCOMPASSING_VIEW']['RETURN'] {
-        const sceneBB = this.scene.ComputeSceneBB();
+        const sceneBB = this._scene.ComputeSceneBB();
 
-        const transform = this.controller.ComputeEncompassingView(sceneBB);
+        const transform = this._controller.ComputeEncompassingView(sceneBB);
         Object.assign(payload, transform);
 
         return transform;
     }
 
     private zoomCamera(payload: Actions['ZOOM_CAMERA']['PAYLOAD']): Actions['ZOOM_CAMERA']['RETURN'] {
-        if (payload.direction === 'IN') this.controller.ZoomIn(payload.by);
-        if (payload.direction === 'OUT') this.controller.ZoomOut(payload.by);
+        if (payload.direction === 'IN') this._controller.ZoomIn(payload.by);
+        if (payload.direction === 'OUT') this._controller.ZoomOut(payload.by);
 
         return true;
     }
 
     private setGizmoMode(payload: Actions['SET_GIZMO_MODE']['PAYLOAD']): Actions['SET_GIZMO_MODE']['RETURN'] {
-        this.toolbox.SetGizmoMode(payload.mode);
+        this._toolbox.SetGizmoMode(payload.mode);
         return true;
     }
 
     private setGizmoVisibility(payload: Actions['SET_GIZMO_VISIBILITY']['PAYLOAD']): Actions['SET_GIZMO_VISIBILITY']['RETURN'] {
-        this.toolbox.SetGizmoVisibility(payload);
+        this._toolbox.SetGizmoVisibility(payload);
         return payload;
     }
 
     private useTool(payload: Actions['USE_TOOL']['PAYLOAD']): Actions['USE_TOOL']['RETURN'] {
-        this.toolbox.UseTool(payload.tool);
+        this._toolbox.UseTool(payload.tool);
         return true;
     }
 
     private modelLoaded(payload: Actions['MODEL_LOADED']['PAYLOAD']): Actions['MODEL_LOADED']['RETURN'] {
-        (this.registered.get(payload.id) as COMModel).loaded = true;
+        (this._registered.get(payload.id) as COMModel).loaded = true;
         return true;
     }
 
     private updateScene(payload: Actions['UPDATE_SCENE']['PAYLOAD']): Actions['UPDATE_SCENE']['RETURN'] {
-        if (payload.name !== undefined) this.scene.name = payload.name;
-        if (payload.backgroundColor !== undefined) this.scene.SetBackground(payload.backgroundColor);
+        if (payload.name !== undefined) this._scene.name = payload.name;
+        if (payload.backgroundColor !== undefined) this._scene.SetBackground(payload.backgroundColor);
 
-        if (payload.gridEnabled !== undefined) this.scene.Grid.SetVisibility(payload.gridEnabled);
+        if (payload.gridEnabled !== undefined) this._scene.Grid.SetVisibility(payload.gridEnabled);
 
-        if (payload.floorEnabled !== undefined) this.scene.Floor.SetVisibility(payload.floorEnabled);
-        if (payload.floorColor !== undefined) this.scene.Floor.SetColor(payload.floorColor);
+        if (payload.floorEnabled !== undefined) this._scene.Floor.SetVisibility(payload.floorEnabled);
+        if (payload.floorColor !== undefined) this._scene.Floor.SetColor(payload.floorColor);
 
 
         // fill payload with current values
         // TODO optmize this
-        payload.name = this.scene.name;
-        payload.backgroundColor = '#' + (this.scene.background as Color).getHexString();
-        payload.gridEnabled = this.scene.Grid.visible;
-        payload.floorEnabled = this.scene.Floor.visible;
-        payload.floorColor = '#' + (this.scene.Floor.material as MeshStandardMaterial).color.getHexString();
+        payload.name = this._scene.name;
+        payload.backgroundColor = '#' + (this._scene.background as Color).getHexString();
+        payload.gridEnabled = this._scene.Grid.visible;
+        payload.floorEnabled = this._scene.Floor.visible;
+        payload.floorColor = '#' + (this._scene.Floor.material as MeshStandardMaterial).color.getHexString();
 
         return true;
     }
@@ -471,8 +504,8 @@ export class DIVECommunication {
         let position = { x: 0, y: 0, z: 0 };
         let target = { x: 0, y: 0, z: 0 };
         if ('id' in payload) {
-            position = (this.registered.get(payload.id) as COMPov).position;
-            target = (this.registered.get(payload.id) as COMPov).target;
+            position = (this._registered.get(payload.id) as COMPov).position;
+            target = (this._registered.get(payload.id) as COMPov).target;
         } else {
             position = payload.position;
             target = payload.target;
@@ -484,15 +517,15 @@ export class DIVECommunication {
     }
 
     private setParent(payload: Actions['SET_PARENT']['PAYLOAD']): Actions['SET_PARENT']['RETURN'] {
-        const object = this.registered.get(payload.object.id);
+        const object = this._registered.get(payload.object.id);
         if (!object) return false;
 
-        const sceneObject = this.scene.GetSceneObject(object);
+        const sceneObject = this._scene.GetSceneObject(object);
         if (!sceneObject) return false;
 
         if (payload.parent === null) {
             // detach from current parent
-            this.scene.Root.attach(sceneObject);
+            this._scene.Root.attach(sceneObject);
             return true;
         }
 
@@ -501,18 +534,18 @@ export class DIVECommunication {
             return false;
         }
 
-        const parent = this.registered.get(payload.parent.id);
+        const parent = this._registered.get(payload.parent.id);
         if (!parent) {
             // detach from current parent
-            this.scene.Root.attach(sceneObject);
+            this._scene.Root.attach(sceneObject);
             return true;
         }
 
         // attach to new parent
-        const parentObject = this.scene.GetSceneObject(parent);
+        const parentObject = this._scene.GetSceneObject(parent);
         if (!parentObject) {
             // detach from current parent
-            this.scene.Root.attach(sceneObject);
+            this._scene.Root.attach(sceneObject);
             return true;
         }
 
@@ -520,6 +553,15 @@ export class DIVECommunication {
         parentObject.attach(sceneObject);
         return true;
     }
+}
+
+export interface DIVECommunication_exposed {
+    get renderer(): DIVERenderer;
+    get scene(): DIVEScene
+    get controller(): DIVEOrbitControls
+    get toolbox(): DIVEToolbox
+    get mediaGenerator(): DIVEMediaCreator;
+    get registered(): Map<string, COMEntity>;
 }
 
 export type { Actions } from './actions/index.ts';

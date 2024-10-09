@@ -73,6 +73,7 @@ export default class DIVE {
             visible: true,
             intensity: 1,
             color: 0xffffff,
+            position: { x: 0, y: 0, z: 0 },
         });
 
         // generate model id
