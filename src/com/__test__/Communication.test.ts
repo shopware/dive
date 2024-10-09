@@ -44,6 +44,16 @@ jest.mock('../../mediacreator/MediaCreator', () => {
     }
 });
 
+jest.mock('../../io/IO', () => {
+    return {
+        DIVEIO: jest.fn(function () {
+            this.Import = jest.fn();
+            this.Export = jest.fn();
+            return this;
+        }),
+    }
+});
+
 jest.mock('../../toolbox/select/SelectTool', () => {
     return {
         isSelectTool: jest.fn().mockReturnValue(true),
@@ -829,5 +839,16 @@ describe('dive/communication/DIVECommunication', () => {
             parent: parent1,
         });
         expect(attachToValidParent).toBe(true);
+    });
+
+    it('should perform action EXPORT_SCENE', async () => {
+        const url = 'https://example.com';
+
+        jest.spyOn(testCom['io'], 'Export').mockResolvedValueOnce(url);
+
+        const result = await testCom.PerformAction('EXPORT_SCENE', {
+            type: 'glb',
+        });
+        expect(result).toBe(url);
     });
 });

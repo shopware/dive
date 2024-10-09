@@ -12,6 +12,8 @@ import { type DIVEModel } from "../model/Model.ts";
 import { type DIVEMediaCreator } from "../mediacreator/MediaCreator.ts";
 import { type DIVERenderer } from "../renderer/Renderer.ts";
 import { type DIVESelectable } from "../interface/Selectable.ts";
+import { type DIVEIO } from "../io/IO.ts";
+
 
 type EventListener<Action extends keyof Actions> = (payload: Actions[Action]['PAYLOAD']) => void;
 
@@ -65,6 +67,15 @@ export class DIVECommunication {
         return this._mediaGenerator;
     }
 
+    private _io: DIVEIO | null;
+    private get io(): DIVEIO {
+        if (!this._io) {
+            const DIVEIO = require('../io/IO.ts').DIVEIO as typeof import('../io/IO.ts').DIVEIO;
+            this._io = new DIVEIO(this.scene);
+        }
+        return this._io;
+    }
+
     private registered: Map<string, COMEntity> = new Map();
 
     // private listeners: { [key: string]: EventListener[] } = {};
@@ -77,6 +88,7 @@ export class DIVECommunication {
         this.controller = controls;
         this.toolbox = toolbox;
         this._mediaGenerator = null;
+        this._io = null;
 
         DIVECommunication.__instances.push(this);
     }
@@ -190,6 +202,10 @@ export class DIVECommunication {
             }
             case 'SET_PARENT': {
                 returnValue = this.setParent(payload as Actions['SET_PARENT']['PAYLOAD']);
+                break;
+            }
+            case 'EXPORT_SCENE': {
+                returnValue = this.exportScene(payload as Actions['EXPORT_SCENE']['PAYLOAD']);
                 break;
             }
         }
@@ -519,6 +535,10 @@ export class DIVECommunication {
         // attach to new parent
         parentObject.attach(sceneObject);
         return true;
+    }
+
+    private exportScene(payload: Actions['EXPORT_SCENE']['PAYLOAD']): Actions['EXPORT_SCENE']['RETURN'] {
+        return this.io.Export(payload.type);
     }
 }
 
