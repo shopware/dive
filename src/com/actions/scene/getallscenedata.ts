@@ -1,5 +1,5 @@
 import { Vector3Like } from "three";
-import { COMLight, COMModel, COMPov } from "../../types";
+import { type COMLight, type COMModel, type COMPov, type COMPrimitive } from "../../types";
 
 type SceneData = {
     name: string,
@@ -15,6 +15,7 @@ type SceneData = {
     lights: COMLight[],
     objects: COMModel[],
     cameras: COMPov[],
+    primitives: COMPrimitive[],
 };
 
 export default interface GET_ALL_SCENE_DATA {

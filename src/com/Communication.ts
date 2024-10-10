@@ -4,7 +4,7 @@ import { isSelectTool } from "../toolbox/select/SelectTool.ts";
 
 // type imports
 import { type Color, type MeshStandardMaterial } from "three";
-import { type COMLight, type COMModel, type COMEntity, type COMPov } from "./types";
+import { type COMLight, type COMModel, type COMEntity, type COMPov, type COMPrimitive } from "./types";
 import { type DIVEScene } from "../scene/Scene.ts";
 import type DIVEToolbox from "../toolbox/Toolbox.ts";
 import type DIVEOrbitControls from "../controls/OrbitControls.ts";
@@ -239,6 +239,7 @@ export class DIVECommunication {
             lights: Array.from(this.registered.values()).filter((object) => object.entityType === 'light') as COMLight[],
             objects: Array.from(this.registered.values()).filter((object) => object.entityType === 'model') as COMModel[],
             cameras: Array.from(this.registered.values()).filter((object) => object.entityType === 'pov') as COMPov[],
+            primitives: Array.from(this.registered.values()).filter((object) => object.entityType === 'primitive') as COMPrimitive[],
         };
         Object.assign(payload, sceneData);
         return sceneData;
