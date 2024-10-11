@@ -25,7 +25,7 @@ import type { DIVEScene } from '../../scene/Scene';
 import type DIVEToolbox from '../../toolbox/Toolbox';
 import type DIVEOrbitControls from '../../controls/OrbitControls';
 import { type DIVERenderer } from '../../renderer/Renderer';
-import { type COMEntity, type COMEntityType, type COMLight, type COMModel, type COMPov, type COMPrimitive } from '../types';
+import { type COMGroup, type COMEntity, type COMEntityType, type COMLight, type COMModel, type COMPov, type COMPrimitive } from '../types';
 import { type DIVESceneObject } from '../../types';
 
 jest.mock('three/src/math/MathUtils', () => {
@@ -516,6 +516,14 @@ describe('dive/communication/DIVECommunication', () => {
             color: 'white',
         } as COMLight);
 
+        testCom.PerformAction('ADD_OBJECT', {
+            entityType: "group",
+            id: "group1",
+            position: { x: 0, y: 0, z: 0 },
+            rotation: { x: 0, y: 0, z: 0 },
+            parent: null,
+        } as COMGroup);
+
         const success = testCom.PerformAction('GET_ALL_SCENE_DATA', {});
         expect(success).toStrictEqual({
             backgroundColor: "#ffffff",
@@ -553,6 +561,13 @@ describe('dive/communication/DIVECommunication', () => {
                 position: { x: 1, y: 2, z: 3 },
                 target: { x: 4, y: 5, z: 6 },
             },
+            groups: [{
+                entityType: "group",
+                id: "group1",
+                position: { x: 0, y: 0, z: 0 },
+                rotation: { x: 0, y: 0, z: 0 },
+                parent: null,
+            }],
         });
     });
 
