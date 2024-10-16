@@ -75,6 +75,12 @@ export class DIVEGroup extends DIVENode {
      */
     private updateBB(): Vector3 {
         this._boundingBox.makeEmpty();
+
+        if (this.children.length === 1) {
+            // because we always have the box mesh as 1 child
+            return this.position.clone();
+        }
+
         this.children.forEach((child) => {
             if (child.uuid === this._boxMesh.uuid) return;
             this._boundingBox.expandByObject(child);
@@ -84,9 +90,16 @@ export class DIVEGroup extends DIVENode {
     }
 
     private updateBoxMesh(): void {
+        if (this.children.length === 1) {
+            // because we always have the box mesh as 1 child
+            this._boxMesh.visible = false;
+            return;
+        }
+
         this._boxMesh.quaternion.copy(this.quaternion.clone().invert());
         this._boxMesh.scale.set(1 / this.scale.x, 1 / this.scale.y, 1 / this.scale.z);
         this._boxMesh.geometry = new BoxGeometry(this._boundingBox.max.x - this._boundingBox.min.x, this._boundingBox.max.y - this._boundingBox.min.y, this._boundingBox.max.z - this._boundingBox.min.z);
+        this._boxMesh.visible = true;
     }
 
     public onMove(): void {

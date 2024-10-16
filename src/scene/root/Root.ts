@@ -41,8 +41,17 @@ export class DIVERoot extends Object3D {
         return bb;
     }
 
-    public GetSceneObject<T extends DIVESceneObject>(object: Partial<COMEntity> & { id: string }): T | undefined {
-        return this.children.find(object3D => object3D.userData.id === object.id) as T | undefined;
+    public GetSceneObject<T extends DIVESceneObject>(
+        object: Partial<COMEntity> & { id: string }
+    ): T | undefined {
+        let foundObject: T | undefined;
+        this.traverse((object3D) => {
+            if (foundObject) return;
+            if (object3D.userData.id === object.id) {
+                foundObject = object3D as T;
+            }
+        });
+        return foundObject;
     }
 
     public AddSceneObject(object: COMEntity): void {
