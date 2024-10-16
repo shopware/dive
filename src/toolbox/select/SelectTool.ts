@@ -1,8 +1,9 @@
 import { type Object3D } from "three";
 import { DIVEScene } from "../../scene/Scene.ts";
 import DIVETransformTool from "../transform/TransformTool.ts";
+import { findInterface } from "../../helper/findInterface/findInterface.ts";
 import type DIVEOrbitControls from "../../controls/OrbitControls.ts";
-import { type DIVESelectable, findSelectableInterface } from "../../interface/Selectable.ts";
+import { type DIVESelectable } from "../../interface/Selectable.ts";
 import { type DIVEMoveable } from "../../interface/Moveable.ts";
 import { type DIVEBaseTool } from "../BaseTool.ts";
 
@@ -61,7 +62,7 @@ export class DIVESelectTool extends DIVETransformTool {
         super.onClick(e);
 
         const first = this._raycaster.intersectObjects(this._scene.Root.children, true).filter((intersect) => intersect.object.visible)[0];
-        const selectable = findSelectableInterface(first?.object);
+        const selectable = findInterface<DIVESelectable>(first?.object, 'isSelectable');
 
         // if nothing is hit
         if (!first || !selectable) {

@@ -1,4 +1,3 @@
-
 /**
  * Interface for objects that can be moved in the scene.
  *

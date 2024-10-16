@@ -1,6 +1,7 @@
 import { Box3, Object3D, type Vector3Like } from "three";
 import { PRODUCT_LAYER_MASK } from "../constant/VisibilityLayerMask";
 import { DIVECommunication } from "../com/Communication";
+import { implementsInterface } from "../helper/isInterface/implementsInterface";
 
 import { type DIVEMoveable } from "../interface/Moveable";
 import { type DIVESelectable } from "../interface/Selectable";
@@ -46,6 +47,10 @@ export class DIVENode extends Object3D implements DIVESelectable, DIVEMoveable {
 
     public onMove(): void {
         DIVECommunication.get(this.userData.id)?.PerformAction('UPDATE_OBJECT', { id: this.userData.id, position: this.position, rotation: this.rotation, scale: this.scale });
+
+        if (this.parent && implementsInterface<DIVEMoveable>(this.parent, 'isMovable') && this.parent.onMove) {
+            this.parent.onMove();
+        }
     }
 
     public onSelect(): void {
