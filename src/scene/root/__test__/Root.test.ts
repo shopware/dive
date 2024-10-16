@@ -102,7 +102,9 @@ jest.mock('three', () => {
             this.mesh = new Mesh();
             this.traverse = jest.fn((callback) => {
                 callback(this);
-                callback(this.children[0]);
+                for (let i = 0; i < this.children.length; i++) {
+                    callback(this.children[i]);
+                }
             });
             this.parent = {
                 parent: null,
