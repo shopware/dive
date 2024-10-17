@@ -1,7 +1,7 @@
 import { PointLight, Color, SphereGeometry, MeshBasicMaterial, Mesh, FrontSide, Object3D } from 'three';
 import { DIVECommunication } from '../com/Communication';
 import { PRODUCT_LAYER_MASK, UI_LAYER_MASK } from '../constant/VisibilityLayerMask';
-import { DIVEMoveable } from '../interface/Moveable';
+import { DIVEMovable } from '../interface/Movable';
 import { DIVESelectable } from '../interface/Selectable';
 import type { TransformControls } from 'three/examples/jsm/Addons.js';
 
@@ -15,10 +15,10 @@ import type { TransformControls } from 'three/examples/jsm/Addons.js';
  * @module
  */
 
-export default class DIVEPointLight extends Object3D implements DIVESelectable, DIVEMoveable {
+export default class DIVEPointLight extends Object3D implements DIVESelectable, DIVEMovable {
     readonly isDIVELight: true = true;
     readonly isDIVEPointLight: true = true;
-    readonly isMoveable: true = true;
+    readonly isMovable: true = true;
     readonly isSelectable: true = true;
 
     public gizmo: TransformControls | null = null;

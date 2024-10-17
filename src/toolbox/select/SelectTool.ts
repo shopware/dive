@@ -4,7 +4,7 @@ import DIVETransformTool from "../transform/TransformTool.ts";
 import { findInterface } from "../../helper/findInterface/findInterface.ts";
 import type DIVEOrbitControls from "../../controls/OrbitControls.ts";
 import { type DIVESelectable } from "../../interface/Selectable.ts";
-import { type DIVEMoveable } from "../../interface/Moveable.ts";
+import { type DIVEMovable } from "../../interface/Movable.ts";
 import { type DIVEBaseTool } from "../BaseTool.ts";
 
 export const isSelectTool = (tool: DIVEBaseTool): tool is DIVESelectTool => {
@@ -18,7 +18,7 @@ export interface DIVEObjectEventMap {
 /**
  * A Tool to select and move objects in the scene.
  *
- * Objects have to implement the DIVESelectable interface to be selectable and DIVEMoveable to be moveable.
+ * Objects have to implement the DIVESelectable interface to be selectable and DIVEMovable to be movable.
  *
  * @module
  */
@@ -47,8 +47,8 @@ export class DIVESelectTool extends DIVETransformTool {
     }
 
     public AttachGizmo(selectable: DIVESelectable): void {
-        if ('isMoveable' in selectable) {
-            const movable = selectable as (Object3D & DIVESelectable & DIVEMoveable);
+        if ('isMovable' in selectable) {
+            const movable = selectable as (Object3D & DIVESelectable & DIVEMovable);
             this._gizmo.attach(movable);
             this.SetGizmoVisibility(movable.visible);
         }

@@ -108,11 +108,11 @@ jest.mock('three/examples/jsm/Addons.js', () => {
                 this.object = {};
                 callback({ value: false });
                 this.object = {
-                    isMoveable: true
+                    isMovable: true
                 };
                 callback({ value: false });
                 this.object = {
-                    isMoveable: true,
+                    isMovable: true,
                     onMove: jest.fn(),
                 };
                 callback({ value: false });

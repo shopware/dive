@@ -3,14 +3,14 @@ import { PRODUCT_LAYER_MASK } from "../constant/VisibilityLayerMask";
 import { DIVECommunication } from "../com/Communication";
 import { implementsInterface } from "../helper/isInterface/implementsInterface";
 
-import { type DIVEMoveable } from "../interface/Moveable";
+import { type DIVEMovable } from "../interface/Movable";
 import { type DIVESelectable } from "../interface/Selectable";
 import { type TransformControls } from "three/examples/jsm/controls/TransformControls";
 
-export class DIVENode extends Object3D implements DIVESelectable, DIVEMoveable {
+export class DIVENode extends Object3D implements DIVESelectable, DIVEMovable {
     readonly isDIVENode: true = true;
     readonly isSelectable: true = true;
-    readonly isMoveable: true = true;
+    readonly isMovable: true = true;
 
     public gizmo: TransformControls | null = null;
 
@@ -48,7 +48,7 @@ export class DIVENode extends Object3D implements DIVESelectable, DIVEMoveable {
     public onMove(): void {
         DIVECommunication.get(this.userData.id)?.PerformAction('UPDATE_OBJECT', { id: this.userData.id, position: this.position, rotation: this.rotation, scale: this.scale });
 
-        if (this.parent && implementsInterface<DIVEMoveable>(this.parent, 'isMovable') && this.parent.onMove) {
+        if (this.parent && implementsInterface<DIVEMovable>(this.parent, 'isMovable') && this.parent.onMove) {
             this.parent.onMove();
         }
     }
