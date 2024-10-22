@@ -234,7 +234,7 @@ describe('dive/toolbox/select/DIVESelectTool', () => {
         mock_intersectObjects.mockReturnValueOnce([{
             object: {
                 isSelectable: true,
-                isMoveable: true,
+                isMovable: true,
                 onSelect: mock_onSelect,
                 parent: {
                     name: 'this is the test scene root!!!',
@@ -250,7 +250,7 @@ describe('dive/toolbox/select/DIVESelectTool', () => {
         const selectTool = new DIVESelectTool(mockScene, mockController);
         const mock_onSelect = jest.fn();
         expect(() => selectTool.Select({ isSelectable: true })).not.toThrow();
-        expect(() => selectTool.Select({ isMoveable: true, onSelect: mock_onSelect } as unknown as DIVESelectable)).not.toThrow();
+        expect(() => selectTool.Select({ isMovable: true, onSelect: mock_onSelect } as unknown as DIVESelectable)).not.toThrow();
         expect(mock_onSelect).toHaveBeenCalledTimes(1);
     });
 
@@ -258,7 +258,7 @@ describe('dive/toolbox/select/DIVESelectTool', () => {
         const selectTool = new DIVESelectTool(mockScene, mockController);
         const mock_onDeselect = jest.fn();
         expect(() => selectTool.Deselect({ isSelectable: true })).not.toThrow();
-        expect(() => selectTool.Deselect({ isMoveable: true, onDeselect: mock_onDeselect } as unknown as DIVESelectable)).not.toThrow();
+        expect(() => selectTool.Deselect({ isMovable: true, onDeselect: mock_onDeselect } as unknown as DIVESelectable)).not.toThrow();
         expect(mock_onDeselect).toHaveBeenCalledTimes(1);
     });
 

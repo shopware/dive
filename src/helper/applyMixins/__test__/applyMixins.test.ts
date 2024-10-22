@@ -1,6 +1,6 @@
 import { applyMixins } from '../applyMixins.ts';
 
-class Moveable {
+class Movable {
     move() { }
 }
 
@@ -14,9 +14,9 @@ describe('dive/helper/applyMixins', () => {
             doProductThings() { }
         }
 
-        interface Product extends Moveable, Selectable { }
+        interface Product extends Movable, Selectable { }
 
-        applyMixins(Product, [Moveable, Selectable]);
+        applyMixins(Product, [Movable, Selectable]);
 
         const instance = new Product();
         expect(instance).toBeDefined();

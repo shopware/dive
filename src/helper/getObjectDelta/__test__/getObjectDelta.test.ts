@@ -1,7 +1,5 @@
 import { getObjectDelta } from '../getObjectDelta.ts';
 
-
-
 describe('dive/helper/getObjectDelta', () => {
 
     // NO DELTAS

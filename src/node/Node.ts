@@ -2,14 +2,15 @@ import { Box3, Object3D, type Vector3Like } from "three";
 import { PRODUCT_LAYER_MASK } from "../constant/VisibilityLayerMask";
 import { DIVECommunication } from "../com/Communication";
 
-import { type DIVEMoveable } from "../interface/Moveable";
+import { type DIVEMovable } from "../interface/Movable";
 import { type DIVESelectable } from "../interface/Selectable";
 import { type TransformControls } from "three/examples/jsm/controls/TransformControls";
+import { type DIVEGroup } from "../group/Group";
 
-export class DIVENode extends Object3D implements DIVESelectable, DIVEMoveable {
+export class DIVENode extends Object3D implements DIVESelectable, DIVEMovable {
     readonly isDIVENode: true = true;
     readonly isSelectable: true = true;
-    readonly isMoveable: true = true;
+    readonly isMovable: true = true;
 
     public gizmo: TransformControls | null = null;
 
@@ -46,6 +47,10 @@ export class DIVENode extends Object3D implements DIVESelectable, DIVEMoveable {
 
     public onMove(): void {
         DIVECommunication.get(this.userData.id)?.PerformAction('UPDATE_OBJECT', { id: this.userData.id, position: this.position, rotation: this.rotation, scale: this.scale });
+
+        if (this.parent && 'isDIVEGroup' in this.parent) {
+            (this.parent as unknown as DIVEGroup).UpdateLineTo(this);
+        }
     }
 
     public onSelect(): void {

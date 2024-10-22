@@ -2,8 +2,9 @@ import { Intersection, Object3D, Raycaster, Vector2, Vector3 } from "three";
 import { PRODUCT_LAYER_MASK, UI_LAYER_MASK } from "../constant/VisibilityLayerMask";
 import { DIVEScene } from "../scene/Scene";
 import DIVEOrbitControls from "../controls/OrbitControls";
-import { DIVEDraggable, findDraggableInterface } from "../interface/Draggable";
-import { DIVEHoverable, findHoverableInterface } from "../interface/Hoverable";
+import { type DIVEDraggable } from "../interface/Draggable";
+import { type DIVEHoverable } from "../interface/Hoverable";
+import { findInterface } from "../helper/findInterface/findInterface";
 
 export type DraggableEvent = {
     dragStart: Vector3;
@@ -102,7 +103,7 @@ export abstract class DIVEBaseTool {
 
         this._lastPointerDown.copy(this._pointer);
 
-        this._draggable = findDraggableInterface(this._intersects[0]?.object) || null;
+        this._draggable = findInterface<DIVEDraggable>(this._intersects[0]?.object, 'isDraggable') || null;
     }
 
     public onDragStart(e: PointerEvent): void {
@@ -144,7 +145,7 @@ export abstract class DIVEBaseTool {
         this._intersects = this.raycast(this._scene.children);
 
         // handle hover
-        const hoverable = findHoverableInterface(this._intersects[0]?.object);
+        const hoverable = findInterface<DIVEHoverable>(this._intersects[0]?.object, 'isHoverable');
         if (this._intersects[0] && hoverable) {
             if (!this._hovered) {
                 if (hoverable.onPointerEnter) hoverable.onPointerEnter(this._intersects[0]);
