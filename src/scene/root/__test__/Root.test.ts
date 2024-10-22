@@ -394,7 +394,7 @@ jest.mock('../../../group/Group.ts', () => {
             this.SetRotation = jest.fn();
             this.SetScale = jest.fn();
             this.SetVisibility = jest.fn();
-            this.SetBoundingBoxVisibility = jest.fn();
+            this.SetLinesVisibility = jest.fn();
             this.PlaceOnFloor = jest.fn();
             this.removeFromParent = jest.fn();
             return this;

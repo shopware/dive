@@ -30,10 +30,6 @@ describe('dive/group/DIVEGroup', () => {
         expect(group).toBeDefined();
     });
 
-    it('should set bounding box visibility', () => {
-        expect(() => group.SetBoundingBoxVisibility(true)).not.toThrow();
-    });
-
     it('should add an object', () => {
         const mockObject = new DIVEGroup();
 
@@ -52,6 +48,26 @@ describe('dive/group/DIVEGroup', () => {
 
         jest.spyOn(DIVECommunication, 'get').mockReturnValueOnce(undefined);
         expect(() => group.remove(mockObject)).not.toThrow();
+    });
+
+    it('should set lines visibility', () => {
+        expect(() => group.SetLinesVisibility(true)).not.toThrow();
+
+        const mockObject = new DIVEGroup();
+        expect(() => group.SetLinesVisibility(false, mockObject)).not.toThrow();
+
+        expect(() => group.attach(mockObject)).not.toThrow();
+        expect(() => group.SetLinesVisibility(false)).not.toThrow();
+
+        expect(() => group.SetLinesVisibility(true, mockObject)).not.toThrow();
+    });
+
+    it('update lines', () => {
+        const mockObject = new DIVEGroup();
+        expect(() => group.UpdateLineTo(mockObject)).not.toThrow();
+
+        expect(() => group.attach(mockObject)).not.toThrow();
+        expect(() => group.UpdateLineTo(mockObject)).not.toThrow();
     });
 
     it('should onMove', () => {

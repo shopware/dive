@@ -203,8 +203,8 @@ describe('dive/node/DIVENode', () => {
     it('should onMove', () => {
         node.userData.id = 'something';
         node.parent = {
-            isMovable: true,
-            onMove: jest.fn(),
+            isDIVEGroup: true,
+            UpdateLineTo: jest.fn(),
         } as unknown as DIVENode;
 
         expect(() => node.onMove()).not.toThrow();

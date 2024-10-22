@@ -1,11 +1,11 @@
 import { Box3, Object3D, type Vector3Like } from "three";
 import { PRODUCT_LAYER_MASK } from "../constant/VisibilityLayerMask";
 import { DIVECommunication } from "../com/Communication";
-import { implementsInterface } from "../helper/isInterface/implementsInterface";
 
 import { type DIVEMovable } from "../interface/Movable";
 import { type DIVESelectable } from "../interface/Selectable";
 import { type TransformControls } from "three/examples/jsm/controls/TransformControls";
+import { type DIVEGroup } from "../group/Group";
 
 export class DIVENode extends Object3D implements DIVESelectable, DIVEMovable {
     readonly isDIVENode: true = true;
@@ -48,8 +48,8 @@ export class DIVENode extends Object3D implements DIVESelectable, DIVEMovable {
     public onMove(): void {
         DIVECommunication.get(this.userData.id)?.PerformAction('UPDATE_OBJECT', { id: this.userData.id, position: this.position, rotation: this.rotation, scale: this.scale });
 
-        if (this.parent && implementsInterface<DIVEMovable>(this.parent, 'isMovable') && this.parent.onMove) {
-            this.parent.onMove();
+        if (this.parent && 'isDIVEGroup' in this.parent) {
+            (this.parent as unknown as DIVEGroup).UpdateLineTo(this);
         }
     }
 
