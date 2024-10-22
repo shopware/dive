@@ -114,6 +114,8 @@ jest.mock('three/examples/jsm/Addons.js', () => {
                 this.object = {
                     isMovable: true,
                     onMove: jest.fn(),
+                    onMoveStart: jest.fn(),
+                    onMoveEnd: jest.fn(),
                 };
                 callback({ value: false });
             },
