@@ -1,0 +1,11 @@
+{
+  "tabWidth": 4,
+  "singleQuote": true,
+  "printWidth": 125,
+  "trailingComma": "all",
+  "multilineArraysWrapThreshold": 1,
+  "bracketSpacing": true,
+  "plugins": [
+    "prettier-plugin-multiline-arrays"
+  ]
+}
