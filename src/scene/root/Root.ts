@@ -157,7 +157,7 @@ export class DIVERoot extends Object3D {
                     break;
                 }
                 default: {
-                    console.warn(`Root.updateLight: Unknown light type: ${light.type}`);
+                    console.warn(`DIVERoot.updateLight: Unknown light type: ${light.type}`);
                     return;
                 }
             }
@@ -239,7 +239,7 @@ export class DIVERoot extends Object3D {
     private deleteLight(light: Partial<COMLight> & { id: string }): void {
         const sceneObject = this.GetSceneObject(light);
         if (!sceneObject) {
-            console.warn(`Root.deleteLight: Light with id ${light.id} not found`);
+            console.warn(`DIVERoot.deleteLight: Light with id ${light.id} not found`);
             return;
         }
 
@@ -251,7 +251,7 @@ export class DIVERoot extends Object3D {
     private deleteModel(model: Partial<COMModel> & { id: string }): void {
         const sceneObject = this.GetSceneObject(model);
         if (!sceneObject) {
-            console.warn(`Root.deleteModel: Model with id ${model.id} not found`);
+            console.warn(`DIVERoot.deleteModel: Model with id ${model.id} not found`);
             return;
         }
 
@@ -263,7 +263,7 @@ export class DIVERoot extends Object3D {
     private deletePrimitive(primitive: Partial<COMPrimitive> & { id: string }): void {
         const sceneObject = this.GetSceneObject(primitive);
         if (!sceneObject) {
-            console.warn(`Root.deletePrimitive: Primitive with id ${primitive.id} not found`);
+            console.warn(`DIVERoot.deletePrimitive: Primitive with id ${primitive.id} not found`);
             return;
         }
 
@@ -275,7 +275,7 @@ export class DIVERoot extends Object3D {
     private deleteGroup(group: Partial<COMGroup> & { id: string }): void {
         const sceneObject = this.GetSceneObject(group);
         if (!sceneObject) {
-            console.warn(`Root.deleteGroup: Group with id ${group.id} not found`);
+            console.warn(`DIVERoot.deleteGroup: Group with id ${group.id} not found`);
             return;
         }
 

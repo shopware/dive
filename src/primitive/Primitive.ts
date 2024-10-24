@@ -99,7 +99,7 @@ export class DIVEPrimitive extends DIVENode {
 
     public DropIt(): void {
         if (!this.parent) {
-            console.warn('DIVEModel: DropIt() called on a model that is not in the scene.', this);
+            console.warn('DIVEPrimitive: DropIt() called on a model that is not in the scene.', this);
             return;
         }
 
@@ -131,7 +131,7 @@ export class DIVEPrimitive extends DIVENode {
     }
 
     private assembleGeometry(geometry: COMGeometry): BufferGeometry {
-        switch (geometry.name) {
+        switch (geometry.name.toLowerCase()) {
             case 'cylinder':
                 return this.createCylinderGeometry(geometry);
             case 'sphere':
@@ -146,8 +146,10 @@ export class DIVEPrimitive extends DIVENode {
                 return this.createWallGeometry(geometry);
             case 'plane':
                 return this.createPlaneGeometry(geometry);
-            default:
+            default: {
+                console.warn('DIVEPrimitive: Invalid geometry type:', geometry.name.toLowerCase());
                 return new BufferGeometry();
+            }
         }
     }
 
