@@ -441,7 +441,7 @@ describe('DIVE/scene/root/DIVERoot', () => {
             scale: { x: 1, y: 2, z: 3 },
             geometry: {} as COMGeometry,
             visible: true,
-            parent: null,
+            parentId: null,
         })).not.toThrow();
         root.children = [{
             userData: {
@@ -457,19 +457,19 @@ describe('DIVE/scene/root/DIVERoot', () => {
         expect(() => root.AddSceneObject({ id: 'id', name: 'light', entityType: 'light', visible: true } as COMLight)).not.toThrow();
         expect(() => root.AddSceneObject({ id: 'id_scene', name: 'light', entityType: 'light', visible: true, type: 'scene' } as COMLight)).not.toThrow();
         expect(() => root.AddSceneObject({ id: 'id_ambient', name: 'light', entityType: 'light', visible: true, type: 'ambient' } as COMLight)).not.toThrow();
-        expect(() => root.AddSceneObject({ id: 'id_point', name: 'light', entityType: 'light', visible: true, type: 'point', position: { x: 0, y: 0, z: 0 }, intensity: 1, enabled: false, color: 0xffffff, parent: { id: 'id' } } as COMLight)).not.toThrow();
+        expect(() => root.AddSceneObject({ id: 'id_point', name: 'light', entityType: 'light', visible: true, type: 'point', position: { x: 0, y: 0, z: 0 }, intensity: 1, enabled: false, color: 0xffffff, parentId: 'id' } as COMLight)).not.toThrow();
 
 
         expect(() => root.AddSceneObject({ id: 'id', name: 'model', entityType: 'model', visible: true } as COMModel)).not.toThrow();
-        expect(() => root.AddSceneObject({ id: 'id_uri0', name: 'model', entityType: 'model', visible: true, uri: 'uri', position: { x: 0, y: 0, z: 0 }, rotation: { x: 0, y: 0, z: 0 }, scale: { x: 1, y: 1, z: 1 }, material: {}, parent: { id: 'id' } } as COMModel)).not.toThrow();
+        expect(() => root.AddSceneObject({ id: 'id_uri0', name: 'model', entityType: 'model', visible: true, uri: 'uri', position: { x: 0, y: 0, z: 0 }, rotation: { x: 0, y: 0, z: 0 }, scale: { x: 1, y: 1, z: 1 }, material: {}, parentId: 'id' } as COMModel)).not.toThrow();
         jest.spyOn(DIVECommunication, 'get').mockReturnValueOnce(undefined);
         expect(() => root.AddSceneObject({ id: 'id_uri1', name: 'model', entityType: 'model', visible: true, uri: 'uri', position: { x: 0, y: 0, z: 0 }, rotation: { x: 0, y: 0, z: 0 }, scale: { x: 1, y: 1, z: 1 }, material: {} } as COMModel)).not.toThrow();
 
         expect(() => root.AddSceneObject({ id: 'id0', name: 'primitive', entityType: 'primitive', visible: true } as COMPrimitive)).not.toThrow();
-        expect(() => root.AddSceneObject({ id: 'id1', name: 'primitive', entityType: 'primitive', visible: true, material: {}, parent: { id: 'id' } } as COMPrimitive)).not.toThrow();
+        expect(() => root.AddSceneObject({ id: 'id1', name: 'primitive', entityType: 'primitive', visible: true, material: {}, parentId: 'id' } as COMPrimitive)).not.toThrow();
 
         expect(() => root.AddSceneObject({ id: 'id0', name: 'Group', entityType: 'group', visible: true } as COMGroup)).not.toThrow();
-        expect(() => root.AddSceneObject({ id: 'id0', name: 'Group', entityType: 'group', visible: true, position: { x: 0, y: 0, z: 0 }, rotation: { x: 0, y: 0, z: 0 }, scale: { x: 1, y: 1, z: 1 }, bbVisible: true, parent: { id: 'id' } } as COMGroup)).not.toThrow();
+        expect(() => root.AddSceneObject({ id: 'id0', name: 'Group', entityType: 'group', visible: true, position: { x: 0, y: 0, z: 0 }, rotation: { x: 0, y: 0, z: 0 }, scale: { x: 1, y: 1, z: 1 }, bbVisible: true, parentId: 'id' } as COMGroup)).not.toThrow();
     });
 
     it('should update object', () => {
@@ -517,10 +517,10 @@ describe('DIVE/scene/root/DIVERoot', () => {
         expect(() => root.UpdateSceneObject({ id: 'id', name: 'group', entityType: 'group', visible: true } as COMGroup)).not.toThrow();
 
         expect(() => root.AddSceneObject({ id: 'id_groupparent', name: 'Group', entityType: 'group' } as COMGroup)).not.toThrow();
-        expect(() => root.UpdateSceneObject({ id: 'id_groupchild', name: 'group', entityType: 'group', parent: { id: 'id_groupparent' } } as COMGroup)).not.toThrow();
-        expect(() => root.UpdateSceneObject({ id: 'id_groupchild', name: 'group', entityType: 'group', parent: null } as COMGroup)).not.toThrow();
-        expect(() => root.UpdateSceneObject({ id: 'id_groupchild', name: 'group', entityType: 'group', parent: { id: 'id_modelparent' } } as COMGroup)).not.toThrow();
-        expect(() => root.UpdateSceneObject({ id: 'id_groupchild', name: 'group', entityType: 'group', parent: { id: 'does_not_exist' } } as COMGroup)).not.toThrow();
+        expect(() => root.UpdateSceneObject({ id: 'id_groupchild', name: 'group', entityType: 'group', parentId: 'id_groupparent' } as COMGroup)).not.toThrow();
+        expect(() => root.UpdateSceneObject({ id: 'id_groupchild', name: 'group', entityType: 'group', parentId: null } as COMGroup)).not.toThrow();
+        expect(() => root.UpdateSceneObject({ id: 'id_groupchild', name: 'group', entityType: 'group', parentId: 'id_modelparent' } as COMGroup)).not.toThrow();
+        expect(() => root.UpdateSceneObject({ id: 'id_groupchild', name: 'group', entityType: 'group', parentId: 'does_not_exist' } as COMGroup)).not.toThrow();
     });
 
     it('should delete object', () => {

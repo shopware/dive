@@ -10,6 +10,7 @@ import { getObjectDelta } from "./helper/getObjectDelta/getObjectDelta.ts";
 
 import { generateUUID } from "three/src/math/MathUtils";
 import { DIVEInfo } from "./info/Info.ts";
+import pkgjson from '../package.json';
 
 export type DIVESettings = {
     autoResize: boolean;
@@ -227,7 +228,7 @@ export default class DIVE {
             },
         }
 
-        console.log('DIVE initialized');
+        console.log(`DIVE ${pkgjson.version} initialized`);
     }
 
     public Dispose(): void {

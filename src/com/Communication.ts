@@ -1,6 +1,7 @@
 import { Actions } from "./actions/index.ts";
 import { generateUUID } from 'three/src/math/MathUtils';
 import { isSelectTool } from "../toolbox/select/SelectTool.ts";
+import { merge } from 'lodash';
 
 // type imports
 import { type Color, type MeshStandardMaterial } from "three";
@@ -266,7 +267,7 @@ export class DIVECommunication {
     private addObject(payload: Actions['ADD_OBJECT']['PAYLOAD']): Actions['ADD_OBJECT']['RETURN'] {
         if (this.registered.get(payload.id)) return false;
 
-        if (payload.parent === undefined) payload.parent = null;
+        if (payload.parentId === undefined) payload.parentId = null;
 
         this.registered.set(payload.id, payload);
 
@@ -279,7 +280,7 @@ export class DIVECommunication {
         const objectToUpdate = this.registered.get(payload.id);
         if (!objectToUpdate) return false;
 
-        this.registered.set(payload.id, { ...objectToUpdate, ...payload });
+        this.registered.set(payload.id, merge(objectToUpdate, payload));
 
         const updatedObject = this.registered.get(payload.id)!;
         this.scene.UpdateSceneObject({ ...payload, id: updatedObject.id, entityType: updatedObject.entityType });
