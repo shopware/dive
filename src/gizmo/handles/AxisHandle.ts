@@ -1,11 +1,22 @@
-import { Color, ColorRepresentation, CylinderGeometry, Mesh, MeshBasicMaterial, Object3D, Vector3 } from "three";
-import { UI_LAYER_MASK } from "../../constant/VisibilityLayerMask";
-import { DIVEHoverable } from "../../interface/Hoverable";
-import { DIVETranslateGizmo } from "../translate/TranslateGizmo";
-import { DIVEDraggable } from "../../interface/Draggable";
-import { DraggableEvent } from "../../toolbox/BaseTool";
+import {
+    Color,
+    ColorRepresentation,
+    CylinderGeometry,
+    Mesh,
+    MeshBasicMaterial,
+    Object3D,
+    Vector3,
+} from 'three';
+import { UI_LAYER_MASK } from '../../constant/VisibilityLayerMask';
+import { DIVEHoverable } from '../../interface/Hoverable';
+import { DIVETranslateGizmo } from '../translate/TranslateGizmo';
+import { DIVEDraggable } from '../../interface/Draggable';
+import { DraggableEvent } from '../../toolbox/BaseTool';
 
-export class DIVEAxisHandle extends Object3D implements DIVEHoverable, DIVEDraggable {
+export class DIVEAxisHandle
+    extends Object3D
+    implements DIVEHoverable, DIVEDraggable
+{
     readonly isHoverable: true = true;
     readonly isDraggable: true = true;
 
@@ -22,27 +33,39 @@ export class DIVEAxisHandle extends Object3D implements DIVEHoverable, DIVEDragg
     }
     public set highlight(highlight: boolean) {
         this._highlight = highlight;
-        this._lineMaterial.color = this._highlight || this._hovered ? this._colorHover : this._color;
+        this._lineMaterial.color =
+            this._highlight || this._hovered ? this._colorHover : this._color;
     }
 
     private _lineMaterial: MeshBasicMaterial;
 
     public get forwardVector(): Vector3 {
-        return new Vector3(0, 0, 1).applyQuaternion(this.quaternion).normalize();
+        return new Vector3(0, 0, 1)
+            .applyQuaternion(this.quaternion)
+            .normalize();
     }
 
     public get rightVector(): Vector3 {
-        return new Vector3(1, 0, 0).applyQuaternion(this.quaternion).normalize();
+        return new Vector3(1, 0, 0)
+            .applyQuaternion(this.quaternion)
+            .normalize();
     }
 
     public get upVector(): Vector3 {
-        return new Vector3(0, 1, 0).applyQuaternion(this.quaternion).normalize();
+        return new Vector3(0, 1, 0)
+            .applyQuaternion(this.quaternion)
+            .normalize();
     }
 
-    constructor(axis: 'x' | 'y' | 'z', length: number, direction: Vector3, color: ColorRepresentation) {
+    constructor(
+        axis: 'x' | 'y' | 'z',
+        length: number,
+        direction: Vector3,
+        color: ColorRepresentation,
+    ) {
         super();
 
-        this.name = "DIVEAxisHandle";
+        this.name = 'DIVEAxisHandle';
         this.axis = axis;
 
         this._color.set(color);
@@ -82,8 +105,8 @@ export class DIVEAxisHandle extends Object3D implements DIVEHoverable, DIVEDragg
         colliderMesh.translateY(length / 2);
         this.add(colliderMesh);
 
-        this.rotateX(direction.y * -Math.PI / 2);
-        this.rotateY(direction.x * Math.PI / 2);
+        this.rotateX((direction.y * -Math.PI) / 2);
+        this.rotateY((direction.x * Math.PI) / 2);
     }
 
     public reset(): void {

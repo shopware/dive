@@ -1,10 +1,14 @@
-import { Euler, Object3D, Vector3 } from "three";
-import { AxesColorBlue, AxesColorGreen, AxesColorRed } from "../../constant/AxisHelperColors";
-import DIVEOrbitControls from "../../controls/OrbitControls";
-import { DIVERadialHandle } from "../handles/RadialHandle";
-import { DIVEGizmo, DIVEGizmoAxis } from "../Gizmo";
-import { DraggableEvent } from "../../toolbox/BaseTool";
-import { DIVEMath } from "../../math";
+import { Euler, Object3D, Vector3 } from 'three';
+import {
+    AxesColorBlue,
+    AxesColorGreen,
+    AxesColorRed,
+} from '../../constant/AxisHelperColors';
+import DIVEOrbitControls from '../../controls/OrbitControls';
+import { DIVERadialHandle } from '../handles/RadialHandle';
+import { DIVEGizmo, DIVEGizmoAxis } from '../Gizmo';
+import { DraggableEvent } from '../../toolbox/BaseTool';
+import { DIVEMath } from '../../math';
 
 export class DIVERotateGizmo extends Object3D {
     public children: DIVERadialHandle[];
@@ -16,7 +20,7 @@ export class DIVERotateGizmo extends Object3D {
     constructor(controller: DIVEOrbitControls) {
         super();
 
-        this.name = "DIVERotateGizmo";
+        this.name = 'DIVERotateGizmo';
 
         this.children = [];
 
@@ -24,20 +28,48 @@ export class DIVERotateGizmo extends Object3D {
 
         this._controller = controller;
 
-        this.add(new DIVERadialHandle('x', 1, Math.PI / 2, new Vector3(1, 0, 0), AxesColorRed));
-        this.add(new DIVERadialHandle('y', 1, -Math.PI / 2, new Vector3(0, 1, 0), AxesColorGreen));
-        this.add(new DIVERadialHandle('z', 1, Math.PI / 2, new Vector3(0, 0, 1), AxesColorBlue));
+        this.add(
+            new DIVERadialHandle(
+                'x',
+                1,
+                Math.PI / 2,
+                new Vector3(1, 0, 0),
+                AxesColorRed,
+            ),
+        );
+        this.add(
+            new DIVERadialHandle(
+                'y',
+                1,
+                -Math.PI / 2,
+                new Vector3(0, 1, 0),
+                AxesColorGreen,
+            ),
+        );
+        this.add(
+            new DIVERadialHandle(
+                'z',
+                1,
+                Math.PI / 2,
+                new Vector3(0, 0, 1),
+                AxesColorBlue,
+            ),
+        );
     }
 
     public reset(): void {
-        this.children.forEach((child) => {
+        this.children.forEach(child => {
             child.reset();
         });
     }
 
-    private handleHighlight(axis: DIVEGizmoAxis, value: boolean, dragged: boolean): void {
+    private handleHighlight(
+        axis: DIVEGizmoAxis,
+        value: boolean,
+        dragged: boolean,
+    ): void {
         // Set highlight state for all handles.
-        this.children.forEach((child) => {
+        this.children.forEach(child => {
             if (dragged) {
                 // Dragging has priority when it comes to highlighting.
                 child.highlight = child.axis === axis && dragged;
@@ -77,9 +109,19 @@ export class DIVERotateGizmo extends Object3D {
         if (!this.parent.parent) return;
         if (!('onChange' in this.parent.parent)) return;
 
-        const currentVector = e.dragCurrent.clone().sub(this.parent.parent.position).normalize();
-        const startVector = e.dragStart.clone().sub(this.parent.parent.position).normalize();
-        const signedAngle = DIVEMath.signedAngleTo(startVector, currentVector, handle.forwardVector);
+        const currentVector = e.dragCurrent
+            .clone()
+            .sub(this.parent.parent.position)
+            .normalize();
+        const startVector = e.dragStart
+            .clone()
+            .sub(this.parent.parent.position)
+            .normalize();
+        const signedAngle = DIVEMath.signedAngleTo(
+            startVector,
+            currentVector,
+            handle.forwardVector,
+        );
         const euler = new Euler(
             this._startRot.x + handle.forwardVector.x * signedAngle,
             this._startRot.y + handle.forwardVector.y * signedAngle,

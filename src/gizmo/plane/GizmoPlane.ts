@@ -1,6 +1,6 @@
-import { Mesh, MeshBasicMaterial, Object3D, PlaneGeometry } from "three";
-import { UI_LAYER_MASK } from "../../constant/VisibilityLayerMask";
-import { DIVEGizmoAxis, DIVEGizmoMode } from "../Gizmo";
+import { Mesh, MeshBasicMaterial, Object3D, PlaneGeometry } from 'three';
+import { UI_LAYER_MASK } from '../../constant/VisibilityLayerMask';
+import { DIVEGizmoAxis, DIVEGizmoMode } from '../Gizmo';
 
 export class DIVEGizmoPlane extends Object3D {
     private _meshX: Mesh;
@@ -18,7 +18,7 @@ export class DIVEGizmoPlane extends Object3D {
 
     constructor() {
         super();
-        this.name = "DIVEGizmoPlane";
+        this.name = 'DIVEGizmoPlane';
 
         const material = new MeshBasicMaterial({
             transparent: true,
@@ -80,6 +80,5 @@ export class DIVEGizmoPlane extends Object3D {
                     break;
             }
         }
-
     }
 }

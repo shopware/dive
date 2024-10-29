@@ -1,8 +1,8 @@
-import DIVEPerspectiveCamera from "../camera/PerspectiveCamera.ts";
-import { DIVEScene } from "../scene/Scene.ts";
-import { DIVERenderer } from "../renderer/Renderer.ts";
-import DIVEOrbitControls from "../controls/OrbitControls.ts";
-import { Vector3Like } from "three";
+import DIVEPerspectiveCamera from '../camera/PerspectiveCamera.ts';
+import { DIVEScene } from '../scene/Scene.ts';
+import { DIVERenderer } from '../renderer/Renderer.ts';
+import DIVEOrbitControls from '../controls/OrbitControls.ts';
+import { Vector3Like } from 'three';
 
 /**
  * Creates renderings of the current scene
@@ -15,13 +15,22 @@ export class DIVEMediaCreator {
     private scene: DIVEScene;
     private controller: DIVEOrbitControls;
 
-    constructor(renderer: DIVERenderer, scene: DIVEScene, controller: DIVEOrbitControls) {
+    constructor(
+        renderer: DIVERenderer,
+        scene: DIVEScene,
+        controller: DIVEOrbitControls,
+    ) {
         this.renderer = renderer;
         this.scene = scene;
         this.controller = controller;
     }
 
-    public GenerateMedia(position: Vector3Like, target: Vector3Like, width: number, height: number): string {
+    public GenerateMedia(
+        position: Vector3Like,
+        target: Vector3Like,
+        width: number,
+        height: number,
+    ): string {
         const resetPosition = this.controller.object.position.clone();
         const resetRotation = this.controller.object.quaternion.clone();
 
@@ -31,7 +40,6 @@ export class DIVEMediaCreator {
         this.controller.object.position.copy(position);
         this.controller.target.copy(target);
         this.controller.update();
-
 
         const dataUri = this.DrawCanvas().toDataURL();
 
@@ -49,9 +57,11 @@ export class DIVEMediaCreator {
         }
 
         // draw canvas
-        this.controller.object.layers.mask = DIVEPerspectiveCamera.LIVE_VIEW_LAYER_MASK;
+        this.controller.object.layers.mask =
+            DIVEPerspectiveCamera.LIVE_VIEW_LAYER_MASK;
         this.renderer.render(this.scene, this.controller.object);
-        this.controller.object.layers.mask = DIVEPerspectiveCamera.EDITOR_VIEW_LAYER_MASK;
+        this.controller.object.layers.mask =
+            DIVEPerspectiveCamera.EDITOR_VIEW_LAYER_MASK;
 
         const returnCanvas = this.renderer.domElement;
 

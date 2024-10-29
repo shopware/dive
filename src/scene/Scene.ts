@@ -53,7 +53,9 @@ export class DIVEScene extends Scene {
         return this.Root.ComputeSceneBB();
     }
 
-    public GetSceneObject<T extends DIVESceneObject>(object: Partial<COMEntity> & { id: string }): T | undefined {
+    public GetSceneObject<T extends DIVESceneObject>(
+        object: Partial<COMEntity> & { id: string },
+    ): T | undefined {
         return this.Root.GetSceneObject<T>(object);
     }
 
@@ -61,11 +63,15 @@ export class DIVEScene extends Scene {
         this.Root.AddSceneObject(object);
     }
 
-    public UpdateSceneObject(object: Partial<COMEntity> & { id: string }): void {
+    public UpdateSceneObject(
+        object: Partial<COMEntity> & { id: string },
+    ): void {
         this.Root.UpdateSceneObject(object);
     }
 
-    public DeleteSceneObject(object: Partial<COMEntity> & { id: string }): void {
+    public DeleteSceneObject(
+        object: Partial<COMEntity> & { id: string },
+    ): void {
         this.Root.DeleteSceneObject(object);
     }
 

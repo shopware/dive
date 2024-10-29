@@ -2,8 +2,10 @@
  * Find the difference between two objects.
  */
 
-export const getObjectDelta = <T extends object>(a: T, b: Partial<T>): Partial<T> => {
-
+export const getObjectDelta = <T extends object>(
+    a: T,
+    b: Partial<T>,
+): Partial<T> => {
     // if a and b have no entries we have no delta
     if (Object.keys(a).length === 0 && Object.keys(b).length === 0) {
         return {};
@@ -16,8 +18,7 @@ export const getObjectDelta = <T extends object>(a: T, b: Partial<T>): Partial<T
 
     let delta = {};
 
-    Object.keys(b).forEach((key) => {
-
+    Object.keys(b).forEach(key => {
         // if key is not in a we have a delta
         if (!Object.keys(a).includes(key)) {
             delta = { ...delta, [key]: b[key as keyof object] };
@@ -26,7 +27,6 @@ export const getObjectDelta = <T extends object>(a: T, b: Partial<T>): Partial<T
 
         // assumption: b[key] is an array
         if (Array.isArray(b[key as keyof object])) {
-
             // if a[key] is not an array we have a delta
             if (!Array.isArray(a[key as keyof object])) {
                 delta = { ...delta, [key]: b[key as keyof object] };
@@ -54,7 +54,10 @@ export const getObjectDelta = <T extends object>(a: T, b: Partial<T>): Partial<T
 
             bArray.forEach((entry, index) => {
                 // getObjectDelta in array
-                const inArrayDelta = getObjectDelta(aArray[index], bArray[index]);
+                const inArrayDelta = getObjectDelta(
+                    aArray[index],
+                    bArray[index],
+                );
 
                 // if inArrayDelta has more then 0 entries we have a delta
                 if (Object.keys(inArrayDelta).length) {
@@ -68,13 +71,11 @@ export const getObjectDelta = <T extends object>(a: T, b: Partial<T>): Partial<T
                 return;
             }
 
-
             return;
         }
 
         // assumption: b[key] is an object
         if (typeof b[key as keyof object] === 'object') {
-
             // if a[key] is not an object we have a delta
             if (typeof a[key as keyof object] !== 'object') {
                 delta = { ...delta, [key]: b[key as keyof object] };
@@ -82,7 +83,10 @@ export const getObjectDelta = <T extends object>(a: T, b: Partial<T>): Partial<T
             }
 
             // recursive: find objectDelta in a and b
-            const objectDelta = getObjectDelta(a[key as keyof object], b[key as keyof object]);
+            const objectDelta = getObjectDelta(
+                a[key as keyof object],
+                b[key as keyof object],
+            );
 
             // if objectDelta has more than 0 entries we have a delta
             if (Object.keys(objectDelta).length) {
@@ -98,4 +102,4 @@ export const getObjectDelta = <T extends object>(a: T, b: Partial<T>): Partial<T
     });
 
     return delta;
-}
+};

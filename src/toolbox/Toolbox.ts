@@ -1,7 +1,7 @@
-import type DIVEOrbitControls from "../controls/OrbitControls.ts";
-import type { DIVEScene } from "../scene/Scene.ts";
-import { type DIVEBaseTool } from "./BaseTool.ts";
-import { type DIVESelectTool } from "./select/SelectTool.ts";
+import type DIVEOrbitControls from '../controls/OrbitControls.ts';
+import type { DIVEScene } from '../scene/Scene.ts';
+import { type DIVEBaseTool } from './BaseTool.ts';
+import { type DIVESelectTool } from './select/SelectTool.ts';
 
 export type ToolType = 'select' | 'none';
 
@@ -22,8 +22,12 @@ export default class DIVEToolbox {
     private _selectTool: DIVESelectTool | null;
     public get selectTool(): DIVESelectTool {
         if (!this._selectTool) {
-            const DIVESelectTool = require('./select/SelectTool.ts').DIVESelectTool as typeof import('./select/SelectTool.ts').DIVESelectTool;
-            this._selectTool = new DIVESelectTool(this._scene, this._controller);
+            const DIVESelectTool = require('./select/SelectTool.ts')
+                .DIVESelectTool as typeof import('./select/SelectTool.ts').DIVESelectTool;
+            this._selectTool = new DIVESelectTool(
+                this._scene,
+                this._controller,
+            );
         }
         return this._selectTool;
     }
@@ -50,13 +54,13 @@ export default class DIVEToolbox {
     public UseTool(tool: ToolType): void {
         this._activeTool?.Deactivate();
         switch (tool) {
-            case "select": {
+            case 'select': {
                 this.addEventListeners();
                 this.selectTool.Activate();
                 this._activeTool = this.selectTool;
                 break;
             }
-            case "none": {
+            case 'none': {
                 this.removeEventListeners();
                 this._activeTool = null;
                 break;
@@ -92,16 +96,32 @@ export default class DIVEToolbox {
     }
 
     private addEventListeners(): void {
-        this._controller.domElement.addEventListener('pointermove', (e) => this.onPointerMove(e));
-        this._controller.domElement.addEventListener('pointerdown', (e) => this.onPointerDown(e));
-        this._controller.domElement.addEventListener('pointerup', (e) => this.onPointerUp(e));
-        this._controller.domElement.addEventListener('wheel', (e) => this.onWheel(e));
+        this._controller.domElement.addEventListener('pointermove', e =>
+            this.onPointerMove(e),
+        );
+        this._controller.domElement.addEventListener('pointerdown', e =>
+            this.onPointerDown(e),
+        );
+        this._controller.domElement.addEventListener('pointerup', e =>
+            this.onPointerUp(e),
+        );
+        this._controller.domElement.addEventListener('wheel', e =>
+            this.onWheel(e),
+        );
     }
 
     private removeEventListeners(): void {
-        this._controller.domElement.removeEventListener('pointermove', (e) => this.onPointerMove(e));
-        this._controller.domElement.removeEventListener('pointerdown', (e) => this.onPointerDown(e));
-        this._controller.domElement.removeEventListener('pointerup', (e) => this.onPointerUp(e));
-        this._controller.domElement.removeEventListener('wheel', (e) => this.onWheel(e));
+        this._controller.domElement.removeEventListener('pointermove', e =>
+            this.onPointerMove(e),
+        );
+        this._controller.domElement.removeEventListener('pointerdown', e =>
+            this.onPointerDown(e),
+        );
+        this._controller.domElement.removeEventListener('pointerup', e =>
+            this.onPointerUp(e),
+        );
+        this._controller.domElement.removeEventListener('wheel', e =>
+            this.onWheel(e),
+        );
     }
 }

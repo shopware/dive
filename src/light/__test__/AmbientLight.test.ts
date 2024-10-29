@@ -22,9 +22,8 @@ jest.mock('three', () => {
             };
             return this;
         }),
-    }
+    };
 });
-
 
 describe('dive/light/DIVEAmbientLight', () => {
     it('should instantiate', () => {
@@ -41,7 +40,9 @@ describe('dive/light/DIVEAmbientLight', () => {
     it('should set color', () => {
         const testLight = new DIVEAmbientLight();
         testLight.SetColor({ test: true } as unknown as Color);
-        expect((testLight.children[0] as AmbientLight).color).toEqual({ test: true });
+        expect((testLight.children[0] as AmbientLight).color).toEqual({
+            test: true,
+        });
     });
 
     it('should set enabled', () => {

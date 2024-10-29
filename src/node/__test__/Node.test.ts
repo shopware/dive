@@ -35,7 +35,7 @@ jest.mock('three', () => {
             this.setY = (y: number) => {
                 this.y = y;
                 return this;
-            }
+            };
             this.add = (vec3: Vector3) => {
                 this.x += vec3.x;
                 this.y += vec3.y;
@@ -70,15 +70,17 @@ jest.mock('three', () => {
                     far: 0,
                     fov: 0,
                 },
-            }
+            };
             this.add = jest.fn();
             this.sub = jest.fn();
-            this.children = [{
-                visible: true,
-                material: {
-                    color: {},
+            this.children = [
+                {
+                    visible: true,
+                    material: {
+                        color: {},
+                    },
                 },
-            }];
+            ];
             this.userData = {};
             this.position = new Vector3();
             this.rotation = new Euler();
@@ -87,8 +89,8 @@ jest.mock('three', () => {
                 return vec3;
             };
             this.mesh = new Mesh();
-            this.traverse = jest.fn((callback) => {
-                callback(this.children[0])
+            this.traverse = jest.fn(callback => {
+                callback(this.children[0]);
             });
             return this;
         }),
@@ -140,7 +142,7 @@ jest.mock('three', () => {
             this.set = jest.fn();
             return this;
         }),
-    }
+    };
 });
 
 jest.mock('../../com/Communication.ts', () => {
@@ -149,13 +151,15 @@ jest.mock('../../com/Communication.ts', () => {
             get: jest.fn(() => {
                 return {
                     PerformAction: jest.fn(),
-                }
+                };
             }),
         },
-    }
+    };
 });
 
-jest.spyOn(DIVECommunication, 'get').mockReturnValue({ PerformAction: jest.fn() } as unknown as DIVECommunication);
+jest.spyOn(DIVECommunication, 'get').mockReturnValue({
+    PerformAction: jest.fn(),
+} as unknown as DIVECommunication);
 
 let node: DIVENode;
 

@@ -1,7 +1,7 @@
-import { BufferGeometry, Line, LineDashedMaterial, Vector3 } from "three";
-import { DIVENode } from "../node/Node";
-import { type Object3D } from "three";
-import { type DIVESceneObject } from "../types";
+import { BufferGeometry, Line, LineDashedMaterial, Vector3 } from 'three';
+import { DIVENode } from '../node/Node';
+import { type Object3D } from 'three';
+import { type DIVESceneObject } from '../types';
 
 export class DIVEGroup extends DIVENode {
     readonly isDIVEGroup: true = true;
@@ -22,7 +22,7 @@ export class DIVEGroup extends DIVENode {
 
     public SetLinesVisibility(visible: boolean, object?: Object3D): void {
         if (!object) {
-            this._lines.forEach((line) => {
+            this._lines.forEach(line => {
                 line.visible = visible;
             });
             return;
@@ -39,7 +39,6 @@ export class DIVEGroup extends DIVENode {
         const line = this.createLine();
         this.add(line);
         this._lines.push(line);
-
 
         // attach (insted of add) object to keep it's world position
         super.attach(object);
@@ -94,7 +93,10 @@ export class DIVEGroup extends DIVENode {
      * Updates a line to the object.
      */
     private updateLineTo(line: Line, object: Object3D): void {
-        line.geometry.setFromPoints([new Vector3(0, 0, 0), object.position.clone()]);
+        line.geometry.setFromPoints([
+            new Vector3(0, 0, 0),
+            object.position.clone(),
+        ]);
         line.computeLineDistances();
     }
 

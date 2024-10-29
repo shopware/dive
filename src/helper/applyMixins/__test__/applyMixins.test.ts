@@ -1,22 +1,25 @@
 import { applyMixins } from '../applyMixins.ts';
 
 class Movable {
-    move() { }
+    move() {}
 }
 
 class Selectable {
-    select() { }
+    select() {}
 }
 
 describe('dive/helper/applyMixins', () => {
     it('should apply mixins', () => {
         class Product {
-            doProductThings() { }
+            doProductThings() {}
         }
 
-        interface Product extends Movable, Selectable { }
+        interface Product extends Movable, Selectable {}
 
-        applyMixins(Product, [Movable, Selectable]);
+        applyMixins(Product, [
+            Movable,
+            Selectable,
+        ]);
 
         const instance = new Product();
         expect(instance).toBeDefined();

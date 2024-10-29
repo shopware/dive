@@ -1,6 +1,6 @@
 import DIVESceneLight from '../SceneLight';
 import { DIVECommunication } from '../../com/Communication';
-import { Color, HemisphereLight as THREEHemisphereLight, DirectionalLight as THREEDirectionalLight, Object3D } from 'three';
+import { Color, Object3D } from 'three';
 
 jest.mock('../../com/Communication.ts', () => {
     return {
@@ -8,10 +8,10 @@ jest.mock('../../com/Communication.ts', () => {
             get: jest.fn(() => {
                 return {
                     PerformAction: jest.fn(),
-                }
+                };
             }),
         },
-    }
+    };
 });
 
 const mockAdd = jest.fn();
@@ -36,13 +36,15 @@ jest.mock('three', () => {
                     far: 0,
                     fov: 0,
                 },
-            }
+            };
             this.add = mockAdd;
-            this.children = [{
-                material: {
-                    color: {},
+            this.children = [
+                {
+                    material: {
+                        color: {},
+                    },
                 },
-            }];
+            ];
             this.userData = {};
             return this;
         }),
@@ -94,14 +96,16 @@ jest.mock('three', () => {
                     far: 0,
                     fov: 0,
                 },
-            }
+            };
             this.removeFromParent = mockAdd;
             return this;
         }),
-    }
+    };
 });
 
-jest.spyOn(DIVECommunication, 'get').mockReturnValue({ PerformAction: jest.fn() } as unknown as DIVECommunication);
+jest.spyOn(DIVECommunication, 'get').mockReturnValue({
+    PerformAction: jest.fn(),
+} as unknown as DIVECommunication);
 
 describe('dive/light/DIVESceneLight', () => {
     it('should instantiate', () => {
@@ -118,7 +122,9 @@ describe('dive/light/DIVESceneLight', () => {
 
     it('should set color', () => {
         const testLight = new DIVESceneLight();
-        expect(() => testLight.SetColor({ test: true } as unknown as Color)).not.toThrow();
+        expect(() =>
+            testLight.SetColor({ test: true } as unknown as Color),
+        ).not.toThrow();
     });
 
     it('should set enabled', () => {

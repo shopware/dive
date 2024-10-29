@@ -25,7 +25,7 @@ export class DIVEModel extends DIVENode {
     public SetModel(gltf: GLTF): void {
         this.clear();
 
-        gltf.scene.traverse((child) => {
+        gltf.scene.traverse(child => {
             child.castShadow = true;
             child.receiveShadow = true;
 
@@ -40,7 +40,8 @@ export class DIVEModel extends DIVENode {
                 if (this._material) {
                     this._mesh.material = this._material;
                 } else {
-                    this._material = (child as Mesh).material as MeshStandardMaterial;
+                    this._material = (child as Mesh)
+                        .material as MeshStandardMaterial;
                 }
             }
         });
@@ -111,24 +112,40 @@ export class DIVEModel extends DIVENode {
 
     public PlaceOnFloor(): void {
         this.position.y = -this._boundingBox.min.y * this.scale.y;
-        DIVECommunication.get(this.userData.id)?.PerformAction('UPDATE_OBJECT', { id: this.userData.id, position: this.position, rotation: this.rotation, scale: this.scale });
+        DIVECommunication.get(this.userData.id)?.PerformAction(
+            'UPDATE_OBJECT',
+            {
+                id: this.userData.id,
+                position: this.position,
+                rotation: this.rotation,
+                scale: this.scale,
+            },
+        );
     }
 
     public DropIt(): void {
         if (!this.parent) {
-            console.warn('DIVEModel: DropIt() called on a model that is not in the scene.', this);
+            console.warn(
+                'DIVEModel: DropIt() called on a model that is not in the scene.',
+                this,
+            );
             return;
         }
 
         // calculate the bottom center of the bounding box
         const bottomY = this._boundingBox.min.y * this.scale.y;
-        const bbBottomCenter = this.localToWorld(this._boundingBox.getCenter(new Vector3()).multiply(this.scale));
+        const bbBottomCenter = this.localToWorld(
+            this._boundingBox.getCenter(new Vector3()).multiply(this.scale),
+        );
         bbBottomCenter.y = bottomY + this.position.y;
 
         // set up raycaster and raycast all scene objects (product layer)
         const raycaster = new Raycaster(bbBottomCenter, new Vector3(0, -1, 0));
         raycaster.layers.mask = PRODUCT_LAYER_MASK;
-        const intersections = raycaster.intersectObjects(findSceneRecursive(this).Root.children, true);
+        const intersections = raycaster.intersectObjects(
+            findSceneRecursive(this).Root.children,
+            true,
+        );
 
         // if we hit something, move the model to the top on the hit object's bounding box
         if (intersections.length > 0) {
@@ -138,12 +155,23 @@ export class DIVEModel extends DIVENode {
             const worldPos = mesh.localToWorld(meshBB.max.clone());
 
             const oldPos = this.position.clone();
-            const newPos = this.position.clone().setY(worldPos.y).sub(new Vector3(0, bottomY, 0));
+            const newPos = this.position
+                .clone()
+                .setY(worldPos.y)
+                .sub(new Vector3(0, bottomY, 0));
             this.position.copy(newPos);
 
             // if the position changed, update the object in communication
             if (this.position.y === oldPos.y) return;
-            DIVECommunication.get(this.userData.id)?.PerformAction('UPDATE_OBJECT', { id: this.userData.id, position: this.position, rotation: this.rotation, scale: this.scale });
+            DIVECommunication.get(this.userData.id)?.PerformAction(
+                'UPDATE_OBJECT',
+                {
+                    id: this.userData.id,
+                    position: this.position,
+                    rotation: this.rotation,
+                    scale: this.scale,
+                },
+            );
         }
     }
 }

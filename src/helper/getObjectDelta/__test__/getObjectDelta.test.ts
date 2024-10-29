@@ -1,7 +1,6 @@
 import { getObjectDelta } from '../getObjectDelta.ts';
 
 describe('dive/helper/getObjectDelta', () => {
-
     // NO DELTAS
     it('should not find any deltas with empty objects', () => {
         const obj0 = {};
@@ -13,7 +12,16 @@ describe('dive/helper/getObjectDelta', () => {
     });
 
     it('should not find any deltas with equal references', () => {
-        const obj0 = { test0: 'test', value0: 42, array0: [187, 6, 9, 42] };
+        const obj0 = {
+            test0: 'test',
+            value0: 42,
+            array0: [
+                187,
+                6,
+                9,
+                42,
+            ],
+        };
         const obj1 = obj0;
 
         const delta = getObjectDelta(obj0, obj1);
@@ -22,7 +30,16 @@ describe('dive/helper/getObjectDelta', () => {
     });
 
     it('should not find any deltas with equal objects', () => {
-        const obj0 = { test0: 'test', value0: 42, array0: [187, 6, 9, 42] };
+        const obj0 = {
+            test0: 'test',
+            value0: 42,
+            array0: [
+                187,
+                6,
+                9,
+                42,
+            ],
+        };
         const obj1 = { ...obj0 };
 
         const delta = getObjectDelta(obj0, obj1);
@@ -95,8 +112,21 @@ describe('dive/helper/getObjectDelta', () => {
     });
 
     it('should find deltas with array value delta', () => {
-        const obj0 = { array0: [187, 6, 9, 42] };
-        const obj1 = { array0: [187, 6, 9] };
+        const obj0 = {
+            array0: [
+                187,
+                6,
+                9,
+                42,
+            ],
+        };
+        const obj1 = {
+            array0: [
+                187,
+                6,
+                9,
+            ],
+        };
 
         const delta = getObjectDelta(obj0, obj1);
 
@@ -105,7 +135,13 @@ describe('dive/helper/getObjectDelta', () => {
 
     it('should find deltas with array type difference', () => {
         const obj0 = { array0: 'array0' };
-        const obj1 = { array0: [187, 6, 9] as unknown as string };
+        const obj1 = {
+            array0: [
+                187,
+                6,
+                9,
+            ] as unknown as string,
+        };
 
         const delta = getObjectDelta(obj0, obj1);
 

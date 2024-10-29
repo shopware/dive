@@ -33,15 +33,14 @@ jest.mock('../select/SelectTool.ts', () => {
             this.SetGizmoMode = jest.fn();
             this.SetGizmoVisibility = jest.fn();
             return this;
-        })
-    }
+        }),
+    };
 });
 
 const mockController = {
     domElement: mock_Canvas,
-    object: {}
+    object: {},
 } as unknown as DIVEOrbitControls;
-
 
 describe('dive/toolbox/DIVEToolBox', () => {
     afterEach(() => {
@@ -61,7 +60,9 @@ describe('dive/toolbox/DIVEToolBox', () => {
 
     it('should throw with incorrect tool', () => {
         const toolBox = new DIVEToolbox({} as DIVEScene, mockController);
-        expect(() => toolBox.UseTool('not a real tool' as unknown as ToolType)).toThrow();
+        expect(() =>
+            toolBox.UseTool('not a real tool' as unknown as ToolType),
+        ).toThrow();
     });
 
     it('should use no tool', () => {
@@ -77,30 +78,46 @@ describe('dive/toolbox/DIVEToolBox', () => {
 
     it('should execute pointer down event on tool', () => {
         const toolBox = new DIVEToolbox({} as DIVEScene, mockController);
-        expect(() => toolBox.onPointerDown({ type: 'pointerdown' } as PointerEvent)).not.toThrow();
+        expect(() =>
+            toolBox.onPointerDown({ type: 'pointerdown' } as PointerEvent),
+        ).not.toThrow();
         expect(() => toolBox.UseTool('select')).not.toThrow();
-        expect(() => toolBox.onPointerDown({ type: 'pointerdown' } as PointerEvent)).not.toThrow();
+        expect(() =>
+            toolBox.onPointerDown({ type: 'pointerdown' } as PointerEvent),
+        ).not.toThrow();
     });
 
     it('should execute pointer move event on tool', () => {
         const toolBox = new DIVEToolbox({} as DIVEScene, mockController);
-        expect(() => toolBox.onPointerMove({ type: 'pointermove' } as PointerEvent)).not.toThrow();
+        expect(() =>
+            toolBox.onPointerMove({ type: 'pointermove' } as PointerEvent),
+        ).not.toThrow();
         expect(() => toolBox.UseTool('select')).not.toThrow();
-        expect(() => toolBox.onPointerMove({ type: 'pointermove' } as PointerEvent)).not.toThrow();
+        expect(() =>
+            toolBox.onPointerMove({ type: 'pointermove' } as PointerEvent),
+        ).not.toThrow();
     });
 
     it('should execute pointer up event on tool', () => {
         const toolBox = new DIVEToolbox({} as DIVEScene, mockController);
-        expect(() => toolBox.onPointerUp({ type: 'pointerup' } as PointerEvent)).not.toThrow();
+        expect(() =>
+            toolBox.onPointerUp({ type: 'pointerup' } as PointerEvent),
+        ).not.toThrow();
         expect(() => toolBox.UseTool('select')).not.toThrow();
-        expect(() => toolBox.onPointerUp({ type: 'pointerup' } as PointerEvent)).not.toThrow();
+        expect(() =>
+            toolBox.onPointerUp({ type: 'pointerup' } as PointerEvent),
+        ).not.toThrow();
     });
 
     it('should execute wheel event on tool', () => {
         const toolBox = new DIVEToolbox({} as DIVEScene, mockController);
-        expect(() => toolBox.onWheel({ type: 'wheel' } as WheelEvent)).not.toThrow();
+        expect(() =>
+            toolBox.onWheel({ type: 'wheel' } as WheelEvent),
+        ).not.toThrow();
         expect(() => toolBox.UseTool('select')).not.toThrow();
-        expect(() => toolBox.onWheel({ type: 'wheel' } as WheelEvent)).not.toThrow();
+        expect(() =>
+            toolBox.onWheel({ type: 'wheel' } as WheelEvent),
+        ).not.toThrow();
     });
 
     it('should get active tool', () => {

@@ -1,6 +1,6 @@
-import { COMEntity } from "../../types";
+import { COMEntity } from '../../types';
 
 export default interface ADD_OBJECT {
-    'PAYLOAD': COMEntity,
-    'RETURN': boolean,
-};
+    PAYLOAD: COMEntity;
+    RETURN: boolean;
+}

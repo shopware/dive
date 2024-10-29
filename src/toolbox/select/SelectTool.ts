@@ -1,18 +1,18 @@
-import { type Object3D } from "three";
-import { DIVEScene } from "../../scene/Scene.ts";
-import DIVETransformTool from "../transform/TransformTool.ts";
-import { findInterface } from "../../helper/findInterface/findInterface.ts";
-import type DIVEOrbitControls from "../../controls/OrbitControls.ts";
-import { type DIVESelectable } from "../../interface/Selectable.ts";
-import { type DIVEMovable } from "../../interface/Movable.ts";
-import { type DIVEBaseTool } from "../BaseTool.ts";
+import { type Object3D } from 'three';
+import { DIVEScene } from '../../scene/Scene.ts';
+import DIVETransformTool from '../transform/TransformTool.ts';
+import { findInterface } from '../../helper/findInterface/findInterface.ts';
+import type DIVEOrbitControls from '../../controls/OrbitControls.ts';
+import { type DIVESelectable } from '../../interface/Selectable.ts';
+import { type DIVEMovable } from '../../interface/Movable.ts';
+import { type DIVEBaseTool } from '../BaseTool.ts';
 
 export const isSelectTool = (tool: DIVEBaseTool): tool is DIVESelectTool => {
     return (tool as DIVESelectTool).isSelectTool !== undefined;
-}
+};
 
 export interface DIVEObjectEventMap {
-    select: object
+    select: object;
 }
 
 /**
@@ -28,11 +28,10 @@ export class DIVESelectTool extends DIVETransformTool {
 
     constructor(scene: DIVEScene, controller: DIVEOrbitControls) {
         super(scene, controller);
-        this.name = "SelectTool";
+        this.name = 'SelectTool';
     }
 
-    public Activate(): void { }
-
+    public Activate(): void {}
 
     public Select(selectable: DIVESelectable): void {
         if (selectable.onSelect) selectable.onSelect();
@@ -48,7 +47,9 @@ export class DIVESelectTool extends DIVETransformTool {
 
     public AttachGizmo(selectable: DIVESelectable): void {
         if ('isMovable' in selectable) {
-            const movable = selectable as (Object3D & DIVESelectable & DIVEMovable);
+            const movable = selectable as Object3D &
+                DIVESelectable &
+                DIVEMovable;
             this._gizmo.attach(movable);
             this.SetGizmoVisibility(movable.visible);
         }
@@ -61,8 +62,13 @@ export class DIVESelectTool extends DIVETransformTool {
     public onClick(e: PointerEvent): void {
         super.onClick(e);
 
-        const first = this._raycaster.intersectObjects(this._scene.Root.children, true).filter((intersect) => intersect.object.visible)[0];
-        const selectable = findInterface<DIVESelectable>(first?.object, 'isSelectable');
+        const first = this._raycaster
+            .intersectObjects(this._scene.Root.children, true)
+            .filter(intersect => intersect.object.visible)[0];
+        const selectable = findInterface<DIVESelectable>(
+            first?.object,
+            'isSelectable',
+        );
 
         // if nothing is hit
         if (!first || !selectable) {
@@ -77,9 +83,8 @@ export class DIVESelectTool extends DIVETransformTool {
             if (this._gizmo.object.uuid === selectable.uuid) return;
 
             // deselect previous object
-            this.Deselect(this._gizmo.object as (Object3D & DIVESelectable));
+            this.Deselect(this._gizmo.object as Object3D & DIVESelectable);
         }
-
 
         // select clicked object
         this.Select(selectable);

@@ -25,15 +25,19 @@ jest.mock('three', () => {
             return this;
         }),
         MathUtils: {
-            generateUUID: () => { return 'test_uuid'; },
+            generateUUID: () => {
+                return 'test_uuid';
+            },
         },
-    }
+    };
 });
 
 jest.mock('three/src/math/MathUtils', () => {
     return {
-        generateUUID: () => { return 'test_uuid'; },
-    }
+        generateUUID: () => {
+            return 'test_uuid';
+        },
+    };
 });
 
 jest.mock('../com/Communication.ts', () => {
@@ -43,14 +47,16 @@ jest.mock('../com/Communication.ts', () => {
                 position: { x: 0, y: 0, z: 0 },
                 target: { x: 0, y: 0, z: 0 },
             });
-            this.Subscribe = jest.fn((action: string, callback: (data: { id: string }) => void) => {
-                callback({ id: 'incorrect id' });
-                callback({ id: 'test_uuid' });
-            });
+            this.Subscribe = jest.fn(
+                (action: string, callback: (data: { id: string }) => void) => {
+                    callback({ id: 'incorrect id' });
+                    callback({ id: 'test_uuid' });
+                },
+            );
             this.DestroyInstance = jest.fn();
 
             return this;
-        })
+        }),
     };
 });
 
@@ -81,7 +87,7 @@ jest.mock('../renderer/Renderer.ts', () => {
             this.Dispose = jest.fn();
             return this;
         }),
-    }
+    };
 });
 
 jest.mock('../scene/Scene.ts', () => {
@@ -93,16 +99,16 @@ jest.mock('../scene/Scene.ts', () => {
             this.dispatchEvent = jest.fn();
             this.position = {
                 set: jest.fn(),
-            }
+            };
             this.SetIntensity = jest.fn();
             this.SetEnabled = jest.fn();
             this.SetColor = jest.fn();
             this.userData = {
                 id: undefined,
-            }
+            };
             this.removeFromParent = jest.fn();
             return this;
-        })
+        }),
     };
 });
 
@@ -113,13 +119,13 @@ jest.mock('../camera/PerspectiveCamera.ts', () => {
         this.dispatchEvent = jest.fn();
         this.position = {
             set: jest.fn(),
-        }
+        };
         this.SetIntensity = jest.fn();
         this.SetEnabled = jest.fn();
         this.SetColor = jest.fn();
         this.userData = {
             id: undefined,
-        }
+        };
         this.removeFromParent = jest.fn();
         this.OnResize = jest.fn();
         return this;
@@ -133,13 +139,13 @@ jest.mock('../controls/OrbitControls.ts', () => {
         this.dispatchEvent = jest.fn();
         this.position = {
             set: jest.fn(),
-        }
+        };
         this.SetIntensity = jest.fn();
         this.SetEnabled = jest.fn();
         this.SetColor = jest.fn();
         this.userData = {
             id: undefined,
-        }
+        };
         this.removeFromParent = jest.fn();
         this.Dispose = jest.fn();
         return this;
@@ -153,13 +159,13 @@ jest.mock('../toolbox/Toolbox.ts', () => {
         this.dispatchEvent = jest.fn();
         this.position = {
             set: jest.fn(),
-        }
+        };
         this.SetIntensity = jest.fn();
         this.SetEnabled = jest.fn();
         this.SetColor = jest.fn();
         this.userData = {
             id: undefined,
-        }
+        };
         this.Dispose = jest.fn();
         this.removeFromParent = jest.fn();
         return this;
@@ -173,13 +179,13 @@ jest.mock('../axiscamera/AxisCamera.ts', () => {
         this.dispatchEvent = jest.fn();
         this.position = {
             set: jest.fn(),
-        }
+        };
         this.SetIntensity = jest.fn();
         this.SetEnabled = jest.fn();
         this.SetColor = jest.fn();
         this.userData = {
             id: undefined,
-        }
+        };
         this.removeFromParent = jest.fn();
         this.SetFromCameraMatrix = jest.fn();
         this.Dispose = jest.fn();
@@ -208,7 +214,7 @@ describe('dive/DIVE', () => {
 
         const settings = {
             displayAxes: true,
-        }
+        };
         dive = new DIVE(settings);
         expect(() => dive.Dispose()).not.toThrow();
     });
@@ -233,7 +239,7 @@ describe('dive/DIVE', () => {
             orbitControls: {
                 enableDamping: false,
                 dampingFactor: 0,
-            }
+            },
         } as DIVESettings;
         const dive = new DIVE(settings);
         expect(dive).toBeDefined();
@@ -280,23 +286,21 @@ describe('dive/DIVE', () => {
             orbitControls: {
                 enableDamping: false,
                 dampingFactor: 0,
-            }
-        }
+            },
+        };
 
         dive.Settings = {
             autoResize: true,
-        }
+        };
 
         Object.assign(dive.Canvas, { parentElement: null });
 
         dive.Settings = {
             autoResize: false,
-        }
+        };
 
         dive.Settings = {
             autoResize: true,
-        }
+        };
     });
-
-
 });

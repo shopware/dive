@@ -4,7 +4,7 @@
  * @module
  */
 
-import { type DraggableEvent } from "../toolbox/BaseTool";
+import { type DraggableEvent } from '../toolbox/BaseTool';
 
 export interface DIVEDraggable {
     isDraggable: true;

@@ -6,20 +6,26 @@ const mock_setDecoderPath = jest.fn();
 jest.mock('three/examples/jsm/Addons.js', () => {
     return {
         GLTFLoader: jest.fn(function () {
-
-            this.loadAsync = (uri: string, progEvent: (p: ProgressEvent<EventTarget>) => void) => new Promise<void>((resolve) => {
-                progEvent({ loaded: 0, total: 1 } as ProgressEvent<EventTarget>);
-                resolve();
-            });
+            this.loadAsync = (
+                uri: string,
+                progEvent: (p: ProgressEvent<EventTarget>) => void,
+            ) =>
+                new Promise<void>(resolve => {
+                    progEvent({
+                        loaded: 0,
+                        total: 1,
+                    } as ProgressEvent<EventTarget>);
+                    resolve();
+                });
             this.setDRACOLoader = mock_setDRACOLoader;
             return this;
         }),
         DRACOLoader: jest.fn(() => {
             return {
                 setDecoderPath: mock_setDecoderPath,
-            }
+            };
         }),
-    }
+    };
 });
 
 describe('dive/loadingmanager/DIVELoadingManager', () => {
@@ -48,5 +54,4 @@ describe('dive/loadingmanager/DIVELoadingManager', () => {
         const progress = testLight.PollProgress();
         expect(progress).toBe(1);
     });
-
 });

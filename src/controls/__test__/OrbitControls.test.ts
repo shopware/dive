@@ -7,9 +7,9 @@ import { Tween } from '@tweenjs/tween.js';
 
 jest.mock('@tweenjs/tween.js', () => {
     return {
-        Tween: jest.fn(() => { }),
+        Tween: jest.fn(() => {}),
         update: jest.fn(),
-    }
+    };
 });
 
 jest.mock('three/examples/jsm/controls/OrbitControls', () => {
@@ -52,7 +52,7 @@ jest.mock('three/examples/jsm/controls/OrbitControls', () => {
             };
             return this;
         }),
-    }
+    };
 });
 
 jest.mock('../../renderer/Renderer', () => {
@@ -80,7 +80,7 @@ jest.mock('../../animation/AnimationSystem', () => {
 
             return this;
         }),
-    }
+    };
 });
 
 jest.mock('@tweenjs/tween.js', () => {
@@ -94,16 +94,30 @@ jest.mock('@tweenjs/tween.js', () => {
         },
         Tween: jest.fn(() => {
             const instance: object = {
-                easing: () => { return instance; },
-                to: () => { return instance; },
-                start: () => { return instance; },
-                stop: () => { return instance; },
-                onComplete: (callback: () => typeof instance) => { callback(); return instance; },
-                onUpdate: (callback: () => typeof instance) => { callback(); return instance; },
-            }
+                easing: () => {
+                    return instance;
+                },
+                to: () => {
+                    return instance;
+                },
+                start: () => {
+                    return instance;
+                },
+                stop: () => {
+                    return instance;
+                },
+                onComplete: (callback: () => typeof instance) => {
+                    callback();
+                    return instance;
+                },
+                onUpdate: (callback: () => typeof instance) => {
+                    callback();
+                    return instance;
+                },
+            };
             return instance;
         }),
-    }
+    };
 });
 
 const moveToPos = { x: 10, y: 0, z: 0 };
@@ -132,10 +146,10 @@ const mockRenderer = {
     OnResize: jest.fn(),
     getViewport: jest.fn(),
     setViewport: jest.fn(),
-    AddPreRenderCallback: jest.fn((callback) => {
+    AddPreRenderCallback: jest.fn(callback => {
         callback();
     }),
-    AddPostRenderCallback: jest.fn((callback) => {
+    AddPostRenderCallback: jest.fn(callback => {
         callback();
     }),
     RemovePreRenderCallback: jest.fn(),
@@ -150,89 +164,165 @@ describe('dive/controls/DIVEOrbitControls', () => {
     });
 
     it('should instantiate', () => {
-        const controller = new DIVEOrbitControls(mockCamera, mockRenderer, mockAnimSystem, {});
+        const controller = new DIVEOrbitControls(
+            mockCamera,
+            mockRenderer,
+            mockAnimSystem,
+            {},
+        );
         expect(controller).toBeDefined();
     });
 
     it('should instantiate with settings', () => {
-        const controller = new DIVEOrbitControls(mockCamera, mockRenderer, mockAnimSystem, {
-            enableDamping: false,
-            dampingFactor: 0.5,
-        });
+        const controller = new DIVEOrbitControls(
+            mockCamera,
+            mockRenderer,
+            mockAnimSystem,
+            {
+                enableDamping: false,
+                dampingFactor: 0.5,
+            },
+        );
         expect(controller).toBeDefined();
     });
 
     it('should dispose', () => {
-        const controller = new DIVEOrbitControls(mockCamera, mockRenderer, mockAnimSystem);
+        const controller = new DIVEOrbitControls(
+            mockCamera,
+            mockRenderer,
+            mockAnimSystem,
+        );
         expect(() => controller.Dispose()).not.toThrow();
     });
 
     it('should compute encompassing view', () => {
-        const controller = new DIVEOrbitControls(mockCamera, mockRenderer, mockAnimSystem);
-        expect(() => controller.ComputeEncompassingView(new Box3())).not.toThrow();
+        const controller = new DIVEOrbitControls(
+            mockCamera,
+            mockRenderer,
+            mockAnimSystem,
+        );
+        expect(() =>
+            controller.ComputeEncompassingView(new Box3()),
+        ).not.toThrow();
     });
 
     it('should zoom in with default value', () => {
-        const controller = new DIVEOrbitControls(mockCamera, mockRenderer, mockAnimSystem);
+        const controller = new DIVEOrbitControls(
+            mockCamera,
+            mockRenderer,
+            mockAnimSystem,
+        );
         expect(() => controller.ZoomIn()).not.toThrow();
     });
 
     it('should zoom in with custom value', () => {
-        const controller = new DIVEOrbitControls(mockCamera, mockRenderer, mockAnimSystem);
+        const controller = new DIVEOrbitControls(
+            mockCamera,
+            mockRenderer,
+            mockAnimSystem,
+        );
         expect(() => controller.ZoomIn(10)).not.toThrow();
     });
 
     it('should zoom out with default value', () => {
-        const controller = new DIVEOrbitControls(mockCamera, mockRenderer, mockAnimSystem);
+        const controller = new DIVEOrbitControls(
+            mockCamera,
+            mockRenderer,
+            mockAnimSystem,
+        );
         expect(() => controller.ZoomOut()).not.toThrow();
     });
 
     it('should zoom out with custom value', () => {
-        const controller = new DIVEOrbitControls(mockCamera, mockRenderer, mockAnimSystem);
+        const controller = new DIVEOrbitControls(
+            mockCamera,
+            mockRenderer,
+            mockAnimSystem,
+        );
         expect(() => controller.ZoomOut(10)).not.toThrow();
     });
 
     it('should move to', () => {
-        const controller = new DIVEOrbitControls(mockCamera, mockRenderer, mockAnimSystem);
-        expect(() => controller.MoveTo(moveToPos, moveToQuat, moveToDuration, false)).not.toThrow();
+        const controller = new DIVEOrbitControls(
+            mockCamera,
+            mockRenderer,
+            mockAnimSystem,
+        );
+        expect(() =>
+            controller.MoveTo(moveToPos, moveToQuat, moveToDuration, false),
+        ).not.toThrow();
     });
 
     it('should revert move to', () => {
-        const controller = new DIVEOrbitControls(mockCamera, mockRenderer, mockAnimSystem);
+        const controller = new DIVEOrbitControls(
+            mockCamera,
+            mockRenderer,
+            mockAnimSystem,
+        );
         controller.MoveTo(moveToPos, moveToQuat, moveToDuration, true);
         expect(() => controller.RevertLast(moveToDuration)).not.toThrow();
     });
 
     it('should revert move to without values', () => {
-        const controller = new DIVEOrbitControls(mockCamera, mockRenderer, mockAnimSystem);
-        expect(() => controller.MoveTo(undefined, undefined, moveToDuration, true)).not.toThrow();
+        const controller = new DIVEOrbitControls(
+            mockCamera,
+            mockRenderer,
+            mockAnimSystem,
+        );
+        expect(() =>
+            controller.MoveTo(undefined, undefined, moveToDuration, true),
+        ).not.toThrow();
     });
 
     it('should revert move to with lock', async () => {
-        const controller = new DIVEOrbitControls(mockCamera, mockRenderer, mockAnimSystem);
+        const controller = new DIVEOrbitControls(
+            mockCamera,
+            mockRenderer,
+            mockAnimSystem,
+        );
         controller.MoveTo(moveToPos, moveToQuat, moveToDuration, true);
         expect(() => controller.RevertLast(moveToDuration)).not.toThrow();
     });
 
     it('should move after revert with lock', async () => {
-        const controller = new DIVEOrbitControls(mockCamera, mockRenderer, mockAnimSystem);
+        const controller = new DIVEOrbitControls(
+            mockCamera,
+            mockRenderer,
+            mockAnimSystem,
+        );
         controller.MoveTo(moveToPos, moveToQuat, moveToDuration, true);
         controller.RevertLast(moveToDuration);
-        expect(() => controller.MoveTo(moveToPos, moveToQuat, moveToDuration, true)).not.toThrow();
+        expect(() =>
+            controller.MoveTo(moveToPos, moveToQuat, moveToDuration, true),
+        ).not.toThrow();
     });
 
     it('should catch multiple move tos', () => {
-        const controller = new DIVEOrbitControls(mockCamera, mockRenderer, mockAnimSystem);
+        const controller = new DIVEOrbitControls(
+            mockCamera,
+            mockRenderer,
+            mockAnimSystem,
+        );
         controller.MoveTo(moveToPos, moveToQuat, moveToDuration, true);
         controller.RevertLast(moveToDuration);
-        expect(() => controller.MoveTo(moveToPos, moveToQuat, moveToDuration, true)).not.toThrow();
+        expect(() =>
+            controller.MoveTo(moveToPos, moveToQuat, moveToDuration, true),
+        ).not.toThrow();
         controller['animating'] = true;
-        expect(() => controller.MoveTo(moveToPos, moveToQuat, moveToDuration, true)).not.toThrow();
-        expect(() => controller.MoveTo(moveToPos, moveToQuat, moveToDuration, true)).not.toThrow();
+        expect(() =>
+            controller.MoveTo(moveToPos, moveToQuat, moveToDuration, true),
+        ).not.toThrow();
+        expect(() =>
+            controller.MoveTo(moveToPos, moveToQuat, moveToDuration, true),
+        ).not.toThrow();
     });
 
     it('should catch multiple reverts', () => {
-        const controller = new DIVEOrbitControls(mockCamera, mockRenderer, mockAnimSystem);
+        const controller = new DIVEOrbitControls(
+            mockCamera,
+            mockRenderer,
+            mockAnimSystem,
+        );
         controller.MoveTo(moveToPos, moveToQuat, moveToDuration, true);
         expect(() => controller.RevertLast(moveToDuration)).not.toThrow();
         expect(() => controller.RevertLast(moveToDuration)).not.toThrow();
@@ -240,7 +330,11 @@ describe('dive/controls/DIVEOrbitControls', () => {
     });
 
     it('should execute preRenderCallback', () => {
-        const controller = new DIVEOrbitControls(mockCamera, mockRenderer, mockAnimSystem);
+        const controller = new DIVEOrbitControls(
+            mockCamera,
+            mockRenderer,
+            mockAnimSystem,
+        );
         controller.MoveTo(moveToPos, moveToQuat, moveToDuration, true);
         expect(() => controller['preRenderCallback']()).not.toThrow();
         controller['locked'] = true;

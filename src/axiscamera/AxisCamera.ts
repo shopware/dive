@@ -1,10 +1,24 @@
-import { AxesHelper, Color, Material, Matrix4, OrthographicCamera, Vector4 } from "three";
-import SpriteText from "three-spritetext";
-import { COORDINATE_LAYER_MASK } from "../constant/VisibilityLayerMask.ts";
-import { AxesColorRed, AxesColorGreen, AxesColorBlue, AxesColorRedLetter, AxesColorGreenLetter, AxesColorBlueLetter } from "../constant/AxisHelperColors.ts";
-import { DIVERenderer } from "../renderer/Renderer.ts";
-import { DIVEScene } from "../scene/Scene.ts";
-import DIVEOrbitControls from "../controls/OrbitControls.ts";
+import {
+    AxesHelper,
+    Color,
+    Material,
+    Matrix4,
+    OrthographicCamera,
+    Vector4,
+} from 'three';
+import SpriteText from 'three-spritetext';
+import { COORDINATE_LAYER_MASK } from '../constant/VisibilityLayerMask.ts';
+import {
+    AxesColorRed,
+    AxesColorGreen,
+    AxesColorBlue,
+    AxesColorRedLetter,
+    AxesColorGreenLetter,
+    AxesColorBlueLetter,
+} from '../constant/AxisHelperColors.ts';
+import { DIVERenderer } from '../renderer/Renderer.ts';
+import { DIVEScene } from '../scene/Scene.ts';
+import DIVEOrbitControls from '../controls/OrbitControls.ts';
 
 /**
  * Shows the scene axes in the bottom left corner of the screen.
@@ -20,7 +34,11 @@ export default class DIVEAxisCamera extends OrthographicCamera {
 
     private _renderCallbackId: string;
 
-    constructor(renderer: DIVERenderer, scene: DIVEScene, controls: DIVEOrbitControls) {
+    constructor(
+        renderer: DIVERenderer,
+        scene: DIVEScene,
+        controls: DIVEOrbitControls,
+    ) {
         super(-1, 1, 1, -1, 0.1, 100);
 
         this.layers.mask = COORDINATE_LAYER_MASK;
@@ -33,7 +51,7 @@ export default class DIVEAxisCamera extends OrthographicCamera {
         this.axesHelper.setColors(
             new Color(AxesColorRed),
             new Color(AxesColorGreen),
-            new Color(AxesColorBlue)
+            new Color(AxesColorBlue),
         );
 
         const x = new SpriteText('X', 0.2, AxesColorRedLetter);
@@ -83,6 +101,8 @@ export default class DIVEAxisCamera extends OrthographicCamera {
     }
 
     public SetFromCameraMatrix(matrix: Matrix4): void {
-        this.axesHelper.rotation.setFromRotationMatrix(new Matrix4().extractRotation(matrix).invert());
+        this.axesHelper.rotation.setFromRotationMatrix(
+            new Matrix4().extractRotation(matrix).invert(),
+        );
     }
 }

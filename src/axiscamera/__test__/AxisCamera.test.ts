@@ -12,8 +12,13 @@ jest.mock('three', () => {
             return this;
         }),
         Matrix4: jest.fn(function () {
-            this.extractRotation = jest.fn(() => { return this; });
-            this.invert = jest.fn(() => { return this; });
+            this.extractRotation = jest.fn(() => {
+                return this;
+            });
+            this.invert = jest.fn(() => {
+                return this;
+            });
+            // prettier-multiline-arrays-next-line-pattern: 4
             this.elements = [
                 1, 0, 0, 0,
                 0, 1, 0, 0,
@@ -23,7 +28,6 @@ jest.mock('three', () => {
             return this;
         }),
         OrthographicCamera: jest.fn(function () {
-
             this.isObject3D = true;
             this.parent = null;
             this.dispatchEvent = jest.fn();
@@ -53,10 +57,10 @@ jest.mock('three', () => {
             this.setColors = jest.fn();
             this.rotation = {
                 setFromRotationMatrix: jest.fn(),
-            }
+            };
             return this;
         }),
-    }
+    };
 });
 
 jest.mock('three-spritetext', () => {
@@ -72,9 +76,8 @@ jest.mock('three-spritetext', () => {
                 set: jest.fn(),
             },
             removeFromParent: jest.fn(),
-        }
-    },
-    )
+        };
+    });
 });
 
 const mockRenderer = {
@@ -82,7 +85,7 @@ const mockRenderer = {
     OnResize: jest.fn(),
     getViewport: jest.fn(),
     setViewport: jest.fn(),
-    AddPostRenderCallback: jest.fn((callback) => {
+    AddPostRenderCallback: jest.fn(callback => {
         callback();
     }),
     RemovePostRenderCallback: jest.fn(),
@@ -188,7 +191,11 @@ let textAxisCamera: DIVEAxisCamera;
 
 describe('dive/axiscamera/DIVEAxisCamera', () => {
     beforeEach(() => {
-        textAxisCamera = new DIVEAxisCamera(mockRenderer, mockScene, mockController);
+        textAxisCamera = new DIVEAxisCamera(
+            mockRenderer,
+            mockScene,
+            mockController,
+        );
     });
 
     it('should instantiate', () => {
@@ -198,6 +205,7 @@ describe('dive/axiscamera/DIVEAxisCamera', () => {
     it('should set rotation from Matrix4', () => {
         expect.assertions(0);
         const matrix = {
+            // prettier-multiline-arrays-next-line-pattern: 4
             elements: [
                 1, 0, 0, 0,
                 0, 1, 0, 0,

@@ -16,9 +16,13 @@
 
 # About
 
-DIVE is a spatial framework made by and optimized for Shopware. It can be used directly integrated in a Shopware frontend such as Storefront or in any other frontend you want to use it in, it is not tied to Shopware.
+DIVE is a spatial framework made by and optimized for Shopware. It can be used
+directly integrated in a Shopware frontend such as Storefront or in any other
+frontend you want to use it in, it is not tied to Shopware.
 
-DIVE supplies your frontend application with all needed tooling to set up a basic 3D application with event-based controls called "Actions". For further information, see [Getting started](#getting-started).
+DIVE supplies your frontend application with all needed tooling to set up a
+basic 3D application with event-based controls called "Actions". For further
+information, see [Getting started](#getting-started).
 
 # Installation
 
@@ -80,7 +84,9 @@ module.exports = () => {
 
 # Quick View
 
-QuickView is used to quickly display your assets with as few lines of code as possible. Simply call the static `QuickView()` method (with your data-uri as a parameter) to create an instance of DIVE with your asset to use in further code.
+QuickView is used to quickly display your assets with as few lines of code as
+possible. Simply call the static `QuickView()` method (with your data-uri as a
+parameter) to create an instance of DIVE with your asset to use in further code.
 
 ```ts
 import { DIVE } from '@shopware-ag/dive';
@@ -107,7 +113,9 @@ import { DIVE } from '@shopware-ag/dive';
 const dive = new DIVE(); // <-- instantiate DIVE
 ```
 
-DIVE supplies your application with a HTMLCanvasElement that it uses as a render target. After instantiating, you can use the supplied canvas within you frontend code to attach it to your DOM.
+DIVE supplies your application with a HTMLCanvasElement that it uses as a render
+target. After instantiating, you can use the supplied canvas within you frontend
+code to attach it to your DOM.
 
 ```ts
 const dive = new DIVE();
@@ -116,7 +124,8 @@ const myCanvasWrapper = document.createElement('div'); // <-- create wrapper ele
 myCanvasWrapper.appendChild(dive.Canvas); // <-- reference DIVE canvas
 ```
 
-To interact with your newly created DIVE instance you have to perform actions via DIVECommunication. For further information, see [Actions](#actions).
+To interact with your newly created DIVE instance you have to perform actions
+via DIVECommunication. For further information, see [Actions](#actions).
 
 ```ts
 const dive = new DIVE();
@@ -135,9 +144,11 @@ com.PerformAction('SET_CAMERA_TRANSFORM', {
 
 # Actions
 
-Actions symbolize the communication between frontend and 3D space. All actions can be performed anywhere, no matter if you are in frontend or 3D.
+Actions symbolize the communication between frontend and 3D space. All actions
+can be performed anywhere, no matter if you are in frontend or 3D.
 
-In addition to the impact that specific actions have, every action can be subscribed to.
+In addition to the impact that specific actions have, every action can be
+subscribed to.
 
 ```ts
 const myCanvasWrapper = document.createElement('div');
@@ -158,7 +169,8 @@ com.PerformAction('SET_CAMERA_TRANSFORM', {
 });
 ```
 
-Subscribing to an action returns a `unsubscribe()`-callback that should be executed when not needed anymore.
+Subscribing to an action returns a `unsubscribe()`-callback that should be
+executed when not needed anymore.
 
 ```ts
 const myCanvasWrapper = document.createElement('div');
@@ -183,7 +195,9 @@ unsubscribe(); // <-- execute unsubscribe callback when done
 
 # Actions (List)
 
-In the following you find a list of all available actions to perform on DIVECommunication class via [`com.PerformAction()`](https://github.com/shopware/dive/blob/2e193c58843939ce07a1d35bfbd5b3c9d26eeeca/src/com/Communication.ts#L85).
+In the following you find a list of all available actions to perform on
+DIVECommunication class via
+[`com.PerformAction()`](https://github.com/shopware/dive/blob/2e193c58843939ce07a1d35bfbd5b3c9d26eeeca/src/com/Communication.ts#L85).
 
 | Action                                                                           | Description                                                                                        |
 | :------------------------------------------------------------------------------- | :------------------------------------------------------------------------------------------------- |

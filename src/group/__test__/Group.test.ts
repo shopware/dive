@@ -1,5 +1,5 @@
-import { DIVECommunication } from "../../com/Communication";
-import { DIVEGroup } from "../Group";
+import { DIVECommunication } from '../../com/Communication';
+import { DIVEGroup } from '../Group';
 
 jest.mock('../../com/Communication.ts', () => {
     return {
@@ -7,13 +7,15 @@ jest.mock('../../com/Communication.ts', () => {
             get: jest.fn(() => {
                 return {
                     PerformAction: jest.fn(),
-                }
+                };
             }),
         },
-    }
+    };
 });
 
-jest.spyOn(DIVECommunication, 'get').mockReturnValue({ PerformAction: jest.fn() } as unknown as DIVECommunication);
+jest.spyOn(DIVECommunication, 'get').mockReturnValue({
+    PerformAction: jest.fn(),
+} as unknown as DIVECommunication);
 
 let group: DIVEGroup;
 

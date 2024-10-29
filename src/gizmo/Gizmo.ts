@@ -1,12 +1,12 @@
-import { Euler, Object3D, Vector3 } from "three";
-import { DIVERotateGizmo } from "./rotate/RotateGizmo";
-import { DIVETranslateGizmo } from "./translate/TranslateGizmo";
-import DIVEOrbitControls from "../controls/OrbitControls";
-import { DIVEScaleGizmo } from "./scale/ScaleGizmo";
-import { DIVEGizmoPlane as DIVEGizmoPlane } from "./plane/GizmoPlane";
-import { DIVESelectable } from "../interface/Selectable";
+import { Euler, Object3D, Vector3 } from 'three';
+import { DIVERotateGizmo } from './rotate/RotateGizmo';
+import { DIVETranslateGizmo } from './translate/TranslateGizmo';
+import DIVEOrbitControls from '../controls/OrbitControls';
+import { DIVEScaleGizmo } from './scale/ScaleGizmo';
+import { DIVEGizmoPlane as DIVEGizmoPlane } from './plane/GizmoPlane';
+import { DIVESelectable } from '../interface/Selectable';
 
-export type DIVEGizmoMode = ('translate' | 'rotate' | 'scale');
+export type DIVEGizmoMode = 'translate' | 'rotate' | 'scale';
 
 export type DIVEGizmoAxis = 'x' | 'y' | 'z';
 
@@ -41,7 +41,7 @@ export class DIVEGizmo extends Object3D {
 
     constructor(controller: DIVEOrbitControls) {
         super();
-        this.name = "DIVEGizmo";
+        this.name = 'DIVEGizmo';
 
         controller.addEventListener('change', () => {
             const size = controller.getDistance() / 2.5;
@@ -63,7 +63,7 @@ export class DIVEGizmo extends Object3D {
         this._object = null;
     }
 
-    public attach(object: (Object3D & DIVESelectable)): this {
+    public attach(object: Object3D & DIVESelectable): this {
         this._object = object;
         this.assemble();
         return this;
@@ -75,12 +75,20 @@ export class DIVEGizmo extends Object3D {
         return this;
     }
 
-    public onHover(mode: DIVEGizmoMode, axis: DIVEGizmoAxis, value: boolean): void {
+    public onHover(
+        mode: DIVEGizmoMode,
+        axis: DIVEGizmoAxis,
+        value: boolean,
+    ): void {
         if (!value) return;
         this._gizmoPlane.assemble(mode, axis);
     }
 
-    public onChange(position?: Vector3, rotation?: Euler, scale?: Vector3): void {
+    public onChange(
+        position?: Vector3,
+        rotation?: Euler,
+        scale?: Vector3,
+    ): void {
         if (this.object === null) return;
 
         if (position) {

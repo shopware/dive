@@ -1,6 +1,6 @@
-import { type Vector3Like } from "three";
-import { type COMMaterial } from "./COMMaterial";
-import { type COMBaseEntity } from "./COMBaseEntity";
+import { type Vector3Like } from 'three';
+import { type COMMaterial } from './COMMaterial';
+import { type COMBaseEntity } from './COMBaseEntity';
 
 export type COMModel = COMBaseEntity & {
     uri: string;

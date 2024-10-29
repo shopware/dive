@@ -1,4 +1,3 @@
-
 import { DIVEBaseTool } from '../BaseTool';
 import type DIVEOrbitControls from '../../controls/OrbitControls';
 import type { DIVEScene } from '../../scene/Scene';
@@ -9,7 +8,6 @@ import { type DIVEDraggable } from '../../interface/Draggable';
 /**
  * @jest-environment jsdom
  */
-
 
 const mock_Canvas = {
     width: 0,
@@ -25,8 +23,8 @@ const mockController = {
     domElement: mock_Canvas,
     object: {
         isPerspectiveCamera: true,
-        type: 'cameraP'
-    }
+        type: 'cameraP',
+    },
 } as unknown as DIVEOrbitControls;
 
 const mockScene = {
@@ -36,7 +34,7 @@ const mockScene = {
 const abstractWrapper = class Wrapper extends DIVEBaseTool {
     constructor(scene: DIVEScene, controller: DIVEOrbitControls) {
         super(scene, controller);
-        this.name = "DIVEBaseTool";
+        this.name = 'DIVEBaseTool';
     }
 };
 
@@ -95,9 +93,15 @@ describe('dive/toolbox/DIVEBaseTool', () => {
 
     it('should execute onPointerDown correctly', () => {
         const toolBox = new abstractWrapper(mockScene, mockController);
-        expect(() => toolBox.onPointerDown({ button: 0 } as PointerEvent)).not.toThrow();
-        expect(() => toolBox.onPointerDown({ button: 1 } as PointerEvent)).not.toThrow();
-        expect(() => toolBox.onPointerDown({ button: 2 } as PointerEvent)).not.toThrow();
+        expect(() =>
+            toolBox.onPointerDown({ button: 0 } as PointerEvent),
+        ).not.toThrow();
+        expect(() =>
+            toolBox.onPointerDown({ button: 1 } as PointerEvent),
+        ).not.toThrow();
+        expect(() =>
+            toolBox.onPointerDown({ button: 2 } as PointerEvent),
+        ).not.toThrow();
 
         toolBox['_intersects'] = [
             {
@@ -107,12 +111,12 @@ describe('dive/toolbox/DIVEBaseTool', () => {
                         return {
                             x: 1,
                             y: 1,
-                            z: 1
+                            z: 1,
                         } as unknown as Vector3;
                     },
                     x: 1,
                     y: 1,
-                    z: 1
+                    z: 1,
                 } as unknown as Vector3,
                 object: {
                     uuid: 'uuid2',
@@ -120,13 +124,19 @@ describe('dive/toolbox/DIVEBaseTool', () => {
                     onPointerEnter() {
                         return;
                     },
-                } as unknown as Object3D & DIVEHoverable
-            }
+                } as unknown as Object3D & DIVEHoverable,
+            },
         ];
 
-        expect(() => toolBox.onPointerDown({ button: 0 } as PointerEvent)).not.toThrow();
-        expect(() => toolBox.onPointerDown({ button: 1 } as PointerEvent)).not.toThrow();
-        expect(() => toolBox.onPointerDown({ button: 2 } as PointerEvent)).not.toThrow();
+        expect(() =>
+            toolBox.onPointerDown({ button: 0 } as PointerEvent),
+        ).not.toThrow();
+        expect(() =>
+            toolBox.onPointerDown({ button: 1 } as PointerEvent),
+        ).not.toThrow();
+        expect(() =>
+            toolBox.onPointerDown({ button: 2 } as PointerEvent),
+        ).not.toThrow();
     });
 
     it('should execute onPointerMove correctly', () => {
@@ -134,7 +144,10 @@ describe('dive/toolbox/DIVEBaseTool', () => {
         jest.spyOn(toolBox['_raycaster'], 'setFromCamera').mockImplementation();
 
         // test with no hit with hovered object before
-        jest.spyOn(toolBox['_raycaster'], 'intersectObjects').mockReturnValueOnce([]);
+        jest.spyOn(
+            toolBox['_raycaster'],
+            'intersectObjects',
+        ).mockReturnValueOnce([]);
 
         toolBox['_hovered'] = {
             uuid: 'uuid',
@@ -143,82 +156,139 @@ describe('dive/toolbox/DIVEBaseTool', () => {
             },
         } as Object3D & DIVEHoverable;
 
-        expect(() => toolBox.onPointerMove({ button: 0, offsetX: 100, offsetY: 100 } as PointerEvent)).not.toThrow();
-        expect(() => toolBox.onPointerMove({ button: 1, offsetX: 100, offsetY: 100 } as PointerEvent)).not.toThrow();
-        expect(() => toolBox.onPointerMove({ button: 2, offsetX: 100, offsetY: 100 } as PointerEvent)).not.toThrow();
+        expect(() =>
+            toolBox.onPointerMove({
+                button: 0,
+                offsetX: 100,
+                offsetY: 100,
+            } as PointerEvent),
+        ).not.toThrow();
+        expect(() =>
+            toolBox.onPointerMove({
+                button: 1,
+                offsetX: 100,
+                offsetY: 100,
+            } as PointerEvent),
+        ).not.toThrow();
+        expect(() =>
+            toolBox.onPointerMove({
+                button: 2,
+                offsetX: 100,
+                offsetY: 100,
+            } as PointerEvent),
+        ).not.toThrow();
 
         // test with no hovered object
-        jest.spyOn(toolBox['_raycaster'], 'intersectObjects').mockReturnValueOnce(
-            [
-                {
-                    distance: 1,
-                    point: {
-                        x: 1,
-                        y: 1,
-                        z: 1
-                    } as unknown as Vector3,
-                    object: {
-                        uuid: 'uuid',
-                        isHoverable: true,
-                        visible: true,
-                    } as Object3D & DIVEHoverable
-                }
-            ]
-        );
+        jest.spyOn(
+            toolBox['_raycaster'],
+            'intersectObjects',
+        ).mockReturnValueOnce([
+            {
+                distance: 1,
+                point: {
+                    x: 1,
+                    y: 1,
+                    z: 1,
+                } as unknown as Vector3,
+                object: {
+                    uuid: 'uuid',
+                    isHoverable: true,
+                    visible: true,
+                } as Object3D & DIVEHoverable,
+            },
+        ]);
 
         toolBox['_hovered'] = null;
 
-        expect(() => toolBox.onPointerMove({ button: 0, offsetX: 100, offsetY: 100 } as PointerEvent)).not.toThrow();
-        expect(() => toolBox.onPointerMove({ button: 1, offsetX: 100, offsetY: 100 } as PointerEvent)).not.toThrow();
-        expect(() => toolBox.onPointerMove({ button: 2, offsetX: 100, offsetY: 100 } as PointerEvent)).not.toThrow();
+        expect(() =>
+            toolBox.onPointerMove({
+                button: 0,
+                offsetX: 100,
+                offsetY: 100,
+            } as PointerEvent),
+        ).not.toThrow();
+        expect(() =>
+            toolBox.onPointerMove({
+                button: 1,
+                offsetX: 100,
+                offsetY: 100,
+            } as PointerEvent),
+        ).not.toThrow();
+        expect(() =>
+            toolBox.onPointerMove({
+                button: 2,
+                offsetX: 100,
+                offsetY: 100,
+            } as PointerEvent),
+        ).not.toThrow();
 
         // test with no hovered object with onPointerEnter
-        jest.spyOn(toolBox['_raycaster'], 'intersectObjects').mockReturnValueOnce(
-            [
-                {
-                    distance: 1,
-                    point: {
-                        x: 1,
-                        y: 1,
-                        z: 1
-                    } as unknown as Vector3,
-                    object: {
-                        uuid: 'uuid',
-                        isHoverable: true,
-                        visible: true,
-                        onPointerEnter() {
-                            return;
-                        },
-                    } as unknown as Object3D & DIVEHoverable
-                }
-            ]
-        );
+        jest.spyOn(
+            toolBox['_raycaster'],
+            'intersectObjects',
+        ).mockReturnValueOnce([
+            {
+                distance: 1,
+                point: {
+                    x: 1,
+                    y: 1,
+                    z: 1,
+                } as unknown as Vector3,
+                object: {
+                    uuid: 'uuid',
+                    isHoverable: true,
+                    visible: true,
+                    onPointerEnter() {
+                        return;
+                    },
+                } as unknown as Object3D & DIVEHoverable,
+            },
+        ]);
 
-        expect(() => toolBox.onPointerMove({ button: 0, offsetX: 100, offsetY: 100 } as PointerEvent)).not.toThrow();
-        expect(() => toolBox.onPointerMove({ button: 1, offsetX: 100, offsetY: 100 } as PointerEvent)).not.toThrow();
-        expect(() => toolBox.onPointerMove({ button: 2, offsetX: 100, offsetY: 100 } as PointerEvent)).not.toThrow();
+        expect(() =>
+            toolBox.onPointerMove({
+                button: 0,
+                offsetX: 100,
+                offsetY: 100,
+            } as PointerEvent),
+        ).not.toThrow();
+        expect(() =>
+            toolBox.onPointerMove({
+                button: 1,
+                offsetX: 100,
+                offsetY: 100,
+            } as PointerEvent),
+        ).not.toThrow();
+        expect(() =>
+            toolBox.onPointerMove({
+                button: 2,
+                offsetX: 100,
+                offsetY: 100,
+            } as PointerEvent),
+        ).not.toThrow();
 
         // test with same hovered object
-        jest.spyOn(toolBox['_raycaster'], 'intersectObjects').mockReturnValueOnce(
-            [
-                {
-                    distance: 1,
-                    point: {
-                        x: 1,
-                        y: 1,
-                        z: 1
-                    } as unknown as Vector3,
-                    object: {
-                        uuid: 'uuid',
-                        isHoverable: true,
-                        visible: true,
-                        onPointerOver() {
-                            return;
-                        }
-                    } as unknown as Object3D & DIVEHoverable
-                }
-            ]
-        );
+        jest.spyOn(
+            toolBox['_raycaster'],
+            'intersectObjects',
+        ).mockReturnValueOnce([
+            {
+                distance: 1,
+                point: {
+                    x: 1,
+                    y: 1,
+                    z: 1,
+                } as unknown as Vector3,
+                object: {
+                    uuid: 'uuid',
+                    isHoverable: true,
+                    visible: true,
+                    onPointerOver() {
+                        return;
+                    },
+                } as unknown as Object3D & DIVEHoverable,
+            },
+        ]);
 
         toolBox['_hovered'] = {
             uuid: 'uuid',
@@ -228,31 +298,50 @@ describe('dive/toolbox/DIVEBaseTool', () => {
             },
         } as Object3D & DIVEHoverable;
 
-        expect(() => toolBox.onPointerMove({ button: 0, offsetX: 100, offsetY: 100 } as PointerEvent)).not.toThrow();
-        expect(() => toolBox.onPointerMove({ button: 1, offsetX: 100, offsetY: 100 } as PointerEvent)).not.toThrow();
-        expect(() => toolBox.onPointerMove({ button: 2, offsetX: 100, offsetY: 100 } as PointerEvent)).not.toThrow();
+        expect(() =>
+            toolBox.onPointerMove({
+                button: 0,
+                offsetX: 100,
+                offsetY: 100,
+            } as PointerEvent),
+        ).not.toThrow();
+        expect(() =>
+            toolBox.onPointerMove({
+                button: 1,
+                offsetX: 100,
+                offsetY: 100,
+            } as PointerEvent),
+        ).not.toThrow();
+        expect(() =>
+            toolBox.onPointerMove({
+                button: 2,
+                offsetX: 100,
+                offsetY: 100,
+            } as PointerEvent),
+        ).not.toThrow();
 
         // test with different hovered object
-        jest.spyOn(toolBox['_raycaster'], 'intersectObjects').mockReturnValueOnce(
-            [
-                {
-                    distance: 1,
-                    point: {
-                        x: 1,
-                        y: 1,
-                        z: 1
-                    } as unknown as Vector3,
-                    object: {
-                        uuid: 'uuid2',
-                        isHoverable: true,
-                        visible: true,
-                        onPointerEnter() {
-                            return;
-                        },
-                    } as unknown as Object3D & DIVEHoverable
-                }
-            ]
-        );
+        jest.spyOn(
+            toolBox['_raycaster'],
+            'intersectObjects',
+        ).mockReturnValueOnce([
+            {
+                distance: 1,
+                point: {
+                    x: 1,
+                    y: 1,
+                    z: 1,
+                } as unknown as Vector3,
+                object: {
+                    uuid: 'uuid2',
+                    isHoverable: true,
+                    visible: true,
+                    onPointerEnter() {
+                        return;
+                    },
+                } as unknown as Object3D & DIVEHoverable,
+            },
+        ]);
 
         toolBox['_hovered'] = {
             uuid: 'uuid',
@@ -262,31 +351,93 @@ describe('dive/toolbox/DIVEBaseTool', () => {
             },
         } as Object3D & DIVEHoverable;
 
-        expect(() => toolBox.onPointerMove({ button: 0, offsetX: 100, offsetY: 100 } as PointerEvent)).not.toThrow();
-        expect(() => toolBox.onPointerMove({ button: 1, offsetX: 100, offsetY: 100 } as PointerEvent)).not.toThrow();
-        expect(() => toolBox.onPointerMove({ button: 2, offsetX: 100, offsetY: 100 } as PointerEvent)).not.toThrow();
+        expect(() =>
+            toolBox.onPointerMove({
+                button: 0,
+                offsetX: 100,
+                offsetY: 100,
+            } as PointerEvent),
+        ).not.toThrow();
+        expect(() =>
+            toolBox.onPointerMove({
+                button: 1,
+                offsetX: 100,
+                offsetY: 100,
+            } as PointerEvent),
+        ).not.toThrow();
+        expect(() =>
+            toolBox.onPointerMove({
+                button: 2,
+                offsetX: 100,
+                offsetY: 100,
+            } as PointerEvent),
+        ).not.toThrow();
 
         // test with pointer down
         toolBox['_pointerPrimaryDown'] = true;
-        expect(() => toolBox.onPointerMove({ button: 0, offsetX: 100, offsetY: 100 } as PointerEvent)).not.toThrow();
-        expect(() => toolBox.onPointerMove({ button: 1, offsetX: 100, offsetY: 100 } as PointerEvent)).not.toThrow();
-        expect(() => toolBox.onPointerMove({ button: 2, offsetX: 100, offsetY: 100 } as PointerEvent)).not.toThrow();
+        expect(() =>
+            toolBox.onPointerMove({
+                button: 0,
+                offsetX: 100,
+                offsetY: 100,
+            } as PointerEvent),
+        ).not.toThrow();
+        expect(() =>
+            toolBox.onPointerMove({
+                button: 1,
+                offsetX: 100,
+                offsetY: 100,
+            } as PointerEvent),
+        ).not.toThrow();
+        expect(() =>
+            toolBox.onPointerMove({
+                button: 2,
+                offsetX: 100,
+                offsetY: 100,
+            } as PointerEvent),
+        ).not.toThrow();
 
         // test with pointer down while already dragging
         toolBox['_pointerPrimaryDown'] = true;
         toolBox['_dragging'] = true;
-        expect(() => toolBox.onPointerMove({ button: 0, offsetX: 100, offsetY: 100 } as PointerEvent)).not.toThrow();
-        expect(() => toolBox.onPointerMove({ button: 1, offsetX: 100, offsetY: 100 } as PointerEvent)).not.toThrow();
-        expect(() => toolBox.onPointerMove({ button: 2, offsetX: 100, offsetY: 100 } as PointerEvent)).not.toThrow();
+        expect(() =>
+            toolBox.onPointerMove({
+                button: 0,
+                offsetX: 100,
+                offsetY: 100,
+            } as PointerEvent),
+        ).not.toThrow();
+        expect(() =>
+            toolBox.onPointerMove({
+                button: 1,
+                offsetX: 100,
+                offsetY: 100,
+            } as PointerEvent),
+        ).not.toThrow();
+        expect(() =>
+            toolBox.onPointerMove({
+                button: 2,
+                offsetX: 100,
+                offsetY: 100,
+            } as PointerEvent),
+        ).not.toThrow();
     });
 
     it('should execute onPointerUp correctly', () => {
         const toolBox = new abstractWrapper(mockScene, mockController);
-        expect(() => toolBox.onPointerUp({ button: 0 } as PointerEvent)).not.toThrow();
-        expect(() => toolBox.onPointerUp({ button: 1 } as PointerEvent)).not.toThrow();
-        expect(() => toolBox.onPointerUp({ button: 2 } as PointerEvent)).not.toThrow();
+        expect(() =>
+            toolBox.onPointerUp({ button: 0 } as PointerEvent),
+        ).not.toThrow();
+        expect(() =>
+            toolBox.onPointerUp({ button: 1 } as PointerEvent),
+        ).not.toThrow();
+        expect(() =>
+            toolBox.onPointerUp({ button: 2 } as PointerEvent),
+        ).not.toThrow();
 
-        toolBox['pointerWasDragged'] = () => { return true; };
+        toolBox['pointerWasDragged'] = () => {
+            return true;
+        };
         toolBox['_dragging'] = true;
         toolBox['_intersects'] = [
             {
@@ -296,12 +447,12 @@ describe('dive/toolbox/DIVEBaseTool', () => {
                         return {
                             x: 1,
                             y: 1,
-                            z: 1
+                            z: 1,
                         } as unknown as Vector3;
                     },
                     x: 1,
                     y: 1,
-                    z: 1
+                    z: 1,
                 } as unknown as Vector3,
                 object: {
                     uuid: 'uuid2',
@@ -309,17 +460,23 @@ describe('dive/toolbox/DIVEBaseTool', () => {
                     onPointerEnter() {
                         return;
                     },
-                } as unknown as Object3D & DIVEHoverable
-            }
+                } as unknown as Object3D & DIVEHoverable,
+            },
         ];
         toolBox['_draggable'] = {
             onDragEnd() {
                 return;
             },
         } as unknown as Object3D & DIVEDraggable;
-        expect(() => toolBox.onPointerUp({ button: 0 } as PointerEvent)).not.toThrow();
-        expect(() => toolBox.onPointerUp({ button: 1 } as PointerEvent)).not.toThrow();
-        expect(() => toolBox.onPointerUp({ button: 2 } as PointerEvent)).not.toThrow();
+        expect(() =>
+            toolBox.onPointerUp({ button: 0 } as PointerEvent),
+        ).not.toThrow();
+        expect(() =>
+            toolBox.onPointerUp({ button: 1 } as PointerEvent),
+        ).not.toThrow();
+        expect(() =>
+            toolBox.onPointerUp({ button: 2 } as PointerEvent),
+        ).not.toThrow();
     });
 
     it('should execute onDragStart correctly', () => {
@@ -336,10 +493,16 @@ describe('dive/toolbox/DIVEBaseTool', () => {
         toolBox['_dragRaycastOnObjects'] = [];
         expect(() => toolBox.onDragStart({} as PointerEvent)).not.toThrow();
 
-        jest.spyOn(toolBox['_raycaster'], 'intersectObjects').mockReturnValueOnce([]);
+        jest.spyOn(
+            toolBox['_raycaster'],
+            'intersectObjects',
+        ).mockReturnValueOnce([]);
         expect(() => toolBox.onDragStart({} as PointerEvent)).not.toThrow();
 
-        jest.spyOn(toolBox['_raycaster'], 'intersectObjects').mockReturnValueOnce([
+        jest.spyOn(
+            toolBox['_raycaster'],
+            'intersectObjects',
+        ).mockReturnValueOnce([
             {
                 distance: 1,
                 point: {
@@ -347,12 +510,12 @@ describe('dive/toolbox/DIVEBaseTool', () => {
                         return {
                             x: 1,
                             y: 1,
-                            z: 1
+                            z: 1,
                         } as unknown as Vector3;
                     },
                     x: 1,
                     y: 1,
-                    z: 1
+                    z: 1,
                 } as unknown as Vector3,
                 object: {
                     uuid: 'uuid2',
@@ -360,8 +523,8 @@ describe('dive/toolbox/DIVEBaseTool', () => {
                     onPointerEnter() {
                         return;
                     },
-                } as unknown as Object3D & DIVEHoverable
-            }
+                } as unknown as Object3D & DIVEHoverable,
+            },
         ]);
         expect(() => toolBox.onDragStart({} as PointerEvent)).not.toThrow();
 
@@ -385,32 +548,33 @@ describe('dive/toolbox/DIVEBaseTool', () => {
                 return;
             },
         } as unknown as Object3D & DIVEDraggable;
-        jest.spyOn(toolBox['_raycaster'], 'intersectObjects').mockReturnValueOnce(
-            [
-                {
-                    distance: 1,
-                    point: {
-                        clone() {
-                            return {
-                                x: 1,
-                                y: 1,
-                                z: 1
-                            } as unknown as Vector3;
-                        },
-                        x: 1,
-                        y: 1,
-                        z: 1
-                    } as unknown as Vector3,
-                    object: {
-                        uuid: 'uuid2',
-                        isHoverable: true,
-                        onPointerEnter() {
-                            return;
-                        },
-                    } as unknown as Object3D & DIVEHoverable
-                }
-            ]
-        );
+        jest.spyOn(
+            toolBox['_raycaster'],
+            'intersectObjects',
+        ).mockReturnValueOnce([
+            {
+                distance: 1,
+                point: {
+                    clone() {
+                        return {
+                            x: 1,
+                            y: 1,
+                            z: 1,
+                        } as unknown as Vector3;
+                    },
+                    x: 1,
+                    y: 1,
+                    z: 1,
+                } as unknown as Vector3,
+                object: {
+                    uuid: 'uuid2',
+                    isHoverable: true,
+                    onPointerEnter() {
+                        return;
+                    },
+                } as unknown as Object3D & DIVEHoverable,
+            },
+        ]);
         expect(() => toolBox.onDrag({} as PointerEvent)).not.toThrow();
     });
 

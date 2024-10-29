@@ -1,6 +1,6 @@
-import { type ToolType } from "../../../toolbox/Toolbox";
+import { type ToolType } from '../../../toolbox/Toolbox';
 
 export default interface USE_TOOL {
-    'PAYLOAD': { tool: ToolType },
-    'RETURN': boolean,
+    PAYLOAD: { tool: ToolType };
+    RETURN: boolean;
 }

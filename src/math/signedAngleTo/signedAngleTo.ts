@@ -1,4 +1,4 @@
-import { Vector3 } from "three";
+import { Vector3 } from 'three';
 
 /**
  * Calculate the signed angle between two vectors. Only works when the vectors are on the same plane.
@@ -8,6 +8,13 @@ import { Vector3 } from "three";
  * @returns Signed angle in radians
  */
 
-export default function signedAngleTo(vecA: Vector3, vecB: Vector3, planeNormal: Vector3): number {
-    return Math.atan2(vecA.clone().cross(vecB).dot(planeNormal), vecB.clone().dot(vecA));
+export default function signedAngleTo(
+    vecA: Vector3,
+    vecB: Vector3,
+    planeNormal: Vector3,
+): number {
+    return Math.atan2(
+        vecA.clone().cross(vecB).dot(planeNormal),
+        vecB.clone().dot(vecA),
+    );
 }

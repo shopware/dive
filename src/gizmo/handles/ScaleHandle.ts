@@ -1,11 +1,23 @@
-import { BoxGeometry, Color, ColorRepresentation, CylinderGeometry, Mesh, MeshBasicMaterial, Object3D, Vector3 } from "three";
-import { UI_LAYER_MASK } from "../../constant/VisibilityLayerMask";
-import { DIVEHoverable } from "../../interface/Hoverable";
-import { DIVEScaleGizmo } from "../scale/ScaleGizmo";
-import { DIVEDraggable } from "../../interface/Draggable";
-import { DraggableEvent } from "../../toolbox/BaseTool";
+import {
+    BoxGeometry,
+    Color,
+    ColorRepresentation,
+    CylinderGeometry,
+    Mesh,
+    MeshBasicMaterial,
+    Object3D,
+    Vector3,
+} from 'three';
+import { UI_LAYER_MASK } from '../../constant/VisibilityLayerMask';
+import { DIVEHoverable } from '../../interface/Hoverable';
+import { DIVEScaleGizmo } from '../scale/ScaleGizmo';
+import { DIVEDraggable } from '../../interface/Draggable';
+import { DraggableEvent } from '../../toolbox/BaseTool';
 
-export class DIVEScaleHandle extends Object3D implements DIVEHoverable, DIVEDraggable {
+export class DIVEScaleHandle
+    extends Object3D
+    implements DIVEHoverable, DIVEDraggable
+{
     readonly isHoverable: true = true;
     readonly isDraggable: true = true;
 
@@ -22,7 +34,8 @@ export class DIVEScaleHandle extends Object3D implements DIVEHoverable, DIVEDrag
     }
     public set highlight(highlight: boolean) {
         this._highlight = highlight;
-        this._lineMaterial.color = this._highlight || this._hovered ? this._colorHover : this._color;
+        this._lineMaterial.color =
+            this._highlight || this._hovered ? this._colorHover : this._color;
     }
 
     private _lineMaterial: MeshBasicMaterial;
@@ -31,21 +44,33 @@ export class DIVEScaleHandle extends Object3D implements DIVEHoverable, DIVEDrag
     private _boxSize: number;
 
     public get forwardVector(): Vector3 {
-        return new Vector3(0, 0, 1).applyQuaternion(this.quaternion).normalize();
+        return new Vector3(0, 0, 1)
+            .applyQuaternion(this.quaternion)
+            .normalize();
     }
 
     public get rightVector(): Vector3 {
-        return new Vector3(1, 0, 0).applyQuaternion(this.quaternion).normalize();
+        return new Vector3(1, 0, 0)
+            .applyQuaternion(this.quaternion)
+            .normalize();
     }
 
     public get upVector(): Vector3 {
-        return new Vector3(0, 1, 0).applyQuaternion(this.quaternion).normalize();
+        return new Vector3(0, 1, 0)
+            .applyQuaternion(this.quaternion)
+            .normalize();
     }
 
-    constructor(axis: 'x' | 'y' | 'z', length: number, direction: Vector3, color: ColorRepresentation, boxSize: number = 0.05) {
+    constructor(
+        axis: 'x' | 'y' | 'z',
+        length: number,
+        direction: Vector3,
+        color: ColorRepresentation,
+        boxSize: number = 0.05,
+    ) {
         super();
 
-        this.name = "DIVEScaleHandle";
+        this.name = 'DIVEScaleHandle';
         this.axis = axis;
 
         this._color.set(color);
@@ -56,7 +81,12 @@ export class DIVEScaleHandle extends Object3D implements DIVEHoverable, DIVEDrag
         this._boxSize = boxSize;
 
         // create line
-        const lineGeo = new CylinderGeometry(0.01, 0.01, length - boxSize / 2, 13);
+        const lineGeo = new CylinderGeometry(
+            0.01,
+            0.01,
+            length - boxSize / 2,
+            13,
+        );
         this._lineMaterial = new MeshBasicMaterial({
             color: color,
             depthTest: false,
@@ -78,12 +108,17 @@ export class DIVEScaleHandle extends Object3D implements DIVEHoverable, DIVEDrag
         this._box.renderOrder = Infinity;
         this._box.rotateX(Math.PI / 2);
         this._box.translateY(length - boxSize / 2);
-        this._box.rotateZ(direction.x * Math.PI / 2);
-        this._box.rotateX(direction.z * Math.PI / 2);
+        this._box.rotateZ((direction.x * Math.PI) / 2);
+        this._box.rotateX((direction.z * Math.PI) / 2);
         this.add(this._box);
 
         // create collider
-        const collider = new CylinderGeometry(0.1, 0.1, length + boxSize / 2, 3);
+        const collider = new CylinderGeometry(
+            0.1,
+            0.1,
+            length + boxSize / 2,
+            3,
+        );
         const colliderMaterial = new MeshBasicMaterial({
             color: 0xff00ff,
             transparent: true,
@@ -99,8 +134,8 @@ export class DIVEScaleHandle extends Object3D implements DIVEHoverable, DIVEDrag
         colliderMesh.translateY(length / 2);
         this.add(colliderMesh);
 
-        this.rotateX(direction.y * -Math.PI / 2);
-        this.rotateY(direction.x * Math.PI / 2);
+        this.rotateX((direction.y * -Math.PI) / 2);
+        this.rotateY((direction.x * Math.PI) / 2);
     }
 
     public reset(): void {
@@ -111,10 +146,12 @@ export class DIVEScaleHandle extends Object3D implements DIVEHoverable, DIVEDrag
         this._box.scale.copy(
             new Vector3(1, 1, 1) // identity scale ...
                 .sub(this.forwardVector) // subtracted the forward vector ...
-                .add( // to then add ...
-                    scale.clone() // the scale ...
-                        .multiply(this.forwardVector) // that is scaled by the forward vector again to get the forward vector as the only direction
-                )
+                .add(
+                    // to then add ...
+                    scale
+                        .clone() // the scale ...
+                        .multiply(this.forwardVector), // that is scaled by the forward vector again to get the forward vector as the only direction
+                ),
         );
     }
 
