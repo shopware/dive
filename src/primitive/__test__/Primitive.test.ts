@@ -209,8 +209,10 @@ describe('dive/primitive/DIVEPrimitive', () => {
     });
 
     it('should set geometry', () => {
-        const bufferGeometry = {} as COMGeometry;
-        expect(() => primitive.SetGeometry(bufferGeometry)).not.toThrow();
+        const geometry = {
+            name: 'geometry',
+        } as COMGeometry;
+        expect(() => primitive.SetGeometry(geometry)).not.toThrow();
     });
 
     it('should place on floor', () => {
