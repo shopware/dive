@@ -267,7 +267,7 @@ export class DIVECommunication {
     private addObject(payload: Actions['ADD_OBJECT']['PAYLOAD']): Actions['ADD_OBJECT']['RETURN'] {
         if (this.registered.get(payload.id)) return false;
 
-        if (payload.parent === undefined) payload.parent = null;
+        if (payload.parentId === undefined) payload.parentId = null;
 
         this.registered.set(payload.id, payload);
 

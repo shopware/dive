@@ -171,7 +171,7 @@ export class DIVERoot extends Object3D {
         if (light.enabled !== undefined && light.enabled !== null) (sceneObject as (DIVEAmbientLight | DIVEPointLight)).SetEnabled(light.enabled);
         if (light.color !== undefined && light.color !== null) (sceneObject as (DIVEAmbientLight | DIVEPointLight)).SetColor(new Color(light.color));
         if (light.visible !== undefined && light.visible !== null) (sceneObject as (DIVEAmbientLight | DIVEPointLight)).visible = light.visible;
-        if (light.parent !== undefined) this.setParent({ ...light, parent: light.parent });
+        if (light.parentId !== undefined) this.setParent({ ...light, parentId: light.parentId });
     }
 
     private updateModel(model: Partial<COMModel> & { id: string }): void {
@@ -196,7 +196,7 @@ export class DIVERoot extends Object3D {
         if (model.scale !== undefined) (sceneObject as DIVEModel).SetScale(model.scale);
         if (model.visible !== undefined) (sceneObject as DIVEModel).SetVisibility(model.visible);
         if (model.material !== undefined) (sceneObject as DIVEModel).SetMaterial(model.material);
-        if (model.parent !== undefined) this.setParent({ ...model, parent: model.parent });
+        if (model.parentId !== undefined) this.setParent({ ...model, parentId: model.parentId });
     }
 
     private updatePrimitive(primitive: Partial<COMPrimitive> & { id: string }): void {
@@ -215,7 +215,7 @@ export class DIVERoot extends Object3D {
         if (primitive.scale !== undefined) (sceneObject as DIVEPrimitive).SetScale(primitive.scale);
         if (primitive.visible !== undefined) (sceneObject as DIVEPrimitive).SetVisibility(primitive.visible);
         if (primitive.material !== undefined) (sceneObject as DIVEPrimitive).SetMaterial(primitive.material);
-        if (primitive.parent !== undefined) this.setParent({ ...primitive, parent: primitive.parent });
+        if (primitive.parentId !== undefined) this.setParent({ ...primitive, parentId: primitive.parentId });
     }
 
     private updateGroup(group: Partial<COMGroup> & { id: string }): void {
@@ -233,7 +233,7 @@ export class DIVERoot extends Object3D {
         if (group.scale !== undefined) (sceneObject as DIVEPrimitive).SetScale(group.scale);
         if (group.visible !== undefined) (sceneObject as DIVEPrimitive).SetVisibility(group.visible);
         if (group.bbVisible !== undefined) (sceneObject as DIVEGroup).SetLinesVisibility(group.bbVisible);
-        if (group.parent !== undefined) this.setParent({ ...group, parent: group.parent });
+        if (group.parentId !== undefined) this.setParent({ ...group, parentId: group.parentId });
     }
 
     private deleteLight(light: Partial<COMLight> & { id: string }): void {
@@ -295,16 +295,12 @@ export class DIVERoot extends Object3D {
         (sceneObject as DIVEModel | DIVEPrimitive).PlaceOnFloor();
     }
 
-    private setParent(object: Partial<COMEntity> & { id: string, parent: (Partial<COMEntity> & { id: string }) | null }): void {
+    private setParent(object: Partial<COMEntity> & { id: string, parentId: string | null }): void {
         const sceneObject = this.GetSceneObject<DIVESceneObject>(object);
         if (!sceneObject) return;
 
-        if (sceneObject.parent) {
-            sceneObject.parent.remove(sceneObject);
-        }
-
-        if (object.parent !== null) {
-            const parent = this.GetSceneObject<DIVESceneObject>(object.parent);
+        if (object.parentId !== null) {
+            const parent = this.GetSceneObject<DIVESceneObject>({ id: object.parentId });
             if (!parent) return;
 
             // attach to new parent (if exists in scene)
