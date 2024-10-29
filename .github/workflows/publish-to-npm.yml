@@ -19,8 +19,7 @@ jobs:
               with:
                   path: node_modules
                   key:
-                      node-modules-${{ runner.os }}-${{ hashFiles('yarn.lock')
-                      }}
+                      node-modules-${{ runner.os }}-${{ hashFiles('yarn.lock') }}
             - name: Install DIVE dependencies (if cache not found)
               if: steps.yarn-cache.outputs.cache-hit != 'true'
               run: yarn
@@ -36,8 +35,7 @@ jobs:
               with:
                   path: node_modules
                   key:
-                      node-modules-${{ runner.os }}-${{ hashFiles('yarn.lock')
-                      }}
+                      node-modules-${{ runner.os }}-${{ hashFiles('yarn.lock') }}
             - name: Install DIVE dependencies (if cache not found)
               if: steps.yarn-cache.outputs.cache-hit != 'true'
               run: yarn
@@ -55,16 +53,33 @@ jobs:
               with:
                   path: node_modules
                   key:
-                      node-modules-${{ runner.os }}-${{ hashFiles('yarn.lock')
-                      }}
+                      node-modules-${{ runner.os }}-${{ hashFiles('yarn.lock') }}
             - name: Install DIVE dependencies (if cache not found)
               if: steps.yarn-cache.outputs.cache-hit != 'true'
               run: yarn
             - name: Unit-Test DIVE
               run: yarn unit
+    prettier-check:
+        runs-on: ubuntu-latest
+        needs: eslint
+        steps:
+          - name: Checkout DIVE
+            uses: actions/checkout@main
+          - name: Search for cached dependencies
+            uses: actions/cache@main
+            id: yarn-cache
+            with:
+                path: node_modules
+                key:
+                    node-modules-${{ runner.os }}-${{ hashFiles('yarn.lock') }}
+          - name: Install DIVE dependencies (if cache not found)
+            if: steps.yarn-cache.outputs.cache-hit != 'true'
+            run: yarn
+          - name: Prettier check DIVE
+            run: yarn prettier-fix && git add .
     publish:
         runs-on: ubuntu-latest
-        needs: unit
+        needs: [unit, prettier-check]
         steps:
             - name: Checkout
               uses: actions/checkout@v4
@@ -78,8 +93,7 @@ jobs:
               with:
                   path: node_modules
                   key:
-                      node-modules-${{ runner.os }}-${{ hashFiles('yarn.lock')
-                      }}
+                      node-modules-${{ runner.os }}-${{ hashFiles('yarn.lock') }}
             - name: Install dependencies (if cache not found)
               if: steps.yarn-cache.outputs.cache-hit != 'true'
               run: yarn

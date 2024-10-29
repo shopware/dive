@@ -57,7 +57,7 @@
         "build": "tsup && yarn genmd",
         "watch": "tsup --watch",
         "lint": "eslint",
-        "prettier": "prettier --check .",
+        "prettier-check": "prettier --check .",
         "prettier-fix": "prettier --write .",
         "unit": "jest",
         "coverage": "jest --coverage",
