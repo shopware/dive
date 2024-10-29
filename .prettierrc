@@ -1,8 +1,16 @@
 {
   "tabWidth": 4,
   "singleQuote": true,
-  "printWidth": 125,
+  "printWidth": 80,
   "trailingComma": "all",
+  "semi": true,
+  "arrowParens": "avoid",
+  "htmlWhitespaceSensitivity": "css",
+  "proseWrap": "always",
+  "quoteProps": "as-needed",
+  "insertPragma": false,
+  "requirePragma": false,
+  "useTabs": false,
   "multilineArraysWrapThreshold": 1,
   "bracketSpacing": true,
   "plugins": [
