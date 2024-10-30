@@ -34,7 +34,7 @@ jest.mock('three', () => {
                 },
             ];
             this.userData = {};
-            this.traverse = jest.fn(callback => {
+            this.traverse = jest.fn((callback) => {
                 callback(this.children[0]);
             });
             return this;
@@ -49,7 +49,7 @@ jest.mock('three/examples/jsm/loaders/GLTFLoader', () => {
                 uri: string,
                 progEvent: (p: ProgressEvent<EventTarget>) => void,
             ) =>
-                new Promise<void>(resolve => {
+                new Promise<void>((resolve) => {
                     progEvent({
                         loaded: 0,
                         total: 1,
@@ -71,7 +71,7 @@ jest.mock('three/examples/jsm/exporters/GLTFExporter', () => {
                 options?: GLTFExporterOptions,
             ) =>
                 new Promise<ArrayBuffer | { [key: string]: unknown }>(
-                    resolve => {
+                    (resolve) => {
                         resolve(new ArrayBuffer(0));
                     },
                 );
@@ -104,7 +104,7 @@ describe('dive/io/gltf/DIVEGLTFIO', () => {
                 uri: string,
                 progEvent?: (p: ProgressEvent<EventTarget>) => void,
             ) =>
-                new Promise<GLTF>(resolve => {
+                new Promise<GLTF>((resolve) => {
                     if (progEvent)
                         progEvent({
                             loaded: 0,
@@ -128,7 +128,7 @@ describe('dive/io/gltf/DIVEGLTFIO', () => {
                 uri: string,
                 progEvent?: (p: ProgressEvent<EventTarget>) => void,
             ) =>
-                new Promise<GLTF>(resolve => {
+                new Promise<GLTF>((resolve) => {
                     if (progEvent)
                         progEvent({
                             loaded: 0,

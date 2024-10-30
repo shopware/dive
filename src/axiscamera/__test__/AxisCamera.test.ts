@@ -85,7 +85,7 @@ const mockRenderer = {
     OnResize: jest.fn(),
     getViewport: jest.fn(),
     setViewport: jest.fn(),
-    AddPostRenderCallback: jest.fn(callback => {
+    AddPostRenderCallback: jest.fn((callback) => {
         callback();
     }),
     RemovePostRenderCallback: jest.fn(),

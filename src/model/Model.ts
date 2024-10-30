@@ -25,7 +25,7 @@ export class DIVEModel extends DIVENode {
     public SetModel(gltf: GLTF): void {
         this.clear();
 
-        gltf.scene.traverse(child => {
+        gltf.scene.traverse((child) => {
             child.castShadow = true;
             child.receiveShadow = true;
 

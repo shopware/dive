@@ -52,11 +52,13 @@ export class DIVECommunication {
     private static __instances: DIVECommunication[] = [];
 
     public static get(id: string): DIVECommunication | undefined {
-        const fromComID = this.__instances.find(instance => instance.id === id);
+        const fromComID = this.__instances.find(
+            (instance) => instance.id === id,
+        );
         if (fromComID) return fromComID;
-        return this.__instances.find(instance =>
+        return this.__instances.find((instance) =>
             Array.from(instance.registered.values()).find(
-                object => object.id === id,
+                (object) => object.id === id,
             ),
         );
     }
@@ -120,7 +122,7 @@ export class DIVECommunication {
 
     public DestroyInstance(): boolean {
         const existingIndex = DIVECommunication.__instances.findIndex(
-            entry => entry.id === this.id,
+            (entry) => entry.id === this.id,
         );
         if (existingIndex === -1) return false;
         DIVECommunication.__instances.splice(existingIndex, 1);
@@ -313,7 +315,7 @@ export class DIVECommunication {
             if (!listenerArray) return false;
 
             const existingIndex = listenerArray.findIndex(
-                entry => entry === listener,
+                (entry) => entry === listener,
             );
             if (existingIndex === -1) return false;
 
@@ -329,7 +331,7 @@ export class DIVECommunication {
         const listenerArray = this.listeners.get(type);
         if (!listenerArray) return;
 
-        listenerArray.forEach(listener => listener(payload));
+        listenerArray.forEach((listener) => listener(payload));
     }
 
     private getAllSceneData(
@@ -352,19 +354,19 @@ export class DIVECommunication {
             },
             spotmarks: [],
             lights: Array.from(this.registered.values()).filter(
-                object => object.entityType === 'light',
+                (object) => object.entityType === 'light',
             ) as COMLight[],
             objects: Array.from(this.registered.values()).filter(
-                object => object.entityType === 'model',
+                (object) => object.entityType === 'model',
             ) as COMModel[],
             cameras: Array.from(this.registered.values()).filter(
-                object => object.entityType === 'pov',
+                (object) => object.entityType === 'pov',
             ) as COMPov[],
             primitives: Array.from(this.registered.values()).filter(
-                object => object.entityType === 'primitive',
+                (object) => object.entityType === 'primitive',
             ) as COMPrimitive[],
             groups: Array.from(this.registered.values()).filter(
-                object => object.entityType === 'group',
+                (object) => object.entityType === 'group',
             ) as COMGroup[],
         };
         Object.assign(payload, sceneData);
@@ -384,7 +386,7 @@ export class DIVECommunication {
         if (payload.ids.length === 0) return [];
 
         const objects: COMEntity[] = [];
-        this.registered.forEach(object => {
+        this.registered.forEach((object) => {
             if (!payload.ids.includes(object.id)) return;
             objects.push(object);
         });

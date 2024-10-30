@@ -90,7 +90,7 @@ export default class DIVE {
         const modelid = generateUUID();
 
         // add loaded listener
-        dive.Communication.Subscribe('MODEL_LOADED', data => {
+        dive.Communication.Subscribe('MODEL_LOADED', (data) => {
             if (data.id !== modelid) return;
             dive.Communication.PerformAction('PLACE_ON_FLOOR', {
                 id: modelid,

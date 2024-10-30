@@ -108,7 +108,7 @@ jest.mock('three', () => {
                 return vec3;
             };
             this.mesh = new Mesh();
-            this.traverse = jest.fn(callback => {
+            this.traverse = jest.fn((callback) => {
                 callback(this);
                 for (let i = 0; i < this.children.length; i++) {
                     callback(this.children[i]);

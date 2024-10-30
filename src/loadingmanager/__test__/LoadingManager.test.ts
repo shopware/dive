@@ -10,7 +10,7 @@ jest.mock('three/examples/jsm/Addons.js', () => {
                 uri: string,
                 progEvent: (p: ProgressEvent<EventTarget>) => void,
             ) =>
-                new Promise<void>(resolve => {
+                new Promise<void>((resolve) => {
                     progEvent({
                         loaded: 0,
                         total: 1,

@@ -64,7 +64,7 @@ export class DIVESelectTool extends DIVETransformTool {
 
         const first = this._raycaster
             .intersectObjects(this._scene.Root.children, true)
-            .filter(intersect => intersect.object.visible)[0];
+            .filter((intersect) => intersect.object.visible)[0];
         const selectable = findInterface<DIVESelectable>(
             first?.object,
             'isSelectable',

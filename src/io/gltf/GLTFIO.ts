@@ -15,7 +15,7 @@ export class DIVEGLTFIO {
         url: string,
         onProgress?: (progress: number) => void,
     ): Promise<GLTF> {
-        return this._importer.loadAsync(url, progress => {
+        return this._importer.loadAsync(url, (progress) => {
             if (!onProgress) return;
 
             onProgress(progress.loaded / progress.total);

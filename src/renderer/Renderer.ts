@@ -190,13 +190,13 @@ export class DIVERenderer extends WebGLRenderer {
         if ((this.paused || !this.running) && !this.force) return;
 
         // execute render loop callbacks
-        this.preRenderCallbacks.forEach(callback => {
+        this.preRenderCallbacks.forEach((callback) => {
             callback();
         });
 
         this.render(scene, cam);
 
-        this.postRenderCallbacks.forEach(callback => {
+        this.postRenderCallbacks.forEach((callback) => {
             callback();
         });
 

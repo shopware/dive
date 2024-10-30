@@ -20,7 +20,7 @@ export class DIVEIO {
     ): Promise<DIVESceneFileType[FileType] | null> {
         return this._importFromURL(type, url)
 
-            .catch(error => {
+            .catch((error) => {
                 console.error(error);
 
                 return null;
@@ -32,7 +32,7 @@ export class DIVEIO {
     ): Promise<string | null> {
         return this._exportToURL(type)
 
-            .catch(error => {
+            .catch((error) => {
                 console.error(error);
 
                 return null;
@@ -63,11 +63,11 @@ export class DIVEIO {
                     this._gltfIO
                         .Export(this._scene, true, true)
 
-                        .then(data => {
+                        .then((data) => {
                             resolve(this._createBlobURL(data));
                         })
 
-                        .catch(error => {
+                        .catch((error) => {
                             reject(error);
                         });
                 });

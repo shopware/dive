@@ -290,10 +290,10 @@ export abstract class DIVEBaseTool {
         if (objects !== undefined)
             return this._raycaster
                 .intersectObjects(objects, true)
-                .filter(i => i.object.visible);
+                .filter((i) => i.object.visible);
         return this._raycaster
             .intersectObjects(this._scene.children, true)
-            .filter(i => i.object.visible);
+            .filter((i) => i.object.visible);
     }
 
     private pointerWasDragged(): boolean {

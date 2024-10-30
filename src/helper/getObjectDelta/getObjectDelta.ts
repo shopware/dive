@@ -18,7 +18,7 @@ export const getObjectDelta = <T extends object>(
 
     let delta = {};
 
-    Object.keys(b).forEach(key => {
+    Object.keys(b).forEach((key) => {
         // if key is not in a we have a delta
         if (!Object.keys(a).includes(key)) {
             delta = { ...delta, [key]: b[key as keyof object] };

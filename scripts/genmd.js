@@ -21,7 +21,7 @@ const object = {};
 // Function to print properties of a type
 function printProperties(type, object) {
     const properties = checker.getPropertiesOfType(type);
-    properties.forEach(prop => {
+    properties.forEach((prop) => {
         const propType = checker.getTypeOfSymbolAtLocation(
             prop,
             prop.declarations[0],
@@ -76,11 +76,11 @@ const checker = program.getTypeChecker();
 const sourceFile = program.getSourceFile(tsFilePath);
 
 // Find all interfaces
-const interfaces = sourceFile.statements.filter(node =>
+const interfaces = sourceFile.statements.filter((node) =>
     ts.isInterfaceDeclaration(node),
 );
 
-interfaces.forEach(interfaceNode => {
+interfaces.forEach((interfaceNode) => {
     if (ts.isInterfaceDeclaration(interfaceNode)) {
         const symbol = checker.getSymbolAtLocation(interfaceNode.name);
         if (symbol) {
@@ -90,16 +90,16 @@ interfaces.forEach(interfaceNode => {
     }
 });
 
-fs.access(templatePath, fs.constants.F_OK, err => {
+fs.access(templatePath, fs.constants.F_OK, (err) => {
     if (err) throw err;
 
     fs.readFile(templatePath, 'utf8', (err, markdown) => {
         if (err) throw err;
 
-        fs.access(targetPath, fs.constants.F_OK, err => {
+        fs.access(targetPath, fs.constants.F_OK, (err) => {
             if (err) {
                 // File does not exist, create it
-                fs.writeFile(targetPath, markdown, err => {
+                fs.writeFile(targetPath, markdown, (err) => {
                     if (err) throw err;
                 });
             } else {

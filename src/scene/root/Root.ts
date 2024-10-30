@@ -51,7 +51,7 @@ export class DIVERoot extends Object3D {
         object: Partial<COMEntity> & { id: string },
     ): T | undefined {
         let foundObject: T | undefined;
-        this.traverse(object3D => {
+        this.traverse((object3D) => {
             if (foundObject) return;
             if (object3D.userData.id === object.id) {
                 foundObject = object3D as T;
@@ -214,7 +214,7 @@ export class DIVERoot extends Object3D {
         }
 
         if (model.uri !== undefined) {
-            this.loadingManager.LoadGLTF(model.uri).then(gltf => {
+            this.loadingManager.LoadGLTF(model.uri).then((gltf) => {
                 (sceneObject as DIVEModel).SetModel(gltf);
                 DIVECommunication.get(model.id!)?.PerformAction(
                     'MODEL_LOADED',
@@ -381,7 +381,7 @@ export class DIVERoot extends Object3D {
 
     private detachTransformControls(object: Object3D): void {
         // this is only neccessary due to using the old TransformControls instead of the new DIVEGizmo
-        this.findScene(object).children.find(object => {
+        this.findScene(object).children.find((object) => {
             if ('isTransformControls' in object) {
                 (object as TransformControls).detach();
             }

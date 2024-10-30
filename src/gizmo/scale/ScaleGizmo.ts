@@ -42,13 +42,13 @@ export class DIVEScaleGizmo extends Object3D implements DIVEHoverable {
     }
 
     public reset(): void {
-        this.children.forEach(child => {
+        this.children.forEach((child) => {
             child.reset();
         });
     }
 
     public update(scale: Vector3): void {
-        this.children.forEach(child => {
+        this.children.forEach((child) => {
             child.update(scale);
         });
     }
@@ -59,7 +59,7 @@ export class DIVEScaleGizmo extends Object3D implements DIVEHoverable {
         dragged: boolean,
     ): void {
         // Set highlight state for all handles.
-        this.children.forEach(child => {
+        this.children.forEach((child) => {
             if (dragged) {
                 // Dragging has priority when it comes to highlighting.
                 child.highlight = child.axis === axis && dragged;

@@ -22,7 +22,7 @@ export class DIVEGroup extends DIVENode {
 
     public SetLinesVisibility(visible: boolean, object?: Object3D): void {
         if (!object) {
-            this._lines.forEach(line => {
+            this._lines.forEach((line) => {
                 line.visible = visible;
             });
             return;

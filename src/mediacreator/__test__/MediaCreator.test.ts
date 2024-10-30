@@ -96,7 +96,7 @@ jest.mock('../../animation/AnimationSystem', () => {
             };
             this.render = mock_render;
             this.OnResize = jest.fn();
-            this.AddPreRenderCallback = jest.fn(callback => {
+            this.AddPreRenderCallback = jest.fn((callback) => {
                 callback();
                 return 'id';
             });

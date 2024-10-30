@@ -96,31 +96,31 @@ export default class DIVEToolbox {
     }
 
     private addEventListeners(): void {
-        this._controller.domElement.addEventListener('pointermove', e =>
+        this._controller.domElement.addEventListener('pointermove', (e) =>
             this.onPointerMove(e),
         );
-        this._controller.domElement.addEventListener('pointerdown', e =>
+        this._controller.domElement.addEventListener('pointerdown', (e) =>
             this.onPointerDown(e),
         );
-        this._controller.domElement.addEventListener('pointerup', e =>
+        this._controller.domElement.addEventListener('pointerup', (e) =>
             this.onPointerUp(e),
         );
-        this._controller.domElement.addEventListener('wheel', e =>
+        this._controller.domElement.addEventListener('wheel', (e) =>
             this.onWheel(e),
         );
     }
 
     private removeEventListeners(): void {
-        this._controller.domElement.removeEventListener('pointermove', e =>
+        this._controller.domElement.removeEventListener('pointermove', (e) =>
             this.onPointerMove(e),
         );
-        this._controller.domElement.removeEventListener('pointerdown', e =>
+        this._controller.domElement.removeEventListener('pointerdown', (e) =>
             this.onPointerDown(e),
         );
-        this._controller.domElement.removeEventListener('pointerup', e =>
+        this._controller.domElement.removeEventListener('pointerup', (e) =>
             this.onPointerUp(e),
         );
-        this._controller.domElement.removeEventListener('wheel', e =>
+        this._controller.domElement.removeEventListener('wheel', (e) =>
             this.onWheel(e),
         );
     }
