@@ -4,15 +4,10 @@
     "printWidth": 80,
     "trailingComma": "all",
     "semi": true,
-    "arrowParens": "avoid",
+    "arrowParens": "always",
     "htmlWhitespaceSensitivity": "css",
-    "proseWrap": "always",
-    "quoteProps": "as-needed",
-    "insertPragma": false,
-    "requirePragma": false,
-    "useTabs": false,
-    "multilineArraysWrapThreshold": 1,
     "bracketSpacing": true,
+    "multilineArraysWrapThreshold": 1,
     "plugins": [
         "prettier-plugin-multiline-arrays"
     ]
