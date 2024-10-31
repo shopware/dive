@@ -1,4 +1,4 @@
-import { type Texture } from "three";
+import { type Texture } from 'three';
 
 export type COMMaterial = {
     vertexColors: boolean;
@@ -9,4 +9,4 @@ export type COMMaterial = {
     roughnessMap: Texture | null;
     metalness: number;
     metalnessMap: Texture | null;
-}
+};

@@ -1,4 +1,13 @@
-import { Camera, MathUtils, NoToneMapping, PCFSoftShadowMap, Scene, ShadowMapType, ToneMapping, WebGLRenderer } from "three";
+import {
+    Camera,
+    MathUtils,
+    NoToneMapping,
+    PCFSoftShadowMap,
+    Scene,
+    ShadowMapType,
+    ToneMapping,
+    WebGLRenderer,
+} from 'three';
 
 export type DIVERendererSettings = {
     antialias: boolean;
@@ -8,7 +17,7 @@ export type DIVERendererSettings = {
     shadowMapType: ShadowMapType;
     toneMapping: ToneMapping;
     canvas?: HTMLCanvasElement;
-}
+};
 
 export const DIVERendererDefaultSettings: DIVERendererSettings = {
     antialias: true,
@@ -18,7 +27,7 @@ export const DIVERendererDefaultSettings: DIVERendererSettings = {
     shadowMapType: PCFSoftShadowMap,
     toneMapping: NoToneMapping,
     canvas: undefined,
-}
+};
 
 /**
  * A changed version of the WebGLRenderer.
@@ -35,22 +44,38 @@ export class DIVERenderer extends WebGLRenderer {
     private force: boolean = false;
 
     // pre- and post-render callbacks
-    private preRenderCallbacks: Map<string, () => void> = new Map<string, () => void>();
-    private postRenderCallbacks: Map<string, () => void> = new Map<string, () => void>();
+    private preRenderCallbacks: Map<string, () => void> = new Map<
+        string,
+        () => void
+    >();
+    private postRenderCallbacks: Map<string, () => void> = new Map<
+        string,
+        () => void
+    >();
 
-    constructor(rendererSettings: Partial<DIVERendererSettings> = DIVERendererDefaultSettings) {
+    constructor(
+        rendererSettings: Partial<DIVERendererSettings> = DIVERendererDefaultSettings,
+    ) {
         super({
-            antialias: rendererSettings.antialias || DIVERendererDefaultSettings.antialias,
+            antialias:
+                rendererSettings.antialias ||
+                DIVERendererDefaultSettings.antialias,
             alpha: rendererSettings.alpha || DIVERendererDefaultSettings.alpha,
             preserveDrawingBuffer: true,
             canvas: rendererSettings.canvas,
         });
         this.setPixelRatio(window.devicePixelRatio);
 
-        this.shadowMap.enabled = rendererSettings.shadowMapEnabled || DIVERendererDefaultSettings.shadowMapEnabled;
-        this.shadowMap.type = rendererSettings.shadowMapType || DIVERendererDefaultSettings.shadowMapType;
+        this.shadowMap.enabled =
+            rendererSettings.shadowMapEnabled ||
+            DIVERendererDefaultSettings.shadowMapEnabled;
+        this.shadowMap.type =
+            rendererSettings.shadowMapType ||
+            DIVERendererDefaultSettings.shadowMapType;
 
-        this.toneMapping = rendererSettings.toneMapping || DIVERendererDefaultSettings.toneMapping;
+        this.toneMapping =
+            rendererSettings.toneMapping ||
+            DIVERendererDefaultSettings.toneMapping;
 
         this.debug.checkShaderErrors = false;
     }
@@ -63,7 +88,9 @@ export class DIVERenderer extends WebGLRenderer {
 
     // Starts the renderer with the given scene and camera.
     public StartRenderer(scene: Scene, cam: Camera): void {
-        this.setAnimationLoop(() => { this.internal_render(scene, cam) });
+        this.setAnimationLoop(() => {
+            this.internal_render(scene, cam);
+        });
         this.running = true;
     }
 
@@ -163,11 +190,15 @@ export class DIVERenderer extends WebGLRenderer {
         if ((this.paused || !this.running) && !this.force) return;
 
         // execute render loop callbacks
-        this.preRenderCallbacks.forEach((callback) => { callback(); });
+        this.preRenderCallbacks.forEach((callback) => {
+            callback();
+        });
 
         this.render(scene, cam);
 
-        this.postRenderCallbacks.forEach((callback) => { callback(); });
+        this.postRenderCallbacks.forEach((callback) => {
+            callback();
+        });
 
         this.force = false;
     }

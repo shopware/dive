@@ -22,7 +22,7 @@ jest.mock('../root/Root', () => {
             this.removeFromParent = jest.fn();
             this.ComputeSceneBB = jest.fn();
             return this;
-        })
+        }),
     };
 });
 

@@ -1,4 +1,4 @@
-import { DRACOLoader, GLTF, GLTFLoader } from "three/examples/jsm/Addons.js";
+import { DRACOLoader, GLTF, GLTFLoader } from 'three/examples/jsm/Addons.js';
 
 /**
  * A basic loading manager.
@@ -14,7 +14,9 @@ export class DIVELoadingManager {
     constructor() {
         this.gltfloader = new GLTFLoader();
         this.dracoloader = new DRACOLoader();
-        this.dracoloader.setDecoderPath('https://www.gstatic.com/draco/v1/decoders/');
+        this.dracoloader.setDecoderPath(
+            'https://www.gstatic.com/draco/v1/decoders/',
+        );
         this.gltfloader.setDRACOLoader(this.dracoloader);
     }
 
@@ -23,13 +25,16 @@ export class DIVELoadingManager {
     public async LoadGLTF(uri: string): Promise<GLTF> {
         const progEvent = (p: ProgressEvent<EventTarget>): void => {
             this.progress.set(uri, p.loaded / p.total);
-        }
+        };
 
         this.progress.set(uri, 0);
 
         return new Promise<GLTF>((resolve, reject) => {
-            this.gltfloader.loadAsync(uri, progEvent).then(resolve).catch(reject);
-        })
+            this.gltfloader
+                .loadAsync(uri, progEvent)
+                .then(resolve)
+                .catch(reject);
+        });
     }
 
     public PollProgress(): number {

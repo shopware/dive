@@ -1,4 +1,4 @@
 export default interface MODEL_LOADED {
-    'PAYLOAD': { id: string },
-    'RETURN': boolean,
-};
+    PAYLOAD: { id: string };
+    RETURN: boolean;
+}

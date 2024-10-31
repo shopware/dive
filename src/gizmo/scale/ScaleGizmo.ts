@@ -1,10 +1,14 @@
-import { Object3D, Vector3 } from "three";
-import { AxesColorBlue, AxesColorGreen, AxesColorRed } from "../../constant/AxisHelperColors";
-import { DIVEHoverable } from "../../interface/Hoverable";
-import DIVEOrbitControls from "../../controls/OrbitControls";
-import { DIVEScaleHandle } from "../handles/ScaleHandle";
-import { DraggableEvent } from "../../toolbox/BaseTool";
-import { DIVEGizmoAxis, DIVEGizmo } from "../Gizmo";
+import { Object3D, Vector3 } from 'three';
+import {
+    AxesColorBlue,
+    AxesColorGreen,
+    AxesColorRed,
+} from '../../constant/AxisHelperColors';
+import { DIVEHoverable } from '../../interface/Hoverable';
+import DIVEOrbitControls from '../../controls/OrbitControls';
+import { DIVEScaleHandle } from '../handles/ScaleHandle';
+import { DraggableEvent } from '../../toolbox/BaseTool';
+import { DIVEGizmoAxis, DIVEGizmo } from '../Gizmo';
 
 export class DIVEScaleGizmo extends Object3D implements DIVEHoverable {
     readonly isHoverable: true = true;
@@ -18,7 +22,7 @@ export class DIVEScaleGizmo extends Object3D implements DIVEHoverable {
     constructor(controller: DIVEOrbitControls) {
         super();
 
-        this.name = "DIVEScaleGizmo";
+        this.name = 'DIVEScaleGizmo';
 
         this.children = [];
 
@@ -26,9 +30,15 @@ export class DIVEScaleGizmo extends Object3D implements DIVEHoverable {
 
         this._controller = controller;
 
-        this.add(new DIVEScaleHandle('x', 1, new Vector3(1, 0, 0), AxesColorRed));
-        this.add(new DIVEScaleHandle('y', 1, new Vector3(0, 1, 0), AxesColorGreen));
-        this.add(new DIVEScaleHandle('z', 1, new Vector3(0, 0, 1), AxesColorBlue));
+        this.add(
+            new DIVEScaleHandle('x', 1, new Vector3(1, 0, 0), AxesColorRed),
+        );
+        this.add(
+            new DIVEScaleHandle('y', 1, new Vector3(0, 1, 0), AxesColorGreen),
+        );
+        this.add(
+            new DIVEScaleHandle('z', 1, new Vector3(0, 0, 1), AxesColorBlue),
+        );
     }
 
     public reset(): void {
@@ -43,7 +53,11 @@ export class DIVEScaleGizmo extends Object3D implements DIVEHoverable {
         });
     }
 
-    private handleHighlight(axis: DIVEGizmoAxis, value: boolean, dragged: boolean): void {
+    private handleHighlight(
+        axis: DIVEGizmoAxis,
+        value: boolean,
+        dragged: boolean,
+    ): void {
         // Set highlight state for all handles.
         this.children.forEach((child) => {
             if (dragged) {
@@ -63,7 +77,11 @@ export class DIVEScaleGizmo extends Object3D implements DIVEHoverable {
 
         if (!this.parent) return;
         if (!this.parent.parent) return;
-        (this.parent.parent as DIVEGizmo).onHover('translate', handle.axis, value);
+        (this.parent.parent as DIVEGizmo).onHover(
+            'translate',
+            handle.axis,
+            value,
+        );
 
         this.handleHighlight(handle.axis, value, false);
     }
@@ -87,7 +105,11 @@ export class DIVEScaleGizmo extends Object3D implements DIVEHoverable {
         if (!('onChange' in this.parent.parent)) return;
 
         const delta = e.dragDelta.clone().projectOnVector(axis.forwardVector);
-        (this.parent.parent as DIVEGizmo).onChange(undefined, undefined, this._startScale.clone().add(delta));
+        (this.parent.parent as DIVEGizmo).onChange(
+            undefined,
+            undefined,
+            this._startScale.clone().add(delta),
+        );
     }
 
     public onAxisDragEnd(handle: DIVEScaleHandle): void {

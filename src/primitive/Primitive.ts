@@ -1,4 +1,15 @@
-import { BoxGeometry, BufferGeometry, Color, ConeGeometry, CylinderGeometry, Mesh, MeshStandardMaterial, Raycaster, SphereGeometry, Vector3 } from 'three';
+import {
+    BoxGeometry,
+    BufferGeometry,
+    Color,
+    ConeGeometry,
+    CylinderGeometry,
+    Mesh,
+    MeshStandardMaterial,
+    Raycaster,
+    SphereGeometry,
+    Vector3,
+} from 'three';
 import { DIVECommunication } from '../com/Communication';
 import { PRODUCT_LAYER_MASK } from '../constant/VisibilityLayerMask';
 import { findSceneRecursive } from '../helper/findSceneRecursive/findSceneRecursive';
@@ -94,24 +105,40 @@ export class DIVEPrimitive extends DIVENode {
 
     public PlaceOnFloor(): void {
         this.position.y = -this._boundingBox.min.y * this.scale.y;
-        DIVECommunication.get(this.userData.id)?.PerformAction('UPDATE_OBJECT', { id: this.userData.id, position: this.position, rotation: this.rotation, scale: this.scale });
+        DIVECommunication.get(this.userData.id)?.PerformAction(
+            'UPDATE_OBJECT',
+            {
+                id: this.userData.id,
+                position: this.position,
+                rotation: this.rotation,
+                scale: this.scale,
+            },
+        );
     }
 
     public DropIt(): void {
         if (!this.parent) {
-            console.warn('DIVEPrimitive: DropIt() called on a model that is not in the scene.', this);
+            console.warn(
+                'DIVEPrimitive: DropIt() called on a model that is not in the scene.',
+                this,
+            );
             return;
         }
 
         // calculate the bottom center of the bounding box
         const bottomY = this._boundingBox.min.y * this.scale.y;
-        const bbBottomCenter = this.localToWorld(this._boundingBox.getCenter(new Vector3()).multiply(this.scale));
+        const bbBottomCenter = this.localToWorld(
+            this._boundingBox.getCenter(new Vector3()).multiply(this.scale),
+        );
         bbBottomCenter.y = bottomY + this.position.y;
 
         // set up raycaster and raycast all scene objects (product layer)
         const raycaster = new Raycaster(bbBottomCenter, new Vector3(0, -1, 0));
         raycaster.layers.mask = PRODUCT_LAYER_MASK;
-        const intersections = raycaster.intersectObjects(findSceneRecursive(this).Root.children, true);
+        const intersections = raycaster.intersectObjects(
+            findSceneRecursive(this).Root.children,
+            true,
+        );
 
         // if we hit something, move the model to the top on the hit object's bounding box
         if (intersections.length > 0) {
@@ -121,12 +148,23 @@ export class DIVEPrimitive extends DIVENode {
             const worldPos = mesh.localToWorld(meshBB.max.clone());
 
             const oldPos = this.position.clone();
-            const newPos = this.position.clone().setY(worldPos.y).sub(new Vector3(0, bottomY, 0));
+            const newPos = this.position
+                .clone()
+                .setY(worldPos.y)
+                .sub(new Vector3(0, bottomY, 0));
             this.position.copy(newPos);
 
             // if the position changed, update the object in communication
             if (this.position.y === oldPos.y) return;
-            DIVECommunication.get(this.userData.id)?.PerformAction('UPDATE_OBJECT', { id: this.userData.id, position: this.position, rotation: this.rotation, scale: this.scale });
+            DIVECommunication.get(this.userData.id)?.PerformAction(
+                'UPDATE_OBJECT',
+                {
+                    id: this.userData.id,
+                    position: this.position,
+                    rotation: this.rotation,
+                    scale: this.scale,
+                },
+            );
         }
     }
 
@@ -147,14 +185,22 @@ export class DIVEPrimitive extends DIVENode {
             case 'plane':
                 return this.createPlaneGeometry(geometry);
             default: {
-                console.warn('DIVEPrimitive: Invalid geometry type:', geometry.name.toLowerCase());
+                console.warn(
+                    'DIVEPrimitive: Invalid geometry type:',
+                    geometry.name.toLowerCase(),
+                );
                 return new BufferGeometry();
             }
         }
     }
 
     private createCylinderGeometry(geometry: COMGeometry): BufferGeometry {
-        const geo = new CylinderGeometry(geometry.width / 2, geometry.width / 2, geometry.height, 64);
+        const geo = new CylinderGeometry(
+            geometry.width / 2,
+            geometry.width / 2,
+            geometry.height,
+            64,
+        );
         geo.translate(0, geometry.height / 2, 0);
         return geo;
     }
@@ -165,14 +211,24 @@ export class DIVEPrimitive extends DIVENode {
     }
 
     private createPyramidGeometry(geometry: COMGeometry): BufferGeometry {
-        const geo = new ConeGeometry(geometry.width / 2, geometry.height, 4, 1, true);
+        const geo = new ConeGeometry(
+            geometry.width / 2,
+            geometry.height,
+            4,
+            1,
+            true,
+        );
         geo.rotateY(Math.PI / 4);
         geo.translate(0, geometry.height / 2, 0);
         return geo;
     }
 
     private createBoxGeometry(geometry: COMGeometry): BufferGeometry {
-        const geo = new BoxGeometry(geometry.width, geometry.height, geometry.depth);
+        const geo = new BoxGeometry(
+            geometry.width,
+            geometry.height,
+            geometry.depth,
+        );
         geo.translate(0, geometry.height / 2, 0);
         return geo;
     }
@@ -184,13 +240,22 @@ export class DIVEPrimitive extends DIVENode {
     }
 
     private createWallGeometry(geometry: COMGeometry): BufferGeometry {
-        const geo = new BoxGeometry(geometry.width, geometry.height, geometry.depth || 0.05, 16);
+        const geo = new BoxGeometry(
+            geometry.width,
+            geometry.height,
+            geometry.depth || 0.05,
+            16,
+        );
         geo.translate(0, geometry.height / 2, 0);
         return geo;
     }
 
     private createPlaneGeometry(geometry: COMGeometry): BufferGeometry {
-        const geo = new BoxGeometry(geometry.width, geometry.height, geometry.depth);
+        const geo = new BoxGeometry(
+            geometry.width,
+            geometry.height,
+            geometry.depth,
+        );
         geo.translate(0, geometry.height / 2, 0);
         return geo;
     }

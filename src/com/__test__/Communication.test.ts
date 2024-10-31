@@ -25,13 +25,21 @@ import type { DIVEScene } from '../../scene/Scene';
 import type DIVEToolbox from '../../toolbox/Toolbox';
 import type DIVEOrbitControls from '../../controls/OrbitControls';
 import { type DIVERenderer } from '../../renderer/Renderer';
-import { type COMGroup, type COMEntity, type COMEntityType, type COMLight, type COMModel, type COMPov, type COMPrimitive } from '../types';
+import {
+    type COMGroup,
+    type COMEntity,
+    type COMEntityType,
+    type COMLight,
+    type COMModel,
+    type COMPov,
+    type COMPrimitive,
+} from '../types';
 import { type DIVESceneObject } from '../../types';
 
 jest.mock('three/src/math/MathUtils', () => {
     return {
         generateUUID: jest.fn().mockReturnValue('uuid'),
-    }
+    };
 });
 
 jest.mock('../../mediacreator/MediaCreator', () => {
@@ -41,7 +49,7 @@ jest.mock('../../mediacreator/MediaCreator', () => {
 
             return this;
         }),
-    }
+    };
 });
 
 jest.mock('../../io/IO', () => {
@@ -51,7 +59,7 @@ jest.mock('../../io/IO', () => {
             this.Export = jest.fn();
             return this;
         }),
-    }
+    };
 });
 
 jest.mock('../../toolbox/select/SelectTool', () => {
@@ -63,7 +71,7 @@ jest.mock('../../toolbox/select/SelectTool', () => {
                 DetachGizmo: jest.fn(),
             };
         }),
-    }
+    };
 });
 
 const mockRenderer = {
@@ -170,7 +178,7 @@ const mockController = {
     RevertLast: jest.fn(),
     ComputeEncompassingView: jest.fn().mockReturnValue({
         position: { x: 1, y: 2, z: 3 },
-        target: { x: 4, y: 5, z: 6 }
+        target: { x: 4, y: 5, z: 6 },
     }),
 } as unknown as DIVEOrbitControls;
 
@@ -186,10 +194,14 @@ const mockToolBox = {
 
 let testCom: DIVECommunication;
 
-
 describe('dive/communication/DIVECommunication', () => {
     beforeEach(() => {
-        testCom = new DIVECommunication(mockRenderer, mockScene, mockController, mockToolBox);
+        testCom = new DIVECommunication(
+            mockRenderer,
+            mockScene,
+            mockController,
+            mockToolBox,
+        );
     });
 
     afterEach(() => {
@@ -234,13 +246,13 @@ describe('dive/communication/DIVECommunication', () => {
     });
 
     it('should not unsubscribe twice', () => {
-        const unsub = testCom.Subscribe('GET_ALL_OBJECTS', () => { });
+        const unsub = testCom.Subscribe('GET_ALL_OBJECTS', () => {});
         expect(unsub()).toBe(true);
         expect(unsub()).toBe(false);
     });
 
     it('should not unsubscribe if listener does not exist anymore', () => {
-        const unsub = testCom.Subscribe('GET_ALL_OBJECTS', () => { });
+        const unsub = testCom.Subscribe('GET_ALL_OBJECTS', () => {});
         testCom['listeners'].clear();
         expect(unsub()).toBe(false);
     });
@@ -248,20 +260,22 @@ describe('dive/communication/DIVECommunication', () => {
     it('should tigger onChange callback', () => {
         const payload = {
             name: 'name',
-            entityType: "light",
-            id: "ambient00",
-            type: "ambient",
+            entityType: 'light',
+            id: 'ambient00',
+            type: 'ambient',
             intensity: 0.5,
             color: 'white',
         } as COMLight;
-        expect(() => testCom.PerformAction('ADD_OBJECT', payload)).not.toThrow();
+        expect(() =>
+            testCom.PerformAction('ADD_OBJECT', payload),
+        ).not.toThrow();
     });
 
     it('should perform action ADD_OBJECT', () => {
         const payload = {
-            entityType: "light",
-            id: "ambient00",
-            type: "ambient",
+            entityType: 'light',
+            id: 'ambient00',
+            type: 'ambient',
             intensity: 0.5,
             color: 'white',
         } as COMLight;
@@ -272,9 +286,9 @@ describe('dive/communication/DIVECommunication', () => {
 
     it('should not perform action ADD_OBJECT with same object', () => {
         const payload = {
-            entityType: "light",
-            id: "ambient00",
-            type: "ambient",
+            entityType: 'light',
+            id: 'ambient00',
+            type: 'ambient',
             intensity: 0.5,
             color: 'white',
         } as COMLight;
@@ -285,9 +299,9 @@ describe('dive/communication/DIVECommunication', () => {
 
     it('should perform action UPDATE_OBJECT with existing oject', () => {
         const payload = {
-            entityType: "light",
-            id: "ambient00",
-            type: "ambient",
+            entityType: 'light',
+            id: 'ambient00',
+            type: 'ambient',
             intensity: 0.5,
             color: 'white',
         } as COMLight;
@@ -301,9 +315,9 @@ describe('dive/communication/DIVECommunication', () => {
 
     it('should perform action UPDATE_OBJECT without existing oject', () => {
         const payload = {
-            entityType: "light",
-            id: "ambient00",
-            type: "ambient",
+            entityType: 'light',
+            id: 'ambient00',
+            type: 'ambient',
             intensity: 0.5,
             color: 'white',
         } as COMLight;
@@ -314,9 +328,9 @@ describe('dive/communication/DIVECommunication', () => {
 
     it('should perform action DELETE_OBJECT with existing object', () => {
         const payload = {
-            entityType: "light",
-            id: "ambient00",
-            type: "ambient",
+            entityType: 'light',
+            id: 'ambient00',
+            type: 'ambient',
             intensity: 0.5,
             color: 'white',
         } as COMLight;
@@ -330,9 +344,9 @@ describe('dive/communication/DIVECommunication', () => {
 
     it('should perform action DELETE_OBJECT without existing object', () => {
         const payload = {
-            entityType: "light",
-            id: "ambient00",
-            type: "ambient",
+            entityType: 'light',
+            id: 'ambient00',
+            type: 'ambient',
             intensity: 0.5,
             color: 'white',
         } as COMLight;
@@ -352,13 +366,13 @@ describe('dive/communication/DIVECommunication', () => {
 
     it('should perform action DROP_IT with existing model', () => {
         const payload = {
-            entityType: "model",
-            id: "model",
+            entityType: 'model',
+            id: 'model',
             position: { x: 0, y: 0, z: 0 },
             rotation: { x: 0, y: 0, z: 0 },
             scale: { x: 0.01, y: 0.01, z: 0.01 },
 
-            uri: "https://threejs.org/examples/models/gltf/LittlestTokyo.glb",
+            uri: 'https://threejs.org/examples/models/gltf/LittlestTokyo.glb',
         } as COMModel;
 
         testCom.PerformAction('ADD_OBJECT', payload);
@@ -372,13 +386,13 @@ describe('dive/communication/DIVECommunication', () => {
 
     it('should perform action DROP_IT without existing model', () => {
         const payload = {
-            entityType: "model",
-            id: "model",
+            entityType: 'model',
+            id: 'model',
             position: { x: 0, y: 0, z: 0 },
             rotation: { x: 0, y: 0, z: 0 },
             scale: { x: 0.01, y: 0.01, z: 0.01 },
 
-            uri: "https://threejs.org/examples/models/gltf/LittlestTokyo.glb",
+            uri: 'https://threejs.org/examples/models/gltf/LittlestTokyo.glb',
         };
         const placeSpy = jest.spyOn(mockScene, 'GetSceneObject');
 
@@ -389,13 +403,13 @@ describe('dive/communication/DIVECommunication', () => {
 
     it('should perform action PLACE_ON_FLOOR with existing model', () => {
         const payload = {
-            entityType: "model",
-            id: "model",
+            entityType: 'model',
+            id: 'model',
             position: { x: 0, y: 0, z: 0 },
             rotation: { x: 0, y: 0, z: 0 },
             scale: { x: 0.01, y: 0.01, z: 0.01 },
 
-            uri: "https://threejs.org/examples/models/gltf/LittlestTokyo.glb",
+            uri: 'https://threejs.org/examples/models/gltf/LittlestTokyo.glb',
         } as COMModel;
 
         testCom.PerformAction('ADD_OBJECT', payload);
@@ -409,13 +423,13 @@ describe('dive/communication/DIVECommunication', () => {
 
     it('should perform action PLACE_ON_FLOOR without existing model', () => {
         const payload = {
-            entityType: "model" as COMEntityType,
-            id: "model",
+            entityType: 'model' as COMEntityType,
+            id: 'model',
             position: { x: 0, y: 0, z: 0 },
             rotation: { x: 0, y: 0, z: 0 },
             scale: { x: 0.01, y: 0.01, z: 0.01 },
 
-            uri: "https://threejs.org/examples/models/gltf/LittlestTokyo.glb",
+            uri: 'https://threejs.org/examples/models/gltf/LittlestTokyo.glb',
         };
         const placeSpy = jest.spyOn(mockScene, 'PlaceOnFloor');
 
@@ -426,13 +440,13 @@ describe('dive/communication/DIVECommunication', () => {
 
     it('should perform action GET_ALL_OBJECTS', () => {
         const payload = {
-            entityType: "model",
-            id: "model",
+            entityType: 'model',
+            id: 'model',
             position: { x: 0, y: 0, z: 0 },
             rotation: { x: 0, y: 0, z: 0 },
             scale: { x: 0.01, y: 0.01, z: 0.01 },
 
-            uri: "https://threejs.org/examples/models/gltf/LittlestTokyo.glb",
+            uri: 'https://threejs.org/examples/models/gltf/LittlestTokyo.glb',
         } as COMModel;
 
         const objects0 = testCom.PerformAction('GET_ALL_OBJECTS', new Map());
@@ -462,8 +476,8 @@ describe('dive/communication/DIVECommunication', () => {
 
         moveToSpy.mockClear();
         testCom.PerformAction('ADD_OBJECT', {
-            entityType: "pov",
-            id: "pov",
+            entityType: 'pov',
+            id: 'pov',
             position: { x: 0, y: 0, z: 0 },
             target: { x: 0, y: 0, z: 0 },
         } as COMPov);
@@ -489,46 +503,49 @@ describe('dive/communication/DIVECommunication', () => {
 
     it('should perform action COMPUTE_ENCOMPASSING_VIEW', () => {
         const payload = {};
-        const transform = testCom.PerformAction('COMPUTE_ENCOMPASSING_VIEW', payload);
+        const transform = testCom.PerformAction(
+            'COMPUTE_ENCOMPASSING_VIEW',
+            payload,
+        );
         expect(transform).toStrictEqual({
             position: { x: 1, y: 2, z: 3 },
-            target: { x: 4, y: 5, z: 6 }
+            target: { x: 4, y: 5, z: 6 },
         });
         expect(payload).toStrictEqual({
             position: { x: 1, y: 2, z: 3 },
-            target: { x: 4, y: 5, z: 6 }
+            target: { x: 4, y: 5, z: 6 },
         });
     });
 
     it('should perform action GET_ALL_SCENE_DATA', () => {
         testCom.PerformAction('ADD_OBJECT', {
-            entityType: "pov",
-            id: "pov",
+            entityType: 'pov',
+            id: 'pov',
             position: { x: 0, y: 0, z: 0 },
             target: { x: 0, y: 0, z: 0 },
         } as COMPov);
 
         testCom.PerformAction('ADD_OBJECT', {
-            entityType: "model",
-            id: "model",
+            entityType: 'model',
+            id: 'model',
             position: { x: 0, y: 0, z: 0 },
             rotation: { x: 0, y: 0, z: 0 },
             scale: { x: 0.01, y: 0.01, z: 0.01 },
 
-            uri: "https://threejs.org/examples/models/gltf/LittlestTokyo.glb",
+            uri: 'https://threejs.org/examples/models/gltf/LittlestTokyo.glb',
         } as COMModel);
 
         testCom.PerformAction('ADD_OBJECT', {
-            entityType: "light",
-            id: "ambient00",
-            type: "ambient",
+            entityType: 'light',
+            id: 'ambient00',
+            type: 'ambient',
             intensity: 0.5,
             color: 'white',
         } as COMLight);
 
         testCom.PerformAction('ADD_OBJECT', {
-            entityType: "group",
-            id: "group1",
+            entityType: 'group',
+            id: 'group1',
             position: { x: 0, y: 0, z: 0 },
             rotation: { x: 0, y: 0, z: 0 },
             parentId: null,
@@ -536,122 +553,166 @@ describe('dive/communication/DIVECommunication', () => {
 
         const success = testCom.PerformAction('GET_ALL_SCENE_DATA', {});
         expect(success).toStrictEqual({
-            backgroundColor: "#ffffff",
-            cameras: [{
-                entityType: "pov",
-                id: "pov",
-                position: { x: 0, y: 0, z: 0 },
-                target: { x: 0, y: 0, z: 0 },
-                parentId: null,
-            }],
-            floorColor: "#ffffff",
+            backgroundColor: '#ffffff',
+            cameras: [
+                {
+                    entityType: 'pov',
+                    id: 'pov',
+                    position: { x: 0, y: 0, z: 0 },
+                    target: { x: 0, y: 0, z: 0 },
+                    parentId: null,
+                },
+            ],
+            floorColor: '#ffffff',
             floorEnabled: true,
-            lights: [{
-                entityType: "light",
-                id: "ambient00",
-                type: "ambient",
-                intensity: 0.5,
-                color: 'white',
-                parentId: null,
-            }],
+            lights: [
+                {
+                    entityType: 'light',
+                    id: 'ambient00',
+                    type: 'ambient',
+                    intensity: 0.5,
+                    color: 'white',
+                    parentId: null,
+                },
+            ],
             mediaItem: null,
             name: undefined,
-            objects: [{
-                entityType: "model",
-                id: "model",
-                position: { x: 0, y: 0, z: 0 },
-                rotation: { x: 0, y: 0, z: 0 },
-                scale: { x: 0.01, y: 0.01, z: 0.01 },
-                parentId: null,
-                uri: "https://threejs.org/examples/models/gltf/LittlestTokyo.glb",
-            }],
+            objects: [
+                {
+                    entityType: 'model',
+                    id: 'model',
+                    position: { x: 0, y: 0, z: 0 },
+                    rotation: { x: 0, y: 0, z: 0 },
+                    scale: { x: 0.01, y: 0.01, z: 0.01 },
+                    parentId: null,
+                    uri: 'https://threejs.org/examples/models/gltf/LittlestTokyo.glb',
+                },
+            ],
             primitives: [],
             spotmarks: [],
             userCamera: {
                 position: { x: 1, y: 2, z: 3 },
                 target: { x: 4, y: 5, z: 6 },
             },
-            groups: [{
-                entityType: "group",
-                id: "group1",
-                position: { x: 0, y: 0, z: 0 },
-                rotation: { x: 0, y: 0, z: 0 },
-                parentId: null,
-            }],
+            groups: [
+                {
+                    entityType: 'group',
+                    id: 'group1',
+                    position: { x: 0, y: 0, z: 0 },
+                    rotation: { x: 0, y: 0, z: 0 },
+                    parentId: null,
+                },
+            ],
         });
     });
 
     it('should perform action GET_OBJECTS', () => {
         const mock0 = {
-            entityType: "pov",
-            id: "test0",
+            entityType: 'pov',
+            id: 'test0',
             position: { x: 0, y: 0, z: 0 },
             target: { x: 0, y: 0, z: 0 },
         } as COMPov;
         testCom.PerformAction('ADD_OBJECT', mock0);
 
         const mock1 = {
-            entityType: "pov",
-            id: "test1",
+            entityType: 'pov',
+            id: 'test1',
             position: { x: 0, y: 0, z: 0 },
             target: { x: 0, y: 0, z: 0 },
         } as COMPov;
         testCom.PerformAction('ADD_OBJECT', mock1);
 
-        const successWithoutIds = testCom.PerformAction('GET_OBJECTS', { ids: [] });
+        const successWithoutIds = testCom.PerformAction('GET_OBJECTS', {
+            ids: [],
+        });
         expect(Array.from(successWithoutIds.values())).toStrictEqual([]);
 
-        const successWithIds = testCom.PerformAction('GET_OBJECTS', { ids: ['test1'] });
-        expect(Array.from(successWithIds.values())).toStrictEqual([{ entityType: "pov", id: "test1", position: { x: 0, y: 0, z: 0 }, target: { x: 0, y: 0, z: 0 }, parentId: null }]);
+        const successWithIds = testCom.PerformAction('GET_OBJECTS', {
+            ids: ['test1'],
+        });
+        expect(Array.from(successWithIds.values())).toStrictEqual([
+            {
+                entityType: 'pov',
+                id: 'test1',
+                position: { x: 0, y: 0, z: 0 },
+                target: { x: 0, y: 0, z: 0 },
+                parentId: null,
+            },
+        ]);
     });
 
     it('should perform action SELECT_OBJECT', () => {
-        const success0 = testCom.PerformAction('SELECT_OBJECT', { id: 'test0' });
+        const success0 = testCom.PerformAction('SELECT_OBJECT', {
+            id: 'test0',
+        });
         expect(success0).toBe(false);
 
         const mock0 = {
-            entityType: "pov",
-            id: "test0",
+            entityType: 'pov',
+            id: 'test0',
             position: { x: 0, y: 0, z: 0 },
             target: { x: 0, y: 0, z: 0 },
         } as COMPov;
         testCom.PerformAction('ADD_OBJECT', mock0);
 
         jest.spyOn(mockScene, 'GetSceneObject').mockReturnValueOnce(undefined);
-        const success1 = testCom.PerformAction('SELECT_OBJECT', { id: 'test0' });
+        const success1 = testCom.PerformAction('SELECT_OBJECT', {
+            id: 'test0',
+        });
         expect(success1).toBe(false);
 
-        jest.spyOn(mockScene, 'GetSceneObject').mockReturnValueOnce({} as unknown as DIVESceneObject);
-        const success2 = testCom.PerformAction('SELECT_OBJECT', { id: 'test0' });
+        jest.spyOn(mockScene, 'GetSceneObject').mockReturnValueOnce(
+            {} as unknown as DIVESceneObject,
+        );
+        const success2 = testCom.PerformAction('SELECT_OBJECT', {
+            id: 'test0',
+        });
         expect(success2).toBe(false);
 
-        jest.spyOn(mockScene, 'GetSceneObject').mockReturnValueOnce({ isSelectable: true } as unknown as DIVESceneObject);
-        const success3 = testCom.PerformAction('SELECT_OBJECT', { id: 'test0' });
+        jest.spyOn(mockScene, 'GetSceneObject').mockReturnValueOnce({
+            isSelectable: true,
+        } as unknown as DIVESceneObject);
+        const success3 = testCom.PerformAction('SELECT_OBJECT', {
+            id: 'test0',
+        });
         expect(success3).toBe(true);
     });
 
     it('should perform action DESELECT_OBJECT', () => {
-        const success0 = testCom.PerformAction('DESELECT_OBJECT', { id: 'test0' });
+        const success0 = testCom.PerformAction('DESELECT_OBJECT', {
+            id: 'test0',
+        });
         expect(success0).toBe(false);
 
         const mock0 = {
-            entityType: "pov",
-            id: "test0",
+            entityType: 'pov',
+            id: 'test0',
             position: { x: 0, y: 0, z: 0 },
             target: { x: 0, y: 0, z: 0 },
         } as COMPov;
         testCom.PerformAction('ADD_OBJECT', mock0);
 
         jest.spyOn(mockScene, 'GetSceneObject').mockReturnValueOnce(undefined);
-        const success1 = testCom.PerformAction('DESELECT_OBJECT', { id: 'test0' });
+        const success1 = testCom.PerformAction('DESELECT_OBJECT', {
+            id: 'test0',
+        });
         expect(success1).toBe(false);
 
-        jest.spyOn(mockScene, 'GetSceneObject').mockReturnValueOnce({} as unknown as DIVESceneObject);
-        const success2 = testCom.PerformAction('DESELECT_OBJECT', { id: 'test0' });
+        jest.spyOn(mockScene, 'GetSceneObject').mockReturnValueOnce(
+            {} as unknown as DIVESceneObject,
+        );
+        const success2 = testCom.PerformAction('DESELECT_OBJECT', {
+            id: 'test0',
+        });
         expect(success2).toBe(false);
 
-        jest.spyOn(mockScene, 'GetSceneObject').mockReturnValueOnce({ isSelectable: true } as unknown as DIVESceneObject);
-        const success3 = testCom.PerformAction('DESELECT_OBJECT', { id: 'test0' });
+        jest.spyOn(mockScene, 'GetSceneObject').mockReturnValueOnce({
+            isSelectable: true,
+        } as unknown as DIVESceneObject);
+        const success3 = testCom.PerformAction('DESELECT_OBJECT', {
+            id: 'test0',
+        });
         expect(success3).toBe(true);
     });
 
@@ -716,13 +777,13 @@ describe('dive/communication/DIVECommunication', () => {
 
     it('should perform action MODEL_LOADED', () => {
         const payload = {
-            entityType: "model",
-            id: "modelID",
+            entityType: 'model',
+            id: 'modelID',
             position: { x: 0, y: 0, z: 0 },
             rotation: { x: 0, y: 0, z: 0 },
             scale: { x: 0.01, y: 0.01, z: 0.01 },
 
-            uri: "https://threejs.org/examples/models/gltf/LittlestTokyo.glb",
+            uri: 'https://threejs.org/examples/models/gltf/LittlestTokyo.glb',
         } as COMModel;
         testCom.PerformAction('ADD_OBJECT', payload);
         const success = testCom.PerformAction('MODEL_LOADED', {
@@ -753,8 +814,8 @@ describe('dive/communication/DIVECommunication', () => {
 
     it('should perform action GENERATE_MEDIA', () => {
         const mock1 = {
-            entityType: "pov",
-            id: "test1",
+            entityType: 'pov',
+            id: 'test1',
             position: { x: 0, y: 0, z: 0 },
             target: { x: 0, y: 0, z: 0 },
         } as COMPov;
@@ -780,26 +841,26 @@ describe('dive/communication/DIVECommunication', () => {
 
     it('should perform action SET_PARENT', () => {
         const object = {
-            id: "object",
+            id: 'object',
         } as COMEntity;
         testCom.PerformAction('ADD_OBJECT', object);
 
         const objectNotRegistered = {
-            id: "objectNotRegistered",
+            id: 'objectNotRegistered',
         } as COMEntity;
 
         const parent0 = {
-            id: "parent0",
+            id: 'parent0',
         } as COMEntity;
         testCom.PerformAction('ADD_OBJECT', parent0);
 
         const parent1 = {
-            id: "parent1",
+            id: 'parent1',
         } as COMEntity;
         testCom.PerformAction('ADD_OBJECT', parent1);
 
         const parentNotRegistered = {
-            id: "parentNotRegistered",
+            id: 'parentNotRegistered',
         } as COMEntity;
 
         const attachNotRegisteredObject = testCom.PerformAction('SET_PARENT', {
@@ -810,7 +871,7 @@ describe('dive/communication/DIVECommunication', () => {
 
         jest.spyOn(mockScene, 'GetSceneObject').mockImplementationOnce(() => {
             return undefined;
-        })
+        });
         const attachNonSceneObject = testCom.PerformAction('SET_PARENT', {
             object: object,
             parent: null,
@@ -829,20 +890,25 @@ describe('dive/communication/DIVECommunication', () => {
         });
         expect(attachToItself).toBe(false);
 
-        const attachToNotRegsiteredParent = testCom.PerformAction('SET_PARENT', {
-            object: object,
-            parent: parentNotRegistered,
-        });
+        const attachToNotRegsiteredParent = testCom.PerformAction(
+            'SET_PARENT',
+            {
+                object: object,
+                parent: parentNotRegistered,
+            },
+        );
         expect(attachToNotRegsiteredParent).toBe(true);
 
-        jest.spyOn(mockScene, 'GetSceneObject').mockImplementationOnce(() => {
-            return {
-                DropIt: jest.fn(),
-                attach: jest.fn(),
-            } as unknown as DIVESceneObject;
-        }).mockImplementationOnce(() => {
-            return undefined;
-        });
+        jest.spyOn(mockScene, 'GetSceneObject')
+            .mockImplementationOnce(() => {
+                return {
+                    DropIt: jest.fn(),
+                    attach: jest.fn(),
+                } as unknown as DIVESceneObject;
+            })
+            .mockImplementationOnce(() => {
+                return undefined;
+            });
 
         const attachtoNonSceneParent = testCom.PerformAction('SET_PARENT', {
             object: object,

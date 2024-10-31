@@ -1,5 +1,13 @@
 import { DIVERoot } from '../Root';
-import { type COMPrimitive, type COMLight, type COMModel, type COMPov, type COMEntity, type COMGeometry, COMGroup } from '../../../com/types';
+import {
+    type COMPrimitive,
+    type COMLight,
+    type COMModel,
+    type COMPov,
+    type COMEntity,
+    type COMGeometry,
+    COMGroup,
+} from '../../../com/types';
 import { type DIVEScene } from '../../Scene';
 import { DIVECommunication } from '../../../com/Communication';
 import { type DIVESceneObject } from '../../../types';
@@ -35,7 +43,7 @@ jest.mock('three', () => {
             this.setY = (y: number) => {
                 this.y = y;
                 return this;
-            }
+            };
             this.add = (vec3: Vector3) => {
                 this.x += vec3.x;
                 this.y += vec3.y;
@@ -68,20 +76,20 @@ jest.mock('three', () => {
                     far: 0,
                     fov: 0,
                 },
-            }
+            };
             this.add = jest.fn();
             this.attach = jest.fn();
             this.remove = jest.fn();
             this.sub = jest.fn();
-            this.children = [{
-                visible: true,
-                material: {
-                    color: {},
+            this.children = [
+                {
+                    visible: true,
+                    material: {
+                        color: {},
+                    },
+                    userData: {},
                 },
-                userData: {
-
-                },
-            }];
+            ];
             this.userData = {};
             this.position = new Vector3();
             this.rotation = {
@@ -188,7 +196,7 @@ jest.mock('three', () => {
         Color: jest.fn(function () {
             return this;
         }),
-    }
+    };
 });
 
 jest.mock('../../../com/Communication.ts', () => {
@@ -197,9 +205,9 @@ jest.mock('../../../com/Communication.ts', () => {
             get: jest.fn(() => {
                 return {
                     PerformAction: jest.fn(),
-                }
+                };
             }),
-        }
+        },
     };
 });
 
@@ -209,7 +217,7 @@ jest.mock('../../../loadingmanager/LoadingManager.ts', () => {
         DIVELoadingManager: jest.fn(function () {
             this.LoadGLTF = mock_LoadGLTF;
             return this;
-        })
+        }),
     };
 });
 
@@ -242,7 +250,7 @@ jest.mock('../../../light/AmbientLight.ts', () => {
         this.dispatchEvent = jest.fn();
         this.position = {
             set: jest.fn(),
-        }
+        };
         this.parent = {
             attach: jest.fn(),
         };
@@ -255,7 +263,7 @@ jest.mock('../../../light/AmbientLight.ts', () => {
         this.SetColor = jest.fn();
         this.userData = {
             id: undefined,
-        }
+        };
         this.removeFromParent = jest.fn();
         return this;
     });
@@ -268,7 +276,7 @@ jest.mock('../../../light/PointLight.ts', () => {
         this.dispatchEvent = jest.fn();
         this.position = {
             set: jest.fn(),
-        }
+        };
         this.parent = {
             attach: jest.fn(),
         };
@@ -281,7 +289,7 @@ jest.mock('../../../light/PointLight.ts', () => {
         this.SetColor = jest.fn();
         this.userData = {
             id: undefined,
-        }
+        };
         this.removeFromParent = jest.fn();
         return this;
     });
@@ -294,7 +302,7 @@ jest.mock('../../../light/SceneLight.ts', () => {
         this.dispatchEvent = jest.fn();
         this.position = {
             set: jest.fn(),
-        }
+        };
         this.parent = {
             attach: jest.fn(),
         };
@@ -307,7 +315,7 @@ jest.mock('../../../light/SceneLight.ts', () => {
         this.SetColor = jest.fn();
         this.userData = {
             id: undefined,
-        }
+        };
         this.removeFromParent = jest.fn();
         return this;
     });
@@ -338,7 +346,7 @@ jest.mock('../../../model/Model.ts', () => {
             this.PlaceOnFloor = jest.fn();
             this.removeFromParent = jest.fn();
             return this;
-        })
+        }),
     };
 });
 
@@ -367,7 +375,7 @@ jest.mock('../../../primitive/Primitive.ts', () => {
             this.PlaceOnFloor = jest.fn();
             this.removeFromParent = jest.fn();
             return this;
-        })
+        }),
     };
 });
 
@@ -398,13 +406,13 @@ jest.mock('../../../group/Group.ts', () => {
             this.PlaceOnFloor = jest.fn();
             this.removeFromParent = jest.fn();
             return this;
-        })
+        }),
     };
 });
 
 let root: DIVERoot;
 
-jest.spyOn(console, 'warn').mockImplementation(() => { });
+jest.spyOn(console, 'warn').mockImplementation(() => {});
 
 describe('DIVE/scene/root/DIVERoot', () => {
     beforeEach(() => {
@@ -425,51 +433,166 @@ describe('DIVE/scene/root/DIVERoot', () => {
     });
 
     it('should get scene object', async () => {
-        root.children = [{
-            userData: {
-                id: 'different_id',
-            }
-        }] as unknown as DIVESceneObject[];
+        root.children = [
+            {
+                userData: {
+                    id: 'different_id',
+                },
+            },
+        ] as unknown as DIVESceneObject[];
         expect(root.GetSceneObject({ id: 'test_id' })).toBeUndefined();
 
-        expect(() => root.AddSceneObject({
-            id: 'test_id',
-            name: 'test',
-            entityType: 'primitive',
-            position: { x: 1, y: 2, z: 3 },
-            rotation: { x: 1, y: 2, z: 3 },
-            scale: { x: 1, y: 2, z: 3 },
-            geometry: {} as COMGeometry,
-            visible: true,
-            parentId: null,
-        })).not.toThrow();
-        root.children = [{
-            userData: {
+        expect(() =>
+            root.AddSceneObject({
                 id: 'test_id',
-            }
-        }] as unknown as DIVESceneObject[];
+                name: 'test',
+                entityType: 'primitive',
+                position: { x: 1, y: 2, z: 3 },
+                rotation: { x: 1, y: 2, z: 3 },
+                scale: { x: 1, y: 2, z: 3 },
+                geometry: {} as COMGeometry,
+                visible: true,
+                parentId: null,
+            }),
+        ).not.toThrow();
+        root.children = [
+            {
+                userData: {
+                    id: 'test_id',
+                },
+            },
+        ] as unknown as DIVESceneObject[];
         expect(root.GetSceneObject({ id: 'test_id' })).toBeDefined();
     });
 
     it('should add object', () => {
-        expect(() => root.AddSceneObject({ id: 'id', name: 'pov', entityType: 'pov', visible: true } as COMPov)).not.toThrow();
+        expect(() =>
+            root.AddSceneObject({
+                id: 'id',
+                name: 'pov',
+                entityType: 'pov',
+                visible: true,
+            } as COMPov),
+        ).not.toThrow();
 
-        expect(() => root.AddSceneObject({ id: 'id', name: 'light', entityType: 'light', visible: true } as COMLight)).not.toThrow();
-        expect(() => root.AddSceneObject({ id: 'id_scene', name: 'light', entityType: 'light', visible: true, type: 'scene' } as COMLight)).not.toThrow();
-        expect(() => root.AddSceneObject({ id: 'id_ambient', name: 'light', entityType: 'light', visible: true, type: 'ambient' } as COMLight)).not.toThrow();
-        expect(() => root.AddSceneObject({ id: 'id_point', name: 'light', entityType: 'light', visible: true, type: 'point', position: { x: 0, y: 0, z: 0 }, intensity: 1, enabled: false, color: 0xffffff, parentId: 'id' } as COMLight)).not.toThrow();
+        expect(() =>
+            root.AddSceneObject({
+                id: 'id',
+                name: 'light',
+                entityType: 'light',
+                visible: true,
+            } as COMLight),
+        ).not.toThrow();
+        expect(() =>
+            root.AddSceneObject({
+                id: 'id_scene',
+                name: 'light',
+                entityType: 'light',
+                visible: true,
+                type: 'scene',
+            } as COMLight),
+        ).not.toThrow();
+        expect(() =>
+            root.AddSceneObject({
+                id: 'id_ambient',
+                name: 'light',
+                entityType: 'light',
+                visible: true,
+                type: 'ambient',
+            } as COMLight),
+        ).not.toThrow();
+        expect(() =>
+            root.AddSceneObject({
+                id: 'id_point',
+                name: 'light',
+                entityType: 'light',
+                visible: true,
+                type: 'point',
+                position: { x: 0, y: 0, z: 0 },
+                intensity: 1,
+                enabled: false,
+                color: 0xffffff,
+                parentId: 'id',
+            } as COMLight),
+        ).not.toThrow();
 
-
-        expect(() => root.AddSceneObject({ id: 'id', name: 'model', entityType: 'model', visible: true } as COMModel)).not.toThrow();
-        expect(() => root.AddSceneObject({ id: 'id_uri0', name: 'model', entityType: 'model', visible: true, uri: 'uri', position: { x: 0, y: 0, z: 0 }, rotation: { x: 0, y: 0, z: 0 }, scale: { x: 1, y: 1, z: 1 }, material: {}, parentId: 'id' } as COMModel)).not.toThrow();
+        expect(() =>
+            root.AddSceneObject({
+                id: 'id',
+                name: 'model',
+                entityType: 'model',
+                visible: true,
+            } as COMModel),
+        ).not.toThrow();
+        expect(() =>
+            root.AddSceneObject({
+                id: 'id_uri0',
+                name: 'model',
+                entityType: 'model',
+                visible: true,
+                uri: 'uri',
+                position: { x: 0, y: 0, z: 0 },
+                rotation: { x: 0, y: 0, z: 0 },
+                scale: { x: 1, y: 1, z: 1 },
+                material: {},
+                parentId: 'id',
+            } as COMModel),
+        ).not.toThrow();
         jest.spyOn(DIVECommunication, 'get').mockReturnValueOnce(undefined);
-        expect(() => root.AddSceneObject({ id: 'id_uri1', name: 'model', entityType: 'model', visible: true, uri: 'uri', position: { x: 0, y: 0, z: 0 }, rotation: { x: 0, y: 0, z: 0 }, scale: { x: 1, y: 1, z: 1 }, material: {} } as COMModel)).not.toThrow();
+        expect(() =>
+            root.AddSceneObject({
+                id: 'id_uri1',
+                name: 'model',
+                entityType: 'model',
+                visible: true,
+                uri: 'uri',
+                position: { x: 0, y: 0, z: 0 },
+                rotation: { x: 0, y: 0, z: 0 },
+                scale: { x: 1, y: 1, z: 1 },
+                material: {},
+            } as COMModel),
+        ).not.toThrow();
 
-        expect(() => root.AddSceneObject({ id: 'id0', name: 'primitive', entityType: 'primitive', visible: true } as COMPrimitive)).not.toThrow();
-        expect(() => root.AddSceneObject({ id: 'id1', name: 'primitive', entityType: 'primitive', visible: true, material: {}, parentId: 'id' } as COMPrimitive)).not.toThrow();
+        expect(() =>
+            root.AddSceneObject({
+                id: 'id0',
+                name: 'primitive',
+                entityType: 'primitive',
+                visible: true,
+            } as COMPrimitive),
+        ).not.toThrow();
+        expect(() =>
+            root.AddSceneObject({
+                id: 'id1',
+                name: 'primitive',
+                entityType: 'primitive',
+                visible: true,
+                material: {},
+                parentId: 'id',
+            } as COMPrimitive),
+        ).not.toThrow();
 
-        expect(() => root.AddSceneObject({ id: 'id0', name: 'Group', entityType: 'group', visible: true } as COMGroup)).not.toThrow();
-        expect(() => root.AddSceneObject({ id: 'id0', name: 'Group', entityType: 'group', visible: true, position: { x: 0, y: 0, z: 0 }, rotation: { x: 0, y: 0, z: 0 }, scale: { x: 1, y: 1, z: 1 }, bbVisible: true, parentId: 'id' } as COMGroup)).not.toThrow();
+        expect(() =>
+            root.AddSceneObject({
+                id: 'id0',
+                name: 'Group',
+                entityType: 'group',
+                visible: true,
+            } as COMGroup),
+        ).not.toThrow();
+        expect(() =>
+            root.AddSceneObject({
+                id: 'id0',
+                name: 'Group',
+                entityType: 'group',
+                visible: true,
+                position: { x: 0, y: 0, z: 0 },
+                rotation: { x: 0, y: 0, z: 0 },
+                scale: { x: 1, y: 1, z: 1 },
+                bbVisible: true,
+                parentId: 'id',
+            } as COMGroup),
+        ).not.toThrow();
     });
 
     it('should update object', () => {
@@ -508,19 +631,88 @@ describe('DIVE/scene/root/DIVERoot', () => {
                     remove: jest.fn(),
                 },
                 children: [],
-            } as unknown as Object3D
+            } as unknown as Object3D,
         ];
-        expect(() => root.UpdateSceneObject({ id: 'id', name: 'pov', entityType: 'pov', visible: true } as COMPov)).not.toThrow();
-        expect(() => root.UpdateSceneObject({ id: 'id', name: 'light', entityType: 'light', visible: true } as COMLight)).not.toThrow();
-        expect(() => root.UpdateSceneObject({ id: 'id', name: 'model', entityType: 'model', visible: true } as COMModel)).not.toThrow();
-        expect(() => root.UpdateSceneObject({ id: 'id', name: 'primitive', entityType: 'primitive', visible: true } as COMPrimitive)).not.toThrow();
-        expect(() => root.UpdateSceneObject({ id: 'id', name: 'group', entityType: 'group', visible: true } as COMGroup)).not.toThrow();
+        expect(() =>
+            root.UpdateSceneObject({
+                id: 'id',
+                name: 'pov',
+                entityType: 'pov',
+                visible: true,
+            } as COMPov),
+        ).not.toThrow();
+        expect(() =>
+            root.UpdateSceneObject({
+                id: 'id',
+                name: 'light',
+                entityType: 'light',
+                visible: true,
+            } as COMLight),
+        ).not.toThrow();
+        expect(() =>
+            root.UpdateSceneObject({
+                id: 'id',
+                name: 'model',
+                entityType: 'model',
+                visible: true,
+            } as COMModel),
+        ).not.toThrow();
+        expect(() =>
+            root.UpdateSceneObject({
+                id: 'id',
+                name: 'primitive',
+                entityType: 'primitive',
+                visible: true,
+            } as COMPrimitive),
+        ).not.toThrow();
+        expect(() =>
+            root.UpdateSceneObject({
+                id: 'id',
+                name: 'group',
+                entityType: 'group',
+                visible: true,
+            } as COMGroup),
+        ).not.toThrow();
 
-        expect(() => root.AddSceneObject({ id: 'id_groupparent', name: 'Group', entityType: 'group' } as COMGroup)).not.toThrow();
-        expect(() => root.UpdateSceneObject({ id: 'id_groupchild', name: 'group', entityType: 'group', parentId: 'id_groupparent' } as COMGroup)).not.toThrow();
-        expect(() => root.UpdateSceneObject({ id: 'id_groupchild', name: 'group', entityType: 'group', parentId: null } as COMGroup)).not.toThrow();
-        expect(() => root.UpdateSceneObject({ id: 'id_groupchild', name: 'group', entityType: 'group', parentId: 'id_modelparent' } as COMGroup)).not.toThrow();
-        expect(() => root.UpdateSceneObject({ id: 'id_groupchild', name: 'group', entityType: 'group', parentId: 'does_not_exist' } as COMGroup)).not.toThrow();
+        expect(() =>
+            root.AddSceneObject({
+                id: 'id_groupparent',
+                name: 'Group',
+                entityType: 'group',
+            } as COMGroup),
+        ).not.toThrow();
+        expect(() =>
+            root.UpdateSceneObject({
+                id: 'id_groupchild',
+                name: 'group',
+                entityType: 'group',
+                parentId: 'id_groupparent',
+            } as COMGroup),
+        ).not.toThrow();
+        expect(() =>
+            root.UpdateSceneObject({
+                id: 'id_groupchild',
+                name: 'group',
+                entityType: 'group',
+                parentId: null,
+            } as COMGroup),
+        ).not.toThrow();
+        expect(() =>
+            root.UpdateSceneObject({
+                id: 'id_groupchild',
+                name: 'group',
+                entityType: 'group',
+                parentId: 'id_modelparent',
+            } as COMGroup),
+        ).not.toThrow();
+        expect(() =>
+            root.UpdateSceneObject({
+                id: 'id_groupchild',
+                name: 'group',
+                entityType: 'group',
+                parentId: 'does_not_exist',
+            } as COMGroup),
+        ).not.toThrow();
     });
 
     it('should delete object', () => {
@@ -531,9 +723,9 @@ describe('DIVE/scene/root/DIVERoot', () => {
                 {
                     isTransformControls: true,
                     detach: jest.fn(),
-                }
+                },
             ],
-        }
+        };
         root.parent = sceneParent as unknown as DIVEScene;
 
         root.children = [
@@ -544,35 +736,115 @@ describe('DIVE/scene/root/DIVERoot', () => {
                 SetVisibility: jest.fn(),
                 parent: root,
                 children: [],
-            } as unknown as Object3D
+            } as unknown as Object3D,
         ];
 
-        expect(() => root.DeleteSceneObject({ id: 'does_not_exist', name: 'pov', entityType: 'pov', visible: true } as COMPov)).not.toThrow();
-        expect(() => root.DeleteSceneObject({ id: 'id', name: 'pov', entityType: 'pov', visible: true } as COMPov)).not.toThrow();
+        expect(() =>
+            root.DeleteSceneObject({
+                id: 'does_not_exist',
+                name: 'pov',
+                entityType: 'pov',
+                visible: true,
+            } as COMPov),
+        ).not.toThrow();
+        expect(() =>
+            root.DeleteSceneObject({
+                id: 'id',
+                name: 'pov',
+                entityType: 'pov',
+                visible: true,
+            } as COMPov),
+        ).not.toThrow();
 
-        expect(() => root.DeleteSceneObject({ id: 'does_not_exist', name: 'light', entityType: 'light', visible: true, type: 'scene' } as COMLight)).not.toThrow();
-        expect(() => root.DeleteSceneObject({ id: 'id', name: 'light', entityType: 'light', visible: true, type: 'scene' } as COMLight)).not.toThrow();
+        expect(() =>
+            root.DeleteSceneObject({
+                id: 'does_not_exist',
+                name: 'light',
+                entityType: 'light',
+                visible: true,
+                type: 'scene',
+            } as COMLight),
+        ).not.toThrow();
+        expect(() =>
+            root.DeleteSceneObject({
+                id: 'id',
+                name: 'light',
+                entityType: 'light',
+                visible: true,
+                type: 'scene',
+            } as COMLight),
+        ).not.toThrow();
 
-        expect(() => root.DeleteSceneObject({ id: 'does_not_exist', name: 'model', entityType: 'model', visible: true } as COMModel)).not.toThrow();
-        expect(() => root.DeleteSceneObject({ id: 'id', name: 'model', entityType: 'model', visible: true } as COMModel)).not.toThrow();
+        expect(() =>
+            root.DeleteSceneObject({
+                id: 'does_not_exist',
+                name: 'model',
+                entityType: 'model',
+                visible: true,
+            } as COMModel),
+        ).not.toThrow();
+        expect(() =>
+            root.DeleteSceneObject({
+                id: 'id',
+                name: 'model',
+                entityType: 'model',
+                visible: true,
+            } as COMModel),
+        ).not.toThrow();
 
-        expect(() => root.DeleteSceneObject({ id: 'does_not_exist', name: 'primitive', entityType: 'primitive', visible: true } as COMPrimitive)).not.toThrow();
-        expect(() => root.DeleteSceneObject({ id: 'id', name: 'primitive', entityType: 'primitive', visible: true } as COMPrimitive)).not.toThrow();
+        expect(() =>
+            root.DeleteSceneObject({
+                id: 'does_not_exist',
+                name: 'primitive',
+                entityType: 'primitive',
+                visible: true,
+            } as COMPrimitive),
+        ).not.toThrow();
+        expect(() =>
+            root.DeleteSceneObject({
+                id: 'id',
+                name: 'primitive',
+                entityType: 'primitive',
+                visible: true,
+            } as COMPrimitive),
+        ).not.toThrow();
 
-        expect(() => root.DeleteSceneObject({ id: 'does_not_exist', name: 'group', entityType: 'group', visible: true } as COMGroup)).not.toThrow();
-        expect(() => root.DeleteSceneObject({ id: 'id', name: 'group', entityType: 'group', visible: true } as COMGroup)).not.toThrow();
+        expect(() =>
+            root.DeleteSceneObject({
+                id: 'does_not_exist',
+                name: 'group',
+                entityType: 'group',
+                visible: true,
+            } as COMGroup),
+        ).not.toThrow();
+        expect(() =>
+            root.DeleteSceneObject({
+                id: 'id',
+                name: 'group',
+                entityType: 'group',
+                visible: true,
+            } as COMGroup),
+        ).not.toThrow();
 
         const firstFind = root.GetSceneObject({ id: 'id' });
-        jest.spyOn(root, 'GetSceneObject')
-            .mockReturnValueOnce({
-                ...firstFind,
-                parent: sceneParent,
-                children: [{
+        jest.spyOn(root, 'GetSceneObject').mockReturnValueOnce({
+            ...firstFind,
+            parent: sceneParent,
+            children: [
+                {
                     isObject3D: true,
-                }],
-            } as unknown as DIVESceneObject)
+                },
+            ],
+        } as unknown as DIVESceneObject);
 
-        expect(() => root.DeleteSceneObject({ id: 'id', name: 'group', entityType: 'group', visible: true } as COMGroup)).not.toThrow();
+        expect(() =>
+            root.DeleteSceneObject({
+                id: 'id',
+                name: 'group',
+                entityType: 'group',
+                visible: true,
+            } as COMGroup),
+        ).not.toThrow();
     });
 
     it('should place object on floor', () => {
@@ -585,19 +857,75 @@ describe('DIVE/scene/root/DIVERoot', () => {
                 PlaceOnFloor: jest.fn(),
                 parent: root,
                 children: [],
-            } as unknown as Object3D
+            } as unknown as Object3D,
         ];
 
-        expect(() => root.PlaceOnFloor({ id: 'does_not_exist', name: 'pov', entityType: 'pov', visible: true } as COMPov)).not.toThrow();
-        expect(() => root.PlaceOnFloor({ id: 'id', name: 'pov', entityType: 'pov', visible: true } as COMPov)).not.toThrow();
+        expect(() =>
+            root.PlaceOnFloor({
+                id: 'does_not_exist',
+                name: 'pov',
+                entityType: 'pov',
+                visible: true,
+            } as COMPov),
+        ).not.toThrow();
+        expect(() =>
+            root.PlaceOnFloor({
+                id: 'id',
+                name: 'pov',
+                entityType: 'pov',
+                visible: true,
+            } as COMPov),
+        ).not.toThrow();
 
-        expect(() => root.PlaceOnFloor({ id: 'does_not_exist', name: 'light', entityType: 'light', visible: true } as COMLight)).not.toThrow();
-        expect(() => root.PlaceOnFloor({ id: 'id', name: 'light', entityType: 'light', visible: true } as COMLight)).not.toThrow();
+        expect(() =>
+            root.PlaceOnFloor({
+                id: 'does_not_exist',
+                name: 'light',
+                entityType: 'light',
+                visible: true,
+            } as COMLight),
+        ).not.toThrow();
+        expect(() =>
+            root.PlaceOnFloor({
+                id: 'id',
+                name: 'light',
+                entityType: 'light',
+                visible: true,
+            } as COMLight),
+        ).not.toThrow();
 
-        expect(() => root.PlaceOnFloor({ id: 'does_not_exist', name: 'model', entityType: 'model', visible: true } as COMModel)).not.toThrow();
-        expect(() => root.PlaceOnFloor({ id: 'id', name: 'model', entityType: 'model', visible: true } as COMModel)).not.toThrow();
+        expect(() =>
+            root.PlaceOnFloor({
+                id: 'does_not_exist',
+                name: 'model',
+                entityType: 'model',
+                visible: true,
+            } as COMModel),
+        ).not.toThrow();
+        expect(() =>
+            root.PlaceOnFloor({
+                id: 'id',
+                name: 'model',
+                entityType: 'model',
+                visible: true,
+            } as COMModel),
+        ).not.toThrow();
 
-        expect(() => root.PlaceOnFloor({ id: 'does_not_exist', name: 'primitive', entityType: 'primitive', visible: true } as COMPrimitive)).not.toThrow();
-        expect(() => root.PlaceOnFloor({ id: 'id', name: 'primitive', entityType: 'primitive', visible: true } as COMPrimitive)).not.toThrow();
+        expect(() =>
+            root.PlaceOnFloor({
+                id: 'does_not_exist',
+                name: 'primitive',
+                entityType: 'primitive',
+                visible: true,
+            } as COMPrimitive),
+        ).not.toThrow();
+        expect(() =>
+            root.PlaceOnFloor({
+                id: 'id',
+                name: 'primitive',
+                entityType: 'primitive',
+                visible: true,
+            } as COMPrimitive),
+        ).not.toThrow();
     });
 });

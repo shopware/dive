@@ -9,9 +9,9 @@ import { DIVEAnimationSystem } from '../../../animation/AnimationSystem';
 
 jest.mock('@tweenjs/tween.js', () => {
     return {
-        Tween: jest.fn(() => { }),
+        Tween: jest.fn(() => {}),
         update: jest.fn(),
-    }
+    };
 });
 
 jest.mock('../../../renderer/Renderer', () => {
@@ -40,7 +40,7 @@ jest.mock('../../../controls/OrbitControls', () => {
         this.object = {
             layers: {
                 mask: 0,
-            }
+            },
         };
         return this;
     });
@@ -53,10 +53,10 @@ jest.mock('../../../scene/Scene', () => {
             this.remove = jest.fn();
             this.Root = {
                 children: [],
-            }
+            };
             this.children = [];
             return this;
-        })
+        }),
     };
 });
 
@@ -72,7 +72,7 @@ jest.mock('../../../animation/AnimationSystem', () => {
 
             return this;
         }),
-    }
+    };
 });
 
 const mock_intersectObjects = jest.fn().mockReturnValue([]);
@@ -102,13 +102,16 @@ const mock_detach = jest.fn();
 jest.mock('three/examples/jsm/Addons.js', () => {
     return {
         TransformControls: jest.fn(function () {
-            this.addEventListener = (type: string, callback: (e: object) => void) => {
+            (this.addEventListener = (
+                type: string,
+                callback: (e: object) => void,
+            ) => {
                 this.object = null;
                 callback({ value: false });
                 this.object = {};
                 callback({ value: false });
                 this.object = {
-                    isMovable: true
+                    isMovable: true,
                 };
                 callback({ value: false });
                 this.object = {
@@ -118,12 +121,12 @@ jest.mock('three/examples/jsm/Addons.js', () => {
                     onMoveEnd: jest.fn(),
                 };
                 callback({ value: false });
-            },
-                this.attach = mock_attach,
-                this.detach = mock_detach,
-                this.traverse = function (callback: (obj: object) => void) {
+            }),
+                (this.attach = mock_attach),
+                (this.detach = mock_detach),
+                (this.traverse = function (callback: (obj: object) => void) {
                     callback(this);
-                };
+                });
             this.setMode = jest.fn();
             this.getRaycaster = jest.fn().mockReturnValue({
                 layers: {
@@ -155,7 +158,11 @@ const mockRenderer = {
 } as unknown as DIVERenderer;
 const mockScene: DIVEScene = new DIVEScene();
 const mockAnimSystem = new DIVEAnimationSystem(mockRenderer);
-const mockController: DIVEOrbitControls = new DIVEOrbitControls(mockCamera, mockRenderer, mockAnimSystem);
+const mockController: DIVEOrbitControls = new DIVEOrbitControls(
+    mockCamera,
+    mockRenderer,
+    mockAnimSystem,
+);
 
 describe('dive/toolbox/select/DIVETransformTool', () => {
     it('should test if it is SelectTool', () => {

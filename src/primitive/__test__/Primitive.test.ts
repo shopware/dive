@@ -1,6 +1,12 @@
 import { DIVEPrimitive } from '../Primitive';
 import { DIVECommunication } from '../../com/Communication';
-import { Vector3, Box3, Mesh, type Texture, type MeshStandardMaterial } from 'three';
+import {
+    Vector3,
+    Box3,
+    Mesh,
+    type Texture,
+    type MeshStandardMaterial,
+} from 'three';
 import type { DIVEScene } from '../../scene/Scene';
 import { type COMMaterial, type COMGeometry } from '../../com/types';
 
@@ -36,7 +42,7 @@ jest.mock('three', () => {
             this.setY = (y: number) => {
                 this.y = y;
                 return this;
-            }
+            };
             this.add = (vec3: Vector3) => {
                 this.x += vec3.x;
                 this.y += vec3.y;
@@ -67,15 +73,17 @@ jest.mock('three', () => {
                     far: 0,
                     fov: 0,
                 },
-            }
+            };
             this.add = jest.fn();
             this.sub = jest.fn();
-            this.children = [{
-                visible: true,
-                material: {
-                    color: {},
+            this.children = [
+                {
+                    visible: true,
+                    material: {
+                        color: {},
+                    },
                 },
-            }];
+            ];
             this.userData = {};
             this.position = new Vector3();
             this.rotation = {
@@ -95,7 +103,7 @@ jest.mock('three', () => {
             };
             this.mesh = new Mesh();
             this.traverse = jest.fn((callback) => {
-                callback(this.children[0])
+                callback(this.children[0]);
             });
             return this;
         }),
@@ -176,7 +184,7 @@ jest.mock('three', () => {
         Color: jest.fn(function () {
             return this;
         }),
-    }
+    };
 });
 
 jest.mock('../../com/Communication.ts', () => {
@@ -185,13 +193,15 @@ jest.mock('../../com/Communication.ts', () => {
             get: jest.fn(() => {
                 return {
                     PerformAction: jest.fn(),
-                }
+                };
             }),
         },
-    }
+    };
 });
 
-jest.spyOn(DIVECommunication, 'get').mockReturnValue({ PerformAction: jest.fn() } as unknown as DIVECommunication);
+jest.spyOn(DIVECommunication, 'get').mockReturnValue({
+    PerformAction: jest.fn(),
+} as unknown as DIVECommunication);
 
 let primitive: DIVEPrimitive;
 
@@ -246,14 +256,14 @@ describe('dive/primitive/DIVEPrimitive', () => {
             }),
         } as unknown as Box3;
 
-
         const hitObject = new Mesh();
         hitObject.geometry.boundingBox = new Box3();
         hitObject.geometry.boundingBox.max = new Vector3(0, 2, 0);
-        intersectObjectsMock.mockReturnValue([{
-            object: hitObject,
-
-        }]);
+        intersectObjectsMock.mockReturnValue([
+            {
+                object: hitObject,
+            },
+        ]);
 
         const scene = {
             parent: null,
@@ -284,8 +294,6 @@ describe('dive/primitive/DIVEPrimitive', () => {
         jest.spyOn(DIVECommunication, 'get').mockReturnValueOnce(undefined);
         expect(() => primitive.DropIt()).not.toThrow();
         expect(comMock.PerformAction).toHaveBeenCalledTimes(1);
-
-
     });
 
     it('should set geometry', () => {
@@ -363,33 +371,36 @@ describe('dive/primitive/DIVEPrimitive', () => {
     });
 
     it('should set material', () => {
-        const material = (primitive['_mesh'].material as MeshStandardMaterial);
+        const material = primitive['_mesh'].material as MeshStandardMaterial;
 
         // apply invalid material should not crash
         expect(() => primitive.SetMaterial({} as COMMaterial)).not.toThrow();
         expect(material).toBeDefined();
 
-
-        expect(() => primitive.SetMaterial({
-            color: 0xffffff,
-            roughness: 0,
-            metalness: 1,
-        } as COMMaterial)).not.toThrow();
+        expect(() =>
+            primitive.SetMaterial({
+                color: 0xffffff,
+                roughness: 0,
+                metalness: 1,
+            } as COMMaterial),
+        ).not.toThrow();
         expect((material as MeshStandardMaterial).roughness).toBe(0);
         expect((material as MeshStandardMaterial).roughnessMap).toBeUndefined();
         expect((material as MeshStandardMaterial).metalness).toBe(1);
         expect((material as MeshStandardMaterial).metalnessMap).toBeUndefined();
 
-        expect(() => primitive.SetMaterial({
-            color: 0xff00ff,
-            vertexColors: true,
-            map: 'This_Is_A_Texture' as unknown as Texture,
-            normalMap: 'This_Is_A_Texture' as unknown as Texture,
-            roughness: 0,
-            roughnessMap: 'This_Is_A_Texture' as unknown as Texture,
-            metalness: 1,
-            metalnessMap: 'This_Is_A_Texture' as unknown as Texture,
-        } as COMMaterial)).not.toThrow();
+        expect(() =>
+            primitive.SetMaterial({
+                color: 0xff00ff,
+                vertexColors: true,
+                map: 'This_Is_A_Texture' as unknown as Texture,
+                normalMap: 'This_Is_A_Texture' as unknown as Texture,
+                roughness: 0,
+                roughnessMap: 'This_Is_A_Texture' as unknown as Texture,
+                metalness: 1,
+                metalnessMap: 'This_Is_A_Texture' as unknown as Texture,
+            } as COMMaterial),
+        ).not.toThrow();
         expect((material as MeshStandardMaterial).roughness).toBe(1);
         expect((material as MeshStandardMaterial).roughnessMap).toBeDefined();
         expect((material as MeshStandardMaterial).metalness).toBe(0);

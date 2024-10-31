@@ -1,5 +1,11 @@
-import { Color, ColorRepresentation, Mesh, MeshStandardMaterial, PlaneGeometry } from "three";
-import { PRODUCT_LAYER_MASK } from "../../constant/VisibilityLayerMask.ts";
+import {
+    Color,
+    ColorRepresentation,
+    Mesh,
+    MeshStandardMaterial,
+    PlaneGeometry,
+} from 'three';
+import { PRODUCT_LAYER_MASK } from '../../constant/VisibilityLayerMask.ts';
 
 /**
  * A basic floor geometry.
@@ -13,7 +19,12 @@ export class DIVEFloor extends Mesh {
     public isFloor: true = true;
 
     constructor() {
-        super(new PlaneGeometry(10000, 10000), new MeshStandardMaterial({ color: new Color(150 / 255, 150 / 255, 150 / 255) }));
+        super(
+            new PlaneGeometry(10000, 10000),
+            new MeshStandardMaterial({
+                color: new Color(150 / 255, 150 / 255, 150 / 255),
+            }),
+        );
 
         this.name = 'Floor';
 

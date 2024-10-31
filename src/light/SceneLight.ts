@@ -1,5 +1,5 @@
-import { PRODUCT_LAYER_MASK } from "../constant/VisibilityLayerMask.ts";
-import { Color, DirectionalLight, HemisphereLight, Object3D } from "three";
+import { PRODUCT_LAYER_MASK } from '../constant/VisibilityLayerMask.ts';
+import { Color, DirectionalLight, HemisphereLight, Object3D } from 'three';
 
 /**
  * A complex scene light.
@@ -37,10 +37,10 @@ export default class DIVESceneLight extends Object3D {
 
         const d = 5;
 
-        this._dirLight.shadow.camera.left = - d;
+        this._dirLight.shadow.camera.left = -d;
         this._dirLight.shadow.camera.right = d;
         this._dirLight.shadow.camera.top = d;
-        this._dirLight.shadow.camera.bottom = - d;
+        this._dirLight.shadow.camera.bottom = -d;
 
         this._dirLight.shadow.camera.far = 3500;
         this.add(this._dirLight);

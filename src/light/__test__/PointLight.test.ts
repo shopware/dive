@@ -25,13 +25,15 @@ jest.mock('three', () => {
                     far: 0,
                     fov: 0,
                 },
-            }
+            };
             this.add = mockAdd;
-            this.children = [{
-                material: {
-                    color: {},
+            this.children = [
+                {
+                    material: {
+                        color: {},
+                    },
                 },
-            }];
+            ];
             return this;
         }),
         SphereGeometry: jest.fn(function () {
@@ -58,7 +60,7 @@ jest.mock('three', () => {
             this.userData = {};
             return this;
         }),
-    }
+    };
 });
 
 jest.mock('../../com/Communication.ts', () => {
@@ -67,10 +69,10 @@ jest.mock('../../com/Communication.ts', () => {
             get: jest.fn(() => {
                 return {
                     PerformAction: jest.fn(),
-                }
+                };
             }),
         },
-    }
+    };
 });
 
 describe('dive/light/DIVEPointLight', () => {
@@ -93,7 +95,9 @@ describe('dive/light/DIVEPointLight', () => {
     it('should set color', () => {
         const testLight = new DIVEPointLight();
         testLight.SetColor({ test: true } as unknown as Color);
-        expect((testLight.children[0] as PointLight).color).toEqual({ test: true });
+        expect((testLight.children[0] as PointLight).color).toEqual({
+            test: true,
+        });
     });
 
     it('should set enabled', () => {

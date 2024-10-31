@@ -1,7 +1,9 @@
 import { DIVEMediaCreator } from '../MediaCreator';
 import { DIVERenderer } from '../../renderer/Renderer';
 import { DIVEScene } from '../../scene/Scene';
-import DIVEPerspectiveCamera, { DIVEPerspectiveCameraDefaultSettings } from '../../camera/PerspectiveCamera';
+import DIVEPerspectiveCamera, {
+    DIVEPerspectiveCameraDefaultSettings,
+} from '../../camera/PerspectiveCamera';
 import { type COMPov } from '../../com/types';
 import DIVEOrbitControls from '../../controls/OrbitControls';
 import { DIVEAnimationSystem } from '../../animation/AnimationSystem';
@@ -17,7 +19,7 @@ jest.mock('../../scene/Scene', () => {
     return {
         DIVEScene: jest.fn(() => {
             return {};
-        })
+        }),
     };
 });
 
@@ -40,7 +42,7 @@ jest.mock('../../camera/PerspectiveCamera', () => {
         };
         this.layers = {
             mask: 0,
-        }
+        };
         return this;
     });
 });
@@ -78,12 +80,12 @@ jest.mock('../../renderer/Renderer', () => {
         DIVERenderer: jest.fn(function () {
             this.domElement = {
                 toDataURL: mock_toDataURL,
-            }
+            };
             this.render = mock_render;
             this.OnResize = jest.fn();
             return this;
-        })
-    }
+        }),
+    };
 });
 
 jest.mock('../../animation/AnimationSystem', () => {
@@ -91,7 +93,7 @@ jest.mock('../../animation/AnimationSystem', () => {
         DIVEAnimationSystem: jest.fn(function () {
             this.domElement = {
                 toDataURL: mock_toDataURL,
-            }
+            };
             this.render = mock_render;
             this.OnResize = jest.fn();
             this.AddPreRenderCallback = jest.fn((callback) => {
@@ -99,8 +101,8 @@ jest.mock('../../animation/AnimationSystem', () => {
                 return 'id';
             });
             return this;
-        })
-    }
+        }),
+    };
 });
 
 let mediaCreator: DIVEMediaCreator;
@@ -108,7 +110,15 @@ let mediaCreator: DIVEMediaCreator;
 describe('dive/mediacreator/DIVEMediaCreator', () => {
     beforeEach(() => {
         jest.clearAllMocks();
-        mediaCreator = new DIVEMediaCreator(new DIVERenderer(), new DIVEScene(), new DIVEOrbitControls(new DIVEPerspectiveCamera(DIVEPerspectiveCameraDefaultSettings), new DIVERenderer(), new DIVEAnimationSystem(new DIVERenderer())));
+        mediaCreator = new DIVEMediaCreator(
+            new DIVERenderer(),
+            new DIVEScene(),
+            new DIVEOrbitControls(
+                new DIVEPerspectiveCamera(DIVEPerspectiveCameraDefaultSettings),
+                new DIVERenderer(),
+                new DIVEAnimationSystem(new DIVERenderer()),
+            ),
+        );
     });
 
     it('should instantiate', () => {
@@ -118,10 +128,15 @@ describe('dive/mediacreator/DIVEMediaCreator', () => {
     it('should generate media', () => {
         const mock_POV = {
             position: { x: 0, y: 0, z: 0 },
-            target: { x: 0, y: 0, z: 0 }
+            target: { x: 0, y: 0, z: 0 },
         } as COMPov;
         expect(() => {
-            mediaCreator.GenerateMedia(mock_POV.position, mock_POV.target, 800, 600)
+            mediaCreator.GenerateMedia(
+                mock_POV.position,
+                mock_POV.target,
+                800,
+                600,
+            );
         }).not.toThrow();
         expect(mock_render).toHaveBeenCalledTimes(1);
         expect(mock_toDataURL).toHaveBeenCalledTimes(1);

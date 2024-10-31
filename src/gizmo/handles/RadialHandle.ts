@@ -1,11 +1,22 @@
-import { Color, ColorRepresentation, Mesh, MeshBasicMaterial, Object3D, TorusGeometry, Vector3 } from "three";
-import { UI_LAYER_MASK } from "../../constant/VisibilityLayerMask";
-import { DIVEHoverable } from "../../interface/Hoverable";
-import { DraggableEvent } from "../../toolbox/BaseTool";
-import { DIVERotateGizmo } from "../rotate/RotateGizmo";
-import { DIVEDraggable } from "../../interface/Draggable";
+import {
+    Color,
+    ColorRepresentation,
+    Mesh,
+    MeshBasicMaterial,
+    Object3D,
+    TorusGeometry,
+    Vector3,
+} from 'three';
+import { UI_LAYER_MASK } from '../../constant/VisibilityLayerMask';
+import { DIVEHoverable } from '../../interface/Hoverable';
+import { DraggableEvent } from '../../toolbox/BaseTool';
+import { DIVERotateGizmo } from '../rotate/RotateGizmo';
+import { DIVEDraggable } from '../../interface/Draggable';
 
-export class DIVERadialHandle extends Object3D implements DIVEHoverable, DIVEDraggable {
+export class DIVERadialHandle
+    extends Object3D
+    implements DIVEHoverable, DIVEDraggable
+{
     readonly isHoverable: true = true;
     readonly isDraggable: true = true;
 
@@ -22,27 +33,40 @@ export class DIVERadialHandle extends Object3D implements DIVEHoverable, DIVEDra
     }
     public set highlight(highlight: boolean) {
         this._highlight = highlight;
-        this._lineMaterial.color = this._highlight || this._hovered ? this._colorHover : this._color;
+        this._lineMaterial.color =
+            this._highlight || this._hovered ? this._colorHover : this._color;
     }
 
     private _lineMaterial: MeshBasicMaterial;
 
     public get forwardVector(): Vector3 {
-        return new Vector3(0, 0, 1).applyQuaternion(this.quaternion).normalize();
+        return new Vector3(0, 0, 1)
+            .applyQuaternion(this.quaternion)
+            .normalize();
     }
 
     public get rightVector(): Vector3 {
-        return new Vector3(1, 0, 0).applyQuaternion(this.quaternion).normalize();
+        return new Vector3(1, 0, 0)
+            .applyQuaternion(this.quaternion)
+            .normalize();
     }
 
     public get upVector(): Vector3 {
-        return new Vector3(0, 1, 0).applyQuaternion(this.quaternion).normalize();
+        return new Vector3(0, 1, 0)
+            .applyQuaternion(this.quaternion)
+            .normalize();
     }
 
-    constructor(axis: 'x' | 'y' | 'z', radius: number, arc: number, direction: Vector3, color: ColorRepresentation) {
+    constructor(
+        axis: 'x' | 'y' | 'z',
+        radius: number,
+        arc: number,
+        direction: Vector3,
+        color: ColorRepresentation,
+    ) {
         super();
 
-        this.name = "DIVERadialHandle";
+        this.name = 'DIVERadialHandle';
         this.axis = axis;
 
         this._color.set(color);

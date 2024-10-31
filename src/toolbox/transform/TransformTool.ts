@@ -1,16 +1,18 @@
-import { DIVEBaseTool } from "../BaseTool.ts";
-import { DIVEScene } from "../../scene/Scene.ts";
-import DIVEOrbitControls from "../../controls/OrbitControls.ts";
-import { TransformControls } from "three/examples/jsm/Addons";
-import { type DIVEMovable } from "../../interface/Movable.ts";
-import { implementsInterface } from "../../helper/isInterface/implementsInterface.ts";
+import { DIVEBaseTool } from '../BaseTool.ts';
+import { DIVEScene } from '../../scene/Scene.ts';
+import DIVEOrbitControls from '../../controls/OrbitControls.ts';
+import { TransformControls } from 'three/examples/jsm/Addons';
+import { type DIVEMovable } from '../../interface/Movable.ts';
+import { implementsInterface } from '../../helper/isInterface/implementsInterface.ts';
 
-export const isTransformTool = (tool: DIVEBaseTool): tool is DIVETransformTool => {
+export const isTransformTool = (
+    tool: DIVEBaseTool,
+): tool is DIVETransformTool => {
     return (tool as DIVETransformTool).isTransformTool !== undefined;
-}
+};
 
 export interface DIVEObjectEventMap {
-    select: object
+    select: object;
 }
 
 /**
@@ -28,23 +30,38 @@ export default class DIVETransformTool extends DIVEBaseTool {
 
     constructor(scene: DIVEScene, controller: DIVEOrbitControls) {
         super(scene, controller);
-        this.name = "DIVETransformTool";
+        this.name = 'DIVETransformTool';
 
-        this._gizmo = new TransformControls(this._controller.object, this._controller.domElement);
+        this._gizmo = new TransformControls(
+            this._controller.object,
+            this._controller.domElement,
+        );
         this._gizmo.mode = 'translate';
 
         // happens when pointerDown event is called on gizmo
         this._gizmo.addEventListener('mouseDown', () => {
             controller.enabled = false;
 
-            if (!implementsInterface<DIVEMovable>(this._gizmo.object, 'isMovable')) return;
+            if (
+                !implementsInterface<DIVEMovable>(
+                    this._gizmo.object,
+                    'isMovable',
+                )
+            )
+                return;
             if (!this._gizmo.object.onMoveStart) return;
             this._gizmo.object.onMoveStart();
         });
 
         // happens when pointerMove event is called on gizmo
         this._gizmo.addEventListener('objectChange', () => {
-            if (!implementsInterface<DIVEMovable>(this._gizmo.object, 'isMovable')) return;
+            if (
+                !implementsInterface<DIVEMovable>(
+                    this._gizmo.object,
+                    'isMovable',
+                )
+            )
+                return;
             if (!this._gizmo.object.onMove) return;
             this._gizmo.object.onMove();
         });
@@ -53,7 +70,13 @@ export default class DIVETransformTool extends DIVEBaseTool {
         this._gizmo.addEventListener('mouseUp', () => {
             controller.enabled = true;
 
-            if (!implementsInterface<DIVEMovable>(this._gizmo.object, 'isMovable')) return;
+            if (
+                !implementsInterface<DIVEMovable>(
+                    this._gizmo.object,
+                    'isMovable',
+                )
+            )
+                return;
             if (!this._gizmo.object.onMoveEnd) return;
             this._gizmo.object.onMoveEnd();
         });
@@ -61,7 +84,7 @@ export default class DIVETransformTool extends DIVEBaseTool {
         scene.add(this._gizmo);
     }
 
-    public Activate(): void { }
+    public Activate(): void {}
 
     public SetGizmoMode(mode: 'translate' | 'rotate' | 'scale'): void {
         this._gizmo.mode = mode;

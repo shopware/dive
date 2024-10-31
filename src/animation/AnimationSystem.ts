@@ -1,5 +1,5 @@
-import { Tween, update as updateTween } from "@tweenjs/tween.js";
-import { DIVERenderer } from "../renderer/Renderer";
+import { Tween, update as updateTween } from '@tweenjs/tween.js';
+import { DIVERenderer } from '../renderer/Renderer';
 
 /**
  * Updates all animations.
@@ -17,7 +17,7 @@ export class DIVEAnimationSystem {
 
         this._rendererCallbackId = this._renderer.AddPreRenderCallback(() => {
             this.Update();
-        })
+        });
     }
 
     public Dispose(): void {

@@ -1,6 +1,17 @@
-import { PointLight, Color, SphereGeometry, MeshBasicMaterial, Mesh, FrontSide, Object3D } from 'three';
+import {
+    PointLight,
+    Color,
+    SphereGeometry,
+    MeshBasicMaterial,
+    Mesh,
+    FrontSide,
+    Object3D,
+} from 'three';
 import { DIVECommunication } from '../com/Communication';
-import { PRODUCT_LAYER_MASK, UI_LAYER_MASK } from '../constant/VisibilityLayerMask';
+import {
+    PRODUCT_LAYER_MASK,
+    UI_LAYER_MASK,
+} from '../constant/VisibilityLayerMask';
 import { DIVEMovable } from '../interface/Movable';
 import { DIVESelectable } from '../interface/Selectable';
 import type { TransformControls } from 'three/examples/jsm/Addons.js';
@@ -15,7 +26,10 @@ import type { TransformControls } from 'three/examples/jsm/Addons.js';
  * @module
  */
 
-export default class DIVEPointLight extends Object3D implements DIVESelectable, DIVEMovable {
+export default class DIVEPointLight
+    extends Object3D
+    implements DIVESelectable, DIVEMovable
+{
     readonly isDIVELight: true = true;
     readonly isDIVEPointLight: true = true;
     readonly isMovable: true = true;
@@ -42,9 +56,18 @@ export default class DIVEPointLight extends Object3D implements DIVESelectable, 
 
         const geoSize = 0.1;
 
-        const geometry = new SphereGeometry(geoSize, geoSize * 320, geoSize * 320);
+        const geometry = new SphereGeometry(
+            geoSize,
+            geoSize * 320,
+            geoSize * 320,
+        );
 
-        const material = new MeshBasicMaterial({ color: this.light.color, transparent: true, opacity: 0.8, side: FrontSide });
+        const material = new MeshBasicMaterial({
+            color: this.light.color,
+            transparent: true,
+            opacity: 0.8,
+            side: FrontSide,
+        });
 
         this.mesh = new Mesh(geometry, material);
         this.mesh.layers.mask = UI_LAYER_MASK;
@@ -61,7 +84,8 @@ export default class DIVEPointLight extends Object3D implements DIVESelectable, 
     public SetIntensity(intensity: number): void {
         this.light.intensity = intensity;
 
-        (this.mesh.material as MeshBasicMaterial).opacity = intensity > 0.8 ? 0.8 : intensity * 0.8;
+        (this.mesh.material as MeshBasicMaterial).opacity =
+            intensity > 0.8 ? 0.8 : intensity * 0.8;
     }
 
     public SetEnabled(enabled: boolean): void {
@@ -69,14 +93,23 @@ export default class DIVEPointLight extends Object3D implements DIVESelectable, 
     }
 
     public onMove(): void {
-        DIVECommunication.get(this.userData.id)?.PerformAction('UPDATE_OBJECT', { id: this.userData.id, position: this.position });
+        DIVECommunication.get(this.userData.id)?.PerformAction(
+            'UPDATE_OBJECT',
+            { id: this.userData.id, position: this.position },
+        );
     }
 
     public onSelect(): void {
-        DIVECommunication.get(this.userData.id)?.PerformAction('SELECT_OBJECT', { id: this.userData.id });
+        DIVECommunication.get(this.userData.id)?.PerformAction(
+            'SELECT_OBJECT',
+            { id: this.userData.id },
+        );
     }
 
     public onDeselect(): void {
-        DIVECommunication.get(this.userData.id)?.PerformAction('DESELECT_OBJECT', { id: this.userData.id });
+        DIVECommunication.get(this.userData.id)?.PerformAction(
+            'DESELECT_OBJECT',
+            { id: this.userData.id },
+        );
     }
 }

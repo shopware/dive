@@ -8,17 +8,17 @@ export class DIVEInfo {
     public static GetSystem(): string {
         const platform = navigator.platform;
         if (/Android/.test(navigator.userAgent)) {
-            return "Android";
+            return 'Android';
         } else if (/iPhone|iPad|iPod/.test(navigator.userAgent)) {
-            return "iOS";
-        } else if (platform.startsWith("Win")) {
-            return "Windows";
-        } else if (platform.startsWith("Mac")) {
-            return "MacOS";
-        } else if (platform.startsWith("Linux")) {
-            return "Linux";
+            return 'iOS';
+        } else if (platform.startsWith('Win')) {
+            return 'Windows';
+        } else if (platform.startsWith('Mac')) {
+            return 'MacOS';
+        } else if (platform.startsWith('Linux')) {
+            return 'Linux';
         } else {
-            return "Unknown";
+            return 'Unknown';
         }
     }
 
@@ -36,7 +36,8 @@ export class DIVEInfo {
         }
         // Check if immersive-vr session mode is supported
         try {
-            const supported = await navigator.xr.isSessionSupported('immersive-ar');
+            const supported =
+                await navigator.xr.isSessionSupported('immersive-ar');
             this._supportsWebXR = supported;
         } catch (error) {
             this._supportsWebXR = false;
@@ -48,8 +49,8 @@ export class DIVEInfo {
      * @returns A boolean indicating whether the user's device supports AR Quick Look.
      */
     public static GetSupportsARQuickLook(): boolean {
-        const a = document.createElement("a");
-        if (a.relList.supports("ar")) {
+        const a = document.createElement('a');
+        if (a.relList.supports('ar')) {
             return true;
         }
 
@@ -57,7 +58,9 @@ export class DIVEInfo {
         const userAgent = navigator.userAgent;
 
         // Check if the device is running iOS
-        const isIOS = /iPad|iPhone|iPod/.test(userAgent) && !(window as unknown as Window & { MSStream?: string }).MSStream;
+        const isIOS =
+            /iPad|iPhone|iPod/.test(userAgent) &&
+            !(window as unknown as Window & { MSStream?: string }).MSStream;
         if (!isIOS) {
             return false;
         }
@@ -78,7 +81,8 @@ export class DIVEInfo {
         }
 
         // Check for supported browser
-        const isSupportedBrowser = /^((?!chrome|android).)*safari|CriOS|FxiOS/i.test(userAgent);
+        const isSupportedBrowser =
+            /^((?!chrome|android).)*safari|CriOS|FxiOS/i.test(userAgent);
         if (isSupportedBrowser) {
             return true;
         }
@@ -91,7 +95,7 @@ export class DIVEInfo {
      * @returns A boolean indicating whether the user's device is a mobile device.
      */
     public static get isMobile(): boolean {
-        return this.GetSystem() === "Android" || this.GetSystem() === "iOS";
+        return this.GetSystem() === 'Android' || this.GetSystem() === 'iOS';
     }
 
     /**

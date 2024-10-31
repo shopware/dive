@@ -1,0 +1,14 @@
+{
+    "tabWidth": 4,
+    "singleQuote": true,
+    "printWidth": 80,
+    "trailingComma": "all",
+    "semi": true,
+    "arrowParens": "always",
+    "htmlWhitespaceSensitivity": "css",
+    "bracketSpacing": true,
+    "multilineArraysWrapThreshold": 1,
+    "plugins": [
+        "prettier-plugin-multiline-arrays"
+    ]
+}

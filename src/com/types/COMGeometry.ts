@@ -1,6 +1,6 @@
 export type COMGeometry = {
-    name: string
+    name: string;
     width: number;
     height: number;
     depth: number;
-}
+};

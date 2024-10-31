@@ -1,17 +1,20 @@
-import { Intersection, Object3D, Raycaster, Vector2, Vector3 } from "three";
-import { PRODUCT_LAYER_MASK, UI_LAYER_MASK } from "../constant/VisibilityLayerMask";
-import { DIVEScene } from "../scene/Scene";
-import DIVEOrbitControls from "../controls/OrbitControls";
-import { type DIVEDraggable } from "../interface/Draggable";
-import { type DIVEHoverable } from "../interface/Hoverable";
-import { findInterface } from "../helper/findInterface/findInterface";
+import { Intersection, Object3D, Raycaster, Vector2, Vector3 } from 'three';
+import {
+    PRODUCT_LAYER_MASK,
+    UI_LAYER_MASK,
+} from '../constant/VisibilityLayerMask';
+import { DIVEScene } from '../scene/Scene';
+import DIVEOrbitControls from '../controls/OrbitControls';
+import { type DIVEDraggable } from '../interface/Draggable';
+import { type DIVEHoverable } from '../interface/Hoverable';
+import { findInterface } from '../helper/findInterface/findInterface';
 
 export type DraggableEvent = {
     dragStart: Vector3;
     dragCurrent: Vector3;
     dragEnd: Vector3;
     dragDelta: Vector3;
-}
+};
 
 /* eslint-disable @typescript-eslint/no-unused-vars */
 export abstract class DIVEBaseTool {
@@ -27,10 +30,12 @@ export abstract class DIVEBaseTool {
     protected _pointer: Vector2;
 
     protected get _pointerAnyDown(): boolean {
-        return this._pointerPrimaryDown
-            || this._pointerMiddleDown
-            || this._pointerSecondaryDown;
-    };
+        return (
+            this._pointerPrimaryDown ||
+            this._pointerMiddleDown ||
+            this._pointerSecondaryDown
+        );
+    }
     protected _pointerPrimaryDown: boolean;
     protected _pointerMiddleDown: boolean;
     protected _pointerSecondaryDown: boolean;
@@ -54,7 +59,7 @@ export abstract class DIVEBaseTool {
     protected _dragRaycastOnObjects: Object3D[] | null;
 
     protected constructor(scene: DIVEScene, controller: DIVEOrbitControls) {
-        this.name = "BaseTool";
+        this.name = 'BaseTool';
 
         this._canvas = controller.domElement;
         this._scene = scene;
@@ -84,9 +89,9 @@ export abstract class DIVEBaseTool {
         this._dragRaycastOnObjects = null;
     }
 
-    public Activate(): void { }
+    public Activate(): void {}
 
-    public Deactivate(): void { }
+    public Deactivate(): void {}
 
     public onPointerDown(e: PointerEvent): void {
         switch (e.button) {
@@ -103,14 +108,21 @@ export abstract class DIVEBaseTool {
 
         this._lastPointerDown.copy(this._pointer);
 
-        this._draggable = findInterface<DIVEDraggable>(this._intersects[0]?.object, 'isDraggable') || null;
+        this._draggable =
+            findInterface<DIVEDraggable>(
+                this._intersects[0]?.object,
+                'isDraggable',
+            ) || null;
     }
 
     public onDragStart(e: PointerEvent): void {
         if (!this._draggable) return;
 
         if (this._dragRaycastOnObjects !== null) {
-            this._intersects = this._raycaster.intersectObjects(this._dragRaycastOnObjects, true);
+            this._intersects = this._raycaster.intersectObjects(
+                this._dragRaycastOnObjects,
+                true,
+            );
         }
 
         if (this._intersects.length === 0) return;
@@ -145,27 +157,34 @@ export abstract class DIVEBaseTool {
         this._intersects = this.raycast(this._scene.children);
 
         // handle hover
-        const hoverable = findInterface<DIVEHoverable>(this._intersects[0]?.object, 'isHoverable');
+        const hoverable = findInterface<DIVEHoverable>(
+            this._intersects[0]?.object,
+            'isHoverable',
+        );
         if (this._intersects[0] && hoverable) {
             if (!this._hovered) {
-                if (hoverable.onPointerEnter) hoverable.onPointerEnter(this._intersects[0]);
+                if (hoverable.onPointerEnter)
+                    hoverable.onPointerEnter(this._intersects[0]);
                 this._hovered = hoverable;
                 return;
             }
 
             if (this._hovered.uuid !== hoverable.uuid) {
-                if (this._hovered.onPointerLeave) this._hovered.onPointerLeave();
-                if (hoverable.onPointerEnter) hoverable.onPointerEnter(this._intersects[0]);
+                if (this._hovered.onPointerLeave)
+                    this._hovered.onPointerLeave();
+                if (hoverable.onPointerEnter)
+                    hoverable.onPointerEnter(this._intersects[0]);
                 this._hovered = hoverable;
                 return;
             }
 
-            if (hoverable.onPointerOver) hoverable.onPointerOver(this._intersects[0]);
+            if (hoverable.onPointerOver)
+                hoverable.onPointerOver(this._intersects[0]);
             this._hovered = hoverable;
-
         } else {
             if (this._hovered) {
-                if (this._hovered.onPointerLeave) this._hovered.onPointerLeave();
+                if (this._hovered.onPointerLeave)
+                    this._hovered.onPointerLeave();
             }
 
             this._hovered = null;
@@ -183,14 +202,20 @@ export abstract class DIVEBaseTool {
 
     public onDrag(e: PointerEvent): void {
         if (this._dragRaycastOnObjects !== null) {
-            this._intersects = this._raycaster.intersectObjects(this._dragRaycastOnObjects, true);
+            this._intersects = this._raycaster.intersectObjects(
+                this._dragRaycastOnObjects,
+                true,
+            );
         }
         const intersect = this._intersects[0];
         if (!intersect) return;
 
         this._dragCurrent.copy(intersect.point.clone());
         this._dragEnd.copy(intersect.point.clone());
-        this._dragDelta.subVectors(this._dragCurrent.clone(), this._dragStart.clone());
+        this._dragDelta.subVectors(
+            this._dragCurrent.clone(),
+            this._dragStart.clone(),
+        );
 
         if (this._draggable && this._draggable.onDrag) {
             this._draggable.onDrag({
@@ -226,14 +251,17 @@ export abstract class DIVEBaseTool {
         this._lastPointerUp.copy(this._pointer);
     }
 
-    public onClick(e: PointerEvent): void { }
+    public onClick(e: PointerEvent): void {}
 
     public onDragEnd(e: PointerEvent): void {
         const intersect = this._intersects[0];
         if (intersect) {
             this._dragEnd.copy(intersect.point.clone());
             this._dragCurrent.copy(intersect.point.clone());
-            this._dragDelta.subVectors(this._dragCurrent.clone(), this._dragStart.clone());
+            this._dragDelta.subVectors(
+                this._dragCurrent.clone(),
+                this._dragStart.clone(),
+            );
         }
 
         if (this._draggable && this._draggable.onDragEnd) {
@@ -256,14 +284,22 @@ export abstract class DIVEBaseTool {
         this._controller.enabled = true;
     }
 
-    public onWheel(e: WheelEvent): void { }
+    public onWheel(e: WheelEvent): void {}
 
     protected raycast(objects?: Object3D[]): Intersection[] {
-        if (objects !== undefined) return this._raycaster.intersectObjects(objects, true).filter(i => i.object.visible);
-        return this._raycaster.intersectObjects(this._scene.children, true).filter(i => i.object.visible);
+        if (objects !== undefined)
+            return this._raycaster
+                .intersectObjects(objects, true)
+                .filter((i) => i.object.visible);
+        return this._raycaster
+            .intersectObjects(this._scene.children, true)
+            .filter((i) => i.object.visible);
     }
 
     private pointerWasDragged(): boolean {
-        return this._lastPointerDown.distanceTo(this._pointer) > this.POINTER_DRAG_THRESHOLD;
+        return (
+            this._lastPointerDown.distanceTo(this._pointer) >
+            this.POINTER_DRAG_THRESHOLD
+        );
     }
 }

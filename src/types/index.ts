@@ -1,7 +1,4 @@
-import { type DIVESceneObject } from "./SceneObjects";
-import { type DIVESceneFileType } from "./SceneType";
+import { type DIVESceneObject } from './SceneObjects';
+import { type DIVESceneFileType } from './SceneType';
 
-export {
-    type DIVESceneObject,
-    type DIVESceneFileType,
-}
+export { type DIVESceneObject, type DIVESceneFileType };

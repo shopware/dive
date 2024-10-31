@@ -1,4 +1,4 @@
-import DIVEPerspectiveCamera, { DIVEPerspectiveCameraDefaultSettings } from '../PerspectiveCamera';
+import DIVEPerspectiveCamera from '../PerspectiveCamera';
 
 let cam: DIVEPerspectiveCamera;
 

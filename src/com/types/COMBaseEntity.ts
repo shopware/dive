@@ -1,4 +1,4 @@
-import { COMEntityType } from "./COMEntityType";
+import { COMEntityType } from './COMEntityType';
 
 export type COMBaseEntity = {
     id: string;
@@ -6,4 +6,4 @@ export type COMBaseEntity = {
     entityType: COMEntityType;
     visible: boolean;
     parentId?: string | null;
-}
+};
