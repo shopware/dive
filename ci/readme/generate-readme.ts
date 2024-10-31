@@ -5,11 +5,12 @@
 import * as ts from 'typescript';
 import * as fs from 'fs';
 import * as path from 'path';
-import pkgjson from '../../package.json';
+
+const ACTIONS_PATH = 'src/com/actions/index.ts';
 
 const templatePath = path.resolve(__dirname, './template/TEMPLATE_README.md');
 const targetPath = path.resolve('./README.md');
-const actionIndexFile = path.resolve('./src/com/actions/index.ts');
+const actionIndexFile = path.resolve(ACTIONS_PATH);
 
 function extractInterfaces(mainFile: string): {
     name: string;
@@ -62,12 +63,7 @@ function extractInterfaces(mainFile: string): {
                 });
 
                 // create a relative path to the file for adding to the table
-                const packageName = pkgjson.name;
-                const [
-                    ,
-                    relativeFilePath,
-                ] = filePath.split(packageName);
-
+                const relativeFilePath = path.relative(process.cwd(), filePath);
                 interfaces.push({
                     name,
                     description,
@@ -143,7 +139,7 @@ interfaces.forEach(({ name, description, filePath }) => {
     table += `
     <tr>
         <td>
-            <a href="${'.'.concat(filePath)}"> ${name} </a>
+            <a href="${filePath}"> ${name} </a>
         </td>
         <td>
             ${description.slice(1, description.length - 1)}
