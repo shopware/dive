@@ -24,6 +24,7 @@ import COMPUTE_ENCOMPASSING_VIEW from './camera/computeencompassingview.ts';
 import USE_TOOL from './toolbox/usetool.ts';
 import SET_PARENT from './object/setparent.ts';
 import EXPORT_SCENE from './scene/exportscene.ts';
+import NEW_ACTION from './object/newaction.ts';
 
 export interface Actions {
     GET_ALL_SCENE_DATA: GET_ALL_SCENE_DATA;
@@ -52,4 +53,5 @@ export interface Actions {
     GENERATE_MEDIA: GENERATE_MEDIA;
     SET_PARENT: SET_PARENT;
     EXPORT_SCENE: EXPORT_SCENE;
+    NEW_ACTION: NEW_ACTION;
 };
