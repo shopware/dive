@@ -55,16 +55,20 @@
         "typescript-eslint": "^7.7.1"
     },
     "scripts": {
+        "pre-commit-test": "ci/hooks/pre-commit",
+        "postinstall": "ci/setup_hooks.sh",
         "build": "tsup",
         "dev": "tsup --watch",
-        "eslint": "eslint",
+        "lint": "eslint",
+        "lint:actions": "",
+        "lint:actions:transpile": "yarn tsc --resolveJsonModule --esModuleInterop ci/check-actions/generate-readme.ts && mv ci/check-actions/generate-readme.js ci/check-actions/generate-readme.cjs",
         "prettier-check": "prettier --check .",
         "prettier-fix": "prettier --write .",
         "unit": "jest",
         "coverage": "jest --coverage",
-        "generate-readme": "yarn generate-readme-transpile && yarn generate-readme-write && yarn generate-readme-cleanup",
-        "generate-readme-transpile": "yarn tsc --resolveJsonModule --esModuleInterop ci/readme/generate-readme.ts && mv ci/readme/generate-readme.js ci/readme/generate-readme.cjs",
-        "generate-readme-write": "yarn node ci/readme/generate-readme.cjs",
-        "generate-readme-cleanup": "node -e \"require('fs').unlinkSync('ci/readme/generate-readme.cjs')\""
+        "generate-readme": "yarn generate-readme:transpile && yarn generate-readme:write && yarn generate-readme:cleanup",
+        "generate-readme:transpile": "yarn tsc --resolveJsonModule --esModuleInterop ci/readme/generate-readme.ts && mv ci/readme/generate-readme.js ci/readme/generate-readme.cjs",
+        "generate-readme:write": "yarn node ci/readme/generate-readme.cjs",
+        "generate-readme:cleanup": "node -e \"require('fs').unlinkSync('ci/readme/generate-readme.cjs')\""
     }
 }
