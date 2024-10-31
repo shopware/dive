@@ -52,4 +52,4 @@ export interface Actions {
     GENERATE_MEDIA: GENERATE_MEDIA;
     SET_PARENT: SET_PARENT;
     EXPORT_SCENE: EXPORT_SCENE;
-};
+}

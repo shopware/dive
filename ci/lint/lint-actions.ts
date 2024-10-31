@@ -5,7 +5,11 @@ import * as path from 'path';
 const ACTIONS_DIR = 'src/com/actions/'; // Adjust path as needed
 
 // Define the required properties for each interface
-const REQUIRED_PROPERTIES = ['DESCRIPTION', 'PAYLOAD', 'RETURN'];
+const REQUIRED_PROPERTIES = [
+    'DESCRIPTION',
+    'PAYLOAD',
+    'RETURN',
+];
 
 // Specify the directory with TypeScript files to check
 const INTERFACE_DIR = path.resolve(ACTIONS_DIR);
@@ -15,9 +19,13 @@ const INTERFACE_DIR = path.resolve(ACTIONS_DIR);
  * @param {ts.InterfaceDeclaration} interfaceNode
  * @returns {boolean}
  */
-function hasRequiredProperties(interfaceNode: ts.InterfaceDeclaration): boolean {
-    const properties = interfaceNode.members.map(member => member.name && member.name.getText());
-    return REQUIRED_PROPERTIES.every(prop => properties.includes(prop));
+function hasRequiredProperties(
+    interfaceNode: ts.InterfaceDeclaration,
+): boolean {
+    const properties = interfaceNode.members.map(
+        (member) => member.name && member.name.getText(),
+    );
+    return REQUIRED_PROPERTIES.every((prop) => properties.includes(prop));
 }
 
 /**
@@ -33,18 +41,25 @@ function checkInterfacesInFile(filePath: string): {
         filePath,
         fs.readFileSync(filePath, 'utf8'),
         ts.ScriptTarget.ES2015,
-        true
+        true,
     );
 
-    const missingProperties: { name: string, missingProps: string[] }[] = [];
+    const missingProperties: { name: string; missingProps: string[] }[] = [];
 
     function visit(node: ts.Node): void {
         if (ts.isInterfaceDeclaration(node)) {
             const interfaceName = node.name.escapedText;
             if (!hasRequiredProperties(node)) {
-                const properties = node.members.map(member => member.name && member.name.getText());
-                const missingProps = REQUIRED_PROPERTIES.filter(prop => !properties.includes(prop));
-                missingProperties.push({ name: interfaceName as string, missingProps });
+                const properties = node.members.map(
+                    (member) => member.name && member.name.getText(),
+                );
+                const missingProps = REQUIRED_PROPERTIES.filter(
+                    (prop) => !properties.includes(prop),
+                );
+                missingProperties.push({
+                    name: interfaceName as string,
+                    missingProps,
+                });
             }
         }
         ts.forEachChild(node, visit);
@@ -76,17 +91,20 @@ function getAllTsFiles(dir: string, isTopLevel = true): string[] {
     return files;
 }
 
-const filesWithErrors: { name: string, file: string, missingProps: string[] }[] = [];
+const filesWithErrors: {
+    name: string;
+    file: string;
+    missingProps: string[];
+}[] = [];
 
 // Main function
 function main(): void {
     const tsFiles = getAllTsFiles(INTERFACE_DIR);
     let hasErrors = false;
 
-    tsFiles.forEach(file => {
+    tsFiles.forEach((file) => {
         const missingPropsInFile = checkInterfacesInFile(file);
         if (missingPropsInFile.length > 0) {
-
             missingPropsInFile.forEach(({ name, missingProps }) => {
                 filesWithErrors.push({ name, file, missingProps });
             });
@@ -98,7 +116,9 @@ function main(): void {
         console.error('');
         filesWithErrors.forEach(({ name, file, missingProps }) => {
             console.error(`    ERROR: Interface: ${name}`);
-            console.error(`           is missing properties: ${missingProps.join(', ')}`);
+            console.error(
+                `           is missing properties: ${missingProps.join(', ')}`,
+            );
             console.error(`           in file ${file})`);
         });
         console.error('');

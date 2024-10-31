@@ -16,8 +16,18 @@ const actionIndexFile = path.resolve('./src/com/actions/index.ts');
 function extractInterfaces(mainFile: string) {
     function extractInterfaceDetails(filePath: string) {
         const sourceCode = fs.readFileSync(filePath, 'utf8');
-        const sourceFile = ts.createSourceFile(path.basename(filePath), sourceCode, ts.ScriptTarget.Latest);
-        const interfaces: { name: string; description: string; payload: string; returnType: string; filePath: string }[] = [];
+        const sourceFile = ts.createSourceFile(
+            path.basename(filePath),
+            sourceCode,
+            ts.ScriptTarget.Latest,
+        );
+        const interfaces: {
+            name: string;
+            description: string;
+            payload: string;
+            returnType: string;
+            filePath: string;
+        }[] = [];
 
         function visit(node: ts.Node) {
             // Look for interface declarations
@@ -28,7 +38,7 @@ function extractInterfaces(mainFile: string) {
                 let returnType = '';
 
                 // Extract DESCRIPTION, PAYLOAD, and RETURN
-                node.members.forEach(member => {
+                node.members.forEach((member) => {
                     if (ts.isPropertySignature(member)) {
                         const memberName = member.name.getText(sourceFile);
                         if (member.type && memberName === 'DESCRIPTION') {
@@ -43,9 +53,18 @@ function extractInterfaces(mainFile: string) {
 
                 // create a relative path to the file for adding to the table
                 const packageName = pkgjson.name;
-                const [packagePath, relativeFilePath] = filePath.split(packageName);
+                const [
+                    packagePath,
+                    relativeFilePath,
+                ] = filePath.split(packageName);
 
-                interfaces.push({ name, description, payload, returnType, filePath: relativeFilePath });
+                interfaces.push({
+                    name,
+                    description,
+                    payload,
+                    returnType,
+                    filePath: relativeFilePath,
+                });
             }
 
             ts.forEachChild(node, visit);
@@ -57,14 +76,25 @@ function extractInterfaces(mainFile: string) {
 
     function getImportedInterfaces(mainFilePath: string) {
         const sourceCode = fs.readFileSync(mainFilePath, 'utf8');
-        const sourceFile = ts.createSourceFile(path.basename(mainFilePath), sourceCode, ts.ScriptTarget.Latest);
+        const sourceFile = ts.createSourceFile(
+            path.basename(mainFilePath),
+            sourceCode,
+            ts.ScriptTarget.Latest,
+        );
         const importPaths: string[] = [];
 
         function visit(node: ts.Node) {
             // Collect import declarations
-            if (ts.isImportDeclaration(node) && node.moduleSpecifier && ts.isStringLiteral(node.moduleSpecifier)) {
+            if (
+                ts.isImportDeclaration(node) &&
+                node.moduleSpecifier &&
+                ts.isStringLiteral(node.moduleSpecifier)
+            ) {
                 const importPath = node.moduleSpecifier.text;
-                const resolvedPath = path.resolve(path.dirname(mainFilePath), importPath.replace('.js', '.ts'));
+                const resolvedPath = path.resolve(
+                    path.dirname(mainFilePath),
+                    importPath.replace('.js', '.ts'),
+                );
                 importPaths.push(resolvedPath);
             }
 
@@ -80,12 +110,16 @@ function extractInterfaces(mainFile: string) {
 
     // Get all imported interface files
     const importPaths = getImportedInterfaces(mainFilePath);
-    const extractedInterfaces = importPaths.flatMap(importPath => extractInterfaceDetails(importPath));
+    const extractedInterfaces = importPaths.flatMap((importPath) =>
+        extractInterfaceDetails(importPath),
+    );
     return extractedInterfaces;
 }
 
 // create table
-const interfaces = extractInterfaces(actionIndexFile).sort((a, b) => a.name.toLowerCase().localeCompare(b.name.toLowerCase()));
+const interfaces = extractInterfaces(actionIndexFile).sort((a, b) =>
+    a.name.toLowerCase().localeCompare(b.name.toLowerCase()),
+);
 
 let table = `
 | Action                                                                           | Description                                                                                        |
@@ -98,13 +132,17 @@ interfaces.forEach(({ name, description, filePath }) => {
     rowBuffer = `| [${name}](${'.'.concat(filePath)})`;
 
     // fill up the rowBuffer with spaces
-    rowBuffer.length < 83 ? rowBuffer += ' '.repeat(83 - rowBuffer.length) : rowBuffer += ' ';
+    rowBuffer.length < 83
+        ? (rowBuffer += ' '.repeat(83 - rowBuffer.length))
+        : (rowBuffer += ' ');
 
     // enter the description and cut away leading and trailing quotes
     rowBuffer += `| ${description.slice(1, description.length - 1)}`;
 
     // fill up the rowBuffer with spaces
-    rowBuffer.length < 184 ? rowBuffer += ' '.repeat(184 - rowBuffer.length) : rowBuffer += ' ';
+    rowBuffer.length < 184
+        ? (rowBuffer += ' '.repeat(184 - rowBuffer.length))
+        : (rowBuffer += ' ');
 
     // finish the row with a newline
     rowBuffer += '|\n';
@@ -112,6 +150,8 @@ interfaces.forEach(({ name, description, filePath }) => {
     // append the row to the table
     table += rowBuffer;
 });
+
+console.log(table);
 
 // finally, write the markdown to the README.md file
 fs.access(templatePath, fs.constants.F_OK, (err) => {
@@ -131,11 +171,10 @@ fs.access(templatePath, fs.constants.F_OK, (err) => {
                 const writeStream = fs.createWriteStream(targetPath, {
                     flags: 'w',
                 });
-                writeStream.write('\n' + templateMarkdown);
+                writeStream.write(templateMarkdown);
                 writeStream.write('\n' + table);
                 writeStream.end();
             }
         });
     });
 });
-
