@@ -39,7 +39,7 @@ jobs:
               if: steps.yarn-cache.outputs.cache-hit != 'true'
               run: yarn
             - name: Lint DIVE
-              run: yarn lint
+              run: yarn eslint
     unit:
         runs-on: ubuntu-latest
         needs: eslint

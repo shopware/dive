@@ -7,9 +7,11 @@
 import * as ts from 'typescript';
 import * as fs from 'fs';
 import * as path from 'path';
-import pkgjson from '../package.json';
+import pkgjson from '../../package.json';
 
-const actionIndexFile = '../src/com/actions/index.ts';
+const templatePath = path.resolve(__dirname, './template/TEMPLATE_README.md');
+const targetPath = path.resolve('./README.md');
+const actionIndexFile = path.resolve('./src/com/actions/index.ts');
 
 function extractInterfaces(mainFile: string) {
     function extractInterfaceDetails(filePath: string) {
@@ -112,9 +114,6 @@ interfaces.forEach(({ name, description, filePath }) => {
 });
 
 // finally, write the markdown to the README.md file
-const templatePath = path.resolve(__dirname, './template/TEMPLATE_README.md');
-const targetPath = './README.md';
-
 fs.access(templatePath, fs.constants.F_OK, (err) => {
     if (err) throw err;
 

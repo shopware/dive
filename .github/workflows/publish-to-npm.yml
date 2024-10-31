@@ -40,7 +40,7 @@ jobs:
               if: steps.yarn-cache.outputs.cache-hit != 'true'
               run: yarn
             - name: Lint DIVE
-              run: yarn lint
+              run: yarn eslint
     unit:
         runs-on: ubuntu-latest
         needs: eslint
@@ -119,27 +119,26 @@ jobs:
 
             - name: 'Create release branch'
               run:
-                  git checkout -b release/v$(node -p
-                  "require('./package.json').version")
+                  git checkout -b release/v$(node -p "require('./package.json').version")
             - name: Build DIVE
               run: yarn build
-            - name: 'Add Build files'
+            - name: 'Add Build files to git'
               run:
-                  git add ./build -f && git add README.md -f && echo "Staged
-                  Build files. Status:" && git status && echo "Committing ..."
-                  && git commit -m "Release v$(node -p
-                  "require('./package.json').version")" && echo "Committed.
-                  Status:" && git status
+                  git add ./build -f && echo "Staged build files! Status:" && git status
+            - name: Generate README.md
+              run: yarn generate-readme
+            - name: 'Add README file to git'
+              run:
+                  git add README.md -f && echo "Staged README file! Status:" && git status
+            - name: 'Commit changes'
+              run:
+                  echo "Committing ..." && git commit -m "Release v$(node -p "require('./package.json').version")" && echo "Committed! Status:" && git status
             - name: 'Add tag'
               run:
-                  git tag -a v$(node -p "require('./package.json').version") -m
-                  "Release v$(node -p "require('./package.json').version")"
+                  git tag -a v$(node -p "require('./package.json').version") -m "Release v$(node -p "require('./package.json').version")"
             - name: 'Push to release branch'
               run:
-                  git push origin release/v$(node -p
-                  "require('./package.json').version") && git push origin tag
-                  v$(node -p "require('./package.json').version")
-
+                  git push origin release/v$(node -p "require('./package.json').version") && git push origin tag v$(node -p "require('./package.json').version")
             - name: Publish DIVE to npm
               uses: JS-DevTools/npm-publish@v3
               with:

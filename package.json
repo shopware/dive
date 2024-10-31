@@ -55,17 +55,16 @@
         "typescript-eslint": "^7.7.1"
     },
     "scripts": {
-        "build": "tsup && yarn genmd",
-        "watch": "tsup --watch",
-        "lint": "eslint",
+        "build": "tsup",
+        "dev": "tsup --watch",
+        "eslint": "eslint",
         "prettier-check": "prettier --check .",
         "prettier-fix": "prettier --write .",
         "unit": "jest",
         "coverage": "jest --coverage",
-        "genmd": "node ./readme/genmd.js",
-        "genmd-transpile": "yarn tsc --resolveJsonModule --esModuleInterop ./readme/genmd.ts && mv ./readme/genmd.js ./readme/genmd.cjs",
-        "genmd-write": "yarn node ./readme/genmd.cjs",
-        "genmd-cleanup": "node -e \"require('fs').unlinkSync('readme/genmd.cjs')\"",
-        "genmd2": "yarn genmd-transpile && yarn genmd-write && yarn genmd-cleanup"
+        "generate-readme": "yarn generate-readme-transpile && yarn generate-readme-write && yarn generate-readme-cleanup",
+        "generate-readme-transpile": "yarn tsc --resolveJsonModule --esModuleInterop ci/readme/generate-readme.ts && mv ci/readme/generate-readme.js ci/readme/generate-readme.cjs",
+        "generate-readme-write": "yarn node ci/readme/generate-readme.cjs",
+        "generate-readme-cleanup": "node -e \"require('fs').unlinkSync('ci/readme/generate-readme.cjs')\""
     }
 }

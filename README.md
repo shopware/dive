@@ -204,61 +204,32 @@ In the following you find a list of all available actions to perform on
 DIVECommunication class via
 [`com.PerformAction()`](https://github.com/shopware/dive/blob/2e193c58843939ce07a1d35bfbd5b3c9d26eeeca/src/com/Communication.ts#L85).
 
-| Action                                                                           | Description                                                                                        |
-| :------------------------------------------------------------------------------- | :------------------------------------------------------------------------------------------------- |
-| [GET_ALL_SCENE_DATA](./src/com/actions/scene/getallscenedata.ts)                 | Return all scene data that is currently set                                                        |
-| [GET_ALL_OBJECTS](./src/com/actions/object/getallobjects.ts)                     | Return a map of all objects                                                                        |
-| [GET_OBJECTS](./src/com/actions/object/getobjects.ts)                            | Return an array of all objects with given ids                                                      |
-| [ADD_OBJECT](./src/com/actions/object/addobject.ts)                              | Add an object to the scene                                                                         |
-| [UPDATE_OBJECT](./src/com/actions/object/updateobject.ts)                        | Update an existing object                                                                          |
-| [DELETE_OBJECT](./src/com/actions/object/deleteobject.ts)                        | Delete an existing object                                                                          |
-| [SELECT_OBJECT](./src/com/actions/object/selectobject.ts)                        | Select an existing object in the scene                                                             |
-| [DESELECT_OBJECT](./src/com/actions/object/deselectobject.ts)                    | Deselect an existing object in the scene                                                           |
-| [SET_BACKGROUND](./src/com/actions/scene/setbackground.ts)                       | Set a background color                                                                             |
-| [DROP_IT](./src/com/actions/object/model/dropit.ts)                              | Places the model onto the next underlying object's bounding box                                    |
-| [PLACE_ON_FLOOR](./src/com/actions/object/model/placeonfloor.ts)                 | Places the model onto the floor (zero plane)                                                       |
-| [SET_CAMERA_TRANSFORM](./src/com/actions/camera/setcameratransform.ts)           | Set camera transformation (w/o animation, used to initially set up camera)                         |
-| [GET_CAMERA_TRANSFORM](./src/com/actions/camera/getcameratransform.ts)           | Return currenty camera transformation                                                              |
-| [MOVE_CAMERA](./src/com/actions/camera/movecamera.ts)                            | Move camera to a specific position or the position of a previously defined POV (with an animation) |
-| [RESET_CAMERA](./src/com/actions/camera/resetcamera.ts)                          | Reset camera to original position after MOVE_CAMERA was performed                                  |
-| [COMPUTE_ENCOMPASSING_VIEW](./src/com/actions/camera/computeencompassingview.ts) | Calculates the camera position and target to view the whole scene                                  |
-| [SET_CAMERA_LAYER](./src/com/actions/camera/setcameralayer.ts)                   | Set camera layer to switch between live view and editor view                                       |
-| [ZOOM_CAMERA](./src/com/actions/camera/zoomcamera.ts)                            | Zoom in or out                                                                                     |
-| [SET_GIZMO_MODE](./src/com/actions/toolbox/select/setgizmomode.ts)               | Set gizmo mode                                                                                     |
-| [SET_GIZMO_VISIBILITY](./src/com/actions/toolbox/select/setgizmovisibility.ts)   | Set gizmo visibility                                                                               |
-| [USE_TOOL](./src/com/actions/toolbox/usetool.ts)                                 | Use a specific tool                                                                                |
-| [MODEL_LOADED](./src/com/actions/object/model/modelloaded.ts)                    | Is performed when a model file is completely loaded                                                |
-| [UPDATE_SCENE](./src/com/actions/scene/updatescene.ts)                           | Update scene data                                                                                  |
-| [GENERATE_MEDIA](./src/com/actions/media/generatemedia.ts)                       | Generate a screenshot with the specified parameters                                                |
-| [SET_PARENT](./src/com/actions/object/setparent.ts)                              | Sets an objects parent                                                                             |
-| [EXPORT_SCENE](./src/com/actions/scene/exportscene.ts)                           | Exports a scene to a glb, saves it to a blob and returns the associated uri                        |
-
 
 | Action                                                                           | Description                                                                                        |
 | :------------------------------------------------------------------------------- | :------------------------------------------------------------------------------------------------- |
-| [ADD_OBJECT](./src/com/actions/object/addobject.ts)                              |                                                                                                    |
-| [COMPUTE_ENCOMPASSING_VIEW](./src/com/actions/camera/computeencompassingview.ts) |                                                                                                    |
-| [DELETE_OBJECT](./src/com/actions/object/deleteobject.ts)                        |                                                                                                    |
-| [DESELECT_OBJECT](./src/com/actions/object/deselectobject.ts)                    |                                                                                                    |
-| [DROP_IT](./src/com/actions/object/model/dropit.ts)                              |                                                                                                    |
-| [EXPORT_SCENE](./src/com/actions/scene/exportscene.ts)                           |                                                                                                    |
-| [GENERATE_MEDIA](./src/com/actions/media/generatemedia.ts)                       |                                                                                                    |
+| [ADD_OBJECT](./src/com/actions/object/addobject.ts)                              | Adds an object to the scene.                                                                       |
+| [COMPUTE_ENCOMPASSING_VIEW](./src/com/actions/camera/computeencompassingview.ts) | Calculates the camera position and target to view the whole scene. (experimental)                  |
+| [DELETE_OBJECT](./src/com/actions/object/deleteobject.ts)                        | Deletes an object from the scene.                                                                  |
+| [DESELECT_OBJECT](./src/com/actions/object/deselectobject.ts)                    | Deselects an existing object.                                                                      |
+| [DROP_IT](./src/com/actions/object/model/dropit.ts)                              | Places an object on top of an underlying object or the floor.                                      |
+| [EXPORT_SCENE](./src/com/actions/scene/exportscene.ts)                           | Exports the current scene to a blob and returns the URL.                                           |
+| [GENERATE_MEDIA](./src/com/actions/media/generatemedia.ts)                       | Generates a screenshot, stores it in a Blob and writes the URL into the payload.                   |
 | [GET_ALL_OBJECTS](./src/com/actions/object/getallobjects.ts)                     | Retrieves all objects in the scene.                                                                |
 | [GET_ALL_SCENE_DATA](./src/com/actions/scene/getallscenedata.ts)                 | Retrieves all current scene data.                                                                  |
-| [GET_CAMERA_TRANSFORM](./src/com/actions/camera/getcameratransform.ts)           |                                                                                                    |
-| [GET_OBJECTS](./src/com/actions/object/getobjects.ts)                            |                                                                                                    |
-| [MODEL_LOADED](./src/com/actions/object/model/modelloaded.ts)                    |                                                                                                    |
-| [MOVE_CAMERA](./src/com/actions/camera/movecamera.ts)                            |                                                                                                    |
-| [PLACE_ON_FLOOR](./src/com/actions/object/model/placeonfloor.ts)                 |                                                                                                    |
+| [GET_CAMERA_TRANSFORM](./src/com/actions/camera/getcameratransform.ts)           | Returns the current camera position and target.                                                    |
+| [GET_OBJECTS](./src/com/actions/object/getobjects.ts)                            | Returns a list of objects of given IDs.                                                            |
+| [MODEL_LOADED](./src/com/actions/object/model/modelloaded.ts)                    | Is triggered when a model is loaded.                                                               |
+| [MOVE_CAMERA](./src/com/actions/camera/movecamera.ts)                            | Moves the camera to a new position and target.                                                     |
+| [PLACE_ON_FLOOR](./src/com/actions/object/model/placeonfloor.ts)                 | Places an object on the floor.                                                                     |
 | [RESET_CAMERA](./src/com/actions/camera/resetcamera.ts)                          | Reset the camera to its initial position and rotation.                                             |
-| [SELECT_OBJECT](./src/com/actions/object/selectobject.ts)                        |                                                                                                    |
+| [SELECT_OBJECT](./src/com/actions/object/selectobject.ts)                        | Selects an existing object.                                                                        |
 | [SET_BACKGROUND](./src/com/actions/scene/setbackground.ts)                       | Set the background color of the scene.                                                             |
-| [SET_CAMERA_LAYER](./src/com/actions/camera/setcameralayer.ts)                   |                                                                                                    |
-| [SET_CAMERA_TRANSFORM](./src/com/actions/camera/setcameratransform.ts)           |                                                                                                    |
-| [SET_GIZMO_MODE](./src/com/actions/toolbox/select/setgizmomode.ts)               |                                                                                                    |
-| [SET_GIZMO_VISIBILITY](./src/com/actions/toolbox/transform/setgizmovisible.ts)   |                                                                                                    |
-| [SET_PARENT](./src/com/actions/object/setparent.ts)                              | Set the parent of an object.                                                                       |
-| [UPDATE_OBJECT](./src/com/actions/object/updateobject.ts)                        |                                                                                                    |
-| [UPDATE_SCENE](./src/com/actions/scene/updatescene.ts)                           |                                                                                                    |
-| [USE_TOOL](./src/com/actions/toolbox/usetool.ts)                                 |                                                                                                    |
-| [ZOOM_CAMERA](./src/com/actions/camera/zoomcamera.ts)                            |                                                                                                    |
+| [SET_CAMERA_LAYER](./src/com/actions/camera/setcameralayer.ts)                   | Sets the camera layer to a certain layer.                                                          |
+| [SET_CAMERA_TRANSFORM](./src/com/actions/camera/setcameratransform.ts)           | Sets the camera position and target.                                                               |
+| [SET_GIZMO_MODE](./src/com/actions/toolbox/select/setgizmomode.ts)               | Sets the gizmo\'s mode.                                                                            |
+| [SET_GIZMO_VISIBILITY](./src/com/actions/toolbox/transform/setgizmovisible.ts)   | Sets the gizmo\'s visibility.                                                                      |
+| [SET_PARENT](./src/com/actions/object/setparent.ts)                              | Attach an object to another object.                                                                |
+| [UPDATE_OBJECT](./src/com/actions/object/updateobject.ts)                        | Updates an existing object.                                                                        |
+| [UPDATE_SCENE](./src/com/actions/scene/updatescene.ts)                           | Updates global scene data.                                                                         |
+| [USE_TOOL](./src/com/actions/toolbox/usetool.ts)                                 | Activates a specific tool from the toolbox.                                                        |
+| [ZOOM_CAMERA](./src/com/actions/camera/zoomcamera.ts)                            | Zooms the camera in or out by a certain amount.                                                    |
