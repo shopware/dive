@@ -76,7 +76,7 @@ jobs:
             if: steps.yarn-cache.outputs.cache-hit != 'true'
             run: yarn
           - name: Prettier check DIVE
-            run: yarn prettier-fix && git add .
+            run: yarn prettier:fix && git add .
     publish:
         runs-on: ubuntu-latest
         needs: [unit, prettier-check]

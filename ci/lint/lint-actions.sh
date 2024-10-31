@@ -4,9 +4,7 @@
 FOLDER_TO_CHECK="src/com/actions"
 
 if git diff --cached --name-only | grep -q "^$FOLDER_TO_CHECK/"; then
-    echo -e "Something has changed in $FOLDER_TO_CHECK."
-
-    echo -e "\nLinting action interfaces..."
+    echo -e "Actions have changed! Linting action interfaces..."
 
     yarn lint:actions:transpile > /dev/null
     LINT_OUTPUT=$(yarn lint:actions:check 2>&1)
