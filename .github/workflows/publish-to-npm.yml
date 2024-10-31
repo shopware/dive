@@ -97,6 +97,10 @@ jobs:
             - name: Install dependencies (if cache not found)
               if: steps.yarn-cache.outputs.cache-hit != 'true'
               run: yarn
+            - name: Generate README.md
+              run: yarn generate-readme
+            - name: 'Add README file to git'
+              run: git add README.md -f
             - name: 'Automated Version Bump'
               uses: 'phips28/gh-action-bump-version@master'
               env:
@@ -124,10 +128,6 @@ jobs:
               run: yarn build
             - name: 'Add Build files to git'
               run: git add ./build -f && echo "Staged build files! Status:" && git status
-            - name: Generate README.md
-              run: yarn generate-readme
-            - name: 'Add README file to git'
-              run: git add README.md -f && echo "Staged README file! Status:" && git status
             - name: 'Commit changes'
               run: echo "Committing ..." && git commit -m "Release v$(node -p "require('./package.json').version")" && echo "Committed! Status:" && git status
             - name: 'Add tag'

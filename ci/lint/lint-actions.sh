@@ -18,19 +18,6 @@ if git diff --cached --name-only | grep -q "^$FOLDER_TO_CHECK/"; then
     fi
     yarn lint:actions:cleanup > /dev/null
     echo -e "All interfaces contain the required properties."
-
-    echo -e "\nGenerating README.md file..."
-    if ! yarn generate-readme > /dev/null; then
-        echo -e "Generation of README.md failed! Please fix the issues before committing."
-        yarn generate-readme:cleanup > /dev/null
-        exit 1
-    fi
-    echo -e "README.md generated!"
-
-    echo -e "\nAdding README.md to the commit..."
-    git add ./README.md > /dev/null
-    echo -e "Added README.md!"
-    echo -e "\nCommitting..."
 fi
 
 exit 0
