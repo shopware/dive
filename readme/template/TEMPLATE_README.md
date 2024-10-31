@@ -38,6 +38,10 @@ npm install @shopware-ag/dive
 yarn add @shopware-ag/dive
 ```
 
+# Formatter
+
+DIVE uses Prettier as a preconfigured formatter.
+
 #### Setup in Shopware
 
 Don't forget to include DIVE in your webpack.config.js:
@@ -227,7 +231,3 @@ DIVECommunication class via
 | [GENERATE_MEDIA](./src/com/actions/media/generatemedia.ts)                       | Generate a screenshot with the specified parameters                                                |
 | [SET_PARENT](./src/com/actions/object/setparent.ts)                              | Sets an objects parent                                                                             |
 | [EXPORT_SCENE](./src/com/actions/scene/exportscene.ts)                           | Exports a scene to a glb, saves it to a blob and returns the associated uri                        |
-
-# Formatter
-
-DIVE uses Prettier as a preconfigured formatter.
