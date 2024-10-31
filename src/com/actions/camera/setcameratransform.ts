@@ -1,6 +1,7 @@
 import { Vector3Like } from 'three';
 
 export default interface SET_CAMERA_TRANSFORM {
+    DESCRIPTION: 'Sets the camera position and target.';
     PAYLOAD: {
         position: Vector3Like;
         target: Vector3Like;

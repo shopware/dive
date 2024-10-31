@@ -49,18 +49,26 @@
         "prettier-plugin-multiline-arrays": "^3.0.6",
         "ts-jest": "^29.1.2",
         "ts-node": "^10.9.2",
+        "tsc": "^2.0.4",
         "tsup": "^8.0.2",
         "typescript": "^5.4.5",
         "typescript-eslint": "^7.7.1"
     },
     "scripts": {
-        "build": "tsup && yarn genmd",
-        "watch": "tsup --watch",
+        "build": "tsup",
+        "dev": "tsup --watch",
         "lint": "eslint",
-        "prettier-check": "prettier --check .",
-        "prettier-fix": "prettier --write .",
+        "lint:actions": "yarn lint:actions:transpile && yarn lint:actions:check && yarn lint:actions:cleanup",
+        "lint:actions:transpile": "yarn tsc --resolveJsonModule --esModuleInterop ci/lint/lint-actions.ts && mv ci/lint/lint-actions.js ci/lint/lint-actions.cjs",
+        "lint:actions:check": "yarn node ci/lint/lint-actions.cjs",
+        "lint:actions:cleanup": "node -e \"require('fs').unlinkSync('ci/lint/lint-actions.cjs')\"",
+        "prettier:check": "prettier --check .",
+        "prettier:fix": "prettier --write .",
         "unit": "jest",
         "coverage": "jest --coverage",
-        "genmd": "node ./scripts/genmd.js"
+        "generate-readme": "yarn generate-readme:transpile && yarn generate-readme:write && yarn generate-readme:cleanup",
+        "generate-readme:transpile": "yarn tsc --resolveJsonModule --esModuleInterop ci/readme/generate-readme.ts && mv ci/readme/generate-readme.js ci/readme/generate-readme.cjs",
+        "generate-readme:write": "node ci/readme/generate-readme.cjs",
+        "generate-readme:cleanup": "node -e \"require('fs').unlinkSync('ci/readme/generate-readme.cjs')\""
     }
 }

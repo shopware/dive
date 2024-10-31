@@ -1,6 +1,7 @@
 import { Vector3Like } from 'three';
 
 export default interface MOVE_CAMERA {
+    DESCRIPTION: 'Moves the camera to a new position and target.';
     PAYLOAD:
         | {
               position: Vector3Like;
