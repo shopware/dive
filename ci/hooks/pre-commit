@@ -1,0 +1,16 @@
+#!/bin/bash
+
+# Define the path to the folder you want to check
+FOLDER_TO_CHECK="src/com/actions"
+
+if git diff --cached --name-only | grep -q "^$FOLDER_TO_CHECK/"; then
+    echo "Something has changed in $FOLDER_TO_CHECK."
+    echo "Generating README.md file..."
+    yarn readme
+    echo "README.md generated!"
+    echo "Adding README.md to the commit..."
+    git add ./README.md
+fi
+
+exit 0
+
