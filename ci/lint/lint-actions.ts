@@ -1,6 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
-/* eslint-disable @typescript-eslint/explicit-function-return-type */
-// checkInterfaces.js
 import * as ts from 'typescript';
 import * as fs from 'fs';
 import * as path from 'path';
@@ -11,14 +8,14 @@ const ACTIONS_DIR = 'src/com/actions/'; // Adjust path as needed
 const REQUIRED_PROPERTIES = ['DESCRIPTION', 'PAYLOAD', 'RETURN'];
 
 // Specify the directory with TypeScript files to check
-const INTERFACE_DIR = path.resolve(ACTIONS_DIR); // Adjust path as needed
+const INTERFACE_DIR = path.resolve(ACTIONS_DIR);
 
 /**
  * Check if an interface node has all required properties.
  * @param {ts.InterfaceDeclaration} interfaceNode
  * @returns {boolean}
  */
-function hasRequiredProperties(interfaceNode: ts.InterfaceDeclaration) {
+function hasRequiredProperties(interfaceNode: ts.InterfaceDeclaration): boolean {
     const properties = interfaceNode.members.map(member => member.name && member.name.getText());
     return REQUIRED_PROPERTIES.every(prop => properties.includes(prop));
 }
@@ -28,7 +25,10 @@ function hasRequiredProperties(interfaceNode: ts.InterfaceDeclaration) {
  * @param {string} filePath
  * @returns {Array<{ name: string, missingProps: string[] }>}
  */
-function checkInterfacesInFile(filePath: string) {
+function checkInterfacesInFile(filePath: string): {
+    name: string;
+    missingProps: string[];
+}[] {
     const sourceFile = ts.createSourceFile(
         filePath,
         fs.readFileSync(filePath, 'utf8'),
@@ -38,7 +38,7 @@ function checkInterfacesInFile(filePath: string) {
 
     const missingProperties: { name: string, missingProps: string[] }[] = [];
 
-    function visit(node: ts.Node) {
+    function visit(node: ts.Node): void {
         if (ts.isInterfaceDeclaration(node)) {
             const interfaceName = node.name.escapedText;
             if (!hasRequiredProperties(node)) {
@@ -59,7 +59,7 @@ function checkInterfacesInFile(filePath: string) {
  * @param {string} dir
  * @returns {string[]}
  */
-function getAllTsFiles(dir: string, isTopLevel = true) {
+function getAllTsFiles(dir: string, isTopLevel = true): string[] {
     const entries = fs.readdirSync(dir, { withFileTypes: true });
     const files = entries.flatMap((entry): string | string[] => {
         const res = path.resolve(dir, entry.name);
@@ -79,7 +79,7 @@ function getAllTsFiles(dir: string, isTopLevel = true) {
 const filesWithErrors: { name: string, file: string, missingProps: string[] }[] = [];
 
 // Main function
-function main() {
+function main(): void {
     const tsFiles = getAllTsFiles(INTERFACE_DIR);
     let hasErrors = false;
 
@@ -95,10 +95,13 @@ function main() {
     });
 
     if (hasErrors) {
-        filesWithErrors.forEach(({ name, file, missingProps }, index) => {
-            if (index === 0) console.error(`\n`);
-            console.error(`    Error: Interface ${name} is missing the following properties: ${missingProps.join(', ')} (File ${file})\n`);
+        console.error('');
+        filesWithErrors.forEach(({ name, file, missingProps }) => {
+            console.error(`    ERROR: Interface: ${name}`);
+            console.error(`           is missing properties: ${missingProps.join(', ')}`);
+            console.error(`           in file ${file})`);
         });
+        console.error('');
 
         process.exit(1);
     }
