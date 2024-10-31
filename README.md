@@ -220,7 +220,6 @@ DIVECommunication class via
 | [GET_OBJECTS](./src/com/actions/object/getobjects.ts)                            | Returns a list of objects of given IDs.                                                            |
 | [MODEL_LOADED](./src/com/actions/object/model/modelloaded.ts)                    | Is triggered when a model is loaded.                                                               |
 | [MOVE_CAMERA](./src/com/actions/camera/movecamera.ts)                            | Moves the camera to a new position and target.                                                     |
-| [NEW_ACTION](./src/com/actions/object/newaction.ts)                              | Returns a list of objects of given IDs.                                                            |
 | [PLACE_ON_FLOOR](./src/com/actions/object/model/placeonfloor.ts)                 | Places an object on the floor.                                                                     |
 | [RESET_CAMERA](./src/com/actions/camera/resetcamera.ts)                          | Reset the camera to its initial position and rotation.                                             |
 | [SELECT_OBJECT](./src/com/actions/object/selectobject.ts)                        | Selects an existing object.                                                                        |
