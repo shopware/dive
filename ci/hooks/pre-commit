@@ -1,48 +1,37 @@
 #!/usr/bin/env bash
 
-# Color codes
-YELLOW='\033[33m'
-GREEN_BOLD='\033[1;32m'
-RED_BOLD='\033[1;31m'
-RESET='\033[0m'
-
 # Define the path to the folder you want to check
 FOLDER_TO_CHECK="src/com/actions"
 
 if git diff --cached --name-only | grep -q "^$FOLDER_TO_CHECK/"; then
-    echo -e "${YELLOW}Something has changed in $FOLDER_TO_CHECK.${RESET}"
+    echo -e "Something has changed in $FOLDER_TO_CHECK."
 
     echo -e "\nLinting action interfaces..."
-
-
 
     yarn lint:actions:transpile > /dev/null
     LINT_OUTPUT=$(yarn lint:actions:check 2>&1)
 
-
     if [ $? -ne 0 ]; then
-        echo -e "\n${RED_BOLD}ACTION LINTING FAILED${RESET}\n"
+        echo -e "\nACTION LINTING FAILED\n"
         echo "$LINT_OUTPUT"
-        echo -e "\n${YELLOW}Please go to listed files and fix them before comitting.${RESET}"
+        echo -e "\nPlease go to listed files and fix them before comitting."
         yarn lint:actions:cleanup > /dev/null
         exit 1
     fi
     yarn lint:actions:cleanup > /dev/null
-    echo -e "${GREEN_BOLD}All interfaces contain the required properties.${RESET}"
-
-
+    echo -e "All interfaces contain the required properties."
 
     echo -e "\nGenerating README.md file..."
     if ! yarn generate-readme > /dev/null; then
-        echo -e "${RED_BOLD}Generation of README.md failed! Please fix the issues before committing.${RESET}"
+        echo -e "Generation of README.md failed! Please fix the issues before committing."
         yarn generate-readme:cleanup > /dev/null
         exit 1
     fi
-    echo -e "${GREEN_BOLD}README.md generated!${RESET}"
+    echo -e "README.md generated!"
 
     echo -e "\nAdding README.md to the commit..."
     git add ./README.md > /dev/null
-    echo -e "${GREEN_BOLD}Added README.md!${RESET}"
+    echo -e "Added README.md!"
     echo -e "\nCommitting..."
 fi
 
