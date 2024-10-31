@@ -1,5 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
-/* eslint-disable @typescript-eslint/explicit-function-return-type */
 /**
  * This script generates a README.md file based on the interfaces defined in the source code.
  */
@@ -13,8 +11,20 @@ const templatePath = path.resolve(__dirname, './template/TEMPLATE_README.md');
 const targetPath = path.resolve('./README.md');
 const actionIndexFile = path.resolve('./src/com/actions/index.ts');
 
-function extractInterfaces(mainFile: string) {
-    function extractInterfaceDetails(filePath: string) {
+function extractInterfaces(mainFile: string): {
+    name: string;
+    description: string;
+    payload: string;
+    returnType: string;
+    filePath: string;
+}[] {
+    function extractInterfaceDetails(filePath: string): {
+        name: string;
+        description: string;
+        payload: string;
+        returnType: string;
+        filePath: string;
+    }[] {
         const sourceCode = fs.readFileSync(filePath, 'utf8');
         const sourceFile = ts.createSourceFile(
             path.basename(filePath),
@@ -29,7 +39,7 @@ function extractInterfaces(mainFile: string) {
             filePath: string;
         }[] = [];
 
-        function visit(node: ts.Node) {
+        function visit(node: ts.Node): void {
             // Look for interface declarations
             if (ts.isInterfaceDeclaration(node)) {
                 const name = node.name.text;
@@ -54,7 +64,7 @@ function extractInterfaces(mainFile: string) {
                 // create a relative path to the file for adding to the table
                 const packageName = pkgjson.name;
                 const [
-                    packagePath,
+                    ,
                     relativeFilePath,
                 ] = filePath.split(packageName);
 
@@ -74,7 +84,7 @@ function extractInterfaces(mainFile: string) {
         return interfaces;
     }
 
-    function getImportedInterfaces(mainFilePath: string) {
+    function getImportedInterfaces(mainFilePath: string): string[] {
         const sourceCode = fs.readFileSync(mainFilePath, 'utf8');
         const sourceFile = ts.createSourceFile(
             path.basename(mainFilePath),
@@ -83,7 +93,7 @@ function extractInterfaces(mainFile: string) {
         );
         const importPaths: string[] = [];
 
-        function visit(node: ts.Node) {
+        function visit(node: ts.Node): void {
             // Collect import declarations
             if (
                 ts.isImportDeclaration(node) &&
@@ -116,42 +126,33 @@ function extractInterfaces(mainFile: string) {
     return extractedInterfaces;
 }
 
-// create table
+// extract interfaces from the action index file
 const interfaces = extractInterfaces(actionIndexFile).sort((a, b) =>
     a.name.toLowerCase().localeCompare(b.name.toLowerCase()),
 );
 
-let table = `
-| Action                                                                           | Description                                                                                        |
-| :------------------------------------------------------------------------------- | :------------------------------------------------------------------------------------------------- |
-`;
+// create table
+let table = `<table>
+    <tr>
+        <th>Actions</th>
+        <th>Description</th>
+    </tr>`;
 
-let rowBuffer = '';
+// add each interface to the table
 interfaces.forEach(({ name, description, filePath }) => {
-    // enter name and filepath
-    rowBuffer = `| [${name}](${'.'.concat(filePath)})`;
-
-    // fill up the rowBuffer with spaces
-    rowBuffer.length < 83
-        ? (rowBuffer += ' '.repeat(83 - rowBuffer.length))
-        : (rowBuffer += ' ');
-
-    // enter the description and cut away leading and trailing quotes
-    rowBuffer += `| ${description.slice(1, description.length - 1)}`;
-
-    // fill up the rowBuffer with spaces
-    rowBuffer.length < 184
-        ? (rowBuffer += ' '.repeat(184 - rowBuffer.length))
-        : (rowBuffer += ' ');
-
-    // finish the row with a newline
-    rowBuffer += '|\n';
-
-    // append the row to the table
-    table += rowBuffer;
+    table += `
+    <tr>
+        <td>
+            <a href="${'.'.concat(filePath)}"> ${name} </a>
+        </td>
+        <td>
+            ${description.slice(1, description.length - 1)}
+        </td>
+    </tr>`;
 });
 
-console.log(table);
+// close table
+table += `\n</table>\n`;
 
 // finally, write the markdown to the README.md file
 fs.access(templatePath, fs.constants.F_OK, (err) => {
