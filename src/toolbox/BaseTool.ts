@@ -95,15 +95,23 @@ export abstract class DIVEBaseTool {
 
     public onPointerDown(e: PointerEvent): void {
         switch (e.button) {
-            case 0:
+            case 0: {
                 this._pointerPrimaryDown = true;
                 break;
-            case 1:
+            }
+            case 1: {
                 this._pointerMiddleDown = true;
                 break;
-            case 2:
+            }
+            case 2: {
                 this._pointerSecondaryDown = true;
                 break;
+            }
+            default: {
+                console.warn(
+                    'DIVEBaseTool.onPointerDown: Unknown button: ' + e.button,
+                );
+            }
         }
 
         this._lastPointerDown.copy(this._pointer);

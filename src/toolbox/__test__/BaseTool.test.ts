@@ -1,7 +1,7 @@
 import { DIVEBaseTool } from '../BaseTool';
 import type DIVEOrbitControls from '../../controls/OrbitControls';
 import type { DIVEScene } from '../../scene/Scene';
-import { type Object3D, type Vector3 } from 'three';
+import { type Intersection, type Object3D, type Vector3 } from 'three';
 import { type DIVEHoverable } from '../../interface/Hoverable';
 import { type DIVEDraggable } from '../../interface/Draggable';
 
@@ -60,8 +60,36 @@ describe('dive/toolbox/DIVEBaseTool', () => {
 
     it('should raycast', () => {
         const toolBox = new abstractWrapper(mockScene, mockController);
+        const spy = jest
+            .spyOn(toolBox['_raycaster'], 'intersectObjects')
+            .mockImplementationOnce(() => {
+                return [
+                    {
+                        object: {
+                            visible: true,
+                        },
+                    } as unknown as Intersection,
+                ];
+            });
         expect(() => toolBox['raycast']()).not.toThrow();
+        expect(spy).toHaveBeenCalled();
+    });
+
+    it('should raycast with selection of objects', () => {
+        const toolBox = new abstractWrapper(mockScene, mockController);
+        const spy = jest
+            .spyOn(toolBox['_raycaster'], 'intersectObjects')
+            .mockImplementationOnce(() => {
+                return [
+                    {
+                        object: {
+                            visible: true,
+                        },
+                    } as unknown as Intersection,
+                ];
+            });
         expect(() => toolBox['raycast']([])).not.toThrow();
+        expect(spy).toHaveBeenCalled();
     });
 
     it('should return correct pointerAnyDown', () => {
@@ -96,12 +124,20 @@ describe('dive/toolbox/DIVEBaseTool', () => {
         expect(() =>
             toolBox.onPointerDown({ button: 0 } as PointerEvent),
         ).not.toThrow();
+
         expect(() =>
             toolBox.onPointerDown({ button: 1 } as PointerEvent),
         ).not.toThrow();
+
         expect(() =>
             toolBox.onPointerDown({ button: 2 } as PointerEvent),
         ).not.toThrow();
+
+        const spy = jest.spyOn(console, 'warn').mockImplementation();
+        expect(() =>
+            toolBox.onPointerDown({ button: 666 } as PointerEvent),
+        ).not.toThrow();
+        expect(spy).toHaveBeenCalled();
 
         toolBox['_intersects'] = [
             {

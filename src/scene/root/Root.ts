@@ -81,6 +81,11 @@ export class DIVERoot extends Object3D {
                 this.updateGroup(object);
                 break;
             }
+            default: {
+                console.warn(
+                    `DIVERoot.AddSceneObject: Unknown entity type: ${object.entityType}`,
+                );
+            }
         }
     }
 
@@ -106,6 +111,11 @@ export class DIVERoot extends Object3D {
             case 'group': {
                 this.updateGroup(object);
                 break;
+            }
+            default: {
+                console.warn(
+                    `DIVERoot.UpdateSceneObject: Unknown entity type: ${object.entityType}`,
+                );
             }
         }
     }
@@ -133,6 +143,11 @@ export class DIVERoot extends Object3D {
                 this.deleteGroup(object);
                 break;
             }
+            default: {
+                console.warn(
+                    `DIVERoot.DeleteSceneObject: Unknown entity type: ${object.entityType}`,
+                );
+            }
         }
     }
 
@@ -146,6 +161,11 @@ export class DIVERoot extends Object3D {
             case 'primitive': {
                 this.placeOnFloor(object);
                 break;
+            }
+            default: {
+                console.warn(
+                    `DIVERoot.PlaceOnFloor: Unknown entity type: ${object.entityType}`,
+                );
             }
         }
     }

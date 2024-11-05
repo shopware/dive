@@ -6,7 +6,8 @@ import {
     type COMPov,
     type COMEntity,
     type COMGeometry,
-    COMGroup,
+    type COMGroup,
+    type COMEntityType,
 } from '../../../com/types';
 import { type DIVEScene } from '../../Scene';
 import { DIVECommunication } from '../../../com/Communication';
@@ -927,5 +928,57 @@ describe('DIVE/scene/root/DIVERoot', () => {
                 visible: true,
             } as COMPrimitive),
         ).not.toThrow();
+    });
+
+    it('should warn if entity type is invalid while adding object', () => {
+        const spy = jest.spyOn(console, 'warn').mockImplementation(() => {});
+        expect(() =>
+            root.AddSceneObject({
+                id: 'id',
+                name: 'entity',
+                entityType: 'INVALID' as COMEntityType,
+                visible: true,
+            } as COMEntity),
+        ).not.toThrow();
+        expect(spy).toHaveBeenCalled();
+    });
+
+    it('should warn if entity type is invalid while updating object', () => {
+        const spy = jest.spyOn(console, 'warn').mockImplementation(() => {});
+        expect(() =>
+            root.UpdateSceneObject({
+                id: 'id',
+                name: 'entity',
+                entityType: 'INVALID' as COMEntityType,
+                visible: true,
+            } as COMEntity),
+        ).not.toThrow();
+        expect(spy).toHaveBeenCalled();
+    });
+
+    it('should warn if entity type is invalid while deleting object', () => {
+        const spy = jest.spyOn(console, 'warn').mockImplementation(() => {});
+        expect(() =>
+            root.DeleteSceneObject({
+                id: 'id',
+                name: 'entity',
+                entityType: 'INVALID' as COMEntityType,
+                visible: true,
+            } as COMEntity),
+        ).not.toThrow();
+        expect(spy).toHaveBeenCalled();
+    });
+
+    it('should warn if entity type is invalid while placing on floor', () => {
+        const spy = jest.spyOn(console, 'warn').mockImplementation(() => {});
+        expect(() =>
+            root.PlaceOnFloor({
+                id: 'id',
+                name: 'entity',
+                entityType: 'INVALID' as COMEntityType,
+                visible: true,
+            } as COMEntity),
+        ).not.toThrow();
+        expect(spy).toHaveBeenCalled();
     });
 });

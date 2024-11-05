@@ -8,7 +8,11 @@ import {
     type MeshStandardMaterial,
 } from 'three';
 import type { DIVEScene } from '../../scene/Scene';
-import { type COMMaterial, type COMGeometry } from '../../com/types';
+import {
+    type COMMaterial,
+    type COMGeometry,
+    type COMGeometryType,
+} from '../../com/types';
 
 const intersectObjectsMock = jest.fn();
 
@@ -219,10 +223,21 @@ describe('dive/primitive/DIVEPrimitive', () => {
     });
 
     it('should set geometry', () => {
+        jest.spyOn(console, 'warn');
         const geometry = {
-            name: 'geometry',
+            name: 'cube' as COMGeometryType,
         } as COMGeometry;
         expect(() => primitive.SetGeometry(geometry)).not.toThrow();
+        expect(console.warn).not.toHaveBeenCalled();
+    });
+
+    it('should warn when geometry is invalid', () => {
+        jest.spyOn(console, 'warn').mockImplementation(() => {});
+        const geometry = {
+            name: 'INVALID' as COMGeometryType,
+        } as COMGeometry;
+        expect(() => primitive.SetGeometry(geometry)).not.toThrow();
+        expect(console.warn).toHaveBeenCalled();
     });
 
     it('should place on floor', () => {

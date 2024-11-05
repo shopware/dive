@@ -66,7 +66,7 @@ export default class DIVEToolbox {
                 break;
             }
             default: {
-                throw new Error(`ToolBox.UseTool: Unknown tool: ${tool}`);
+                console.warn(`DIVEToolBox.UseTool: Unknown tool: ${tool}`);
             }
         }
     }

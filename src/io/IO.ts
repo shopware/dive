@@ -18,63 +18,40 @@ export class DIVEIO {
         type: FileType,
         url: string,
     ): Promise<DIVESceneFileType[FileType] | null> {
-        return this._importFromURL(type, url)
+        switch (type) {
+            case 'glb': {
+                return this._gltfIO.Import(url).catch((error) => {
+                    console.error(error);
+                    return null;
+                });
+            }
 
-            .catch((error) => {
-                console.error(error);
-
-                return null;
-            });
+            default: {
+                console.error('DIVEIO.Import: Unsupported file type: ' + type);
+                return Promise.reject();
+            }
+        }
     }
 
     public Export<FileType extends keyof DIVESceneFileType>(
         type: FileType,
     ): Promise<string | null> {
-        return this._exportToURL(type)
-
-            .catch((error) => {
-                console.error(error);
-
-                return null;
-            });
-    }
-
-    private _importFromURL<FileType extends keyof DIVESceneFileType>(
-        type: FileType,
-        url: string,
-    ): Promise<DIVESceneFileType[FileType]> {
         switch (type) {
             case 'glb': {
-                return this._gltfIO.Import(url);
+                return this._gltfIO
+                    .Export(this._scene, true, true)
+                    .then((data) => {
+                        return this._createBlobURL(data);
+                    })
+                    .catch((error) => {
+                        console.error(error);
+                        return null;
+                    });
             }
 
             default: {
-                return Promise.reject('Unsupported file type: ' + type);
-            }
-        }
-    }
-
-    private _exportToURL<FileType extends keyof DIVESceneFileType>(
-        type: FileType,
-    ): Promise<string> {
-        switch (type) {
-            case 'glb': {
-                return new Promise((resolve, reject) => {
-                    this._gltfIO
-                        .Export(this._scene, true, true)
-
-                        .then((data) => {
-                            resolve(this._createBlobURL(data));
-                        })
-
-                        .catch((error) => {
-                            reject(error);
-                        });
-                });
-            }
-
-            default: {
-                return Promise.reject('Unsupported file type: ' + type);
+                console.error('DIVEIO.Export: Unsupported file type: ' + type);
+                return Promise.reject();
             }
         }
     }

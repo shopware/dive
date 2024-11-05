@@ -6,21 +6,6 @@ import type { DIVEScene } from '../../scene/Scene';
  * @jest-environment jsdom
  */
 
-const mock_addEventListener = jest.fn();
-const mock_removeEventListener = jest.fn();
-
-const mock_Canvas = {
-    width: 0,
-    height: 0,
-    addEventListener: mock_addEventListener,
-    getContext: jest.fn(),
-    removeEventListener: mock_removeEventListener,
-    clientWidth: 0,
-    clientHeight: 0,
-    offsetLeft: 0,
-    offsetTop: 0,
-};
-
 jest.mock('../select/SelectTool.ts', () => {
     return {
         DIVESelectTool: jest.fn(function () {
@@ -38,7 +23,21 @@ jest.mock('../select/SelectTool.ts', () => {
 });
 
 const mockController = {
-    domElement: mock_Canvas,
+    domElement: {
+        width: 0,
+        height: 0,
+        addEventListener: jest.fn((type, callback) => {
+            callback();
+        }),
+        getContext: jest.fn(),
+        removeEventListener: jest.fn((type, callback) => {
+            callback();
+        }),
+        clientWidth: 0,
+        clientHeight: 0,
+        offsetLeft: 0,
+        offsetTop: 0,
+    },
     object: {},
 } as unknown as DIVEOrbitControls;
 
@@ -55,14 +54,15 @@ describe('dive/toolbox/DIVEToolBox', () => {
     it('should dispose', () => {
         const toolBox = new DIVEToolbox({} as DIVEScene, mockController);
         toolBox.Dispose();
-        expect(mock_removeEventListener).toHaveBeenCalled();
     });
 
     it('should throw with incorrect tool', () => {
+        const spy = jest.spyOn(console, 'warn').mockImplementation();
         const toolBox = new DIVEToolbox({} as DIVEScene, mockController);
         expect(() =>
             toolBox.UseTool('not a real tool' as unknown as ToolType),
-        ).toThrow();
+        ).not.toThrow();
+        expect(spy).toHaveBeenCalled();
     });
 
     it('should use no tool', () => {

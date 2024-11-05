@@ -10,7 +10,6 @@ const test_uuid = 'test-uuid';
 
 const mock_render = jest.fn();
 const mock_setSize = jest.fn();
-const mock_setAnimationLoop = jest.fn();
 
 jest.mock('three', () => {
     return {
@@ -27,7 +26,9 @@ jest.mock('three', () => {
             this.setSize = mock_setSize;
             this.setPixelRatio = jest.fn();
             this.render = mock_render;
-            this.setAnimationLoop = mock_setAnimationLoop;
+            this.setAnimationLoop = jest.fn((callback: (() => void) | null) => {
+                if (callback) callback();
+            });
             this.shadowMap = {
                 enabled: false,
             };

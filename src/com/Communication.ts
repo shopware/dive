@@ -292,6 +292,11 @@ export class DIVECommunication {
                 );
                 break;
             }
+            default: {
+                console.warn(
+                    `DIVECommunication.PerformAction: has been executed with unknown Action type ${action}`,
+                );
+            }
         }
 
         this.dispatch(action, payload);

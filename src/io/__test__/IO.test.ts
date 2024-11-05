@@ -58,15 +58,24 @@ describe('dive/io/DIVEIO', () => {
         expect(result).toStrictEqual(mockGLTF);
     });
 
-    it('should reject when importing with unsupported file type', async () => {
+    it('should handle rejection from gltf io import', async () => {
         jest.spyOn(console, 'error').mockImplementationOnce(() => {});
-
-        const result = await testIO.Import(
-            'unsupported file type' as 'glb',
-            'test.glb',
+        jest.spyOn(testIO['_gltfIO'], 'Import').mockRejectedValueOnce(
+            'THIS_IS_A_TEST_ERROR',
         );
 
-        expect(result).toStrictEqual(null);
+        expect(testIO.Import('glb', 'test.glb')).resolves.toEqual(null);
+    });
+
+    it('should reject when importing with unsupported file type', async () => {
+        const spy = jest
+            .spyOn(console, 'error')
+            .mockImplementationOnce(() => {});
+
+        expect(
+            testIO.Import('THIS_IS_NOT_A_VALID_FILE_TYPE' as 'glb', 'test.glb'),
+        ).rejects.not.toBeDefined();
+        expect(spy).toHaveBeenCalled();
     });
 
     it('should export to URL', async () => {
@@ -80,20 +89,28 @@ describe('dive/io/DIVEIO', () => {
 
         const result = await testIO.Export('glb');
         expect(result).toBeDefined();
+        expect(console.error).not.toHaveBeenCalled();
     });
 
-    it('should handle rejection from gltf io', async () => {
-        jest.spyOn(console, 'error').mockImplementationOnce(() => {});
-        jest.spyOn(testIO['_gltfIO'], 'Export').mockRejectedValueOnce('Error');
+    it('should handle rejection from gltf io export', async () => {
+        const spy = jest
+            .spyOn(console, 'error')
+            .mockImplementationOnce(() => {});
+        jest.spyOn(testIO['_gltfIO'], 'Export').mockRejectedValueOnce(
+            'THIS_IS_A_TEST_ERROR',
+        );
 
-        const result = await testIO.Export('glb');
-        expect(result).toBeDefined();
+        expect(testIO.Export('glb')).resolves.toEqual(null);
     });
 
     it('should reject when exporting with unsupported file type', async () => {
-        jest.spyOn(console, 'error').mockImplementationOnce(() => {});
+        const spy = jest
+            .spyOn(console, 'error')
+            .mockImplementationOnce(() => {});
 
-        const result = await testIO.Export('unsupported file type' as 'glb');
-        expect(result).toStrictEqual(null);
+        expect(
+            testIO.Export('THIS_IS_NOT_A_VALID_FILE_TYPE' as 'glb'),
+        ).rejects.not.toBeDefined();
+        expect(spy).toHaveBeenCalled();
     });
 });
