@@ -43,7 +43,10 @@ export class DIVEPrimitive extends DIVENode {
     }
 
     public SetGeometry(geometry: COMGeometry): void {
-        this._mesh.geometry = this.assembleGeometry(geometry);
+        const geo = this.assembleGeometry(geometry);
+        if (!geo) return;
+
+        this._mesh.geometry = geo;
         this._boundingBox.setFromObject(this._mesh);
     }
 
@@ -168,7 +171,7 @@ export class DIVEPrimitive extends DIVENode {
         }
     }
 
-    private assembleGeometry(geometry: COMGeometry): BufferGeometry {
+    private assembleGeometry(geometry: COMGeometry): BufferGeometry | null {
         switch (geometry.name.toLowerCase()) {
             case 'cylinder':
                 return this.createCylinderGeometry(geometry);
@@ -186,10 +189,10 @@ export class DIVEPrimitive extends DIVENode {
                 return this.createPlaneGeometry(geometry);
             default: {
                 console.warn(
-                    'DIVEPrimitive: Invalid geometry type:',
+                    'DIVEPrimitive.assembleGeometry: Invalid geometry type:',
                     geometry.name.toLowerCase(),
                 );
-                return new BufferGeometry();
+                return null;
             }
         }
     }
