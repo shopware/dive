@@ -277,7 +277,9 @@ export default class DIVE {
             },
         };
 
-        console.log(`DIVE ${pkgjson.version} initialized`);
+        console.log(
+            `DIVE ${pkgjson.version} initialized ${process.env.NODE_ENV === 'development' ? 'in development mode' : ''}`,
+        );
     }
 
     public Dispose(): void {
