@@ -7,6 +7,7 @@ import { type COMGeometry } from './COMGeometry';
 import { type COMMaterial } from './COMMaterial';
 import { type COMGroup } from './COMGroup';
 import { type COMEntityType } from './COMEntityType';
+import { type COMGeometryType } from './COMGeometryType';
 
 export type {
     COMEntity,
@@ -18,4 +19,5 @@ export type {
     COMMaterial,
     COMGroup,
     COMEntityType,
+    COMGeometryType,
 };

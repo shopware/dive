@@ -179,6 +179,7 @@ export class DIVEPrimitive extends DIVENode {
                 return this.createSphereGeometry(geometry);
             case 'pyramid':
                 return this.createPyramidGeometry(geometry);
+            case 'cube':
             case 'box':
                 return this.createBoxGeometry(geometry);
             case 'cone':

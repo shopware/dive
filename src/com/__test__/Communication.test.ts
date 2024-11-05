@@ -1,6 +1,6 @@
 import { DIVECommunication } from '../Communication';
 import '../types';
-import '../actions';
+import { type Actions } from '../actions';
 import '../actions/camera/movecamera';
 import '../actions/camera/resetcamera';
 import '../actions/camera/setcameralayer';
@@ -932,5 +932,11 @@ describe('dive/communication/DIVECommunication', () => {
             type: 'glb',
         });
         expect(result).toBe(url);
+    });
+
+    it('should warn of action is of invalid type ', () => {
+        jest.spyOn(console, 'warn').mockImplementationOnce(() => {});
+        testCom.PerformAction('INVALID_ACTION' as keyof Actions, {});
+        expect(console.warn).toHaveBeenCalledTimes(1);
     });
 });

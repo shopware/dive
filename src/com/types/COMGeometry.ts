@@ -1,5 +1,7 @@
+import { COMGeometryType } from './COMGeometryType';
+
 export type COMGeometry = {
-    name: string;
+    name: COMGeometryType;
     width: number;
     height: number;
     depth: number;
