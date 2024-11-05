@@ -1,6 +1,5 @@
 import { Mesh, MeshStandardMaterial, Raycaster, Vector3 } from 'three';
 import { PRODUCT_LAYER_MASK } from '../constant/VisibilityLayerMask';
-import { DIVECommunication } from '../com/Communication';
 import type { GLTF } from 'three/examples/jsm/Addons.js';
 import { findSceneRecursive } from '../helper/findSceneRecursive/findSceneRecursive';
 import { type COMMaterial } from '../com/types';

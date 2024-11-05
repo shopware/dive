@@ -10,7 +10,6 @@ import {
     SphereGeometry,
     Vector3,
 } from 'three';
-import { DIVECommunication } from '../com/Communication';
 import { PRODUCT_LAYER_MASK } from '../constant/VisibilityLayerMask';
 import { findSceneRecursive } from '../helper/findSceneRecursive/findSceneRecursive';
 import { DIVENode } from '../node/Node';
