@@ -66,7 +66,7 @@ export class DIVERoot extends Object3D {
                 break;
             }
             case 'light': {
-                this.updateLight(object);
+                this.updateLight(object as COMLight);
                 break;
             }
             case 'model': {
@@ -90,14 +90,14 @@ export class DIVERoot extends Object3D {
     }
 
     public UpdateSceneObject(
-        object: Partial<COMEntity> & { id: string },
+        object: Partial<COMEntity> & { id: string; entityType: string },
     ): void {
         switch (object.entityType) {
             case 'pov': {
                 break;
             }
             case 'light': {
-                this.updateLight(object);
+                this.updateLight(object as COMLight);
                 break;
             }
             case 'model': {
@@ -121,7 +121,7 @@ export class DIVERoot extends Object3D {
     }
 
     public DeleteSceneObject(
-        object: Partial<COMEntity> & { id: string },
+        object: Partial<COMEntity> & { id: string; entityType: string },
     ): void {
         switch (object.entityType) {
             case 'pov': {
@@ -151,7 +151,9 @@ export class DIVERoot extends Object3D {
         }
     }
 
-    public PlaceOnFloor(object: Partial<COMEntity> & { id: string }): void {
+    public PlaceOnFloor(
+        object: Partial<COMEntity> & { id: string; entityType: string },
+    ): void {
         switch (object.entityType) {
             case 'pov':
             case 'light': {
@@ -170,7 +172,13 @@ export class DIVERoot extends Object3D {
         }
     }
 
-    private updateLight(light: Partial<COMLight> & { id: string }): void {
+    private updateLight(
+        light: Partial<COMLight> & {
+            id: string;
+            entityType: string;
+            type: string;
+        },
+    ): void {
         let sceneObject = this.GetSceneObject(light);
         if (!sceneObject) {
             switch (light.type) {

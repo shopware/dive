@@ -516,9 +516,10 @@ export class DIVECommunication {
     private placeOnFloor(
         payload: Actions['PLACE_ON_FLOOR']['PAYLOAD'],
     ): Actions['PLACE_ON_FLOOR']['RETURN'] {
-        if (!this.registered.get(payload.id)) return false;
+        const object = this.registered.get(payload.id);
+        if (!object) return false;
 
-        this.scene.PlaceOnFloor(payload);
+        this.scene.PlaceOnFloor(object);
 
         return true;
     }

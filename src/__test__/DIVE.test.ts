@@ -208,6 +208,14 @@ describe('dive/DIVE', () => {
         expect(() => (window as any).DIVE.PrintScene()).not.toThrow();
     });
 
+    it('should instantiate in development NODE_ENV', () => {
+        process.env.NODE_ENV = 'development';
+        const dive = new DIVE();
+        expect(dive).toBeDefined();
+        expect((window as any).DIVE.PrintScene).toBeDefined();
+        expect(() => (window as any).DIVE.PrintScene()).not.toThrow();
+    });
+
     it('should dispose', () => {
         let dive = new DIVE();
         expect(() => dive.Dispose()).not.toThrow();

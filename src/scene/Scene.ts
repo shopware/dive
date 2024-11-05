@@ -64,18 +64,20 @@ export class DIVEScene extends Scene {
     }
 
     public UpdateSceneObject(
-        object: Partial<COMEntity> & { id: string },
+        object: Partial<COMEntity> & { id: string; entityType: string },
     ): void {
         this.Root.UpdateSceneObject(object);
     }
 
     public DeleteSceneObject(
-        object: Partial<COMEntity> & { id: string },
+        object: Partial<COMEntity> & { id: string; entityType: string },
     ): void {
         this.Root.DeleteSceneObject(object);
     }
 
-    public PlaceOnFloor(object: Partial<COMModel> & { id: string }): void {
+    public PlaceOnFloor(
+        object: Partial<COMModel> & { id: string; entityType: string },
+    ): void {
         this.Root.PlaceOnFloor(object);
     }
 }

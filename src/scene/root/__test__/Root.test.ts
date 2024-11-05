@@ -413,8 +413,6 @@ jest.mock('../../../group/Group.ts', () => {
 
 let root: DIVERoot;
 
-jest.spyOn(console, 'warn').mockImplementation(() => {});
-
 describe('DIVE/scene/root/DIVERoot', () => {
     beforeEach(() => {
         root = new DIVERoot();
@@ -714,6 +712,22 @@ describe('DIVE/scene/root/DIVERoot', () => {
                 parentId: 'does_not_exist',
             } as COMGroup),
         ).not.toThrow();
+
+        jest.spyOn(console, 'warn').mockImplementationOnce(() => {});
+        expect(() =>
+            root.UpdateSceneObject({
+                entityType: 'INVALID' as COMEntityType,
+            } as COMPrimitive),
+        ).not.toThrow();
+        expect(console.warn).toHaveBeenCalled();
+
+        jest.spyOn(console, 'warn').mockImplementationOnce(() => {});
+        expect(() =>
+            root.UpdateSceneObject({
+                entityType: undefined,
+            } as unknown as COMPrimitive),
+        ).not.toThrow();
+        expect(console.warn).toHaveBeenCalled();
     });
 
     it('should delete object', () => {
@@ -846,6 +860,22 @@ describe('DIVE/scene/root/DIVERoot', () => {
                 visible: true,
             } as COMGroup),
         ).not.toThrow();
+
+        jest.spyOn(console, 'warn').mockImplementationOnce(() => {});
+        expect(() =>
+            root.DeleteSceneObject({
+                entityType: 'INVALID' as COMEntityType,
+            } as COMPrimitive),
+        ).not.toThrow();
+        expect(console.warn).toHaveBeenCalled();
+
+        jest.spyOn(console, 'warn').mockImplementationOnce(() => {});
+        expect(() =>
+            root.DeleteSceneObject({
+                entityType: undefined,
+            } as unknown as COMPrimitive),
+        ).not.toThrow();
+        expect(console.warn).toHaveBeenCalled();
     });
 
     it('should place object on floor', () => {
@@ -928,10 +958,28 @@ describe('DIVE/scene/root/DIVERoot', () => {
                 visible: true,
             } as COMPrimitive),
         ).not.toThrow();
+
+        jest.spyOn(console, 'warn').mockImplementationOnce(() => {});
+        expect(() =>
+            root.PlaceOnFloor({
+                entityType: 'INVALID' as COMEntityType,
+            } as COMPrimitive),
+        ).not.toThrow();
+        expect(console.warn).toHaveBeenCalled();
+
+        jest.spyOn(console, 'warn').mockImplementationOnce(() => {});
+        expect(() =>
+            root.PlaceOnFloor({
+                entityType: undefined,
+            } as unknown as COMPrimitive),
+        ).not.toThrow();
+        expect(console.warn).toHaveBeenCalled();
     });
 
     it('should warn if entity type is invalid while adding object', () => {
-        const spy = jest.spyOn(console, 'warn').mockImplementation(() => {});
+        const spy = jest
+            .spyOn(console, 'warn')
+            .mockImplementationOnce(() => {});
         expect(() =>
             root.AddSceneObject({
                 id: 'id',
@@ -944,7 +992,9 @@ describe('DIVE/scene/root/DIVERoot', () => {
     });
 
     it('should warn if entity type is invalid while updating object', () => {
-        const spy = jest.spyOn(console, 'warn').mockImplementation(() => {});
+        const spy = jest
+            .spyOn(console, 'warn')
+            .mockImplementationOnce(() => {});
         expect(() =>
             root.UpdateSceneObject({
                 id: 'id',
@@ -957,7 +1007,9 @@ describe('DIVE/scene/root/DIVERoot', () => {
     });
 
     it('should warn if entity type is invalid while deleting object', () => {
-        const spy = jest.spyOn(console, 'warn').mockImplementation(() => {});
+        const spy = jest
+            .spyOn(console, 'warn')
+            .mockImplementationOnce(() => {});
         expect(() =>
             root.DeleteSceneObject({
                 id: 'id',
@@ -970,7 +1022,9 @@ describe('DIVE/scene/root/DIVERoot', () => {
     });
 
     it('should warn if entity type is invalid while placing on floor', () => {
-        const spy = jest.spyOn(console, 'warn').mockImplementation(() => {});
+        const spy = jest
+            .spyOn(console, 'warn')
+            .mockImplementationOnce(() => {});
         expect(() =>
             root.PlaceOnFloor({
                 id: 'id',

@@ -1,6 +1,5 @@
 import { Mesh, MeshStandardMaterial, Raycaster, Vector3 } from 'three';
 import { PRODUCT_LAYER_MASK } from '../constant/VisibilityLayerMask';
-import { DIVECommunication } from '../com/Communication';
 import type { GLTF } from 'three/examples/jsm/Addons.js';
 import { findSceneRecursive } from '../helper/findSceneRecursive/findSceneRecursive';
 import { type COMMaterial } from '../com/types';
@@ -111,16 +110,11 @@ export class DIVEModel extends DIVENode {
     }
 
     public PlaceOnFloor(): void {
+        const oldPos = this.position.clone();
         this.position.y = -this._boundingBox.min.y * this.scale.y;
-        DIVECommunication.get(this.userData.id)?.PerformAction(
-            'UPDATE_OBJECT',
-            {
-                id: this.userData.id,
-                position: this.position,
-                rotation: this.rotation,
-                scale: this.scale,
-            },
-        );
+        if (this.position.y === oldPos.y) return;
+
+        this.onMove();
     }
 
     public DropIt(): void {
@@ -163,15 +157,8 @@ export class DIVEModel extends DIVENode {
 
             // if the position changed, update the object in communication
             if (this.position.y === oldPos.y) return;
-            DIVECommunication.get(this.userData.id)?.PerformAction(
-                'UPDATE_OBJECT',
-                {
-                    id: this.userData.id,
-                    position: this.position,
-                    rotation: this.rotation,
-                    scale: this.scale,
-                },
-            );
+
+            this.onMove();
         }
     }
 }

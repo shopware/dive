@@ -255,6 +255,10 @@ describe('dive/primitive/DIVEPrimitive', () => {
         } as unknown as DIVECommunication;
         jest.spyOn(DIVECommunication, 'get').mockReturnValue(comMock);
 
+        const spy = jest
+            .spyOn(primitive, 'onMove')
+            .mockImplementation(() => {});
+
         const size = {
             x: 1,
             y: 1,
@@ -299,16 +303,16 @@ describe('dive/primitive/DIVEPrimitive', () => {
 
         expect(() => primitive.DropIt()).not.toThrow();
         expect(primitive.position.y).toBe(2.5);
-        expect(comMock.PerformAction).toHaveBeenCalledTimes(1);
+        expect(spy).toHaveBeenCalledTimes(1);
 
         expect(() => primitive.DropIt()).not.toThrow();
-        expect(comMock.PerformAction).toHaveBeenCalledTimes(1);
+        expect(spy).toHaveBeenCalledTimes(1);
 
-        // reset for PerformAction to be called again
+        // alter position so onMove will be called again
         primitive.position.y = 2;
         jest.spyOn(DIVECommunication, 'get').mockReturnValueOnce(undefined);
         expect(() => primitive.DropIt()).not.toThrow();
-        expect(comMock.PerformAction).toHaveBeenCalledTimes(1);
+        expect(spy).toHaveBeenCalledTimes(2);
     });
 
     it('should set geometry', () => {

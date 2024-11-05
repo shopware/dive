@@ -10,7 +10,6 @@ import {
     SphereGeometry,
     Vector3,
 } from 'three';
-import { DIVECommunication } from '../com/Communication';
 import { PRODUCT_LAYER_MASK } from '../constant/VisibilityLayerMask';
 import { findSceneRecursive } from '../helper/findSceneRecursive/findSceneRecursive';
 import { DIVENode } from '../node/Node';
@@ -107,16 +106,11 @@ export class DIVEPrimitive extends DIVENode {
     }
 
     public PlaceOnFloor(): void {
+        const oldPos = this.position.clone();
         this.position.y = -this._boundingBox.min.y * this.scale.y;
-        DIVECommunication.get(this.userData.id)?.PerformAction(
-            'UPDATE_OBJECT',
-            {
-                id: this.userData.id,
-                position: this.position,
-                rotation: this.rotation,
-                scale: this.scale,
-            },
-        );
+        if (this.position.y === oldPos.y) return;
+
+        this.onMove();
     }
 
     public DropIt(): void {
@@ -159,15 +153,8 @@ export class DIVEPrimitive extends DIVENode {
 
             // if the position changed, update the object in communication
             if (this.position.y === oldPos.y) return;
-            DIVECommunication.get(this.userData.id)?.PerformAction(
-                'UPDATE_OBJECT',
-                {
-                    id: this.userData.id,
-                    position: this.position,
-                    rotation: this.rotation,
-                    scale: this.scale,
-                },
-            );
+
+            this.onMove();
         }
     }
 

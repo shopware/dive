@@ -228,10 +228,14 @@ describe('dive/model/DIVEModel', () => {
     it('should place on floor', () => {
         model.userData.id = 'something';
 
+        const spy = jest.spyOn(model, 'onMove').mockImplementation(() => {});
+
         expect(() => model.PlaceOnFloor()).not.toThrow();
+        expect(spy).toHaveBeenCalledTimes(1);
 
         jest.spyOn(DIVECommunication, 'get').mockReturnValueOnce(undefined);
         expect(() => model.PlaceOnFloor()).not.toThrow();
+        expect(spy).toHaveBeenCalledTimes(1);
     });
 
     it('should drop it', () => {
@@ -239,6 +243,8 @@ describe('dive/model/DIVEModel', () => {
             PerformAction: jest.fn(),
         } as unknown as DIVECommunication;
         jest.spyOn(DIVECommunication, 'get').mockReturnValue(comMock);
+
+        const spy = jest.spyOn(model, 'onMove').mockImplementation(() => {});
 
         const size = {
             x: 1,
@@ -284,16 +290,16 @@ describe('dive/model/DIVEModel', () => {
 
         expect(() => model.DropIt()).not.toThrow();
         expect(model.position.y).toBe(2.5);
-        expect(comMock.PerformAction).toHaveBeenCalledTimes(1);
+        expect(spy).toHaveBeenCalledTimes(1);
 
         expect(() => model.DropIt()).not.toThrow();
-        expect(comMock.PerformAction).toHaveBeenCalledTimes(1);
+        expect(spy).toHaveBeenCalledTimes(1);
 
-        // reset for PerformAction to be called again
+        // alter position so onMove will be called again
         model.position.y = 2;
         jest.spyOn(DIVECommunication, 'get').mockReturnValueOnce(undefined);
         expect(() => model.DropIt()).not.toThrow();
-        expect(comMock.PerformAction).toHaveBeenCalledTimes(1);
+        expect(spy).toHaveBeenCalledTimes(2);
     });
 
     it('should set material', () => {
