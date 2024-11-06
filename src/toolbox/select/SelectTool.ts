@@ -34,15 +34,15 @@ export class DIVESelectTool extends DIVETransformTool {
     public Activate(): void {}
 
     public Select(selectable: DIVESelectable): void {
-        if (selectable.onSelect) selectable.onSelect();
-
         this.AttachGizmo(selectable);
+
+        if (selectable.onSelect) selectable.onSelect();
     }
 
     public Deselect(selectable: DIVESelectable): void {
-        if (selectable.onDeselect) selectable.onDeselect();
-
         this.DetachGizmo();
+
+        if (selectable.onDeselect) selectable.onDeselect();
     }
 
     public AttachGizmo(selectable: DIVESelectable): void {
