@@ -159,6 +159,12 @@ jest.mock('three', () => {
             this.setAttribute = jest.fn();
             this.setIndex = jest.fn();
             this.translate = jest.fn();
+            this.computeVertexNormals = jest.fn();
+            this.computeBoundingBox = jest.fn();
+            this.computeBoundingSphere = jest.fn();
+            return this;
+        }),
+        BufferAttribute: jest.fn(function () {
             return this;
         }),
         CylinderGeometry: jest.fn(function () {
