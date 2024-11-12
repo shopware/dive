@@ -7,4 +7,5 @@ export type COMLight = COMBaseEntity & {
     color: string | number;
     enabled: boolean;
     position?: Vector3Like;
+    rotation?: Vector3Like;
 };

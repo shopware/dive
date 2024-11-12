@@ -329,3 +329,4 @@ export * from './math/index.ts';
 
 export type * from './com/actions/index.ts';
 export type * from './com/types';
+export type * from './types';
