@@ -4,6 +4,7 @@ import type { GLTF } from 'three/examples/jsm/Addons.js';
 import { findSceneRecursive } from '../helper/findSceneRecursive/findSceneRecursive';
 import { type COMMaterial } from '../com/types';
 import { DIVENode } from '../node/Node';
+import { DIVECommunication } from '../com/Communication';
 
 /**
  * A basic model class.
@@ -23,6 +24,7 @@ export class DIVEModel extends DIVENode {
 
     public SetModel(gltf: GLTF): void {
         this.clear();
+        this._boundingBox.makeEmpty();
 
         gltf.scene.traverse((child) => {
             child.castShadow = true;
@@ -110,11 +112,25 @@ export class DIVEModel extends DIVENode {
     }
 
     public PlaceOnFloor(): void {
-        const oldPos = this.position.clone();
-        this.position.y = -this._boundingBox.min.y * this.scale.y;
-        if (this.position.y === oldPos.y) return;
+        // calculate and temporary save world position
+        const worldPos = this.getWorldPosition(this._positionWorldBuffer);
+        const oldWorldPos = worldPos.clone();
 
-        this.onMove();
+        // calculate the bottom center of the bounding box and set it to world posion
+        worldPos.y = -this._boundingBox.min.y * this.scale.y;
+
+        // skip any action when the position did not change
+        if (worldPos.y === oldWorldPos.y) return;
+
+        DIVECommunication.get(this.userData.id)?.PerformAction(
+            'UPDATE_OBJECT',
+            {
+                id: this.userData.id,
+                position: worldPos,
+                rotation: this.rotation,
+                scale: this.scale,
+            },
+        );
     }
 
     public DropIt(): void {

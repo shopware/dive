@@ -18,7 +18,11 @@ const intersectObjectsMock = jest.fn();
 
 jest.mock('three', () => {
     return {
-        Vector3: jest.fn(function (x: number, y: number, z: number) {
+        Vector3: jest.fn(function (
+            x: number = 0,
+            y: number = 0,
+            z: number = 0,
+        ) {
             this.x = x;
             this.y = y;
             this.z = z;
@@ -108,6 +112,9 @@ jest.mock('three', () => {
             this.mesh = new Mesh();
             this.traverse = jest.fn((callback) => {
                 callback(this.children[0]);
+            });
+            this.getWorldPosition = jest.fn(() => {
+                return this.position.clone();
             });
             return this;
         }),
@@ -241,12 +248,37 @@ describe('dive/primitive/DIVEPrimitive', () => {
     });
 
     it('should place on floor', () => {
+        const com = DIVECommunication.get('id')!;
+        const spyPerformAction = jest.spyOn(com, 'PerformAction');
+
         primitive.userData.id = 'something';
 
-        expect(() => primitive.PlaceOnFloor()).not.toThrow();
+        primitive['_boundingBox'] = {
+            min: new Vector3(0, -1, 0),
+        } as unknown as Box3;
 
-        jest.spyOn(DIVECommunication, 'get').mockReturnValueOnce(undefined);
         expect(() => primitive.PlaceOnFloor()).not.toThrow();
+        expect(spyPerformAction).toHaveBeenCalledWith(
+            'UPDATE_OBJECT',
+            expect.objectContaining({
+                position: expect.objectContaining({
+                    y: 1,
+                }),
+            }),
+        );
+
+        // skip any action when the position did not change
+        spyPerformAction.mockClear();
+        primitive.position.y = 1;
+        expect(() => primitive.PlaceOnFloor()).not.toThrow();
+        expect(spyPerformAction).not.toHaveBeenCalled();
+
+        // mock that the communication is not available
+        spyPerformAction.mockClear();
+        jest.spyOn(DIVECommunication, 'get').mockReturnValueOnce(undefined);
+        primitive.position.y = 0;
+        expect(() => primitive.PlaceOnFloor()).not.toThrow();
+        expect(spyPerformAction).not.toHaveBeenCalled();
     });
 
     it('should drop it', () => {

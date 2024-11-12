@@ -1,4 +1,4 @@
-import { Box3, Object3D, type Vector3Like } from 'three';
+import { Box3, Object3D, Vector3, type Vector3Like } from 'three';
 import { PRODUCT_LAYER_MASK } from '../constant/VisibilityLayerMask';
 import { DIVECommunication } from '../com/Communication';
 
@@ -14,6 +14,7 @@ export class DIVENode extends Object3D implements DIVESelectable, DIVEMovable {
 
     public gizmo: TransformControls | null = null;
 
+    protected _positionWorldBuffer: Vector3;
     protected _boundingBox: Box3;
 
     constructor() {
@@ -21,11 +22,24 @@ export class DIVENode extends Object3D implements DIVESelectable, DIVEMovable {
 
         this.layers.mask = PRODUCT_LAYER_MASK;
 
+        this._positionWorldBuffer = new Vector3();
         this._boundingBox = new Box3();
     }
 
     public SetPosition(position: Vector3Like): void {
-        this.position.set(position.x, position.y, position.z);
+        // if there is no parent, the object will be attached later and keep it's world position
+        if (!this.parent) {
+            this.position.set(position.x, position.y, position.z);
+            return;
+        }
+
+        // if we have a parent, we have to calculate the position in the parent's coordinate system to keep the world position
+        const newPosition = new Vector3(position.x, position.y, position.z);
+        this.position.copy(this.parent.worldToLocal(newPosition));
+
+        if ('isDIVEGroup' in this.parent) {
+            (this.parent as unknown as DIVEGroup).UpdateLineTo(this);
+        }
     }
 
     public SetRotation(rotation: Vector3Like): void {
@@ -46,7 +60,7 @@ export class DIVENode extends Object3D implements DIVESelectable, DIVEMovable {
             'UPDATE_OBJECT',
             {
                 id: this.userData.id,
-                position: this.position,
+                position: this.getWorldPosition(this._positionWorldBuffer),
                 rotation: this.rotation,
                 scale: this.scale,
             },
@@ -58,15 +72,11 @@ export class DIVENode extends Object3D implements DIVESelectable, DIVEMovable {
             'UPDATE_OBJECT',
             {
                 id: this.userData.id,
-                position: this.position,
+                position: this.getWorldPosition(this._positionWorldBuffer),
                 rotation: this.rotation,
                 scale: this.scale,
             },
         );
-
-        if (this.parent && 'isDIVEGroup' in this.parent) {
-            (this.parent as unknown as DIVEGroup).UpdateLineTo(this);
-        }
     }
 
     public onSelect(): void {

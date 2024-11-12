@@ -413,6 +413,8 @@ jest.mock('../../../group/Group.ts', () => {
 
 let root: DIVERoot;
 
+let spyConsoleWarn = jest.spyOn(console, 'warn').mockImplementation(() => {});
+
 describe('DIVE/scene/root/DIVERoot', () => {
     beforeEach(() => {
         root = new DIVERoot();
@@ -420,6 +422,10 @@ describe('DIVE/scene/root/DIVERoot', () => {
 
     afterEach(() => {
         jest.clearAllMocks();
+    });
+
+    afterAll(() => {
+        spyConsoleWarn.mockRestore();
     });
 
     it('should instantiate', () => {
@@ -474,6 +480,7 @@ describe('DIVE/scene/root/DIVERoot', () => {
             } as COMPov),
         ).not.toThrow();
 
+        spyConsoleWarn.mockClear();
         expect(() =>
             root.AddSceneObject({
                 id: 'id',
@@ -482,6 +489,9 @@ describe('DIVE/scene/root/DIVERoot', () => {
                 visible: true,
             } as COMLight),
         ).not.toThrow();
+        expect(spyConsoleWarn).toHaveBeenCalled();
+
+        spyConsoleWarn.mockClear();
         expect(() =>
             root.AddSceneObject({
                 id: 'id_scene',
@@ -491,6 +501,9 @@ describe('DIVE/scene/root/DIVERoot', () => {
                 type: 'scene',
             } as COMLight),
         ).not.toThrow();
+        expect(spyConsoleWarn).not.toHaveBeenCalled();
+
+        spyConsoleWarn.mockClear();
         expect(() =>
             root.AddSceneObject({
                 id: 'id_ambient',
@@ -500,6 +513,9 @@ describe('DIVE/scene/root/DIVERoot', () => {
                 type: 'ambient',
             } as COMLight),
         ).not.toThrow();
+        expect(spyConsoleWarn).not.toHaveBeenCalled();
+
+        spyConsoleWarn.mockClear();
         expect(() =>
             root.AddSceneObject({
                 id: 'id_point',
@@ -514,6 +530,7 @@ describe('DIVE/scene/root/DIVERoot', () => {
                 parentId: 'id',
             } as COMLight),
         ).not.toThrow();
+        expect(spyConsoleWarn).not.toHaveBeenCalled();
 
         expect(() =>
             root.AddSceneObject({
@@ -754,6 +771,7 @@ describe('DIVE/scene/root/DIVERoot', () => {
             } as unknown as Object3D,
         ];
 
+        spyConsoleWarn.mockClear();
         expect(() =>
             root.DeleteSceneObject({
                 id: 'does_not_exist',
@@ -762,6 +780,8 @@ describe('DIVE/scene/root/DIVERoot', () => {
                 visible: true,
             } as COMPov),
         ).not.toThrow();
+
+        spyConsoleWarn.mockClear();
         expect(() =>
             root.DeleteSceneObject({
                 id: 'id',
@@ -770,7 +790,9 @@ describe('DIVE/scene/root/DIVERoot', () => {
                 visible: true,
             } as COMPov),
         ).not.toThrow();
+        expect(spyConsoleWarn).not.toHaveBeenCalled();
 
+        spyConsoleWarn.mockClear();
         expect(() =>
             root.DeleteSceneObject({
                 id: 'does_not_exist',
@@ -780,6 +802,9 @@ describe('DIVE/scene/root/DIVERoot', () => {
                 type: 'scene',
             } as COMLight),
         ).not.toThrow();
+        expect(spyConsoleWarn).toHaveBeenCalled();
+
+        spyConsoleWarn.mockClear();
         expect(() =>
             root.DeleteSceneObject({
                 id: 'id',
@@ -789,7 +814,9 @@ describe('DIVE/scene/root/DIVERoot', () => {
                 type: 'scene',
             } as COMLight),
         ).not.toThrow();
+        expect(spyConsoleWarn).not.toHaveBeenCalled();
 
+        spyConsoleWarn.mockClear();
         expect(() =>
             root.DeleteSceneObject({
                 id: 'does_not_exist',
@@ -798,6 +825,9 @@ describe('DIVE/scene/root/DIVERoot', () => {
                 visible: true,
             } as COMModel),
         ).not.toThrow();
+        expect(spyConsoleWarn).toHaveBeenCalled();
+
+        spyConsoleWarn.mockClear();
         expect(() =>
             root.DeleteSceneObject({
                 id: 'id',
@@ -815,6 +845,9 @@ describe('DIVE/scene/root/DIVERoot', () => {
                 visible: true,
             } as COMPrimitive),
         ).not.toThrow();
+        expect(spyConsoleWarn).toHaveBeenCalled();
+
+        spyConsoleWarn.mockClear();
         expect(() =>
             root.DeleteSceneObject({
                 id: 'id',
@@ -823,7 +856,9 @@ describe('DIVE/scene/root/DIVERoot', () => {
                 visible: true,
             } as COMPrimitive),
         ).not.toThrow();
+        expect(spyConsoleWarn).not.toHaveBeenCalled();
 
+        spyConsoleWarn.mockClear();
         expect(() =>
             root.DeleteSceneObject({
                 id: 'does_not_exist',
@@ -832,6 +867,9 @@ describe('DIVE/scene/root/DIVERoot', () => {
                 visible: true,
             } as COMGroup),
         ).not.toThrow();
+        expect(spyConsoleWarn).toHaveBeenCalled();
+
+        spyConsoleWarn.mockClear();
         expect(() =>
             root.DeleteSceneObject({
                 id: 'id',
@@ -840,6 +878,7 @@ describe('DIVE/scene/root/DIVERoot', () => {
                 visible: true,
             } as COMGroup),
         ).not.toThrow();
+        expect(spyConsoleWarn).not.toHaveBeenCalled();
 
         const firstFind = root.GetSceneObject({ id: 'id' });
         jest.spyOn(root, 'GetSceneObject').mockReturnValueOnce({

@@ -14,6 +14,7 @@ import { PRODUCT_LAYER_MASK } from '../constant/VisibilityLayerMask';
 import { findSceneRecursive } from '../helper/findSceneRecursive/findSceneRecursive';
 import { DIVENode } from '../node/Node';
 import { type COMGeometry, type COMMaterial } from '../com/types';
+import { DIVECommunication } from '../com/Communication';
 
 /**
  * A basic model class.
@@ -24,7 +25,6 @@ import { type COMGeometry, type COMMaterial } from '../com/types';
  *
  * @module
  */
-
 export class DIVEPrimitive extends DIVENode {
     readonly isDIVEPrimitive: true = true;
 
@@ -106,11 +106,25 @@ export class DIVEPrimitive extends DIVENode {
     }
 
     public PlaceOnFloor(): void {
-        const oldPos = this.position.clone();
-        this.position.y = -this._boundingBox.min.y * this.scale.y;
-        if (this.position.y === oldPos.y) return;
+        // calculate and temporary save world position
+        const worldPos = this.getWorldPosition(this._positionWorldBuffer);
+        const oldWorldPos = worldPos.clone();
 
-        this.onMove();
+        // calculate the bottom center of the bounding box and set it to world posion
+        worldPos.y = -this._boundingBox.min.y * this.scale.y;
+
+        // skip any action when the position did not change
+        if (worldPos.y === oldWorldPos.y) return;
+
+        DIVECommunication.get(this.userData.id)?.PerformAction(
+            'UPDATE_OBJECT',
+            {
+                id: this.userData.id,
+                position: worldPos,
+                rotation: this.rotation,
+                scale: this.scale,
+            },
+        );
     }
 
     public DropIt(): void {
