@@ -1,13 +1,17 @@
 import { DIVENode } from '../Node';
 import { DIVECommunication } from '../../com/Communication';
-import { GLTF } from 'three/examples/jsm/loaders/GLTFLoader';
 import { Vector3, Box3, Mesh, Color, Euler } from 'three';
+import { type DIVEGroup } from '../../group/Group';
 
 const intersectObjectsMock = jest.fn();
 
 jest.mock('three', () => {
     return {
-        Vector3: jest.fn(function (x: number, y: number, z: number) {
+        Vector3: jest.fn(function (
+            x: number = 0,
+            y: number = 0,
+            z: number = 0,
+        ) {
             this.x = x;
             this.y = y;
             this.z = z;
@@ -91,6 +95,9 @@ jest.mock('three', () => {
             this.mesh = new Mesh();
             this.traverse = jest.fn((callback) => {
                 callback(this.children[0]);
+            });
+            this.getWorldPosition = jest.fn(() => {
+                return new Vector3();
             });
             return this;
         }),
@@ -177,7 +184,32 @@ describe('dive/node/DIVENode', () => {
     });
 
     it('should set position', () => {
-        expect(() => node.SetPosition({ x: 0, y: 0, z: 0 })).not.toThrow();
+        const spySet = jest.spyOn(node.position, 'set');
+        const spyCopy = jest.spyOn(node.position, 'copy');
+
+        // without a parent, the node should only set it's local position
+        node.parent = null;
+        expect(() => node.SetPosition({ x: 1, y: 2, z: 3 })).not.toThrow();
+        expect(spySet).toHaveBeenCalledWith(1, 2, 3);
+        expect(spyCopy).not.toHaveBeenCalled();
+
+        // with a parent, the node should set it's position relative to the parent
+        spySet.mockClear();
+        spyCopy.mockClear();
+        node.parent = {
+            worldToLocal: jest.fn(() => new Vector3(4, 5, 6)),
+            isDIVEGroup: true,
+            UpdateLineTo: jest.fn(),
+        } as unknown as DIVENode;
+        const spyUpdateLineTo = jest.spyOn(
+            node.parent as DIVEGroup,
+            'UpdateLineTo',
+        );
+        expect(() => node.SetPosition({ x: 4, y: 5, z: 6 })).not.toThrow();
+        expect(spySet).not.toHaveBeenCalled();
+        expect(spyCopy).toHaveBeenCalledWith(
+            expect.objectContaining({ x: 4, y: 5, z: 6 }),
+        );
     });
 
     it('should set rotation', () => {
