@@ -1,5 +1,6 @@
 import {
     BoxGeometry,
+    BufferAttribute,
     BufferGeometry,
     Color,
     ConeGeometry,
@@ -173,12 +174,18 @@ export class DIVEPrimitive extends DIVENode {
     }
 
     private assembleGeometry(geometry: COMGeometry): BufferGeometry | null {
+        // reset material to smooth shading
+        (this._mesh.material as MeshStandardMaterial).flatShading = false;
+
         switch (geometry.name.toLowerCase()) {
             case 'cylinder':
                 return this.createCylinderGeometry(geometry);
             case 'sphere':
                 return this.createSphereGeometry(geometry);
             case 'pyramid':
+                // set material to flat shading for pyramid
+                (this._mesh.material as MeshStandardMaterial).flatShading =
+                    true;
                 return this.createPyramidGeometry(geometry);
             case 'cube':
             case 'box':
@@ -216,16 +223,36 @@ export class DIVEPrimitive extends DIVENode {
     }
 
     private createPyramidGeometry(geometry: COMGeometry): BufferGeometry {
-        const geo = new ConeGeometry(
-            geometry.width / 2,
-            geometry.height,
-            4,
-            1,
-            true,
+        // prettier-multiline-arrays-next-line-pattern: 3
+        const vertices = new Float32Array([
+            -geometry.width / 2, 0, -geometry.depth / 2, // 0
+            geometry.width / 2, 0, -geometry.depth / 2, // 1
+            geometry.width / 2, 0, geometry.depth / 2, // 2
+            -geometry.width / 2, 0, geometry.depth / 2, // 3
+            0, geometry.height, 0,
+        ]);
+
+        // prettier-multiline-arrays-next-line-pattern: 3
+        const indices = new Uint16Array([
+            0, 1, 2,
+            0, 2, 3,
+            0, 4, 1,
+            1, 4, 2,
+            2, 4, 3,
+            3, 4, 0,
+        ]);
+
+        const geometryBuffer = new BufferGeometry();
+        geometryBuffer.setAttribute(
+            'position',
+            new BufferAttribute(vertices, 3),
         );
-        geo.rotateY(Math.PI / 4);
-        geo.translate(0, geometry.height / 2, 0);
-        return geo;
+        geometryBuffer.setIndex(new BufferAttribute(indices, 1));
+        geometryBuffer.computeVertexNormals();
+
+        geometryBuffer.computeBoundingBox();
+        geometryBuffer.computeBoundingSphere();
+        return geometryBuffer;
     }
 
     private createBoxGeometry(geometry: COMGeometry): BufferGeometry {
