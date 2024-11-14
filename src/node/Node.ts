@@ -67,6 +67,9 @@ export class DIVENode extends Object3D implements DIVESelectable, DIVEMovable {
         );
     }
 
+    /**
+     * Can be called when the object is moved from a foreign object (gizmo, parent, etc.) to update the object's position.
+     */
     public onMove(): void {
         DIVECommunication.get(this.userData.id)?.PerformAction(
             'UPDATE_OBJECT',
