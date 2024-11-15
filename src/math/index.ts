@@ -4,6 +4,8 @@ import roundExp from './round/roundExp.ts';
 import signedAngleTo from './signedAngleTo/signedAngleTo.ts';
 import toFixedExp from './toFixed/toFixedExp.ts';
 import truncateExp from './truncate/truncateExp.ts';
+import radToDeg from './radToDeg/radToDeg.ts';
+import degToRad from './degToRad/degToRad.ts';
 
 export const DIVEMath: {
     ceilExp: typeof ceilExp;
@@ -12,6 +14,8 @@ export const DIVEMath: {
     toFixedExp: typeof toFixedExp;
     truncateExp: typeof truncateExp;
     signedAngleTo: typeof signedAngleTo;
+    radToDeg: typeof radToDeg;
+    degToRad: typeof degToRad;
 } = {
     ceilExp,
     floorExp,
@@ -19,4 +23,6 @@ export const DIVEMath: {
     toFixedExp,
     truncateExp,
     signedAngleTo,
+    radToDeg,
+    degToRad,
 };

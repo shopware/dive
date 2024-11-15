@@ -1,4 +1,10 @@
-import { BufferGeometry, Line, LineDashedMaterial, Vector3 } from 'three';
+import {
+    BufferGeometry,
+    Line,
+    LineDashedMaterial,
+    Vector3,
+    Vector3Like,
+} from 'three';
 import { DIVENode } from '../node/Node';
 import { type Object3D } from 'three';
 import { type DIVESceneObject } from '../types';
@@ -18,6 +24,15 @@ export class DIVEGroup extends DIVENode {
         this._members = [];
 
         this._lines = [];
+    }
+
+    public SetPosition(position: Vector3Like): void {
+        super.SetPosition(position);
+        this._members.forEach((member) => {
+            if ('isDIVENode' in member) {
+                (member as DIVENode).onMove();
+            }
+        });
     }
 
     public SetLinesVisibility(visible: boolean, object?: Object3D): void {
