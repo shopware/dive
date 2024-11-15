@@ -26,6 +26,15 @@ export class DIVEGroup extends DIVENode {
         this._lines = [];
     }
 
+    public SetPosition(position: Vector3Like): void {
+        super.SetPosition(position);
+        this._members.forEach((member) => {
+            if ('isDIVENode' in member) {
+                (member as DIVENode).onMove();
+            }
+        });
+    }
+
     public SetLinesVisibility(visible: boolean, object?: Object3D): void {
         if (!object) {
             this._lines.forEach((line) => {
@@ -104,15 +113,6 @@ export class DIVEGroup extends DIVENode {
             object.position.clone(),
         ]);
         line.computeLineDistances();
-    }
-
-    public SetPosition(position: Vector3Like): void {
-        super.SetPosition(position);
-        this._members.forEach((member) => {
-            if ('isDIVENode' in member) {
-                (member as DIVENode).onMove();
-            }
-        });
     }
 
     // public SetBoundingBoxVisibility(visible: boolean): void {
