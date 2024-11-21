@@ -219,6 +219,7 @@ let model: DIVEModel;
 
 describe('dive/model/DIVEModel', () => {
     beforeEach(() => {
+        jest.clearAllMocks();
         model = new DIVEModel();
     });
 
@@ -241,7 +242,8 @@ describe('dive/model/DIVEModel', () => {
         model.userData.id = 'something';
 
         model['_boundingBox'] = {
-            min: new Vector3(0, -1, 0),
+            min: new Vector3(0, 1, 0),
+            max: new Vector3(1, 4, 1),
         } as unknown as Box3;
 
         expect(() => model.PlaceOnFloor()).not.toThrow();
@@ -249,14 +251,14 @@ describe('dive/model/DIVEModel', () => {
             'UPDATE_OBJECT',
             expect.objectContaining({
                 position: expect.objectContaining({
-                    y: 1,
+                    y: 1.5,
                 }),
             }),
         );
 
         // skip any action when the position did not change
         spyPerformAction.mockClear();
-        model.position.y = 1;
+        model.position.y = 1.5;
         expect(() => model.PlaceOnFloor()).not.toThrow();
         expect(spyPerformAction).not.toHaveBeenCalled();
 
