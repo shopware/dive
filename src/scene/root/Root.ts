@@ -329,7 +329,7 @@ export class DIVERoot extends Object3D {
 
         this.detachTransformControls(sceneObject);
 
-        this.remove(sceneObject);
+        sceneObject.parent!.remove(sceneObject);
     }
 
     private deleteModel(model: Partial<COMModel> & { id: string }): void {
@@ -343,7 +343,7 @@ export class DIVERoot extends Object3D {
 
         this.detachTransformControls(sceneObject);
 
-        this.remove(sceneObject);
+        sceneObject.parent!.remove(sceneObject);
     }
 
     private deletePrimitive(
@@ -359,7 +359,7 @@ export class DIVERoot extends Object3D {
 
         this.detachTransformControls(sceneObject);
 
-        this.remove(sceneObject);
+        sceneObject.parent!.remove(sceneObject);
     }
 
     private deleteGroup(group: Partial<COMGroup> & { id: string }): void {
