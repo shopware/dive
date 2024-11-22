@@ -260,7 +260,8 @@ describe('dive/primitive/DIVEPrimitive', () => {
         primitive.userData.id = 'something';
 
         primitive['_boundingBox'] = {
-            min: new Vector3(0, -1, 0),
+            min: new Vector3(0, 1, 0),
+            max: new Vector3(0, 4, 0),
         } as unknown as Box3;
 
         expect(() => primitive.PlaceOnFloor()).not.toThrow();
@@ -268,14 +269,14 @@ describe('dive/primitive/DIVEPrimitive', () => {
             'UPDATE_OBJECT',
             expect.objectContaining({
                 position: expect.objectContaining({
-                    y: 1,
+                    y: 1.5,
                 }),
             }),
         );
 
         // skip any action when the position did not change
         spyPerformAction.mockClear();
-        primitive.position.y = 1;
+        primitive.position.y = 1.5;
         expect(() => primitive.PlaceOnFloor()).not.toThrow();
         expect(spyPerformAction).not.toHaveBeenCalled();
 

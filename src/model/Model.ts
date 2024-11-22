@@ -117,7 +117,7 @@ export class DIVEModel extends DIVENode {
         const oldWorldPos = worldPos.clone();
 
         // calculate the bottom center of the bounding box and set it to world posion
-        worldPos.y = -this._boundingBox.min.y * this.scale.y;
+        worldPos.y = (this._boundingBox.max.y - this._boundingBox.min.y) / 2;
 
         // skip any action when the position did not change
         if (worldPos.y === oldWorldPos.y) return;
