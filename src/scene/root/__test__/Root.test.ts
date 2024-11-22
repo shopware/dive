@@ -870,6 +870,13 @@ describe('DIVE/scene/root/DIVERoot', () => {
         expect(spyConsoleWarn).toHaveBeenCalled();
 
         spyConsoleWarn.mockClear();
+        root['detachTransformControls'] = jest.fn();
+        jest.spyOn(root, 'GetSceneObject').mockReturnValueOnce({
+            members: [new Object3D()],
+            parent: {
+                remove: jest.fn(),
+            },
+        } as unknown as DIVESceneObject);
         expect(() =>
             root.DeleteSceneObject({
                 id: 'id',
@@ -883,6 +890,7 @@ describe('DIVE/scene/root/DIVERoot', () => {
         const firstFind = root.GetSceneObject({ id: 'id' });
         jest.spyOn(root, 'GetSceneObject').mockReturnValueOnce({
             ...firstFind,
+            members: [new Object3D()],
             parent: sceneParent,
             children: [
                 {

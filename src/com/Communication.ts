@@ -444,6 +444,13 @@ export class DIVECommunication {
 
         this.registered.delete(payload.id);
 
+        // detach from parent
+        Array.from(this.registered.values()).forEach((object) => {
+            if (!object.parentId) return;
+            if (object.parentId !== payload.id) return;
+            object.parentId = null;
+        });
+
         this.scene.DeleteSceneObject(deletedObject);
 
         return true;

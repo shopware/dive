@@ -363,7 +363,7 @@ export class DIVERoot extends Object3D {
     }
 
     private deleteGroup(group: Partial<COMGroup> & { id: string }): void {
-        const sceneObject = this.GetSceneObject(group);
+        const sceneObject = this.GetSceneObject<DIVEGroup>(group);
         if (!sceneObject) {
             console.warn(
                 `DIVERoot.deleteGroup: Group with id ${group.id} not found`,
@@ -373,8 +373,8 @@ export class DIVERoot extends Object3D {
 
         this.detachTransformControls(sceneObject);
 
-        for (let i = sceneObject.children.length - 1; i >= 0; i--) {
-            this.attach(sceneObject.children[i]);
+        for (let i = sceneObject.members.length - 1; i >= 0; i--) {
+            this.attach(sceneObject.members[i]);
         }
 
         sceneObject.parent!.remove(sceneObject);

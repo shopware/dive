@@ -12,7 +12,11 @@ import { type DIVESceneObject } from '../types';
 export class DIVEGroup extends DIVENode {
     readonly isDIVEGroup: true = true;
 
-    private _members: Object3D[]; // lines to children
+    private _members: Object3D[]; // children objects
+
+    public get members(): Object3D[] {
+        return this._members;
+    }
 
     private _lines: Line[]; // lines to children
 
