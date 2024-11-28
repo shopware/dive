@@ -55,8 +55,8 @@
         "typescript-eslint": "^7.7.1"
     },
     "scripts": {
-        "build": "tsup",
-        "dev": "tsup --watch",
+        "build": "tsup --env.DIVE_NODE_ENV production",
+        "dev": "tsup --watch --env.DIVE_NODE_ENV development",
         "lint": "eslint",
         "lint:actions": "yarn lint:actions:transpile && yarn lint:actions:check && yarn lint:actions:cleanup",
         "lint:actions:transpile": "yarn tsc --resolveJsonModule --esModuleInterop ci/lint/lint-actions.ts && mv ci/lint/lint-actions.js ci/lint/lint-actions.cjs",
