@@ -304,6 +304,11 @@ export class DIVECommunication {
                 );
                 break;
             }
+            case 'LAUNCH_AR': {
+                this.ar.Launch();
+                returnValue = true;
+                break;
+            }
             default: {
                 console.warn(
                     `DIVECommunication.PerformAction: has been executed with unknown Action type ${action}`,

@@ -32,6 +32,7 @@ export class DIVEARQuickLook {
 
                 // launch ARQuickLook
                 const a = document.createElement('a');
+                a.innerHTML = '<picture></picture>'; // This is actually needed so the viewer opens instantly
                 a.rel = 'ar';
                 a.href = url;
                 a.download = 'scene.usdz';
