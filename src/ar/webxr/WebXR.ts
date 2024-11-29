@@ -35,8 +35,7 @@ export class DIVEWebXR {
     private static _crosshair: DIVEWebXRCrosshair | null = null;
 
     // placement members
-    private static _hangNode: Object3D;
-    private static _hangOffset = new Vector3(0, -0.05, -0.25)
+    private static _handOffset = new Vector3(0, -0.05, -0.25)
     private static _placed = false;
 
     public static async Launch(renderer: DIVERenderer, scene: DIVEScene, controller: DIVEOrbitControls): Promise<void> {
@@ -89,8 +88,8 @@ export class DIVEWebXR {
         if (!this._currentSession) return;
 
         if (!this._placed) {
-            this._hangNode.position.copy(this._hangOffset.clone().applyMatrix4(this._renderer.xr.getCamera().matrixWorld));
-            this._hangNode.quaternion.copy(new Quaternion().setFromRotationMatrix(this._renderer.xr.getCamera().matrixWorld));
+            this._scene.XRRoot.XRHandNode.position.copy(this._handOffset.clone().applyMatrix4(this._renderer.xr.getCamera().matrixWorld));
+            this._scene.XRRoot.XRHandNode.quaternion.copy(new Quaternion().setFromRotationMatrix(this._renderer.xr.getCamera().matrixWorld));
         }
 
         if (this._raycaster) {
@@ -189,10 +188,6 @@ export class DIVEWebXR {
         this._crosshair.visible = false;
         this._scene.add(this._crosshair);
 
-        // initialize hang node
-        this._hangNode = new Object3D();
-        this._scene.XRRoot.add(this._hangNode);
-
         // hang current scene children to hang node
         const children: Object3D[] = [];
         this._scene.Root.ModelRoot.children.forEach((child) => {
@@ -207,7 +202,7 @@ export class DIVEWebXR {
             clone.position.set(0, 0, 0);
             children.push(clone);
         });
-        this._hangNode.add(...children);
+        this._scene.XRRoot.XRHandNode.add(...children);
     }
 
     private static async initRaycaster(): Promise<void> {
@@ -249,14 +244,13 @@ export class DIVEWebXR {
         }
 
         // clear hang node and remove attached models
-        this._hangNode.clear();
-        this._scene.XRRoot.remove(this._hangNode);
+        this._scene.XRRoot.XRHandNode.clear();
         this._scene.XRRoot.XRModelRoot.clear();
     }
 
     private static placeObjects(pose: XRPose): void {
         this._scene.XRRoot.matrix.fromArray(pose.transform.matrix);
-        [...this._hangNode.children].forEach((child) => {
+        [...this._scene.XRRoot.XRHandNode.children].forEach((child) => {
             this._scene.XRRoot.XRModelRoot.add(child);
         });
         this._placed = true;

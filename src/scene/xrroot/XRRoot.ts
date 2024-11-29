@@ -8,6 +8,7 @@ import { type DIVEScene } from "../Scene";
 export class DIVEXRRoot extends Object3D {
     private _xrLightRoot: DIVEXRLightRoot;
     private _xrModelRoot: DIVEModelRoot;
+    private _xrHandNode: Object3D;
 
     public get XRModelRoot(): DIVEModelRoot {
         return this._xrModelRoot;
@@ -17,16 +18,25 @@ export class DIVEXRRoot extends Object3D {
         return this._xrLightRoot;
     }
 
+    public get XRHandNode(): Object3D {
+        return this._xrHandNode;
+    }
+
     constructor(scene: DIVEScene) {
         super();
         this.name = "XRRoot";
 
-        this._xrLightRoot = new DIVEXRLightRoot(scene);
-        this.add(this._xrLightRoot);
-
         this._xrModelRoot = new DIVEModelRoot();
         this._xrModelRoot.name = "XRModelRoot";
         this.add(this._xrModelRoot);
+
+        this._xrLightRoot = new DIVEXRLightRoot(scene);
+        this._xrLightRoot.name = "XRLightRoot";
+        this.add(this._xrLightRoot);
+
+        this._xrHandNode = new Object3D();
+        this._xrHandNode.name = "XRHandNode";
+        this.add(this._xrHandNode);
     }
 
     public CopyFromRoot(root: DIVERoot): void {
