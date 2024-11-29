@@ -1,4 +1,4 @@
-import { DIVEInfo } from "../info/Info";
+import { DIVEInfo, WebXRUnsupportedReason } from "../info/Info";
 import { DIVEARQuickLook } from "./arquicklook/ARQuickLook";
 import { DIVEWebXR } from "./webxr/WebXR";
 import { type DIVEScene } from "../scene/Scene";
@@ -33,7 +33,7 @@ export class DIVEAR {
         if (system === 'Android') {
             const support = await DIVEInfo.GetSupportsWebXR();
             if (!support) {
-                console.log('WebXR not supported. Reason: ' + DIVEInfo.GetWebXRUnsupportedReason());
+                console.log('WebXR not supported. Reason: ' + WebXRUnsupportedReason[DIVEInfo.GetWebXRUnsupportedReason()!]);
                 return Promise.reject();
             }
 
@@ -44,5 +44,6 @@ export class DIVEAR {
             return Promise.resolve();
         }
 
+        console.log('AR not supported. Not a mobile system. (System is ' + system + ')');
     }
 }

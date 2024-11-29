@@ -40,13 +40,24 @@ export class DIVEWebXR {
         // add end session event listener
         DIVEWebXR._overlay.CloseButton.addEventListener('click', () => session.end());
 
+        console.log('Session started', this._currentSession);
+
         // build up session
         renderer.xr.setReferenceSpaceType(this._referenceSpaceType);
         await renderer.xr.setSession(session);
         DIVEWebXR._overlay.Element.style.display = '';
         this._currentSession = session;
 
+        // start session
+        this._onSessionStarted();
+
         return Promise.resolve();
+    }
+
+    private static _onSessionStarted(): void {
+        console.log('Session started', this._currentSession);
+        if (!this._currentSession) return;
+
     }
 
     private static _onSessionEnded(): void {
