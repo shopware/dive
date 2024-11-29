@@ -96,42 +96,36 @@ jobs:
               if: steps.yarn-cache.outputs.cache-hit != 'true'
               run: yarn
 
-            - name: 'Automated Version Bump (Beta)'
-              uses: 'phips28/gh-action-bump-version@master'
-              env:
-                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-                  GITHUB_USER: 'DIVE[bot]'
-                  GITHUB_EMAIL: 'f.frank@shopware.com'
-              with:
-                  target-branch: 'trunk'
-                  commit-message: 'DIVE[bot]: Beta {{version}} [pre-beta] [skip ci]'
-                  skip-push: 'true'
-                  skip-tag: 'true'
+            - name: Register git user
+              run: |
+                git config user.name "GitHub Actions"
+                git config user.email "actions@github.com"
+
+            - name: 'Bump version to beta'
+              run: |
+                npm version prerelease --preid=beta --no-git-tag-version
+                git add package.json
+
+            - name: Add build files
+              run: git add ./build -f
 
             - name: 'Create beta branch'
-              run: git checkout -b beta/v$(node -p "require('./package.json').version")
+              run:
+                  git checkout -b beta/v$(node -p "require('./package.json').version")
 
-            - name: Build DIVE
-              run: yarn build
-
-            - name: 'Add Build files to git'
+            - name: Commit changes
               run: |
-                git add ./build -f
-                echo "Staged build files! Status:"
-                git status
+                git commit -m "Beta v$(node -p "require('./package.json').version")"
+                git tag -a v$(node -p "require('./package.json').version") -m "Beta v$(node -p "require('./package.json').version")"
 
-            - name: 'Commit changes'
+            - name: Push changes
               run: |
-                echo "Committing ..."
-                git commit -m "Beta v$(node -p "require('./package.json').version") [skip ci]"
-                echo "Committed! Status:"
-                git status
+                git push origin beta/v$(node -p "require('./package.json').version") --follow-tags
 
-            - name: 'Add beta tag'
-              run: git tag -a v$(node -p "require('./package.json').version") -m "Beta v$(node -p "require('./package.json').version")"
-
-            - name: 'Push to beta branch'
-              run: git push origin beta/v$(node -p "require('./package.json').version") && git push origin tag v$(node -p "require('./package.json').version")
+            - name: Authenticate with NPM
+              env:
+                NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+              run: echo "//registry.npmjs.org/:_authToken=${NODE_AUTH_TOKEN}" > ~/.npmrc
 
             - name: Publish Beta tag to npm
               run: |

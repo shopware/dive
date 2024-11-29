@@ -97,10 +97,13 @@ jobs:
             - name: Install dependencies (if cache not found)
               if: steps.yarn-cache.outputs.cache-hit != 'true'
               run: yarn
+
             - name: Generate README.md
               run: yarn generate-readme
+
             - name: 'Add README file to git'
               run: git add README.md -f
+
             - name: 'Automated Version Bump'
               uses: 'phips28/gh-action-bump-version@master'
               env:
@@ -112,6 +115,7 @@ jobs:
                   commit-message: 'DIVE[bot]: Release {{version}} [skip ci]'
                   skip-push: 'true'
                   skip-tag: 'true'
+
             - name: Push to protected branch trunk
               uses: CasperWA/push-protected@v2
               with:
