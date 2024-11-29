@@ -48,8 +48,8 @@ export class DIVEWebXRController extends Object3D {
         this._touchscreenControls.Subscribe('TOUCH_START', () => {
             this._hasTouchInput = true;
         });
-        this._touchscreenControls.Subscribe('TOUCH_END', () => {
-            this._hasTouchInput = false;
+        this._touchscreenControls.Subscribe('TOUCH_END', (payload) => {
+            this._hasTouchInput = payload.touchCount > 0;
         });
 
         this._scene.XRRoot.XRHandNode.position.set(0, -0.05, -0.25);
