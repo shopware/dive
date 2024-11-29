@@ -1,9 +1,21 @@
+import { Matrix4, Mesh, Vector3 } from "three";
 import { DIVERenderer } from "../../../renderer/Renderer";
+import { DIVEWebXRRaycasterAR } from "./ar/WebXRRaycasterAR";
+import { DIVEWebXRRaycasterTHREE } from "./three/WebXRRaycasterTHREE";
+import { DIVEScene } from "../../../scene/Scene";
+
+/**
+ * object is undefined when AR world is hit.
+ */
+export type DIVEHitResult = {
+    point: Vector3;
+    matrix: Matrix4;
+    object?: Mesh;
+}
 
 type DIVEWebXREvents = {
     'HIT_FOUND': {
-        hit: XRHitTestResult;
-        pose: XRPose;
+        hit: DIVEHitResult;
     },
     'HIT_LOST': undefined;
 };
@@ -14,37 +26,32 @@ type Unsubscribe = () => boolean;
 
 export class DIVEWebXRRaycaster {
     private _renderer: DIVERenderer;
-
     private _session: XRSession;
-    private _entityTypes: XRHitTestTrackableType[] | undefined;
 
-    private _hitTestSource: XRHitTestSource | undefined;
-
-    private _requesting: boolean = false;
     private _initialized: boolean = false;
+
+    private _threeRaycaster: DIVEWebXRRaycasterTHREE;
+    private _arRaycaster: DIVEWebXRRaycasterAR;
+
+    private _hitResultBuffer: DIVEHitResult[] = [];
 
     // listeners
     private _listeners: Map<keyof DIVEWebXREvents, EventListener<keyof DIVEWebXREvents>[]> = new Map();
 
     // buffers
-    private _hitTestResultBuffer: XRHitTestResult[] = [];
-    private _referenceSpaceBuffer: XRReferenceSpace | null = null;
     private _hasHit: boolean = false;
 
-    constructor(session: XRSession, renderer: DIVERenderer, entityTypes?: XRHitTestTrackableType[]) {
+    constructor(session: XRSession, renderer: DIVERenderer, scene: DIVEScene) {
+        this._session = session;
         this._renderer = renderer;
 
-        this._session = session;
-        this._entityTypes = entityTypes;
+        this._threeRaycaster = new DIVEWebXRRaycasterTHREE(renderer, scene);
+        this._arRaycaster = new DIVEWebXRRaycasterAR(session, renderer);
     }
 
     public Dispose(): void {
         // dispose code here
-        if (this._hitTestSource) this._hitTestSource.cancel();
-        this._hitTestSource = undefined;
-
         this._initialized = false;
-        this._requesting = false;
     }
 
     public async Init(): Promise<this> {
@@ -53,24 +60,15 @@ export class DIVEWebXRRaycaster {
             return Promise.reject();
         }
 
-        if (this._requesting) {
-            console.error("DIVEWebXRRaycaster: Currently initializing! Aborting initialization...");
-            return Promise.reject();
-        }
-
         if (this._initialized) {
             console.error("DIVEWebXRRaycaster: Already initialized! Aborting initialization...");
             return Promise.reject();
         }
 
-        this._requesting = true;
-        const referenceSpace = await this._session.requestReferenceSpace('viewer');
-        this._hitTestSource = await this._session.requestHitTestSource!({ space: referenceSpace, entityTypes: this._entityTypes });
-        this._requesting = false;
+        await this._threeRaycaster.Init();
+        await this._arRaycaster.Init();
 
-        if (!this._hitTestSource) {
-            return Promise.reject();
-        }
+        console.log('DIVEWebXRRaycaster: Initialized');
 
         this._initialized = true;
 
@@ -80,24 +78,23 @@ export class DIVEWebXRRaycaster {
     public Update(frame: XRFrame): void {
         if (!this._initialized) return;
 
-        if (!this._hitTestSource) {
-            throw new Error("DIVEWebXRRaycaster: Critical Error: HitTestSource not available but Raycaster is initialized!");
+        // check for scene hits
+        this._hitResultBuffer = this._threeRaycaster.GetIntersections();
+        if (this._hitResultBuffer.length > 0) {
+            // scene hit found
+            this.onHitFound(this._hitResultBuffer[0]);
+            // early return to prevent ar raycaster from overriding scene hit
+            return;
+        } else {
+            // scene hit nothing
+            this.onHitLost();
         }
 
-        // get hit test results
-        this._hitTestResultBuffer = frame.getHitTestResults(this._hitTestSource);
-        if (this._hitTestResultBuffer.length > 0) {
-
+        // check for ar hits
+        this._hitResultBuffer = this._arRaycaster.GetIntersections(frame);
+        if (this._hitResultBuffer.length > 0) {
             // hit found
-            this._referenceSpaceBuffer = this._renderer.xr.getReferenceSpace();
-
-            // if there is no reference space, hit will be counted as lost for this frame
-            if (!this._referenceSpaceBuffer) {
-                this.onHitLost();
-                return;
-            }
-
-            this.onHitFound(this._hitTestResultBuffer[0]);
+            this.onHitFound(this._hitResultBuffer[0]);
 
         } else {
             // hit nothing
@@ -130,18 +127,9 @@ export class DIVEWebXRRaycaster {
         listenerArray.forEach((listener) => listener(payload))
     }
 
-    private onHitFound(hit: XRHitTestResult): void {
-        // hit test result code here
-        if (!this._referenceSpaceBuffer) {
-            console.error("DIVEWebXRRaycaster: ReferenceSpace not available but hit found!");
-            return;
-        }
-
-        const pose = hit.getPose(this._referenceSpaceBuffer);
-        if (!pose) return;
-
+    private onHitFound(hit: DIVEHitResult): void {
         this._hasHit = true;
-        this.dispatch('HIT_FOUND', { hit, pose });
+        this.dispatch('HIT_FOUND', { hit });
     }
 
     private onHitLost(): void {
