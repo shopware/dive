@@ -21,6 +21,7 @@ import { type DIVEMediaCreator } from '../mediacreator/MediaCreator.ts';
 import { type DIVERenderer } from '../renderer/Renderer.ts';
 import { type DIVESelectable } from '../interface/Selectable.ts';
 import { type DIVEIO } from '../io/IO.ts';
+import { type DIVEAR } from '../ar/AR.ts';
 
 type EventListener<Action extends keyof Actions> = (
     payload: Actions[Action]['PAYLOAD'],
@@ -97,6 +98,16 @@ export class DIVECommunication {
         return this._io;
     }
 
+    private _ar: DIVEAR | null;
+    private get ar(): DIVEAR {
+        if (!this._ar) {
+            const DIVEAR = require('../ar/AR.ts')
+                .default as typeof import('../ar/AR.ts').DIVEAR;
+            this._ar = new DIVEAR(this.renderer, this.scene);
+        }
+        return this._ar;
+    }
+
     private registered: Map<string, COMEntity> = new Map();
 
     // private listeners: { [key: string]: EventListener[] } = {};
@@ -116,6 +127,7 @@ export class DIVECommunication {
         this.toolbox = toolbox;
         this._mediaGenerator = null;
         this._io = null;
+        this._ar = null;
 
         DIVECommunication.__instances.push(this);
     }
