@@ -96,16 +96,17 @@ jobs:
               if: steps.yarn-cache.outputs.cache-hit != 'true'
               run: yarn
 
-            - name: Register Git User
-              run: |
-                git config user.name "GitHub Actions"
-                git config user.email "actions@github.com"
-
-            - name: Bump to Beta Version
+            - name: 'Automated Version Bump (Beta)'
+              uses: 'phips28/gh-action-bump-version@master'
               env:
-                PR_NUMBER: ${{ github.event.pull_request.number || 'workflow_dispatch' }}
-              run: |
-                yarn version --prerelease --preid beta
+                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+                  GITHUB_USER: 'DIVE[bot]'
+                  GITHUB_EMAIL: 'f.frank@shopware.com'
+              with:
+                  target-branch: 'trunk'
+                  commit-message: 'DIVE[bot]: Beta {{version}} [pre-beta] [skip ci]'
+                  skip-push: 'true'
+                  skip-tag: 'true'
 
             - name: 'Create beta branch'
               run: git checkout -b beta/v$(node -p "require('./package.json').version")
