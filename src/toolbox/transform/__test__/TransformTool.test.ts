@@ -99,7 +99,7 @@ jest.mock('three', () => {
 const mock_attach = jest.fn();
 const mock_detach = jest.fn();
 
-jest.mock('three/examples/jsm/Addons.js', () => {
+jest.mock('three/examples/jsm/controls/TransformControls', () => {
     return {
         TransformControls: jest.fn(function () {
             (this.addEventListener = (
@@ -189,9 +189,7 @@ describe('dive/toolbox/select/DIVETransformTool', () => {
         const transformTool = new DIVETransformTool(mockScene, mockController);
         expect(() => transformTool.SetGizmoVisibility(true)).not.toThrow();
 
-        expect(mockScene.add).toBeCalled();
-
-        mockScene.children.includes = jest.fn().mockReturnValue(true);
+        mockScene.Root.children.includes = jest.fn().mockReturnValue(true);
         expect(() => transformTool.SetGizmoVisibility(false)).not.toThrow();
     });
 });

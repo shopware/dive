@@ -17,8 +17,13 @@ const mock_toDataURL = jest.fn();
 
 jest.mock('../../scene/Scene', () => {
     return {
-        DIVEScene: jest.fn(() => {
-            return {};
+        DIVEScene: jest.fn(function () {
+            this.add = jest.fn();
+            this.children = [];
+            this.Root = {
+                children: [],
+            };
+            return this;
         }),
     };
 });
