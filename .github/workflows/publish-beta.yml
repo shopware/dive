@@ -1,8 +1,6 @@
 name: Beta Release
 
 on:
-  pull_request:
-    types: [opened, synchronize, reopened]  # Automatically runs for PR events
   workflow_dispatch:  # This allows manual triggering only from the Actions tab
 
 jobs:
