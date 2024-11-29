@@ -89,7 +89,7 @@ jobs:
         - name: Remove old beta tags
           run: |
             git fetch --tags
-            for tag in $(git tag -l "-beta.*"); do
+            for tag in $(git tag -l "beta.*"); do
               git tag -d $tag
               git push --delete origin $tag
             done
