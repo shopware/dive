@@ -73,8 +73,8 @@ export class DIVEWebXRTouchscreenControls extends DIVEEventExecutor<DIVETouchscr
     private _handlePinchEnded: boolean = false;
 
     private _scaleDistanceStart: number = 0;
-    private _currentScale: number = 0;
-    private _deltaScale: number = 0;
+    private _currentDistance: number = 1;
+    private _deltaDistance: number = 0;
 
     constructor(session: XRSession) {
         super();
@@ -183,8 +183,8 @@ export class DIVEWebXRTouchscreenControls extends DIVEEventExecutor<DIVETouchscr
 
             if (this._handlePinchMoved) {
                 this.dispatch('PINCH_MOVE', {
-                    current: this._currentScale - this._scaleDistanceStart,
-                    delta: this._deltaScale,
+                    current: this._currentDistance,
+                    delta: this._deltaDistance,
                 });
                 this._handlePinchMoved = false;
             }
@@ -218,7 +218,7 @@ export class DIVEWebXRTouchscreenControls extends DIVEEventExecutor<DIVETouchscr
 
         if (this._handlePinchEnded) {
             this.dispatch('PINCH_END', {
-                current: this._currentScale - this._scaleDistanceStart,
+                current: this._currentDistance,
             });
             this._handlePinchEnded = false;
         }
@@ -255,15 +255,13 @@ export class DIVEWebXRTouchscreenControls extends DIVEEventExecutor<DIVETouchscr
     // rotation handler
     private handleRotateStart(): void {
         this._handleRotateStarted = true;
-        this._startAngle = this._touches[1].start.clone().sub(this._touches[0].current).angle() //+ this._lastAngle;
-        // console.log('start', this._startAngle);
+        this._startAngle = this._touches[1].start.clone().sub(this._touches[0].current).angle();
     }
 
     private handleRotateMoved(): void {
         this._handleRotateMoved = true;
         const currentAngle = this._touches[1].current.clone().sub(this._touches[0].current).angle();
         this._angleDelta = currentAngle - this._startAngle;
-        // console.log('current', currentAngle, 'delta', this._angleDelta);
         this._lastAngle = this._angleDelta * -1;
     }
 
@@ -275,15 +273,18 @@ export class DIVEWebXRTouchscreenControls extends DIVEEventExecutor<DIVETouchscr
     private handlePinchStart(): void {
         this._handlePinchStarted = true;
 
-        this._scaleDistanceStart = this._touches[1].start.distanceTo(this._touches[0].start);
+        this._scaleDistanceStart = this._touches[1].start.distanceTo(this._touches[0].current);
     }
 
     private handlePinchMoved(): void {
         this._handlePinchMoved = true;
 
-        const beforeDistance = this._currentScale;
-        this._currentScale = this._touches[1].current.distanceTo(this._touches[0].current);
-        this._deltaScale = this._currentScale - beforeDistance;
+        const beforeDistance = this._currentDistance;
+        const distance = this._touches[1].current.distanceTo(this._touches[0].current);
+        this._currentDistance = distance / this._scaleDistanceStart;
+        this._deltaDistance = this._currentDistance - beforeDistance;
+        // console.log('distance', distance, 'this._scaleDistanceStart', this._scaleDistanceStart);
+        console.log('this._currentDistance', this._currentDistance);
         // this._scaleFactor = this._scaleFactorStart * (distance / this._scaleDistanceStart);
         // if (this._scaleFactor <= 1 + this._scaleThreshold && this._scaleFactor >= 1 - this._scaleThreshold) {
         //     this.scale.set(1.0, 1.0, 1.0);

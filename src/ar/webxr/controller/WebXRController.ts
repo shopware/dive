@@ -43,6 +43,7 @@ export class DIVEWebXRController extends Object3D {
     private _touchQuaterion: Quaternion = new Quaternion();
 
     // grabbing scale
+    private _touchScale: number = 1;
     private _scaleThreshold: number = 0.1;
 
     constructor(session: XRSession, renderer: DIVERenderer, scene: DIVEScene) {
@@ -60,16 +61,25 @@ export class DIVEWebXRController extends Object3D {
 
         this._xrCamera = this._renderer.xr.getCamera();
 
+        this._scene.XRRoot.XRHandNode.position.set(0, -0.05, -0.25);
+        this._handNodeInitialPosition = this._scene.XRRoot.XRHandNode.position.clone();
+
         this._touchscreenControls = new DIVEWebXRTouchscreenControls(this._session);
+
+        // translating
         this._touchscreenControls.Subscribe('TOUCH_START', () => this.onTouchStart());
         this._touchscreenControls.Subscribe('TOUCH_MOVE', () => this.onTouchMove());
         this._touchscreenControls.Subscribe('TOUCH_END', (p) => this.onTouchEnd(p));
+
+        // rotating
         this._touchscreenControls.Subscribe('ROTATE_START', () => this.onRotateStart());
         this._touchscreenControls.Subscribe('ROTATE_MOVE', (p) => this.onRotateMove(p));
-        this._touchscreenControls.Subscribe('ROTATE_END', () => this.onRotateEnd());
 
-        this._scene.XRRoot.XRHandNode.position.set(0, -0.05, -0.25);
-        this._handNodeInitialPosition = this._scene.XRRoot.XRHandNode.position.clone();
+        // scaling
+        this._touchscreenControls.Subscribe('PINCH_START', () => this.onPinchStart());
+        this._touchscreenControls.Subscribe('PINCH_MOVE', (p) => this.onPinchMove(p));
+
+
     }
 
     public async Init(): Promise<this> {
@@ -130,7 +140,7 @@ export class DIVEWebXRController extends Object3D {
         if (!this._grabbedObject) return;
         this._grabbedObject.position.copy(this._arHitPosition);
         this._grabbedObject.quaternion.copy(this._arHitQuaternion.clone().multiply(this._touchQuaterion));
-        this._grabbedObject.scale.copy(this._arHitScale);
+        this._grabbedObject.scale.copy(new Vector3(this._touchScale, this._touchScale, this._touchScale).multiply(this._arHitScale));
     }
 
     private onTouchStart(): void {
@@ -203,9 +213,18 @@ export class DIVEWebXRController extends Object3D {
         this.updateObject();
     }
 
-    private onRotateEnd(): void {
-
+    private _startTouchScale: number = 1;
+    private onPinchStart(): void {
+        this._startTouchScale = this._touchScale;
+        console.log('_startTouchScale', this._startTouchScale);
     }
+
+    private onPinchMove(payload: DIVETouchscreenEvents['PINCH_MOVE']): void {
+        this._touchScale = this._startTouchScale * payload.current;
+        // console.log('scale', this._touchScale, 'delta', payload.delta);
+        this.updateObject();
+    }
+
 
     // prepare & cleanup scene
     private prepareScene(): void {
