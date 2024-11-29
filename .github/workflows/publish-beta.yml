@@ -1,0 +1,145 @@
+name: Beta Release
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]  # Automatically runs for PR events
+  workflow_dispatch:  # This allows manual triggering from the Actions tab
+
+jobs:
+  install:
+        runs-on: ubuntu-latest
+        steps:
+            - name: Checkout DIVE
+              uses: actions/checkout@main
+            - name: Setup Node.js
+              uses: actions/setup-node@main
+            - name: Search for cached dependencies
+              uses: actions/cache@main
+              id: yarn-cache
+              with:
+                  path: node_modules
+                  key:
+                      node-modules-${{ runner.os }}-${{ hashFiles('yarn.lock') }}
+            - name: Install DIVE dependencies (if cache not found)
+              if: steps.yarn-cache.outputs.cache-hit != 'true'
+              run: yarn
+  eslint:
+      runs-on: ubuntu-latest
+      needs: install
+      steps:
+          - name: Checkout DIVE
+            uses: actions/checkout@main
+          - name: Search for cached dependencies
+            uses: actions/cache@main
+            id: yarn-cache
+            with:
+                path: node_modules
+                key:
+                    node-modules-${{ runner.os }}-${{ hashFiles('yarn.lock') }}
+          - name: Install DIVE dependencies (if cache not found)
+            if: steps.yarn-cache.outputs.cache-hit != 'true'
+            run: yarn
+          - name: Lint DIVE
+            run: yarn lint
+  unit:
+      runs-on: ubuntu-latest
+      needs: install
+      steps:
+          - name: Checkout DIVE
+            uses: actions/checkout@main
+          - name: Search for cached dependencies
+            uses: actions/cache@main
+            id: yarn-cache
+            with:
+                path: node_modules
+                key:
+                    node-modules-${{ runner.os }}-${{ hashFiles('yarn.lock') }}
+          - name: Install DIVE dependencies (if cache not found)
+            if: steps.yarn-cache.outputs.cache-hit != 'true'
+            run: yarn
+          - name: Unit-Test DIVE (coverage)
+            run: yarn coverage
+  prettier-check:
+      runs-on: ubuntu-latest
+      needs: install
+      steps:
+        - name: Checkout DIVE
+          uses: actions/checkout@main
+        - name: Search for cached dependencies
+          uses: actions/cache@main
+          id: yarn-cache
+          with:
+              path: node_modules
+              key:
+                  node-modules-${{ runner.os }}-${{ hashFiles('yarn.lock') }}
+        - name: Install DIVE dependencies (if cache not found)
+          if: steps.yarn-cache.outputs.cache-hit != 'true'
+          run: yarn
+        - name: Prettier check DIVE
+          run: yarn prettier:check
+  build:
+      runs-on: ubuntu-latest
+      needs: install
+      steps:
+          - name: Checkout
+            uses: actions/checkout@main
+          - name: Search for cached dependencies
+            uses: actions/cache@main
+            id: yarn-cache
+            with:
+                path: node_modules
+                key:
+                    node-modules-${{ runner.os }}-${{ hashFiles('yarn.lock') }}
+          - name: Install dependencies (if cache not found)
+            if: steps.yarn-cache.outputs.cache-hit != 'true'
+            run: yarn
+          - name: Build DIVE
+            run: yarn build
+  lint-actions:
+      runs-on: ubuntu-latest
+      needs: install
+      steps:
+          - name: Checkout
+            uses: actions/checkout@main
+          - name: Search for cached dependencies
+            uses: actions/cache@main
+            id: yarn-cache
+            with:
+                path: node_modules
+                key:
+                    node-modules-${{ runner.os }}-${{ hashFiles('yarn.lock') }}
+          - name: Install dependencies (if cache not found)
+            if: steps.yarn-cache.outputs.cache-hit != 'true'
+            run: yarn
+          - name: Run lint-actions
+            run: bash ci/lint/lint-actions.sh
+  publish-beta:
+    name: Publish Beta
+    needs: [unit, eslint, build, prettier-check, lint-actions]
+    runs-on: ubuntu-latest
+    if: github.event_name == 'workflow_dispatch' || github.event.pull_request.head.repo.full_name == github.repository
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18
+          cache: 'yarn'
+
+      - name: Install Dependencies
+        run: yarn install
+
+      - name: Authenticate with NPM
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: echo "//registry.npmjs.org/:_authToken=${NODE_AUTH_TOKEN}" > ~/.npmrc
+
+      - name: Publish Beta Version
+        env:
+          PR_NUMBER: ${{ github.event.pull_request.number || 'workflow_dispatch' }}
+        run: |
+          yarn version --prerelease --preid beta
+          yarn publish --tag beta
+          git push origin --tags
