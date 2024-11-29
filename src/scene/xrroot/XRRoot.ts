@@ -1,4 +1,4 @@
-import { Object3D } from "three";
+import { Mesh, Object3D, PlaneGeometry, ShadowMaterial } from "three";
 import DIVERoot from "../root/Root";
 import DIVEModelRoot from "../root/modelroot/ModelRoot";
 import { type DIVERenderer } from "../../renderer/Renderer";
@@ -22,6 +22,8 @@ export class DIVEXRRoot extends Object3D {
         return this._xrHandNode;
     }
 
+    private _xrShadowPlane: Mesh;
+
     constructor(scene: DIVEScene) {
         super();
         this.name = "XRRoot";
@@ -29,6 +31,9 @@ export class DIVEXRRoot extends Object3D {
         this._xrModelRoot = new DIVEModelRoot();
         this._xrModelRoot.name = "XRModelRoot";
         this.add(this._xrModelRoot);
+
+        this._xrShadowPlane = new Mesh(new PlaneGeometry(100, 100), new ShadowMaterial({ opacity: 1, transparent: true }));
+        this._xrModelRoot.add(this._xrShadowPlane);
 
         this._xrLightRoot = new DIVEXRLightRoot(scene);
         this._xrLightRoot.name = "XRLightRoot";
