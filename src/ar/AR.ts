@@ -50,10 +50,6 @@ export class DIVEAR {
             }
 
             console.log('Launching AR on Android');
-
-            const modelViewer = document.createElement('model-viewer');
-
-            return Promise.resolve();
             // Launch WebXR
             await DIVEWebXR.Launch(
                 this._renderer,
