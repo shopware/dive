@@ -52,5 +52,6 @@ export interface Actions {
     GENERATE_MEDIA: GENERATE_MEDIA;
     SET_PARENT: SET_PARENT;
     EXPORT_SCENE: EXPORT_SCENE;
-    LAUNCH_AR: object;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    LAUNCH_AR: any;
 }
