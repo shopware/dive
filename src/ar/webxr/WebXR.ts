@@ -123,6 +123,10 @@ export class DIVEWebXR {
         this.clearXRScene();
         this.disposeRaycaster();
 
+        // reset placement members
+        this._raycastHitCounter = 0;
+        this._placed = false;
+
         // remove Update() callback
         if (this._renderCallbackId) {
             this._renderer.RemovePreRenderCallback(this._renderCallbackId);
@@ -169,7 +173,6 @@ export class DIVEWebXR {
             this._crosshair.visible = true;
             this._crosshair.UpdateFromPose(pose);
         }
-
     }
 
     private static onHitLost(): void {
