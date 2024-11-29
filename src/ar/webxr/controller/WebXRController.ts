@@ -2,7 +2,7 @@ import { Matrix4, Mesh, Object3D, Quaternion, Vector3, WebXRArrayCamera } from "
 import { DIVERenderer } from "../../../renderer/Renderer";
 import { DIVEScene } from "../../../scene/Scene";
 import { DIVEWebXRCrosshair } from "../crosshair/WebXRCrosshair";
-import { DIVEWebXRRaycaster, DIVEWebXRRaycasterEvents } from "../raycaster/WebXRRaycaster";
+import { DIVEWebXRRaycaster } from "../raycaster/WebXRRaycaster";
 import { DIVEWebXROrigin } from "../origin/WebXROrigin";
 import { DIVETouchscreenEvents, DIVEWebXRTouchscreenControls } from "../touchscreencontrols/WebXRTouchscreenControls";
 import { findMoveableInterface } from "../../../interface/Moveable";
@@ -12,6 +12,8 @@ export class DIVEWebXRController extends Object3D {
     private _renderer: DIVERenderer;
     private _scene: DIVEScene;
     private _session: XRSession;
+
+    private _frameBuffer: XRFrame | null = null;
 
     // raycaster members
     private _xrRaycaster: DIVEWebXRRaycaster;
@@ -28,6 +30,9 @@ export class DIVEWebXRController extends Object3D {
 
     // grabbing
     private _grabbedObject: Object3D | null = null;
+    private _arHitPosition: Vector3 = new Vector3();
+    private _arHitQuaternion: Quaternion = new Quaternion();
+    private _arHitScale: Vector3 = new Vector3(1, 1, 1);
 
     // grabbing position
     private _initialObjectPosition: Vector3 | null = null;
@@ -35,7 +40,7 @@ export class DIVEWebXRController extends Object3D {
     private _deltaRaycastHit: Vector3 = new Vector3();
 
     // grabbing rotation
-    private _bufferQuaternion: Quaternion = new Quaternion();
+    private _touchQuaterion: Quaternion = new Quaternion();
 
     // grabbing scale
     private _scaleThreshold: number = 0.1;
@@ -57,7 +62,11 @@ export class DIVEWebXRController extends Object3D {
 
         this._touchscreenControls = new DIVEWebXRTouchscreenControls(this._session);
         this._touchscreenControls.Subscribe('TOUCH_START', () => this.onTouchStart());
+        this._touchscreenControls.Subscribe('TOUCH_MOVE', () => this.onTouchMove());
         this._touchscreenControls.Subscribe('TOUCH_END', (p) => this.onTouchEnd(p));
+        this._touchscreenControls.Subscribe('ROTATE_START', () => this.onRotateStart());
+        this._touchscreenControls.Subscribe('ROTATE_MOVE', (p) => this.onRotateMove(p));
+        this._touchscreenControls.Subscribe('ROTATE_END', () => this.onRotateEnd());
 
         this._scene.XRRoot.XRHandNode.position.set(0, -0.05, -0.25);
         this._handNodeInitialPosition = this._scene.XRRoot.XRHandNode.position.clone();
@@ -83,6 +92,8 @@ export class DIVEWebXRController extends Object3D {
     }
 
     public Update(frame: XRFrame): void {
+        this._frameBuffer = frame;
+
         if (!this._placed) {
 
             this._xrCamera.updateMatrixWorld();
@@ -92,10 +103,6 @@ export class DIVEWebXRController extends Object3D {
             if (this._origin) {
                 this._origin.Update(frame);
             }
-        }
-
-        if (this._grabbedObject) {
-            this._xrRaycaster.GetARIntersections(frame);
         }
     }
 
@@ -119,6 +126,13 @@ export class DIVEWebXRController extends Object3D {
     }
 
     // grabbing
+    private updateObject(): void {
+        if (!this._grabbedObject) return;
+        this._grabbedObject.position.copy(this._arHitPosition);
+        this._grabbedObject.quaternion.copy(this._arHitQuaternion.clone().multiply(this._touchQuaterion));
+        this._grabbedObject.scale.copy(this._arHitScale);
+    }
+
     private onTouchStart(): void {
         const sceneHits = this._xrRaycaster.GetSceneIntersections();
         if (sceneHits.length === 0) return;
@@ -130,6 +144,42 @@ export class DIVEWebXRController extends Object3D {
         this._grabbedObject = moveable;
     }
 
+    private onTouchMove(): void {
+        // raycast ar
+        if (!this._frameBuffer) return;
+        if (!this._grabbedObject) return;
+
+        const intersections = this._xrRaycaster.GetARIntersections(this._frameBuffer);
+        if (intersections.length === 0) {
+            this._crosshair.visible = false;
+            return;
+        }
+
+        const hit = intersections[0];
+
+        this._crosshair.visible = true;
+        this._crosshair.matrix.copy(hit.matrix);
+
+        if (!this._grabbedObject) return;
+
+        // if initial values have been reset by TOUCH_END event then set them again
+        if (!this._initialObjectPosition || !this._initialRaycastHit) {
+            this._initialObjectPosition = this._grabbedObject.position.clone();
+            this._initialRaycastHit = hit.point.clone();
+        }
+
+        // decompose hit matrix to apply hit matrix to object
+        hit.matrix.decompose(this._arHitPosition, this._arHitQuaternion, this._arHitScale);
+
+        // calculate raycast hit delta
+        this._deltaRaycastHit.copy(hit.point.clone().sub(this._initialRaycastHit));
+
+        // apply moved raycast delta to actual object position
+        this._arHitPosition.copy(this._initialObjectPosition.clone().add(this._deltaRaycastHit));
+
+        this.updateObject();
+    }
+
     private onTouchEnd(payload: DIVETouchscreenEvents['TOUCH_END']): void {
         if (payload.touchCount === 0) {
             this._crosshair.visible = false;
@@ -139,6 +189,22 @@ export class DIVEWebXRController extends Object3D {
             this._initialRaycastHit = null;
             this._grabbedObject = null;
         }
+    }
+
+    private _startTouchQuaternion: Quaternion = new Quaternion();
+    private onRotateStart(): void {
+        this._startTouchQuaternion = this._touchQuaterion.clone();
+    }
+
+    private onRotateMove(payload: DIVETouchscreenEvents['ROTATE_MOVE']): void {
+        // console.log('delta', payload.delta);
+        this._touchQuaterion.setFromAxisAngle(new Vector3(0, -1, 0), payload.delta * 3);
+        this._touchQuaterion.multiply(this._startTouchQuaternion);
+        this.updateObject();
+    }
+
+    private onRotateEnd(): void {
+
     }
 
     // prepare & cleanup scene
@@ -186,35 +252,5 @@ export class DIVEWebXRController extends Object3D {
             this.Dispose();
             return Promise.reject();
         }
-
-        // add subscriptions
-        this._xrRaycaster.Subscribe('AR_HIT_FOUND', (p) => this.onARRaycasterHit(p));
-        this._xrRaycaster.Subscribe('AR_HIT_LOST', () => this.onARRaycasterHitLost());
-    }
-
-    private onARRaycasterHit(payload: DIVEWebXRRaycasterEvents['AR_HIT_FOUND']): void {
-        this._crosshair.visible = true;
-        this._crosshair.matrix.copy(payload.hit.matrix);
-
-        if (!this._grabbedObject) return;
-
-        // if initial values have been reset by TOUCH_END event then set them again
-        if (!this._initialObjectPosition || !this._initialRaycastHit) {
-            this._initialObjectPosition = this._grabbedObject.position.clone();
-            this._initialRaycastHit = payload.hit.point.clone();
-        }
-
-        // calculate raycast hit delta
-        this._deltaRaycastHit.copy(payload.hit.point.clone().sub(this._initialRaycastHit));
-
-        // decompose hit matrix to apply hit matrix to object
-        payload.hit.matrix.decompose(new Vector3(), this._grabbedObject.quaternion, this._grabbedObject.scale);
-
-        // apply moved raycast delta to actual object position
-        this._grabbedObject.position.copy(this._initialObjectPosition.clone().add(this._deltaRaycastHit));
-    }
-
-    private onARRaycasterHitLost(): void {
-        this._crosshair.visible = false;
     }
 }
