@@ -95,6 +95,11 @@ jobs:
             - name: Install dependencies (if cache not found)
               if: steps.yarn-cache.outputs.cache-hit != 'true'
               run: yarn
+            - name: Bump to Beta Version
+              env:
+                PR_NUMBER: ${{ github.event.pull_request.number || 'workflow_dispatch' }}
+              run: |
+                yarn version --prerelease --preid beta
 
             - name: 'Create release branch'
               run: git checkout -b release/v$(node -p "require('./package.json').version")
@@ -120,17 +125,16 @@ jobs:
             - name: 'Add beta tag'
               run: |
                 VERSION=$(node -p "require('./package.json').version")
-                BETA_TAG="v${VERSION}-beta.${{ github.run_number }}"
+                BETA_TAG="v${VERSION}-beta.${{ github.event.pull_request.number || 'workflow_dispatch' }}"
                 git tag -a ${BETA_TAG} -m "Release ${BETA_TAG}"
                 echo "Created tag ${BETA_TAG}"
 
             - name: 'Push beta tag to trunk'
               run: |
                 VERSION=$(node -p "require('./package.json').version")
-                BETA_TAG="v${VERSION}-beta.${{ github.run_number }}"
+                BETA_TAG="v${VERSION}-beta.${{ github.event.pull_request.number || 'workflow_dispatch' }}"
                 git push origin ${BETA_TAG}
 
-            - name: Publish DIVE to npm
-              uses: JS-DevTools/npm-publish@v3
-              with:
-                token: ${{ secrets.NPM_TOKEN }}
+            - name: Publish Beta tag to npm
+              run: |
+                yarn publish --tag beta
