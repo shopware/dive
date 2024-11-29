@@ -30,10 +30,6 @@ export class DIVERoot extends Object3D {
 
     private loadingManager: DIVELoadingManager;
 
-    public get ModelRoot(): DIVEModelRoot {
-        return this.modelRoot;
-    }
-
     constructor() {
         super();
         this.name = 'Root';
