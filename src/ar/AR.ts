@@ -110,7 +110,7 @@ export class DIVEAR {
             encodeURIComponent(modelUrl.toString()),
         );
 
-        let intent = `intent://arvr.google.com/scene-viewer/1.2?${
+        const intent = `intent://arvr.google.com/scene-viewer/1.2?${
             params.toString() + '&file=' + modelUrl.toString()
         }#Intent;scheme=https;package=com.google.android.googlequicksearchbox;action=android.intent.action.VIEW;S.browser_fallback_url=${encodeURIComponent(
             locationUrl.toString(),
