@@ -9,7 +9,7 @@ export class DIVEWebXRController extends Object3D {
     private _renderer: DIVERenderer;
     private _scene: DIVEScene;
     private _currentSession: XRSession;
-    private _raycaster: DIVEWebXRRaycaster | null = null;
+    private _xrRaycaster: DIVEWebXRRaycaster | null = null;
 
     // crosshair
     private _crosshair: DIVEWebXRCrosshair | null = null;
@@ -49,8 +49,8 @@ export class DIVEWebXRController extends Object3D {
             this._scene.XRRoot.XRHandNode.quaternion.copy(new Quaternion().setFromRotationMatrix(this._renderer.xr.getCamera().matrixWorld));
         }
 
-        if (this._raycaster) {
-            this._raycaster.Update(frame);
+        if (this._xrRaycaster) {
+            this._xrRaycaster.Update(frame);
         }
     }
 
@@ -104,29 +104,29 @@ export class DIVEWebXRController extends Object3D {
         if (!this._currentSession) return Promise.reject();
 
         // initialize raycaster
-        this._raycaster = await new DIVEWebXRRaycaster(this._currentSession, this._renderer, ['plane']).Init();
+        this._xrRaycaster = await new DIVEWebXRRaycaster(this._currentSession, this._renderer, ['plane']).Init();
 
         // check if successful
-        if (!this._raycaster) {
+        if (!this._xrRaycaster) {
             console.error('Raycaster not initialized successfully. Aborting WebXR...');
             this.Dispose();
             return Promise.reject();
         }
 
         // add subscriptions
-        this._raycaster.Subscribe('HIT_FOUND', (payload) => {
+        this._xrRaycaster.Subscribe('HIT_FOUND', (payload) => {
             this.onHitFound(payload.pose);
         });
 
-        this._raycaster.Subscribe('HIT_LOST', () => {
+        this._xrRaycaster.Subscribe('HIT_LOST', () => {
             this.onHitLost();
         });
     }
 
     private disposeRaycaster(): void {
         // properly dispose raycaster
-        if (this._raycaster) {
-            this._raycaster.Dispose();
+        if (this._xrRaycaster) {
+            this._xrRaycaster.Dispose();
         }
     }
 
