@@ -40,7 +40,7 @@ export class DIVEAR {
             console.log('Launching AR on Android');
 
             // Launch WebXR
-            await DIVEWebXR.Launch(this.renderer);
+            await DIVEWebXR.Launch(this.renderer, this.scene);
             return Promise.resolve();
         }
 

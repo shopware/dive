@@ -1,4 +1,5 @@
 import { type DIVERenderer } from "../../renderer/Renderer";
+import { type DIVEScene } from "../../scene/Scene";
 import { Overlay } from "./overlay/Overlay";
 
 export class DIVEWebXR {
@@ -11,13 +12,14 @@ export class DIVEWebXR {
         domOverlay: { root: {} as HTMLElement },
     };
 
-    public static async Launch(renderer: DIVERenderer): Promise<void> {
+    public static async Launch(renderer: DIVERenderer, scene: DIVEScene): Promise<void> {
         if (!navigator.xr) {
             console.error('WebXR not supported');
             return Promise.reject();
         }
 
         renderer.xr.enabled = true;
+        scene.InitXR(renderer);
 
         // creating overlay
         if (!DIVEWebXR._overlay) {
