@@ -171,6 +171,7 @@ export class DIVEWebXRController extends Object3D {
     // grabbing
     private updateObject(): void {
         if (!this._grabbedObject) return;
+
         this._grabbedObject.position.copy(this._arHitPosition);
         this._grabbedObject.quaternion.copy(
             this._arHitQuaternion.clone().multiply(this._touchQuaterion),
@@ -186,6 +187,7 @@ export class DIVEWebXRController extends Object3D {
 
     private onTouchStart(): void {
         const sceneHits = this._xrRaycaster.GetSceneIntersections();
+        console.log('sceneHits', sceneHits);
         if (sceneHits.length === 0) return;
         if (!sceneHits[0].object) return;
 
@@ -240,6 +242,8 @@ export class DIVEWebXRController extends Object3D {
         this._arHitPosition.copy(
             this._initialObjectPosition.clone().add(this._deltaRaycastHit),
         );
+
+        console.log('arHitPosition', this._arHitPosition);
 
         this.updateObject();
     }

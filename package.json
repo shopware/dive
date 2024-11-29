@@ -29,6 +29,7 @@
         "> 1%, not dead, not ie 11, not op_mini all"
     ],
     "dependencies": {
+        "@google/model-viewer": "^4.0.0",
         "@tweenjs/tween.js": "^23.1.1",
         "lodash": "^4.17.21",
         "three": "^0.163.0",
