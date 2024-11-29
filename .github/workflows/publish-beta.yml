@@ -1,9 +1,7 @@
-name: 'Publish to npm'
+name: Beta Release
 
 on:
-    push:
-        branches:
-            - trunk
+  workflow_dispatch:  # This allows manual triggering only from the Actions tab
 
 jobs:
     install:
