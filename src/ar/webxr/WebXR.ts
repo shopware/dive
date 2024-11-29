@@ -1,4 +1,4 @@
-import { type Vector3 } from "three";
+import { Mesh, Object3D, Quaternion, Vector3 } from "three";
 import DIVEOrbitControls from "../../controls/OrbitControls";
 import { type DIVERenderer } from "../../renderer/Renderer";
 import { type DIVEScene } from "../../scene/Scene";
@@ -7,26 +7,37 @@ import { DIVEWebXRRaycaster } from "./raycaster/WebXRRaycaster";
 import { DIVEWebXRCrosshair } from "./crosshair/WebXRCrosshair";
 
 export class DIVEWebXR {
+    // general members
     private static _renderer: DIVERenderer;
     private static _scene: DIVEScene;
     private static _controller: DIVEOrbitControls;
 
-    // camera reset values
+    // camera reset members
     private static _cameraPosition: Vector3;
     private static _cameraTarget: Vector3;
 
+    // render loop members
     private static _renderCallbackId: string | null = null;
 
+    // setup members
     private static _currentSession: XRSession | null = null;
-    private static _referenceSpaceType: XRReferenceSpaceType = 'viewer';
+    private static _referenceSpaceType: XRReferenceSpaceType = 'local';
     private static _overlay: Overlay | null = null;
     private static _options = {
         requiredFeatures: ['local', 'hit-test'],
-        optionalFeatures: ['light-estimation', 'local-floor', 'dom-overlay'],
+        optionalFeatures: ['light-estimation', 'local-floor', 'dom-overlay', 'depth-sensing'],
+        depthSensing: { usagePreference: ['gpu-optimized' as XRDepthUsage], dataFormatPreference: [] },
         domOverlay: { root: {} as HTMLElement },
     };
+
+    // web xr members
     private static _raycaster: DIVEWebXRRaycaster | null = null;
     private static _crosshair: DIVEWebXRCrosshair | null = null;
+
+    // placement members
+    private static _hangNode: Object3D;
+    private static _hangOffset = new Vector3(0, -0.05, -0.25)
+    private static _placed = false;
 
     public static async Launch(renderer: DIVERenderer, scene: DIVEScene, controller: DIVEOrbitControls): Promise<void> {
         this._renderer = renderer;
@@ -77,6 +88,11 @@ export class DIVEWebXR {
     public static Update(_time: DOMHighResTimeStamp, frame: XRFrame): void {
         if (!this._currentSession) return;
 
+        if (!this._placed) {
+            this._hangNode.position.copy(this._hangOffset.clone().applyMatrix4(this._renderer.xr.getCamera().matrixWorld));
+            this._hangNode.quaternion.copy(new Quaternion().setFromRotationMatrix(this._renderer.xr.getCamera().matrixWorld));
+        }
+
         if (this._raycaster) {
             this._raycaster.Update(frame);
         }
@@ -90,29 +106,8 @@ export class DIVEWebXR {
     private static async _onSessionStarted(): Promise<void> {
         if (!this._currentSession) return;
 
-        // initialize crosshair
-        this._crosshair = new DIVEWebXRCrosshair();
-        this._crosshair.visible = false;
-        this._scene.XRRoot.add(this._crosshair);
-
-        // initialize raycaster
-        this._raycaster = await new DIVEWebXRRaycaster(this._currentSession, this._renderer, ['plane']).Init();
-
-        // check if successful
-        if (!this._raycaster) {
-            console.error('Raycaster not initialized successfully. Aborting WebXR...');
-            this.End();
-            return Promise.reject();
-        }
-
-        // add subscriptions
-        this._raycaster.Subscribe('HIT_FOUND', (payload) => {
-            this.onHitFound(payload.pose);
-        });
-
-        this._raycaster.Subscribe('HIT_LOST', () => {
-            this.onHitLost();
-        });
+        this.appendXRScene();
+        await this.initRaycaster();
 
         // add update callback to render loop
         this._renderCallbackId = this._renderer.AddPreRenderCallback((time: DOMHighResTimeStamp, frame: XRFrame) => {
@@ -125,15 +120,8 @@ export class DIVEWebXR {
     private static _onSessionEnded(): void {
         if (!this._currentSession) return;
 
-        // remove crosshair
-        if (this._crosshair) {
-            this._scene.XRRoot.remove(this._crosshair);
-        }
-
-        // properly dispose raycaster
-        if (this._raycaster) {
-            this._raycaster.Dispose();
-        }
+        this.clearXRScene();
+        this.disposeRaycaster();
 
         // remove Update() callback
         if (this._renderCallbackId) {
@@ -170,20 +158,107 @@ export class DIVEWebXR {
         this._currentSession = null;
     }
 
+    private static hitCounter = 0;
     private static onHitFound(pose: XRPose): void {
-        console.log('Hit found');
+        this.hitCounter++;
 
-        if (!this._crosshair) return;
+        if (!this._placed && this.hitCounter > 50) {
+            this.placeObjects(pose);
+        }
 
-        this._crosshair.visible = true;
-        this._crosshair.UpdateFromPose(pose);
+        if (this._crosshair) {
+            this._crosshair.visible = true;
+            this._crosshair.UpdateFromPose(pose);
+        }
+
     }
 
     private static onHitLost(): void {
-        console.log('Hit lost');
+        this.hitCounter = 0;
 
-        if (!this._crosshair) return;
+        if (this._crosshair) {
+            this._crosshair.visible = false;
+        }
+    }
 
+    private static appendXRScene(): void {
+        this._scene.XRRoot.matrixAutoUpdate = false;
+
+        // initialize crosshair
+        this._crosshair = new DIVEWebXRCrosshair();
         this._crosshair.visible = false;
+        this._scene.add(this._crosshair);
+
+        // initialize hang node
+        this._hangNode = new Object3D();
+        this._scene.XRRoot.add(this._hangNode);
+
+        // hang current scene children to hang node
+        const children: Object3D[] = [];
+        this._scene.Root.ModelRoot.children.forEach((child) => {
+            const clone = child.clone();
+            clone.layers.enableAll();
+            clone.traverse((obj) => {
+                obj.layers.enableAll();
+                if (obj instanceof Mesh) {
+                    obj.scale.set(0.1, 0.1, 0.1);
+                }
+            });
+            clone.position.set(0, 0, 0);
+            children.push(clone);
+        });
+        this._hangNode.add(...children);
+    }
+
+    private static async initRaycaster(): Promise<void> {
+        if (!this._currentSession) return Promise.reject();
+
+        // initialize raycaster
+        this._raycaster = await new DIVEWebXRRaycaster(this._currentSession, this._renderer, ['plane']).Init();
+
+        // check if successful
+        if (!this._raycaster) {
+            console.error('Raycaster not initialized successfully. Aborting WebXR...');
+            this.End();
+            return Promise.reject();
+        }
+
+        // add subscriptions
+        this._raycaster.Subscribe('HIT_FOUND', (payload) => {
+            this.onHitFound(payload.pose);
+        });
+
+        this._raycaster.Subscribe('HIT_LOST', () => {
+            this.onHitLost();
+        });
+    }
+
+    private static disposeRaycaster(): void {
+        // properly dispose raycaster
+        if (this._raycaster) {
+            this._raycaster.Dispose();
+        }
+    }
+
+    private static clearXRScene(): void {
+        this._scene.XRRoot.matrixAutoUpdate = true;
+
+        // clear xr scene
+        if (this._crosshair) {
+            this._scene.remove(this._crosshair);
+        }
+
+        // clear hang node and remove attached models
+        this._hangNode.clear();
+        this._scene.XRRoot.remove(this._hangNode);
+        this._scene.XRRoot.XRModelRoot.clear();
+    }
+
+    private static placeObjects(pose: XRPose): void {
+        this._scene.XRRoot.matrix.fromArray(pose.transform.matrix);
+        [...this._hangNode.children].forEach((child) => {
+            this._scene.XRRoot.XRModelRoot.add(child);
+        });
+        this._placed = true;
     }
 }
