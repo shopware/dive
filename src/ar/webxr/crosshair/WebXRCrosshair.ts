@@ -26,7 +26,7 @@ export class DIVEWebXRCrosshair extends Object3D {
     }
 
     public UseDefaultMesh(): void {
-        const geometry = new RingGeometry(0.08, 0.10, 32).rotateX(-Math.PI / 2);
+        const geometry = new RingGeometry(0.008, 0.01, 32).rotateX(-Math.PI / 2);
         const material = new MeshBasicMaterial();
         this.mesh = new Mesh(geometry, material);
     }
