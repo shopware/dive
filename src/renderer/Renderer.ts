@@ -29,6 +29,11 @@ export const DIVERendererDefaultSettings: DIVERendererSettings = {
     canvas: undefined,
 };
 
+export type DIVERenderCallback = (
+    time: DOMHighResTimeStamp,
+    frame: XRFrame,
+) => void;
+
 /**
  * A changed version of the WebGLRenderer.
  *
@@ -44,13 +49,13 @@ export class DIVERenderer extends WebGLRenderer {
     private force: boolean = false;
 
     // pre- and post-render callbacks
-    private preRenderCallbacks: Map<string, () => void> = new Map<
+    private preRenderCallbacks: Map<string, DIVERenderCallback> = new Map<
         string,
-        () => void
+        DIVERenderCallback
     >();
-    private postRenderCallbacks: Map<string, () => void> = new Map<
+    private postRenderCallbacks: Map<string, DIVERenderCallback> = new Map<
         string,
-        () => void
+        DIVERenderCallback
     >();
 
     constructor(
@@ -88,8 +93,8 @@ export class DIVERenderer extends WebGLRenderer {
 
     // Starts the renderer with the given scene and camera.
     public StartRenderer(scene: Scene, cam: Camera): void {
-        this.setAnimationLoop(() => {
-            this.internal_render(scene, cam);
+        this.setAnimationLoop((time: DOMHighResTimeStamp, frame: XRFrame) => {
+            this.internal_render(scene, cam, time, frame);
         });
         this.running = true;
     }
@@ -120,7 +125,7 @@ export class DIVERenderer extends WebGLRenderer {
      * @param callback Executed before rendering.
      * @returns uuid to remove the callback.
      */
-    public AddPreRenderCallback(callback: () => void): string {
+    public AddPreRenderCallback(callback: DIVERenderCallback): string {
         // add callback to renderloop
         const newUUID = MathUtils.generateUUID();
         this.preRenderCallbacks.set(newUUID, callback);
@@ -148,7 +153,7 @@ export class DIVERenderer extends WebGLRenderer {
      * @param callback Executed after rendering.
      * @returns uuid to remove the callback.
      */
-    public AddPostRenderCallback(callback: () => void): string {
+    public AddPostRenderCallback(callback: DIVERenderCallback): string {
         // add callback to renderloop
         const newUUID = MathUtils.generateUUID();
         this.postRenderCallbacks.set(newUUID, callback);
@@ -185,19 +190,24 @@ export class DIVERenderer extends WebGLRenderer {
      * @param scene Scene to render.
      * @param cam Camera to render with.
      */
-    private internal_render(scene: Scene, cam: Camera): void {
+    private internal_render(
+        scene: Scene,
+        cam: Camera,
+        time: DOMHighResTimeStamp,
+        frame: XRFrame,
+    ): void {
         // execute background render loop callbacks
         if ((this.paused || !this.running) && !this.force) return;
 
         // execute render loop callbacks
         this.preRenderCallbacks.forEach((callback) => {
-            callback();
+            callback(time, frame);
         });
 
         this.render(scene, cam);
 
         this.postRenderCallbacks.forEach((callback) => {
-            callback();
+            callback(time, frame);
         });
 
         this.force = false;
