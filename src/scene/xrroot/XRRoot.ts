@@ -46,10 +46,6 @@ export class DIVEXRRoot extends Object3D {
         this.add(this._xrHandNode);
     }
 
-    public CopyFromRoot(root: DIVERoot): void {
-        this._xrModelRoot.copy(root.clone());
-    }
-
     public InitLightEstimation(renderer: DIVERenderer): void {
         this._xrLightRoot.InitLightEstimation(renderer);
     }
