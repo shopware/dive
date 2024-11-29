@@ -1,5 +1,5 @@
 import { Object3D } from "three";
-import type DIVEScene from "../../scene/Scene";
+import { type DIVEScene } from "../../scene/Scene";
 import { USDZExporter } from "three/examples/jsm/exporters/USDZExporter";
 
 export class DIVEARQuickLook {

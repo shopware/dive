@@ -1,7 +1,7 @@
 import { DIVEInfo } from "../info/Info";
 import { DIVEARQuickLook } from "./arquicklook/ARQuickLook";
 import { DIVEWebXR } from "./webxr/WebXR";
-import type DIVEScene from "../scene/Scene";
+import { type DIVEScene } from "../scene/Scene";
 import { type DIVERenderer } from "../renderer/Renderer";
 
 export class DIVEAR {

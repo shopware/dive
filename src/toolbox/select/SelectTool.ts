@@ -1,5 +1,5 @@
 import { type Object3D } from 'three';
-import { DIVEScene } from '../../scene/Scene.ts';
+import { type DIVEScene } from '../../scene/Scene.ts';
 import DIVETransformTool from '../transform/TransformTool.ts';
 import { findInterface } from '../../helper/findInterface/findInterface.ts';
 import type DIVEOrbitControls from '../../controls/OrbitControls.ts';

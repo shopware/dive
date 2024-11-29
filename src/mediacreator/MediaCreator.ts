@@ -1,8 +1,8 @@
 import DIVEPerspectiveCamera from '../camera/PerspectiveCamera.ts';
-import { DIVEScene } from '../scene/Scene.ts';
-import { DIVERenderer } from '../renderer/Renderer.ts';
-import DIVEOrbitControls from '../controls/OrbitControls.ts';
-import { Vector3Like } from 'three';
+import { type DIVEScene } from '../scene/Scene.ts';
+import { type DIVERenderer } from '../renderer/Renderer.ts';
+import type DIVEOrbitControls from '../controls/OrbitControls.ts';
+import { type Vector3Like } from 'three';
 
 /**
  * Creates renderings of the current scene
