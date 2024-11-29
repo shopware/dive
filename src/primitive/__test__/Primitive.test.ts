@@ -1,0 +1,467 @@
+import { DIVEPrimitive } from '../Primitive';
+import { DIVECommunication } from '../../com/Communication';
+import {
+    Vector3,
+    Box3,
+    Mesh,
+    type Texture,
+    type MeshStandardMaterial,
+} from 'three';
+import type { DIVEScene } from '../../scene/Scene';
+import {
+    type COMMaterial,
+    type COMGeometry,
+    type COMGeometryType,
+} from '../../com/types';
+
+const intersectObjectsMock = jest.fn();
+
+jest.mock('three', () => {
+    return {
+        Vector3: jest.fn(function (
+            x: number = 0,
+            y: number = 0,
+            z: number = 0,
+        ) {
+            this.x = x;
+            this.y = y;
+            this.z = z;
+            this.copy = (vec3: Vector3) => {
+                this.x = vec3.x;
+                this.y = vec3.y;
+                this.z = vec3.z;
+                return this;
+            };
+            this.set = (x: number, y: number, z: number) => {
+                this.x = x;
+                this.y = y;
+                this.z = z;
+                return this;
+            };
+            this.multiply = (vec3: Vector3) => {
+                this.x *= vec3.x;
+                this.y *= vec3.y;
+                this.z *= vec3.z;
+                return this;
+            };
+            this.clone = () => {
+                return new Vector3(this.x, this.y, this.z);
+            };
+            this.setY = (y: number) => {
+                this.y = y;
+                return this;
+            };
+            this.add = (vec3: Vector3) => {
+                this.x += vec3.x;
+                this.y += vec3.y;
+                this.z += vec3.z;
+                return this;
+            };
+            this.sub = (vec3: Vector3) => {
+                this.x -= vec3.x;
+                this.y -= vec3.y;
+                this.z -= vec3.z;
+                return this;
+            };
+            return this;
+        }),
+        Object3D: jest.fn(function () {
+            this.clear = jest.fn();
+            this.color = {};
+            this.intensity = 0;
+            this.layers = {
+                mask: 0,
+            };
+            this.shadow = {
+                radius: 0,
+                mapSize: { width: 0, height: 0 },
+                bias: 0,
+                camera: {
+                    near: 0,
+                    far: 0,
+                    fov: 0,
+                },
+            };
+            this.add = jest.fn();
+            this.sub = jest.fn();
+            this.children = [
+                {
+                    visible: true,
+                    material: {
+                        color: {},
+                    },
+                },
+            ];
+            this.userData = {};
+            this.position = new Vector3();
+            this.rotation = {
+                x: 0,
+                y: 0,
+                z: 0,
+                setFromVector3: jest.fn(),
+            };
+            this.scale = {
+                x: 1,
+                y: 1,
+                z: 1,
+                set: jest.fn(),
+            };
+            this.localToWorld = (vec3: Vector3) => {
+                return vec3;
+            };
+            this.mesh = new Mesh();
+            this.traverse = jest.fn((callback) => {
+                callback(this.children[0]);
+            });
+            this.getWorldPosition = jest.fn(() => {
+                return this.position.clone();
+            });
+            return this;
+        }),
+        Box3: jest.fn(function () {
+            this.min = new Vector3(Infinity, Infinity, Infinity);
+            this.max = new Vector3(-Infinity, -Infinity, -Infinity);
+            this.getCenter = jest.fn(() => {
+                return new Vector3(0, 0, 0);
+            });
+            this.expandByObject = jest.fn();
+            this.setFromObject = jest.fn();
+
+            return this;
+        }),
+        Raycaster: jest.fn(function () {
+            this.intersectObjects = intersectObjectsMock;
+            this.layers = {
+                mask: 0,
+            };
+            return this;
+        }),
+        Mesh: jest.fn(function () {
+            this.geometry = {
+                computeBoundingBox: jest.fn(),
+                boundingBox: new Box3(),
+            };
+            this.material = {};
+            this.castShadow = true;
+            this.receiveShadow = true;
+            this.layers = {
+                mask: 0,
+            };
+            this.updateWorldMatrix = jest.fn();
+            this.traverse = jest.fn();
+            this.removeFromParent = jest.fn();
+            this.localToWorld = (vec3: Vector3) => {
+                return vec3;
+            };
+            return this;
+        }),
+        BufferGeometry: jest.fn(function () {
+            this.setAttribute = jest.fn();
+            this.setIndex = jest.fn();
+            this.translate = jest.fn();
+            this.computeVertexNormals = jest.fn();
+            this.computeBoundingBox = jest.fn();
+            this.computeBoundingSphere = jest.fn();
+            return this;
+        }),
+        BufferAttribute: jest.fn(function () {
+            return this;
+        }),
+        CylinderGeometry: jest.fn(function () {
+            this.translate = jest.fn();
+            return this;
+        }),
+        SphereGeometry: jest.fn(function () {
+            this.translate = jest.fn();
+            return this;
+        }),
+        BoxGeometry: jest.fn(function () {
+            this.translate = jest.fn();
+            return this;
+        }),
+        ConeGeometry: jest.fn(function () {
+            this.rotateY = jest.fn();
+            this.translate = jest.fn();
+            return this;
+        }),
+        Float32BufferAttribute: jest.fn(function () {
+            return this;
+        }),
+        Uint32BufferAttribute: jest.fn(function () {
+            return this;
+        }),
+        MeshStandardMaterial: jest.fn(function () {
+            this.color = {};
+            this.roughness = 0;
+            this.roughnessMap = undefined;
+            this.metalness = 0;
+            this.metalnessMap = undefined;
+            return this;
+        }),
+        Color: jest.fn(function () {
+            return this;
+        }),
+    };
+});
+
+jest.mock('../../com/Communication.ts', () => {
+    return {
+        DIVECommunication: {
+            get: jest.fn(() => {
+                return {
+                    PerformAction: jest.fn(),
+                };
+            }),
+        },
+    };
+});
+
+jest.spyOn(DIVECommunication, 'get').mockReturnValue({
+    PerformAction: jest.fn(),
+} as unknown as DIVECommunication);
+
+let primitive: DIVEPrimitive;
+
+describe('dive/primitive/DIVEPrimitive', () => {
+    beforeEach(() => {
+        primitive = new DIVEPrimitive();
+    });
+
+    afterEach(() => {
+        jest.clearAllMocks();
+    });
+
+    it('should instantiate', () => {
+        expect(primitive).toBeDefined();
+    });
+
+    it('should set geometry', () => {
+        jest.spyOn(console, 'warn');
+        const geometry = {
+            name: 'cube' as COMGeometryType,
+        } as COMGeometry;
+        expect(() => primitive.SetGeometry(geometry)).not.toThrow();
+        expect(console.warn).not.toHaveBeenCalled();
+    });
+
+    it('should warn when geometry is invalid', () => {
+        jest.spyOn(console, 'warn').mockImplementation(() => {});
+        const geometry = {
+            name: 'INVALID' as COMGeometryType,
+        } as COMGeometry;
+        expect(() => primitive.SetGeometry(geometry)).not.toThrow();
+        expect(console.warn).toHaveBeenCalled();
+    });
+
+    it('should place on floor', () => {
+        const com = DIVECommunication.get('id')!;
+        const spyPerformAction = jest.spyOn(com, 'PerformAction');
+
+        primitive.userData.id = 'something';
+
+        primitive['_boundingBox'] = {
+            min: new Vector3(0, 1, 0),
+            max: new Vector3(0, 4, 0),
+        } as unknown as Box3;
+
+        expect(() => primitive.PlaceOnFloor()).not.toThrow();
+        expect(spyPerformAction).toHaveBeenCalledWith(
+            'UPDATE_OBJECT',
+            expect.objectContaining({
+                position: expect.objectContaining({
+                    y: 1.5,
+                }),
+            }),
+        );
+
+        // skip any action when the position did not change
+        spyPerformAction.mockClear();
+        primitive.position.y = 1.5;
+        expect(() => primitive.PlaceOnFloor()).not.toThrow();
+        expect(spyPerformAction).not.toHaveBeenCalled();
+
+        // mock that the communication is not available
+        spyPerformAction.mockClear();
+        jest.spyOn(DIVECommunication, 'get').mockReturnValueOnce(undefined);
+        primitive.position.y = 0;
+        expect(() => primitive.PlaceOnFloor()).not.toThrow();
+        expect(spyPerformAction).not.toHaveBeenCalled();
+    });
+
+    it('should drop it', () => {
+        const comMock = {
+            PerformAction: jest.fn(),
+        } as unknown as DIVECommunication;
+        jest.spyOn(DIVECommunication, 'get').mockReturnValue(comMock);
+
+        const spy = jest
+            .spyOn(primitive, 'onMove')
+            .mockImplementation(() => {});
+
+        const size = {
+            x: 1,
+            y: 1,
+            z: 1,
+        };
+
+        primitive.userData.id = 'something';
+        primitive.position.set(0, 4, 0);
+        primitive['_boundingBox'] = {
+            min: new Vector3(-size.x / 2, -size.y / 2, -size.z / 2),
+            max: new Vector3(size.x / 2, size.y / 2, size.z / 2),
+            getCenter: jest.fn(() => {
+                return new Vector3(0, 0, 0);
+            }),
+        } as unknown as Box3;
+
+        const hitObject = new Mesh();
+        hitObject.geometry.boundingBox = new Box3();
+        hitObject.geometry.boundingBox.max = new Vector3(0, 2, 0);
+        intersectObjectsMock.mockReturnValue([
+            {
+                object: hitObject,
+            },
+        ]);
+
+        const scene = {
+            parent: null,
+            Root: {
+                children: [
+                    primitive,
+                ],
+            },
+        } as unknown as DIVEScene;
+        scene.Root.parent = scene;
+
+        // test when parent is not set
+        console.warn = jest.fn();
+        expect(() => primitive.DropIt()).not.toThrow();
+        expect(console.warn).toHaveBeenCalledTimes(1);
+
+        primitive.parent = scene.Root;
+
+        expect(() => primitive.DropIt()).not.toThrow();
+        expect(primitive.position.y).toBe(2.5);
+        expect(spy).toHaveBeenCalledTimes(1);
+
+        expect(() => primitive.DropIt()).not.toThrow();
+        expect(spy).toHaveBeenCalledTimes(1);
+
+        // alter position so onMove will be called again
+        primitive.position.y = 2;
+        jest.spyOn(DIVECommunication, 'get').mockReturnValueOnce(undefined);
+        expect(() => primitive.DropIt()).not.toThrow();
+        expect(spy).toHaveBeenCalledTimes(2);
+    });
+
+    it('should set geometry', () => {
+        primitive.userData.id = 'something';
+
+        // cylinder
+        const cylinder = {
+            name: 'cylinder',
+            width: 1,
+            height: 1.5,
+            depth: 1,
+        } as COMGeometry;
+        expect(() => primitive.SetGeometry(cylinder)).not.toThrow();
+
+        // sphere
+        const sphere = {
+            name: 'sphere',
+            width: 1,
+            height: 1,
+            depth: 1,
+        } as COMGeometry;
+        expect(() => primitive.SetGeometry(sphere)).not.toThrow();
+
+        // pyramid
+        const pyramid = {
+            name: 'pyramid',
+            width: 1,
+            height: 1.5,
+            depth: 1,
+        } as COMGeometry;
+        expect(() => primitive.SetGeometry(pyramid)).not.toThrow();
+
+        // box
+        const box = {
+            name: 'box',
+            width: 1,
+            height: 1,
+            depth: 1,
+        } as COMGeometry;
+        expect(() => primitive.SetGeometry(box)).not.toThrow();
+
+        // cone
+        const cone = {
+            name: 'cone',
+            width: 1,
+            height: 1.5,
+            depth: 1,
+        } as COMGeometry;
+        expect(() => primitive.SetGeometry(cone)).not.toThrow();
+
+        // wall
+        const wall = {
+            name: 'wall',
+            width: 1,
+            height: 1.5,
+            depth: 0.1,
+        } as COMGeometry;
+        expect(() => primitive.SetGeometry(wall)).not.toThrow();
+
+        const wallWithoutDepth = {
+            name: 'wall',
+            width: 1,
+            height: 1.5,
+        } as COMGeometry;
+        expect(() => primitive.SetGeometry(wallWithoutDepth)).not.toThrow();
+
+        // plane
+        const plane = {
+            name: 'plane',
+            width: 1,
+            height: 0.1,
+            depth: 1,
+        } as COMGeometry;
+        expect(() => primitive.SetGeometry(plane)).not.toThrow();
+    });
+
+    it('should set material', () => {
+        const material = primitive['_mesh'].material as MeshStandardMaterial;
+
+        // apply invalid material should not crash
+        expect(() => primitive.SetMaterial({} as COMMaterial)).not.toThrow();
+        expect(material).toBeDefined();
+
+        expect(() =>
+            primitive.SetMaterial({
+                color: 0xffffff,
+                roughness: 0,
+                metalness: 1,
+            } as COMMaterial),
+        ).not.toThrow();
+        expect((material as MeshStandardMaterial).roughness).toBe(0);
+        expect((material as MeshStandardMaterial).roughnessMap).toBeUndefined();
+        expect((material as MeshStandardMaterial).metalness).toBe(1);
+        expect((material as MeshStandardMaterial).metalnessMap).toBeUndefined();
+
+        expect(() =>
+            primitive.SetMaterial({
+                color: 0xff00ff,
+                vertexColors: true,
+                map: 'This_Is_A_Texture' as unknown as Texture,
+                normalMap: 'This_Is_A_Texture' as unknown as Texture,
+                roughness: 0,
+                roughnessMap: 'This_Is_A_Texture' as unknown as Texture,
+                metalness: 1,
+                metalnessMap: 'This_Is_A_Texture' as unknown as Texture,
+            } as COMMaterial),
+        ).not.toThrow();
+        expect((material as MeshStandardMaterial).roughness).toBe(1);
+        expect((material as MeshStandardMaterial).roughnessMap).toBeDefined();
+        expect((material as MeshStandardMaterial).metalness).toBe(0);
+        expect((material as MeshStandardMaterial).metalnessMap).toBeDefined();
+    });
+});

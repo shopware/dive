@@ -1,0 +1,397 @@
+import { DIVEModel } from '../Model';
+import { DIVECommunication } from '../../com/Communication';
+import { GLTF } from 'three/examples/jsm/Addons';
+import { DIVEScene } from '../../scene/Scene';
+import {
+    Vector3,
+    Box3,
+    Mesh,
+    MeshStandardMaterial,
+    type Texture,
+    Color,
+} from 'three';
+import { type COMMaterial } from '../../com/types';
+import { isTypeOnlyImportOrExportDeclaration } from 'typescript';
+
+const intersectObjectsMock = jest.fn();
+
+jest.mock('three', () => {
+    return {
+        Vector3: jest.fn(function (
+            x: number = 0,
+            y: number = 0,
+            z: number = 0,
+        ) {
+            this.x = x;
+            this.y = y;
+            this.z = z;
+            this.copy = (vec3: Vector3) => {
+                this.x = vec3.x;
+                this.y = vec3.y;
+                this.z = vec3.z;
+                return this;
+            };
+            this.set = (x: number, y: number, z: number) => {
+                this.x = x;
+                this.y = y;
+                this.z = z;
+                return this;
+            };
+            this.multiply = (vec3: Vector3) => {
+                this.x *= vec3.x;
+                this.y *= vec3.y;
+                this.z *= vec3.z;
+                return this;
+            };
+            this.clone = () => {
+                return new Vector3(this.x, this.y, this.z);
+            };
+            this.setY = (y: number) => {
+                this.y = y;
+                return this;
+            };
+            this.add = (vec3: Vector3) => {
+                this.x += vec3.x;
+                this.y += vec3.y;
+                this.z += vec3.z;
+                return this;
+            };
+            this.sub = (vec3: Vector3) => {
+                this.x -= vec3.x;
+                this.y -= vec3.y;
+                this.z -= vec3.z;
+                return this;
+            };
+            return this;
+        }),
+        Object3D: jest.fn(function () {
+            this.clear = jest.fn();
+            this.color = {};
+            this.intensity = 0;
+            this.layers = {
+                mask: 0,
+            };
+            this.shadow = {
+                radius: 0,
+                mapSize: { width: 0, height: 0 },
+                bias: 0,
+                camera: {
+                    near: 0,
+                    far: 0,
+                    fov: 0,
+                },
+            };
+            this.add = jest.fn();
+            this.sub = jest.fn();
+            this.children = [
+                {
+                    visible: true,
+                    material: {
+                        color: {},
+                    },
+                },
+            ];
+            this.userData = {};
+            this.position = new Vector3();
+            this.rotation = {
+                x: 0,
+                y: 0,
+                z: 0,
+                setFromVector3: jest.fn(),
+            };
+            this.scale = {
+                x: 1,
+                y: 1,
+                z: 1,
+                set: jest.fn(),
+            };
+            this.localToWorld = (vec3: Vector3) => {
+                return vec3;
+            };
+            this.mesh = new Mesh();
+            this.traverse = jest.fn((callback) => {
+                callback(this.children[0]);
+            });
+            this.getWorldPosition = jest.fn(() => {
+                return this.position.clone();
+            });
+            return this;
+        }),
+        Box3: jest.fn(function () {
+            this.min = new Vector3(Infinity, Infinity, Infinity);
+            this.max = new Vector3(-Infinity, -Infinity, -Infinity);
+            this.getCenter = jest.fn(() => {
+                return new Vector3(0, 0, 0);
+            });
+            this.expandByObject = jest.fn();
+            this.makeEmpty = jest.fn();
+
+            return this;
+        }),
+        Raycaster: jest.fn(function () {
+            this.intersectObjects = intersectObjectsMock;
+            this.layers = {
+                mask: 0,
+            };
+            return this;
+        }),
+        Mesh: jest.fn(function () {
+            this.geometry = {
+                computeBoundingBox: jest.fn(),
+                boundingBox: new Box3(),
+            };
+            this.material = {};
+            this.castShadow = true;
+            this.receiveShadow = true;
+            this.layers = {
+                mask: 0,
+            };
+            this.updateWorldMatrix = jest.fn();
+            this.traverse = jest.fn();
+            this.removeFromParent = jest.fn();
+            this.localToWorld = (vec3: Vector3) => {
+                return vec3;
+            };
+            return this;
+        }),
+        MeshStandardMaterial: jest.fn(function () {
+            this.color = new Color();
+            this.roughness = 1;
+            this.roughnessMap = undefined;
+            this.metalness = 0;
+            this.metalnessMap = undefined;
+            return this;
+        }),
+        Color: jest.fn(function () {
+            this.set = jest.fn();
+            return this;
+        }),
+    };
+});
+
+jest.mock('../../com/Communication.ts', () => {
+    return {
+        DIVECommunication: {
+            get: jest.fn(() => {
+                return {
+                    PerformAction: jest.fn(),
+                };
+            }),
+        },
+    };
+});
+
+const gltf = {
+    scene: {
+        isMesh: true,
+        isObject3D: true,
+        parent: null,
+        dispatchEvent: jest.fn(),
+        layers: {
+            mask: 0,
+        },
+        material: {},
+        updateWorldMatrix: jest.fn(),
+        children: [
+            {
+                castShadow: false,
+                receiveShadow: false,
+                layers: {
+                    mask: 0,
+                },
+                children: [],
+                updateWorldMatrix: jest.fn(),
+                isMesh: true,
+            },
+        ],
+        traverse: function (callback: (object: object) => void) {
+            callback(this);
+        },
+        removeFromParent: jest.fn(),
+    },
+} as unknown as GLTF;
+
+jest.spyOn(DIVECommunication, 'get').mockReturnValue({
+    PerformAction: jest.fn(),
+} as unknown as DIVECommunication);
+
+let model: DIVEModel;
+
+describe('dive/model/DIVEModel', () => {
+    beforeEach(() => {
+        jest.clearAllMocks();
+        model = new DIVEModel();
+    });
+
+    afterEach(() => {
+        jest.clearAllMocks();
+    });
+
+    it('should instantiate', () => {
+        expect(model).toBeDefined();
+    });
+
+    it('should set model', () => {
+        expect(() => model.SetModel(gltf)).not.toThrow();
+    });
+
+    it('should place on floor', () => {
+        const com = DIVECommunication.get('id')!;
+        const spyPerformAction = jest.spyOn(com, 'PerformAction');
+
+        model.userData.id = 'something';
+
+        model['_boundingBox'] = {
+            min: new Vector3(0, 1, 0),
+            max: new Vector3(1, 4, 1),
+        } as unknown as Box3;
+
+        expect(() => model.PlaceOnFloor()).not.toThrow();
+        expect(spyPerformAction).toHaveBeenCalledWith(
+            'UPDATE_OBJECT',
+            expect.objectContaining({
+                position: expect.objectContaining({
+                    y: 1.5,
+                }),
+            }),
+        );
+
+        // skip any action when the position did not change
+        spyPerformAction.mockClear();
+        model.position.y = 1.5;
+        expect(() => model.PlaceOnFloor()).not.toThrow();
+        expect(spyPerformAction).not.toHaveBeenCalled();
+
+        // mock that the communication is not available
+        spyPerformAction.mockClear();
+        jest.spyOn(DIVECommunication, 'get').mockReturnValueOnce(undefined);
+        model.position.y = 0;
+        expect(() => model.PlaceOnFloor()).not.toThrow();
+        expect(spyPerformAction).not.toHaveBeenCalled();
+    });
+
+    it('should drop it', () => {
+        const comMock = {
+            PerformAction: jest.fn(),
+        } as unknown as DIVECommunication;
+        jest.spyOn(DIVECommunication, 'get').mockReturnValue(comMock);
+
+        const spy = jest.spyOn(model, 'onMove').mockImplementation(() => {});
+
+        const size = {
+            x: 1,
+            y: 1,
+            z: 1,
+        };
+
+        model.userData.id = 'something';
+        model.position.set(0, 4, 0);
+        model['_boundingBox'] = {
+            min: new Vector3(-size.x / 2, -size.y / 2, -size.z / 2),
+            max: new Vector3(size.x / 2, size.y / 2, size.z / 2),
+            getCenter: jest.fn(() => {
+                return new Vector3(0, 0, 0);
+            }),
+        } as unknown as Box3;
+
+        const hitObject = new Mesh();
+        hitObject.geometry.boundingBox = new Box3();
+        hitObject.geometry.boundingBox.max = new Vector3(0, 2, 0);
+        intersectObjectsMock.mockReturnValue([
+            {
+                object: hitObject,
+            },
+        ]);
+
+        const scene = {
+            parent: null,
+            Root: {
+                children: [
+                    model,
+                ],
+            },
+        } as unknown as DIVEScene;
+        scene.Root.parent = scene;
+
+        // test when parent is not set
+        console.warn = jest.fn();
+        expect(() => model.DropIt()).not.toThrow();
+        expect(console.warn).toHaveBeenCalledTimes(1);
+
+        model.parent = scene.Root;
+
+        expect(() => model.DropIt()).not.toThrow();
+        expect(model.position.y).toBe(2.5);
+        expect(spy).toHaveBeenCalledTimes(1);
+
+        expect(() => model.DropIt()).not.toThrow();
+        expect(spy).toHaveBeenCalledTimes(1);
+
+        // alter position so onMove will be called again
+        model.position.y = 2;
+        jest.spyOn(DIVECommunication, 'get').mockReturnValueOnce(undefined);
+        expect(() => model.DropIt()).not.toThrow();
+        expect(spy).toHaveBeenCalledTimes(2);
+    });
+
+    it('should set material', () => {
+        // apply invalid material should not crash
+        expect(() => model.SetMaterial({} as COMMaterial)).not.toThrow();
+        expect(model['_material']).not.toBeNull();
+
+        expect(() =>
+            model.SetMaterial({
+                color: 0xffffff,
+                roughness: 0,
+                metalness: 1,
+            } as COMMaterial),
+        ).not.toThrow();
+        expect((model['_material'] as MeshStandardMaterial).roughness).toBe(0);
+        expect(
+            (model['_material'] as MeshStandardMaterial).roughnessMap,
+        ).toBeUndefined();
+        expect((model['_material'] as MeshStandardMaterial).metalness).toBe(1);
+        expect(
+            (model['_material'] as MeshStandardMaterial).metalnessMap,
+        ).toBeUndefined();
+
+        expect(() =>
+            model.SetMaterial({
+                color: 0xff00ff,
+                vertexColors: true,
+                map: 'This_Is_A_Texture' as unknown as Texture,
+                normalMap: 'This_Is_A_Texture' as unknown as Texture,
+                roughness: 0,
+                roughnessMap: 'This_Is_A_Texture' as unknown as Texture,
+                metalness: 1,
+                metalnessMap: 'This_Is_A_Texture' as unknown as Texture,
+            } as COMMaterial),
+        ).not.toThrow();
+        expect((model['_material'] as MeshStandardMaterial).roughness).toBe(1);
+        expect(
+            (model['_material'] as MeshStandardMaterial).roughnessMap,
+        ).toBeDefined();
+        expect((model['_material'] as MeshStandardMaterial).metalness).toBe(1);
+        expect(
+            (model['_material'] as MeshStandardMaterial).metalnessMap,
+        ).toBeDefined();
+    });
+
+    it('should set model material when material already set before', () => {
+        model.SetMaterial({ roughness: 0.5 } as COMMaterial);
+        expect(() => model.SetModel(gltf)).not.toThrow();
+        expect(
+            (model['_mesh']?.material as MeshStandardMaterial).roughness,
+        ).toBe(0.5);
+    });
+
+    it('should set material to model when model already set before', () => {
+        model.SetModel(gltf);
+        expect(() =>
+            model.SetMaterial({ roughness: 0.5 } as COMMaterial),
+        ).not.toThrow();
+        expect(
+            (model['_mesh']?.material as MeshStandardMaterial).roughness,
+        ).toBe(0.5);
+    });
+});
