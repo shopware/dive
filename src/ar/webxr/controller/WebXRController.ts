@@ -57,7 +57,7 @@ export class DIVEWebXRController extends Object3D {
     }
 
     public async Init(): Promise<this> {
-        this.appendXRScene();
+        this.prepareScene();
 
         await this.initOrigin();
         await this.initRaycaster();
@@ -66,7 +66,7 @@ export class DIVEWebXRController extends Object3D {
     }
 
     public Dispose(): void {
-        this.clearXRScene();
+        this.restoreScene();
 
         this._origin.Dispose();
         this._xrRaycaster.Dispose();
@@ -92,20 +92,27 @@ export class DIVEWebXRController extends Object3D {
         }
     }
 
-    private onHitFound(hit: DIVEHitResult): void {
-        if (this._crosshair) {
-            this._crosshair.visible = true;
-            this._crosshair.matrix.copy(hit.matrix);
-        }
+    // placement
+    private async initOrigin(): Promise<void> {
+        // initialize origin
+        this._origin = await this._origin.Init();
+
+        // set resolve callback: place objects at origin when it is set
+        this._origin.originSet.then(() => {
+            this.placeObjects(this._origin.matrix);
+        });
     }
 
-    private onHitLost(): void {
-        if (this._crosshair) {
-            this._crosshair.visible = false;
-        }
+    private placeObjects(matrix: Matrix4): void {
+        this._scene.XRRoot.matrix.copy(matrix);
+        [...this._scene.XRRoot.XRHandNode.children].forEach((child) => {
+            this._scene.XRRoot.XRModelRoot.add(child);
+        });
+        this._placed = true;
     }
 
-    private appendXRScene(): void {
+    // prepare & cleanup scene
+    private prepareScene(): void {
         this._scene.XRRoot.matrixAutoUpdate = false;
 
         // initialize crosshair
@@ -128,18 +135,17 @@ export class DIVEWebXRController extends Object3D {
         this._scene.XRRoot.XRHandNode.add(...children);
     }
 
-    private async initOrigin(): Promise<void> {
-        // initialize origin
-        this._origin = await this._origin.Init();
+    private restoreScene(): void {
+        this._scene.remove(this._crosshair);
 
-        // set resolve callback: place objects at origin when it is set
-        this._origin.originSet.then((set) => {
-            if (!set) return;
+        // clear hang node and remove attached models
+        this._scene.XRRoot.XRHandNode.clear();
+        this._scene.XRRoot.XRModelRoot.clear();
 
-            this.placeObjects(this._origin.matrix);
-        });
+        this._scene.XRRoot.matrixAutoUpdate = true;
     }
 
+    // raycast
     private async initRaycaster(): Promise<void> {
         // initialize raycaster
         await this._xrRaycaster.Init();
@@ -153,29 +159,20 @@ export class DIVEWebXRController extends Object3D {
 
         // add subscriptions
         this._xrRaycaster.Subscribe('HIT_FOUND', (payload) => {
-            this.onHitFound(payload.hit);
+            this.onARRaycasterHit(payload.hit);
         });
 
         this._xrRaycaster.Subscribe('HIT_LOST', () => {
-            this.onHitLost();
+            this.onARRaycasterHitLost();
         });
     }
 
-    private clearXRScene(): void {
-        this._scene.remove(this._crosshair);
-
-        // clear hang node and remove attached models
-        this._scene.XRRoot.XRHandNode.clear();
-        this._scene.XRRoot.XRModelRoot.clear();
-
-        this._scene.XRRoot.matrixAutoUpdate = true;
+    private onARRaycasterHit(hit: DIVEHitResult): void {
+        this._crosshair.visible = true;
+        this._crosshair.matrix.copy(hit.matrix);
     }
 
-    private placeObjects(matrix: Matrix4): void {
-        this._scene.XRRoot.matrix.copy(matrix);
-        [...this._scene.XRRoot.XRHandNode.children].forEach((child) => {
-            this._scene.XRRoot.XRModelRoot.add(child);
-        });
-        this._placed = true;
+    private onARRaycasterHitLost(): void {
+        this._crosshair.visible = false;
     }
 }

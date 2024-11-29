@@ -16,9 +16,9 @@ export class DIVEWebXROrigin {
     private _hitTestResultBuffer: XRHitTestResult[];
     private _raycastHitCounter: number = 0;
 
-    private _originSet: Promise<boolean>;
-    private _originSetResolve: (value: boolean) => void = () => { };
-    public get originSet(): Promise<boolean> {
+    private _originSet: Promise<void>;
+    private _originSetResolve: (value: void) => void = () => { };
+    public get originSet(): Promise<void> {
         return this._originSet;
     }
 
@@ -50,7 +50,7 @@ export class DIVEWebXROrigin {
         this._renderer = renderer;
         this._session = session;
 
-        this._originSet = new Promise<boolean>((resolve) => {
+        this._originSet = new Promise<void>((resolve) => {
             this._originSetResolve = resolve;
         });
 
@@ -160,7 +160,7 @@ export class DIVEWebXROrigin {
         this.matrix.fromArray(pose.transform.matrix);
 
         if (this._raycastHitCounter > 50) {
-            this._originSetResolve(true);
+            this._originSetResolve();
         }
     }
 
