@@ -238,6 +238,7 @@ export class DIVERoot extends Object3D {
             const created = new DIVEModel();
             sceneObject = created;
             sceneObject.userData.id = model.id;
+            sceneObject.userData.uri = model.uri;
             this.add(sceneObject);
         }
 

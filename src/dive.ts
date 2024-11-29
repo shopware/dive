@@ -62,8 +62,11 @@ export const DIVEDefaultSettings: DIVESettings = {
 
 export default class DIVE {
     // static members
-    public static QuickView(uri: string): DIVE {
-        const dive = new DIVE();
+    public static QuickView(
+        uri: string,
+        settings?: Partial<DIVESettings>,
+    ): DIVE {
+        const dive = new DIVE(settings);
 
         dive.Communication.PerformAction('SET_CAMERA_TRANSFORM', {
             position: { x: 0, y: 2, z: 2 },
