@@ -25,7 +25,7 @@ export class DIVEWebXR {
     private static _options = {
         requiredFeatures: ['local', 'hit-test'],
         optionalFeatures: ['light-estimation', 'local-floor', 'dom-overlay', 'depth-sensing'],
-        depthSensing: { usagePreference: ['gpu-optimized' as XRDepthUsage], dataFormatPreference: [] },
+        depthSensing: { usagePreference: ['gpu-optimized'], dataFormatPreference: [] },
         domOverlay: { root: {} as HTMLElement },
     };
 
@@ -93,14 +93,14 @@ export class DIVEWebXR {
     private static async _onSessionStarted(): Promise<void> {
         if (!this._currentSession) return;
 
-        this._xrController = new DIVEWebXRController(this._currentSession, this._renderer, this._scene);
-        await this._xrController.Init().catch(() => {
-            this.End();
-        });
-
         // add update callback to render loop
         this._renderCallbackId = this._renderer.AddPreRenderCallback((time: DOMHighResTimeStamp, frame: XRFrame) => {
             this.Update(time, frame);
+        });
+
+        this._xrController = new DIVEWebXRController(this._currentSession, this._renderer, this._scene);
+        await this._xrController.Init().catch(() => {
+            this.End();
         });
 
         return Promise.resolve();

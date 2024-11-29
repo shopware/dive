@@ -1,8 +1,9 @@
-import { Mesh, Object3D, Quaternion, Vector3 } from "three";
+import { Matrix4, Mesh, Object3D, Quaternion, Vector3 } from "three";
 import { DIVERenderer } from "../../../renderer/Renderer";
 import { DIVEScene } from "../../../scene/Scene";
 import { DIVEWebXRCrosshair } from "../crosshair/WebXRCrosshair";
 import { DIVEWebXRRaycaster } from "../raycaster/WebXRRaycaster";
+import { DIVEWebXROrigin } from "../origin/WebXROrigin";
 
 export class DIVEWebXRController extends Object3D {
     // general members
@@ -10,6 +11,8 @@ export class DIVEWebXRController extends Object3D {
     private _scene: DIVEScene;
     private _currentSession: XRSession;
     private _xrRaycaster: DIVEWebXRRaycaster | null = null;
+
+    private _origin: DIVEWebXROrigin | null = null;
 
     // crosshair
     private _crosshair: DIVEWebXRCrosshair | null = null;
@@ -31,6 +34,10 @@ export class DIVEWebXRController extends Object3D {
 
     public async Init(): Promise<void> {
         this.appendXRScene();
+        this._origin = await new DIVEWebXROrigin(this._currentSession, this._renderer, ['plane']).Init();
+        this._origin.matrix.then((matrix) => {
+            this.placeObjects(matrix);
+        })
         return this.initRaycaster();
     }
 
@@ -47,19 +54,26 @@ export class DIVEWebXRController extends Object3D {
         if (!this._placed) {
             this._scene.XRRoot.XRHandNode.position.copy(this._handOffset.clone().applyMatrix4(this._renderer.xr.getCamera().matrixWorld));
             this._scene.XRRoot.XRHandNode.quaternion.copy(new Quaternion().setFromRotationMatrix(this._renderer.xr.getCamera().matrixWorld));
+
+            if (this._origin) {
+                this._origin.Update(frame);
+            }
         }
 
-        if (this._xrRaycaster) {
-            this._xrRaycaster.Update(frame);
+        if (this._placed) {
+            if (this._xrRaycaster) {
+                this._xrRaycaster.Update(frame);
+            }
         }
+
     }
-
     private onHitFound(pose: XRPose): void {
         this._raycastHitCounter++;
 
-        if (!this._placed && this._raycastHitCounter > 50) {
-            this.placeObjects(pose);
-        }
+        // if (!this._placed && this._raycastHitCounter > 50) {
+        //     const matrix = new Matrix4().fromArray(pose.transform.matrix);
+        //     this.placeObjects(matrix);
+        // }
 
         if (this._crosshair) {
             this._crosshair.visible = true;
@@ -143,8 +157,8 @@ export class DIVEWebXRController extends Object3D {
         this._scene.XRRoot.XRModelRoot.clear();
     }
 
-    private placeObjects(pose: XRPose): void {
-        this._scene.XRRoot.matrix.fromArray(pose.transform.matrix);
+    private placeObjects(matrix: Matrix4): void {
+        this._scene.XRRoot.matrix.copy(matrix);
         [...this._scene.XRRoot.XRHandNode.children].forEach((child) => {
             this._scene.XRRoot.XRModelRoot.add(child);
         });
