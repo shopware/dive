@@ -142,8 +142,8 @@ jobs:
         env:
           PR_NUMBER: ${{ github.event.pull_request.number || 'workflow_dispatch' }}
         run: |
-          yarn version --prerelease --preid beta
-          yarn publish --tag beta
           git config user.name "GitHub Actions"
           git config user.email "actions@github.com"
+          yarn version --prerelease --preid beta
+          yarn publish --tag beta
           git push origin --tags
