@@ -3,6 +3,7 @@ import { DIVERenderer } from "../../../renderer/Renderer";
 import { DIVEWebXRRaycasterAR } from "./ar/WebXRRaycasterAR";
 import { DIVEWebXRRaycasterTHREE } from "./three/WebXRRaycasterTHREE";
 import { DIVEScene } from "../../../scene/Scene";
+import { DIVEEventExecutor } from "../../../events/EventExecutor";
 
 /**
  * object is undefined when AR world is hit.
@@ -20,11 +21,7 @@ type DIVEWebXREvents = {
     'HIT_LOST': undefined;
 };
 
-type EventListener<DIVEWebXREvent extends keyof DIVEWebXREvents> = (payload: DIVEWebXREvents[DIVEWebXREvent]) => void;
-
-type Unsubscribe = () => boolean;
-
-export class DIVEWebXRRaycaster {
+export class DIVEWebXRRaycaster extends DIVEEventExecutor<DIVEWebXREvents> {
     private _renderer: DIVERenderer;
     private _session: XRSession;
 
@@ -35,13 +32,12 @@ export class DIVEWebXRRaycaster {
 
     private _hitResultBuffer: DIVEHitResult[] = [];
 
-    // listeners
-    private _listeners: Map<keyof DIVEWebXREvents, EventListener<keyof DIVEWebXREvents>[]> = new Map();
-
     // buffers
     private _hasHit: boolean = false;
 
     constructor(session: XRSession, renderer: DIVERenderer, scene: DIVEScene) {
+        super();
+
         this._session = session;
         this._renderer = renderer;
 
@@ -100,31 +96,6 @@ export class DIVEWebXRRaycaster {
             // hit nothing
             this.onHitLost();
         }
-    }
-
-    public Subscribe<DIVEWebXREvent extends keyof DIVEWebXREvents>(type: DIVEWebXREvent, listener: EventListener<DIVEWebXREvent>): Unsubscribe {
-        if (!this._listeners.get(type)) this._listeners.set(type, []);
-
-        // casting to any because of typescript not finding between Action and typeof Actions being equal in this case
-        this._listeners.get(type)!.push(listener as EventListener<keyof DIVEWebXREvents>);
-
-        return () => {
-            const listenerArray = this._listeners.get(type);
-            if (!listenerArray) return false;
-
-            const existingIndex = listenerArray.findIndex((entry) => entry === listener);
-            if (existingIndex === -1) return false;
-
-            listenerArray.splice(existingIndex, 1);
-            return true;
-        };
-    }
-
-    private dispatch<Action extends keyof DIVEWebXREvents>(type: Action, payload?: DIVEWebXREvents[Action]): void {
-        const listenerArray = this._listeners.get(type);
-        if (!listenerArray) return;
-
-        listenerArray.forEach((listener) => listener(payload))
     }
 
     private onHitFound(hit: DIVEHitResult): void {
