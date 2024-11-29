@@ -14,8 +14,6 @@ export class DIVEAR {
     }
 
     public async Launch(): Promise<void> {
-        console.log('Launching AR');
-
         const system = DIVEInfo.GetSystem();
 
         if (system === 'iOS') {
