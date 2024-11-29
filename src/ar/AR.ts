@@ -3,14 +3,17 @@ import { DIVEARQuickLook } from "./arquicklook/ARQuickLook";
 import { DIVEWebXR } from "./webxr/WebXR";
 import { type DIVEScene } from "../scene/Scene";
 import { type DIVERenderer } from "../renderer/Renderer";
+import DIVEOrbitControls from "../controls/OrbitControls";
 
 export class DIVEAR {
-    private renderer: DIVERenderer;
-    private scene: DIVEScene;
+    private _renderer: DIVERenderer;
+    private _scene: DIVEScene;
+    private _controller: DIVEOrbitControls;
 
-    constructor(renderer: DIVERenderer, scene: DIVEScene) {
-        this.renderer = renderer;
-        this.scene = scene;
+    constructor(renderer: DIVERenderer, scene: DIVEScene, controller: DIVEOrbitControls) {
+        this._renderer = renderer;
+        this._scene = scene;
+        this._controller = controller;
     }
 
     public async Launch(): Promise<void> {
@@ -26,7 +29,7 @@ export class DIVEAR {
             console.log('Launching AR on iOS');
 
             // Launch ARQuickLook
-            await DIVEARQuickLook.Launch(this.scene);
+            await DIVEARQuickLook.Launch(this._scene);
             return Promise.resolve();
         }
 
@@ -40,7 +43,7 @@ export class DIVEAR {
             console.log('Launching AR on Android');
 
             // Launch WebXR
-            await DIVEWebXR.Launch(this.renderer, this.scene);
+            await DIVEWebXR.Launch(this._renderer, this._scene, this._controller);
             return Promise.resolve();
         }
 

@@ -1,9 +1,11 @@
 import { Color, Scene, type Box3, type ColorRepresentation } from 'three';
 import { type COMModel, type COMEntity } from '../com/types';
 import { DIVERoot } from './root/Root';
+import { DIVEGrid } from '../grid/Grid';
+import { DIVEFloor } from '../primitive/floor/Floor';
+import { type DIVESceneObject } from '../types';
 import { DIVEXRRoot } from './xrroot/XRRoot';
 import { type DIVERenderer } from '../renderer/Renderer';
-import { type DIVESceneObject } from '../types';
 
 /**
  * A basic scene class.
@@ -15,6 +17,9 @@ import { type DIVESceneObject } from '../types';
 
 export class DIVEScene extends Scene {
     private _root: DIVERoot;
+    private _floor: DIVEFloor;
+    private _grid: DIVEGrid;
+
     public get Root(): DIVERoot {
         return this._root;
     }
@@ -24,6 +29,14 @@ export class DIVEScene extends Scene {
         return this._xrRoot;
     }
 
+    public get Floor(): DIVEFloor {
+        return this._floor;
+    }
+
+    public get Grid(): DIVEGrid {
+        return this._grid;
+    }
+
     constructor() {
         super();
 
@@ -31,6 +44,12 @@ export class DIVEScene extends Scene {
 
         this._root = new DIVERoot();
         this.add(this._root);
+
+        this._floor = new DIVEFloor();
+        this.add(this._floor);
+
+        this._grid = new DIVEGrid();
+        this.add(this._grid);
 
         this._xrRoot = new DIVEXRRoot(this);
         this._xrRoot.visible = false;
