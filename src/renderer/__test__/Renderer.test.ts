@@ -123,6 +123,8 @@ describe('dive/renderer/DIVERenderer', () => {
             renderer['internal_render'](
                 {} as DIVEScene,
                 {} as DIVEPerspectiveCamera,
+                0.016,
+                {} as XRFrame,
             );
         }).not.toThrow();
         expect(mock_render).toHaveBeenCalledTimes(1);
@@ -139,6 +141,8 @@ describe('dive/renderer/DIVERenderer', () => {
         renderer['internal_render'](
             {} as DIVEScene,
             {} as DIVEPerspectiveCamera,
+            0.016,
+            {} as XRFrame,
         );
         expect(mock_render).toHaveBeenCalledTimes(0);
     });
@@ -148,6 +152,8 @@ describe('dive/renderer/DIVERenderer', () => {
         renderer['internal_render'](
             {} as DIVEScene,
             {} as DIVEPerspectiveCamera,
+            0.016,
+            {} as XRFrame,
         );
         expect(mock_render).toHaveBeenCalledTimes(1);
 
@@ -155,6 +161,8 @@ describe('dive/renderer/DIVERenderer', () => {
         renderer['internal_render'](
             {} as DIVEScene,
             {} as DIVEPerspectiveCamera,
+            0.016,
+            {} as XRFrame,
         );
         expect(mock_render).toHaveBeenCalledTimes(1);
     });
@@ -164,6 +172,8 @@ describe('dive/renderer/DIVERenderer', () => {
         renderer['internal_render'](
             {} as DIVEScene,
             {} as DIVEPerspectiveCamera,
+            0.016,
+            {} as XRFrame,
         );
         expect(mock_render).toHaveBeenCalledTimes(1);
 
@@ -171,6 +181,8 @@ describe('dive/renderer/DIVERenderer', () => {
         renderer['internal_render'](
             {} as DIVEScene,
             {} as DIVEPerspectiveCamera,
+            0.016,
+            {} as XRFrame,
         );
         expect(mock_render).toHaveBeenCalledTimes(1);
     });
@@ -181,6 +193,8 @@ describe('dive/renderer/DIVERenderer', () => {
         renderer['internal_render'](
             {} as DIVEScene,
             {} as DIVEPerspectiveCamera,
+            0.016,
+            {} as XRFrame,
         );
         expect(mock_render).toHaveBeenCalledTimes(0);
 
@@ -188,6 +202,8 @@ describe('dive/renderer/DIVERenderer', () => {
         renderer['internal_render'](
             {} as DIVEScene,
             {} as DIVEPerspectiveCamera,
+            0.016,
+            {} as XRFrame,
         );
         expect(mock_render).toHaveBeenCalledTimes(1);
     });
@@ -233,6 +249,8 @@ describe('dive/renderer/DIVERenderer', () => {
         renderer['internal_render'](
             {} as DIVEScene,
             {} as DIVEPerspectiveCamera,
+            0.016,
+            {} as XRFrame,
         );
         expect(precallback).toHaveBeenCalledTimes(1);
         expect(postcallback).toHaveBeenCalledTimes(1);
