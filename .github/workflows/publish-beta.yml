@@ -101,10 +101,13 @@ jobs:
                 git config user.name "GitHub Actions"
                 git config user.email "actions@github.com"
 
-            - name: 'Bump version to beta'
+            - name: Bump version to beta
               run: |
                 npm version prerelease --preid=beta --no-git-tag-version
                 git add package.json
+
+            - name: Build DIVE
+              run: yarn build
 
             - name: Add build files
               run: git add ./build -f
