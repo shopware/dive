@@ -107,8 +107,8 @@ jobs:
               run: |
                 yarn version --prerelease --preid beta
 
-            - name: 'Create release branch'
-              run: git checkout -b release/v$(node -p "require('./package.json').version")
+            - name: 'Create beta branch'
+              run: git checkout -b beta/v$(node -p "require('./package.json').version")
 
             - name: Build DIVE
               run: yarn build
@@ -122,22 +122,15 @@ jobs:
             - name: 'Commit changes'
               run: |
                 echo "Committing ..."
-                git commit -m "Release v$(node -p "require('./package.json').version") [skip ci]"
+                git commit -m "Beta v$(node -p "require('./package.json').version") [skip ci]"
                 echo "Committed! Status:"
                 git status
 
             - name: 'Add beta tag'
-              run: |
-                VERSION=$(node -p "require('./package.json').version")
-                BETA_TAG="v${VERSION}-beta.${{ github.event.pull_request.number || 'workflow_dispatch' }}"
-                git tag -a ${BETA_TAG} -m "Release ${BETA_TAG}"
-                echo "Created tag ${BETA_TAG}"
+              run: git tag -a v$(node -p "require('./package.json').version") -m "Beta v$(node -p "require('./package.json').version")"
 
-            - name: 'Push beta tag to trunk'
-              run: |
-                VERSION=$(node -p "require('./package.json').version")
-                BETA_TAG="v${VERSION}-beta.${{ github.event.pull_request.number || 'workflow_dispatch' }}"
-                git push origin ${BETA_TAG}
+            - name: 'Push to beta branch'
+              run: git push origin beta/v$(node -p "require('./package.json').version") && git push origin tag v$(node -p "require('./package.json').version")
 
             - name: Publish Beta tag to npm
               run: |
