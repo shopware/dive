@@ -283,14 +283,6 @@ export class DIVEWebXRTouchscreenControls extends DIVEEventExecutor<DIVETouchscr
         const distance = this._touches[1].current.distanceTo(this._touches[0].current);
         this._currentDistance = distance / this._scaleDistanceStart;
         this._deltaDistance = this._currentDistance - beforeDistance;
-        // console.log('distance', distance, 'this._scaleDistanceStart', this._scaleDistanceStart);
-        console.log('this._currentDistance', this._currentDistance);
-        // this._scaleFactor = this._scaleFactorStart * (distance / this._scaleDistanceStart);
-        // if (this._scaleFactor <= 1 + this._scaleThreshold && this._scaleFactor >= 1 - this._scaleThreshold) {
-        //     this.scale.set(1.0, 1.0, 1.0);
-        // } else {
-        //     this.scale.set(this._scaleFactor, this._scaleFactor, this._scaleFactor);
-        // }
     }
 
     private handlePinchEnded(): void {
