@@ -3,6 +3,7 @@ import { DIVERenderer } from "../../../renderer/Renderer";
 type DIVEWebXREvents = {
     'HIT_FOUND': {
         hit: XRHitTestResult;
+        pose: XRPose;
     },
     'HIT_LOST': undefined;
 };
@@ -88,7 +89,6 @@ export class DIVEWebXRRaycaster {
         if (this._hitTestResultBuffer.length > 0) {
 
             // hit found
-            const hit = this._hitTestResultBuffer[0];
             this._referenceSpaceBuffer = this._renderer.xr.getReferenceSpace();
 
             // if there is no reference space, hit will be counted as lost for this frame
@@ -97,7 +97,7 @@ export class DIVEWebXRRaycaster {
                 return;
             }
 
-            this.onHitFound(hit);
+            this.onHitFound(this._hitTestResultBuffer[0]);
 
         } else {
             // hit nothing
@@ -141,7 +141,7 @@ export class DIVEWebXRRaycaster {
         if (!pose) return;
 
         this._hasHit = true;
-        this.dispatch('HIT_FOUND', { hit });
+        this.dispatch('HIT_FOUND', { hit, pose });
     }
 
     private onHitLost(): void {

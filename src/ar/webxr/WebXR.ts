@@ -1,4 +1,4 @@
-import { type Vector3 } from "three";
+import { Mesh, MeshBasicMaterial, RingGeometry, type Vector3 } from "three";
 import DIVEOrbitControls from "../../controls/OrbitControls";
 import { type DIVERenderer } from "../../renderer/Renderer";
 import { type DIVEScene } from "../../scene/Scene";
@@ -25,6 +25,17 @@ export class DIVEWebXR {
         domOverlay: { root: {} as HTMLElement },
     };
     private static _raycaster: DIVEWebXRRaycaster | null = null;
+
+    private static _crosshair: Mesh | null = null;
+
+    private static initializeCrosshair(): Mesh {
+        const geometry = new RingGeometry(0.08, 0.10, 32).rotateX(-Math.PI / 2);
+        const material = new MeshBasicMaterial();
+        const mesh = new Mesh(geometry, material);
+        mesh.matrixAutoUpdate = false;
+        mesh.visible = false;
+        return mesh;
+    }
 
     public static async Launch(renderer: DIVERenderer, scene: DIVEScene, controller: DIVEOrbitControls): Promise<void> {
         this._renderer = renderer;
@@ -86,7 +97,10 @@ export class DIVEWebXR {
 
     private static async _onSessionStarted(): Promise<void> {
         if (!this._currentSession) return;
-        console.log('Session started', this._currentSession);
+
+        // initialize reticle
+        this._crosshair = this.initializeCrosshair();
+        this._scene.XRRoot.add(this._crosshair);
 
         // initialize raycaster
         this._raycaster = await new DIVEWebXRRaycaster(this._currentSession, this._renderer, ['plane']).Init();
@@ -98,11 +112,9 @@ export class DIVEWebXR {
             return Promise.reject();
         }
 
-        console.log('raycaster created', this._raycaster);
-
         // add subscriptions
         this._raycaster.Subscribe('HIT_FOUND', (payload) => {
-            this.onHitFound(payload.hit);
+            this.onHitFound(payload.pose);
         });
 
         this._raycaster.Subscribe('HIT_LOST', () => {
@@ -119,6 +131,10 @@ export class DIVEWebXR {
 
     private static _onSessionEnded(): void {
         if (!this._currentSession) return;
+
+        if (this._crosshair) {
+            this._scene.remove(this._crosshair);
+        }
 
         if (this._raycaster) {
             this._raycaster.Dispose();
@@ -155,16 +171,16 @@ export class DIVEWebXR {
         this._currentSession = null;
     }
 
-    private static onHitFound(hit: XRHitTestResult): void {
-        console.log('hit found', hit);
+    private static onHitFound(pose: XRPose): void {
+        if (!this._crosshair) return;
 
-        // this.reticle.visible = true;
-        // this.reticle.matrix.fromArray(pose.transform.matrix);
+        this._crosshair.visible = true;
+        this._crosshair.matrix.fromArray(pose.transform.matrix);
     }
 
     private static onHitLost(): void {
-        console.log('hit lost');
+        if (!this._crosshair) return;
 
-        // this.reticle.visible = false;
+        this._crosshair.visible = false;
     }
 }
