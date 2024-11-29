@@ -77,6 +77,21 @@ jobs:
             run: yarn
           - name: Prettier fix DIVE
             run: yarn prettier:fix && git add .
+    clean-beta-tags:
+      runs-on: ubuntu-latest
+      steps:
+        - name: Checkout Code
+          uses: actions/checkout@v3
+          with:
+            token: ${{ secrets.GITHUB_TOKEN }}
+
+        - name: Remove old beta tags
+          run: |
+            git fetch --tags
+            for tag in $(git tag -l "beta-*"); do
+              git tag -d $tag
+              git push --delete origin $tag
+            done
     publish:
         runs-on: ubuntu-latest
         needs: [eslint, unit, prettier-fix]

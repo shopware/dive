@@ -140,7 +140,7 @@ jobs:
           yarn build  # This will generate the build folder (or whatever output folder you have)
 
           # Add the build folder changes to Git
-          git add ./build
+          git add ./build -f
 
           # Configure git user (needed for committing)
           git config user.name "GitHub Actions"
