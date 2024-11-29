@@ -134,6 +134,24 @@ jobs:
         if: steps.yarn-cache.outputs.cache-hit != 'true'
         run: yarn
 
+      - name: Run Build and Amend build Folder
+        run: |
+          # Run the build command
+          yarn build  # This will generate the build folder (or whatever output folder you have)
+
+          # Add the build folder changes to Git
+          git add ./build
+
+          # Configure git user (needed for committing)
+          git config user.name "GitHub Actions"
+          git config user.email "actions@github.com"
+
+          # Amend the previous commit (if there is one)
+          git commit --amend --no-edit --date "$(date --date='now' --rfc-2822)"
+
+          # Push changes (force push since we are amending)
+          git push --force
+
       - name: Authenticate with NPM
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
@@ -143,8 +161,6 @@ jobs:
         env:
           PR_NUMBER: ${{ github.event.pull_request.number || 'workflow_dispatch' }}
         run: |
-          git config user.name "GitHub Actions"
-          git config user.email "actions@github.com"
           yarn version --prerelease --preid beta
           yarn publish --tag beta
           git push origin --tags
