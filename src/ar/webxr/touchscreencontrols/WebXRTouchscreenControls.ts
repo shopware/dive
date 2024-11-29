@@ -1,7 +1,7 @@
-import { Quaternion, Vector2 } from "three";
+import { Vector2 } from "three";
 import { DIVEEventExecutor } from "../../../events/EventExecutor";
 
-type DIVETouchscreenEvents = {
+export type DIVETouchscreenEvents = {
     'TOUCH_START': {
         index: number,
         current: Vector2,
@@ -51,61 +51,39 @@ export class DIVEWebXRTouchscreenControls extends DIVEEventExecutor<DIVETouchscr
     private _session: XRSession;
 
     // touch members
-    private _touchCount: number;
+    private _touchCount: number = 0;
     private _touches: DIVETouch[] = [];
 
     // rotate members
-    private _handleRotateStarted: boolean;
-    private _handleRotateMoved: boolean;
-    private _handleRotateEnded: boolean;
+    private _handleRotateStarted: boolean = false;
+    private _handleRotateMoved: boolean = false;
+    private _handleRotateEnded: boolean = false;
 
     private _startAngle: number = 0;
     private _lastAngle: number = 0;
     private _angleDelta: number = 0;
-    protected bufferQuaternion: Quaternion = new Quaternion();
+
 
     // scale members
-    private _handlePinchStarted: boolean;
-    private _handlePinchMoved: boolean;
-    private _handlePinchEnded: boolean;
+    private _handlePinchStarted: boolean = false;
+    private _handlePinchMoved: boolean = false;
+    private _handlePinchEnded: boolean = false;
 
-    protected _scaleThreshold: number = 0.05;
-    protected _scaleDistanceStart: number;
-    protected _currentScale: number;
-    protected _deltaScale: number;
-    protected _scaleFactor: number;
-    protected _scaleFactorStart: number;
-
+    private _scaleDistanceStart: number = 0;
+    private _currentScale: number = 0;
+    private _deltaScale: number = 0;
 
     constructor(session: XRSession) {
         super();
 
         this._session = session;
 
-        this._touchCount = 0;
         this._touches = [
             { start: new Vector2(), current: new Vector2(), delta: new Vector2() },
             { start: new Vector2(), current: new Vector2(), delta: new Vector2() },
         ];
 
         this._handleRotateStarted = false;
-        this._handleRotateMoved = false;
-        this._handleRotateEnded = false;
-
-        this._startAngle = 0;
-        this._lastAngle = 0;
-        this._angleDelta = 0;
-
-
-        this._handlePinchStarted = false;
-        this._handlePinchMoved = false;
-        this._handlePinchEnded = false;
-
-        this._scaleDistanceStart = 0;
-        this._currentScale = 0;
-        this._deltaScale = 0;
-        this._scaleFactorStart = 1;
-        this._scaleFactor = 1;
 
         window.addEventListener('touchstart', (e: TouchEvent) => this.onTouchStart(e));
         window.addEventListener('touchmove', (e: TouchEvent) => this.onTouchMove(e));
@@ -245,7 +223,6 @@ export class DIVEWebXRTouchscreenControls extends DIVEEventExecutor<DIVETouchscr
         this._handlePinchStarted = true;
 
         this._scaleDistanceStart = this._touches[1].start.distanceTo(this._touches[0].start);
-        this._scaleFactorStart = this._scaleFactor;
     }
 
     private handlePinchMoved(): void {
