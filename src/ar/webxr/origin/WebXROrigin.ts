@@ -1,5 +1,5 @@
-import { Matrix4, Quaternion, Vector3 } from "three";
-import { DIVERenderer } from "../../../renderer/Renderer";
+import { Matrix4, Quaternion, Vector3 } from 'three';
+import { DIVERenderer } from '../../../renderer/Renderer';
 
 export class DIVEWebXROrigin {
     private _renderer: DIVERenderer;
@@ -17,7 +17,7 @@ export class DIVEWebXROrigin {
     private _raycastHitCounter: number = 0;
 
     private _originSet: Promise<void>;
-    private _originSetResolve: (value: void) => void = () => { };
+    private _originSetResolve: (value: void) => void = () => {};
     public get originSet(): Promise<void> {
         return this._originSet;
     }
@@ -46,7 +46,11 @@ export class DIVEWebXROrigin {
         return this._scale;
     }
 
-    constructor(session: XRSession, renderer: DIVERenderer, entityTypes?: XRHitTestTrackableType[]) {
+    constructor(
+        session: XRSession,
+        renderer: DIVERenderer,
+        entityTypes?: XRHitTestTrackableType[],
+    ) {
         this._renderer = renderer;
         this._session = session;
 
@@ -73,7 +77,11 @@ export class DIVEWebXROrigin {
         // when origin is set, decompose matrix into position, quaternion and scale
         this._originSet.then(() => {
             // decompose matrix into position, quaternion and scale
-            this._matrix.decompose(this._position, this._quaternion, this._scale);
+            this._matrix.decompose(
+                this._position,
+                this._quaternion,
+                this._scale,
+            );
         });
     }
 
@@ -83,18 +91,27 @@ export class DIVEWebXROrigin {
         }
 
         if (!this._session) {
-            console.error("DIVEWebXROrigin: No session set in Init()! Aborting initialization...");
+            console.error(
+                'DIVEWebXROrigin: No session set in Init()! Aborting initialization...',
+            );
             return Promise.reject();
         }
 
         if (this._requesting) {
-            console.error("DIVEWebXROrigin: Currently initializing! Aborting initialization...");
+            console.error(
+                'DIVEWebXROrigin: Currently initializing! Aborting initialization...',
+            );
             return Promise.reject();
         }
 
         this._requesting = true;
-        const referenceSpace = await this._session.requestReferenceSpace('viewer');
-        this._hitTestSource = await this._session.requestHitTestSource!({ space: referenceSpace, entityTypes: this._entityTypes }) || null;
+        const referenceSpace =
+            await this._session.requestReferenceSpace('viewer');
+        this._hitTestSource =
+            (await this._session.requestHitTestSource!({
+                space: referenceSpace,
+                entityTypes: this._entityTypes,
+            })) || null;
         this._requesting = false;
 
         if (!this._hitTestSource) {
@@ -125,13 +142,16 @@ export class DIVEWebXROrigin {
         if (!this._initialized) return;
 
         if (!this._hitTestSource) {
-            throw new Error("DIVEWebXRRaycaster: Critical Error: HitTestSource not available but WebXROrigin is initialized!");
+            throw new Error(
+                'DIVEWebXRRaycaster: Critical Error: HitTestSource not available but WebXROrigin is initialized!',
+            );
         }
 
         // get hit test results
-        this._hitTestResultBuffer = frame.getHitTestResults(this._hitTestSource);
+        this._hitTestResultBuffer = frame.getHitTestResults(
+            this._hitTestSource,
+        );
         if (this._hitTestResultBuffer.length > 0) {
-
             // hit found
             this._referenceSpaceBuffer = this._renderer.xr.getReferenceSpace();
 
@@ -141,14 +161,15 @@ export class DIVEWebXROrigin {
                 return;
             }
 
-            const pose = this._hitTestResultBuffer[0].getPose(this._referenceSpaceBuffer);
+            const pose = this._hitTestResultBuffer[0].getPose(
+                this._referenceSpaceBuffer,
+            );
             if (!pose) {
                 this.onHitLost();
                 return;
             }
 
             this.onHitFound(pose);
-
         } else {
             this.onHitLost();
         }

@@ -1,53 +1,53 @@
-import { Vector2 } from "three";
-import { DIVEEventExecutor } from "../../../events/EventExecutor";
+import { Vector2 } from 'three';
+import { DIVEEventExecutor } from '../../../events/EventExecutor';
 
 export type DIVETouchscreenEvents = {
-    'TOUCH_START': {
+    TOUCH_START: {
         touches: {
-            current: Vector2,
-        }[],
-        touchCount: number,
-    },
-    'TOUCH_MOVE': {
+            current: Vector2;
+        }[];
+        touchCount: number;
+    };
+    TOUCH_MOVE: {
         touches: {
-            current: Vector2,
-            delta: Vector2,
-        }[],
-        touchCount: number,
-    },
-    'TOUCH_END': {
+            current: Vector2;
+            delta: Vector2;
+        }[];
+        touchCount: number;
+    };
+    TOUCH_END: {
         touches: {
-            current: Vector2,
-        }[],
-        touchCount: number,
-    },
-    'ROTATE_START': {
-        current: number,
-    },
-    'ROTATE_MOVE': {
-        current: number,
-        delta: number,
-    },
-    'ROTATE_END': {
-        current: number,
-    },
-    'PINCH_START': {
-        current: number,
-    },
-    'PINCH_MOVE': {
-        current: number,
-        delta: number,
-    },
-    'PINCH_END': {
-        current: number,
-    },
-}
+            current: Vector2;
+        }[];
+        touchCount: number;
+    };
+    ROTATE_START: {
+        current: number;
+    };
+    ROTATE_MOVE: {
+        current: number;
+        delta: number;
+    };
+    ROTATE_END: {
+        current: number;
+    };
+    PINCH_START: {
+        current: number;
+    };
+    PINCH_MOVE: {
+        current: number;
+        delta: number;
+    };
+    PINCH_END: {
+        current: number;
+    };
+};
 
 type DIVETouch = {
     start: Vector2;
     current: Vector2;
     delta: Vector2;
-}
+};
 
 export class DIVEWebXRTouchscreenControls extends DIVEEventExecutor<DIVETouchscreenEvents> {
     // general members
@@ -66,7 +66,6 @@ export class DIVEWebXRTouchscreenControls extends DIVEEventExecutor<DIVETouchscr
     private _lastAngle: number = 0;
     private _angleDelta: number = 0;
 
-
     // scale members
     private _handlePinchStarted: boolean = false;
     private _handlePinchMoved: boolean = false;
@@ -82,39 +81,79 @@ export class DIVEWebXRTouchscreenControls extends DIVEEventExecutor<DIVETouchscr
         this._session = session;
 
         this._touches = [
-            { start: new Vector2(), current: new Vector2(), delta: new Vector2() },
-            { start: new Vector2(), current: new Vector2(), delta: new Vector2() },
+            {
+                start: new Vector2(),
+                current: new Vector2(),
+                delta: new Vector2(),
+            },
+            {
+                start: new Vector2(),
+                current: new Vector2(),
+                delta: new Vector2(),
+            },
         ];
 
         this._handleRotateStarted = false;
 
-        window.addEventListener('touchstart', (e: TouchEvent) => this.onTouchStart(e));
-        window.addEventListener('touchmove', (e: TouchEvent) => this.onTouchMove(e));
-        window.addEventListener('touchend', (e: TouchEvent) => this.onTouchEnd(e));
+        window.addEventListener('touchstart', (e: TouchEvent) =>
+            this.onTouchStart(e),
+        );
+        window.addEventListener('touchmove', (e: TouchEvent) =>
+            this.onTouchMove(e),
+        );
+        window.addEventListener('touchend', (e: TouchEvent) =>
+            this.onTouchEnd(e),
+        );
 
-        this._session.addEventListener('selectstart', () => this.onSessionSelectStart());
-        this._session.addEventListener('selectend', () => this.onSessionSelectEnd());
+        this._session.addEventListener('selectstart', () =>
+            this.onSessionSelectStart(),
+        );
+        this._session.addEventListener('selectend', () =>
+            this.onSessionSelectEnd(),
+        );
     }
 
     public Dispose(): void {
-        window.removeEventListener('touchstart', (e: TouchEvent) => this.onTouchStart(e));
-        window.removeEventListener('touchmove', (e: TouchEvent) => this.onTouchMove(e));
-        window.removeEventListener('touchend', (e: TouchEvent) => this.onTouchEnd(e));
+        window.removeEventListener('touchstart', (e: TouchEvent) =>
+            this.onTouchStart(e),
+        );
+        window.removeEventListener('touchmove', (e: TouchEvent) =>
+            this.onTouchMove(e),
+        );
+        window.removeEventListener('touchend', (e: TouchEvent) =>
+            this.onTouchEnd(e),
+        );
 
-        this._session.removeEventListener('selectstart', () => this.onSessionSelectStart());
-        this._session.removeEventListener('selectend', () => this.onSessionSelectEnd());
+        this._session.removeEventListener('selectstart', () =>
+            this.onSessionSelectStart(),
+        );
+        this._session.removeEventListener('selectend', () =>
+            this.onSessionSelectEnd(),
+        );
     }
 
     private onTouchStart(event: TouchEvent): void {
         this._touchCount = event.touches.length;
 
-        this._touches[0].start.set(event.touches[0].clientX, event.touches[0].clientY);
-        this._touches[0].current.set(event.touches[0].clientX, event.touches[0].clientY);
+        this._touches[0].start.set(
+            event.touches[0].clientX,
+            event.touches[0].clientY,
+        );
+        this._touches[0].current.set(
+            event.touches[0].clientX,
+            event.touches[0].clientY,
+        );
         this._touches[0].delta.set(0, 0);
 
         if (this._touchCount > 1) {
-            this._touches[1].start.set(event.touches[1].clientX, event.touches[1].clientY);
-            this._touches[1].current.set(event.touches[1].clientX, event.touches[1].clientY);
+            this._touches[1].start.set(
+                event.touches[1].clientX,
+                event.touches[1].clientY,
+            );
+            this._touches[1].current.set(
+                event.touches[1].clientX,
+                event.touches[1].clientY,
+            );
             this._touches[1].delta.set(0, 0);
         }
 
@@ -141,14 +180,30 @@ export class DIVEWebXRTouchscreenControls extends DIVEEventExecutor<DIVETouchscr
     private onTouchMove(event: TouchEvent): void {
         this._touchCount = event.touches.length;
 
-        this._touches[0].start.set(event.touches[0].clientX, event.touches[0].clientY);
-        this._touches[0].current.set(event.touches[0].clientX, event.touches[0].clientY);
-        this._touches[0].delta.copy(this._touches[0].current.clone().sub(this._touches[0].start));
+        this._touches[0].start.set(
+            event.touches[0].clientX,
+            event.touches[0].clientY,
+        );
+        this._touches[0].current.set(
+            event.touches[0].clientX,
+            event.touches[0].clientY,
+        );
+        this._touches[0].delta.copy(
+            this._touches[0].current.clone().sub(this._touches[0].start),
+        );
 
         if (this._touchCount > 1) {
-            this._touches[1].start.set(event.touches[1].clientX, event.touches[1].clientY);
-            this._touches[1].current.set(event.touches[1].clientX, event.touches[1].clientY);
-            this._touches[1].delta.copy(this._touches[1].current.clone().sub(this._touches[1].start));
+            this._touches[1].start.set(
+                event.touches[1].clientX,
+                event.touches[1].clientY,
+            );
+            this._touches[1].current.set(
+                event.touches[1].clientX,
+                event.touches[1].clientY,
+            );
+            this._touches[1].delta.copy(
+                this._touches[1].current.clone().sub(this._touches[1].start),
+            );
         }
 
         if (this._touchCount === 2) {
@@ -166,7 +221,7 @@ export class DIVEWebXRTouchscreenControls extends DIVEEventExecutor<DIVETouchscr
                     {
                         current: this._touches[1].current.clone(),
                         delta: this._touches[1].delta.clone(),
-                    }
+                    },
                 ],
                 touchCount: this._touchCount,
             });
@@ -232,7 +287,7 @@ export class DIVEWebXRTouchscreenControls extends DIVEEventExecutor<DIVETouchscr
                 },
                 {
                     current: this._touches[1].current.clone(),
-                }
+                },
             ],
             touchCount: this._touchCount,
         });
@@ -246,7 +301,7 @@ export class DIVEWebXRTouchscreenControls extends DIVEEventExecutor<DIVETouchscr
                 },
                 {
                     current: this._touches[1].current.clone(),
-                }
+                },
             ],
             touchCount: this._touchCount,
         });
@@ -255,12 +310,18 @@ export class DIVEWebXRTouchscreenControls extends DIVEEventExecutor<DIVETouchscr
     // rotation handler
     private handleRotateStart(): void {
         this._handleRotateStarted = true;
-        this._startAngle = this._touches[1].start.clone().sub(this._touches[0].current).angle();
+        this._startAngle = this._touches[1].start
+            .clone()
+            .sub(this._touches[0].current)
+            .angle();
     }
 
     private handleRotateMoved(): void {
         this._handleRotateMoved = true;
-        const currentAngle = this._touches[1].current.clone().sub(this._touches[0].current).angle();
+        const currentAngle = this._touches[1].current
+            .clone()
+            .sub(this._touches[0].current)
+            .angle();
         this._angleDelta = currentAngle - this._startAngle;
         this._lastAngle = this._angleDelta * -1;
     }
@@ -273,14 +334,18 @@ export class DIVEWebXRTouchscreenControls extends DIVEEventExecutor<DIVETouchscr
     private handlePinchStart(): void {
         this._handlePinchStarted = true;
 
-        this._scaleDistanceStart = this._touches[1].start.distanceTo(this._touches[0].current);
+        this._scaleDistanceStart = this._touches[1].start.distanceTo(
+            this._touches[0].current,
+        );
     }
 
     private handlePinchMoved(): void {
         this._handlePinchMoved = true;
 
         const beforeDistance = this._currentDistance;
-        const distance = this._touches[1].current.distanceTo(this._touches[0].current);
+        const distance = this._touches[1].current.distanceTo(
+            this._touches[0].current,
+        );
         this._currentDistance = distance / this._scaleDistanceStart;
         this._deltaDistance = this._currentDistance - beforeDistance;
     }

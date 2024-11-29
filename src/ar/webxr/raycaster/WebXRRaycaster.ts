@@ -1,9 +1,9 @@
-import { Matrix4, Mesh, Vector3 } from "three";
-import { DIVERenderer } from "../../../renderer/Renderer";
-import { DIVEWebXRRaycasterAR } from "./ar/WebXRRaycasterAR";
-import { DIVEWebXRRaycasterTHREE } from "./three/WebXRRaycasterTHREE";
-import { DIVEScene } from "../../../scene/Scene";
-import { DIVEEventExecutor } from "../../../events/EventExecutor";
+import { Matrix4, Mesh, Vector3 } from 'three';
+import { DIVERenderer } from '../../../renderer/Renderer';
+import { DIVEWebXRRaycasterAR } from './ar/WebXRRaycasterAR';
+import { DIVEWebXRRaycasterTHREE } from './three/WebXRRaycasterTHREE';
+import { DIVEScene } from '../../../scene/Scene';
+import { DIVEEventExecutor } from '../../../events/EventExecutor';
 
 /**
  * object is undefined when AR world is hit.
@@ -15,14 +15,14 @@ export type DIVEHitResult = {
 };
 
 export type DIVEWebXRRaycasterEvents = {
-    'AR_HIT_FOUND': {
-        hit: DIVEHitResult;
-    },
-    'AR_HIT_LOST': undefined;
-    'SCENE_HIT_FOUND': {
+    AR_HIT_FOUND: {
         hit: DIVEHitResult;
     };
-    'SCENE_HIT_LOST': undefined;
+    AR_HIT_LOST: undefined;
+    SCENE_HIT_FOUND: {
+        hit: DIVEHitResult;
+    };
+    SCENE_HIT_LOST: undefined;
 };
 
 export class DIVEWebXRRaycaster extends DIVEEventExecutor<DIVEWebXRRaycasterEvents> {
@@ -55,12 +55,16 @@ export class DIVEWebXRRaycaster extends DIVEEventExecutor<DIVEWebXRRaycasterEven
 
     public async Init(): Promise<this> {
         if (!this._session) {
-            console.error("DIVEWebXRRaycaster: No session set in Init()! Aborting initialization...");
+            console.error(
+                'DIVEWebXRRaycaster: No session set in Init()! Aborting initialization...',
+            );
             return Promise.reject();
         }
 
         if (this._initialized) {
-            console.error("DIVEWebXRRaycaster: Already initialized! Aborting initialization...");
+            console.error(
+                'DIVEWebXRRaycaster: Already initialized! Aborting initialization...',
+            );
             return Promise.reject();
         }
 
@@ -80,7 +84,6 @@ export class DIVEWebXRRaycaster extends DIVEEventExecutor<DIVEWebXRRaycasterEven
         if (this._arHitResultBuffer.length > 0) {
             // hit found
             this.onARHitFound(this._arHitResultBuffer[0]);
-
         } else {
             // hit nothing
             this.onARHitLost();

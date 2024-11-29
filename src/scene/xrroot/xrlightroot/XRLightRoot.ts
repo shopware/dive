@@ -1,19 +1,19 @@
-import { XREstimatedLight } from "three/examples/jsm/webxr/XREstimatedLight";
-import { type DIVERenderer } from "../../../renderer/Renderer";
-import DIVELightRoot from "../../root/lightroot/LightRoot";
-import { Object3D } from "three";
-import { type DIVEScene } from "../../Scene";
-import { PRODUCT_LAYER_MASK } from "../../../constant/VisibilityLayerMask";
+import { XREstimatedLight } from 'three/examples/jsm/webxr/XREstimatedLight';
+import { type DIVERenderer } from '../../../renderer/Renderer';
+import { Object3D } from 'three';
+import { type DIVEScene } from '../../Scene';
+import { PRODUCT_LAYER_MASK } from '../../../constant/VisibilityLayerMask';
+import { DIVERoot } from '../../root/Root';
 
 export class DIVEXRLightRoot extends Object3D {
     private _scene: DIVEScene;
 
     private _xrLight: XREstimatedLight | null;
-    private _lightRoot: DIVELightRoot;
+    private _lightRoot: DIVERoot;
 
     constructor(scene: DIVEScene) {
         super();
-        this.name = "XRLightRoot";
+        this.name = 'XRLightRoot';
 
         this._scene = scene;
 
@@ -21,8 +21,8 @@ export class DIVEXRLightRoot extends Object3D {
         this._xrLight = null;
 
         // add scene
-        this._lightRoot = new DIVELightRoot();
-        this._lightRoot.UpdateLight({
+        this._lightRoot = new DIVERoot();
+        this._lightRoot.UpdateSceneObject({
             id: 'XRSceneLight',
             entityType: 'light',
             name: 'XRSceneLight',
@@ -42,15 +42,23 @@ export class DIVEXRLightRoot extends Object3D {
             this.add(this._xrLight);
         }
 
-        this._xrLight.addEventListener('estimationstart', () => { this.onEstimationStart() });
-        this._xrLight.addEventListener('estimationend', () => { this.onEstimationEnd() });
+        this._xrLight.addEventListener('estimationstart', () => {
+            this.onEstimationStart();
+        });
+        this._xrLight.addEventListener('estimationend', () => {
+            this.onEstimationEnd();
+        });
     }
 
     public DisposeLightEstimation(): void {
         if (!this._xrLight) return;
 
-        this._xrLight.removeEventListener('estimationstart', () => { this.onEstimationStart() });
-        this._xrLight.removeEventListener('estimationend', () => { this.onEstimationEnd() });
+        this._xrLight.removeEventListener('estimationstart', () => {
+            this.onEstimationStart();
+        });
+        this._xrLight.removeEventListener('estimationend', () => {
+            this.onEstimationEnd();
+        });
     }
 
     private onEstimationStart(): void {

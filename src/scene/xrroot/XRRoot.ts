@@ -1,16 +1,15 @@
-import { Mesh, Object3D, PlaneGeometry, ShadowMaterial } from "three";
-import DIVERoot from "../root/Root";
-import DIVEModelRoot from "../root/modelroot/ModelRoot";
-import { type DIVERenderer } from "../../renderer/Renderer";
-import { DIVEXRLightRoot } from "./xrlightroot/XRLightRoot";
-import { type DIVEScene } from "../Scene";
+import { Mesh, Object3D, PlaneGeometry, ShadowMaterial } from 'three';
+import { DIVERoot } from '../root/Root';
+import { type DIVERenderer } from '../../renderer/Renderer';
+import { DIVEXRLightRoot } from './xrlightroot/XRLightRoot';
+import { type DIVEScene } from '../Scene';
 
 export class DIVEXRRoot extends Object3D {
     private _xrLightRoot: DIVEXRLightRoot;
-    private _xrModelRoot: DIVEModelRoot;
+    private _xrModelRoot: DIVERoot;
     private _xrHandNode: Object3D;
 
-    public get XRModelRoot(): DIVEModelRoot {
+    public get XRModelRoot(): DIVERoot {
         return this._xrModelRoot;
     }
 
@@ -26,26 +25,29 @@ export class DIVEXRRoot extends Object3D {
 
     constructor(scene: DIVEScene) {
         super();
-        this.name = "XRRoot";
+        this.name = 'XRRoot';
 
-        this._xrModelRoot = new DIVEModelRoot();
-        this._xrModelRoot.name = "XRModelRoot";
+        this._xrModelRoot = new DIVERoot();
+        this._xrModelRoot.name = 'XRModelRoot';
         this.add(this._xrModelRoot);
 
-        this._xrShadowPlane = new Mesh(new PlaneGeometry(100, 100), new ShadowMaterial({ opacity: 1, transparent: true }));
+        this._xrShadowPlane = new Mesh(
+            new PlaneGeometry(100, 100),
+            new ShadowMaterial({ opacity: 1, transparent: true }),
+        );
         this._xrModelRoot.add(this._xrShadowPlane);
 
         this._xrLightRoot = new DIVEXRLightRoot(scene);
-        this._xrLightRoot.name = "XRLightRoot";
+        this._xrLightRoot.name = 'XRLightRoot';
         this.add(this._xrLightRoot);
 
         this._xrHandNode = new Object3D();
-        this._xrHandNode.name = "XRHandNode";
+        this._xrHandNode.name = 'XRHandNode';
         this.add(this._xrHandNode);
     }
 
     public CopyFromRoot(root: DIVERoot): void {
-        this._xrModelRoot.copy(root.ModelRoot.clone());
+        this._xrModelRoot.copy(root.clone());
     }
 
     public InitLightEstimation(renderer: DIVERenderer): void {

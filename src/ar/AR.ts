@@ -1,16 +1,20 @@
-import { DIVEInfo, WebXRUnsupportedReason } from "../info/Info";
-import { DIVEARQuickLook } from "./arquicklook/ARQuickLook";
-import { DIVEWebXR } from "./webxr/WebXR";
-import { type DIVEScene } from "../scene/Scene";
-import { type DIVERenderer } from "../renderer/Renderer";
-import DIVEOrbitControls from "../controls/OrbitControls";
+import { DIVEInfo, WebXRUnsupportedReason } from '../info/Info';
+import { DIVEARQuickLook } from './arquicklook/ARQuickLook';
+import { DIVEWebXR } from './webxr/WebXR';
+import { type DIVEScene } from '../scene/Scene';
+import { type DIVERenderer } from '../renderer/Renderer';
+import DIVEOrbitControls from '../controls/OrbitControls';
 
 export class DIVEAR {
     private _renderer: DIVERenderer;
     private _scene: DIVEScene;
     private _controller: DIVEOrbitControls;
 
-    constructor(renderer: DIVERenderer, scene: DIVEScene, controller: DIVEOrbitControls) {
+    constructor(
+        renderer: DIVERenderer,
+        scene: DIVEScene,
+        controller: DIVEOrbitControls,
+    ) {
         this._renderer = renderer;
         this._scene = scene;
         this._controller = controller;
@@ -36,17 +40,28 @@ export class DIVEAR {
         if (system === 'Android') {
             const support = await DIVEInfo.GetSupportsWebXR();
             if (!support) {
-                console.log('WebXR not supported. Reason: ' + WebXRUnsupportedReason[DIVEInfo.GetWebXRUnsupportedReason()!]);
+                console.log(
+                    'WebXR not supported. Reason: ' +
+                        WebXRUnsupportedReason[
+                            DIVEInfo.GetWebXRUnsupportedReason()!
+                        ],
+                );
                 return Promise.reject();
             }
 
             console.log('Launching AR on Android');
 
             // Launch WebXR
-            await DIVEWebXR.Launch(this._renderer, this._scene, this._controller);
+            await DIVEWebXR.Launch(
+                this._renderer,
+                this._scene,
+                this._controller,
+            );
             return Promise.resolve();
         }
 
-        console.log('AR not supported. Not a mobile system. (System is ' + system + ')');
+        console.log(
+            'AR not supported. Not a mobile system. (System is ' + system + ')',
+        );
     }
 }

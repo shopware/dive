@@ -1,6 +1,6 @@
-import { Object3D } from "three";
-import { type DIVEScene } from "../../scene/Scene";
-import { USDZExporter } from "three/examples/jsm/exporters/USDZExporter";
+import { Object3D } from 'three';
+import { type DIVEScene } from '../../scene/Scene';
+import { USDZExporter } from 'three/examples/jsm/exporters/USDZExporter';
 
 export class DIVEARQuickLook {
     private static _usdzExporter: USDZExporter = new USDZExporter();
@@ -18,7 +18,7 @@ export class DIVEARQuickLook {
 
     private static extractModels(scene: DIVEScene): Object3D[] {
         // extract models
-        return scene.Root.ModelRoot.children;
+        return scene.Root.children;
     }
 
     private static launchARFromNode(node: Object3D): Promise<void> {

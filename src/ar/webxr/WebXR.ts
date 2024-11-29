@@ -1,9 +1,9 @@
-import { Vector3 } from "three";
-import DIVEOrbitControls from "../../controls/OrbitControls";
-import { type DIVERenderer } from "../../renderer/Renderer";
-import { type DIVEScene } from "../../scene/Scene";
-import { Overlay } from "./overlay/Overlay";
-import { DIVEWebXRController } from "./controller/WebXRController";
+import { Vector3 } from 'three';
+import DIVEOrbitControls from '../../controls/OrbitControls';
+import { type DIVERenderer } from '../../renderer/Renderer';
+import { type DIVEScene } from '../../scene/Scene';
+import { Overlay } from './overlay/Overlay';
+import { DIVEWebXRController } from './controller/WebXRController';
 
 export class DIVEWebXR {
     // general members
@@ -23,15 +23,30 @@ export class DIVEWebXR {
     private static _referenceSpaceType: XRReferenceSpaceType = 'local';
     private static _overlay: Overlay | null = null;
     private static _options = {
-        requiredFeatures: ['local', 'hit-test'],
-        optionalFeatures: ['light-estimation', 'local-floor', 'dom-overlay', 'depth-sensing'],
-        depthSensing: { usagePreference: ['gpu-optimized'], dataFormatPreference: [] },
+        requiredFeatures: [
+            'local',
+            'hit-test',
+        ],
+        optionalFeatures: [
+            'light-estimation',
+            'local-floor',
+            'dom-overlay',
+            'depth-sensing',
+        ],
+        depthSensing: {
+            usagePreference: ['gpu-optimized'],
+            dataFormatPreference: [],
+        },
         domOverlay: { root: {} as HTMLElement },
     };
 
     private static _xrController: DIVEWebXRController | null = null;
 
-    public static async Launch(renderer: DIVERenderer, scene: DIVEScene, controller: DIVEOrbitControls): Promise<void> {
+    public static async Launch(
+        renderer: DIVERenderer,
+        scene: DIVEScene,
+        controller: DIVEOrbitControls,
+    ): Promise<void> {
         this._renderer = renderer;
         this._scene = scene;
         this._controller = controller;
@@ -57,7 +72,10 @@ export class DIVEWebXR {
         DIVEWebXR._options.domOverlay = { root: DIVEWebXR._overlay.Element };
 
         // request session
-        const session = await navigator.xr.requestSession('immersive-ar', this._options);
+        const session = await navigator.xr.requestSession(
+            'immersive-ar',
+            this._options,
+        );
         session.addEventListener('end', () => {
             this._onSessionEnded();
         });
@@ -69,7 +87,9 @@ export class DIVEWebXR {
         this._session = session;
 
         // add end session event listener
-        DIVEWebXR._overlay.CloseButton.addEventListener('click', () => this.End());
+        DIVEWebXR._overlay.CloseButton.addEventListener('click', () =>
+            this.End(),
+        );
 
         // start session
         await this._onSessionStarted();
@@ -94,11 +114,17 @@ export class DIVEWebXR {
         if (!this._session) return;
 
         // add update callback to render loop
-        this._renderCallbackId = this._renderer.AddPreRenderCallback((time: DOMHighResTimeStamp, frame: XRFrame) => {
-            this.Update(time, frame);
-        });
+        this._renderCallbackId = this._renderer.AddPreRenderCallback(
+            (time: DOMHighResTimeStamp, frame: XRFrame) => {
+                this.Update(time, frame);
+            },
+        );
 
-        this._xrController = new DIVEWebXRController(this._session, this._renderer, this._scene);
+        this._xrController = new DIVEWebXRController(
+            this._session,
+            this._renderer,
+            this._scene,
+        );
         await this._xrController.Init().catch(() => {
             this.End();
         });

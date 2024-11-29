@@ -1,11 +1,22 @@
-import { Matrix4, Mesh, Object3D, Quaternion, Vector3, WebXRArrayCamera } from "three";
-import { DIVERenderer } from "../../../renderer/Renderer";
-import { DIVEScene } from "../../../scene/Scene";
-import { DIVEWebXRCrosshair } from "../crosshair/WebXRCrosshair";
-import { DIVEWebXRRaycaster } from "../raycaster/WebXRRaycaster";
-import { DIVEWebXROrigin } from "../origin/WebXROrigin";
-import { DIVETouchscreenEvents, DIVEWebXRTouchscreenControls } from "../touchscreencontrols/WebXRTouchscreenControls";
-import { findMoveableInterface } from "../../../interface/Moveable";
+import {
+    Matrix4,
+    Mesh,
+    Object3D,
+    Quaternion,
+    Vector3,
+    WebXRArrayCamera,
+} from 'three';
+import { DIVERenderer } from '../../../renderer/Renderer';
+import { DIVEScene } from '../../../scene/Scene';
+import { DIVEWebXRCrosshair } from '../crosshair/WebXRCrosshair';
+import { DIVEWebXRRaycaster } from '../raycaster/WebXRRaycaster';
+import { DIVEWebXROrigin } from '../origin/WebXROrigin';
+import {
+    DIVETouchscreenEvents,
+    DIVEWebXRTouchscreenControls,
+} from '../touchscreencontrols/WebXRTouchscreenControls';
+import { type DIVEMovable } from '../.././../interface/Movable';
+import { findInterface } from '../../../helper/findInterface/findInterface';
 
 export class DIVEWebXRController extends Object3D {
     // general members
@@ -54,7 +65,9 @@ export class DIVEWebXRController extends Object3D {
         this._session = session;
 
         this._xrRaycaster = new DIVEWebXRRaycaster(session, renderer, scene);
-        this._origin = new DIVEWebXROrigin(this._session, this._renderer, ['plane']);
+        this._origin = new DIVEWebXROrigin(this._session, this._renderer, [
+            'plane',
+        ]);
 
         this._crosshair = new DIVEWebXRCrosshair();
         this._crosshair.visible = false;
@@ -62,24 +75,39 @@ export class DIVEWebXRController extends Object3D {
         this._xrCamera = this._renderer.xr.getCamera();
 
         this._scene.XRRoot.XRHandNode.position.set(0, -0.05, -0.25);
-        this._handNodeInitialPosition = this._scene.XRRoot.XRHandNode.position.clone();
+        this._handNodeInitialPosition =
+            this._scene.XRRoot.XRHandNode.position.clone();
 
-        this._touchscreenControls = new DIVEWebXRTouchscreenControls(this._session);
+        this._touchscreenControls = new DIVEWebXRTouchscreenControls(
+            this._session,
+        );
 
         // translating
-        this._touchscreenControls.Subscribe('TOUCH_START', () => this.onTouchStart());
-        this._touchscreenControls.Subscribe('TOUCH_MOVE', () => this.onTouchMove());
-        this._touchscreenControls.Subscribe('TOUCH_END', (p) => this.onTouchEnd(p));
+        this._touchscreenControls.Subscribe('TOUCH_START', () =>
+            this.onTouchStart(),
+        );
+        this._touchscreenControls.Subscribe('TOUCH_MOVE', () =>
+            this.onTouchMove(),
+        );
+        this._touchscreenControls.Subscribe('TOUCH_END', (p) =>
+            this.onTouchEnd(p),
+        );
 
         // rotating
-        this._touchscreenControls.Subscribe('ROTATE_START', () => this.onRotateStart());
-        this._touchscreenControls.Subscribe('ROTATE_MOVE', (p) => this.onRotateMove(p));
+        this._touchscreenControls.Subscribe('ROTATE_START', () =>
+            this.onRotateStart(),
+        );
+        this._touchscreenControls.Subscribe('ROTATE_MOVE', (p) =>
+            this.onRotateMove(p),
+        );
 
         // scaling
-        this._touchscreenControls.Subscribe('PINCH_START', () => this.onPinchStart());
-        this._touchscreenControls.Subscribe('PINCH_MOVE', (p) => this.onPinchMove(p));
-
-
+        this._touchscreenControls.Subscribe('PINCH_START', () =>
+            this.onPinchStart(),
+        );
+        this._touchscreenControls.Subscribe('PINCH_MOVE', (p) =>
+            this.onPinchMove(p),
+        );
     }
 
     public async Init(): Promise<this> {
@@ -105,10 +133,15 @@ export class DIVEWebXRController extends Object3D {
         this._frameBuffer = frame;
 
         if (!this._placed) {
-
             this._xrCamera.updateMatrixWorld();
-            this._scene.XRRoot.XRHandNode.position.copy(this._handNodeInitialPosition.clone().applyMatrix4(this._xrCamera.matrixWorld));
-            this._scene.XRRoot.XRHandNode.quaternion.setFromRotationMatrix(this._xrCamera.matrixWorld);
+            this._scene.XRRoot.XRHandNode.position.copy(
+                this._handNodeInitialPosition
+                    .clone()
+                    .applyMatrix4(this._xrCamera.matrixWorld),
+            );
+            this._scene.XRRoot.XRHandNode.quaternion.setFromRotationMatrix(
+                this._xrCamera.matrixWorld,
+            );
 
             if (this._origin) {
                 this._origin.Update(frame);
@@ -139,8 +172,16 @@ export class DIVEWebXRController extends Object3D {
     private updateObject(): void {
         if (!this._grabbedObject) return;
         this._grabbedObject.position.copy(this._arHitPosition);
-        this._grabbedObject.quaternion.copy(this._arHitQuaternion.clone().multiply(this._touchQuaterion));
-        this._grabbedObject.scale.copy(new Vector3(this._touchScale, this._touchScale, this._touchScale).multiply(this._arHitScale));
+        this._grabbedObject.quaternion.copy(
+            this._arHitQuaternion.clone().multiply(this._touchQuaterion),
+        );
+        this._grabbedObject.scale.copy(
+            new Vector3(
+                this._touchScale,
+                this._touchScale,
+                this._touchScale,
+            ).multiply(this._arHitScale),
+        );
     }
 
     private onTouchStart(): void {
@@ -148,7 +189,10 @@ export class DIVEWebXRController extends Object3D {
         if (sceneHits.length === 0) return;
         if (!sceneHits[0].object) return;
 
-        const moveable = findMoveableInterface(sceneHits[0].object);
+        const moveable = findInterface<DIVEMovable>(
+            sceneHits[0].object,
+            'isMovable',
+        );
         if (!moveable) return;
 
         this._grabbedObject = moveable;
@@ -159,7 +203,9 @@ export class DIVEWebXRController extends Object3D {
         if (!this._frameBuffer) return;
         if (!this._grabbedObject) return;
 
-        const intersections = this._xrRaycaster.GetARIntersections(this._frameBuffer);
+        const intersections = this._xrRaycaster.GetARIntersections(
+            this._frameBuffer,
+        );
         if (intersections.length === 0) {
             this._crosshair.visible = false;
             return;
@@ -179,13 +225,21 @@ export class DIVEWebXRController extends Object3D {
         }
 
         // decompose hit matrix to apply hit matrix to object
-        hit.matrix.decompose(this._arHitPosition, this._arHitQuaternion, this._arHitScale);
+        hit.matrix.decompose(
+            this._arHitPosition,
+            this._arHitQuaternion,
+            this._arHitScale,
+        );
 
         // calculate raycast hit delta
-        this._deltaRaycastHit.copy(hit.point.clone().sub(this._initialRaycastHit));
+        this._deltaRaycastHit.copy(
+            hit.point.clone().sub(this._initialRaycastHit),
+        );
 
         // apply moved raycast delta to actual object position
-        this._arHitPosition.copy(this._initialObjectPosition.clone().add(this._deltaRaycastHit));
+        this._arHitPosition.copy(
+            this._initialObjectPosition.clone().add(this._deltaRaycastHit),
+        );
 
         this.updateObject();
     }
@@ -207,7 +261,10 @@ export class DIVEWebXRController extends Object3D {
     }
 
     private onRotateMove(payload: DIVETouchscreenEvents['ROTATE_MOVE']): void {
-        this._touchQuaterion.setFromAxisAngle(new Vector3(0, -1, 0), payload.delta * 3);
+        this._touchQuaterion.setFromAxisAngle(
+            new Vector3(0, -1, 0),
+            payload.delta * 3,
+        );
         this._touchQuaterion.multiply(this._startTouchQuaternion);
         this.updateObject();
     }
@@ -222,7 +279,6 @@ export class DIVEWebXRController extends Object3D {
         this.updateObject();
     }
 
-
     // prepare & cleanup scene
     private prepareScene(): void {
         this._scene.XRRoot.XRModelRoot.matrixAutoUpdate = false;
@@ -232,7 +288,7 @@ export class DIVEWebXRController extends Object3D {
 
         // hang current scene children to hang node
         const children: Object3D[] = [];
-        this._scene.Root.ModelRoot.children.forEach((child) => {
+        this._scene.Root.children.forEach((child) => {
             const clone = child.clone();
             clone.layers.enableAll();
             clone.traverse((obj) => {
@@ -264,7 +320,9 @@ export class DIVEWebXRController extends Object3D {
 
         // check if successful
         if (!this._xrRaycaster) {
-            console.error('Raycaster not initialized successfully. Aborting WebXR...');
+            console.error(
+                'Raycaster not initialized successfully. Aborting WebXR...',
+            );
             this.Dispose();
             return Promise.reject();
         }

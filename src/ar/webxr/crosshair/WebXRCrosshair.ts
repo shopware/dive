@@ -1,4 +1,4 @@
-import { Mesh, MeshBasicMaterial, Object3D, RingGeometry } from "three";
+import { Mesh, MeshBasicMaterial, Object3D, RingGeometry } from 'three';
 
 export class DIVEWebXRCrosshair extends Object3D {
     public set mesh(mesh: Mesh | undefined) {
@@ -21,12 +21,12 @@ export class DIVEWebXRCrosshair extends Object3D {
         this.matrixAutoUpdate = false;
 
         return this;
-
-
     }
 
     public UseDefaultMesh(): void {
-        const geometry = new RingGeometry(0.008, 0.01, 32).rotateX(-Math.PI / 2);
+        const geometry = new RingGeometry(0.008, 0.01, 32).rotateX(
+            -Math.PI / 2,
+        );
         const material = new MeshBasicMaterial();
         this.mesh = new Mesh(geometry, material);
     }

@@ -1,6 +1,6 @@
-import { Matrix4, Vector3 } from "three";
-import { type DIVERenderer } from "../../../../renderer/Renderer";
-import { type DIVEHitResult } from "../WebXRRaycaster";
+import { Matrix4, Vector3 } from 'three';
+import { type DIVERenderer } from '../../../../renderer/Renderer';
+import { type DIVEHitResult } from '../WebXRRaycaster';
 
 export class DIVEWebXRRaycasterAR {
     private _session: XRSession;
@@ -30,22 +30,31 @@ export class DIVEWebXRRaycasterAR {
 
     public async Init(): Promise<this> {
         if (!this._session) {
-            console.error("DIVEWebXRRaycaster: No session set in Init()! Aborting initialization...");
+            console.error(
+                'DIVEWebXRRaycaster: No session set in Init()! Aborting initialization...',
+            );
             return Promise.reject();
         }
 
         if (this._requesting) {
-            console.error("DIVEWebXRRaycaster: Currently initializing! Aborting initialization...");
+            console.error(
+                'DIVEWebXRRaycaster: Currently initializing! Aborting initialization...',
+            );
             return Promise.reject();
         }
 
         if (this._initialized) {
-            console.error("DIVEWebXRRaycaster: Already initialized! Aborting initialization...");
+            console.error(
+                'DIVEWebXRRaycaster: Already initialized! Aborting initialization...',
+            );
             return Promise.reject();
         }
 
         this._requesting = true;
-        this._transientHitTestSource = await this._session.requestHitTestSourceForTransientInput!({ profile: 'generic-touchscreen' });
+        this._transientHitTestSource = await this._session
+            .requestHitTestSourceForTransientInput!({
+            profile: 'generic-touchscreen',
+        });
         this._referenceSpaceBuffer = this._renderer.xr.getReferenceSpace();
         this._requesting = false;
 
@@ -63,7 +72,9 @@ export class DIVEWebXRRaycasterAR {
     public GetIntersections(frame: XRFrame): DIVEHitResult[] {
         if (!this._transientHitTestSource) return [];
 
-        const touches = frame.getHitTestResultsForTransientInput(this._transientHitTestSource);
+        const touches = frame.getHitTestResultsForTransientInput(
+            this._transientHitTestSource,
+        );
         if (touches.length === 0) return [];
 
         const hits = touches.map((touch: XRTransientInputHitTestResult) => {
@@ -75,9 +86,15 @@ export class DIVEWebXRRaycasterAR {
             if (!pose) return undefined;
 
             this._hitMatrixBuffer.fromArray(pose.transform.matrix);
-            const position = new Vector3().setFromMatrixPosition(this._hitMatrixBuffer);
+            const position = new Vector3().setFromMatrixPosition(
+                this._hitMatrixBuffer,
+            );
 
-            return { point: position, matrix: this._hitMatrixBuffer, object: undefined };
+            return {
+                point: position,
+                matrix: this._hitMatrixBuffer,
+                object: undefined,
+            };
         });
 
         return hits.filter((hit) => hit !== undefined) as DIVEHitResult[];

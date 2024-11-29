@@ -1,7 +1,12 @@
-import { type Intersection, type Mesh, Raycaster, type XRTargetRaySpace } from "three";
-import { type DIVERenderer } from "../../../../renderer/Renderer";
-import { type DIVEScene } from "../../../../scene/Scene";
-import { type DIVEHitResult } from "../WebXRRaycaster";
+import {
+    type Intersection,
+    type Mesh,
+    Raycaster,
+    type XRTargetRaySpace,
+} from 'three';
+import { type DIVERenderer } from '../../../../renderer/Renderer';
+import { type DIVEScene } from '../../../../scene/Scene';
+import { type DIVEHitResult } from '../WebXRRaycaster';
 
 export class DIVEWebXRRaycasterTHREE {
     private _renderer: DIVERenderer;
@@ -27,7 +32,9 @@ export class DIVEWebXRRaycasterTHREE {
     public GetIntersections(): DIVEHitResult[] {
         this._controller.updateMatrixWorld();
         this._raycaster.setFromXRController(this._controller);
-        const intersections = this._raycaster.intersectObjects(this._scene.XRRoot.XRModelRoot.children);
+        const intersections = this._raycaster.intersectObjects(
+            this._scene.XRRoot.XRModelRoot.children,
+        );
 
         if (intersections.length === 0) return [];
 
@@ -35,7 +42,7 @@ export class DIVEWebXRRaycasterTHREE {
             return {
                 point: intersection.point,
                 matrix: intersection.object.matrixWorld,
-                object: intersection.object as Mesh
+                object: intersection.object as Mesh,
             };
         });
     }
