@@ -101,10 +101,46 @@ jobs:
                 git config user.name "GitHub Actions"
                 git config user.email "actions@github.com"
 
-            - name: Bump version to beta
+            - name: Calculate next beta version from branches
+              id: calculate-beta
               run: |
-                npm version prerelease --preid=beta --no-git-tag-version
+                # Fetch all remote branches
+                git fetch --all
+
+                # Get the current version from package.json
+                current_version=$(node -p "require('./package.json').version")
+
+                # Extract the base version (major.minor.patch) and increment the patch number
+                base_version=$(echo $current_version | awk -F'-' '{print $1}')
+                IFS='.' read -r major minor patch <<< "$base_version"
+                next_patch=$((patch + 1))
+
+                # Rebuild the new base version
+                next_version="$major.$minor.$next_patch"
+
+                # Find all beta branches matching the pattern
+                prefix="beta/v$next_version-beta"
+                last_beta=$(git branch -r | grep "origin/$prefix" | awk -F '-' '{print $NF}' | sort -n | tail -n 1)
+
+                if [ -z "$last_beta" ]; then
+                  next_beta="$next_version-beta.0"  # Start at beta.0 if no beta exists
+                else
+                  # Increment the beta number (without trying arithmetic on the full string)
+                  beta_number=$(echo $last_beta | sed 's/[^0-9]*//g')  # Extract numeric part
+                  next_beta="$next_version-beta.$((beta_number + 1))"
+                fi
+
+                # Export the next beta version
+                echo "next_beta=$next_beta" >> $GITHUB_ENV
+
+            - name: Update package.json with new beta version
+              run: |
+                npm version --no-git-tag-version ${{ env.next_beta }}
                 git add package.json
+
+            - name: Create beta branch
+              run: |
+                git checkout -b beta/v${{ env.next_beta }}
 
             - name: Build DIVE
               run: yarn build
@@ -112,13 +148,12 @@ jobs:
             - name: Add build files
               run: git add ./build -f
 
-            - name: 'Create beta branch'
-              run:
-                  git checkout -b beta/v$(node -p "require('./package.json').version")
-
             - name: Commit changes
               run: |
                 git commit -m "Beta v$(node -p "require('./package.json').version")"
+
+            - name: Create tag
+              run: |
                 git tag -a v$(node -p "require('./package.json').version") -m "Beta v$(node -p "require('./package.json').version")"
 
             - name: Push changes
