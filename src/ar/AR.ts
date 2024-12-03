@@ -150,7 +150,7 @@ export class DIVEAR {
 
         anchor.setAttribute('href', intent);
         console.log('Attempting to present in AR with Scene Viewer...');
-        anchor.click();
+        // anchor.click();
     }
 
     private createSceneViewerSrc(): string {
