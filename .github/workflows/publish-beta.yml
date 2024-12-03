@@ -101,20 +101,42 @@ jobs:
                 git config user.name "GitHub Actions"
                 git config user.email "actions@github.com"
 
-            - name: Bump version to beta
+            - name: Calculate next beta version
+              id: calculate-beta
               run: |
-                npm version prerelease --preid=beta --no-git-tag-version
+                # Get the current version from package.json
+                current_version=$(node -p "require('./package.json').version")
+
+                # Calculate the next patch version
+                base_version=$(echo $current_version | awk -F'-' '{print $1}')
+                next_patch=$(echo $base_version | awk -F. '{print $1 "." $2 "." $3 + 1}')
+
+                # Determine the beta suffix
+                prefix="v$next_patch-beta"
+                last_beta=$(git tag | grep "^$prefix" | sort -V | tail -n 1)
+                if [ -z "$last_beta" ]; then
+                  next_beta="$next_patch-beta.1"
+                else
+                  beta_number=$(echo $last_beta | awk -F '.' '{print $NF}')
+                  next_beta="$next_patch-beta.$((beta_number + 1))"
+                fi
+
+                echo "next_beta=$next_beta" >> $GITHUB_ENV
+
+            - name: Update package.json with new beta version
+              run: |
+                npm version --no-git-tag-version ${{ env.next_beta }}
                 git add package.json
+
+            - name: Create beta branch
+              run: |
+                git checkout -b beta/v${{ env.next_beta }}
 
             - name: Build DIVE
               run: yarn build
 
             - name: Add build files
               run: git add ./build -f
-
-            - name: 'Create beta branch'
-              run:
-                  git checkout -b beta/v$(node -p "require('./package.json').version")
 
             - name: Commit changes
               run: |
