@@ -85,10 +85,7 @@ export class DIVEAR {
         locationUrl.hash = noArViewerSigil;
 
         // modelUrl can contain title/link/sound etc.
-        params.set('mode', 'ar_preferred');
-        if (!params.has('disable_occlusion')) {
-            params.set('disable_occlusion', 'true');
-        }
+        params.set('mode', 'ar_only');
         if (this.arScale === 'fixed') {
             params.set('resizable', 'false');
         }
@@ -104,28 +101,11 @@ export class DIVEAR {
             params.set('link', linkUrl.toString());
         }
 
-        console.log('modelUrl.toString()', modelUrl.toString());
-        console.log(
-            'encodeURIComponent(modelUrl.toString())',
-            encodeURIComponent(modelUrl.toString()),
-        );
-
-        const version = '1.0';
-
-        console.log('USING SCENE VIEWER');
-        console.log('version:', version);
-        console.log('params:', params.toString());
-        console.log('modelUrl:', modelUrl.toString());
-        console.log('locationUrl:', locationUrl.toString());
-
-        const intent = `intent://arvr.google.com/scene-viewer/${version}?${
+        const intent = `intent://arvr.google.com/scene-viewer/1.2?${
             params.toString() + '&file=' + modelUrl.toString()
         }#Intent;scheme=https;package=com.google.android.googlequicksearchbox;action=android.intent.action.VIEW;S.browser_fallback_url=${encodeURIComponent(
             locationUrl.toString(),
         )};end;`;
-        // intent =
-        //     'intent://arvr.google.com/scene-viewer/1.0?file=https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Models/master/2.0/Avocado/glTF/Avocado.gltf#Intent;scheme=https;package=com.google.android.googlequicksearchbox;action=android.intent.action.VIEW;S.browser_fallback_url=https://developers.google.com/ar;end;';
-        console.log({ intent });
 
         const undoHashChange = (): void => {
             if (self.location.hash === noArViewerSigil) {
@@ -150,7 +130,7 @@ export class DIVEAR {
 
         anchor.setAttribute('href', intent);
         console.log('Attempting to present in AR with Scene Viewer...');
-        // anchor.click();
+        anchor.click();
     }
 
     private createSceneViewerSrc(): string {
