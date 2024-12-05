@@ -69,6 +69,7 @@
         "generate-readme": "yarn generate-readme:transpile && yarn generate-readme:write && yarn generate-readme:cleanup",
         "generate-readme:transpile": "yarn tsc --resolveJsonModule --esModuleInterop ci/readme/generate-readme.ts && mv ci/readme/generate-readme.js ci/readme/generate-readme.cjs",
         "generate-readme:write": "node ci/readme/generate-readme.cjs",
-        "generate-readme:cleanup": "node -e \"require('fs').unlinkSync('ci/readme/generate-readme.cjs')\""
+        "generate-readme:cleanup": "node -e \"require('fs').unlinkSync('ci/readme/generate-readme.cjs')\"",
+        "ci": "yarn lint && yarn coverage && yarn prettier:check && yarn build && bash ci/lint/lint-actions.sh"
     }
 }
