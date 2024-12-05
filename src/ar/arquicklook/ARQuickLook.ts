@@ -37,7 +37,7 @@ export class DIVEARQuickLook {
                     anchoring: { type: 'plane' },
                     planeAnchoring: {
                         alignment:
-                            options?.arPlacement === 'wall'
+                            options?.arPlacement === 'vertical'
                                 ? 'vertical'
                                 : 'horizontal',
                     },
@@ -46,7 +46,11 @@ export class DIVEARQuickLook {
             .then((usdz: Uint8Array) => {
                 // create blob
                 const blob = new Blob([usdz], { type: 'model/vnd.usdz+zip' });
-                const url = URL.createObjectURL(blob);
+                let url = URL.createObjectURL(blob);
+
+                if (options?.arScale === 'fixed') {
+                    url = url.concat('#allowsContentScaling=0');
+                }
 
                 // launch ARQuickLook
                 const a = document.createElement('a');

@@ -31,7 +31,7 @@ export class DIVESceneViewer {
         if (options?.arScale === 'fixed') {
             params.set('resizable', 'false');
         }
-        if (options?.arPlacement === 'wall') {
+        if (options?.arPlacement === 'vertical') {
             params.set('enable_vertical_placement', 'true');
         }
         if (params.has('sound')) {
