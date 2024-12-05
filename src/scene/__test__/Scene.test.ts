@@ -71,6 +71,16 @@ describe('dive/scene/DIVEScene', () => {
         expect(scene.XRRoot).toBeDefined();
     });
 
+    it('should have Floor', () => {
+        const scene = new DIVEScene();
+        expect(scene.Floor).toBeDefined();
+    });
+
+    it('should have Grid', () => {
+        const scene = new DIVEScene();
+        expect(scene.Grid).toBeDefined();
+    });
+
     it('should InitXR', () => {
         const scene = new DIVEScene();
         expect(() => scene.InitXR(mockRenderer)).not.toThrow();
