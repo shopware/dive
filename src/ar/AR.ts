@@ -39,7 +39,7 @@ export class DIVEAR {
 
         if (system === 'Android') {
             if (options?.useWebXR) {
-                console.warn('DIVEAR: WebXR is experimental on Android.');
+                console.warn('DIVE: WebXR is experimental on Android.');
                 return this.tryWebXR();
             }
 
@@ -47,7 +47,9 @@ export class DIVEAR {
         }
 
         console.log(
-            'AR not supported. Not a mobile system. (System is ' + system + ')',
+            'DIVE: AR not supported. Not a mobile system. (System is ' +
+                system +
+                ')',
         );
     }
 
@@ -58,7 +60,7 @@ export class DIVEAR {
             return Promise.reject();
         }
 
-        console.log('Launching AR with ARQuickLook ...');
+        console.log('DIVE: Launching AR with ARQuickLook ...');
 
         // Launch ARQuickLook
         await DIVEARQuickLook.Launch(this._scene, options);
@@ -77,7 +79,7 @@ export class DIVEAR {
             return Promise.reject();
         }
 
-        console.log('Launching AR with WebXR ...');
+        console.log('DIVE: Launching AR with WebXR ...');
         // Launch WebXR
         await DIVEWebXR.Launch(this._renderer, this._scene, this._controller);
         return Promise.resolve();
@@ -87,6 +89,9 @@ export class DIVEAR {
         // actually we don't have to try here, because SceneViewer is supported on all devices by now.
         // if there are no AR services (ARCore) installed on the device, SceneViewer will only show the model in 3D.
         // we also have no options to detect if SceneViewer is supported.
+
+        console.log('DIVE: Launching AR with SceneViewer ...');
+
         DIVESceneViewer.Launch(this._scene, options);
         return Promise.resolve();
     }
