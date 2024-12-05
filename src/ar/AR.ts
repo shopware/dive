@@ -80,7 +80,7 @@ export class DIVEAR {
         return Promise.resolve();
     }
 
-    private trySceneViewer(options?: DIVEAROptions): Promise<void> {
+    private async trySceneViewer(options?: DIVEAROptions): Promise<void> {
         // actually we don't have to try here, because SceneViewer is supported on all devices by now.
         // if there are no AR services (ARCore) installed on the device, SceneViewer will only show the model in 3D.
         // we also have no options to detect if SceneViewer is supported.
