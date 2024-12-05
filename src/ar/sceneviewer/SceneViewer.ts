@@ -1,27 +1,18 @@
 import { type DIVEScene } from '../../scene/Scene';
-
-type DIVESceneViewerOptions = {
-    arPlacement: string;
-    arScale: string;
-};
+import { type DIVEAROptions } from '../AR';
 
 export class DIVESceneViewer {
-    public static Launch(
-        scene: DIVEScene,
-        options?: DIVESceneViewerOptions,
-    ): Promise<void> {
+    public static Launch(scene: DIVEScene, options?: DIVEAROptions): void {
         // find url in scene (first object found that has a set uri)
         const url = this.findSceneViewerSrc(scene);
 
         // launch SceneViewer
         this.launchSceneViewer(url, options);
-
-        return Promise.resolve();
     }
 
     private static launchSceneViewer(
         url: string,
-        options?: DIVESceneViewerOptions,
+        options?: DIVEAROptions,
     ): void {
         const anchor = document.createElement('a');
         const noArViewerSigil = '#model-viewer-no-ar-fallback';
