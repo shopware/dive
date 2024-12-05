@@ -338,14 +338,40 @@ describe('dive/communication/DIVECommunication', () => {
 
     it('should perform action DELETE_OBJECT with existing object', () => {
         const payload = {
+            entityType: 'group',
+            id: 'group00',
+        } as COMGroup;
+
+        testCom.PerformAction('ADD_OBJECT', payload);
+
+        // additionally add a child to the group
+        testCom.PerformAction('ADD_OBJECT', {
             entityType: 'light',
             id: 'ambient00',
             type: 'ambient',
             intensity: 0.5,
             color: 'white',
-        } as COMLight;
+            parentId: 'group00',
+        } as COMLight);
 
-        testCom.PerformAction('ADD_OBJECT', payload);
+        // and one child that has NO parent
+        testCom.PerformAction('ADD_OBJECT', {
+            entityType: 'light',
+            id: 'ambient01',
+            type: 'ambient',
+            intensity: 0.5,
+            color: 'white',
+        } as COMLight);
+
+        // and one child that has A DIFFERENT parent
+        testCom.PerformAction('ADD_OBJECT', {
+            entityType: 'light',
+            id: 'ambient02',
+            type: 'ambient',
+            intensity: 0.5,
+            color: 'white',
+            parentId: 'group01',
+        } as COMLight);
 
         const successDelete = testCom.PerformAction('DELETE_OBJECT', payload);
         expect(mockScene.DeleteSceneObject).toHaveBeenCalledTimes(1);

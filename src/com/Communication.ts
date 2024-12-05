@@ -462,7 +462,7 @@ export class DIVECommunication {
 
         this.registered.delete(payload.id);
 
-        // detach from parent
+        // detach all children from parent if we delete a group
         Array.from(this.registered.values()).forEach((object) => {
             if (!object.parentId) return;
             if (object.parentId !== payload.id) return;
