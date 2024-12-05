@@ -4,6 +4,13 @@ import { DIVEWebXR } from './webxr/WebXR';
 import { type DIVEScene } from '../scene/Scene';
 import { type DIVERenderer } from '../renderer/Renderer';
 import DIVEOrbitControls from '../controls/OrbitControls';
+import { DIVESceneViewer } from './sceneviewer/SceneViewer';
+
+export type DIVEAROptions = {
+    arPlacement: 'plane' | 'wall';
+    arScale: 'auto' | 'fixed';
+    useWebXR: boolean; // will be added later when we want to expand AR capabilities
+};
 
 export class DIVEAR {
     private _renderer: DIVERenderer;
@@ -23,51 +30,64 @@ export class DIVEAR {
         this._controller = controller;
     }
 
-    public async Launch(): Promise<void> {
+    public async Launch(options?: DIVEAROptions): Promise<void> {
         const system = DIVEInfo.GetSystem();
 
         if (system === 'iOS') {
-            const support = DIVEInfo.GetSupportsARQuickLook();
-            if (!support) {
-                console.log('ARQuickLook not supported');
-                return Promise.reject();
-            }
-
-            console.log('Launching AR on iOS');
-
-            // Launch ARQuickLook
-            await DIVEARQuickLook.Launch(this._scene);
-            return Promise.resolve();
+            return this.tryARQuickLook();
         }
 
         if (system === 'Android') {
-            this.openSceneViewer();
-            return;
-
-            const support = await DIVEInfo.GetSupportsWebXR();
-            if (!support) {
-                console.log(
-                    'WebXR not supported. Reason: ' +
-                        WebXRUnsupportedReason[
-                            DIVEInfo.GetWebXRUnsupportedReason()!
-                        ],
-                );
-                return Promise.reject();
+            if (options?.useWebXR) {
+                return this.tryWebXR();
             }
 
-            console.log('Launching AR on Android');
-            // Launch WebXR
-            await DIVEWebXR.Launch(
-                this._renderer,
-                this._scene,
-                this._controller,
-            );
-            return Promise.resolve();
+            return this.trySceneViewer();
         }
 
         console.log(
             'AR not supported. Not a mobile system. (System is ' + system + ')',
         );
+    }
+
+    private async tryARQuickLook(options?: DIVEAROptions): Promise<void> {
+        const support = DIVEInfo.GetSupportsARQuickLook();
+        if (!support) {
+            console.log('ARQuickLook not supported');
+            return Promise.reject();
+        }
+
+        console.log('Launching AR with ARQuickLook ...');
+
+        // Launch ARQuickLook
+        await DIVEARQuickLook.Launch(this._scene, options);
+        return Promise.resolve();
+    }
+
+    private async tryWebXR(): Promise<void> {
+        const support = await DIVEInfo.GetSupportsWebXR();
+        if (!support) {
+            console.log(
+                'WebXR not supported. Reason: ' +
+                    WebXRUnsupportedReason[
+                        DIVEInfo.GetWebXRUnsupportedReason()!
+                    ],
+            );
+            return Promise.reject();
+        }
+
+        console.log('Launching AR with WebXR ...');
+        // Launch WebXR
+        await DIVEWebXR.Launch(this._renderer, this._scene, this._controller);
+        return Promise.resolve();
+    }
+
+    private trySceneViewer(options?: DIVEAROptions): Promise<void> {
+        // actually we don't have to try here, because SceneViewer is supported on all devices by now.
+        // if there are no AR services (ARCore) installed on the device, SceneViewer will only show the model in 3D.
+        // we also have no options to detect if SceneViewer is supported.
+        DIVESceneViewer.Launch(this._scene, options);
+        return Promise.resolve();
     }
 
     private openSceneViewer(): void {
