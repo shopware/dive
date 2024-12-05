@@ -305,8 +305,9 @@ export class DIVECommunication {
                 break;
             }
             case 'LAUNCH_AR': {
-                this.ar.Launch();
-                returnValue = true;
+                returnValue = this.ar.Launch(
+                    payload as Actions['LAUNCH_AR']['PAYLOAD'],
+                );
                 break;
             }
             default: {

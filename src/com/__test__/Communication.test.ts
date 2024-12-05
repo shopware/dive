@@ -62,6 +62,16 @@ jest.mock('../../io/IO', () => {
     };
 });
 
+jest.mock('../../ar/AR', () => {
+    return {
+        DIVEAR: jest.fn(function () {
+            this.Launch = jest.fn();
+
+            return this;
+        }),
+    };
+});
+
 jest.mock('../../toolbox/select/SelectTool', () => {
     return {
         isSelectTool: jest.fn().mockReturnValue(true),
@@ -932,6 +942,15 @@ describe('dive/communication/DIVECommunication', () => {
             type: 'glb',
         });
         expect(result).toBe(url);
+    });
+
+    it('should perform action LAUNCH_AR', async () => {
+        const arLaunchSpy = jest
+            .spyOn(testCom['ar'], 'Launch')
+            .mockResolvedValueOnce();
+
+        const result = await testCom.PerformAction('LAUNCH_AR', undefined);
+        expect(arLaunchSpy).toHaveBeenCalledTimes(1);
     });
 
     it('should warn of action is of invalid type ', () => {

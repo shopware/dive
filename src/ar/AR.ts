@@ -9,7 +9,10 @@ import { DIVESceneViewer } from './sceneviewer/SceneViewer';
 export type DIVEAROptions = {
     arPlacement: 'horizontal' | 'vertical';
     arScale: 'auto' | 'fixed';
-    useWebXR: boolean; // experimental
+    /**
+     * experimental, currently deactivated
+     */
+    useWebXR: false;
 };
 
 export class DIVEAR {

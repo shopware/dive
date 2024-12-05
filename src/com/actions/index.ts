@@ -24,6 +24,7 @@ import COMPUTE_ENCOMPASSING_VIEW from './camera/computeencompassingview.ts';
 import USE_TOOL from './toolbox/usetool.ts';
 import SET_PARENT from './object/setparent.ts';
 import EXPORT_SCENE from './scene/exportscene.ts';
+import LAUNCH_AR from './scene/launchar.ts';
 
 export interface Actions {
     GET_ALL_SCENE_DATA: GET_ALL_SCENE_DATA;
@@ -52,6 +53,5 @@ export interface Actions {
     GENERATE_MEDIA: GENERATE_MEDIA;
     SET_PARENT: SET_PARENT;
     EXPORT_SCENE: EXPORT_SCENE;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    LAUNCH_AR: any;
+    LAUNCH_AR: LAUNCH_AR;
 }
