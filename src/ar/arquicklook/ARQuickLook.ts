@@ -1,11 +1,15 @@
 import { Object3D } from 'three';
+import { DIVEUSDZExporter } from '../../exporters/usdz/USDZExporter';
 import { type DIVEScene } from '../../scene/Scene';
-import { USDZExporter } from 'three/examples/jsm/exporters/USDZExporter';
+import { type DIVEAROptions } from '../AR';
 
 export class DIVEARQuickLook {
-    private static _usdzExporter: USDZExporter = new USDZExporter();
+    private static _usdzExporter: DIVEUSDZExporter = new DIVEUSDZExporter();
 
-    public static Launch(scene: DIVEScene): Promise<void> {
+    public static Launch(
+        scene: DIVEScene,
+        options?: DIVEAROptions,
+    ): Promise<void> {
         // create node to build usdz from
         const quickLookScene = new Object3D();
 
@@ -13,7 +17,7 @@ export class DIVEARQuickLook {
         quickLookScene.add(...this.extractModels(scene));
 
         // launch ARQuickLook
-        return this.launchARFromNode(quickLookScene);
+        return this.launchARFromNode(quickLookScene, options);
     }
 
     private static extractModels(scene: DIVEScene): Object3D[] {
@@ -21,10 +25,24 @@ export class DIVEARQuickLook {
         return scene.Root.children;
     }
 
-    private static launchARFromNode(node: Object3D): Promise<void> {
+    private static launchARFromNode(
+        node: Object3D,
+        options?: DIVEAROptions,
+    ): Promise<void> {
         // bundle USDZ
         return this._usdzExporter
-            .parse(node, { quickLookCompatible: true })
+            .parse(node, {
+                quickLookCompatible: true,
+                ar: {
+                    anchoring: { type: 'plane' },
+                    planeAnchoring: {
+                        alignment:
+                            options?.arPlacement === 'wall'
+                                ? 'vertical'
+                                : 'horizontal',
+                    },
+                },
+            })
             .then((usdz: Uint8Array) => {
                 // create blob
                 const blob = new Blob([usdz], { type: 'model/vnd.usdz+zip' });
