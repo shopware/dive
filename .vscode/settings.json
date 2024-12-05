@@ -8,4 +8,5 @@
     },
     "prettier.configPath": ".prettierrc",
     "prettier.prettierPath": "./node_modules/prettier",
+    "jest.jestCommandLine": "yarn unit",
 }
