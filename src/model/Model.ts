@@ -116,13 +116,18 @@ export class DIVEModel extends DIVENode {
         const worldPos = this.getWorldPosition(this._positionWorldBuffer);
         const oldWorldPos = worldPos.clone();
 
-        // compute the bounding box 
+        // compute the bounding box
         this._mesh?.geometry?.computeBoundingBox();
         const meshBB = this._mesh?.geometry?.boundingBox;
-
+        console.log(meshBB);
         // subtract the bounding box min y axis value from the world position y value
         if (meshBB && this._mesh) {
-            worldPos.y = worldPos.y - this._mesh.localToWorld(meshBB.min.clone()).y;
+            console.log(meshBB);
+            console.log(this._mesh);
+            console.log(worldPos.y);
+            worldPos.y =
+                worldPos.y - this._mesh.localToWorld(meshBB.min.clone()).y;
+            console.log(worldPos.y);
         }
 
         // skip any action when the position did not change

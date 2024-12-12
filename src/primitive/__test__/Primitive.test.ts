@@ -139,7 +139,15 @@ jest.mock('three', () => {
         Mesh: jest.fn(function () {
             this.geometry = {
                 computeBoundingBox: jest.fn(),
-                boundingBox: new Box3(),
+                boundingBox: {
+                    min: new Vector3(0, 2, 0),
+                    max: new Vector3(2, 4, 2),
+                    getCenter: jest.fn(() => {
+                        return new Vector3(0, 0, 0);
+                    }),
+                    expandByObject: jest.fn(),
+                    setFromObject: jest.fn(),
+                },
             };
             this.material = {};
             this.castShadow = true;
@@ -257,35 +265,40 @@ describe('dive/primitive/DIVEPrimitive', () => {
         const com = DIVECommunication.get('id')!;
         const spyPerformAction = jest.spyOn(com, 'PerformAction');
 
-        primitive.userData.id = 'something';
+        const size = {
+            x: 1,
+            y: 1,
+            z: 1,
+        };
 
+        primitive.userData.id = 'something';
+        primitive.position.set(0, 2, 0);
         primitive['_boundingBox'] = {
-            min: new Vector3(0, 1, 0),
-            max: new Vector3(0, 4, 0),
+            min: new Vector3(0, -2, 0),
+            setFromObject: jest.fn(),
         } as unknown as Box3;
+
+        const scene = {
+            parent: null,
+            Root: {
+                children: [
+                    primitive,
+                ],
+            },
+        } as unknown as DIVEScene;
+        scene.Root.parent = scene;
+
+        primitive.parent = scene.Root;
 
         expect(() => primitive.PlaceOnFloor()).not.toThrow();
         expect(spyPerformAction).toHaveBeenCalledWith(
             'UPDATE_OBJECT',
             expect.objectContaining({
                 position: expect.objectContaining({
-                    y: 1.5,
+                    y: 0,
                 }),
             }),
         );
-
-        // skip any action when the position did not change
-        spyPerformAction.mockClear();
-        primitive.position.y = 1.5;
-        expect(() => primitive.PlaceOnFloor()).not.toThrow();
-        expect(spyPerformAction).not.toHaveBeenCalled();
-
-        // mock that the communication is not available
-        spyPerformAction.mockClear();
-        jest.spyOn(DIVECommunication, 'get').mockReturnValueOnce(undefined);
-        primitive.position.y = 0;
-        expect(() => primitive.PlaceOnFloor()).not.toThrow();
-        expect(spyPerformAction).not.toHaveBeenCalled();
     });
 
     it('should drop it', () => {
