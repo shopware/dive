@@ -180,6 +180,7 @@ export class DIVEWebXROrigin {
 
         this.matrix.fromArray(pose.transform.matrix);
 
+        // we have to wait for a certain amount of frames to make sure the origin is set
         if (this._raycastHitCounter > 50) {
             this._originSetResolve();
         }

@@ -133,20 +133,24 @@ export class DIVEWebXRController extends Object3D {
         this._frameBuffer = frame;
 
         if (!this._placed) {
-            this._xrCamera.updateMatrixWorld();
-            this._scene.XRRoot.XRHandNode.position.copy(
-                this._handNodeInitialPosition
-                    .clone()
-                    .applyMatrix4(this._xrCamera.matrixWorld),
-            );
-            this._scene.XRRoot.XRHandNode.quaternion.setFromRotationMatrix(
-                this._xrCamera.matrixWorld,
-            );
+            this.updateHandNode();
 
             if (this._origin) {
                 this._origin.Update(frame);
             }
         }
+    }
+
+    private updateHandNode(): void {
+        this._xrCamera.updateMatrixWorld();
+        this._scene.XRRoot.XRHandNode.position.copy(
+            this._handNodeInitialPosition
+                .clone()
+                .applyMatrix4(this._xrCamera.matrixWorld),
+        );
+        this._scene.XRRoot.XRHandNode.quaternion.setFromRotationMatrix(
+            this._xrCamera.matrixWorld,
+        );
     }
 
     // placement
@@ -162,6 +166,8 @@ export class DIVEWebXRController extends Object3D {
 
     private placeObjects(matrix: Matrix4): void {
         this._scene.XRRoot.XRModelRoot.matrix.copy(matrix);
+
+        // we are copying children to a new array to keep the original array intact
         [...this._scene.XRRoot.XRHandNode.children].forEach((child) => {
             this._scene.XRRoot.XRModelRoot.add(child);
         });
@@ -290,7 +296,7 @@ export class DIVEWebXRController extends Object3D {
         // initialize crosshair
         this._scene.add(this._crosshair);
 
-        // hang current scene children to hang node
+        // hang current scene children to hand node
         const children: Object3D[] = [];
         this._scene.Root.children.forEach((child) => {
             const clone = child.clone();
@@ -310,7 +316,7 @@ export class DIVEWebXRController extends Object3D {
     private restoreScene(): void {
         this._scene.remove(this._crosshair);
 
-        // clear hang node and remove attached models
+        // clear hand node and remove attached models
         this._scene.XRRoot.XRHandNode.clear();
         this._scene.XRRoot.XRModelRoot.clear();
 

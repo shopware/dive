@@ -95,22 +95,6 @@ export default class DIVE {
         dive.Communication.Subscribe('MODEL_LOADED', (data) => {
             if (data.id !== modelid) return;
 
-            // console.log(
-            //     dive.Communication.PerformAction('GET_OBJECTS', {
-            //         ids: [modelid],
-            //     })[0].position,
-            // );
-
-            // dive.Communication.PerformAction('PLACE_ON_FLOOR', {
-            //     id: modelid,
-            // });
-
-            // console.log(
-            //     dive.Communication.PerformAction('GET_OBJECTS', {
-            //         ids: [modelid],
-            //     }),
-            // );
-
             const transform = dive.Communication.PerformAction(
                 'COMPUTE_ENCOMPASSING_VIEW',
                 {},
