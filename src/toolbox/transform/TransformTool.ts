@@ -1,7 +1,7 @@
 import { DIVEBaseTool } from '../BaseTool.ts';
-import { DIVEScene } from '../../scene/Scene.ts';
-import DIVEOrbitControls from '../../controls/OrbitControls.ts';
-import { TransformControls } from 'three/examples/jsm/Addons';
+import { type DIVEScene } from '../../scene/Scene.ts';
+import type DIVEOrbitControls from '../../controls/OrbitControls.ts';
+import { TransformControls } from 'three/examples/jsm/controls/TransformControls';
 import { type DIVEMovable } from '../../interface/Movable.ts';
 import { implementsInterface } from '../../helper/isInterface/implementsInterface.ts';
 
@@ -81,7 +81,7 @@ export default class DIVETransformTool extends DIVEBaseTool {
             this._gizmo.object.onMoveEnd();
         });
 
-        scene.add(this._gizmo);
+        this._scene.add(this._gizmo);
     }
 
     public Activate(): void {}

@@ -4,6 +4,8 @@ import { DIVERoot } from './root/Root';
 import { DIVEGrid } from '../grid/Grid';
 import { DIVEFloor } from '../primitive/floor/Floor';
 import { type DIVESceneObject } from '../types';
+import { DIVEXRRoot } from './xrroot/XRRoot';
+import { type DIVERenderer } from '../renderer/Renderer';
 
 /**
  * A basic scene class.
@@ -14,20 +16,25 @@ import { type DIVESceneObject } from '../types';
  */
 
 export class DIVEScene extends Scene {
-    private root: DIVERoot;
-    private floor: DIVEFloor;
-    private grid: DIVEGrid;
+    private _root: DIVERoot;
+    private _floor: DIVEFloor;
+    private _grid: DIVEGrid;
 
     public get Root(): DIVERoot {
-        return this.root;
+        return this._root;
+    }
+
+    private _xrRoot: DIVEXRRoot;
+    public get XRRoot(): DIVEXRRoot {
+        return this._xrRoot;
     }
 
     public get Floor(): DIVEFloor {
-        return this.floor;
+        return this._floor;
     }
 
     public get Grid(): DIVEGrid {
-        return this.grid;
+        return this._grid;
     }
 
     constructor() {
@@ -35,14 +42,30 @@ export class DIVEScene extends Scene {
 
         this.background = new Color(0xffffff);
 
-        this.root = new DIVERoot();
-        this.add(this.root);
+        this._root = new DIVERoot();
+        this.add(this._root);
 
-        this.floor = new DIVEFloor();
-        this.add(this.floor);
+        this._floor = new DIVEFloor();
+        this.add(this._floor);
 
-        this.grid = new DIVEGrid();
-        this.add(this.grid);
+        this._grid = new DIVEGrid();
+        this.add(this._grid);
+
+        this._xrRoot = new DIVEXRRoot(this);
+        this._xrRoot.visible = false;
+        this.add(this._xrRoot);
+    }
+
+    public InitXR(renderer: DIVERenderer): void {
+        this._root.visible = false;
+        this._xrRoot.visible = true;
+        this._xrRoot.InitLightEstimation(renderer);
+    }
+
+    public DisposeXR(): void {
+        this._root.visible = true;
+        this._xrRoot.visible = false;
+        this._xrRoot.DisposeLightEstimation();
     }
 
     public SetBackground(color: ColorRepresentation): void {

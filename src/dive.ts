@@ -17,7 +17,6 @@ import { DIVECommunication } from './com/Communication.ts';
 import { DIVEAnimationSystem } from './animation/AnimationSystem.ts';
 import DIVEAxisCamera from './axiscamera/AxisCamera.ts';
 import { getObjectDelta } from './helper/getObjectDelta/getObjectDelta.ts';
-
 import { generateUUID } from 'three/src/math/MathUtils';
 import { DIVEInfo } from './info/Info.ts';
 import pkgjson from '../package.json';
@@ -63,8 +62,11 @@ export const DIVEDefaultSettings: DIVESettings = {
 
 export default class DIVE {
     // static members
-    public static QuickView(uri: string): DIVE {
-        const dive = new DIVE();
+    public static QuickView(
+        uri: string,
+        settings?: Partial<DIVESettings>,
+    ): DIVE {
+        const dive = new DIVE(settings);
 
         dive.Communication.PerformAction('SET_CAMERA_TRANSFORM', {
             position: { x: 0, y: 2, z: 2 },
@@ -92,9 +94,6 @@ export default class DIVE {
         // add loaded listener
         dive.Communication.Subscribe('MODEL_LOADED', (data) => {
             if (data.id !== modelid) return;
-            dive.Communication.PerformAction('PLACE_ON_FLOOR', {
-                id: modelid,
-            });
 
             const transform = dive.Communication.PerformAction(
                 'COMPUTE_ENCOMPASSING_VIEW',
@@ -277,9 +276,40 @@ export default class DIVE {
             },
         };
 
-        console.log(
-            `DIVE ${pkgjson.version} initialized ${process.env.DIVE_NODE_ENV === 'development' ? 'in development mode' : ''}`,
-        );
+        console.log(`DIVE ${pkgjson.version} initialized successfully!`);
+        if (process.env.DIVE_NODE_ENV === 'development') {
+            console.log('DIVE is running in development mode.');
+        }
+        console.log(`
+                    @@@@@@@@@@@@@@@@@@@@@@@              @@@@@@@@@@@@@@@@@@@@@@@
+               @@@@+-:::::::---------------------==------------------------------=#@@@@
+            @@%=::::.......::---------------------------------------------------------+@@
+          @@+:::...........::-----------------------------------------------------------#@@
+        @@=:::.........::::::-------------------------------------------------------------%@
+       @%:::.......:::::::-----------------------------------------------------------------#@
+      @*:::.....:::::-----------------------------------------------------------------------*@
+     @%::::::.::::---------------------------------------------------------------------------@@
+    @@-:::::::::-----------------------------------------------------------------------------=@
+    @%::::::::--------------------------------------------------------------------------------%@
+    @+::::::::--------------------------------=@@@@@%-----------------------------------------%@
+    @=:::::::--------------------------------*@@    @@+---------------------------------------#@
+    @+:::::::-------------------------------*@        @*--------------------------------------%@
+    @#::::::::-----------------------------=@@        @@=-------------------------------------%@
+    @@-::::::::----------------------------@@          @@------------------------------------=@
+     @%:::::::::--------------------------*@            @*-----------------------------------@@
+      @*:::::::::-------------------------@@            @@----------------------------------%@
+       @#::::::::::----------------------%@              @%--------------------------------%@
+        @#:::::::::::-------------------=@@              @@=------------------------------%@
+         @@-::::::::::::----------------%@                @%----------------------------=@@
+          @@#::::::::::::::------------*@                  @*--------------------------#@@
+            @@+::::::::::::::::--------@@                  @@------------------------+@@
+              @@*:::::::::::::::::----@@                    @@---------------------+@@
+                @@@-:::::::::::::::--#@                      @#-----------------=%@@
+                   @@%-::::::::::::-%@                        @%-------------=%@@
+                      @@@@+:::::::#@@                          @@*-------*@@@@
+                           @@@@@@@                                @@@@@@
+
+        `);
     }
 
     public Dispose(): void {

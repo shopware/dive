@@ -21,7 +21,7 @@ import '../actions/scene/updatescene';
 import '../actions/toolbox/select/setgizmomode';
 import '../actions/toolbox/transform/setgizmovisible';
 import '../actions/camera/getcameratransform';
-import type { DIVEScene } from '../../scene/Scene';
+import { type DIVEScene } from '../../scene/Scene';
 import type DIVEToolbox from '../../toolbox/Toolbox';
 import type DIVEOrbitControls from '../../controls/OrbitControls';
 import { type DIVERenderer } from '../../renderer/Renderer';
@@ -57,6 +57,16 @@ jest.mock('../../io/IO', () => {
         DIVEIO: jest.fn(function () {
             this.Import = jest.fn();
             this.Export = jest.fn();
+            return this;
+        }),
+    };
+});
+
+jest.mock('../../ar/AR', () => {
+    return {
+        DIVEAR: jest.fn(function () {
+            this.Launch = jest.fn();
+
             return this;
         }),
     };
@@ -328,14 +338,40 @@ describe('dive/communication/DIVECommunication', () => {
 
     it('should perform action DELETE_OBJECT with existing object', () => {
         const payload = {
+            entityType: 'group',
+            id: 'group00',
+        } as COMGroup;
+
+        testCom.PerformAction('ADD_OBJECT', payload);
+
+        // additionally add a child to the group
+        testCom.PerformAction('ADD_OBJECT', {
             entityType: 'light',
             id: 'ambient00',
             type: 'ambient',
             intensity: 0.5,
             color: 'white',
-        } as COMLight;
+            parentId: 'group00',
+        } as COMLight);
 
-        testCom.PerformAction('ADD_OBJECT', payload);
+        // and one child that has NO parent
+        testCom.PerformAction('ADD_OBJECT', {
+            entityType: 'light',
+            id: 'ambient01',
+            type: 'ambient',
+            intensity: 0.5,
+            color: 'white',
+        } as COMLight);
+
+        // and one child that has A DIFFERENT parent
+        testCom.PerformAction('ADD_OBJECT', {
+            entityType: 'light',
+            id: 'ambient02',
+            type: 'ambient',
+            intensity: 0.5,
+            color: 'white',
+            parentId: 'group01',
+        } as COMLight);
 
         const successDelete = testCom.PerformAction('DELETE_OBJECT', payload);
         expect(mockScene.DeleteSceneObject).toHaveBeenCalledTimes(1);
@@ -932,6 +968,15 @@ describe('dive/communication/DIVECommunication', () => {
             type: 'glb',
         });
         expect(result).toBe(url);
+    });
+
+    it('should perform action LAUNCH_AR', async () => {
+        const arLaunchSpy = jest
+            .spyOn(testCom['ar'], 'Launch')
+            .mockResolvedValueOnce();
+
+        const result = await testCom.PerformAction('LAUNCH_AR', undefined);
+        expect(arLaunchSpy).toHaveBeenCalledTimes(1);
     });
 
     it('should warn of action is of invalid type ', () => {

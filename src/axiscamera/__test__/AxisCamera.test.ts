@@ -118,6 +118,10 @@ const mockScene = {
         Grid: {
             SetVisibility: jest.fn(),
         },
+        HelperRoot: {
+            add: jest.fn(),
+            remove: jest.fn(),
+        },
     },
 } as unknown as DIVEScene;
 

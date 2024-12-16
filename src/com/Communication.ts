@@ -21,6 +21,7 @@ import { type DIVEMediaCreator } from '../mediacreator/MediaCreator.ts';
 import { type DIVERenderer } from '../renderer/Renderer.ts';
 import { type DIVESelectable } from '../interface/Selectable.ts';
 import { type DIVEIO } from '../io/IO.ts';
+import { type DIVEAR } from '../ar/AR.ts';
 
 type EventListener<Action extends keyof Actions> = (
     payload: Actions[Action]['PAYLOAD'],
@@ -97,6 +98,16 @@ export class DIVECommunication {
         return this._io;
     }
 
+    private _ar: DIVEAR | null;
+    private get ar(): DIVEAR {
+        if (!this._ar) {
+            const DIVEAR = require('../ar/AR.ts')
+                .DIVEAR as typeof import('../ar/AR.ts').DIVEAR;
+            this._ar = new DIVEAR(this.renderer, this.scene, this.controller);
+        }
+        return this._ar;
+    }
+
     private registered: Map<string, COMEntity> = new Map();
 
     // private listeners: { [key: string]: EventListener[] } = {};
@@ -116,6 +127,7 @@ export class DIVECommunication {
         this.toolbox = toolbox;
         this._mediaGenerator = null;
         this._io = null;
+        this._ar = null;
 
         DIVECommunication.__instances.push(this);
     }
@@ -292,6 +304,12 @@ export class DIVECommunication {
                 );
                 break;
             }
+            case 'LAUNCH_AR': {
+                returnValue = this.ar.Launch(
+                    payload as Actions['LAUNCH_AR']['PAYLOAD'],
+                );
+                break;
+            }
             default: {
                 console.warn(
                     `DIVECommunication.PerformAction: has been executed with unknown Action type ${action}`,
@@ -444,7 +462,7 @@ export class DIVECommunication {
 
         this.registered.delete(payload.id);
 
-        // detach from parent
+        // detach all children from parent if we delete a group
         Array.from(this.registered.values()).forEach((object) => {
             if (!object.parentId) return;
             if (object.parentId !== payload.id) return;

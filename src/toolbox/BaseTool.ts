@@ -1,10 +1,16 @@
-import { Intersection, Object3D, Raycaster, Vector2, Vector3 } from 'three';
+import {
+    type Intersection,
+    type Object3D,
+    Raycaster,
+    Vector2,
+    Vector3,
+} from 'three';
 import {
     PRODUCT_LAYER_MASK,
     UI_LAYER_MASK,
 } from '../constant/VisibilityLayerMask';
-import { DIVEScene } from '../scene/Scene';
-import DIVEOrbitControls from '../controls/OrbitControls';
+import { type DIVEScene } from '../scene/Scene';
+import type DIVEOrbitControls from '../controls/OrbitControls';
 import { type DIVEDraggable } from '../interface/Draggable';
 import { type DIVEHoverable } from '../interface/Hoverable';
 import { findInterface } from '../helper/findInterface/findInterface';

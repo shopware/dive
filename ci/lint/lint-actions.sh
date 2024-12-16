@@ -3,6 +3,8 @@
 # Define the path to the folder you want to check
 FOLDER_TO_CHECK="src/com/actions"
 
+echo -e "Checking if Actions have changed..."
+
 if git diff --cached --name-only | grep -q "^$FOLDER_TO_CHECK/"; then
     echo -e "Actions have changed! Linting action interfaces..."
 
@@ -18,6 +20,8 @@ if git diff --cached --name-only | grep -q "^$FOLDER_TO_CHECK/"; then
     fi
     yarn lint:actions:cleanup > /dev/null
     echo -e "All interfaces contain the required properties."
+else
+    echo -e "No changes in Actions. Skipping linting."
 fi
 
 exit 0

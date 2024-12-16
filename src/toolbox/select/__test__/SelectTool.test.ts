@@ -100,7 +100,7 @@ jest.mock('three', () => {
 const mock_attach = jest.fn();
 const mock_detach = jest.fn();
 
-jest.mock('three/examples/jsm/Addons.js', () => {
+jest.mock('three/examples/jsm/controls/TransformControls', () => {
     return {
         TransformControls: jest.fn(function () {
             (this.addEventListener = (

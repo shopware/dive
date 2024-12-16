@@ -39,6 +39,7 @@ describe('dive/group/DIVEGroup', () => {
 
         expect(() => group.attach(mockObject)).not.toThrow();
         expect(group.children).toContain(mockObject);
+        expect(group.members).toContain(mockObject);
 
         jest.spyOn(DIVECommunication, 'get').mockReturnValueOnce(undefined);
         expect(() => group.attach(mockObject)).not.toThrow();
@@ -49,6 +50,7 @@ describe('dive/group/DIVEGroup', () => {
 
         expect(() => group.remove(mockObject)).not.toThrow();
         expect(group.children).not.toContain(mockObject);
+        expect(group.members).not.toContain(mockObject);
 
         jest.spyOn(DIVECommunication, 'get').mockReturnValueOnce(undefined);
         expect(() => group.remove(mockObject)).not.toThrow();

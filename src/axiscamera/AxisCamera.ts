@@ -1,7 +1,7 @@
 import {
     AxesHelper,
     Color,
-    Material,
+    type Material,
     Matrix4,
     OrthographicCamera,
     Vector4,
@@ -16,9 +16,9 @@ import {
     AxesColorGreenLetter,
     AxesColorBlueLetter,
 } from '../constant/AxisHelperColors.ts';
-import { DIVERenderer } from '../renderer/Renderer.ts';
-import { DIVEScene } from '../scene/Scene.ts';
-import DIVEOrbitControls from '../controls/OrbitControls.ts';
+import { type DIVERenderer } from '../renderer/Renderer.ts';
+import { type DIVEScene } from '../scene/Scene.ts';
+import type DIVEOrbitControls from '../controls/OrbitControls.ts';
 
 /**
  * Shows the scene axes in the bottom left corner of the screen.
