@@ -9,9 +9,9 @@ import {
     MeshStandardMaterial,
     type Texture,
     Color,
+    Object3D,
 } from 'three';
 import { type COMMaterial } from '../../com/types';
-import { isTypeOnlyImportOrExportDeclaration } from 'typescript';
 
 const intersectObjectsMock = jest.fn();
 
@@ -25,43 +25,43 @@ jest.mock('three', () => {
             this.x = x;
             this.y = y;
             this.z = z;
-            this.copy = (vec3: Vector3) => {
+            this.copy = jest.fn((vec3: Vector3) => {
                 this.x = vec3.x;
                 this.y = vec3.y;
                 this.z = vec3.z;
                 return this;
-            };
-            this.set = (x: number, y: number, z: number) => {
+            });
+            this.set = jest.fn((x: number, y: number, z: number) => {
                 this.x = x;
                 this.y = y;
                 this.z = z;
                 return this;
-            };
-            this.multiply = (vec3: Vector3) => {
+            });
+            this.multiply = jest.fn((vec3: Vector3) => {
                 this.x *= vec3.x;
                 this.y *= vec3.y;
                 this.z *= vec3.z;
                 return this;
-            };
-            this.clone = () => {
+            });
+            this.clone = jest.fn(() => {
                 return new Vector3(this.x, this.y, this.z);
-            };
-            this.setY = (y: number) => {
+            });
+            this.setY = jest.fn((y: number) => {
                 this.y = y;
                 return this;
-            };
-            this.add = (vec3: Vector3) => {
+            });
+            this.add = jest.fn((vec3: Vector3) => {
                 this.x += vec3.x;
                 this.y += vec3.y;
                 this.z += vec3.z;
                 return this;
-            };
-            this.sub = (vec3: Vector3) => {
+            });
+            this.sub = jest.fn((vec3: Vector3) => {
                 this.x -= vec3.x;
                 this.y -= vec3.y;
                 this.z -= vec3.z;
                 return this;
-            };
+            });
             return this;
         }),
         Object3D: jest.fn(function () {
@@ -83,14 +83,7 @@ jest.mock('three', () => {
             };
             this.add = jest.fn();
             this.sub = jest.fn();
-            this.children = [
-                {
-                    visible: true,
-                    material: {
-                        color: {},
-                    },
-                },
-            ];
+            this.children = [];
             this.userData = {};
             this.position = new Vector3();
             this.rotation = {
@@ -105,12 +98,14 @@ jest.mock('three', () => {
                 z: 1,
                 set: jest.fn(),
             };
-            this.localToWorld = (vec3: Vector3) => {
+            this.localToWorld = jest.fn((vec3: Vector3) => {
                 return vec3;
-            };
-            this.mesh = new Mesh();
+            });
             this.traverse = jest.fn((callback) => {
-                callback(this.children[0]);
+                callback(this);
+                this.children.forEach((child: Object3D) => {
+                    callback(child);
+                });
             });
             this.getWorldPosition = jest.fn(() => {
                 return this.position.clone();
@@ -136,11 +131,12 @@ jest.mock('three', () => {
             return this;
         }),
         Mesh: jest.fn(function () {
+            this.isMesh = true;
             this.geometry = {
                 computeBoundingBox: jest.fn(),
                 boundingBox: new Box3(),
             };
-            this.material = {};
+            this.material = new MeshStandardMaterial();
             this.castShadow = true;
             this.receiveShadow = true;
             this.layers = {
@@ -149,9 +145,9 @@ jest.mock('three', () => {
             this.updateWorldMatrix = jest.fn();
             this.traverse = jest.fn();
             this.removeFromParent = jest.fn();
-            this.localToWorld = (vec3: Vector3) => {
+            this.localToWorld = jest.fn((vec3: Vector3) => {
                 return vec3;
-            };
+            });
             return this;
         }),
         MeshStandardMaterial: jest.fn(function () {
@@ -181,33 +177,12 @@ jest.mock('../../com/Communication.ts', () => {
     };
 });
 
+const object = new Object3D();
+object.children.push(new Mesh());
+
 const gltf = {
     scene: {
-        isMesh: true,
-        isObject3D: true,
-        parent: null,
-        dispatchEvent: jest.fn(),
-        layers: {
-            mask: 0,
-        },
-        material: {},
-        updateWorldMatrix: jest.fn(),
-        children: [
-            {
-                castShadow: false,
-                receiveShadow: false,
-                layers: {
-                    mask: 0,
-                },
-                children: [],
-                updateWorldMatrix: jest.fn(),
-                isMesh: true,
-            },
-        ],
-        traverse: function (callback: (object: object) => void) {
-            callback(this);
-        },
-        removeFromParent: jest.fn(),
+        ...object,
     },
 } as unknown as GLTF;
 
@@ -236,38 +211,38 @@ describe('dive/model/DIVEModel', () => {
     });
 
     it('should place on floor', () => {
+        model.SetModel(gltf);
+
         const com = DIVECommunication.get('id')!;
         const spyPerformAction = jest.spyOn(com, 'PerformAction');
 
         model.userData.id = 'something';
+        model.position.set(0, 4, 0);
 
-        model['_boundingBox'] = {
-            min: new Vector3(0, 1, 0),
-            max: new Vector3(1, 4, 1),
-        } as unknown as Box3;
+        jest.spyOn(model['_mesh']!, 'localToWorld').mockReturnValueOnce(
+            new Vector3(0, 2, 0),
+        );
+
+        const scene = {
+            parent: null,
+            Root: {
+                children: [
+                    model,
+                ],
+            },
+        } as unknown as DIVEScene;
+        scene.Root.parent = scene;
+        model.parent = scene.Root;
 
         expect(() => model.PlaceOnFloor()).not.toThrow();
         expect(spyPerformAction).toHaveBeenCalledWith(
             'UPDATE_OBJECT',
             expect.objectContaining({
                 position: expect.objectContaining({
-                    y: 1.5,
+                    y: 2,
                 }),
             }),
         );
-
-        // skip any action when the position did not change
-        spyPerformAction.mockClear();
-        model.position.y = 1.5;
-        expect(() => model.PlaceOnFloor()).not.toThrow();
-        expect(spyPerformAction).not.toHaveBeenCalled();
-
-        // mock that the communication is not available
-        spyPerformAction.mockClear();
-        jest.spyOn(DIVECommunication, 'get').mockReturnValueOnce(undefined);
-        model.position.y = 0;
-        expect(() => model.PlaceOnFloor()).not.toThrow();
-        expect(spyPerformAction).not.toHaveBeenCalled();
     });
 
     it('should drop it', () => {

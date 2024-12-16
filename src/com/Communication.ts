@@ -457,6 +457,27 @@ export class DIVECommunication {
         const deletedObject = this.registered.get(payload.id);
         if (!deletedObject) return false;
 
+        // If the object has a parent, detach it first
+        if (deletedObject.parentId) {
+            // First detach from parent group
+            this.setParent({
+                object: { id: deletedObject.id },
+                parent: null,
+            });
+        }
+
+        // If deleting a group, update all children to have no parent
+        if (deletedObject.entityType === 'group') {
+            this.registered.forEach((object) => {
+                if (object.parentId === deletedObject.id) {
+                    this.updateObject({
+                        id: object.id,
+                        parentId: null,
+                    });
+                }
+            });
+        }
+
         // copy object to payload to use later
         Object.assign(payload, deletedObject);
 
@@ -723,6 +744,11 @@ export class DIVECommunication {
         if (payload.parent === null) {
             // detach from current parent
             this.scene.Root.attach(sceneObject);
+            // Update registration to reflect no parent
+            this.updateObject({
+                id: object.id,
+                parentId: null,
+            });
             return true;
         }
 
@@ -735,6 +761,11 @@ export class DIVECommunication {
         if (!parent) {
             // detach from current parent
             this.scene.Root.attach(sceneObject);
+            // Update registration to reflect no parent
+            this.updateObject({
+                id: object.id,
+                parentId: null,
+            });
             return true;
         }
 
@@ -743,11 +774,21 @@ export class DIVECommunication {
         if (!parentObject) {
             // detach from current parent
             this.scene.Root.attach(sceneObject);
+            // Update registration to reflect no parent
+            this.updateObject({
+                id: object.id,
+                parentId: null,
+            });
             return true;
         }
 
         // attach to new parent
         parentObject.attach(sceneObject);
+        // Update registration to reflect new parent
+        this.updateObject({
+            id: object.id,
+            parentId: parent.id,
+        });
         return true;
     }
 
