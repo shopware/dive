@@ -307,6 +307,14 @@ DIVECommunication class via
     </tr>
     <tr>
         <td>
+            <a href="src/com/actions/scene/launchar.ts"> LAUNCH_AR </a>
+        </td>
+        <td>
+            Launches AR mode in native capabilities. (iOS: AR Quick Look, Android: Google Scene Viewer)
+        </td>
+    </tr>
+    <tr>
+        <td>
             <a href="src/com/actions/object/model/modelloaded.ts"> MODEL_LOADED </a>
         </td>
         <td>
