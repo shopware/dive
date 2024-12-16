@@ -265,12 +265,6 @@ describe('dive/primitive/DIVEPrimitive', () => {
         const com = DIVECommunication.get('id')!;
         const spyPerformAction = jest.spyOn(com, 'PerformAction');
 
-        const size = {
-            x: 1,
-            y: 1,
-            z: 1,
-        };
-
         primitive.userData.id = 'something';
         primitive.position.set(0, 2, 0);
         primitive['_boundingBox'] = {
