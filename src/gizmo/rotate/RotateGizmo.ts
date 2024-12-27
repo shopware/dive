@@ -15,6 +15,12 @@ export class DIVERotateGizmo extends Object3D {
 
     private _controller: DIVEOrbitControls;
 
+    public set debug(value: boolean) {
+        this.children.forEach((child) => {
+            child.debug = value;
+        });
+    }
+
     private _startRot: Euler | null;
 
     constructor(controller: DIVEOrbitControls) {

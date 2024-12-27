@@ -20,6 +20,10 @@ export class DIVERadialHandle
     readonly isHoverable: true = true;
     readonly isDraggable: true = true;
 
+    public set debug(value: boolean) {
+        this._colliderMesh.visible = value;
+    }
+
     public parent: DIVERotateGizmo | null = null;
 
     public axis: 'x' | 'y' | 'z';
@@ -38,6 +42,8 @@ export class DIVERadialHandle
     }
 
     private _lineMaterial: MeshBasicMaterial;
+
+    private _colliderMesh: Mesh;
 
     public get forwardVector(): Vector3 {
         return new Vector3(0, 0, 1)
@@ -87,7 +93,7 @@ export class DIVERadialHandle
         this.add(lineMesh);
 
         // create collider
-        const collider = new TorusGeometry(radius, 0.1, 3, 48, arc);
+        const colliderGeo = new TorusGeometry(radius, 0.1, 3, 48, arc);
         const colliderMaterial = new MeshBasicMaterial({
             color: 0xff00ff,
             transparent: true,
@@ -95,12 +101,12 @@ export class DIVERadialHandle
             depthTest: false,
             depthWrite: false,
         });
-        const colliderMesh = new Mesh(collider, colliderMaterial);
-        colliderMesh.visible = false;
-        colliderMesh.layers.mask = UI_LAYER_MASK;
-        colliderMesh.renderOrder = Infinity;
+        this._colliderMesh = new Mesh(colliderGeo, colliderMaterial);
+        this._colliderMesh.visible = false;
+        this._colliderMesh.layers.mask = UI_LAYER_MASK;
+        this._colliderMesh.renderOrder = Infinity;
 
-        this.add(colliderMesh);
+        this.add(this._colliderMesh);
 
         this.lookAt(direction);
     }

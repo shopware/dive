@@ -20,6 +20,10 @@ export class DIVEAxisHandle
     readonly isHoverable: true = true;
     readonly isDraggable: true = true;
 
+    public set debug(value: boolean) {
+        this._colliderMesh.visible = value;
+    }
+
     public parent: DIVETranslateGizmo | null = null;
 
     public axis: 'x' | 'y' | 'z';
@@ -38,6 +42,8 @@ export class DIVEAxisHandle
     }
 
     private _lineMaterial: MeshBasicMaterial;
+
+    private _colliderMesh: Mesh;
 
     public get forwardVector(): Vector3 {
         return new Vector3(0, 0, 1)
@@ -89,7 +95,7 @@ export class DIVEAxisHandle
         this.add(lineMesh);
 
         // create collider
-        const collider = new CylinderGeometry(0.1, 0.1, length, 3);
+        const colliderGeo = new CylinderGeometry(0.1, 0.1, length, 3);
         const colliderMaterial = new MeshBasicMaterial({
             color: 0xff00ff,
             transparent: true,
@@ -97,13 +103,13 @@ export class DIVEAxisHandle
             depthTest: false,
             depthWrite: false,
         });
-        const colliderMesh = new Mesh(collider, colliderMaterial);
-        colliderMesh.visible = false;
-        colliderMesh.layers.mask = UI_LAYER_MASK;
-        colliderMesh.renderOrder = Infinity;
-        colliderMesh.rotateX(Math.PI / 2);
-        colliderMesh.translateY(length / 2);
-        this.add(colliderMesh);
+        this._colliderMesh = new Mesh(colliderGeo, colliderMaterial);
+        this._colliderMesh.visible = false;
+        this._colliderMesh.layers.mask = UI_LAYER_MASK;
+        this._colliderMesh.renderOrder = Infinity;
+        this._colliderMesh.rotateX(Math.PI / 2);
+        this._colliderMesh.translateY(length / 2);
+        this.add(this._colliderMesh);
 
         this.rotateX((direction.y * -Math.PI) / 2);
         this.rotateY((direction.x * Math.PI) / 2);
