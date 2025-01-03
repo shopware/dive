@@ -5,7 +5,6 @@ import { TransformControls } from 'three/examples/jsm/controls/TransformControls
 import { type DIVEMovable } from '../../interface/Movable.ts';
 import { implementsInterface } from '../../helper/isInterface/implementsInterface.ts';
 import { DIVEGizmo } from '../../gizmo/Gizmo.ts';
-import { type Intersection } from 'three';
 
 export const isTransformTool = (
     tool: DIVEBaseTool,
@@ -64,19 +63,21 @@ export default class DIVETransformTool extends DIVEBaseTool {
         }
     }
 
-    public onPointerDown(e: PointerEvent): void {
-        super.onPointerDown(e);
+    // only used for optimizing pointer events with DIVEGizmo
+    // public onPointerDown(e: PointerEvent): void {
+    //     super.onPointerDown(e);
 
-        if (this._hovered) {
-            this._dragRaycastOnObjects = (
-                this._gizmo as DIVEGizmo
-            ).gizmoPlane.children;
-        }
-    }
+    //     if (this._hovered) {
+    //         this._dragRaycastOnObjects = (
+    //             this._gizmo as DIVEGizmo
+    //         ).gizmoPlane?.children;
+    //     }
+    // }
 
-    protected raycast(): Intersection[] {
-        return super.raycast((this._gizmo as DIVEGizmo).gizmoNode.children);
-    }
+    // only used for optimizing pointer events with DIVEGizmo
+    // protected raycast(): Intersection[] {
+    //     return super.raycast((this._gizmo as DIVEGizmo).gizmoNode.children);
+    // }
 
     private initGizmo(): TransformControls | DIVEGizmo {
         const g = new TransformControls(
