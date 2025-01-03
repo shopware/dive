@@ -1,0 +1,779 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites name="jest tests" tests="343" failures="0" errors="0" time="5.173">
+  <testsuite name="dive/light/DIVEAmbientLight" errors="0" failures="0" skipped="0" timestamp="2025-01-03T08:13:47" time="3.255" tests="4">
+    <testcase classname="src/light/__test__/AmbientLight.test.ts" name="dive/light/DIVEAmbientLight should instantiate" time="0.006">
+    </testcase>
+    <testcase classname="src/light/__test__/AmbientLight.test.ts" name="dive/light/DIVEAmbientLight should set intensity" time="0">
+    </testcase>
+    <testcase classname="src/light/__test__/AmbientLight.test.ts" name="dive/light/DIVEAmbientLight should set color" time="0.001">
+    </testcase>
+    <testcase classname="src/light/__test__/AmbientLight.test.ts" name="dive/light/DIVEAmbientLight should set enabled" time="0">
+    </testcase>
+  </testsuite>
+  <testsuite name="dive/helper/getObjectDelta" errors="0" failures="0" skipped="0" timestamp="2025-01-03T08:13:47" time="3.257" tests="16">
+    <testcase classname="src/helper/getObjectDelta/__test__/getObjectDelta.test.ts" name="dive/helper/getObjectDelta should not find any deltas with empty objects" time="0.003">
+    </testcase>
+    <testcase classname="src/helper/getObjectDelta/__test__/getObjectDelta.test.ts" name="dive/helper/getObjectDelta should not find any deltas with equal references" time="0">
+    </testcase>
+    <testcase classname="src/helper/getObjectDelta/__test__/getObjectDelta.test.ts" name="dive/helper/getObjectDelta should not find any deltas with equal objects" time="0">
+    </testcase>
+    <testcase classname="src/helper/getObjectDelta/__test__/getObjectDelta.test.ts" name="dive/helper/getObjectDelta should not find any deltas with empty arrays" time="0">
+    </testcase>
+    <testcase classname="src/helper/getObjectDelta/__test__/getObjectDelta.test.ts" name="dive/helper/getObjectDelta should find deltas with incorrect types (case a)" time="0.001">
+    </testcase>
+    <testcase classname="src/helper/getObjectDelta/__test__/getObjectDelta.test.ts" name="dive/helper/getObjectDelta should find deltas with incorrect types (case b)" time="0">
+    </testcase>
+    <testcase classname="src/helper/getObjectDelta/__test__/getObjectDelta.test.ts" name="dive/helper/getObjectDelta should find deltas with one empty object" time="0.001">
+    </testcase>
+    <testcase classname="src/helper/getObjectDelta/__test__/getObjectDelta.test.ts" name="dive/helper/getObjectDelta should find deltas with different key lengths" time="0">
+    </testcase>
+    <testcase classname="src/helper/getObjectDelta/__test__/getObjectDelta.test.ts" name="dive/helper/getObjectDelta should find deltas with a type delta" time="0">
+    </testcase>
+    <testcase classname="src/helper/getObjectDelta/__test__/getObjectDelta.test.ts" name="dive/helper/getObjectDelta should find deltas with a value delta" time="0">
+    </testcase>
+    <testcase classname="src/helper/getObjectDelta/__test__/getObjectDelta.test.ts" name="dive/helper/getObjectDelta should find deltas with array value delta" time="0">
+    </testcase>
+    <testcase classname="src/helper/getObjectDelta/__test__/getObjectDelta.test.ts" name="dive/helper/getObjectDelta should find deltas with array type difference" time="0">
+    </testcase>
+    <testcase classname="src/helper/getObjectDelta/__test__/getObjectDelta.test.ts" name="dive/helper/getObjectDelta should find deltas with deltas in objects in array" time="0">
+    </testcase>
+    <testcase classname="src/helper/getObjectDelta/__test__/getObjectDelta.test.ts" name="dive/helper/getObjectDelta should find deltas with undefined value in objects in object" time="0">
+    </testcase>
+    <testcase classname="src/helper/getObjectDelta/__test__/getObjectDelta.test.ts" name="dive/helper/getObjectDelta should find deltas with wrong type in objects in object" time="0.001">
+    </testcase>
+    <testcase classname="src/helper/getObjectDelta/__test__/getObjectDelta.test.ts" name="dive/helper/getObjectDelta should find deltas with empty value in objects in object" time="0">
+    </testcase>
+  </testsuite>
+  <testsuite name="dive/helper/findInterface" errors="0" failures="0" skipped="0" timestamp="2025-01-03T08:13:47" time="3.259" tests="3">
+    <testcase classname="src/helper/findInterface/__test__/findInterface.test.ts" name="dive/helper/findInterface should not find interface" time="0.004">
+    </testcase>
+    <testcase classname="src/helper/findInterface/__test__/findInterface.test.ts" name="dive/helper/findInterface should find interface in object" time="0.001">
+    </testcase>
+    <testcase classname="src/helper/findInterface/__test__/findInterface.test.ts" name="dive/helper/findInterface should find interface in parent" time="0">
+    </testcase>
+  </testsuite>
+  <testsuite name="dive/io/gltf/DIVEGLTFIO" errors="0" failures="0" skipped="0" timestamp="2025-01-03T08:13:47" time="3.262" tests="3">
+    <testcase classname="src/io/gltf/__test__/GLTFIO.test.ts" name="dive/io/gltf/DIVEGLTFIO should instantiate" time="0.018">
+    </testcase>
+    <testcase classname="src/io/gltf/__test__/GLTFIO.test.ts" name="dive/io/gltf/DIVEGLTFIO should import from URL" time="0.001">
+    </testcase>
+    <testcase classname="src/io/gltf/__test__/GLTFIO.test.ts" name="dive/io/gltf/DIVEGLTFIO should export to URL" time="0.001">
+    </testcase>
+  </testsuite>
+  <testsuite name="dive/info/DIVEInfo" errors="0" failures="0" skipped="0" timestamp="2025-01-03T08:13:47" time="3.261" tests="34">
+    <testcase classname="src/info/__test__/Info.test.ts" name="dive/info/DIVEInfo should get system: Windows" time="0.008">
+    </testcase>
+    <testcase classname="src/info/__test__/Info.test.ts" name="dive/info/DIVEInfo should get system: MacOS" time="0.001">
+    </testcase>
+    <testcase classname="src/info/__test__/Info.test.ts" name="dive/info/DIVEInfo should get system: Linux" time="0">
+    </testcase>
+    <testcase classname="src/info/__test__/Info.test.ts" name="dive/info/DIVEInfo should get system: Android" time="0">
+    </testcase>
+    <testcase classname="src/info/__test__/Info.test.ts" name="dive/info/DIVEInfo should get system: iOS" time="0">
+    </testcase>
+    <testcase classname="src/info/__test__/Info.test.ts" name="dive/info/DIVEInfo should get system: Unknown" time="0">
+    </testcase>
+    <testcase classname="src/info/__test__/Info.test.ts" name="dive/info/DIVEInfo should support webXR" time="0">
+    </testcase>
+    <testcase classname="src/info/__test__/Info.test.ts" name="dive/info/DIVEInfo should not support webXR (xr undefined)" time="0.001">
+    </testcase>
+    <testcase classname="src/info/__test__/Info.test.ts" name="dive/info/DIVEInfo should not support webXR (xr undefined &amp; isSecureContext false)" time="0">
+    </testcase>
+    <testcase classname="src/info/__test__/Info.test.ts" name="dive/info/DIVEInfo should get empty reason (not checked)" time="0">
+    </testcase>
+    <testcase classname="src/info/__test__/Info.test.ts" name="dive/info/DIVEInfo should get empty reason (webXR supported)" time="0.001">
+    </testcase>
+    <testcase classname="src/info/__test__/Info.test.ts" name="dive/info/DIVEInfo should not support webXR" time="0">
+    </testcase>
+    <testcase classname="src/info/__test__/Info.test.ts" name="dive/info/DIVEInfo should not support webXR on error" time="0">
+    </testcase>
+    <testcase classname="src/info/__test__/Info.test.ts" name="dive/info/DIVEInfo should return cached value" time="0">
+    </testcase>
+    <testcase classname="src/info/__test__/Info.test.ts" name="dive/info/DIVEInfo should return cached value (false)" time="0">
+    </testcase>
+    <testcase classname="src/info/__test__/Info.test.ts" name="dive/info/DIVEInfo should support ARQuickLook with feature detection" time="0.001">
+    </testcase>
+    <testcase classname="src/info/__test__/Info.test.ts" name="dive/info/DIVEInfo should support ARQuickLook (iPhone, iOS 15, Safari)" time="0">
+    </testcase>
+    <testcase classname="src/info/__test__/Info.test.ts" name="dive/info/DIVEInfo should support ARQuickLook (iPhone, iOS 17, Google)" time="0">
+    </testcase>
+    <testcase classname="src/info/__test__/Info.test.ts" name="dive/info/DIVEInfo should support ARQuickLook (iPhone, iOS 17, Chrome)" time="0">
+    </testcase>
+    <testcase classname="src/info/__test__/Info.test.ts" name="dive/info/DIVEInfo should support ARQuickLook (iPhone, iOS 17, Chrome)" time="0">
+    </testcase>
+    <testcase classname="src/info/__test__/Info.test.ts" name="dive/info/DIVEInfo should support ARQuickLook (iPhone, iOS 17, Firefox)" time="0.001">
+    </testcase>
+    <testcase classname="src/info/__test__/Info.test.ts" name="dive/info/DIVEInfo should not support ARQuickLook (Android)" time="0">
+    </testcase>
+    <testcase classname="src/info/__test__/Info.test.ts" name="dive/info/DIVEInfo should not support ARQuickLook (iPhone, no iOS version)" time="0">
+    </testcase>
+    <testcase classname="src/info/__test__/Info.test.ts" name="dive/info/DIVEInfo should not support ARQuickLook (iPhone, iOS 17, no browser)" time="0">
+    </testcase>
+    <testcase classname="src/info/__test__/Info.test.ts" name="dive/info/DIVEInfo should not support ARQuickLook (iPhone, iOS &lt;12, Safari)" time="0">
+    </testcase>
+    <testcase classname="src/info/__test__/Info.test.ts" name="dive/info/DIVEInfo should be mobile (iOS)" time="0.001">
+    </testcase>
+    <testcase classname="src/info/__test__/Info.test.ts" name="dive/info/DIVEInfo should be mobile (Android)" time="0">
+    </testcase>
+    <testcase classname="src/info/__test__/Info.test.ts" name="dive/info/DIVEInfo should be desktop (Windows)" time="0">
+    </testcase>
+    <testcase classname="src/info/__test__/Info.test.ts" name="dive/info/DIVEInfo should be desktop (MacOS)" time="0">
+    </testcase>
+    <testcase classname="src/info/__test__/Info.test.ts" name="dive/info/DIVEInfo should be desktop (Linux)" time="0.001">
+    </testcase>
+    <testcase classname="src/info/__test__/Info.test.ts" name="dive/info/DIVEInfo should be desktop (Unknown)" time="0">
+    </testcase>
+    <testcase classname="src/info/__test__/Info.test.ts" name="dive/info/DIVEInfo should be capable of AR (ARQuickLook)" time="0">
+    </testcase>
+    <testcase classname="src/info/__test__/Info.test.ts" name="dive/info/DIVEInfo should be capable of AR (WebXR)" time="0">
+    </testcase>
+    <testcase classname="src/info/__test__/Info.test.ts" name="dive/info/DIVEInfo should not be capable of AR" time="0">
+    </testcase>
+  </testsuite>
+  <testsuite name="dive/loadingmanager/DIVELoadingManager" errors="0" failures="0" skipped="0" timestamp="2025-01-03T08:13:47" time="3.269" tests="4">
+    <testcase classname="src/loadingmanager/__test__/LoadingManager.test.ts" name="dive/loadingmanager/DIVELoadingManager should instantiate" time="0.019">
+    </testcase>
+    <testcase classname="src/loadingmanager/__test__/LoadingManager.test.ts" name="dive/loadingmanager/DIVELoadingManager should return GLTF promise" time="0.001">
+    </testcase>
+    <testcase classname="src/loadingmanager/__test__/LoadingManager.test.ts" name="dive/loadingmanager/DIVELoadingManager should return progress" time="0.006">
+    </testcase>
+    <testcase classname="src/loadingmanager/__test__/LoadingManager.test.ts" name="dive/loadingmanager/DIVELoadingManager should return done progress without load" time="0">
+    </testcase>
+  </testsuite>
+  <testsuite name="dive/toolbox/select/DIVESelectTool" errors="0" failures="0" skipped="0" timestamp="2025-01-03T08:13:47" time="3.27" tests="11">
+    <testcase classname="src/toolbox/select/__test__/SelectTool.test.ts" name="dive/toolbox/select/DIVESelectTool should test if it is SelectTool" time="0.003">
+    </testcase>
+    <testcase classname="src/toolbox/select/__test__/SelectTool.test.ts" name="dive/toolbox/select/DIVESelectTool should instantiate" time="0">
+    </testcase>
+    <testcase classname="src/toolbox/select/__test__/SelectTool.test.ts" name="dive/toolbox/select/DIVESelectTool should activate" time="0">
+    </testcase>
+    <testcase classname="src/toolbox/select/__test__/SelectTool.test.ts" name="dive/toolbox/select/DIVESelectTool should execute onClick without hit" time="0">
+    </testcase>
+    <testcase classname="src/toolbox/select/__test__/SelectTool.test.ts" name="dive/toolbox/select/DIVESelectTool should execute onClick with hit" time="0.001">
+    </testcase>
+    <testcase classname="src/toolbox/select/__test__/SelectTool.test.ts" name="dive/toolbox/select/DIVESelectTool should execute onClick with same ISelectable hit" time="0">
+    </testcase>
+    <testcase classname="src/toolbox/select/__test__/SelectTool.test.ts" name="dive/toolbox/select/DIVESelectTool should execute onClick with ISelectable hit" time="0.001">
+    </testcase>
+    <testcase classname="src/toolbox/select/__test__/SelectTool.test.ts" name="dive/toolbox/select/DIVESelectTool should execute onClick with IMovable hit" time="0.001">
+    </testcase>
+    <testcase classname="src/toolbox/select/__test__/SelectTool.test.ts" name="dive/toolbox/select/DIVESelectTool should Select" time="0.001">
+    </testcase>
+    <testcase classname="src/toolbox/select/__test__/SelectTool.test.ts" name="dive/toolbox/select/DIVESelectTool should Deselect" time="0.001">
+    </testcase>
+    <testcase classname="src/toolbox/select/__test__/SelectTool.test.ts" name="dive/toolbox/select/DIVESelectTool should set gizmo mode" time="0">
+    </testcase>
+  </testsuite>
+  <testsuite name="dive/controls/DIVEOrbitControls" errors="0" failures="0" skipped="0" timestamp="2025-01-03T08:13:47" time="3.292" tests="16">
+    <testcase classname="src/controls/__test__/OrbitControls.test.ts" name="dive/controls/DIVEOrbitControls should instantiate" time="0.003">
+    </testcase>
+    <testcase classname="src/controls/__test__/OrbitControls.test.ts" name="dive/controls/DIVEOrbitControls should instantiate with settings" time="0.001">
+    </testcase>
+    <testcase classname="src/controls/__test__/OrbitControls.test.ts" name="dive/controls/DIVEOrbitControls should dispose" time="0">
+    </testcase>
+    <testcase classname="src/controls/__test__/OrbitControls.test.ts" name="dive/controls/DIVEOrbitControls should compute encompassing view" time="0.001">
+    </testcase>
+    <testcase classname="src/controls/__test__/OrbitControls.test.ts" name="dive/controls/DIVEOrbitControls should zoom in with default value" time="0">
+    </testcase>
+    <testcase classname="src/controls/__test__/OrbitControls.test.ts" name="dive/controls/DIVEOrbitControls should zoom in with custom value" time="0">
+    </testcase>
+    <testcase classname="src/controls/__test__/OrbitControls.test.ts" name="dive/controls/DIVEOrbitControls should zoom out with default value" time="0">
+    </testcase>
+    <testcase classname="src/controls/__test__/OrbitControls.test.ts" name="dive/controls/DIVEOrbitControls should zoom out with custom value" time="0.001">
+    </testcase>
+    <testcase classname="src/controls/__test__/OrbitControls.test.ts" name="dive/controls/DIVEOrbitControls should move to" time="0">
+    </testcase>
+    <testcase classname="src/controls/__test__/OrbitControls.test.ts" name="dive/controls/DIVEOrbitControls should revert move to" time="0">
+    </testcase>
+    <testcase classname="src/controls/__test__/OrbitControls.test.ts" name="dive/controls/DIVEOrbitControls should revert move to without values" time="0.001">
+    </testcase>
+    <testcase classname="src/controls/__test__/OrbitControls.test.ts" name="dive/controls/DIVEOrbitControls should revert move to with lock" time="0">
+    </testcase>
+    <testcase classname="src/controls/__test__/OrbitControls.test.ts" name="dive/controls/DIVEOrbitControls should move after revert with lock" time="0">
+    </testcase>
+    <testcase classname="src/controls/__test__/OrbitControls.test.ts" name="dive/controls/DIVEOrbitControls should catch multiple move tos" time="0.001">
+    </testcase>
+    <testcase classname="src/controls/__test__/OrbitControls.test.ts" name="dive/controls/DIVEOrbitControls should catch multiple reverts" time="0">
+    </testcase>
+    <testcase classname="src/controls/__test__/OrbitControls.test.ts" name="dive/controls/DIVEOrbitControls should execute preRenderCallback" time="0">
+    </testcase>
+  </testsuite>
+  <testsuite name="radToDeg" errors="0" failures="0" skipped="0" timestamp="2025-01-03T08:13:47" time="3.298" tests="9">
+    <testcase classname="src/math/radToDeg/__test__/radToDeg.test.ts" name="radToDeg should convert 0 radians to 0 degrees" time="0.003">
+    </testcase>
+    <testcase classname="src/math/radToDeg/__test__/radToDeg.test.ts" name="radToDeg should convert π radians to 180 degrees" time="0">
+    </testcase>
+    <testcase classname="src/math/radToDeg/__test__/radToDeg.test.ts" name="radToDeg should convert 2π radians to 0 degrees (wrapped)" time="0.001">
+    </testcase>
+    <testcase classname="src/math/radToDeg/__test__/radToDeg.test.ts" name="radToDeg should convert 3π/2 radians to 270 degrees" time="0">
+    </testcase>
+    <testcase classname="src/math/radToDeg/__test__/radToDeg.test.ts" name="radToDeg should handle angles greater than 2π radians correctly" time="0">
+    </testcase>
+    <testcase classname="src/math/radToDeg/__test__/radToDeg.test.ts" name="radToDeg should handle fractional radians correctly" time="0.001">
+    </testcase>
+    <testcase classname="src/math/radToDeg/__test__/radToDeg.test.ts" name="radToDeg should wrap negative angles correctly" time="0">
+    </testcase>
+    <testcase classname="src/math/radToDeg/__test__/radToDeg.test.ts" name="radToDeg should handle multiple full rotations correctly" time="0">
+    </testcase>
+    <testcase classname="src/math/radToDeg/__test__/radToDeg.test.ts" name="radToDeg should handle mixed angles" time="0.001">
+    </testcase>
+  </testsuite>
+  <testsuite name="dive/toolbox/select/DIVETransformTool" errors="0" failures="0" skipped="0" timestamp="2025-01-03T08:13:50" time="0.117" tests="5">
+    <testcase classname="src/toolbox/transform/__test__/TransformTool.test.ts" name="dive/toolbox/select/DIVETransformTool should test if it is SelectTool" time="0.001">
+    </testcase>
+    <testcase classname="src/toolbox/transform/__test__/TransformTool.test.ts" name="dive/toolbox/select/DIVETransformTool should instantiate" time="0">
+    </testcase>
+    <testcase classname="src/toolbox/transform/__test__/TransformTool.test.ts" name="dive/toolbox/select/DIVETransformTool should activate" time="0.001">
+    </testcase>
+    <testcase classname="src/toolbox/transform/__test__/TransformTool.test.ts" name="dive/toolbox/select/DIVETransformTool should set gizmo mode" time="0">
+    </testcase>
+    <testcase classname="src/toolbox/transform/__test__/TransformTool.test.ts" name="dive/toolbox/select/DIVETransformTool should set gizmo active" time="0">
+    </testcase>
+  </testsuite>
+  <testsuite name="dive/grid/DIVEGrid" errors="0" failures="0" skipped="0" timestamp="2025-01-03T08:13:50" time="0.119" tests="2">
+    <testcase classname="src/grid/__test__/Grid.test.ts" name="dive/grid/DIVEGrid should instantiate" time="0.001">
+    </testcase>
+    <testcase classname="src/grid/__test__/Grid.test.ts" name="dive/grid/DIVEGrid should set visibility" time="0">
+    </testcase>
+  </testsuite>
+  <testsuite name="dive/scene/DIVEScene" errors="0" failures="0" skipped="0" timestamp="2025-01-03T08:13:50" time="0.141" tests="14">
+    <testcase classname="src/scene/__test__/Scene.test.ts" name="dive/scene/DIVEScene should instantiate" time="0.002">
+    </testcase>
+    <testcase classname="src/scene/__test__/Scene.test.ts" name="dive/scene/DIVEScene should have Root" time="0">
+    </testcase>
+    <testcase classname="src/scene/__test__/Scene.test.ts" name="dive/scene/DIVEScene should have XRRoot" time="0.001">
+    </testcase>
+    <testcase classname="src/scene/__test__/Scene.test.ts" name="dive/scene/DIVEScene should have Floor" time="0">
+    </testcase>
+    <testcase classname="src/scene/__test__/Scene.test.ts" name="dive/scene/DIVEScene should have Grid" time="0.001">
+    </testcase>
+    <testcase classname="src/scene/__test__/Scene.test.ts" name="dive/scene/DIVEScene should InitXR" time="0">
+    </testcase>
+    <testcase classname="src/scene/__test__/Scene.test.ts" name="dive/scene/DIVEScene should DisposeXR" time="0">
+    </testcase>
+    <testcase classname="src/scene/__test__/Scene.test.ts" name="dive/scene/DIVEScene should set background color" time="0.001">
+    </testcase>
+    <testcase classname="src/scene/__test__/Scene.test.ts" name="dive/scene/DIVEScene should ComputeSceneBB" time="0.001">
+    </testcase>
+    <testcase classname="src/scene/__test__/Scene.test.ts" name="dive/scene/DIVEScene should add object" time="0.001">
+    </testcase>
+    <testcase classname="src/scene/__test__/Scene.test.ts" name="dive/scene/DIVEScene should update object" time="0">
+    </testcase>
+    <testcase classname="src/scene/__test__/Scene.test.ts" name="dive/scene/DIVEScene should remove object" time="0.001">
+    </testcase>
+    <testcase classname="src/scene/__test__/Scene.test.ts" name="dive/scene/DIVEScene should place object on floor" time="0">
+    </testcase>
+    <testcase classname="src/scene/__test__/Scene.test.ts" name="dive/scene/DIVEScene should get scene object" time="0">
+    </testcase>
+  </testsuite>
+  <testsuite name="DIVESceneViewer" errors="0" failures="0" skipped="0" timestamp="2025-01-03T08:13:50" time="0.141" tests="5">
+    <testcase classname="src/ar/sceneviewer/__test__/SceneViewer.test.ts" name="DIVESceneViewer Launch should be a function" time="0.001">
+    </testcase>
+    <testcase classname="src/ar/sceneviewer/__test__/SceneViewer.test.ts" name="DIVESceneViewer Launch should not throw without options" time="0.01">
+    </testcase>
+    <testcase classname="src/ar/sceneviewer/__test__/SceneViewer.test.ts" name="DIVESceneViewer Launch should not throw with options" time="0.002">
+    </testcase>
+    <testcase classname="src/ar/sceneviewer/__test__/SceneViewer.test.ts" name="DIVESceneViewer Launch should not throw with alternated options" time="0.017">
+    </testcase>
+    <testcase classname="src/ar/sceneviewer/__test__/SceneViewer.test.ts" name="DIVESceneViewer Launch should throw if no url is found" time="0.023">
+    </testcase>
+  </testsuite>
+  <testsuite name="dive/group/DIVEGroup" errors="0" failures="0" skipped="0" timestamp="2025-01-03T08:13:50" time="0.116" tests="13">
+    <testcase classname="src/group/__test__/Group.test.ts" name="dive/group/DIVEGroup should instantiate" time="0.001">
+    </testcase>
+    <testcase classname="src/group/__test__/Group.test.ts" name="dive/group/DIVEGroup should add an object" time="0.001">
+    </testcase>
+    <testcase classname="src/group/__test__/Group.test.ts" name="dive/group/DIVEGroup should remove an object" time="0.001">
+    </testcase>
+    <testcase classname="src/group/__test__/Group.test.ts" name="dive/group/DIVEGroup should set lines visibility" time="0">
+    </testcase>
+    <testcase classname="src/group/__test__/Group.test.ts" name="dive/group/DIVEGroup update lines" time="0">
+    </testcase>
+    <testcase classname="src/group/__test__/Group.test.ts" name="dive/group/DIVEGroup should onMove" time="0.001">
+    </testcase>
+    <testcase classname="src/group/__test__/Group.test.ts" name="dive/group/DIVEGroup should onSelect" time="0">
+    </testcase>
+    <testcase classname="src/group/__test__/Group.test.ts" name="dive/group/DIVEGroup should onDeselect" time="0">
+    </testcase>
+    <testcase classname="src/group/__test__/Group.test.ts" name="dive/group/DIVEGroup should onMove" time="0.018">
+    </testcase>
+    <testcase classname="src/group/__test__/Group.test.ts" name="dive/group/DIVEGroup should call onMove on members with isDIVENode" time="0">
+    </testcase>
+    <testcase classname="src/group/__test__/Group.test.ts" name="dive/group/DIVEGroup should not call onMove on members without isDIVENode" time="0">
+    </testcase>
+    <testcase classname="src/group/__test__/Group.test.ts" name="dive/group/DIVEGroup should handle an empty _members array without errors" time="0">
+    </testcase>
+    <testcase classname="src/group/__test__/Group.test.ts" name="dive/group/DIVEGroup should handle _members with mixed types correctly" time="0">
+    </testcase>
+  </testsuite>
+  <testsuite name="dive/math" errors="0" failures="0" skipped="0" timestamp="2025-01-03T08:13:50" time="0.153" tests="1">
+    <testcase classname="src/math/__test__/DIVEMath.test.ts" name="dive/math should be defined" time="0">
+    </testcase>
+  </testsuite>
+  <testsuite name="DIVE/scene/root/DIVERoot" errors="0" failures="0" skipped="0" timestamp="2025-01-03T08:13:50" time="0.117" tests="11">
+    <testcase classname="src/scene/root/__test__/Root.test.ts" name="DIVE/scene/root/DIVERoot should instantiate" time="0.001">
+    </testcase>
+    <testcase classname="src/scene/root/__test__/Root.test.ts" name="DIVE/scene/root/DIVERoot should ComputeSceneBB" time="0.001">
+    </testcase>
+    <testcase classname="src/scene/root/__test__/Root.test.ts" name="DIVE/scene/root/DIVERoot should get scene object" time="0">
+    </testcase>
+    <testcase classname="src/scene/root/__test__/Root.test.ts" name="DIVE/scene/root/DIVERoot should add object" time="0.003">
+    </testcase>
+    <testcase classname="src/scene/root/__test__/Root.test.ts" name="DIVE/scene/root/DIVERoot should update object" time="0.001">
+    </testcase>
+    <testcase classname="src/scene/root/__test__/Root.test.ts" name="DIVE/scene/root/DIVERoot should delete object" time="0.001">
+    </testcase>
+    <testcase classname="src/scene/root/__test__/Root.test.ts" name="DIVE/scene/root/DIVERoot should place object on floor" time="0.022">
+    </testcase>
+    <testcase classname="src/scene/root/__test__/Root.test.ts" name="DIVE/scene/root/DIVERoot should warn if entity type is invalid while adding object" time="0">
+    </testcase>
+    <testcase classname="src/scene/root/__test__/Root.test.ts" name="DIVE/scene/root/DIVERoot should warn if entity type is invalid while updating object" time="0">
+    </testcase>
+    <testcase classname="src/scene/root/__test__/Root.test.ts" name="DIVE/scene/root/DIVERoot should warn if entity type is invalid while deleting object" time="0.001">
+    </testcase>
+    <testcase classname="src/scene/root/__test__/Root.test.ts" name="DIVE/scene/root/DIVERoot should warn if entity type is invalid while placing on floor" time="0">
+    </testcase>
+  </testsuite>
+  <testsuite name="degToRad" errors="0" failures="0" skipped="0" timestamp="2025-01-03T08:13:50" time="0.029" tests="10">
+    <testcase classname="src/math/degToRad/__test__/degToRad.test.ts" name="degToRad should convert 0 degrees to 0 radians" time="0.002">
+    </testcase>
+    <testcase classname="src/math/degToRad/__test__/degToRad.test.ts" name="degToRad should convert 180 degrees to π radians" time="0">
+    </testcase>
+    <testcase classname="src/math/degToRad/__test__/degToRad.test.ts" name="degToRad should convert 360 degrees to 2π radians" time="0.001">
+    </testcase>
+    <testcase classname="src/math/degToRad/__test__/degToRad.test.ts" name="degToRad should convert 90 degrees to π/2 radians" time="0">
+    </testcase>
+    <testcase classname="src/math/degToRad/__test__/degToRad.test.ts" name="degToRad should convert 45 degrees to π/4 radians" time="0">
+    </testcase>
+    <testcase classname="src/math/degToRad/__test__/degToRad.test.ts" name="degToRad should handle multiple calls with different degrees" time="0">
+    </testcase>
+    <testcase classname="src/math/degToRad/__test__/degToRad.test.ts" name="degToRad should handle edge case of degrees just below 360" time="0">
+    </testcase>
+    <testcase classname="src/math/degToRad/__test__/degToRad.test.ts" name="degToRad should not allow negative degrees" time="0.001">
+    </testcase>
+    <testcase classname="src/math/degToRad/__test__/degToRad.test.ts" name="degToRad should handle undefined degrees gracefully" time="0">
+    </testcase>
+    <testcase classname="src/math/degToRad/__test__/degToRad.test.ts" name="degToRad should handle null degrees gracefully" time="0">
+    </testcase>
+  </testsuite>
+  <testsuite name="dive/axiscamera/DIVEAxisCamera" errors="0" failures="0" skipped="0" timestamp="2025-01-03T08:13:50" time="0.045" tests="3">
+    <testcase classname="src/axiscamera/__test__/AxisCamera.test.ts" name="dive/axiscamera/DIVEAxisCamera should instantiate" time="0.001">
+    </testcase>
+    <testcase classname="src/axiscamera/__test__/AxisCamera.test.ts" name="dive/axiscamera/DIVEAxisCamera should set rotation from Matrix4" time="0">
+    </testcase>
+    <testcase classname="src/axiscamera/__test__/AxisCamera.test.ts" name="dive/axiscamera/DIVEAxisCamera should dispose" time="0">
+    </testcase>
+  </testsuite>
+  <testsuite name="dive/camera/DIVEPerspectiveCamera" errors="0" failures="0" skipped="0" timestamp="2025-01-03T08:13:50" time="0.056" tests="4">
+    <testcase classname="src/camera/__test__/PerspectiveCamera.test.ts" name="dive/camera/DIVEPerspectiveCamera should instantiate" time="0.001">
+    </testcase>
+    <testcase classname="src/camera/__test__/PerspectiveCamera.test.ts" name="dive/camera/DIVEPerspectiveCamera should instantiate with settings" time="0">
+    </testcase>
+    <testcase classname="src/camera/__test__/PerspectiveCamera.test.ts" name="dive/camera/DIVEPerspectiveCamera should resize" time="0">
+    </testcase>
+    <testcase classname="src/camera/__test__/PerspectiveCamera.test.ts" name="dive/camera/DIVEPerspectiveCamera should set camera layer" time="0">
+    </testcase>
+  </testsuite>
+  <testsuite name="dive/node/DIVENode" errors="0" failures="0" skipped="0" timestamp="2025-01-03T08:13:50" time="0.053" tests="9">
+    <testcase classname="src/node/__test__/Node.test.ts" name="dive/node/DIVENode should instantiate" time="0">
+    </testcase>
+    <testcase classname="src/node/__test__/Node.test.ts" name="dive/node/DIVENode should set position" time="0.001">
+    </testcase>
+    <testcase classname="src/node/__test__/Node.test.ts" name="dive/node/DIVENode should set rotation" time="0">
+    </testcase>
+    <testcase classname="src/node/__test__/Node.test.ts" name="dive/node/DIVENode should set scale" time="0">
+    </testcase>
+    <testcase classname="src/node/__test__/Node.test.ts" name="dive/node/DIVENode should set visibility" time="0">
+    </testcase>
+    <testcase classname="src/node/__test__/Node.test.ts" name="dive/node/DIVENode should set to world origin" time="0.001">
+    </testcase>
+    <testcase classname="src/node/__test__/Node.test.ts" name="dive/node/DIVENode should onMove" time="0">
+    </testcase>
+    <testcase classname="src/node/__test__/Node.test.ts" name="dive/node/DIVENode should onSelect" time="0">
+    </testcase>
+    <testcase classname="src/node/__test__/Node.test.ts" name="dive/node/DIVENode should onDeselect" time="0">
+    </testcase>
+  </testsuite>
+  <testsuite name="dive/communication/DIVECommunication" errors="0" failures="0" skipped="0" timestamp="2025-01-03T08:13:50" time="0.227" tests="40">
+    <testcase classname="src/com/__test__/Communication.test.ts" name="dive/communication/DIVECommunication should instantiate" time="0.001">
+    </testcase>
+    <testcase classname="src/com/__test__/Communication.test.ts" name="dive/communication/DIVECommunication should get instance" time="0">
+    </testcase>
+    <testcase classname="src/com/__test__/Communication.test.ts" name="dive/communication/DIVECommunication should destroy instance" time="0">
+    </testcase>
+    <testcase classname="src/com/__test__/Communication.test.ts" name="dive/communication/DIVECommunication should subscribe, listen and unsubscribe from action" time="0.001">
+    </testcase>
+    <testcase classname="src/com/__test__/Communication.test.ts" name="dive/communication/DIVECommunication should not unsubscribe twice" time="0">
+    </testcase>
+    <testcase classname="src/com/__test__/Communication.test.ts" name="dive/communication/DIVECommunication should not unsubscribe if listener does not exist anymore" time="0">
+    </testcase>
+    <testcase classname="src/com/__test__/Communication.test.ts" name="dive/communication/DIVECommunication should tigger onChange callback" time="0">
+    </testcase>
+    <testcase classname="src/com/__test__/Communication.test.ts" name="dive/communication/DIVECommunication should perform action ADD_OBJECT" time="0">
+    </testcase>
+    <testcase classname="src/com/__test__/Communication.test.ts" name="dive/communication/DIVECommunication should not perform action ADD_OBJECT with same object" time="0.001">
+    </testcase>
+    <testcase classname="src/com/__test__/Communication.test.ts" name="dive/communication/DIVECommunication should perform action UPDATE_OBJECT with existing oject" time="0">
+    </testcase>
+    <testcase classname="src/com/__test__/Communication.test.ts" name="dive/communication/DIVECommunication should perform action UPDATE_OBJECT without existing oject" time="0">
+    </testcase>
+    <testcase classname="src/com/__test__/Communication.test.ts" name="dive/communication/DIVECommunication should perform action DELETE_OBJECT with existing object" time="0">
+    </testcase>
+    <testcase classname="src/com/__test__/Communication.test.ts" name="dive/communication/DIVECommunication should perform action DELETE_OBJECT without existing object" time="0">
+    </testcase>
+    <testcase classname="src/com/__test__/Communication.test.ts" name="dive/communication/DIVECommunication should perform action SET_BACKGROUND" time="0">
+    </testcase>
+    <testcase classname="src/com/__test__/Communication.test.ts" name="dive/communication/DIVECommunication should perform action DROP_IT with existing model" time="0.012">
+    </testcase>
+    <testcase classname="src/com/__test__/Communication.test.ts" name="dive/communication/DIVECommunication should perform action DROP_IT without existing model" time="0.002">
+    </testcase>
+    <testcase classname="src/com/__test__/Communication.test.ts" name="dive/communication/DIVECommunication should perform action PLACE_ON_FLOOR with existing model" time="0">
+    </testcase>
+    <testcase classname="src/com/__test__/Communication.test.ts" name="dive/communication/DIVECommunication should perform action PLACE_ON_FLOOR without existing model" time="0">
+    </testcase>
+    <testcase classname="src/com/__test__/Communication.test.ts" name="dive/communication/DIVECommunication should perform action GET_ALL_OBJECTS" time="0.001">
+    </testcase>
+    <testcase classname="src/com/__test__/Communication.test.ts" name="dive/communication/DIVECommunication should perform action MOVE_CAMERA" time="0">
+    </testcase>
+    <testcase classname="src/com/__test__/Communication.test.ts" name="dive/communication/DIVECommunication should perform action RESET_CAMERA" time="0">
+    </testcase>
+    <testcase classname="src/com/__test__/Communication.test.ts" name="dive/communication/DIVECommunication should perform action COMPUTE_ENCOMPASSING_VIEW" time="0.001">
+    </testcase>
+    <testcase classname="src/com/__test__/Communication.test.ts" name="dive/communication/DIVECommunication should perform action GET_ALL_SCENE_DATA" time="0.001">
+    </testcase>
+    <testcase classname="src/com/__test__/Communication.test.ts" name="dive/communication/DIVECommunication should perform action GET_OBJECTS" time="0">
+    </testcase>
+    <testcase classname="src/com/__test__/Communication.test.ts" name="dive/communication/DIVECommunication should perform action SELECT_OBJECT" time="0">
+    </testcase>
+    <testcase classname="src/com/__test__/Communication.test.ts" name="dive/communication/DIVECommunication should perform action DESELECT_OBJECT" time="0">
+    </testcase>
+    <testcase classname="src/com/__test__/Communication.test.ts" name="dive/communication/DIVECommunication should perform action SET_CAMERA_TRANSFORM" time="0">
+    </testcase>
+    <testcase classname="src/com/__test__/Communication.test.ts" name="dive/communication/DIVECommunication should perform action GET_CAMERA_TRANSFORM" time="0.001">
+    </testcase>
+    <testcase classname="src/com/__test__/Communication.test.ts" name="dive/communication/DIVECommunication should perform action SET_CAMERA_LAYER" time="0">
+    </testcase>
+    <testcase classname="src/com/__test__/Communication.test.ts" name="dive/communication/DIVECommunication should perform action ZOOM_CAMERA" time="0">
+    </testcase>
+    <testcase classname="src/com/__test__/Communication.test.ts" name="dive/communication/DIVECommunication should perform action SET_GIZMO_MODE" time="0">
+    </testcase>
+    <testcase classname="src/com/__test__/Communication.test.ts" name="dive/communication/DIVECommunication should perform action SET_GIZMO_VISIBILITY" time="0">
+    </testcase>
+    <testcase classname="src/com/__test__/Communication.test.ts" name="dive/communication/DIVECommunication should perform action USE_TOOL" time="0">
+    </testcase>
+    <testcase classname="src/com/__test__/Communication.test.ts" name="dive/communication/DIVECommunication should perform action MODEL_LOADED" time="0">
+    </testcase>
+    <testcase classname="src/com/__test__/Communication.test.ts" name="dive/communication/DIVECommunication should perform action UPDATE_SCENE" time="0.001">
+    </testcase>
+    <testcase classname="src/com/__test__/Communication.test.ts" name="dive/communication/DIVECommunication should perform action GENERATE_MEDIA" time="0">
+    </testcase>
+    <testcase classname="src/com/__test__/Communication.test.ts" name="dive/communication/DIVECommunication should perform action SET_PARENT" time="0">
+    </testcase>
+    <testcase classname="src/com/__test__/Communication.test.ts" name="dive/communication/DIVECommunication should perform action EXPORT_SCENE" time="0.001">
+    </testcase>
+    <testcase classname="src/com/__test__/Communication.test.ts" name="dive/communication/DIVECommunication should perform action LAUNCH_AR" time="0">
+    </testcase>
+    <testcase classname="src/com/__test__/Communication.test.ts" name="dive/communication/DIVECommunication should warn of action is of invalid type " time="0">
+    </testcase>
+  </testsuite>
+  <testsuite name="dive/io/DIVEIO" errors="0" failures="0" skipped="0" timestamp="2025-01-03T08:13:50" time="0.063" tests="7">
+    <testcase classname="src/io/__test__/IO.test.ts" name="dive/io/DIVEIO should instantiate" time="0">
+    </testcase>
+    <testcase classname="src/io/__test__/IO.test.ts" name="dive/io/DIVEIO should import from URL" time="0">
+    </testcase>
+    <testcase classname="src/io/__test__/IO.test.ts" name="dive/io/DIVEIO should handle rejection from gltf io import" time="0">
+    </testcase>
+    <testcase classname="src/io/__test__/IO.test.ts" name="dive/io/DIVEIO should reject when importing with unsupported file type" time="0.001">
+    </testcase>
+    <testcase classname="src/io/__test__/IO.test.ts" name="dive/io/DIVEIO should export to URL" time="0.001">
+    </testcase>
+    <testcase classname="src/io/__test__/IO.test.ts" name="dive/io/DIVEIO should handle rejection from gltf io export" time="0">
+    </testcase>
+    <testcase classname="src/io/__test__/IO.test.ts" name="dive/io/DIVEIO should reject when exporting with unsupported file type" time="0.001">
+    </testcase>
+  </testsuite>
+  <testsuite name="dive/primitive/DIVEPrimitive" errors="0" failures="0" skipped="0" timestamp="2025-01-03T08:13:50" time="0.072" tests="7">
+    <testcase classname="src/primitive/__test__/Primitive.test.ts" name="dive/primitive/DIVEPrimitive should instantiate" time="0.001">
+    </testcase>
+    <testcase classname="src/primitive/__test__/Primitive.test.ts" name="dive/primitive/DIVEPrimitive should set geometry" time="0.001">
+    </testcase>
+    <testcase classname="src/primitive/__test__/Primitive.test.ts" name="dive/primitive/DIVEPrimitive should warn when geometry is invalid" time="0.001">
+    </testcase>
+    <testcase classname="src/primitive/__test__/Primitive.test.ts" name="dive/primitive/DIVEPrimitive should place on floor" time="0.001">
+    </testcase>
+    <testcase classname="src/primitive/__test__/Primitive.test.ts" name="dive/primitive/DIVEPrimitive should drop it" time="0.001">
+    </testcase>
+    <testcase classname="src/primitive/__test__/Primitive.test.ts" name="dive/primitive/DIVEPrimitive should set geometry" time="0.01">
+    </testcase>
+    <testcase classname="src/primitive/__test__/Primitive.test.ts" name="dive/primitive/DIVEPrimitive should set material" time="0.001">
+    </testcase>
+  </testsuite>
+  <testsuite name="dive/helper/applyMixins" errors="0" failures="0" skipped="0" timestamp="2025-01-03T08:13:50" time="0.057" tests="1">
+    <testcase classname="src/helper/applyMixins/__test__/applyMixins.test.ts" name="dive/helper/applyMixins should apply mixins" time="0.001">
+    </testcase>
+  </testsuite>
+  <testsuite name="dive/light/DIVEPointLight" errors="0" failures="0" skipped="0" timestamp="2025-01-03T08:13:50" time="0.081" tests="7">
+    <testcase classname="src/light/__test__/PointLight.test.ts" name="dive/light/DIVEPointLight should instantiate" time="0.001">
+    </testcase>
+    <testcase classname="src/light/__test__/PointLight.test.ts" name="dive/light/DIVEPointLight should set intensity" time="0.009">
+    </testcase>
+    <testcase classname="src/light/__test__/PointLight.test.ts" name="dive/light/DIVEPointLight should set color" time="0.001">
+    </testcase>
+    <testcase classname="src/light/__test__/PointLight.test.ts" name="dive/light/DIVEPointLight should set enabled" time="0">
+    </testcase>
+    <testcase classname="src/light/__test__/PointLight.test.ts" name="dive/light/DIVEPointLight should onMove" time="0">
+    </testcase>
+    <testcase classname="src/light/__test__/PointLight.test.ts" name="dive/light/DIVEPointLight should onSelect" time="0">
+    </testcase>
+    <testcase classname="src/light/__test__/PointLight.test.ts" name="dive/light/DIVEPointLight should onDeselect" time="0.001">
+    </testcase>
+  </testsuite>
+  <testsuite name="dive/mediacreator/DIVEMediaCreator" errors="0" failures="0" skipped="0" timestamp="2025-01-03T08:13:50" time="0.088" tests="3">
+    <testcase classname="src/mediacreator/__test__/MediaCreator.test.ts" name="dive/mediacreator/DIVEMediaCreator should instantiate" time="0.001">
+    </testcase>
+    <testcase classname="src/mediacreator/__test__/MediaCreator.test.ts" name="dive/mediacreator/DIVEMediaCreator should generate media" time="0">
+    </testcase>
+    <testcase classname="src/mediacreator/__test__/MediaCreator.test.ts" name="dive/mediacreator/DIVEMediaCreator should draw canvas with custom canvas" time="0.001">
+    </testcase>
+  </testsuite>
+  <testsuite name="dive/math/truncate/truncateExp" errors="0" failures="0" skipped="0" timestamp="2025-01-03T08:13:50" time="0.037" tests="1">
+    <testcase classname="src/math/truncate/__test__/truncateExp.test.ts" name="dive/math/truncate/truncateExp should truncateExp" time="0.001">
+    </testcase>
+  </testsuite>
+  <testsuite name="dive/math/toFixed/toFixedExp" errors="0" failures="0" skipped="0" timestamp="2025-01-03T08:13:50" time="0.038" tests="1">
+    <testcase classname="src/math/toFixed/__test__/toFixedExp.test.ts" name="dive/math/toFixed/toFixedExp should toFixedExp" time="0.001">
+    </testcase>
+  </testsuite>
+  <testsuite name="dive/toolbox/DIVEToolBox" errors="0" failures="0" skipped="0" timestamp="2025-01-03T08:13:50" time="0.061" tests="12">
+    <testcase classname="src/toolbox/__test__/Toolbox.test.ts" name="dive/toolbox/DIVEToolBox should instantiate" time="0">
+    </testcase>
+    <testcase classname="src/toolbox/__test__/Toolbox.test.ts" name="dive/toolbox/DIVEToolBox should dispose" time="0">
+    </testcase>
+    <testcase classname="src/toolbox/__test__/Toolbox.test.ts" name="dive/toolbox/DIVEToolBox should throw with incorrect tool" time="0">
+    </testcase>
+    <testcase classname="src/toolbox/__test__/Toolbox.test.ts" name="dive/toolbox/DIVEToolBox should use no tool" time="0">
+    </testcase>
+    <testcase classname="src/toolbox/__test__/Toolbox.test.ts" name="dive/toolbox/DIVEToolBox should use select tool" time="0">
+    </testcase>
+    <testcase classname="src/toolbox/__test__/Toolbox.test.ts" name="dive/toolbox/DIVEToolBox should execute pointer down event on tool" time="0.001">
+    </testcase>
+    <testcase classname="src/toolbox/__test__/Toolbox.test.ts" name="dive/toolbox/DIVEToolBox should execute pointer move event on tool" time="0">
+    </testcase>
+    <testcase classname="src/toolbox/__test__/Toolbox.test.ts" name="dive/toolbox/DIVEToolBox should execute pointer up event on tool" time="0">
+    </testcase>
+    <testcase classname="src/toolbox/__test__/Toolbox.test.ts" name="dive/toolbox/DIVEToolBox should execute wheel event on tool" time="0">
+    </testcase>
+    <testcase classname="src/toolbox/__test__/Toolbox.test.ts" name="dive/toolbox/DIVEToolBox should get active tool" time="0.001">
+    </testcase>
+    <testcase classname="src/toolbox/__test__/Toolbox.test.ts" name="dive/toolbox/DIVEToolBox should set gizmo mode" time="0">
+    </testcase>
+    <testcase classname="src/toolbox/__test__/Toolbox.test.ts" name="dive/toolbox/DIVEToolBox should set gizmo active" time="0">
+    </testcase>
+  </testsuite>
+  <testsuite name="dive/renderer/DIVERenderer" errors="0" failures="0" skipped="0" timestamp="2025-01-03T08:13:50" time="0.062" tests="22">
+    <testcase classname="src/renderer/__test__/Renderer.test.ts" name="dive/renderer/DIVERenderer should instantiate" time="0.001">
+    </testcase>
+    <testcase classname="src/renderer/__test__/Renderer.test.ts" name="dive/renderer/DIVERenderer should instantiate" time="0">
+    </testcase>
+    <testcase classname="src/renderer/__test__/Renderer.test.ts" name="dive/renderer/DIVERenderer should instantiate with settings parameter" time="0">
+    </testcase>
+    <testcase classname="src/renderer/__test__/Renderer.test.ts" name="dive/renderer/DIVERenderer should dispose" time="0">
+    </testcase>
+    <testcase classname="src/renderer/__test__/Renderer.test.ts" name="dive/renderer/DIVERenderer should start render" time="0">
+    </testcase>
+    <testcase classname="src/renderer/__test__/Renderer.test.ts" name="dive/renderer/DIVERenderer should pause render" time="0.001">
+    </testcase>
+    <testcase classname="src/renderer/__test__/Renderer.test.ts" name="dive/renderer/DIVERenderer should resume render" time="0">
+    </testcase>
+    <testcase classname="src/renderer/__test__/Renderer.test.ts" name="dive/renderer/DIVERenderer should stop render" time="0">
+    </testcase>
+    <testcase classname="src/renderer/__test__/Renderer.test.ts" name="dive/renderer/DIVERenderer should resize renderer" time="0">
+    </testcase>
+    <testcase classname="src/renderer/__test__/Renderer.test.ts" name="dive/renderer/DIVERenderer should render" time="0">
+    </testcase>
+    <testcase classname="src/renderer/__test__/Renderer.test.ts" name="dive/renderer/DIVERenderer should force render" time="0.001">
+    </testcase>
+    <testcase classname="src/renderer/__test__/Renderer.test.ts" name="dive/renderer/DIVERenderer should not render when not started" time="0">
+    </testcase>
+    <testcase classname="src/renderer/__test__/Renderer.test.ts" name="dive/renderer/DIVERenderer should not render when stopped" time="0">
+    </testcase>
+    <testcase classname="src/renderer/__test__/Renderer.test.ts" name="dive/renderer/DIVERenderer should not render when paused" time="0">
+    </testcase>
+    <testcase classname="src/renderer/__test__/Renderer.test.ts" name="dive/renderer/DIVERenderer should resume render when running" time="0">
+    </testcase>
+    <testcase classname="src/renderer/__test__/Renderer.test.ts" name="dive/renderer/DIVERenderer should add pre render callback" time="0">
+    </testcase>
+    <testcase classname="src/renderer/__test__/Renderer.test.ts" name="dive/renderer/DIVERenderer should remove pre render callback" time="0">
+    </testcase>
+    <testcase classname="src/renderer/__test__/Renderer.test.ts" name="dive/renderer/DIVERenderer should not crash while removing non-existing pre render callback" time="0.001">
+    </testcase>
+    <testcase classname="src/renderer/__test__/Renderer.test.ts" name="dive/renderer/DIVERenderer should add post render callback" time="0">
+    </testcase>
+    <testcase classname="src/renderer/__test__/Renderer.test.ts" name="dive/renderer/DIVERenderer should remove post render callback" time="0">
+    </testcase>
+    <testcase classname="src/renderer/__test__/Renderer.test.ts" name="dive/renderer/DIVERenderer should not crash while removing non-existing post render callback" time="0">
+    </testcase>
+    <testcase classname="src/renderer/__test__/Renderer.test.ts" name="dive/renderer/DIVERenderer should execute pre and post render callbacks" time="0">
+    </testcase>
+  </testsuite>
+  <testsuite name="DIVEAR" errors="0" failures="0" skipped="0" timestamp="2025-01-03T08:13:50" time="0.077" tests="6">
+    <testcase classname="src/ar/__test__/AR.test.ts" name="DIVEAR Launch AR Quick Look should launch ARQuickLook on iOS" time="0.001">
+    </testcase>
+    <testcase classname="src/ar/__test__/AR.test.ts" name="DIVEAR Launch AR Quick Look should not launch ARQuickLook on iOS if not supported" time="0.001">
+    </testcase>
+    <testcase classname="src/ar/__test__/AR.test.ts" name="DIVEAR Launch Scene Viewer should launch SceneViewer on Android" time="0">
+    </testcase>
+    <testcase classname="src/ar/__test__/AR.test.ts" name="DIVEAR Launch WebXR should launch WebXR on Android with useWebXR option" time="0.001">
+    </testcase>
+    <testcase classname="src/ar/__test__/AR.test.ts" name="DIVEAR Launch WebXR should not launch WebXR on Android with useWebXR option" time="0">
+    </testcase>
+    <testcase classname="src/ar/__test__/AR.test.ts" name="DIVEAR Launch should log AR not supported on non-mobile systems" time="0">
+    </testcase>
+  </testsuite>
+  <testsuite name="dive/math/floor/floorExp" errors="0" failures="0" skipped="0" timestamp="2025-01-03T08:13:50" time="0.037" tests="1">
+    <testcase classname="src/math/floor/__test__/floorExp.test.ts" name="dive/math/floor/floorExp should floorExp" time="0.001">
+    </testcase>
+  </testsuite>
+  <testsuite name="dive/model/DIVEModel" errors="0" failures="0" skipped="0" timestamp="2025-01-03T08:13:50" time="0.083" tests="7">
+    <testcase classname="src/model/__test__/Model.test.ts" name="dive/model/DIVEModel should instantiate" time="0.001">
+    </testcase>
+    <testcase classname="src/model/__test__/Model.test.ts" name="dive/model/DIVEModel should set model" time="0">
+    </testcase>
+    <testcase classname="src/model/__test__/Model.test.ts" name="dive/model/DIVEModel should place on floor" time="0.001">
+    </testcase>
+    <testcase classname="src/model/__test__/Model.test.ts" name="dive/model/DIVEModel should drop it" time="0.001">
+    </testcase>
+    <testcase classname="src/model/__test__/Model.test.ts" name="dive/model/DIVEModel should set material" time="0.001">
+    </testcase>
+    <testcase classname="src/model/__test__/Model.test.ts" name="dive/model/DIVEModel should set model material when material already set before" time="0.001">
+    </testcase>
+    <testcase classname="src/model/__test__/Model.test.ts" name="dive/model/DIVEModel should set material to model when model already set before" time="0">
+    </testcase>
+  </testsuite>
+  <testsuite name="dive/animation/DIVEAnimationSystem" errors="0" failures="0" skipped="0" timestamp="2025-01-03T08:13:50" time="0.042" tests="4">
+    <testcase classname="src/animation/__test__/AnimationSystem.test.ts" name="dive/animation/DIVEAnimationSystem should instantiate" time="0">
+    </testcase>
+    <testcase classname="src/animation/__test__/AnimationSystem.test.ts" name="dive/animation/DIVEAnimationSystem should Animate" time="0.001">
+    </testcase>
+    <testcase classname="src/animation/__test__/AnimationSystem.test.ts" name="dive/animation/DIVEAnimationSystem should update" time="0">
+    </testcase>
+    <testcase classname="src/animation/__test__/AnimationSystem.test.ts" name="dive/animation/DIVEAnimationSystem should dispose" time="0">
+    </testcase>
+  </testsuite>
+  <testsuite name="dive/helper/implementsInterface" errors="0" failures="0" skipped="0" timestamp="2025-01-03T08:13:50" time="0.044" tests="2">
+    <testcase classname="src/helper/isInterface/__test__/implementsInterface.test.ts" name="dive/helper/implementsInterface should not find interface" time="0">
+    </testcase>
+    <testcase classname="src/helper/isInterface/__test__/implementsInterface.test.ts" name="dive/helper/implementsInterface should find interface" time="0">
+    </testcase>
+  </testsuite>
+  <testsuite name="dive/primitive/floor/DIVEFloor" errors="0" failures="0" skipped="0" timestamp="2025-01-03T08:13:50" time="0.033" tests="3">
+    <testcase classname="src/primitive/floor/__test__/Floor.test.ts" name="dive/primitive/floor/DIVEFloor should instantiate" time="0.001">
+    </testcase>
+    <testcase classname="src/primitive/floor/__test__/Floor.test.ts" name="dive/primitive/floor/DIVEFloor should set visibility" time="0">
+    </testcase>
+    <testcase classname="src/primitive/floor/__test__/Floor.test.ts" name="dive/primitive/floor/DIVEFloor should set color" time="0">
+    </testcase>
+  </testsuite>
+  <testsuite name="dive/toolbox/DIVEBaseTool" errors="0" failures="0" skipped="0" timestamp="2025-01-03T08:13:50" time="0.058" tests="14">
+    <testcase classname="src/toolbox/__test__/BaseTool.test.ts" name="dive/toolbox/DIVEBaseTool should instantiate" time="0.001">
+    </testcase>
+    <testcase classname="src/toolbox/__test__/BaseTool.test.ts" name="dive/toolbox/DIVEBaseTool should Activate" time="0">
+    </testcase>
+    <testcase classname="src/toolbox/__test__/BaseTool.test.ts" name="dive/toolbox/DIVEBaseTool should Deactivate" time="0">
+    </testcase>
+    <testcase classname="src/toolbox/__test__/BaseTool.test.ts" name="dive/toolbox/DIVEBaseTool should raycast" time="0.001">
+    </testcase>
+    <testcase classname="src/toolbox/__test__/BaseTool.test.ts" name="dive/toolbox/DIVEBaseTool should raycast with selection of objects" time="0">
+    </testcase>
+    <testcase classname="src/toolbox/__test__/BaseTool.test.ts" name="dive/toolbox/DIVEBaseTool should return correct pointerAnyDown" time="0">
+    </testcase>
+    <testcase classname="src/toolbox/__test__/BaseTool.test.ts" name="dive/toolbox/DIVEBaseTool should execute onPointerDown correctly" time="0.001">
+    </testcase>
+    <testcase classname="src/toolbox/__test__/BaseTool.test.ts" name="dive/toolbox/DIVEBaseTool should execute onPointerMove correctly" time="0.002">
+    </testcase>
+    <testcase classname="src/toolbox/__test__/BaseTool.test.ts" name="dive/toolbox/DIVEBaseTool should execute onPointerUp correctly" time="0">
+    </testcase>
+    <testcase classname="src/toolbox/__test__/BaseTool.test.ts" name="dive/toolbox/DIVEBaseTool should execute onDragStart correctly" time="0.001">
+    </testcase>
+    <testcase classname="src/toolbox/__test__/BaseTool.test.ts" name="dive/toolbox/DIVEBaseTool should execute onDrag correctly" time="0">
+    </testcase>
+    <testcase classname="src/toolbox/__test__/BaseTool.test.ts" name="dive/toolbox/DIVEBaseTool should execute onCLick correctly" time="0">
+    </testcase>
+    <testcase classname="src/toolbox/__test__/BaseTool.test.ts" name="dive/toolbox/DIVEBaseTool should execute onDragEnd correctly" time="0">
+    </testcase>
+    <testcase classname="src/toolbox/__test__/BaseTool.test.ts" name="dive/toolbox/DIVEBaseTool should execute onWheel correctly" time="0">
+    </testcase>
+  </testsuite>
+  <testsuite name="dive/math/ceil/ceilExp" errors="0" failures="0" skipped="0" timestamp="2025-01-03T08:13:50" time="0.043" tests="1">
+    <testcase classname="src/math/ceil/__test__/ceilExp.test.ts" name="dive/math/ceil/ceilExp should ceilExp" time="0.001">
+    </testcase>
+  </testsuite>
+  <testsuite name="dive/light/DIVESceneLight" errors="0" failures="0" skipped="0" timestamp="2025-01-03T08:13:50" time="0.039" tests="4">
+    <testcase classname="src/light/__test__/SceneLight.test.ts" name="dive/light/DIVESceneLight should instantiate" time="0.001">
+    </testcase>
+    <testcase classname="src/light/__test__/SceneLight.test.ts" name="dive/light/DIVESceneLight should set intensity" time="0">
+    </testcase>
+    <testcase classname="src/light/__test__/SceneLight.test.ts" name="dive/light/DIVESceneLight should set color" time="0">
+    </testcase>
+    <testcase classname="src/light/__test__/SceneLight.test.ts" name="dive/light/DIVESceneLight should set enabled" time="0.001">
+    </testcase>
+  </testsuite>
+  <testsuite name="dive/math/round/roundExp" errors="0" failures="0" skipped="0" timestamp="2025-01-03T08:13:50" time="0.043" tests="1">
+    <testcase classname="src/math/round/__test__/roundExp.test.ts" name="dive/math/round/roundExp should roundExp" time="0">
+    </testcase>
+  </testsuite>
+  <testsuite name="DIVEARQuickLook" errors="0" failures="0" skipped="0" timestamp="2025-01-03T08:13:50" time="0.067" tests="7">
+    <testcase classname="src/ar/arquicklook/__test__/ARQuickLook.test.ts" name="DIVEARQuickLook Launch should be a function" time="0.002">
+    </testcase>
+    <testcase classname="src/ar/arquicklook/__test__/ARQuickLook.test.ts" name="DIVEARQuickLook Launch should return a promise" time="0.006">
+    </testcase>
+    <testcase classname="src/ar/arquicklook/__test__/ARQuickLook.test.ts" name="DIVEARQuickLook Launch should not throw when called without options" time="0.002">
+    </testcase>
+    <testcase classname="src/ar/arquicklook/__test__/ARQuickLook.test.ts" name="DIVEARQuickLook Launch should not throw when called with empty scene" time="0.001">
+    </testcase>
+    <testcase classname="src/ar/arquicklook/__test__/ARQuickLook.test.ts" name="DIVEARQuickLook Launch should not throw when called with filled scene" time="0.004">
+    </testcase>
+    <testcase classname="src/ar/arquicklook/__test__/ARQuickLook.test.ts" name="DIVEARQuickLook Launch should pass options to exporter" time="0.001">
+    </testcase>
+    <testcase classname="src/ar/arquicklook/__test__/ARQuickLook.test.ts" name="DIVEARQuickLook Launch should reject when USDZExporter fails" time="0.001">
+    </testcase>
+  </testsuite>
+  <testsuite name="dive/helper/findSceneRecursive" errors="0" failures="0" skipped="0" timestamp="2025-01-03T08:13:50" time="0.021" tests="3">
+    <testcase classname="src/helper/findSceneRecursive/__test__/findSceneRecursive.test.ts" name="dive/helper/findSceneRecursive should find itself if parent is not set" time="0">
+    </testcase>
+    <testcase classname="src/helper/findSceneRecursive/__test__/findSceneRecursive.test.ts" name="dive/helper/findSceneRecursive should find itself if it has no parent" time="0">
+    </testcase>
+    <testcase classname="src/helper/findSceneRecursive/__test__/findSceneRecursive.test.ts" name="dive/helper/findSceneRecursive should find itself if it has no parent" time="0">
+    </testcase>
+  </testsuite>
+  <testsuite name="dive/math/helper/shift" errors="0" failures="0" skipped="0" timestamp="2025-01-03T08:13:50" time="0.027" tests="1">
+    <testcase classname="src/math/helper/__test__/shift.test.ts" name="dive/math/helper/shift should shift" time="0.001">
+    </testcase>
+  </testsuite>
+  <testsuite name="dive/math/signedAngleTo" errors="0" failures="0" skipped="0" timestamp="2025-01-03T08:13:50" time="0.044" tests="1">
+    <testcase classname="src/math/signedAngleTo/__test__/signedAngleTo.test.ts" name="dive/math/signedAngleTo should signedAngleTo" time="0.001">
+    </testcase>
+  </testsuite>
+  <testsuite name="dive/DIVE" errors="0" failures="0" skipped="0" timestamp="2025-01-03T08:13:50" time="1.087" tests="10">
+    <testcase classname="src/__test__/DIVE.test.ts" name="dive/DIVE should QuickView" time="0.001">
+    </testcase>
+    <testcase classname="src/__test__/DIVE.test.ts" name="dive/DIVE should instantiate" time="0">
+    </testcase>
+    <testcase classname="src/__test__/DIVE.test.ts" name="dive/DIVE should instantiate in development DIVE_NODE_ENV" time="0.001">
+    </testcase>
+    <testcase classname="src/__test__/DIVE.test.ts" name="dive/DIVE should dispose" time="0">
+    </testcase>
+    <testcase classname="src/__test__/DIVE.test.ts" name="dive/DIVE should instantiate with settings" time="0.001">
+    </testcase>
+    <testcase classname="src/__test__/DIVE.test.ts" name="dive/DIVE should have Canvas" time="0">
+    </testcase>
+    <testcase classname="src/__test__/DIVE.test.ts" name="dive/DIVE should have Communication" time="0">
+    </testcase>
+    <testcase classname="src/__test__/DIVE.test.ts" name="dive/DIVE should have Info" time="0.001">
+    </testcase>
+    <testcase classname="src/__test__/DIVE.test.ts" name="dive/DIVE should resize" time="0">
+    </testcase>
+    <testcase classname="src/__test__/DIVE.test.ts" name="dive/DIVE should update settings" time="0.001">
+    </testcase>
+  </testsuite>
+</testsuites>
