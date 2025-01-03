@@ -102,35 +102,37 @@ const mock_detach = jest.fn();
 jest.mock('three/examples/jsm/controls/TransformControls', () => {
     return {
         TransformControls: jest.fn(function () {
-            (this.addEventListener = (
-                type: string,
-                callback: (e: object) => void,
-            ) => {
-                this.object = null;
-                callback({ value: false });
-                this.object = {};
-                callback({ value: false });
-                this.object = {
-                    isMovable: true,
-                };
-                callback({ value: false });
-                this.object = {
-                    isMovable: true,
-                    onMove: jest.fn(),
-                    onMoveStart: jest.fn(),
-                    onMoveEnd: jest.fn(),
-                };
-                callback({ value: false });
-            }),
-                (this.attach = mock_attach),
-                (this.detach = mock_detach),
-                (this.traverse = function (callback: (obj: object) => void) {
-                    callback(this);
-                });
+            this.isTransformControls = true;
+            this.addEventListener = jest.fn(
+                (type: string, callback: (e: object) => void) => {
+                    this.object = null;
+                    callback({ value: false });
+                    this.object = {};
+                    callback({ value: false });
+                    this.object = {
+                        isMovable: true,
+                    };
+                    callback({ value: false });
+                    this.object = {
+                        isMovable: true,
+                        onMove: jest.fn(),
+                        onMoveStart: jest.fn(),
+                        onMoveEnd: jest.fn(),
+                    };
+                    callback({ value: false });
+                },
+            );
+            this.attach = mock_attach;
+            this.detach = mock_detach;
+            this.traverse = jest.fn((callback: (obj: object) => void) => {
+                callback(this);
+            });
             this.setMode = jest.fn();
             this.getRaycaster = jest.fn().mockReturnValue({
                 layers: {
                     mask: 0,
+                    disableAll: jest.fn(),
+                    enableAll: jest.fn(),
                 },
             });
             this.layers = {
