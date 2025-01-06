@@ -12,6 +12,12 @@ import { DraggableEvent } from '../../toolbox/BaseTool';
 export class DIVETranslateGizmo extends Object3D {
     private _controller: DIVEOrbitControls;
 
+    public set debug(value: boolean) {
+        this.children.forEach((child) => {
+            child.debug = value;
+        });
+    }
+
     public children: DIVEAxisHandle[];
 
     private _startPos: Vector3 | null;

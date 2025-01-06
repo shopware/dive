@@ -20,6 +20,12 @@ export class DIVEGizmo extends Object3D {
         this.assemble();
     }
 
+    public set debug(value: boolean) {
+        this._translateGizmo.debug = value;
+        this._rotateGizmo.debug = value;
+        this._scaleGizmo.debug = value;
+    }
+
     private _gizmoNode: Object3D;
     public get gizmoNode(): Object3D {
         return this._gizmoNode;

@@ -103,31 +103,37 @@ const mock_detach = jest.fn();
 jest.mock('three/examples/jsm/controls/TransformControls', () => {
     return {
         TransformControls: jest.fn(function () {
-            (this.addEventListener = (
-                type: string,
-                callback: (e: object) => void,
-            ) => {
-                callback({ value: false });
-                this.object = {};
-                callback({ value: false });
-                this.object = {
-                    onMove: 'hello',
-                };
-                callback({ value: false });
-                this.object = {
-                    onMove: jest.fn(),
-                };
-                callback({ value: false });
-            }),
-                (this.attach = mock_attach),
-                (this.detach = mock_detach),
-                (this.traverse = function (callback: (obj: object) => void) {
-                    callback(this);
-                });
+            this.isTransformControls = true;
+            this.addEventListener = jest.fn(
+                (type: string, callback: (e: object) => void) => {
+                    callback({ value: false });
+                    this.object = {};
+                    callback({ value: false });
+                    this.object = {
+                        onMove: 'hello',
+                    };
+                    callback({ value: false });
+                    this.object = {
+                        onMove: jest.fn(),
+                    };
+                    callback({ value: false });
+                },
+            );
+            this.attach = jest.fn((object) => {
+                this.object = object;
+            });
+            this.detach = jest.fn(() => {
+                this.object = null;
+            });
+            this.traverse = function (callback: (obj: object) => void) {
+                callback(this);
+            };
             this.setMode = jest.fn();
             this.getRaycaster = jest.fn().mockReturnValue({
                 layers: {
                     mask: 0,
+                    disableAll: jest.fn(),
+                    enableAll: jest.fn(),
                 },
             });
             this.layers = {
@@ -169,8 +175,7 @@ describe('dive/toolbox/select/DIVESelectTool', () => {
 
     it('should execute onClick without hit', () => {
         const selectTool = new DIVESelectTool(mockScene, mockController);
-        selectTool['_gizmo'].object = {} as unknown as Object3D &
-            DIVESelectable;
+        selectTool.AttachGizmo({} as unknown as DIVESelectable);
         expect(() =>
             selectTool.onClick({ offsetX: 0, offsetY: 0 } as PointerEvent),
         ).not.toThrow();
@@ -213,11 +218,11 @@ describe('dive/toolbox/select/DIVESelectTool', () => {
             },
         ]);
         const selectTool = new DIVESelectTool(mockScene, mockController);
-        selectTool['_gizmo'].object = {
+        selectTool.AttachGizmo({
             visible: true,
             isSelectable: true,
             uuid: 'test0',
-        } as unknown as Object3D & DIVESelectable;
+        } as unknown as Object3D & DIVESelectable);
         expect(() =>
             selectTool.onClick({ offsetX: 0, offsetY: 0 } as PointerEvent),
         ).not.toThrow();
@@ -241,10 +246,10 @@ describe('dive/toolbox/select/DIVESelectTool', () => {
             },
         ]);
         const selectTool = new DIVESelectTool(mockScene, mockController);
-        selectTool['_gizmo'].object = {
+        selectTool.AttachGizmo({
             isSelectable: true,
             uuid: 'test1',
-        } as unknown as Object3D & DIVESelectable;
+        } as unknown as Object3D & DIVESelectable);
         expect(() =>
             selectTool.onClick({ offsetX: 0, offsetY: 0 } as PointerEvent),
         ).not.toThrow();

@@ -17,6 +17,12 @@ export class DIVEScaleGizmo extends Object3D implements DIVEHoverable {
 
     private _controller: DIVEOrbitControls;
 
+    public set debug(value: boolean) {
+        this.children.forEach((child) => {
+            child.debug = value;
+        });
+    }
+
     private _startScale: Vector3 | null;
 
     constructor(controller: DIVEOrbitControls) {
