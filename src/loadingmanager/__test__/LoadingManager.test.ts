@@ -1,17 +1,5 @@
 import { DIVELoadingManager } from '../LoadingManager';
 
-const mock_setDecoderPath = jest.fn();
-
-jest.mock('three/examples/jsm/loaders/DRACOLoader', () => {
-    return {
-        DRACOLoader: jest.fn(() => {
-            return {
-                setDecoderPath: mock_setDecoderPath,
-            };
-        }),
-    };
-});
-
 describe('dive/loadingmanager/DIVELoadingManager', () => {
     it('should instantiate', () => {
         const testLight = new DIVELoadingManager();
