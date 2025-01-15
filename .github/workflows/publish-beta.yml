@@ -1,7 +1,7 @@
 name: Beta Release
 
 on:
-  workflow_dispatch:  # This allows manual triggering only from the Actions tab
+    workflow_dispatch: # This allows manual triggering only from the Actions tab
 
 jobs:
     install:
@@ -16,8 +16,7 @@ jobs:
               id: yarn-cache
               with:
                   path: node_modules
-                  key:
-                      node-modules-${{ runner.os }}-${{ hashFiles('yarn.lock') }}
+                  key: node-modules-${{ runner.os }}-${{ hashFiles('yarn.lock') }}
             - name: Install DIVE dependencies (if cache not found)
               if: steps.yarn-cache.outputs.cache-hit != 'true'
               run: yarn
@@ -32,8 +31,7 @@ jobs:
               id: yarn-cache
               with:
                   path: node_modules
-                  key:
-                      node-modules-${{ runner.os }}-${{ hashFiles('yarn.lock') }}
+                  key: node-modules-${{ runner.os }}-${{ hashFiles('yarn.lock') }}
             - name: Install DIVE dependencies (if cache not found)
               if: steps.yarn-cache.outputs.cache-hit != 'true'
               run: yarn
@@ -50,8 +48,7 @@ jobs:
               id: yarn-cache
               with:
                   path: node_modules
-                  key:
-                      node-modules-${{ runner.os }}-${{ hashFiles('yarn.lock') }}
+                  key: node-modules-${{ runner.os }}-${{ hashFiles('yarn.lock') }}
             - name: Install DIVE dependencies (if cache not found)
               if: steps.yarn-cache.outputs.cache-hit != 'true'
               run: yarn
@@ -61,20 +58,19 @@ jobs:
         runs-on: ubuntu-latest
         needs: install
         steps:
-          - name: Checkout DIVE
-            uses: actions/checkout@main
-          - name: Search for cached dependencies
-            uses: actions/cache@main
-            id: yarn-cache
-            with:
-                path: node_modules
-                key:
-                    node-modules-${{ runner.os }}-${{ hashFiles('yarn.lock') }}
-          - name: Install DIVE dependencies (if cache not found)
-            if: steps.yarn-cache.outputs.cache-hit != 'true'
-            run: yarn
-          - name: Prettier fix DIVE
-            run: yarn prettier:fix && git add .
+            - name: Checkout DIVE
+              uses: actions/checkout@main
+            - name: Search for cached dependencies
+              uses: actions/cache@main
+              id: yarn-cache
+              with:
+                  path: node_modules
+                  key: node-modules-${{ runner.os }}-${{ hashFiles('yarn.lock') }}
+            - name: Install DIVE dependencies (if cache not found)
+              if: steps.yarn-cache.outputs.cache-hit != 'true'
+              run: yarn
+            - name: Prettier fix DIVE
+              run: yarn prettier:fix && git add .
     publish-beta:
         runs-on: ubuntu-latest
         needs: [eslint, unit, prettier-fix]
@@ -90,57 +86,56 @@ jobs:
               id: yarn-cache
               with:
                   path: node_modules
-                  key:
-                      node-modules-${{ runner.os }}-${{ hashFiles('yarn.lock') }}
+                  key: node-modules-${{ runner.os }}-${{ hashFiles('yarn.lock') }}
             - name: Install dependencies (if cache not found)
               if: steps.yarn-cache.outputs.cache-hit != 'true'
               run: yarn
 
             - name: Register git user
               run: |
-                git config user.name "GitHub Actions"
-                git config user.email "actions@github.com"
+                  git config user.name "GitHub Actions"
+                  git config user.email "actions@github.com"
 
             - name: Calculate next beta version from branches
               id: calculate-beta
               run: |
-                # Fetch all remote branches
-                git fetch --all
+                  # Fetch all remote branches
+                  git fetch --all
 
-                # Get the current version from package.json
-                current_version=$(node -p "require('./package.json').version")
+                  # Get the current version from package.json
+                  current_version=$(node -p "require('./package.json').version")
 
-                # Extract the base version (major.minor.patch) and increment the patch number
-                base_version=$(echo $current_version | awk -F'-' '{print $1}')
-                IFS='.' read -r major minor patch <<< "$base_version"
-                next_patch=$((patch + 1))
+                  # Extract the base version (major.minor.patch) and increment the patch number
+                  base_version=$(echo $current_version | awk -F'-' '{print $1}')
+                  IFS='.' read -r major minor patch <<< "$base_version"
+                  next_patch=$((patch + 1))
 
-                # Rebuild the new base version
-                next_version="$major.$minor.$next_patch"
+                  # Rebuild the new base version
+                  next_version="$major.$minor.$next_patch"
 
-                # Find all beta branches matching the pattern
-                prefix="beta/v$next_version-beta"
-                last_beta=$(git branch -r | grep "origin/$prefix" | awk -F '-' '{print $NF}' | sort -n | tail -n 1)
+                  # Find all beta branches matching the pattern
+                  prefix="beta/v$next_version-beta"
+                  last_beta=$(git branch -r | grep "origin/$prefix" | awk -F '-' '{print $NF}' | sort -n | tail -n 1)
 
-                if [ -z "$last_beta" ]; then
-                  next_beta="$next_version-beta.0"  # Start at beta.0 if no beta exists
-                else
-                  # Increment the beta number (without trying arithmetic on the full string)
-                  beta_number=$(echo $last_beta | sed 's/[^0-9]*//g')  # Extract numeric part
-                  next_beta="$next_version-beta.$((beta_number + 1))"
-                fi
+                  if [ -z "$last_beta" ]; then
+                    next_beta="$next_version-beta.0"  # Start at beta.0 if no beta exists
+                  else
+                    # Increment the beta number (without trying arithmetic on the full string)
+                    beta_number=$(echo $last_beta | sed 's/[^0-9]*//g')  # Extract numeric part
+                    next_beta="$next_version-beta.$((beta_number + 1))"
+                  fi
 
-                # Export the next beta version
-                echo "next_beta=$next_beta" >> $GITHUB_ENV
+                  # Export the next beta version
+                  echo "next_beta=$next_beta" >> $GITHUB_ENV
 
             - name: Update package.json with new beta version
               run: |
-                npm version --no-git-tag-version ${{ env.next_beta }}
-                git add package.json
+                  npm version --no-git-tag-version ${{ steps.calculate-beta.outputs.next_beta }}
+                  git add package.json
 
             - name: Create beta branch
               run: |
-                git checkout -b beta/v${{ env.next_beta }}
+                  git checkout -b beta/v${{ steps.calculate-beta.outputs.next_beta }}
 
             - name: Build DIVE
               run: yarn build
@@ -150,21 +145,21 @@ jobs:
 
             - name: Commit changes
               run: |
-                git commit -m "Beta v$(node -p "require('./package.json').version")"
+                  git commit -m "Beta v$(node -p "require('./package.json').version")"
 
             - name: Create tag
               run: |
-                git tag -a v$(node -p "require('./package.json').version") -m "Beta v$(node -p "require('./package.json').version")"
+                  git tag -a v$(node -p "require('./package.json').version") -m "Beta v$(node -p "require('./package.json').version")"
 
             - name: Push changes
               run: |
-                git push origin beta/v$(node -p "require('./package.json').version") --follow-tags
+                  git push origin beta/v$(node -p "require('./package.json').version") --follow-tags
 
             - name: Authenticate with NPM
               env:
-                NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+                  NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
               run: echo "//registry.npmjs.org/:_authToken=${NODE_AUTH_TOKEN}" > ~/.npmrc
 
             - name: Publish Beta tag to npm
               run: |
-                yarn publish --tag beta
+                  yarn publish --tag beta
