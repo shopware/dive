@@ -4,44 +4,6 @@ import { DIVEGLTFIO } from '../GLTFIO';
 import { type GLTF } from 'three/examples/jsm/loaders/GLTFLoader';
 import { GLTFExporterOptions } from 'three/examples/jsm/exporters/GLTFExporter';
 
-jest.mock('three', () => {
-    return {
-        Object3D: jest.fn(function () {
-            this.clear = jest.fn();
-            this.color = {};
-            this.intensity = 0;
-            this.layers = {
-                mask: 0,
-            };
-            this.shadow = {
-                radius: 0,
-                mapSize: { width: 0, height: 0 },
-                bias: 0,
-                camera: {
-                    near: 0,
-                    far: 0,
-                    fov: 0,
-                },
-            };
-            this.add = jest.fn();
-            this.sub = jest.fn();
-            this.children = [
-                {
-                    visible: true,
-                    material: {
-                        color: {},
-                    },
-                },
-            ];
-            this.userData = {};
-            this.traverse = jest.fn((callback) => {
-                callback(this.children[0]);
-            });
-            return this;
-        }),
-    };
-});
-
 jest.mock('three/examples/jsm/loaders/GLTFLoader', () => {
     return {
         GLTFLoader: jest.fn(function () {

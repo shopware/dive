@@ -21,6 +21,8 @@ jest.spyOn(DIVECommunication, 'get').mockReturnValue({
 
 let group: DIVEGroup;
 
+Object3D.prototype.attach = jest.fn();
+
 describe('dive/group/DIVEGroup', () => {
     beforeEach(() => {
         group = new DIVEGroup();
@@ -35,8 +37,6 @@ describe('dive/group/DIVEGroup', () => {
     });
 
     it('should add an object', () => {
-        Object3D.prototype.attach = jest.fn();
-
         const mockObject = new DIVEGroup();
 
         expect(() => group.attach(mockObject)).not.toThrow();

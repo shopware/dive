@@ -75,27 +75,6 @@ jest.mock('../../../animation/AnimationSystem', () => {
     };
 });
 
-const mock_intersectObjects = jest.fn().mockReturnValue([]);
-
-jest.mock('three', () => {
-    return {
-        Vector2: jest.fn(function () {
-            return this;
-        }),
-        Vector3: jest.fn(function () {
-            return this;
-        }),
-        Raycaster: jest.fn(function () {
-            this.setFromCamera = jest.fn();
-            this.intersectObjects = mock_intersectObjects;
-            this.layers = {
-                mask: 0,
-            };
-            return this;
-        }),
-    };
-});
-
 const mock_attach = jest.fn();
 const mock_detach = jest.fn();
 
@@ -166,30 +145,37 @@ const mockController: DIVEOrbitControls = new DIVEOrbitControls(
     mockAnimSystem,
 );
 
+let transformTool: DIVETransformTool;
+let intersectObjectsSpy: jest.SpyInstance;
+
 describe('dive/toolbox/select/DIVETransformTool', () => {
+    beforeEach(() => {
+        transformTool = new DIVETransformTool(mockScene, mockController);
+        intersectObjectsSpy = jest
+            .spyOn(transformTool['_raycaster'], 'intersectObjects')
+            .mockReturnValue([]);
+    });
+
     it('should test if it is SelectTool', () => {
-        const selectTool = { isTransformTool: true } as unknown as DIVEBaseTool;
-        expect(isTransformTool(selectTool)).toBeDefined();
+        const transformTool = {
+            isTransformTool: true,
+        } as unknown as DIVEBaseTool;
+        expect(isTransformTool(transformTool)).toBeDefined();
     });
 
     it('should instantiate', () => {
-        const transformTool = new DIVETransformTool(mockScene, mockController);
         expect(transformTool).toBeDefined();
     });
 
     it('should activate', () => {
-        const transformTool = new DIVETransformTool(mockScene, mockController);
         expect(() => transformTool.Activate()).not.toThrow();
     });
 
     it('should set gizmo mode', () => {
-        const transformTool = new DIVETransformTool(mockScene, mockController);
         expect(() => transformTool.SetGizmoMode('translate')).not.toThrow();
     });
 
     it('should set gizmo active', () => {
-        const transformTool = new DIVETransformTool(mockScene, mockController);
-
         expect(() => transformTool.SetGizmoVisibility(true)).not.toThrow();
 
         // mock that gizmo is in scene

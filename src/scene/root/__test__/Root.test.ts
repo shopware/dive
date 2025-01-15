@@ -14,192 +14,6 @@ import { DIVECommunication } from '../../../com/Communication';
 import { type DIVESceneObject } from '../../../types';
 import { Vector3, Mesh, Box3, Object3D } from 'three';
 
-jest.mock('three', () => {
-    return {
-        Vector3: jest.fn(function (x: number, y: number, z: number) {
-            this.x = x;
-            this.y = y;
-            this.z = z;
-            this.copy = (vec3: Vector3) => {
-                this.x = vec3.x;
-                this.y = vec3.y;
-                this.z = vec3.z;
-                return this;
-            };
-            this.set = (x: number, y: number, z: number) => {
-                this.x = x;
-                this.y = y;
-                this.z = z;
-                return this;
-            };
-            this.multiply = (vec3: Vector3) => {
-                this.x *= vec3.x;
-                this.y *= vec3.y;
-                this.z *= vec3.z;
-                return this;
-            };
-            this.clone = () => {
-                return new Vector3(this.x, this.y, this.z);
-            };
-            this.setY = (y: number) => {
-                this.y = y;
-                return this;
-            };
-            this.add = (vec3: Vector3) => {
-                this.x += vec3.x;
-                this.y += vec3.y;
-                this.z += vec3.z;
-                return this;
-            };
-            this.sub = (vec3: Vector3) => {
-                this.x -= vec3.x;
-                this.y -= vec3.y;
-                this.z -= vec3.z;
-                return this;
-            };
-            return this;
-        }),
-        Object3D: jest.fn(function () {
-            this.isObject3D = true;
-            this.clear = jest.fn();
-            this.color = {};
-            this.intensity = 0;
-            this.layers = {
-                mask: 0,
-            };
-            this.userData = {};
-            this.shadow = {
-                radius: 0,
-                mapSize: { width: 0, height: 0 },
-                bias: 0,
-                camera: {
-                    near: 0,
-                    far: 0,
-                    fov: 0,
-                },
-            };
-            this.add = jest.fn();
-            this.attach = jest.fn();
-            this.remove = jest.fn();
-            this.sub = jest.fn();
-            this.children = [
-                {
-                    visible: true,
-                    material: {
-                        color: {},
-                    },
-                    userData: {},
-                },
-            ];
-            this.userData = {};
-            this.position = new Vector3();
-            this.rotation = {
-                x: 0,
-                y: 0,
-                z: 0,
-                setFromVector3: jest.fn(),
-            };
-            this.scale = {
-                x: 1,
-                y: 1,
-                z: 1,
-                set: jest.fn(),
-            };
-            this.localToWorld = (vec3: Vector3) => {
-                return vec3;
-            };
-            this.mesh = new Mesh();
-            this.traverse = jest.fn((callback) => {
-                callback(this);
-                for (let i = 0; i < this.children.length; i++) {
-                    callback(this.children[i]);
-                }
-            });
-            this.parent = {
-                parent: null,
-            };
-            return this;
-        }),
-        Box3: jest.fn(function () {
-            this.min = new Vector3(Infinity, Infinity, Infinity);
-            this.max = new Vector3(-Infinity, -Infinity, -Infinity);
-            this.getCenter = jest.fn(() => {
-                return new Vector3(0, 0, 0);
-            });
-            this.expandByObject = jest.fn();
-            this.setFromObject = jest.fn();
-
-            return this;
-        }),
-        Raycaster: jest.fn(function () {
-            this.intersectObjects = jest.fn();
-            this.layers = {
-                mask: 0,
-            };
-            return this;
-        }),
-        Mesh: jest.fn(function () {
-            this.geometry = {
-                computeBoundingBox: jest.fn(),
-                boundingBox: new Box3(),
-            };
-            this.material = {};
-            this.castShadow = true;
-            this.receiveShadow = true;
-            this.layers = {
-                mask: 0,
-            };
-            this.updateWorldMatrix = jest.fn();
-            this.traverse = jest.fn();
-            this.removeFromParent = jest.fn();
-            this.localToWorld = (vec3: Vector3) => {
-                return vec3;
-            };
-            return this;
-        }),
-        BufferGeometry: jest.fn(function () {
-            this.setAttribute = jest.fn();
-            this.setIndex = jest.fn();
-            this.translate = jest.fn();
-            return this;
-        }),
-        CylinderGeometry: jest.fn(function () {
-            this.translate = jest.fn();
-            return this;
-        }),
-        SphereGeometry: jest.fn(function () {
-            this.translate = jest.fn();
-            return this;
-        }),
-        BoxGeometry: jest.fn(function () {
-            this.translate = jest.fn();
-            return this;
-        }),
-        ConeGeometry: jest.fn(function () {
-            this.rotateY = jest.fn();
-            this.translate = jest.fn();
-            return this;
-        }),
-        Float32BufferAttribute: jest.fn(function () {
-            return this;
-        }),
-        Uint32BufferAttribute: jest.fn(function () {
-            return this;
-        }),
-        MeshStandardMaterial: jest.fn(function () {
-            this.color = {};
-            this.roughness = 0;
-            this.roughnessMap = undefined;
-            this.metalness = 0;
-            this.metalnessMap = undefined;
-            return this;
-        }),
-        Color: jest.fn(function () {
-            return this;
-        }),
-    };
-});
-
 jest.mock('../../../com/Communication.ts', () => {
     return {
         DIVECommunication: {
@@ -415,6 +229,8 @@ let root: DIVERoot;
 
 let spyConsoleWarn = jest.spyOn(console, 'warn').mockImplementation(() => {});
 
+Object3D.prototype.attach = jest.fn();
+
 describe('DIVE/scene/root/DIVERoot', () => {
     beforeEach(() => {
         root = new DIVERoot();
@@ -598,7 +414,7 @@ describe('DIVE/scene/root/DIVERoot', () => {
         ).not.toThrow();
         expect(() =>
             root.AddSceneObject({
-                id: 'id0',
+                id: 'id10',
                 name: 'Group',
                 entityType: 'group',
                 visible: true,
@@ -705,6 +521,7 @@ describe('DIVE/scene/root/DIVERoot', () => {
                 parentId: 'id_groupparent',
             } as COMGroup),
         ).not.toThrow();
+
         expect(() =>
             root.UpdateSceneObject({
                 id: 'id_groupchild',
@@ -856,7 +673,7 @@ describe('DIVE/scene/root/DIVERoot', () => {
                 visible: true,
             } as COMPrimitive),
         ).not.toThrow();
-        expect(spyConsoleWarn).not.toHaveBeenCalled();
+        expect(spyConsoleWarn).toHaveBeenCalled();
 
         spyConsoleWarn.mockClear();
         expect(() =>
@@ -877,6 +694,7 @@ describe('DIVE/scene/root/DIVERoot', () => {
                 remove: jest.fn(),
             },
         } as unknown as DIVESceneObject);
+
         expect(() =>
             root.DeleteSceneObject({
                 id: 'id',

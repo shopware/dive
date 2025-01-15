@@ -66,6 +66,10 @@ export const Vector3 = jest.fn(function (
     return this;
 });
 
+export const Vector4 = jest.fn(function () {
+    return this;
+});
+
 export const Object3D = jest.fn(function () {
     this.clear = jest.fn();
     this.color = {};
@@ -85,20 +89,21 @@ export const Object3D = jest.fn(function () {
     };
     this.add = jest.fn((obj: THREEObject3D) => {
         this.children.push(obj);
+        return this;
     });
-    // this.attach = jest.fn((obj: THREEObject3D) => {
-    //     this.children.push(obj);
-    // });
+    // this.attach = jest.fn();
+    this.remove = jest.fn((obj: THREEObject3D) => {
+        const index = this.children.indexOf(obj);
+        if (index !== -1) {
+            this.children.splice(index, 1);
+        }
+        return this;
+    });
     this.sub = jest.fn();
     this.children = [];
     this.userData = {};
     this.position = new THREEVector3();
-    this.rotation = {
-        x: 0,
-        y: 0,
-        z: 0,
-        setFromVector3: jest.fn(),
-    };
+    this.rotation = new Euler();
     this.scale = {
         x: 1,
         y: 1,
@@ -158,6 +163,7 @@ export const Box3 = jest.fn(function () {
     this.expandByObject = jest.fn();
     this.makeEmpty = jest.fn();
     this.getSize = jest.fn(() => new Vector3());
+    this.setFromObject = jest.fn();
     return this;
 });
 
@@ -186,6 +192,8 @@ export const Color = jest.fn(function () {
     return this;
 });
 
+export const WebGLRendererRenderMock = jest.fn();
+export const WebGLRendererSetSizeMock = jest.fn();
 export const WebGLRenderer = jest.fn(function () {
     this.domElement = {
         clientWidth: 800,
@@ -198,13 +206,14 @@ export const WebGLRenderer = jest.fn(function () {
     this.debug = {
         checkShaderErrors: true,
     };
-    this.setSize = jest.fn();
+    this.setSize = WebGLRendererSetSizeMock;
     this.setPixelRatio = jest.fn();
-    this.render = jest.fn();
+    this.render = WebGLRendererRenderMock;
     this.setAnimationLoop = jest.fn();
     this.shadowMap = {
         enabled: false,
     };
+    this.dispose = jest.fn();
     return this;
 });
 

@@ -2,67 +2,6 @@ import DIVEPointLight from '../PointLight.ts';
 import { DIVECommunication } from '../../com/Communication.ts';
 import { Color, MeshBasicMaterial, Object3D, PointLight } from 'three';
 
-const mockAdd = jest.fn();
-
-jest.mock('three', () => {
-    return {
-        Color: jest.fn(function () {
-            return {};
-        }),
-        PointLight: jest.fn(function () {
-            this.visible = true;
-            this.color = {};
-            this.intensity = 0;
-            this.layers = {
-                mask: 0,
-            };
-            this.shadow = {
-                radius: 0,
-                mapSize: { width: 0, height: 0 },
-                bias: 0,
-                camera: {
-                    near: 0,
-                    far: 0,
-                    fov: 0,
-                },
-            };
-            this.add = mockAdd;
-            this.children = [
-                {
-                    material: {
-                        color: {},
-                    },
-                },
-            ];
-            return this;
-        }),
-        SphereGeometry: jest.fn(function () {
-            return this;
-        }),
-        MeshBasicMaterial: jest.fn(function () {
-            this.opacity = 1.0;
-            this.color = new Color();
-            return this;
-        }),
-        Mesh: jest.fn(function () {
-            this.layers = {
-                mask: 0,
-            };
-            this.visible = true;
-            this.material = new MeshBasicMaterial();
-            return this;
-        }),
-        Object3D: jest.fn(function () {
-            this.children = [];
-            this.add = (obj: Object3D) => {
-                this.children.push(obj);
-            };
-            this.userData = {};
-            return this;
-        }),
-    };
-});
-
 jest.mock('../../com/Communication.ts', () => {
     return {
         DIVECommunication: {

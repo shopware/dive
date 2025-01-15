@@ -1,3 +1,7 @@
+import {
+    WebGLRendererRenderMock,
+    WebGLRendererSetSizeMock,
+} from '../../../__mocks__/three';
 import type DIVEPerspectiveCamera from '../../camera/PerspectiveCamera';
 import { type DIVEScene } from '../../scene/Scene';
 import { DIVERenderer, DIVERendererDefaultSettings } from '../Renderer';
@@ -6,41 +10,7 @@ import { DIVERenderer, DIVERendererDefaultSettings } from '../Renderer';
  * @jest-environment jsdom
  */
 
-const test_uuid = 'test-uuid';
-
-const mock_render = jest.fn();
-const mock_setSize = jest.fn();
-
-jest.mock('three', () => {
-    return {
-        WebGLRenderer: jest.fn(function () {
-            this.domElement = {
-                style: {
-                    position: 'absolute',
-                },
-            };
-            this.dispose = jest.fn();
-            this.debug = {
-                checkShaderErrors: true,
-            };
-            this.setSize = mock_setSize;
-            this.setPixelRatio = jest.fn();
-            this.render = mock_render;
-            this.setAnimationLoop = jest.fn((callback: (() => void) | null) => {
-                if (callback) callback();
-            });
-            this.shadowMap = {
-                enabled: false,
-            };
-            return this;
-        }),
-        MathUtils: {
-            generateUUID: () => {
-                return test_uuid;
-            },
-        },
-    };
-});
+const test_uuid = 'test_uuid';
 
 let renderer: DIVERenderer;
 
@@ -112,11 +82,11 @@ describe('dive/renderer/DIVERenderer', () => {
         expect(() => {
             renderer.OnResize(500, 500);
         }).not.toThrow();
-        expect(mock_setSize).toHaveBeenCalledTimes(1);
+        expect(WebGLRendererSetSizeMock).toHaveBeenCalledTimes(1);
     });
 
     it('should render', () => {
-        expect(mock_render).toHaveBeenCalledTimes(0);
+        expect(WebGLRendererRenderMock).toHaveBeenCalledTimes(0);
 
         renderer.StartRenderer({} as DIVEScene, {} as DIVEPerspectiveCamera);
         expect(() => {
@@ -127,7 +97,7 @@ describe('dive/renderer/DIVERenderer', () => {
                 {} as XRFrame,
             );
         }).not.toThrow();
-        expect(mock_render).toHaveBeenCalledTimes(1);
+        expect(WebGLRendererRenderMock).toHaveBeenCalledTimes(1);
     });
 
     it('should force render', () => {
@@ -137,14 +107,14 @@ describe('dive/renderer/DIVERenderer', () => {
     });
 
     it('should not render when not started', () => {
-        expect(mock_render).toHaveBeenCalledTimes(0);
+        expect(WebGLRendererRenderMock).toHaveBeenCalledTimes(0);
         renderer['internal_render'](
             {} as DIVEScene,
             {} as DIVEPerspectiveCamera,
             0.016,
             {} as XRFrame,
         );
-        expect(mock_render).toHaveBeenCalledTimes(0);
+        expect(WebGLRendererRenderMock).toHaveBeenCalledTimes(0);
     });
 
     it('should not render when stopped', () => {
@@ -155,7 +125,7 @@ describe('dive/renderer/DIVERenderer', () => {
             0.016,
             {} as XRFrame,
         );
-        expect(mock_render).toHaveBeenCalledTimes(1);
+        expect(WebGLRendererRenderMock).toHaveBeenCalledTimes(1);
 
         renderer.StopRenderer();
         renderer['internal_render'](
@@ -164,7 +134,7 @@ describe('dive/renderer/DIVERenderer', () => {
             0.016,
             {} as XRFrame,
         );
-        expect(mock_render).toHaveBeenCalledTimes(1);
+        expect(WebGLRendererRenderMock).toHaveBeenCalledTimes(1);
     });
 
     it('should not render when paused', () => {
@@ -175,7 +145,7 @@ describe('dive/renderer/DIVERenderer', () => {
             0.016,
             {} as XRFrame,
         );
-        expect(mock_render).toHaveBeenCalledTimes(1);
+        expect(WebGLRendererRenderMock).toHaveBeenCalledTimes(1);
 
         renderer.PauseRenderer();
         renderer['internal_render'](
@@ -184,7 +154,7 @@ describe('dive/renderer/DIVERenderer', () => {
             0.016,
             {} as XRFrame,
         );
-        expect(mock_render).toHaveBeenCalledTimes(1);
+        expect(WebGLRendererRenderMock).toHaveBeenCalledTimes(1);
     });
 
     it('should resume render when running', () => {
@@ -196,7 +166,7 @@ describe('dive/renderer/DIVERenderer', () => {
             0.016,
             {} as XRFrame,
         );
-        expect(mock_render).toHaveBeenCalledTimes(0);
+        expect(WebGLRendererRenderMock).toHaveBeenCalledTimes(0);
 
         renderer.ResumeRenderer();
         renderer['internal_render'](
@@ -205,7 +175,7 @@ describe('dive/renderer/DIVERenderer', () => {
             0.016,
             {} as XRFrame,
         );
-        expect(mock_render).toHaveBeenCalledTimes(1);
+        expect(WebGLRendererRenderMock).toHaveBeenCalledTimes(1);
     });
 
     it('should add pre render callback', () => {
