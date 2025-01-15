@@ -1,3 +1,7 @@
+/**
+ * By having this file in the __mocks__ folder, Jest will use this file instead of the actual three.js library.
+ */
+
 import {
     Vector3 as THREEVector3,
     type Object3D as THREEObject3D,

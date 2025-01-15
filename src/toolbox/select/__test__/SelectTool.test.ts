@@ -76,11 +76,6 @@ jest.mock('../../../scene/Scene', () => {
     };
 });
 
-// const intersectObjectsSpy =
-
-const mock_attach = jest.fn();
-const mock_detach = jest.fn();
-
 jest.mock('three/examples/jsm/controls/TransformControls', () => {
     return {
         TransformControls: jest.fn(function () {
