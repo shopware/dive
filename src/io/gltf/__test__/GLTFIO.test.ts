@@ -25,23 +25,6 @@ jest.mock('three/examples/jsm/loaders/GLTFLoader', () => {
     };
 });
 
-jest.mock('three/examples/jsm/exporters/GLTFExporter', () => {
-    return {
-        GLTFExporter: jest.fn(function () {
-            this.parseAsync = (
-                object: Object3D,
-                options?: GLTFExporterOptions,
-            ) =>
-                new Promise<ArrayBuffer | { [key: string]: unknown }>(
-                    (resolve) => {
-                        resolve(new ArrayBuffer(0));
-                    },
-                );
-            return this;
-        }),
-    };
-});
-
 let testGLTFIO: DIVEGLTFIO;
 
 describe('dive/io/gltf/DIVEGLTFIO', () => {
