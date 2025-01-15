@@ -7,13 +7,6 @@ import { type DIVEBaseTool } from '../../BaseTool';
 import { Tween } from '@tweenjs/tween.js';
 import { DIVEAnimationSystem } from '../../../animation/AnimationSystem';
 
-jest.mock('@tweenjs/tween.js', () => {
-    return {
-        Tween: jest.fn(() => {}),
-        update: jest.fn(),
-    };
-});
-
 jest.mock('../../../renderer/Renderer', () => {
     return jest.fn(function () {
         return this;

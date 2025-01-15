@@ -5,13 +5,6 @@ import { Box3 } from 'three';
 import { DIVEAnimationSystem } from '../../animation/AnimationSystem';
 import { Tween } from '@tweenjs/tween.js';
 
-jest.mock('@tweenjs/tween.js', () => {
-    return {
-        Tween: jest.fn(() => {}),
-        update: jest.fn(),
-    };
-});
-
 jest.mock('../../renderer/Renderer', () => {
     return jest.fn(function () {
         this.domElement = {
@@ -36,43 +29,6 @@ jest.mock('../../animation/AnimationSystem', () => {
             };
 
             return this;
-        }),
-    };
-});
-
-jest.mock('@tweenjs/tween.js', () => {
-    return {
-        Easing: {
-            Quadratic: {
-                In: jest.fn(),
-                Out: jest.fn(),
-                InOut: jest.fn(),
-            },
-        },
-        Tween: jest.fn(() => {
-            const instance: object = {
-                easing: () => {
-                    return instance;
-                },
-                to: () => {
-                    return instance;
-                },
-                start: () => {
-                    return instance;
-                },
-                stop: () => {
-                    return instance;
-                },
-                onComplete: (callback: () => typeof instance) => {
-                    callback();
-                    return instance;
-                },
-                onUpdate: (callback: () => typeof instance) => {
-                    callback();
-                    return instance;
-                },
-            };
-            return instance;
         }),
     };
 });
