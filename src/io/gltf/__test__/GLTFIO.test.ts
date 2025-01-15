@@ -2,28 +2,6 @@ import { Object3D } from 'three';
 import { DIVEGLTFIO } from '../GLTFIO';
 
 import { type GLTF } from 'three/examples/jsm/loaders/GLTFLoader';
-import { GLTFExporterOptions } from 'three/examples/jsm/exporters/GLTFExporter';
-
-jest.mock('three/examples/jsm/loaders/GLTFLoader', () => {
-    return {
-        GLTFLoader: jest.fn(function () {
-            this.loadAsync = (
-                uri: string,
-                progEvent: (p: ProgressEvent<EventTarget>) => void,
-            ) =>
-                new Promise<void>((resolve) => {
-                    progEvent({
-                        loaded: 0,
-                        total: 1,
-                    } as ProgressEvent<EventTarget>);
-
-                    resolve();
-                });
-
-            return this;
-        }),
-    };
-});
 
 let testGLTFIO: DIVEGLTFIO;
 
