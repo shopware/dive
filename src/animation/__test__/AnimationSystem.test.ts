@@ -1,13 +1,6 @@
 import { DIVERenderer } from '../../renderer/Renderer';
 import { DIVEAnimationSystem } from '../AnimationSystem';
 
-jest.mock('@tweenjs/tween.js', () => {
-    return {
-        Tween: jest.fn(() => {}),
-        update: jest.fn(),
-    };
-});
-
 const mockRenderer = {
     render: jest.fn(),
     OnResize: jest.fn(),

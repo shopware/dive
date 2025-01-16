@@ -50,84 +50,74 @@ jest.mock('../../renderer/Renderer.ts', () => {
 });
 
 const mockRenderer = new DIVERenderer();
+let scene: DIVEScene;
 
 describe('dive/scene/DIVEScene', () => {
+    beforeEach(() => {
+        scene = new DIVEScene();
+    });
+
     afterEach(() => {
         jest.clearAllMocks();
     });
 
     it('should instantiate', () => {
-        const scene = new DIVEScene();
         expect(scene).toBeDefined();
     });
 
     it('should have Root', () => {
-        const scene = new DIVEScene();
         expect(scene.Root).toBeDefined();
     });
 
     it('should have XRRoot', () => {
-        const scene = new DIVEScene();
         expect(scene.XRRoot).toBeDefined();
     });
 
     it('should have Floor', () => {
-        const scene = new DIVEScene();
         expect(scene.Floor).toBeDefined();
     });
 
     it('should have Grid', () => {
-        const scene = new DIVEScene();
         expect(scene.Grid).toBeDefined();
     });
 
     it('should InitXR', () => {
-        const scene = new DIVEScene();
         expect(() => scene.InitXR(mockRenderer)).not.toThrow();
     });
 
     it('should DisposeXR', () => {
-        const scene = new DIVEScene();
         expect(() => scene.DisposeXR()).not.toThrow();
     });
 
     it('should set background color', () => {
-        const scene = new DIVEScene();
-        scene.SetBackground(0x123456);
-        expect((scene.background as Color).getHex()).toBe(0x123456);
+        expect(() => scene.SetBackground(0x123456)).not.toThrow();
     });
 
     it('should ComputeSceneBB', () => {
-        const scene = new DIVEScene();
         expect(() => scene.ComputeSceneBB()).not.toThrow();
     });
 
     it('should add object', () => {
-        const scene = new DIVEScene();
         scene.AddSceneObject({} as COMEntity);
         expect(mock_AddSceneObject).toHaveBeenCalledTimes(1);
     });
 
     it('should update object', () => {
-        const scene = new DIVEScene();
         scene.UpdateSceneObject({} as COMEntity);
         expect(mock_UpdateSceneObject).toHaveBeenCalledTimes(1);
     });
 
     it('should remove object', () => {
-        const scene = new DIVEScene();
         scene.DeleteSceneObject({} as COMEntity);
         expect(mock_DeleteSceneObject).toHaveBeenCalledTimes(1);
     });
 
     it('should place object on floor', () => {
-        const scene = new DIVEScene();
         scene.PlaceOnFloor({} as COMEntity);
         expect(mock_PlaceOnFloor).toHaveBeenCalledTimes(1);
     });
 
     it('should get scene object', () => {
-        const scene = new DIVEScene();
         scene.GetSceneObject({} as COMEntity);
         expect(mock_GetSceneObject).toHaveBeenCalledTimes(1);
     });

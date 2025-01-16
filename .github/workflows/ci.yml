@@ -17,8 +17,7 @@ jobs:
               id: yarn-cache
               with:
                   path: node_modules
-                  key:
-                      node-modules-${{ runner.os }}-${{ hashFiles('yarn.lock') }}
+                  key: node-modules-${{ runner.os }}-${{ hashFiles('yarn.lock') }}
             - name: Install DIVE dependencies (if cache not found)
               if: steps.yarn-cache.outputs.cache-hit != 'true'
               run: yarn
@@ -33,8 +32,7 @@ jobs:
               id: yarn-cache
               with:
                   path: node_modules
-                  key:
-                      node-modules-${{ runner.os }}-${{ hashFiles('yarn.lock') }}
+                  key: node-modules-${{ runner.os }}-${{ hashFiles('yarn.lock') }}
             - name: Install DIVE dependencies (if cache not found)
               if: steps.yarn-cache.outputs.cache-hit != 'true'
               run: yarn
@@ -51,40 +49,33 @@ jobs:
               id: yarn-cache
               with:
                   path: node_modules
-                  key:
-                      node-modules-${{ runner.os }}-${{ hashFiles('yarn.lock') }}
+                  key: node-modules-${{ runner.os }}-${{ hashFiles('yarn.lock') }}
             - name: Install DIVE dependencies (if cache not found)
               if: steps.yarn-cache.outputs.cache-hit != 'true'
               run: yarn
             - name: Unit-Test DIVE (coverage)
               run: yarn coverage
-            - name: Upload coverage reports to Codecov
-              uses: codecov/codecov-action@v5
-              with:
-                token: ${{ secrets.CODECOV_TOKEN }}
-            - name: Upload test results to Codecov
-              if: ${{ !cancelled() }}
-              uses: codecov/test-results-action@v1
-              with:
-                token: ${{ secrets.CODECOV_TOKEN }}
+            - name: Upload coverage to Codecov (PR comparison)
+              run: npx codecov -f coverage/coverage-final.json
+              env:
+                  CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
     prettier-check:
         runs-on: ubuntu-latest
         needs: install
         steps:
-          - name: Checkout DIVE
-            uses: actions/checkout@main
-          - name: Search for cached dependencies
-            uses: actions/cache@main
-            id: yarn-cache
-            with:
-                path: node_modules
-                key:
-                    node-modules-${{ runner.os }}-${{ hashFiles('yarn.lock') }}
-          - name: Install DIVE dependencies (if cache not found)
-            if: steps.yarn-cache.outputs.cache-hit != 'true'
-            run: yarn
-          - name: Prettier check DIVE
-            run: yarn prettier:check
+            - name: Checkout DIVE
+              uses: actions/checkout@main
+            - name: Search for cached dependencies
+              uses: actions/cache@main
+              id: yarn-cache
+              with:
+                  path: node_modules
+                  key: node-modules-${{ runner.os }}-${{ hashFiles('yarn.lock') }}
+            - name: Install DIVE dependencies (if cache not found)
+              if: steps.yarn-cache.outputs.cache-hit != 'true'
+              run: yarn
+            - name: Prettier check DIVE
+              run: yarn prettier:check
     build:
         runs-on: ubuntu-latest
         needs: install
@@ -96,8 +87,7 @@ jobs:
               id: yarn-cache
               with:
                   path: node_modules
-                  key:
-                      node-modules-${{ runner.os }}-${{ hashFiles('yarn.lock') }}
+                  key: node-modules-${{ runner.os }}-${{ hashFiles('yarn.lock') }}
             - name: Install dependencies (if cache not found)
               if: steps.yarn-cache.outputs.cache-hit != 'true'
               run: yarn
@@ -114,8 +104,7 @@ jobs:
               id: yarn-cache
               with:
                   path: node_modules
-                  key:
-                      node-modules-${{ runner.os }}-${{ hashFiles('yarn.lock') }}
+                  key: node-modules-${{ runner.os }}-${{ hashFiles('yarn.lock') }}
             - name: Install dependencies (if cache not found)
               if: steps.yarn-cache.outputs.cache-hit != 'true'
               run: yarn
@@ -132,8 +121,7 @@ jobs:
               id: yarn-cache
               with:
                   path: node_modules
-                  key:
-                      node-modules-${{ runner.os }}-${{ hashFiles('yarn.lock') }}
+                  key: node-modules-${{ runner.os }}-${{ hashFiles('yarn.lock') }}
             - name: Install dependencies (if cache not found)
               if: steps.yarn-cache.outputs.cache-hit != 'true'
               run: yarn

@@ -54,12 +54,17 @@ export class DIVEGroup extends DIVENode {
     }
 
     public attach(object: DIVESceneObject): this {
+        // Check if the object is already a member
+        if (this._members.includes(object)) {
+            return this;
+        }
+
         // create a line to the new object
         const line = this.createLine();
         this.add(line);
         this._lines.push(line);
 
-        // attach (insted of add) object to keep it's world position
+        // attach (instead of add) object to keep its world position
         super.attach(object);
         this._members.push(object);
 

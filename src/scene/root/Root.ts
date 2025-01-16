@@ -306,13 +306,13 @@ export class DIVERoot extends Object3D {
 
         if (group.name !== undefined) sceneObject.name = group.name;
         if (group.position !== undefined)
-            (sceneObject as DIVEPrimitive).SetPosition(group.position);
+            (sceneObject as DIVEGroup).SetPosition(group.position);
         if (group.rotation !== undefined)
-            (sceneObject as DIVEPrimitive).SetRotation(group.rotation);
+            (sceneObject as DIVEGroup).SetRotation(group.rotation);
         if (group.scale !== undefined)
-            (sceneObject as DIVEPrimitive).SetScale(group.scale);
+            (sceneObject as DIVEGroup).SetScale(group.scale);
         if (group.visible !== undefined)
-            (sceneObject as DIVEPrimitive).SetVisibility(group.visible);
+            (sceneObject as DIVEGroup).SetVisibility(group.visible);
         if (group.bbVisible !== undefined)
             (sceneObject as DIVEGroup).SetLinesVisibility(group.bbVisible);
         if (group.parentId !== undefined)

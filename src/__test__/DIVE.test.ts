@@ -1,45 +1,5 @@
 import DIVE, { DIVESettings } from '../dive.ts';
 
-jest.mock('three', () => {
-    return {
-        Vector4: jest.fn(),
-        WebGLRenderer: jest.fn(function () {
-            this.domElement = {
-                clientWidth: 800,
-                clientHeight: 600,
-                style: {
-                    position: 'absolute',
-                },
-            };
-            this.domElement.parentElement = this.domElement;
-            this.debug = {
-                checkShaderErrors: true,
-            };
-            this.setSize = jest.fn();
-            this.setPixelRatio = jest.fn();
-            this.render = jest.fn();
-            this.setAnimationLoop = jest.fn();
-            this.shadowMap = {
-                enabled: false,
-            };
-            return this;
-        }),
-        MathUtils: {
-            generateUUID: () => {
-                return 'test_uuid';
-            },
-        },
-    };
-});
-
-jest.mock('three/src/math/MathUtils', () => {
-    return {
-        generateUUID: () => {
-            return 'test_uuid';
-        },
-    };
-});
-
 jest.mock('../com/Communication.ts', () => {
     return {
         DIVECommunication: jest.fn(function () {

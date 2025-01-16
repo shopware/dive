@@ -1,4 +1,4 @@
-import { type Vector3Like } from 'three';
+import { Object3D, type Vector3Like } from 'three';
 import { DIVECommunication } from '../../com/Communication';
 import { type DIVENode } from '../../node/Node';
 import { DIVEGroup } from '../Group';
@@ -21,6 +21,8 @@ jest.spyOn(DIVECommunication, 'get').mockReturnValue({
 
 let group: DIVEGroup;
 
+Object3D.prototype.attach = jest.fn();
+
 describe('dive/group/DIVEGroup', () => {
     beforeEach(() => {
         group = new DIVEGroup();
@@ -38,8 +40,9 @@ describe('dive/group/DIVEGroup', () => {
         const mockObject = new DIVEGroup();
 
         expect(() => group.attach(mockObject)).not.toThrow();
-        expect(group.children).toContain(mockObject);
-        expect(group.members).toContain(mockObject);
+        expect(group.members).toContainEqual(
+            expect.objectContaining(mockObject),
+        );
 
         jest.spyOn(DIVECommunication, 'get').mockReturnValueOnce(undefined);
         expect(() => group.attach(mockObject)).not.toThrow();

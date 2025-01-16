@@ -1,4 +1,5 @@
-import { DRACOLoader, GLTF, GLTFLoader } from 'three/examples/jsm/Addons.js';
+import { DRACOLoader } from 'three/examples/jsm/loaders/DRACOLoader';
+import { GLTF, GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader';
 
 /**
  * A basic loading manager.

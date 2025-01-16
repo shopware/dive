@@ -9,13 +9,6 @@ import { type DIVEBaseTool } from '../../BaseTool';
 import { DIVEAnimationSystem } from '../../../animation/AnimationSystem';
 import { Tween } from '@tweenjs/tween.js';
 
-jest.mock('@tweenjs/tween.js', () => {
-    return {
-        Tween: jest.fn(() => {}),
-        update: jest.fn(),
-    };
-});
-
 jest.mock('../../../renderer/Renderer', () => {
     return jest.fn(function () {
         return this;
@@ -76,74 +69,6 @@ jest.mock('../../../scene/Scene', () => {
     };
 });
 
-const mock_intersectObjects = jest.fn().mockReturnValue([]);
-
-jest.mock('three', () => {
-    return {
-        Vector2: jest.fn(function () {
-            return this;
-        }),
-        Vector3: jest.fn(function () {
-            return this;
-        }),
-        Raycaster: jest.fn(function () {
-            this.setFromCamera = jest.fn();
-            this.intersectObjects = mock_intersectObjects;
-            this.layers = {
-                mask: 0,
-            };
-            return this;
-        }),
-    };
-});
-
-const mock_attach = jest.fn();
-const mock_detach = jest.fn();
-
-jest.mock('three/examples/jsm/controls/TransformControls', () => {
-    return {
-        TransformControls: jest.fn(function () {
-            this.isTransformControls = true;
-            this.addEventListener = jest.fn(
-                (type: string, callback: (e: object) => void) => {
-                    callback({ value: false });
-                    this.object = {};
-                    callback({ value: false });
-                    this.object = {
-                        onMove: 'hello',
-                    };
-                    callback({ value: false });
-                    this.object = {
-                        onMove: jest.fn(),
-                    };
-                    callback({ value: false });
-                },
-            );
-            this.attach = jest.fn((object) => {
-                this.object = object;
-            });
-            this.detach = jest.fn(() => {
-                this.object = null;
-            });
-            this.traverse = function (callback: (obj: object) => void) {
-                callback(this);
-            };
-            this.setMode = jest.fn();
-            this.getRaycaster = jest.fn().mockReturnValue({
-                layers: {
-                    mask: 0,
-                    disableAll: jest.fn(),
-                    enableAll: jest.fn(),
-                },
-            });
-            this.layers = {
-                mask: 0,
-            };
-            return this;
-        }),
-    };
-});
-
 const mockCamera: DIVEPerspectiveCamera = {} as DIVEPerspectiveCamera;
 const mockRenderer = {
     render: jest.fn(),
@@ -157,24 +82,31 @@ const mockController: DIVEOrbitControls = new DIVEOrbitControls(
     mockAnimSystem,
 );
 
+let selectTool: DIVESelectTool;
+let intersectObjectsSpy: jest.SpyInstance;
+
 describe('dive/toolbox/select/DIVESelectTool', () => {
+    beforeEach(() => {
+        selectTool = new DIVESelectTool(mockScene, mockController);
+        intersectObjectsSpy = jest
+            .spyOn(selectTool['_raycaster'], 'intersectObjects')
+            .mockReturnValue([]);
+    });
+
     it('should test if it is SelectTool', () => {
         const selectTool = { isSelectTool: true } as unknown as DIVEBaseTool;
         expect(isSelectTool(selectTool)).toBeDefined();
     });
 
     it('should instantiate', () => {
-        const selectTool = new DIVESelectTool(mockScene, mockController);
         expect(selectTool).toBeDefined();
     });
 
     it('should activate', () => {
-        const selectTool = new DIVESelectTool(mockScene, mockController);
         expect(() => selectTool.Activate()).not.toThrow();
     });
 
     it('should execute onClick without hit', () => {
-        const selectTool = new DIVESelectTool(mockScene, mockController);
         selectTool.AttachGizmo({} as unknown as DIVESelectable);
         expect(() =>
             selectTool.onClick({ offsetX: 0, offsetY: 0 } as PointerEvent),
@@ -182,7 +114,7 @@ describe('dive/toolbox/select/DIVESelectTool', () => {
     });
 
     it('should execute onClick with hit', () => {
-        mock_intersectObjects.mockReturnValueOnce([
+        intersectObjectsSpy.mockReturnValueOnce([
             {
                 object: {
                     uuid: 'test',
@@ -194,7 +126,7 @@ describe('dive/toolbox/select/DIVESelectTool', () => {
                 },
             },
         ]);
-        const selectTool = new DIVESelectTool(mockScene, mockController);
+
         expect(() =>
             selectTool.onClick({ offsetX: 0, offsetY: 0 } as PointerEvent),
         ).not.toThrow();
@@ -203,7 +135,7 @@ describe('dive/toolbox/select/DIVESelectTool', () => {
     it('should execute onClick with same ISelectable hit', () => {
         const mock_onSelect = jest.fn();
 
-        mock_intersectObjects.mockReturnValueOnce([
+        intersectObjectsSpy.mockReturnValueOnce([
             {
                 object: {
                     isSelectable: true,
@@ -217,7 +149,6 @@ describe('dive/toolbox/select/DIVESelectTool', () => {
                 },
             },
         ]);
-        const selectTool = new DIVESelectTool(mockScene, mockController);
         selectTool.AttachGizmo({
             visible: true,
             isSelectable: true,
@@ -231,7 +162,7 @@ describe('dive/toolbox/select/DIVESelectTool', () => {
     it('should execute onClick with ISelectable hit', () => {
         const mock_onSelect = jest.fn();
 
-        mock_intersectObjects.mockReturnValueOnce([
+        intersectObjectsSpy.mockReturnValueOnce([
             {
                 object: {
                     isSelectable: true,
@@ -245,7 +176,6 @@ describe('dive/toolbox/select/DIVESelectTool', () => {
                 },
             },
         ]);
-        const selectTool = new DIVESelectTool(mockScene, mockController);
         selectTool.AttachGizmo({
             isSelectable: true,
             uuid: 'test1',
@@ -258,7 +188,7 @@ describe('dive/toolbox/select/DIVESelectTool', () => {
     it('should execute onClick with IMovable hit', () => {
         const mock_onSelect = jest.fn();
 
-        mock_intersectObjects.mockReturnValueOnce([
+        intersectObjectsSpy.mockReturnValueOnce([
             {
                 object: {
                     isSelectable: true,
@@ -271,14 +201,13 @@ describe('dive/toolbox/select/DIVESelectTool', () => {
                 },
             },
         ]);
-        const selectTool = new DIVESelectTool(mockScene, mockController);
+
         expect(() =>
             selectTool.onClick({ offsetX: 0, offsetY: 0 } as PointerEvent),
         ).not.toThrow();
     });
 
     it('should Select', () => {
-        const selectTool = new DIVESelectTool(mockScene, mockController);
         const mock_onSelect = jest.fn();
         expect(() => selectTool.Select({ isSelectable: true })).not.toThrow();
         expect(() =>
@@ -291,7 +220,6 @@ describe('dive/toolbox/select/DIVESelectTool', () => {
     });
 
     it('should Deselect', () => {
-        const selectTool = new DIVESelectTool(mockScene, mockController);
         const mock_onDeselect = jest.fn();
         expect(() => selectTool.Deselect({ isSelectable: true })).not.toThrow();
         expect(() =>
@@ -304,7 +232,6 @@ describe('dive/toolbox/select/DIVESelectTool', () => {
     });
 
     it('should set gizmo mode', () => {
-        const selectTool = new DIVESelectTool(mockScene, mockController);
         expect(() => selectTool.SetGizmoMode('translate')).not.toThrow();
     });
 });

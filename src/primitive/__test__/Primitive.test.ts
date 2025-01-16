@@ -13,204 +13,7 @@ import {
     type COMGeometry,
     type COMGeometryType,
 } from '../../com/types';
-
-const intersectObjectsMock = jest.fn();
-
-jest.mock('three', () => {
-    return {
-        Vector3: jest.fn(function (
-            x: number = 0,
-            y: number = 0,
-            z: number = 0,
-        ) {
-            this.x = x;
-            this.y = y;
-            this.z = z;
-            this.copy = (vec3: Vector3) => {
-                this.x = vec3.x;
-                this.y = vec3.y;
-                this.z = vec3.z;
-                return this;
-            };
-            this.set = (x: number, y: number, z: number) => {
-                this.x = x;
-                this.y = y;
-                this.z = z;
-                return this;
-            };
-            this.multiply = (vec3: Vector3) => {
-                this.x *= vec3.x;
-                this.y *= vec3.y;
-                this.z *= vec3.z;
-                return this;
-            };
-            this.clone = () => {
-                return new Vector3(this.x, this.y, this.z);
-            };
-            this.setY = (y: number) => {
-                this.y = y;
-                return this;
-            };
-            this.add = (vec3: Vector3) => {
-                this.x += vec3.x;
-                this.y += vec3.y;
-                this.z += vec3.z;
-                return this;
-            };
-            this.sub = (vec3: Vector3) => {
-                this.x -= vec3.x;
-                this.y -= vec3.y;
-                this.z -= vec3.z;
-                return this;
-            };
-            return this;
-        }),
-        Object3D: jest.fn(function () {
-            this.clear = jest.fn();
-            this.color = {};
-            this.intensity = 0;
-            this.layers = {
-                mask: 0,
-            };
-            this.shadow = {
-                radius: 0,
-                mapSize: { width: 0, height: 0 },
-                bias: 0,
-                camera: {
-                    near: 0,
-                    far: 0,
-                    fov: 0,
-                },
-            };
-            this.add = jest.fn();
-            this.sub = jest.fn();
-            this.children = [
-                {
-                    visible: true,
-                    material: {
-                        color: {},
-                    },
-                },
-            ];
-            this.userData = {};
-            this.position = new Vector3();
-            this.rotation = {
-                x: 0,
-                y: 0,
-                z: 0,
-                setFromVector3: jest.fn(),
-            };
-            this.scale = {
-                x: 1,
-                y: 1,
-                z: 1,
-                set: jest.fn(),
-            };
-            this.localToWorld = (vec3: Vector3) => {
-                return vec3;
-            };
-            this.mesh = new Mesh();
-            this.traverse = jest.fn((callback) => {
-                callback(this.children[0]);
-            });
-            this.getWorldPosition = jest.fn(() => {
-                return this.position.clone();
-            });
-            return this;
-        }),
-        Box3: jest.fn(function () {
-            this.min = new Vector3(Infinity, Infinity, Infinity);
-            this.max = new Vector3(-Infinity, -Infinity, -Infinity);
-            this.getCenter = jest.fn(() => {
-                return new Vector3(0, 0, 0);
-            });
-            this.expandByObject = jest.fn();
-            this.setFromObject = jest.fn();
-
-            return this;
-        }),
-        Raycaster: jest.fn(function () {
-            this.intersectObjects = intersectObjectsMock;
-            this.layers = {
-                mask: 0,
-            };
-            return this;
-        }),
-        Mesh: jest.fn(function () {
-            this.geometry = {
-                computeBoundingBox: jest.fn(),
-                boundingBox: {
-                    min: new Vector3(0, 2, 0),
-                    max: new Vector3(2, 4, 2),
-                    getCenter: jest.fn(() => {
-                        return new Vector3(0, 0, 0);
-                    }),
-                    expandByObject: jest.fn(),
-                    setFromObject: jest.fn(),
-                },
-            };
-            this.material = {};
-            this.castShadow = true;
-            this.receiveShadow = true;
-            this.layers = {
-                mask: 0,
-            };
-            this.updateWorldMatrix = jest.fn();
-            this.traverse = jest.fn();
-            this.removeFromParent = jest.fn();
-            this.localToWorld = (vec3: Vector3) => {
-                return vec3;
-            };
-            return this;
-        }),
-        BufferGeometry: jest.fn(function () {
-            this.setAttribute = jest.fn();
-            this.setIndex = jest.fn();
-            this.translate = jest.fn();
-            this.computeVertexNormals = jest.fn();
-            this.computeBoundingBox = jest.fn();
-            this.computeBoundingSphere = jest.fn();
-            return this;
-        }),
-        BufferAttribute: jest.fn(function () {
-            return this;
-        }),
-        CylinderGeometry: jest.fn(function () {
-            this.translate = jest.fn();
-            return this;
-        }),
-        SphereGeometry: jest.fn(function () {
-            this.translate = jest.fn();
-            return this;
-        }),
-        BoxGeometry: jest.fn(function () {
-            this.translate = jest.fn();
-            return this;
-        }),
-        ConeGeometry: jest.fn(function () {
-            this.rotateY = jest.fn();
-            this.translate = jest.fn();
-            return this;
-        }),
-        Float32BufferAttribute: jest.fn(function () {
-            return this;
-        }),
-        Uint32BufferAttribute: jest.fn(function () {
-            return this;
-        }),
-        MeshStandardMaterial: jest.fn(function () {
-            this.color = {};
-            this.roughness = 0;
-            this.roughnessMap = undefined;
-            this.metalness = 0;
-            this.metalnessMap = undefined;
-            return this;
-        }),
-        Color: jest.fn(function () {
-            return this;
-        }),
-    };
-});
+import { RaycasterIntersectObjectMock } from '../../../__mocks__/three';
 
 jest.mock('../../com/Communication.ts', () => {
     return {
@@ -264,6 +67,10 @@ describe('dive/primitive/DIVEPrimitive', () => {
     it('should place on floor', () => {
         const com = DIVECommunication.get('id')!;
         const spyPerformAction = jest.spyOn(com, 'PerformAction');
+
+        jest.spyOn(primitive['_mesh']!, 'localToWorld').mockReturnValueOnce(
+            new Vector3(0, 2, 0),
+        );
 
         primitive.userData.id = 'something';
         primitive.position.set(0, 2, 0);
@@ -324,7 +131,7 @@ describe('dive/primitive/DIVEPrimitive', () => {
         const hitObject = new Mesh();
         hitObject.geometry.boundingBox = new Box3();
         hitObject.geometry.boundingBox.max = new Vector3(0, 2, 0);
-        intersectObjectsMock.mockReturnValue([
+        RaycasterIntersectObjectMock.mockReturnValue([
             {
                 object: hitObject,
             },

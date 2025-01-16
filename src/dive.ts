@@ -17,7 +17,7 @@ import { DIVECommunication } from './com/Communication.ts';
 import { DIVEAnimationSystem } from './animation/AnimationSystem.ts';
 import DIVEAxisCamera from './axiscamera/AxisCamera.ts';
 import { getObjectDelta } from './helper/getObjectDelta/getObjectDelta.ts';
-import { generateUUID } from 'three/src/math/MathUtils';
+import { MathUtils } from 'three';
 import { DIVEInfo } from './info/Info.ts';
 import pkgjson from '../package.json';
 
@@ -74,7 +74,7 @@ export default class DIVE {
         });
 
         // generate scene light id
-        const lightid = generateUUID();
+        const lightid = MathUtils.generateUUID();
 
         // add scene light
         dive.Communication.PerformAction('ADD_OBJECT', {
@@ -89,7 +89,7 @@ export default class DIVE {
         });
 
         // generate model id
-        const modelid = generateUUID();
+        const modelid = MathUtils.generateUUID();
 
         // add loaded listener
         dive.Communication.Subscribe('MODEL_LOADED', (data) => {

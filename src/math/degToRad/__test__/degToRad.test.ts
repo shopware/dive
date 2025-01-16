@@ -1,13 +1,6 @@
 import degToRad from '../degToRad';
 import { MathUtils } from 'three';
 
-// Mock the 'three' module, specifically MathUtils.degToRad
-jest.mock('three', () => ({
-    MathUtils: {
-        degToRad: jest.fn(),
-    },
-}));
-
 // Type assertion for the mocked MathUtils.degToRad
 const mockedDegToRad = MathUtils.degToRad as jest.Mock;
 

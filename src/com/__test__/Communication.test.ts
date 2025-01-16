@@ -36,12 +36,6 @@ import {
 } from '../types';
 import { type DIVESceneObject } from '../../types';
 
-jest.mock('three/src/math/MathUtils', () => {
-    return {
-        generateUUID: jest.fn().mockReturnValue('uuid'),
-    };
-});
-
 jest.mock('../../mediacreator/MediaCreator', () => {
     return {
         DIVEMediaCreator: jest.fn(function () {
