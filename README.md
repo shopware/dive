@@ -47,10 +47,6 @@ npm install @shopware-ag/dive
 yarn add @shopware-ag/dive
 ```
 
-# Formatter
-
-DIVE uses Prettier as a preconfigured formatter.
-
 #### Setup in Shopware
 
 Don't forget to include DIVE in your webpack.config.js:
@@ -60,24 +56,33 @@ const path = require('path');
 
 module.exports = () => {
     return {
-        ...
+        // Other configurations...
         resolve: {
-            extensions: ['.ts', '.cjs', '.js'],
+            extensions: [
+                '.ts',
+                '.cjs',
+                '.js',
+            ],
             alias: {
                 three: path.resolve(__dirname, 'path/to/node_modules/three'),
-                "@shopware-ag/dive": path.resolve(__dirname, 'path/to/node_modules/@shopware-ag/dive'),
-            }
+                '@shopware-ag/dive': path.resolve(
+                    __dirname,
+                    'path/to/node_modules/@shopware-ag/dive',
+                ),
+            },
         },
-        ...
         module: {
             rules: [
-                ...
+                // Other rules...
                 {
                     test: /\.(js|ts)$/,
                     loader: 'swc-loader',
                     include: [
                         path.resolve(__dirname, 'path/to/node_modules/three'),
-                        path.resolve(__dirname, 'path/to/node_modules/@shopware-ag/dive')
+                        path.resolve(
+                            __dirname,
+                            'path/to/node_modules/@shopware-ag/dive',
+                        ),
                     ],
                     options: {
                         jsc: {
@@ -88,18 +93,20 @@ module.exports = () => {
                         },
                     },
                 },
-                ...
+                // Other rules...
             ],
-        }
+        },
     };
 };
 ```
 
-# Quick View
+# Usage
+
+## Quick View
 
 QuickView is used to quickly display your assets with as few lines of code as
-possible. Simply call the static `QuickView()` method (with your data-uri as a
-parameter) to create an instance of DIVE with your asset to use in further code.
+possible. Simply call the static `QuickView()` method, with your data URI as a
+parameter, to create an instance of DIVE with your asset to use in further code.
 
 ```ts
 import { DIVE } from '@shopware-ag/dive';
@@ -110,15 +117,30 @@ const myCanvasWrapper = document.createElement('div');
 myCanvasWrapper.appendChild(dive.Canvas);
 ```
 
-# Getting started
+### Example with Error Handling:
 
-Import:
+```ts
+import { DIVE } from '@shopware-ag/dive';
+
+try {
+    const dive = DIVE.QuickView('your/asset/uri.glb'); // <-- call QuickView()
+
+    const myCanvasWrapper = document.createElement('div');
+    myCanvasWrapper.appendChild(dive.Canvas);
+} catch (error) {
+    console.error('Failed to load asset:', error);
+}
+```
+
+## Getting started
+
+### Import:
 
 ```ts
 import { DIVE } from '@shopware-ag/dive'; // <-- import DIVE
 ```
 
-Instantiate:
+### Instantiate:
 
 ```ts
 import { DIVE } from '@shopware-ag/dive';
@@ -127,7 +149,7 @@ const dive = new DIVE(); // <-- instantiate DIVE
 ```
 
 DIVE supplies your application with a HTMLCanvasElement that it uses as a render
-target. After instantiating, you can use the supplied canvas within you frontend
+target. After instantiating, you can use the supplied canvas within your frontend
 code to attach it to your DOM.
 
 ```ts
@@ -155,7 +177,7 @@ com.PerformAction('SET_CAMERA_TRANSFORM', {
 });
 ```
 
-# Actions
+## Actions
 
 Actions symbolize the communication between frontend and 3D space. All actions
 can be performed anywhere, no matter if you are in frontend or 3D.
@@ -206,7 +228,7 @@ com.PerformAction('SET_CAMERA_TRANSFORM', {
 unsubscribe(); // <-- execute unsubscribe callback when done
 ```
 
-# Actions (List)
+### Actions List
 
 In the following you find a list of all available actions to perform on
 DIVECommunication class via
@@ -434,3 +456,15 @@ DIVECommunication class via
         </td>
     </tr>
 </table>
+
+# Unit Tests
+
+All relevant files are covered by Jest tests. If you find any file that has not been covered yet, feel free to add unit tests accordingly.
+
+If there are any modules that have to be mocked (like `three`) you can create a given file in the `__mocks__` folder in project root. Jest manages to mock modules with a given file with the modules name as a file name (for example `three.ts`). Every export will be part of the modules mock. You don't need to mock the module in your test anymore, you only extend the module mock.
+
+If you have any other things from a module to import, you can simply create a folder structure and place the mock file at the end of your structure. To understand better please take a look at the `__mocks__` folder for yourself.
+
+# Formatting
+
+DIVE uses Prettier as a preconfigured formatter.
