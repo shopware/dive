@@ -17,7 +17,6 @@ import {
     WebGLRenderTarget,
     WebGLRenderer,
 } from 'three';
-import DIVEPerspectiveCamera from '../camera/PerspectiveCamera';
 import {
     BokehShader,
     BokehDepthShader,
@@ -26,6 +25,7 @@ import {
     PRODUCT_LAYER_MASK,
     HELPER_LAYER_MASK,
 } from '../constant/VisibilityLayerMask';
+import DIVEPerspectiveCamera from '../camera/PerspectiveCamera';
 import { DIVEScene } from '../scene/Scene';
 
 type DIVEDOFSettings = {
@@ -395,6 +395,15 @@ export class DIVERenderer extends WebGLRenderer {
         return (-zfar * znear) / (depth * (zfar - znear) - zfar);
     }
 
+    private smoothstep(near: number, far: number, depth: number): number {
+        const x = this.saturate((depth - near) / (far - near));
+        return x * x * (3 - 2 * x);
+    }
+
+    private saturate(x: number): number {
+        return Math.max(0, Math.min(1, x));
+    }
+
     private internal_dof_render(
         scene: DIVEScene,
         cam: DIVEPerspectiveCamera,
@@ -413,15 +422,9 @@ export class DIVERenderer extends WebGLRenderer {
         const targetDistance =
             intersects.length > 0 ? intersects[0].distance : 1000;
 
-        const sdistance = MathUtils.smoothstep(
-            cam.near,
-            cam.far,
-            targetDistance,
-        );
+        const sdistance = this.smoothstep(cam.near, cam.far, targetDistance);
 
         const ldistance = this.linearize(cam, 1 - sdistance);
-
-        console.log(sdistance, ldistance);
 
         dof.bokeh_uniforms['focalDepth'].value = ldistance;
 
