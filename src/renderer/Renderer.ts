@@ -132,6 +132,13 @@ export class DIVERenderer extends WebGLRenderer {
             rendererSettings.toneMapping ||
             DIVERendererDefaultSettings.toneMapping;
 
+        this.domElement.addEventListener('mousemove', (event) => {
+            this.mouse.x =
+                (event.offsetX / this.domElement.clientWidth) * 2 - 1;
+            this.mouse.y =
+                -(event.offsetY / this.domElement.clientHeight) * 2 + 1;
+        });
+
         this.debug.checkShaderErrors = false;
     }
 
@@ -144,16 +151,11 @@ export class DIVERenderer extends WebGLRenderer {
     // Starts the renderer with the given scene and camera.
     public StartRenderer(scene: DIVEScene, cam: DIVEPerspectiveCamera): void {
         // init dof
-        this.postprocessing = {
-            dof: this.initDOF(),
-        };
+        this.postprocessing.dof = this.initDOF();
 
-        (this.postprocessing.dof as DIVEDOFSettings).materialDepth.uniforms[
-            'mNear'
-        ].value = cam.near;
-        (this.postprocessing.dof as DIVEDOFSettings).materialDepth.uniforms[
-            'mFar'
-        ].value = cam.far;
+        this.postprocessing.dof.materialDepth.uniforms['mNear'].value =
+            cam.near;
+        this.postprocessing.dof.materialDepth.uniforms['mFar'].value = cam.far;
 
         // normal render loop
         this.setAnimationLoop((time: DOMHighResTimeStamp, frame: XRFrame) => {
