@@ -21,9 +21,21 @@ You can find the template in ci/readme/template/TEMPLATE_README.md
     <a href="#badge">
         <img alt="dive: types" src="https://img.shields.io/npm/types/%40shopware-ag%2Fdive">
     </a>
+    <a href="#badge">
+        <img alt="dive: types" src="https://img.shields.io/codecov/c/github/shopware/dive">
+    </a>
 </p>
 
-# About
+## Table of Contents
+
+1. [About](#about)
+2. [Installation](#installation)
+3. [Local development](#local-development)
+4. [Usage](#usage)
+5. [Unit Tests](#unit-tests)
+6. [Formatting](#formatting)
+
+## About
 
 DIVE is a spatial framework made by and optimized for Shopware. It can be used
 directly integrated in a Shopware frontend such as Storefront or in any other
@@ -33,23 +45,73 @@ DIVE supplies your frontend application with all needed tooling to set up a
 basic 3D application with event-based controls called "Actions". For further
 information, see [Getting started](#getting-started).
 
-# Installation
+## Installation
 
-#### npm:
+The `@shopware-ag/dive` package can be installed via
 
-```
+```bash
 npm install @shopware-ag/dive
-```
 
-#### yarn:
+or
 
-```
 yarn add @shopware-ag/dive
 ```
 
-#### Setup in Shopware
+## Local development
 
-Don't forget to include DIVE in your webpack.config.js:
+### with devenv
+
+If you are using `devenv`, you have to make sure that you are in the correct shell while linking. `nix` (what `devenv` is
+based on) uses it's own instances of `npm` so we need to make sure that the `npm link` get's executed within the correct `devenv` environment a.k.a `nix/store`.
+To make sure you are using the correct instance of `npm` you have to browse to your `devenv` project:
+
+```bash
+cd path/to/your/devenv.nix
+```
+
+#### with direnv
+
+If you use `direnv` you should be launched into the correct shell automatically.
+
+#### without direnv
+
+If you don't use `direnv` you can start the correct shell manually by running
+
+```bash
+devenv shell
+```
+
+Within the `devenv shell` you have to browse to your DIVE folder
+
+```bash
+cd path/to/@shopware-ag/dive
+```
+
+### without devenv
+
+You don't have to do anything special if you don't use `devenv`.
+
+### npm link
+
+If you want to link DIVE package locally after checking out, you can to that in the package's project folder:
+
+```bash
+cd path/to/@shopware-ag/dive
+npm link
+```
+
+After registering the package in npm, you can use the sym-link in your project:
+
+```bash
+cd path/to/your/package.json
+npm link @shopware-ag/dive
+```
+
+After successfully linking DIVE into your project you will find the according sym-link in your `node_modules`.
+
+### Setup in Shopware
+
+Don't forget to include DIVE in your `webpack.config.js`:
 
 ```js
 const path = require('path');
@@ -100,9 +162,9 @@ module.exports = () => {
 };
 ```
 
-# Usage
+## Usage
 
-## Quick View
+### Quick View
 
 QuickView is used to quickly display your assets with as few lines of code as
 possible. Simply call the static `QuickView()` method, with your data URI as a
@@ -132,15 +194,15 @@ try {
 }
 ```
 
-## Getting started
+### Getting started
 
-### Import:
+#### Import:
 
 ```ts
 import { DIVE } from '@shopware-ag/dive'; // <-- import DIVE
 ```
 
-### Instantiate:
+#### Instantiate:
 
 ```ts
 import { DIVE } from '@shopware-ag/dive';
@@ -177,7 +239,7 @@ com.PerformAction('SET_CAMERA_TRANSFORM', {
 });
 ```
 
-## Actions
+### Actions
 
 Actions symbolize the communication between frontend and 3D space. All actions
 can be performed anywhere, no matter if you are in frontend or 3D.
@@ -228,7 +290,7 @@ com.PerformAction('SET_CAMERA_TRANSFORM', {
 unsubscribe(); // <-- execute unsubscribe callback when done
 ```
 
-### Actions List
+#### Actions List
 
 In the following you find a list of all available actions to perform on
 DIVECommunication class via
@@ -457,7 +519,7 @@ DIVECommunication class via
     </tr>
 </table>
 
-# Unit Tests
+## Unit Tests
 
 All relevant files are covered by Jest tests. If you find any file that has not been covered yet, feel free to add unit tests accordingly.
 
@@ -465,6 +527,6 @@ If there are any modules that have to be mocked (like `three`) you can create a 
 
 If you have any other things from a module to import, you can simply create a folder structure and place the mock file at the end of your structure. To understand better please take a look at the `__mocks__` folder for yourself.
 
-# Formatting
+## Formatting
 
 DIVE uses Prettier as a preconfigured formatter.

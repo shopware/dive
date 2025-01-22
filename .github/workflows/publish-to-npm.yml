@@ -55,7 +55,7 @@ jobs:
               if: steps.yarn-cache.outputs.cache-hit != 'true'
               run: yarn
             - name: Unit-Test DIVE
-              run: yarn unit
+              run: yarn coverage
             - name: Upload coverage to Codecov (set new baseline)
               run: npx codecov -f coverage/coverage-final.json -B
               env:
