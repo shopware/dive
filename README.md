@@ -31,9 +31,10 @@ You can find the template in ci/readme/template/TEMPLATE_README.md
 1. [About](#about)
 2. [Installation](#installation)
 3. [Local development](#local-development)
-4. [Usage](#usage)
-5. [Unit Tests](#unit-tests)
-6. [Formatting](#formatting)
+4. [Setup in Shopware](#setup-in-shopware)
+5. [Usage](#usage)
+6. [Unit Tests](#unit-tests)
+7. [Formatting](#formatting)
 
 ## About
 
@@ -109,7 +110,7 @@ npm link @shopware-ag/dive
 
 After successfully linking DIVE into your project you will find the according sym-link in your `node_modules`.
 
-### Setup in Shopware
+## Setup in Shopware
 
 Don't forget to include DIVE in your `webpack.config.js`:
 
