@@ -5,6 +5,12 @@ import { TransformControls } from 'three/examples/jsm/controls/TransformControls
 import { type DIVEMovable } from '../../interface/Movable.ts';
 import { implementsInterface } from '../../helper/isInterface/implementsInterface.ts';
 import { DIVEGizmo } from '../../gizmo/Gizmo.ts';
+import { type Mesh, type MeshBasicMaterial } from 'three';
+import {
+    AxesColorBlue,
+    AxesColorGreen,
+    AxesColorRed,
+} from '../../constant/AxisHelperColors.ts';
 
 export const isTransformTool = (
     tool: DIVEBaseTool,
@@ -33,7 +39,7 @@ export default class DIVETransformTool extends DIVEBaseTool {
         super(scene, controller);
         this.name = 'DIVETransformTool';
 
-        this._gizmo = this.initGizmo();
+        this._gizmo = this.initGizmo() as TransformControls;
 
         this._scene.add(this._gizmo);
     }
@@ -87,6 +93,31 @@ export default class DIVETransformTool extends DIVEBaseTool {
         );
         // g.debug = true;
         g.mode = 'translate';
+
+        g.traverse((child) => {
+            if (!('isMesh' in child)) return;
+
+            const material = (child as Mesh).material as MeshBasicMaterial;
+
+            if (child.name === 'X') {
+                material.color.set(AxesColorRed);
+            }
+            if (child.name === 'Y') {
+                material.color.set(AxesColorGreen);
+            }
+            if (child.name === 'Z') {
+                material.color.set(AxesColorBlue);
+            }
+            if (child.name === 'XY') {
+                material.color.set(AxesColorBlue);
+            }
+            if (child.name === 'YZ') {
+                material.color.set(AxesColorRed);
+            }
+            if (child.name === 'XZ') {
+                material.color.set(AxesColorGreen);
+            }
+        });
 
         // happens when pointerDown event is called on gizmo
         g.addEventListener('mouseDown', () => {
