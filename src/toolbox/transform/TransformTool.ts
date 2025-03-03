@@ -135,6 +135,13 @@ export default class DIVETransformTool extends DIVEBaseTool {
                 return;
             if (!g.object.onMove) return;
             g.object.onMove();
+
+            const uniformScaling = false;
+            if (uniformScaling) {
+                const scale = g.object.scale;
+                const maxScale = Math.max(scale.x, scale.y, scale.z);
+                g.object.scale.set(maxScale, maxScale, maxScale);
+            }
         });
 
         // happens when pointerUp event is called on gizmo
