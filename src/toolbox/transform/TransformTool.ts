@@ -33,11 +33,15 @@ export interface DIVEObjectEventMap {
 export default class DIVETransformTool extends DIVEBaseTool {
     readonly isTransformTool: boolean = true;
 
+    private _scaleLinked: boolean;
+
     protected _gizmo: TransformControls | DIVEGizmo;
 
     constructor(scene: DIVEScene, controller: DIVEOrbitControls) {
         super(scene, controller);
         this.name = 'DIVETransformTool';
+
+        this._scaleLinked = false;
 
         this._gizmo = this.initGizmo() as TransformControls;
 
@@ -67,6 +71,10 @@ export default class DIVETransformTool extends DIVEBaseTool {
                     .layers.disableAll();
             }
         }
+    }
+
+    public SetGizmoScaleLinked(linked: boolean): void {
+        this._scaleLinked = linked;
     }
 
     // only used for optimizing pointer events with DIVEGizmo
@@ -136,11 +144,10 @@ export default class DIVETransformTool extends DIVEBaseTool {
             if (!g.object.onMove) return;
             g.object.onMove();
 
-            const uniformScaling = false;
-            if (uniformScaling) {
+            if (this._scaleLinked) {
                 const scale = g.object.scale;
-                const maxScale = Math.max(scale.x, scale.y, scale.z);
-                g.object.scale.set(maxScale, maxScale, maxScale);
+                const averageScale = (scale.x + scale.y + scale.z) / 3;
+                g.object.scale.set(averageScale, averageScale, averageScale);
             }
         });
 

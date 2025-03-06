@@ -268,6 +268,12 @@ export class DIVECommunication {
                 );
                 break;
             }
+            case 'SET_GIZMO_SCALE_LINKED': {
+                returnValue = this.setGizmoScaleLinked(
+                    payload as Actions['SET_GIZMO_SCALE_LINKED']['PAYLOAD'],
+                );
+                break;
+            }
             case 'USE_TOOL': {
                 returnValue = this.useTool(
                     payload as Actions['USE_TOOL']['PAYLOAD'],
@@ -661,6 +667,14 @@ export class DIVECommunication {
         payload: Actions['SET_GIZMO_VISIBILITY']['PAYLOAD'],
     ): Actions['SET_GIZMO_VISIBILITY']['RETURN'] {
         this.toolbox.SetGizmoVisibility(payload);
+        return payload;
+    }
+
+    private setGizmoScaleLinked(
+        payload: Actions['SET_GIZMO_SCALE_LINKED']['PAYLOAD'],
+    ): Actions['SET_GIZMO_SCALE_LINKED']['RETURN'] {
+        console.log('SET_GIZMO_SCALE_LINKED', payload);
+        this.toolbox.SetGizmoScaleLinked(payload);
         return payload;
     }
 
