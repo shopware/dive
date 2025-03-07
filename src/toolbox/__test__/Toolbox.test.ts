@@ -17,6 +17,7 @@ jest.mock('../select/SelectTool.ts', () => {
             this.onWheel = jest.fn();
             this.SetGizmoMode = jest.fn();
             this.SetGizmoVisibility = jest.fn();
+            this.SetGizmoScaleLinked = jest.fn();
             return this;
         }),
     };
@@ -133,5 +134,10 @@ describe('dive/toolbox/DIVEToolBox', () => {
     it('should set gizmo active', () => {
         const toolBox = new DIVEToolbox({} as DIVEScene, mockController);
         expect(() => toolBox.SetGizmoVisibility(true)).not.toThrow();
+    });
+
+    it('should set gizmo unified scale', () => {
+        const toolBox = new DIVEToolbox({} as DIVEScene, mockController);
+        expect(() => toolBox.SetGizmoScaleLinked(true)).not.toThrow();
     });
 });

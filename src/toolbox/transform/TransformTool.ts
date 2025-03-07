@@ -5,6 +5,12 @@ import { TransformControls } from 'three/examples/jsm/controls/TransformControls
 import { type DIVEMovable } from '../../interface/Movable.ts';
 import { implementsInterface } from '../../helper/isInterface/implementsInterface.ts';
 import { DIVEGizmo } from '../../gizmo/Gizmo.ts';
+import { type Mesh, type MeshBasicMaterial } from 'three';
+import {
+    AxesColorBlue,
+    AxesColorGreen,
+    AxesColorRed,
+} from '../../constant/AxisHelperColors.ts';
 
 export const isTransformTool = (
     tool: DIVEBaseTool,
@@ -27,13 +33,17 @@ export interface DIVEObjectEventMap {
 export default class DIVETransformTool extends DIVEBaseTool {
     readonly isTransformTool: boolean = true;
 
+    private _scaleLinked: boolean;
+
     protected _gizmo: TransformControls | DIVEGizmo;
 
     constructor(scene: DIVEScene, controller: DIVEOrbitControls) {
         super(scene, controller);
         this.name = 'DIVETransformTool';
 
-        this._gizmo = this.initGizmo();
+        this._scaleLinked = false;
+
+        this._gizmo = this.initGizmo() as TransformControls;
 
         this._scene.add(this._gizmo);
     }
@@ -63,6 +73,10 @@ export default class DIVETransformTool extends DIVEBaseTool {
         }
     }
 
+    public SetGizmoScaleLinked(linked: boolean): void {
+        this._scaleLinked = linked;
+    }
+
     // only used for optimizing pointer events with DIVEGizmo
     // public onPointerDown(e: PointerEvent): void {
     //     super.onPointerDown(e);
@@ -88,6 +102,31 @@ export default class DIVETransformTool extends DIVEBaseTool {
         // g.debug = true;
         g.mode = 'translate';
 
+        g.traverse((child) => {
+            if (!('isMesh' in child)) return;
+
+            const material = (child as Mesh).material as MeshBasicMaterial;
+
+            if (child.name === 'X') {
+                material.color.set(AxesColorRed);
+            }
+            if (child.name === 'Y') {
+                material.color.set(AxesColorGreen);
+            }
+            if (child.name === 'Z') {
+                material.color.set(AxesColorBlue);
+            }
+            if (child.name === 'XY') {
+                material.color.set(AxesColorBlue);
+            }
+            if (child.name === 'YZ') {
+                material.color.set(AxesColorRed);
+            }
+            if (child.name === 'XZ') {
+                material.color.set(AxesColorGreen);
+            }
+        });
+
         // happens when pointerDown event is called on gizmo
         g.addEventListener('mouseDown', () => {
             this._controller.enabled = false;
@@ -104,6 +143,12 @@ export default class DIVETransformTool extends DIVEBaseTool {
                 return;
             if (!g.object.onMove) return;
             g.object.onMove();
+
+            if (this._scaleLinked) {
+                const scale = g.object.scale;
+                const averageScale = (scale.x + scale.y + scale.z) / 3;
+                g.object.scale.set(averageScale, averageScale, averageScale);
+            }
         });
 
         // happens when pointerUp event is called on gizmo

@@ -79,6 +79,10 @@ export default class DIVEToolbox {
         this.selectTool.SetGizmoVisibility(active);
     }
 
+    public SetGizmoScaleLinked(linked: boolean): void {
+        this.selectTool.SetGizmoScaleLinked(linked);
+    }
+
     public onPointerMove(e: PointerEvent): void {
         this._activeTool?.onPointerMove(e);
     }

@@ -6,6 +6,7 @@ import { DIVERenderer } from '../../../renderer/Renderer';
 import { type DIVEBaseTool } from '../../BaseTool';
 import { Tween } from '@tweenjs/tween.js';
 import { DIVEAnimationSystem } from '../../../animation/AnimationSystem';
+import { type TransformControls } from 'three/examples/jsm/controls/TransformControls';
 
 jest.mock('../../../renderer/Renderer', () => {
     return jest.fn(function () {
@@ -128,5 +129,19 @@ describe('dive/toolbox/select/DIVETransformTool', () => {
         jest.spyOn(mockScene.children, 'includes').mockReturnValueOnce(true);
 
         expect(() => transformTool.SetGizmoVisibility(false)).not.toThrow();
+    });
+
+    it('should set gizmo unified scaling', () => {
+        expect(() => transformTool.SetGizmoScaleLinked(true)).not.toThrow();
+
+        // mock that gizmo is in scene
+        jest.spyOn(mockScene.children, 'includes').mockReturnValueOnce(true);
+
+        expect(() => transformTool.SetGizmoVisibility(false)).not.toThrow();
+    });
+
+    it('should scale unified if linked', () => {
+        transformTool.SetGizmoScaleLinked(true);
+        transformTool['initGizmo']();
     });
 });
