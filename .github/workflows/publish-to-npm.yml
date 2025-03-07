@@ -118,7 +118,7 @@ jobs:
             - name: Push to protected branch trunk
               uses: CasperWA/push-protected@v2
               with:
-                  token: ${{ secrets.ACTION_AUTH_TOKEN }}
+                  token: ${{ secrets.PUSH_TO_PROTECTED_BRANCH }}
                   branch: trunk
                   unprotect_reviews: true
                   tags: true
