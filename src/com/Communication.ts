@@ -673,7 +673,6 @@ export class DIVECommunication {
     private setGizmoScaleLinked(
         payload: Actions['SET_GIZMO_SCALE_LINKED']['PAYLOAD'],
     ): Actions['SET_GIZMO_SCALE_LINKED']['RETURN'] {
-        console.log('SET_GIZMO_SCALE_LINKED', payload);
         this.toolbox.SetGizmoScaleLinked(payload);
         return payload;
     }
