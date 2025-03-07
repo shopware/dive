@@ -472,6 +472,14 @@ DIVECommunication class via
     </tr>
     <tr>
         <td>
+            <a href="src/com/actions/toolbox/transform/setgizmoscalelinked.ts"> SET_GIZMO_SCALE_LINKED </a>
+        </td>
+        <td>
+            Sets the gizmo's unified scale mode.
+        </td>
+    </tr>
+    <tr>
+        <td>
             <a href="src/com/actions/toolbox/transform/setgizmovisible.ts"> SET_GIZMO_VISIBILITY </a>
         </td>
         <td>
