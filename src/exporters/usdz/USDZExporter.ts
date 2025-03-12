@@ -2,7 +2,7 @@ import { Object3D } from 'three';
 import {
     USDZExporter,
     USDZExporterOptions,
-} from 'three/examples/jsm/exporters/USDZExporter';
+} from 'three/examples/jsm/exporters/USDZExporter.js';
 
 export type DIVEUSDZExporterOptions = USDZExporterOptions & {
     ar?: {

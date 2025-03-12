@@ -4,7 +4,7 @@ import { DIVECommunication } from '../com/Communication';
 
 import { type DIVEMovable } from '../interface/Movable';
 import { type DIVESelectable } from '../interface/Selectable';
-import { type TransformControls } from 'three/examples/jsm/controls/TransformControls';
+import { type TransformControls } from 'three/examples/jsm/controls/TransformControls.js';
 import { type DIVEGroup } from '../group/Group';
 
 export class DIVENode extends Object3D implements DIVESelectable, DIVEMovable {

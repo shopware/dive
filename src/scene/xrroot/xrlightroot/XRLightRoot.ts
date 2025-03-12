@@ -1,4 +1,4 @@
-import { XREstimatedLight } from 'three/examples/jsm/webxr/XREstimatedLight';
+import { XREstimatedLight } from 'three/examples/jsm/webxr/XREstimatedLight.js';
 import { type DIVERenderer } from '../../../renderer/Renderer';
 import { Object3D } from 'three';
 import { type DIVEScene } from '../../Scene';

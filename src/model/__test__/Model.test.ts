@@ -2,7 +2,7 @@ import { RaycasterIntersectObjectMock } from '../../../__mocks__/three';
 
 import { DIVEModel } from '../Model';
 import { DIVECommunication } from '../../com/Communication';
-import { GLTF } from 'three/examples/jsm/loaders/GLTFLoader';
+import { GLTF } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { DIVEScene } from '../../scene/Scene';
 import {
     Vector3,

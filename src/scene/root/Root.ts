@@ -8,7 +8,7 @@ import { DIVECommunication } from '../../com/Communication.ts';
 import { DIVEPrimitive } from '../../primitive/Primitive.ts';
 
 import { type DIVEScene } from '../Scene.ts';
-import { type TransformControls } from 'three/examples/jsm/controls/TransformControls';
+import { type TransformControls } from 'three/examples/jsm/controls/TransformControls.js';
 import {
     type COMLight,
     type COMModel,

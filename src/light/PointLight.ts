@@ -14,7 +14,7 @@ import {
 } from '../constant/VisibilityLayerMask';
 import { DIVEMovable } from '../interface/Movable';
 import { DIVESelectable } from '../interface/Selectable';
-import type { TransformControls } from 'three/examples/jsm/controls/TransformControls';
+import type { TransformControls } from 'three/examples/jsm/controls/TransformControls.js';
 
 /**
  * A basic point light.

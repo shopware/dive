@@ -6,7 +6,6 @@ import { DIVERenderer } from '../../../renderer/Renderer';
 import { type DIVEBaseTool } from '../../BaseTool';
 import { Tween } from '@tweenjs/tween.js';
 import { DIVEAnimationSystem } from '../../../animation/AnimationSystem';
-import { type TransformControls } from 'three/examples/jsm/controls/TransformControls';
 
 jest.mock('../../../renderer/Renderer', () => {
     return jest.fn(function () {

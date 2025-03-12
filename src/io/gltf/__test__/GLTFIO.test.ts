@@ -1,7 +1,7 @@
 import { Object3D } from 'three';
 import { DIVEGLTFIO } from '../GLTFIO';
 
-import { type GLTF } from 'three/examples/jsm/loaders/GLTFLoader';
+import { type GLTF } from 'three/examples/jsm/loaders/GLTFLoader.js';
 
 let testGLTFIO: DIVEGLTFIO;
 

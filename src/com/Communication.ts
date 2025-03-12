@@ -1,5 +1,5 @@
 import { Actions } from './actions/index.ts';
-import { generateUUID } from 'three/src/math/MathUtils';
+import { generateUUID } from 'three/src/math/MathUtils.js';
 import { isSelectTool } from '../toolbox/select/SelectTool.ts';
 import { merge } from 'lodash';
 

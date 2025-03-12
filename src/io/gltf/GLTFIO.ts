@@ -1,5 +1,8 @@
-import { GLTFLoader, type GLTF } from 'three/examples/jsm/loaders/GLTFLoader';
-import { GLTFExporter } from 'three/examples/jsm/exporters/GLTFExporter';
+import {
+    GLTFLoader,
+    type GLTF,
+} from 'three/examples/jsm/loaders/GLTFLoader.js';
+import { GLTFExporter } from 'three/examples/jsm/exporters/GLTFExporter.js';
 import { Object3D } from 'three';
 
 export class DIVEGLTFIO {
