@@ -57,8 +57,8 @@
         "vite-plugin-dts": "^4.5.3"
     },
     "scripts": {
-        "build": "VITE_DIVE_NODE_ENV=production vite build",
-        "dev": "VITE_DIVE_NODE_ENV=development vite build --watch",
+        "build": "vite build",
+        "dev": "vite build --watch",
         "lint": "eslint",
         "lint:actions": "yarn lint:actions:transpile && yarn lint:actions:check && yarn lint:actions:cleanup",
         "lint:actions:transpile": "yarn tsc --resolveJsonModule --esModuleInterop ci/lint/lint-actions.ts && mv ci/lint/lint-actions.js ci/lint/lint-actions.cjs",

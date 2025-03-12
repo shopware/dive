@@ -277,11 +277,6 @@ export default class DIVE {
         };
 
         console.log(`DIVE ${pkgjson.version} initialized successfully!`);
-
-        // @ts-expect-error - env is not defined in the types
-        if (import.meta.env.VITE_DIVE_NODE_ENV === 'development') {
-            console.log('DIVE is running in development mode.');
-        }
         console.log(`
                     @@@@@@@@@@@@@@@@@@@@@@@              @@@@@@@@@@@@@@@@@@@@@@@
                @@@@+-:::::::---------------------==------------------------------=#@@@@
