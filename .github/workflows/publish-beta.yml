@@ -130,12 +130,12 @@ jobs:
 
             - name: Update package.json with new beta version
               run: |
-                  npm version --no-git-tag-version ${{ steps.calculate-beta.outputs.next_beta }}
+                  npm version --no-git-tag-version ${{ env.next_beta }}
                   git add package.json
 
             - name: Create beta branch
               run: |
-                  git checkout -b beta/v${{ steps.calculate-beta.outputs.next_beta }}
+                  git checkout -b beta/v${{ env.next_beta }}
 
             - name: Build DIVE
               run: yarn build
