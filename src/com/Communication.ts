@@ -99,13 +99,30 @@ export class DIVECommunication {
     }
 
     private _ar: DIVEAR | null;
-    private get ar(): DIVEAR {
+    private get ar(): Promise<DIVEAR> {
         if (!this._ar) {
-            const DIVEAR = require('../ar/AR.ts')
-                .DIVEAR as typeof import('../ar/AR.ts').DIVEAR;
-            this._ar = new DIVEAR(this.renderer, this.scene, this.controller);
+            return new Promise((resolve, reject) => {
+                import('../ar/AR.ts')
+                    .then((module) => {
+                        const DIVEAR = module.DIVEAR;
+                        this._ar = new DIVEAR(
+                            this.renderer,
+                            this.scene,
+                            this.controller,
+                        );
+                        resolve(this._ar);
+                    })
+                    .catch((error) => {
+                        console.error(
+                            'DIVE: Error while lazy-loading AR module:',
+                            error,
+                        );
+                        reject(error);
+                    });
+            });
         }
-        return this._ar;
+
+        return Promise.resolve(this._ar);
     }
 
     private registered: Map<string, COMEntity> = new Map();
@@ -311,9 +328,17 @@ export class DIVECommunication {
                 break;
             }
             case 'LAUNCH_AR': {
-                returnValue = this.ar.Launch(
-                    payload as Actions['LAUNCH_AR']['PAYLOAD'],
-                );
+                returnValue = new Promise<void>((resolve, reject) => {
+                    this.ar
+                        .then((arModule) => {
+                            resolve(
+                                arModule.Launch(
+                                    payload as Actions['LAUNCH_AR']['PAYLOAD'],
+                                ),
+                            );
+                        })
+                        .catch(reject);
+                });
                 break;
             }
             default: {

@@ -965,8 +965,9 @@ describe('dive/communication/DIVECommunication', () => {
     });
 
     it('should perform action LAUNCH_AR', async () => {
+        const arModule = await testCom['ar'];
         const arLaunchSpy = jest
-            .spyOn(testCom['ar'], 'Launch')
+            .spyOn(arModule, 'Launch')
             .mockResolvedValueOnce();
 
         const result = await testCom.PerformAction('LAUNCH_AR', undefined);
