@@ -75,37 +75,78 @@ export class DIVECommunication {
     private toolbox: DIVEToolbox;
 
     private _mediaGenerator: DIVEMediaCreator | null;
-    private get mediaGenerator(): DIVEMediaCreator {
+    private get mediaGenerator(): Promise<DIVEMediaCreator> {
         if (!this._mediaGenerator) {
-            const DIVEMediaCreator = require('../mediacreator/MediaCreator.ts')
-                .DIVEMediaCreator as typeof import('../mediacreator/MediaCreator.ts').DIVEMediaCreator;
-            this._mediaGenerator = new DIVEMediaCreator(
-                this.renderer,
-                this.scene,
-                this.controller,
-            );
+            return new Promise((resolve, reject) => {
+                import('../mediacreator/MediaCreator.ts')
+                    .then((module) => {
+                        const DIVEMediaCreator = module.DIVEMediaCreator;
+                        this._mediaGenerator = new DIVEMediaCreator(
+                            this.renderer,
+                            this.scene,
+                            this.controller,
+                        );
+                        resolve(this._mediaGenerator);
+                    })
+                    .catch((error) => {
+                        console.error(
+                            'DIVE: Error while lazy-loading IO module:',
+                            error,
+                        );
+                        reject(error);
+                    });
+            });
         }
-        return this._mediaGenerator;
+        return Promise.resolve(this._mediaGenerator);
     }
 
     private _io: DIVEIO | null;
-    private get io(): DIVEIO {
+    private get io(): Promise<DIVEIO> {
         if (!this._io) {
-            const DIVEIO = require('../io/IO.ts')
-                .DIVEIO as typeof import('../io/IO.ts').DIVEIO;
-            this._io = new DIVEIO(this.scene);
+            return new Promise((resolve, reject) => {
+                import('../io/IO.ts')
+                    .then((module) => {
+                        const DIVEIO = module.DIVEIO;
+                        this._io = new DIVEIO(this.scene);
+                        resolve(this._io);
+                    })
+                    .catch((error) => {
+                        console.error(
+                            'DIVE: Error while lazy-loading IO module:',
+                            error,
+                        );
+                        reject(error);
+                    });
+            });
         }
-        return this._io;
+        return Promise.resolve(this._io);
     }
 
     private _ar: DIVEAR | null;
-    private get ar(): DIVEAR {
+    private get ar(): Promise<DIVEAR> {
         if (!this._ar) {
-            const DIVEAR = require('../ar/AR.ts')
-                .DIVEAR as typeof import('../ar/AR.ts').DIVEAR;
-            this._ar = new DIVEAR(this.renderer, this.scene, this.controller);
+            return new Promise((resolve, reject) => {
+                import('../ar/AR.ts')
+                    .then((module) => {
+                        const DIVEAR = module.DIVEAR;
+                        this._ar = new DIVEAR(
+                            this.renderer,
+                            this.scene,
+                            this.controller,
+                        );
+                        resolve(this._ar);
+                    })
+                    .catch((error) => {
+                        console.error(
+                            'DIVE: Error while lazy-loading AR module:',
+                            error,
+                        );
+                        reject(error);
+                    });
+            });
         }
-        return this._ar;
+
+        return Promise.resolve(this._ar);
     }
 
     private registered: Map<string, COMEntity> = new Map();
@@ -311,9 +352,17 @@ export class DIVECommunication {
                 break;
             }
             case 'LAUNCH_AR': {
-                returnValue = this.ar.Launch(
-                    payload as Actions['LAUNCH_AR']['PAYLOAD'],
-                );
+                returnValue = new Promise<void>((resolve, reject) => {
+                    this.ar
+                        .then((arModule) => {
+                            resolve(
+                                arModule.Launch(
+                                    payload as Actions['LAUNCH_AR']['PAYLOAD'],
+                                ),
+                            );
+                        })
+                        .catch(reject);
+                });
                 break;
             }
             default: {
@@ -735,14 +784,14 @@ export class DIVECommunication {
             target = payload.target;
         }
 
-        payload.dataUri = this.mediaGenerator.GenerateMedia(
-            position,
-            target,
-            payload.width,
-            payload.height,
-        );
-
-        return true;
+        return this.mediaGenerator.then((module) => {
+            return module.GenerateMedia(
+                position,
+                target,
+                payload.width,
+                payload.height,
+            );
+        });
     }
 
     private setParent(
@@ -808,7 +857,13 @@ export class DIVECommunication {
     private exportScene(
         payload: Actions['EXPORT_SCENE']['PAYLOAD'],
     ): Actions['EXPORT_SCENE']['RETURN'] {
-        return this.io.Export(payload.type);
+        return new Promise<string | null>((resolve, reject) => {
+            this.io
+                .then((ioModule) => {
+                    resolve(ioModule.Export(payload.type));
+                })
+                .catch(reject);
+        });
     }
 }
 

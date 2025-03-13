@@ -1,7 +1,7 @@
 import { Vector3Like } from 'three';
 
 export default interface GENERATE_MEDIA {
-    DESCRIPTION: 'Generates a screenshot, stores it in a Blob and writes the URL into the payload.';
+    DESCRIPTION: 'Generates a screenshot, stores it in a Blob and returns a Promise of a valid URI.';
     PAYLOAD: (
         | {
               position: Vector3Like;
@@ -13,7 +13,6 @@ export default interface GENERATE_MEDIA {
     ) & {
         width: number; // image width in pixels
         height: number; // image height in pixels
-        dataUri: string;
     };
-    RETURN: boolean;
+    RETURN: Promise<string>;
 }

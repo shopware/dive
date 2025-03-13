@@ -842,7 +842,14 @@ describe('dive/communication/DIVECommunication', () => {
         expect(success1).toBe(true);
     });
 
-    it('should perform action GENERATE_MEDIA', () => {
+    it('should perform action GENERATE_MEDIA', async () => {
+        const blobUri = 'blob:http://localhost:3000/1234';
+        const mediaGeneratorModule = await testCom['mediaGenerator'];
+
+        jest.spyOn(mediaGeneratorModule, 'GenerateMedia').mockReturnValue(
+            blobUri,
+        );
+
         const mock1 = {
             entityType: 'pov',
             id: 'test1',
@@ -851,22 +858,22 @@ describe('dive/communication/DIVECommunication', () => {
         } as COMPov;
         testCom.PerformAction('ADD_OBJECT', mock1);
 
-        const success0 = testCom.PerformAction('GENERATE_MEDIA', {
+        const success0 = await testCom.PerformAction('GENERATE_MEDIA', {
             id: 'test1',
             width: 800,
             height: 600,
-            dataUri: '',
         });
-        expect(success0).toBe(true);
+        expect(success0).toBe(blobUri);
 
-        const success1 = testCom.PerformAction('GENERATE_MEDIA', {
+        const success1 = await testCom.PerformAction('GENERATE_MEDIA', {
             position: { x: 0, y: 0, z: 0 },
             target: { x: 0, y: 0, z: 0 },
             width: 800,
             height: 600,
-            dataUri: '',
         });
-        expect(success1).toBe(true);
+        expect(success1).toBe(blobUri);
+
+        jest.restoreAllMocks();
     });
 
     it('should perform action SET_PARENT', () => {
@@ -955,8 +962,9 @@ describe('dive/communication/DIVECommunication', () => {
 
     it('should perform action EXPORT_SCENE', async () => {
         const url = 'https://example.com';
+        const ioModule = await testCom['io'];
 
-        jest.spyOn(testCom['io'], 'Export').mockResolvedValueOnce(url);
+        jest.spyOn(ioModule, 'Export').mockResolvedValueOnce(url);
 
         const result = await testCom.PerformAction('EXPORT_SCENE', {
             type: 'glb',
@@ -965,8 +973,9 @@ describe('dive/communication/DIVECommunication', () => {
     });
 
     it('should perform action LAUNCH_AR', async () => {
+        const arModule = await testCom['ar'];
         const arLaunchSpy = jest
-            .spyOn(testCom['ar'], 'Launch')
+            .spyOn(arModule, 'Launch')
             .mockResolvedValueOnce();
 
         const result = await testCom.PerformAction('LAUNCH_AR', undefined);
