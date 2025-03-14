@@ -14,7 +14,9 @@ export class DIVEARQuickLook {
         const quickLookScene = new Object3D();
 
         // extract models from scene
-        quickLookScene.add(...this.extractModels(scene));
+        const rootCopy = scene.Root.clone(true);
+
+        quickLookScene.add(...rootCopy.children);
 
         // launch ARQuickLook
         return this.launchARFromNode(quickLookScene, options);

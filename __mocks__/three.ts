@@ -127,6 +127,9 @@ export const Object3D = jest.fn(function () {
         return this.position.clone();
     });
     this.rotateX = jest.fn();
+    this.clone = jest.fn(() => {
+        return this;
+    });
     return this;
 });
 

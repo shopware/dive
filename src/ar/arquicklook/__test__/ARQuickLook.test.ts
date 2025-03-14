@@ -1,4 +1,4 @@
-import { Box3, Color, Euler, Mesh, Object3D, Vector3 } from 'three';
+import { Object3D } from 'three';
 import { DIVEScene } from '../../../scene/Scene';
 import { DIVEAROptions } from '../../AR';
 import { DIVEARQuickLook } from '../ARQuickLook';
