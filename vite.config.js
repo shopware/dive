@@ -8,7 +8,10 @@ export default defineConfig({
         },
         lib: {
             entry: 'src/dive.ts',
-            formats: ['es', 'cjs'],
+            formats: [
+                'es',
+                'cjs',
+            ],
             fileName: 'dive',
         },
         sourcemap: true,
@@ -25,8 +28,11 @@ export default defineConfig({
             insertTypesEntry: true,
             outputDir: 'build',
             tsConfigFilePath: './tsconfig.json',
-            include: ["src/**/*.ts"],
-            exclude: ['**/*.test.ts', '**/*.spec.ts']
+            include: ['src/**/*.ts'],
+            exclude: [
+                '**/*.test.ts',
+                '**/*.spec.ts',
+            ],
         }),
     ],
 });
