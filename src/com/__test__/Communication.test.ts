@@ -32,36 +32,47 @@ import {
     type COMLight,
     type COMModel,
     type COMPov,
-    type COMPrimitive,
 } from '../types';
 import { type DIVESceneObject } from '../../types';
 
+const mockModule: Record<string, any> = {
+    get: jest.fn().mockReturnValue(Promise.resolve({})),
+};
+jest.mock('../../module/Module', () => {
+    return {
+        DIVEModule: jest.fn().mockImplementation(() => {
+            return mockModule;
+        }),
+    };
+});
+
 jest.mock('../../mediacreator/MediaCreator', () => {
     return {
-        DIVEMediaCreator: jest.fn(function () {
-            this.GenerateMedia = jest.fn();
-
-            return this;
+        DIVEMediaCreator: jest.fn().mockImplementation(() => {
+            return {
+                GenerateMedia: jest.fn(),
+            };
         }),
     };
 });
 
 jest.mock('../../io/IO', () => {
     return {
-        DIVEIO: jest.fn(function () {
-            this.Import = jest.fn();
-            this.Export = jest.fn();
-            return this;
+        DIVEIO: jest.fn().mockImplementation(() => {
+            return {
+                Import: jest.fn(),
+                Export: jest.fn(),
+            };
         }),
     };
 });
 
 jest.mock('../../ar/AR', () => {
     return {
-        DIVEAR: jest.fn(function () {
-            this.Launch = jest.fn();
-
-            return this;
+        DIVEAR: jest.fn().mockImplementation(() => {
+            return {
+                Launch: jest.fn(),
+            };
         }),
     };
 });
@@ -194,12 +205,14 @@ const mockToolBox = {
     }),
     SetGizmoMode: jest.fn(),
     SetGizmoVisibility: jest.fn(),
+    SetGizmoScaleLinked: jest.fn(),
 } as unknown as DIVEToolbox;
 
 let testCom: DIVECommunication;
 
 describe('dive/communication/DIVECommunication', () => {
     beforeEach(() => {
+        jest.clearAllMocks();
         testCom = new DIVECommunication(
             mockRenderer,
             mockScene,
@@ -797,6 +810,11 @@ describe('dive/communication/DIVECommunication', () => {
         expect(visibility).toBe(false);
     });
 
+    it('should perform action SET_GIZMO_SCALE_LINKED', () => {
+        const success = testCom.PerformAction('SET_GIZMO_SCALE_LINKED', true);
+        expect(success).toBe(true);
+    });
+
     it('should perform action USE_TOOL', () => {
         let success = testCom.PerformAction('USE_TOOL', { tool: 'select' });
         expect(success).toBe(true);
@@ -844,7 +862,10 @@ describe('dive/communication/DIVECommunication', () => {
 
     it('should perform action GENERATE_MEDIA', async () => {
         const blobUri = 'blob:http://localhost:3000/1234';
-        const mediaGeneratorModule = await testCom['mediaGenerator'];
+        jest.spyOn(mockModule, 'get').mockResolvedValue({
+            GenerateMedia: jest.fn(),
+        });
+        const mediaGeneratorModule = await testCom['_mediaGenerator'].get();
 
         jest.spyOn(mediaGeneratorModule, 'GenerateMedia').mockReturnValue(
             blobUri,
@@ -962,7 +983,10 @@ describe('dive/communication/DIVECommunication', () => {
 
     it('should perform action EXPORT_SCENE', async () => {
         const url = 'https://example.com';
-        const ioModule = await testCom['io'];
+        jest.spyOn(mockModule, 'get').mockResolvedValue({
+            Export: jest.fn(),
+        });
+        const ioModule = await testCom['_io'].get();
 
         jest.spyOn(ioModule, 'Export').mockResolvedValueOnce(url);
 
@@ -973,7 +997,10 @@ describe('dive/communication/DIVECommunication', () => {
     });
 
     it('should perform action LAUNCH_AR', async () => {
-        const arModule = await testCom['ar'];
+        jest.spyOn(mockModule, 'get').mockResolvedValue({
+            Launch: jest.fn(),
+        });
+        const arModule = await testCom['_ar'].get();
         const arLaunchSpy = jest
             .spyOn(arModule, 'Launch')
             .mockResolvedValueOnce();

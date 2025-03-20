@@ -2,6 +2,7 @@ import { Actions } from './actions/index.ts';
 import { generateUUID } from 'three/src/math/MathUtils';
 import { isSelectTool } from '../toolbox/select/SelectTool.ts';
 import { merge } from 'lodash';
+import { DIVEModule } from '../module/Module.ts';
 
 // type imports
 import { type Color, type MeshStandardMaterial } from 'three';
@@ -74,80 +75,13 @@ export class DIVECommunication {
     private controller: DIVEOrbitControls;
     private toolbox: DIVEToolbox;
 
-    private _mediaGenerator: DIVEMediaCreator | null;
-    private get mediaGenerator(): Promise<DIVEMediaCreator> {
-        if (!this._mediaGenerator) {
-            return new Promise((resolve, reject) => {
-                import('../mediacreator/MediaCreator.ts')
-                    .then((module) => {
-                        const DIVEMediaCreator = module.DIVEMediaCreator;
-                        this._mediaGenerator = new DIVEMediaCreator(
-                            this.renderer,
-                            this.scene,
-                            this.controller,
-                        );
-                        resolve(this._mediaGenerator);
-                    })
-                    .catch((error) => {
-                        console.error(
-                            'DIVE: Error while lazy-loading IO module:',
-                            error,
-                        );
-                        reject(error);
-                    });
-            });
-        }
-        return Promise.resolve(this._mediaGenerator);
-    }
+    private _mediaGenerator: DIVEModule<DIVEMediaCreator> = new DIVEModule(
+        '../mediacreator/MediaCreator.ts',
+        'DIVEMediaCreator',
+    );
+    private _io: DIVEModule<DIVEIO> = new DIVEModule('../io/IO.ts', 'DIVEIO');
 
-    private _io: DIVEIO | null;
-    private get io(): Promise<DIVEIO> {
-        if (!this._io) {
-            return new Promise((resolve, reject) => {
-                import('../io/IO.ts')
-                    .then((module) => {
-                        const DIVEIO = module.DIVEIO;
-                        this._io = new DIVEIO(this.scene);
-                        resolve(this._io);
-                    })
-                    .catch((error) => {
-                        console.error(
-                            'DIVE: Error while lazy-loading IO module:',
-                            error,
-                        );
-                        reject(error);
-                    });
-            });
-        }
-        return Promise.resolve(this._io);
-    }
-
-    private _ar: DIVEAR | null;
-    private get ar(): Promise<DIVEAR> {
-        if (!this._ar) {
-            return new Promise((resolve, reject) => {
-                import('../ar/AR.ts')
-                    .then((module) => {
-                        const DIVEAR = module.DIVEAR;
-                        this._ar = new DIVEAR(
-                            this.renderer,
-                            this.scene,
-                            this.controller,
-                        );
-                        resolve(this._ar);
-                    })
-                    .catch((error) => {
-                        console.error(
-                            'DIVE: Error while lazy-loading AR module:',
-                            error,
-                        );
-                        reject(error);
-                    });
-            });
-        }
-
-        return Promise.resolve(this._ar);
-    }
+    private _ar: DIVEModule<DIVEAR> = new DIVEModule('../ar/AR.ts', 'DIVEAR');
 
     private registered: Map<string, COMEntity> = new Map();
 
@@ -166,9 +100,6 @@ export class DIVECommunication {
         this.scene = scene;
         this.controller = controls;
         this.toolbox = toolbox;
-        this._mediaGenerator = null;
-        this._io = null;
-        this._ar = null;
 
         DIVECommunication.__instances.push(this);
     }
@@ -184,7 +115,7 @@ export class DIVECommunication {
 
     public PerformAction<Action extends keyof Actions>(
         action: Action,
-        payload: Actions[Action]['PAYLOAD'],
+        payload?: Actions[Action]['PAYLOAD'],
     ): Actions[Action]['RETURN'] {
         let returnValue: Actions[Action]['RETURN'] = false;
 
@@ -353,10 +284,11 @@ export class DIVECommunication {
             }
             case 'LAUNCH_AR': {
                 returnValue = new Promise<void>((resolve, reject) => {
-                    this.ar
-                        .then((arModule) => {
+                    this._ar
+                        .get()
+                        .then((ar) => {
                             resolve(
-                                arModule.Launch(
+                                ar.Launch(
                                     payload as Actions['LAUNCH_AR']['PAYLOAD'],
                                 ),
                             );
@@ -784,7 +716,7 @@ export class DIVECommunication {
             target = payload.target;
         }
 
-        return this.mediaGenerator.then((module) => {
+        return this._mediaGenerator.get().then((module) => {
             return module.GenerateMedia(
                 position,
                 target,
@@ -858,9 +790,10 @@ export class DIVECommunication {
         payload: Actions['EXPORT_SCENE']['PAYLOAD'],
     ): Actions['EXPORT_SCENE']['RETURN'] {
         return new Promise<string | null>((resolve, reject) => {
-            this.io
-                .then((ioModule) => {
-                    resolve(ioModule.Export(payload.type));
+            this._io
+                .get()
+                .then((io) => {
+                    resolve(io.Export(payload.type));
                 })
                 .catch(reject);
         });
