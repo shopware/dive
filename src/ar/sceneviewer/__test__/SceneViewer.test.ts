@@ -21,18 +21,6 @@ jest.mock('../../../scene/Scene', () => {
     };
 });
 
-jest.mock('../../../exporters/usdz/USDZExporter', () => {
-    return {
-        DIVEUSDZExporter: jest.fn().mockImplementation(() => {
-            return {
-                parse: jest.fn(() => {
-                    return Promise.resolve(new Uint8Array());
-                }),
-            };
-        }),
-    };
-});
-
 URL.createObjectURL = jest.fn(() => 'blob:http://localhost:8080/');
 
 describe('DIVESceneViewer', () => {

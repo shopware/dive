@@ -3,14 +3,20 @@ import { DIVEScene } from '../../../scene/Scene';
 import { DIVEAROptions } from '../../AR';
 import { DIVEARQuickLook } from '../ARQuickLook';
 
-jest.mock('../../../exporters/usdz/USDZExporter', () => {
+jest.mock('../../../scene/Scene', () => {
     return {
-        DIVEUSDZExporter: jest.fn().mockImplementation(() => {
-            return {
-                parse: jest.fn(() => {
-                    return Promise.resolve(new Uint8Array());
-                }),
+        DIVEScene: jest.fn(function () {
+            this.add = jest.fn();
+            this.children = [];
+            this.Root = {
+                children: [],
             };
+            this.traverse = jest.fn((callback) => {
+                this.Root.children.forEach((child: Object3D) => {
+                    callback(child);
+                });
+            });
+            return this;
         }),
     };
 });
@@ -26,10 +32,12 @@ describe('DIVEARQuickLook', () => {
         mockModels = [
             new Object3D(),
             new Object3D(),
+            new Object3D(),
         ];
-        mockScene = {
-            Root: new Object3D(),
-        } as DIVEScene;
+        mockModels[1].userData = {
+            uri: 'https://example.com',
+        };
+        mockScene = new DIVEScene();
         mockOptions = {
             arPlacement: 'horizontal',
             arScale: 'auto',
@@ -41,88 +49,45 @@ describe('DIVEARQuickLook', () => {
             expect(DIVEARQuickLook.Launch).toBeInstanceOf(Function);
         });
 
-        it('should return a promise', () => {
-            expect(
-                DIVEARQuickLook.Launch(mockScene, mockOptions),
-            ).toBeInstanceOf(Promise);
-        });
-
-        it('should not throw when called without options', () => {
-            const usdzParseSpy = jest.spyOn(
-                DIVEARQuickLook['_usdzExporter'],
-                'parse',
-            );
-
-            expect(
-                async () => await DIVEARQuickLook.Launch(mockScene),
-            ).not.toThrow();
-
-            expect(usdzParseSpy).toHaveBeenCalled();
-        });
-
-        it('should not throw when called with empty scene', () => {
-            const usdzParseSpy = jest.spyOn(
-                DIVEARQuickLook['_usdzExporter'],
-                'parse',
-            );
-
-            expect(
-                async () =>
-                    await DIVEARQuickLook.Launch(mockScene, mockOptions),
-            ).not.toThrow();
-
-            expect(usdzParseSpy).toHaveBeenCalled();
-        });
-
-        it('should not throw when called with filled scene', () => {
-            const usdzParseSpy = jest.spyOn(
-                DIVEARQuickLook['_usdzExporter'],
-                'parse',
-            );
-
+        it('should not throw without options', () => {
             mockScene.Root.children = mockModels;
 
-            expect(
-                async () =>
-                    await DIVEARQuickLook.Launch(mockScene, mockOptions),
-            ).not.toThrow();
-
-            expect(usdzParseSpy).toHaveBeenCalled();
+            expect(() => {
+                DIVEARQuickLook.Launch(mockScene);
+            }).not.toThrow();
         });
 
-        it('should pass options to exporter', async () => {
-            const usdzParseSpy = jest.spyOn(
-                DIVEARQuickLook['_usdzExporter'],
-                'parse',
-            );
+        it('should not throw with options', () => {
+            mockScene.Root.children = mockModels;
 
-            mockOptions.arPlacement = 'vertical';
-            mockOptions.arScale = 'fixed';
-
-            await DIVEARQuickLook.Launch(mockScene, mockOptions);
-
-            expect(usdzParseSpy).toHaveBeenCalledWith(expect.any(Object3D), {
-                quickLookCompatible: true,
-                ar: {
-                    anchoring: { type: 'plane' },
-                    planeAnchoring: {
-                        alignment: 'vertical',
-                    },
-                },
-            });
+            expect(() => {
+                DIVEARQuickLook.Launch(mockScene, mockOptions);
+            }).not.toThrow();
         });
 
-        it('should reject when USDZExporter fails', async () => {
-            const usdzParseSpy = jest.spyOn(
-                DIVEARQuickLook['_usdzExporter'],
-                'parse',
-            );
+        it('should not throw with alternated options', () => {
+            mockScene.Root.children = mockModels;
 
-            usdzParseSpy.mockReturnValueOnce(Promise.reject());
+            mockOptions = {
+                arPlacement: 'vertical',
+                arScale: 'fixed',
+            } as DIVEAROptions;
 
-            await expect(
-                DIVEARQuickLook.Launch(mockScene, mockOptions),
-            ).rejects.toBeUndefined();
+            expect(() => {
+                DIVEARQuickLook.Launch(mockScene, mockOptions);
+            }).not.toThrow();
+        });
+
+        it('should throw if no url is found', () => {
+            mockScene.Root.children = [
+                new Object3D(),
+                new Object3D(),
+                new Object3D(),
+            ];
+
+            expect(() => {
+                DIVEARQuickLook.Launch(mockScene, mockOptions);
+            }).toThrow();
         });
     });
 });

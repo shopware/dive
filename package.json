@@ -3,9 +3,9 @@
     "version": "1.18.4",
     "description": "Shopware Spatial Framework",
     "type": "module",
-    "main": "./build/dive.cjs",
-    "module": "./build/dive.js",
-    "types": "./build/dive.d.ts",
+    "main": "build/dive.cjs",
+    "module": "build/dive.js",
+    "types": "build/dive.d.ts",
     "files": [
         "build",
         "LICENSE",
@@ -51,13 +51,14 @@
         "ts-jest": "^29.1.2",
         "ts-node": "^10.9.2",
         "tsc": "^2.0.4",
-        "tsup": "^8.0.2",
-        "typescript": "^5.4.5",
-        "typescript-eslint": "^7.7.1"
+        "typescript": "^5.8.2",
+        "typescript-eslint": "^7.7.1",
+        "vite": "^6.2.1",
+        "vite-plugin-dts": "^4.5.3"
     },
     "scripts": {
-        "build": "tsup --env.DIVE_NODE_ENV production",
-        "dev": "tsup --watch --env.DIVE_NODE_ENV development",
+        "build": "vite build",
+        "dev": "vite build --watch",
         "lint": "eslint",
         "lint:actions": "yarn lint:actions:transpile && yarn lint:actions:check && yarn lint:actions:cleanup",
         "lint:actions:transpile": "yarn tsc --resolveJsonModule --esModuleInterop ci/lint/lint-actions.ts && mv ci/lint/lint-actions.js ci/lint/lint-actions.cjs",
