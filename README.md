@@ -496,6 +496,14 @@ DIVECommunication class via
     </tr>
     <tr>
         <td>
+            <a href="src/com/actions/renderer/startrender.ts"> START_RENDER </a>
+        </td>
+        <td>
+            Starts the render process.
+        </td>
+    </tr>
+    <tr>
+        <td>
             <a href="src/com/actions/object/updateobject.ts"> UPDATE_OBJECT </a>
         </td>
         <td>
