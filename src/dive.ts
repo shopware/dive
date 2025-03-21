@@ -23,6 +23,7 @@ import pkgjson from '../package.json';
 
 export type DIVESettings = {
     autoResize: boolean;
+    autoStart: boolean;
     displayAxes: boolean;
     renderer: Partial<DIVERendererSettings>;
     perspectiveCamera: Partial<DIVEPerspectiveCameraSettings>;
@@ -31,6 +32,7 @@ export type DIVESettings = {
 
 export const DIVEDefaultSettings: DIVESettings = {
     autoResize: true,
+    autoStart: true,
     displayAxes: false,
     renderer: DIVERendererDefaultSettings,
     perspectiveCamera: DIVEPerspectiveCameraDefaultSettings,
@@ -266,9 +268,6 @@ export default class DIVE {
             this.addResizeObserver();
         }
 
-        // whene everything is done, start the renderer
-        this.renderer.StartRenderer(this.scene, this.perspectiveCamera);
-
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         (window as any).DIVE = {
             PrintScene: () => {
@@ -307,6 +306,11 @@ export default class DIVE {
                            @@@@@@@                                @@@@@@
 
         `);
+
+        if (this._settings.autoStart) {
+            // when everything is done, start the renderer
+            this.renderer.StartRenderer(this.scene, this.perspectiveCamera);
+        }
     }
 
     public Dispose(): void {

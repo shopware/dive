@@ -92,6 +92,7 @@ jest.mock('../../toolbox/select/SelectTool', () => {
 const mockRenderer = {
     render: jest.fn(),
     OnResize: jest.fn(),
+    StartRenderer: jest.fn(),
 } as unknown as DIVERenderer;
 
 const mockScene = {
@@ -286,6 +287,12 @@ describe('dive/communication/DIVECommunication', () => {
         expect(() =>
             testCom.PerformAction('ADD_OBJECT', payload),
         ).not.toThrow();
+    });
+
+    it('should perform action START_RENDER', () => {
+        const success = testCom.PerformAction('START_RENDER');
+        expect(mockRenderer.StartRenderer).toHaveBeenCalledTimes(1);
+        expect(success).toBe(true);
     });
 
     it('should perform action ADD_OBJECT', () => {

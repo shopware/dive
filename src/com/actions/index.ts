@@ -1,3 +1,4 @@
+import START_RENDER from './renderer/startrender.ts';
 import SET_BACKGROUND from './scene/setbackground.ts';
 import RESET_CAMERA from './camera/resetcamera.ts';
 import SET_CAMERA_LAYER from './camera/setcameralayer.ts';
@@ -28,6 +29,7 @@ import EXPORT_SCENE from './scene/exportscene.ts';
 import LAUNCH_AR from './scene/launchar.ts';
 
 export interface Actions {
+    START_RENDER: START_RENDER;
     GET_ALL_SCENE_DATA: GET_ALL_SCENE_DATA;
     GET_ALL_OBJECTS: GET_ALL_OBJECTS;
     GET_OBJECTS: GET_OBJECTS;

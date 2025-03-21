@@ -1,7 +1,7 @@
 import type DIVEOrbitControls from '../controls/OrbitControls.ts';
 import { type DIVEScene } from '../scene/Scene.ts';
 import { type DIVEBaseTool } from './BaseTool.ts';
-import { type DIVESelectTool } from './select/SelectTool.ts';
+import { DIVESelectTool } from './select/SelectTool.ts';
 
 export type ToolType = 'select' | 'none';
 
@@ -22,8 +22,6 @@ export default class DIVEToolbox {
     private _selectTool: DIVESelectTool | null;
     public get selectTool(): DIVESelectTool {
         if (!this._selectTool) {
-            const DIVESelectTool = require('./select/SelectTool.ts')
-                .DIVESelectTool as typeof import('./select/SelectTool.ts').DIVESelectTool;
             this._selectTool = new DIVESelectTool(
                 this._scene,
                 this._controller,
