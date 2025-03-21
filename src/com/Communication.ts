@@ -120,6 +120,11 @@ export class DIVECommunication {
         let returnValue: Actions[Action]['RETURN'] = false;
 
         switch (action) {
+            case 'START_RENDER': {
+                this.renderer.StartRenderer(this.scene, this.controller.object);
+                returnValue = true;
+                break;
+            }
             case 'GET_ALL_SCENE_DATA': {
                 returnValue = this.getAllSceneData(
                     payload as Actions['GET_ALL_SCENE_DATA']['PAYLOAD'],
