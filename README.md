@@ -355,7 +355,7 @@ DIVECommunication class via
             <a href="src/com/actions/media/generatemedia.ts"> GENERATE_MEDIA </a>
         </td>
         <td>
-            Generates a screenshot, stores it in a Blob and writes the URL into the payload.
+            Generates a screenshot, stores it in a Blob and returns a Promise of a valid URI.
         </td>
     </tr>
     <tr>
