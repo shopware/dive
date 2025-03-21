@@ -1,7 +1,7 @@
 import type DIVEOrbitControls from '../controls/OrbitControls.ts';
 import { type DIVEScene } from '../scene/Scene.ts';
 import { type DIVEBaseTool } from './BaseTool.ts';
-import { type DIVESelectTool } from './select/SelectTool.ts';
+import { DIVESelectTool } from './select/SelectTool.ts';
 
 export type ToolType = 'select' | 'none';
 
@@ -20,25 +20,14 @@ export default class DIVEToolbox {
     private _activeTool: DIVEBaseTool | null;
 
     private _selectTool: DIVESelectTool | null;
-    public get selectTool(): Promise<DIVESelectTool> {
-        return new Promise((resolve, reject) => {
-            import('./select/SelectTool.ts')
-                .then((module) => {
-                    const DIVESelectTool = module.DIVESelectTool;
-                    this._selectTool = new DIVESelectTool(
-                        this._scene,
-                        this._controller,
-                    );
-                    resolve(this._selectTool);
-                })
-                .catch((error) => {
-                    console.error(
-                        'DIVE: Error while lazy-loading SelectTool module:',
-                        error,
-                    );
-                    reject(error);
-                });
-        });
+    public get selectTool(): DIVESelectTool {
+        if (!this._selectTool) {
+            this._selectTool = new DIVESelectTool(
+                this._scene,
+                this._controller,
+            );
+        }
+        return this._selectTool;
     }
 
     constructor(scene: DIVEScene, controller: DIVEOrbitControls) {
@@ -60,14 +49,13 @@ export default class DIVEToolbox {
         return this._activeTool;
     }
 
-    public async UseTool(tool: ToolType): Promise<void> {
+    public UseTool(tool: ToolType): void {
         this._activeTool?.Deactivate();
         switch (tool) {
             case 'select': {
                 this.addEventListeners();
-                const tool = await this.selectTool;
-                tool.Activate();
-                this._activeTool = tool;
+                this.selectTool.Activate();
+                this._activeTool = this.selectTool;
                 break;
             }
             case 'none': {
@@ -81,18 +69,16 @@ export default class DIVEToolbox {
         }
     }
 
-    public async SetGizmoMode(
-        mode: 'translate' | 'rotate' | 'scale',
-    ): Promise<void> {
-        (await this.selectTool).SetGizmoMode(mode);
+    public SetGizmoMode(mode: 'translate' | 'rotate' | 'scale'): void {
+        this.selectTool.SetGizmoMode(mode);
     }
 
-    public async SetGizmoVisibility(active: boolean): Promise<void> {
-        (await this.selectTool).SetGizmoVisibility(active);
+    public SetGizmoVisibility(active: boolean): void {
+        this.selectTool.SetGizmoVisibility(active);
     }
 
-    public async SetGizmoScaleLinked(linked: boolean): Promise<void> {
-        (await this.selectTool).SetGizmoScaleLinked(linked);
+    public SetGizmoScaleLinked(linked: boolean): void {
+        this.selectTool.SetGizmoScaleLinked(linked);
     }
 
     public onPointerMove(e: PointerEvent): void {

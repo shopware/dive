@@ -1,5 +1,5 @@
 export default interface START_RENDER {
     DESCRIPTION: 'Starts the render process.';
-    PAYLOAD?: undefined;
+    PAYLOAD: undefined;
     RETURN: boolean;
 }
