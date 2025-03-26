@@ -1,11 +1,49 @@
-/**
- * Merges two class prototypes to a new one.
- */
+/* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable @typescript-eslint/ban-types */
+// A generic constructor type.
+type Constructor<T = {}> = new (...args: any[]) => T;
 
-export const applyMixins = (
-    derivedCtor: { prototype: object },
-    constructors: { prototype: object }[],
-): void => {
+// Converts a union of types to an intersection of types.
+type UnionToIntersection<U> = (U extends any ? (k: U) => void : never) extends (
+    k: infer I,
+) => void
+    ? I
+    : never;
+
+// Merges the instance types of the base class and all mixin classes.
+type MixedInstance<
+    T extends Constructor,
+    K extends readonly Constructor[],
+> = InstanceType<T> & UnionToIntersection<InstanceType<K[number]>>;
+
+// Recursively flatten the constructor parameter lists for a tuple of constructors.
+type FlattenConstructorParams<T extends readonly Constructor[]> =
+    T extends readonly [infer First, ...infer Rest]
+        ? First extends Constructor
+            ? Rest extends readonly Constructor[]
+                ? [
+                      ...ConstructorParameters<First>,
+                      ...FlattenConstructorParams<Rest>,
+                  ]
+                : ConstructorParameters<First>
+            : []
+        : [];
+
+// Constructs the mixed constructor type.
+// It accepts the parameters of T followed by all the parameters of K and
+// produces an instance that is the intersection of the instance types.
+type MixedConstructor<
+    T extends Constructor,
+    K extends readonly Constructor[],
+> = new (
+    ...args: [...ConstructorParameters<T>, ...FlattenConstructorParams<K>]
+) => MixedInstance<T, K>;
+
+// The applyMixins function that applies the mixins to the base class prototype.
+export function applyMixins<
+    T extends Constructor,
+    K extends readonly Constructor[],
+>(derivedCtor: T, constructors: K): MixedConstructor<T, K> {
     constructors.forEach((baseCtor) => {
         Object.getOwnPropertyNames(baseCtor.prototype).forEach((name) => {
             Object.defineProperty(
@@ -15,4 +53,5 @@ export const applyMixins = (
             );
         });
     });
-};
+    return derivedCtor as unknown as MixedConstructor<T, K>;
+}
