@@ -4,9 +4,9 @@
  * @module
  */
 
-export interface DIVEMovable {
-    isMovable: true;
-    onMoveStart?: () => void;
-    onMove?: () => void;
-    onMoveEnd?: () => void;
+export class DIVEMovable {
+    readonly isMovable: true = true;
+    public onMoveStart?(): void;
+    public onMove?(): void;
+    public onMoveEnd?(): void;
 }

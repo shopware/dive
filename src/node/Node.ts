@@ -2,15 +2,17 @@ import { Box3, Object3D, Vector3, type Vector3Like } from 'three';
 import { PRODUCT_LAYER_MASK } from '../constant/VisibilityLayerMask';
 import { DIVECommunication } from '../com/Communication';
 
-import { type DIVEMovable } from '../interface/Movable';
-import { type DIVESelectable } from '../interface/Selectable';
+import { DIVEMovable } from '../interface/Movable';
+import { DIVESelectable } from '../interface/Selectable';
 import { type TransformControls } from 'three/examples/jsm/controls/TransformControls';
 import { type DIVEGroup } from '../group/Group';
+import { applyMixins } from '../helper/applyMixins/applyMixins';
 
-export class DIVENode extends Object3D implements DIVESelectable, DIVEMovable {
+export class DIVENode extends applyMixins(Object3D, [
+    DIVESelectable,
+    DIVEMovable,
+]) {
     readonly isDIVENode: true = true;
-    readonly isSelectable: true = true;
-    readonly isMovable: true = true;
 
     public gizmo: TransformControls | null = null;
 

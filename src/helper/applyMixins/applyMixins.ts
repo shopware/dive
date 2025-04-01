@@ -39,7 +39,20 @@ type MixedConstructor<
     ...args: [...ConstructorParameters<T>, ...FlattenConstructorParams<K>]
 ) => MixedInstance<T, K>;
 
-// The applyMixins function that applies the mixins to the base class prototype.
+/**
+ * Applies mixins to a base class.
+ *
+ * @param derivedCtor Base class constructor
+ * @param constructors Additional constructors that get mixed into the base class
+ * @returns A mixed constructor with the instance type of the base class and all mixin classes
+ * @example
+ * ```
+ * const SelectableMovableObject3D = applyMixins(Object3D, [DIVESelectable, DIVEMovable]);
+ * const instance = new SelectableMovableObject3D();
+ * instance.onMove();
+ * instance.onSelect();
+ * ```
+ */
 export function applyMixins<
     T extends Constructor,
     K extends readonly Constructor[],

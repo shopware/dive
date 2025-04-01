@@ -4,8 +4,8 @@
  * @module
  */
 
-export interface DIVESelectable {
-    isSelectable: true;
-    onSelect?: () => void;
-    onDeselect?: () => void;
+export class DIVESelectable {
+    readonly isSelectable: true = true;
+    public onSelect?(): void;
+    public onDeselect?(): void;
 }
