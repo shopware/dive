@@ -6,6 +6,21 @@
     "main": "build/dive.cjs",
     "module": "build/dive.js",
     "types": "build/dive.d.ts",
+    "exports": {
+        ".": {
+            "types": "./build/dive.d.ts",
+            "node": {
+                "import": {
+                    "default": "./build/dive.mjs"
+                },
+                "require": {
+                    "default": "./build/dive.cjs"
+                }
+            },
+            "import": "./build/dive.mjs",
+            "require": "./build/dive.cjs"
+        }
+    },
     "files": [
         "build",
         "LICENSE",
