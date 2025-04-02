@@ -1,7 +1,12 @@
 import { Object3D } from 'three';
 import { GLTFExporter } from 'three/examples/jsm/exporters/GLTFExporter';
 import { USDZExporter } from 'three/examples/jsm/exporters/USDZExporter';
-import { type FileType } from '../types';
+import {
+    type FileType,
+    type GLTFExporterOptions,
+    type USDZExporterOptions,
+    type ExportOptions,
+} from '../types';
 
 export class Exporter {
     private _gltfExporter: GLTFExporter;
@@ -12,22 +17,32 @@ export class Exporter {
         this._usdzExporter = new USDZExporter();
     }
 
-    public async export(
+    public async export<T extends FileType>(
         object: Object3D,
-        type: FileType,
+        type: T,
+        options?: ExportOptions<T>,
     ): Promise<ArrayBuffer> {
         switch (type) {
-            case 'glb':
-                return this._exportGlb(object);
-            case 'gltf':
-                return this._exportGltf(object);
-            case 'usdz':
-                return this._exportUsdz(object);
+            case 'glb': {
+                return this._exportGlb(object, options);
+            }
+            case 'gltf': {
+                return this._exportGltf(object, options);
+            }
+            case 'usdz': {
+                return this._exportUsdz(object, options);
+            }
+            default:
+                throw new Error(`Unsupported file type: ${type}`);
         }
     }
 
-    private async _exportGlb(object: Object3D): Promise<ArrayBuffer> {
+    private async _exportGlb(
+        object: Object3D,
+        options?: GLTFExporterOptions,
+    ): Promise<ArrayBuffer> {
         const result = await this._gltfExporter.parseAsync(object, {
+            ...options,
             binary: true,
         });
         if (result instanceof ArrayBuffer) {
@@ -36,8 +51,12 @@ export class Exporter {
         throw new Error('Failed to export GLB: expected ArrayBuffer');
     }
 
-    private async _exportGltf(object: Object3D): Promise<ArrayBuffer> {
+    private async _exportGltf(
+        object: Object3D,
+        options?: GLTFExporterOptions,
+    ): Promise<ArrayBuffer> {
         const json = await this._gltfExporter.parseAsync(object, {
+            ...options,
             binary: false,
         });
         const text = JSON.stringify(json);
@@ -46,8 +65,11 @@ export class Exporter {
         return bytes.buffer as ArrayBuffer;
     }
 
-    private async _exportUsdz(object: Object3D): Promise<ArrayBuffer> {
-        const result = await this._usdzExporter.parse(object);
+    private async _exportUsdz(
+        object: Object3D,
+        options?: USDZExporterOptions,
+    ): Promise<ArrayBuffer> {
+        const result = await this._usdzExporter.parse(object, options);
         return result.buffer as ArrayBuffer;
     }
 }
