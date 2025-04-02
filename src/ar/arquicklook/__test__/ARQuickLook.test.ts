@@ -1,7 +1,7 @@
 import { Box3, Color, Euler, Mesh, Object3D, Vector3 } from 'three';
 import { DIVEScene } from '../../../scene/Scene';
-import { DIVEAROptions } from '../../AR';
-import { DIVEARQuickLook } from '../ARQuickLook';
+import { ARSystemOptions } from '../../AR';
+import { ARQuickLook } from '../ARQuickLook';
 import { Converter } from '../../../converter/Converter';
 
 jest.mock('../../../scene/Scene', () => {
@@ -46,7 +46,7 @@ document.createElement = jest.fn().mockReturnValue({
 
 describe('DIVEARQuickLook', () => {
     let mockScene: DIVEScene;
-    let mockOptions: DIVEAROptions;
+    let mockOptions: ARSystemOptions;
     let mockModels: Object3D[];
     const mockUri = 'https://example.com/model.glb';
 
@@ -69,19 +69,19 @@ describe('DIVEARQuickLook', () => {
 
     describe('constructor', () => {
         it('should create an instance with URI and options', () => {
-            const quickLook = new DIVEARQuickLook(mockUri, mockOptions);
-            expect(quickLook).toBeInstanceOf(DIVEARQuickLook);
+            const quickLook = new ARQuickLook(mockUri, mockOptions);
+            expect(quickLook).toBeInstanceOf(ARQuickLook);
         });
 
         it('should create an instance with just URI', () => {
-            const quickLook = new DIVEARQuickLook(mockUri);
-            expect(quickLook).toBeInstanceOf(DIVEARQuickLook);
+            const quickLook = new ARQuickLook(mockUri);
+            expect(quickLook).toBeInstanceOf(ARQuickLook);
         });
     });
 
     describe('launch', () => {
         it('should convert and launch with default options', async () => {
-            const quickLook = new DIVEARQuickLook(mockUri);
+            const quickLook = new ARQuickLook(mockUri);
             await quickLook.launch();
 
             expect(Converter.convert).toHaveBeenCalledWith(mockUri);
@@ -97,11 +97,11 @@ describe('DIVEARQuickLook', () => {
         });
 
         it('should convert and launch with custom options', async () => {
-            const options: DIVEAROptions = {
+            const options: ARSystemOptions = {
                 arPlacement: 'vertical',
                 arScale: 'fixed',
             };
-            const quickLook = new DIVEARQuickLook(mockUri, options);
+            const quickLook = new ARQuickLook(mockUri, options);
             await quickLook.launch();
 
             expect(Converter.convert).toHaveBeenCalledWith(mockUri);
@@ -120,7 +120,7 @@ describe('DIVEARQuickLook', () => {
             const error = new Error('Conversion failed');
             ((Converter as any).to as jest.Mock).mockRejectedValueOnce(error);
 
-            const quickLook = new DIVEARQuickLook(mockUri);
+            const quickLook = new ARQuickLook(mockUri);
             await expect(quickLook.launch()).rejects.toThrow(error);
         });
 
@@ -130,7 +130,7 @@ describe('DIVEARQuickLook', () => {
                 mockBuffer,
             );
 
-            const quickLook = new DIVEARQuickLook(mockUri);
+            const quickLook = new ARQuickLook(mockUri);
             await quickLook.launch();
 
             expect(URL.createObjectURL).toHaveBeenCalledWith(
@@ -141,11 +141,11 @@ describe('DIVEARQuickLook', () => {
         });
 
         it('should add scale parameter when arScale is fixed', async () => {
-            const options: DIVEAROptions = {
+            const options: ARSystemOptions = {
                 arPlacement: 'horizontal',
                 arScale: 'fixed',
             };
-            const quickLook = new DIVEARQuickLook(mockUri, options);
+            const quickLook = new ARQuickLook(mockUri, options);
             await quickLook.launch();
 
             const anchor = document.createElement('a');

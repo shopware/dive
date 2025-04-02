@@ -1,6 +1,6 @@
 import { ESystem, EWebXRUnsupportedReason } from '../types/info';
 
-export class DIVEInfo {
+export class SystemInfo {
     private static _supportsWebXR: boolean = false;
     private static _webXRUnsupportedReason: EWebXRUnsupportedReason | null =
         null;

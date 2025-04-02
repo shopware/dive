@@ -18,7 +18,7 @@ import { DIVEAnimationSystem } from './animation/AnimationSystem.ts';
 import DIVEAxisCamera from './axiscamera/AxisCamera.ts';
 import { getObjectDelta } from './helper/getObjectDelta/getObjectDelta.ts';
 import { MathUtils } from 'three';
-import { DIVEInfo } from './info/Info.ts';
+import { SystemInfo } from './info/Info.ts';
 import pkgjson from '../package.json';
 
 export type DIVESettings = {
@@ -158,8 +158,8 @@ export default class DIVE {
         return this.renderer.domElement;
     }
 
-    public get Info(): DIVEInfo {
-        return DIVEInfo;
+    public get Info(): SystemInfo {
+        return SystemInfo;
     }
 
     // setters

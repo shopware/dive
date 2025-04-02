@@ -1,8 +1,8 @@
 import { Box3, Color, Euler, Mesh, Object3D, Vector3 } from 'three';
 import { DIVEScene } from '../../../scene/Scene';
-import { DIVEAROptions } from '../../AR';
-import { DIVESceneViewer } from '../SceneViewer';
-import { DIVEInfo } from '../../../info/Info';
+import { ARSystemOptions } from '../../AR';
+import { SceneViewer } from '../SceneViewer';
+import { SystemInfo } from '../../../info/Info';
 
 // Mock DIVEInfo
 jest.mock('../../../info/Info', () => ({
@@ -48,7 +48,7 @@ document.createElement = mockCreateElement.mockReturnValue({
 
 describe('DIVESceneViewer', () => {
     const mockUri = 'https://example.com/model.glb';
-    let mockOptions: DIVEAROptions;
+    let mockOptions: ARSystemOptions;
 
     beforeEach(() => {
         mockOptions = {
@@ -60,19 +60,19 @@ describe('DIVESceneViewer', () => {
 
     describe('constructor', () => {
         it('should create an instance with URI and options', () => {
-            const sceneViewer = new DIVESceneViewer(mockUri, mockOptions);
-            expect(sceneViewer).toBeInstanceOf(DIVESceneViewer);
+            const sceneViewer = new SceneViewer(mockUri, mockOptions);
+            expect(sceneViewer).toBeInstanceOf(SceneViewer);
         });
 
         it('should create an instance with just URI', () => {
-            const sceneViewer = new DIVESceneViewer(mockUri);
-            expect(sceneViewer).toBeInstanceOf(DIVESceneViewer);
+            const sceneViewer = new SceneViewer(mockUri);
+            expect(sceneViewer).toBeInstanceOf(SceneViewer);
         });
     });
 
     describe('launch', () => {
         it('should launch with default options', () => {
-            const sceneViewer = new DIVESceneViewer(mockUri);
+            const sceneViewer = new SceneViewer(mockUri);
             sceneViewer.launch();
 
             expect(mockCreateElement).toHaveBeenCalledWith('a');
@@ -84,11 +84,11 @@ describe('DIVESceneViewer', () => {
         });
 
         it('should launch with custom options', () => {
-            const options: DIVEAROptions = {
+            const options: ARSystemOptions = {
                 arPlacement: 'vertical',
                 arScale: 'fixed',
             };
-            const sceneViewer = new DIVESceneViewer(mockUri, options);
+            const sceneViewer = new SceneViewer(mockUri, options);
             sceneViewer.launch();
 
             expect(mockCreateElement).toHaveBeenCalledWith('a');
@@ -104,7 +104,7 @@ describe('DIVESceneViewer', () => {
         });
 
         it('should handle sound parameter in URL', () => {
-            const sceneViewer = new DIVESceneViewer(mockUri);
+            const sceneViewer = new SceneViewer(mockUri);
             const params = new URLSearchParams();
             params.set('sound', 'sound.mp3');
 
@@ -116,7 +116,7 @@ describe('DIVESceneViewer', () => {
         });
 
         it('should handle link parameter in URL', () => {
-            const sceneViewer = new DIVESceneViewer(mockUri);
+            const sceneViewer = new SceneViewer(mockUri);
             const params = new URLSearchParams();
             params.set('link', 'details.html');
 
@@ -128,7 +128,7 @@ describe('DIVESceneViewer', () => {
         });
 
         it('should create intent URL with correct parameters', () => {
-            const sceneViewer = new DIVESceneViewer(mockUri);
+            const sceneViewer = new SceneViewer(mockUri);
             const params = new URLSearchParams();
             params.set('mode', 'ar_preferred');
 
@@ -151,7 +151,7 @@ describe('DIVESceneViewer', () => {
 
         it('should handle relative model URLs', () => {
             const relativeUri = '/models/model.glb';
-            const sceneViewer = new DIVESceneViewer(relativeUri);
+            const sceneViewer = new SceneViewer(relativeUri);
             sceneViewer.launch();
 
             expect(mockSetAttribute).toHaveBeenCalledWith(
@@ -164,7 +164,7 @@ describe('DIVESceneViewer', () => {
 
         it('should handle absolute model URLs', () => {
             const absoluteUri = 'https://cdn.example.com/model.glb';
-            const sceneViewer = new DIVESceneViewer(absoluteUri);
+            const sceneViewer = new SceneViewer(absoluteUri);
             sceneViewer.launch();
 
             expect(mockSetAttribute).toHaveBeenCalledWith(
@@ -177,7 +177,7 @@ describe('DIVESceneViewer', () => {
 
         it('should handle special characters in model URL', () => {
             const specialUri = 'https://example.com/model with spaces.glb';
-            const sceneViewer = new DIVESceneViewer(specialUri);
+            const sceneViewer = new SceneViewer(specialUri);
             sceneViewer.launch();
 
             expect(mockSetAttribute).toHaveBeenCalledWith(

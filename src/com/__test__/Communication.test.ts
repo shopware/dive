@@ -34,6 +34,7 @@ import {
     type COMPov,
 } from '../types';
 import { type DIVESceneObject } from '../../types';
+import { type ARSystemOptions } from '../../ar/AR';
 
 const mockModule: Record<string, any> = {
     get: jest.fn().mockReturnValue(Promise.resolve({})),
@@ -1005,14 +1006,19 @@ describe('dive/communication/DIVECommunication', () => {
 
     it('should perform action LAUNCH_AR', async () => {
         jest.spyOn(mockModule, 'get').mockResolvedValue({
-            Launch: jest.fn(),
+            launch: jest.fn(),
         });
         const arModule = await testCom['_ar'].get();
         const arLaunchSpy = jest
-            .spyOn(arModule, 'Launch')
+            .spyOn(arModule, 'launch')
             .mockResolvedValueOnce();
 
-        const result = await testCom.PerformAction('LAUNCH_AR', undefined);
+        const result = await testCom.PerformAction('LAUNCH_AR', {
+            uri: 'https://example.com',
+            options: {
+                arPlacement: 'horizontal',
+            } as ARSystemOptions,
+        });
         expect(arLaunchSpy).toHaveBeenCalledTimes(1);
     });
 
