@@ -1,37 +1,27 @@
-import { type DIVEScene } from '../../scene/Scene';
 import { type DIVEAROptions } from '../AR';
 import { Converter } from '../../converter/Converter';
 import { type USDZExporterOptions } from '../../types';
 
 export class DIVEARQuickLook {
-    public static async launch(
-        uri: string,
-        options?: DIVEAROptions,
-    ): Promise<void> {
-        const usdzUrl = await this.convertToUSDZ(uri, options);
-        return this.launchARQuickLook(usdzUrl, options);
+    constructor(
+        private readonly _uri: string,
+        private readonly _options?: DIVEAROptions,
+    ) {}
+
+    public async launch(): Promise<void> {
+        const usdzUrl = await this.convertToUSDZ();
+        return this.launchARQuickLook(usdzUrl);
     }
 
-    public static async launchFromScene(
-        scene: DIVEScene,
-        options?: DIVEAROptions,
-    ): Promise<void> {
-        const url = this.findARQuickLookSrc(scene);
-        return this.launch(url, options);
-    }
-
-    private static async convertToUSDZ(
-        uri: string,
-        options?: DIVEAROptions,
-    ): Promise<string> {
+    private async convertToUSDZ(): Promise<string> {
         // Convert the file to USDZ format
-        const usdzBuffer = await Converter.convert(uri).to('usdz', {
+        const usdzBuffer = await Converter.convert(this._uri).to('usdz', {
             quickLookCompatible: true,
             ar: {
                 anchoring: { type: 'plane' },
                 planeAnchoring: {
                     alignment:
-                        options?.arPlacement === 'vertical'
+                        this._options?.arPlacement === 'vertical'
                             ? 'vertical'
                             : 'horizontal',
                 },
@@ -43,29 +33,9 @@ export class DIVEARQuickLook {
         return URL.createObjectURL(blob);
     }
 
-    private static findARQuickLookSrc(scene: DIVEScene): string {
-        let uri: string | null = null;
-
-        scene.traverse((object) => {
-            if (uri) return;
-            if (object.userData.uri) {
-                uri = object.userData.uri;
-            }
-        });
-
-        if (!uri) {
-            throw new Error('No model found in scene');
-        }
-
-        return uri;
-    }
-
-    private static launchARQuickLook(
-        uri: string,
-        options?: DIVEAROptions,
-    ): Promise<void> {
+    private launchARQuickLook(uri: string): Promise<void> {
         return new Promise((resolve) => {
-            if (options?.arScale === 'fixed') {
+            if (this._options?.arScale === 'fixed') {
                 uri = uri.concat('#allowsContentScaling=0');
             }
 
