@@ -4,6 +4,14 @@ import { DIVEScene } from '../../scene/Scene';
 import { DIVEARQuickLook } from '../arquicklook/ARQuickLook';
 import { DIVESceneViewer } from '../sceneviewer/SceneViewer';
 
+// Mock DIVEInfo
+jest.mock('../../info/Info', () => ({
+    DIVEInfo: {
+        GetSystem: jest.fn(),
+        GetSupportsARQuickLook: jest.fn(),
+    },
+}));
+
 // Mock ARQuickLook
 jest.mock('../arquicklook/ARQuickLook', () => ({
     DIVEARQuickLook: jest.fn().mockImplementation(() => ({
@@ -13,9 +21,9 @@ jest.mock('../arquicklook/ARQuickLook', () => ({
 
 // Mock SceneViewer
 jest.mock('../sceneviewer/SceneViewer', () => ({
-    DIVESceneViewer: {
-        Launch: jest.fn(),
-    },
+    DIVESceneViewer: jest.fn().mockImplementation(() => ({
+        launch: jest.fn(),
+    })),
 }));
 
 describe('DIVEAR', () => {
@@ -32,8 +40,8 @@ describe('DIVEAR', () => {
     describe('launch', () => {
         describe('AR Quick Look', () => {
             it('should launch ARQuickLook on iOS', async () => {
-                jest.spyOn(DIVEInfo, 'GetSystem').mockReturnValue('iOS');
-                jest.spyOn(DIVEInfo, 'GetSupportsARQuickLook').mockReturnValue(
+                (DIVEInfo.GetSystem as jest.Mock).mockReturnValue('iOS');
+                (DIVEInfo.GetSupportsARQuickLook as jest.Mock).mockReturnValue(
                     true,
                 );
 
@@ -54,8 +62,8 @@ describe('DIVEAR', () => {
             });
 
             it('should launch ARQuickLook on iOS with options', async () => {
-                jest.spyOn(DIVEInfo, 'GetSystem').mockReturnValue('iOS');
-                jest.spyOn(DIVEInfo, 'GetSupportsARQuickLook').mockReturnValue(
+                (DIVEInfo.GetSystem as jest.Mock).mockReturnValue('iOS');
+                (DIVEInfo.GetSupportsARQuickLook as jest.Mock).mockReturnValue(
                     true,
                 );
 
@@ -78,8 +86,8 @@ describe('DIVEAR', () => {
             });
 
             it('should not launch ARQuickLook on iOS if not supported', async () => {
-                jest.spyOn(DIVEInfo, 'GetSystem').mockReturnValue('iOS');
-                jest.spyOn(DIVEInfo, 'GetSupportsARQuickLook').mockReturnValue(
+                (DIVEInfo.GetSystem as jest.Mock).mockReturnValue('iOS');
+                (DIVEInfo.GetSupportsARQuickLook as jest.Mock).mockReturnValue(
                     false,
                 );
 
@@ -102,11 +110,57 @@ describe('DIVEAR', () => {
                 );
                 consoleLogSpy.mockRestore();
             });
+
+            it('should handle ARQuickLook launch errors', async () => {
+                (DIVEInfo.GetSystem as jest.Mock).mockReturnValue('iOS');
+                (DIVEInfo.GetSupportsARQuickLook as jest.Mock).mockReturnValue(
+                    true,
+                );
+
+                const mockError = new Error('Launch failed');
+                const mockInstance = {
+                    launch: jest.fn().mockImplementation(() => {
+                        throw mockError;
+                    }),
+                };
+                (DIVEARQuickLook as jest.Mock).mockImplementation(
+                    () => mockInstance,
+                );
+
+                const consoleLogSpy = jest
+                    .spyOn(console, 'log')
+                    .mockImplementation();
+                const consoleErrorSpy = jest
+                    .spyOn(console, 'error')
+                    .mockImplementation();
+
+                try {
+                    await diveAR.launch(mockUri);
+                    fail('Expected launch to reject');
+                } catch (error: unknown) {
+                    if (error instanceof Error) {
+                        expect(error.message).toBe('Launch failed');
+                    } else {
+                        fail('Expected error to be an Error instance');
+                    }
+                }
+
+                expect(consoleLogSpy).toHaveBeenCalledWith(
+                    'DIVE: Launching AR with ARQuickLook ...',
+                );
+                expect(consoleErrorSpy).toHaveBeenCalledWith(
+                    'Error launching ARQuickLook:',
+                    mockError,
+                );
+
+                consoleLogSpy.mockRestore();
+                consoleErrorSpy.mockRestore();
+            });
         });
 
         describe('Scene Viewer', () => {
             it('should launch SceneViewer on Android', async () => {
-                jest.spyOn(DIVEInfo, 'GetSystem').mockReturnValue('Android');
+                (DIVEInfo.GetSystem as jest.Mock).mockReturnValue('Android');
 
                 const consoleLogSpy = jest
                     .spyOn(console, 'log')
@@ -114,8 +168,8 @@ describe('DIVEAR', () => {
 
                 await diveAR.launch(mockUri);
 
-                expect(DIVESceneViewer.Launch).toHaveBeenCalledWith(
-                    scene,
+                expect(DIVESceneViewer).toHaveBeenCalledWith(
+                    mockUri,
                     undefined,
                 );
                 expect(consoleLogSpy).toHaveBeenCalledWith(
@@ -125,7 +179,7 @@ describe('DIVEAR', () => {
             });
 
             it('should launch SceneViewer on Android with options', async () => {
-                jest.spyOn(DIVEInfo, 'GetSystem').mockReturnValue('Android');
+                (DIVEInfo.GetSystem as jest.Mock).mockReturnValue('Android');
 
                 const options: DIVEAROptions = {
                     arPlacement: 'vertical',
@@ -138,19 +192,59 @@ describe('DIVEAR', () => {
 
                 await diveAR.launch(mockUri, options);
 
-                expect(DIVESceneViewer.Launch).toHaveBeenCalledWith(
-                    scene,
-                    options,
-                );
+                expect(DIVESceneViewer).toHaveBeenCalledWith(mockUri, options);
                 expect(consoleLogSpy).toHaveBeenCalledWith(
                     'DIVE: Launching AR with SceneViewer ...',
                 );
                 consoleLogSpy.mockRestore();
             });
+
+            it('should handle SceneViewer launch errors', async () => {
+                (DIVEInfo.GetSystem as jest.Mock).mockReturnValue('Android');
+
+                const mockError = new Error('Launch failed');
+                const mockInstance = {
+                    launch: jest.fn().mockImplementation(() => {
+                        throw mockError;
+                    }),
+                };
+                (DIVESceneViewer as jest.Mock).mockImplementation(
+                    () => mockInstance,
+                );
+
+                const consoleLogSpy = jest
+                    .spyOn(console, 'log')
+                    .mockImplementation();
+                const consoleErrorSpy = jest
+                    .spyOn(console, 'error')
+                    .mockImplementation();
+
+                try {
+                    await diveAR.launch(mockUri);
+                    fail('Expected launch to reject');
+                } catch (error: unknown) {
+                    if (error instanceof Error) {
+                        expect(error.message).toBe('Launch failed');
+                    } else {
+                        fail('Expected error to be an Error instance');
+                    }
+                }
+
+                expect(consoleLogSpy).toHaveBeenCalledWith(
+                    'DIVE: Launching AR with SceneViewer ...',
+                );
+                expect(consoleErrorSpy).toHaveBeenCalledWith(
+                    'Error launching SceneViewer:',
+                    mockError,
+                );
+
+                consoleLogSpy.mockRestore();
+                consoleErrorSpy.mockRestore();
+            });
         });
 
         it('should reject on non-mobile systems', async () => {
-            jest.spyOn(DIVEInfo, 'GetSystem').mockReturnValue('Windows');
+            (DIVEInfo.GetSystem as jest.Mock).mockReturnValue('Windows');
 
             const consoleLogSpy = jest
                 .spyOn(console, 'log')

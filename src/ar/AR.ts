@@ -23,7 +23,7 @@ export class DIVEAR {
         }
 
         if (system === 'Android') {
-            return this.trySceneViewer(options);
+            return this.trySceneViewer(uri, options);
         }
 
         console.log(
@@ -48,8 +48,6 @@ export class DIVEAR {
 
         console.log('DIVE: Launching AR with ARQuickLook ...');
 
-        // Launch ARQuickLook
-
         try {
             return new DIVEARQuickLook(uri, options).launch();
         } catch (error) {
@@ -58,14 +56,21 @@ export class DIVEAR {
         }
     }
 
-    private async trySceneViewer(options?: DIVEAROptions): Promise<void> {
+    private async trySceneViewer(
+        uri: string,
+        options?: DIVEAROptions,
+    ): Promise<void> {
         // actually we don't have to try here, because SceneViewer is supported on all devices by now.
         // if there are no AR services (ARCore) installed on the device, SceneViewer will only show the model in 3D.
         // we also have no options to detect if SceneViewer is supported.
 
         console.log('DIVE: Launching AR with SceneViewer ...');
 
-        DIVESceneViewer.Launch(this._scene, options);
-        return Promise.resolve();
+        try {
+            return new DIVESceneViewer(uri, options).launch();
+        } catch (error) {
+            console.error('Error launching SceneViewer:', error);
+            return Promise.reject(error);
+        }
     }
 }

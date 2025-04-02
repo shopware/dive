@@ -293,7 +293,7 @@ export class DIVECommunication {
                         .get()
                         .then((ar) => {
                             resolve(
-                                ar.Launch(
+                                ar.launch(
                                     payload as Actions['LAUNCH_AR']['PAYLOAD'],
                                 ),
                             );
