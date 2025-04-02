@@ -1,9 +1,9 @@
-import { type DIVEAROptions } from '../AR';
+import { type ARSystemOptions } from '../AR';
 
-export class DIVESceneViewer {
+export class SceneViewer {
     constructor(
         private readonly _uri: string,
-        private readonly _options?: DIVEAROptions,
+        private readonly _options?: ARSystemOptions,
     ) {}
 
     public launch(): void {

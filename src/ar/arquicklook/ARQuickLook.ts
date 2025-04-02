@@ -1,11 +1,11 @@
-import { type DIVEAROptions } from '../AR';
+import { type ARSystemOptions } from '../AR';
 import { Converter } from '../../converter/Converter';
 import { type USDZExporterOptions } from '../../types';
 
-export class DIVEARQuickLook {
+export class ARQuickLook {
     constructor(
         private readonly _uri: string,
-        private readonly _options?: DIVEAROptions,
+        private readonly _options?: ARSystemOptions,
     ) {}
 
     public async launch(): Promise<void> {
