@@ -1,24 +1,17 @@
 import { DIVEAR, type DIVEAROptions } from '../AR';
 import { DIVEInfo } from '../../info/Info';
-import { DIVERenderer } from '../../renderer/Renderer';
 import { DIVEScene } from '../../scene/Scene';
-import DIVEOrbitControls from '../../controls/OrbitControls';
 import { DIVEARQuickLook } from '../arquicklook/ARQuickLook';
 import { DIVESceneViewer } from '../sceneviewer/SceneViewer';
-import { DIVEWebXR } from '../webxr/WebXR';
 
+// Mock ARQuickLook
 jest.mock('../arquicklook/ARQuickLook', () => ({
-    DIVEARQuickLook: {
-        Launch: jest.fn(),
-    },
+    DIVEARQuickLook: jest.fn().mockImplementation(() => ({
+        launch: jest.fn().mockResolvedValue(undefined),
+    })),
 }));
 
-jest.mock('../webxr/WebXR', () => ({
-    DIVEWebXR: {
-        Launch: jest.fn(() => Promise.resolve()),
-    },
-}));
-
+// Mock SceneViewer
 jest.mock('../sceneviewer/SceneViewer', () => ({
     DIVESceneViewer: {
         Launch: jest.fn(),
@@ -26,43 +19,61 @@ jest.mock('../sceneviewer/SceneViewer', () => ({
 }));
 
 describe('DIVEAR', () => {
-    let renderer: DIVERenderer;
     let scene: DIVEScene;
-    let controller: DIVEOrbitControls;
     let diveAR: DIVEAR;
+    const mockUri = 'https://example.com/model.glb';
 
     beforeEach(() => {
-        renderer = {} as DIVERenderer;
         scene = {} as DIVEScene;
-        controller = {} as DIVEOrbitControls;
-        diveAR = new DIVEAR(renderer, scene, controller);
+        diveAR = new DIVEAR(scene);
+        jest.clearAllMocks();
     });
 
-    describe('Launch', () => {
+    describe('launch', () => {
         describe('AR Quick Look', () => {
             it('should launch ARQuickLook on iOS', async () => {
                 jest.spyOn(DIVEInfo, 'GetSystem').mockReturnValue('iOS');
                 jest.spyOn(DIVEInfo, 'GetSupportsARQuickLook').mockReturnValue(
                     true,
                 );
-                const arQuickLookLaunchSpy = jest.spyOn(
-                    DIVEARQuickLook,
-                    'Launch',
-                );
 
                 const consoleLogSpy = jest
                     .spyOn(console, 'log')
                     .mockImplementation();
 
-                await diveAR.Launch();
+                await diveAR.launch(mockUri);
 
-                expect(arQuickLookLaunchSpy).toHaveBeenCalledWith(
-                    scene,
+                expect(DIVEARQuickLook).toHaveBeenCalledWith(
+                    mockUri,
                     undefined,
                 );
-                arQuickLookLaunchSpy.mockRestore();
+                expect(consoleLogSpy).toHaveBeenCalledWith(
+                    'DIVE: Launching AR with ARQuickLook ...',
+                );
+                consoleLogSpy.mockRestore();
+            });
 
-                expect(consoleLogSpy).toHaveBeenCalled();
+            it('should launch ARQuickLook on iOS with options', async () => {
+                jest.spyOn(DIVEInfo, 'GetSystem').mockReturnValue('iOS');
+                jest.spyOn(DIVEInfo, 'GetSupportsARQuickLook').mockReturnValue(
+                    true,
+                );
+
+                const options: DIVEAROptions = {
+                    arPlacement: 'vertical',
+                    arScale: 'fixed',
+                };
+
+                const consoleLogSpy = jest
+                    .spyOn(console, 'log')
+                    .mockImplementation();
+
+                await diveAR.launch(mockUri, options);
+
+                expect(DIVEARQuickLook).toHaveBeenCalledWith(mockUri, options);
+                expect(consoleLogSpy).toHaveBeenCalledWith(
+                    'DIVE: Launching AR with ARQuickLook ...',
+                );
                 consoleLogSpy.mockRestore();
             });
 
@@ -71,21 +82,24 @@ describe('DIVEAR', () => {
                 jest.spyOn(DIVEInfo, 'GetSupportsARQuickLook').mockReturnValue(
                     false,
                 );
-                const arQuickLookLaunchSpy = jest.spyOn(
-                    DIVEARQuickLook,
-                    'Launch',
-                );
 
                 const consoleLogSpy = jest
                     .spyOn(console, 'log')
                     .mockImplementation();
 
-                await diveAR.Launch().catch(() => {});
-
-                expect(arQuickLookLaunchSpy).not.toHaveBeenCalled();
-                arQuickLookLaunchSpy.mockRestore();
-
-                expect(consoleLogSpy).toHaveBeenCalled();
+                try {
+                    await diveAR.launch(mockUri);
+                    fail('Expected launch to reject');
+                } catch (error: unknown) {
+                    if (error instanceof Error) {
+                        expect(error.message).toBe('ARQuickLook not supported');
+                    } else {
+                        fail('Expected error to be an Error instance');
+                    }
+                }
+                expect(consoleLogSpy).toHaveBeenCalledWith(
+                    'ARQuickLook not supported',
+                );
                 consoleLogSpy.mockRestore();
             });
         });
@@ -98,90 +112,66 @@ describe('DIVEAR', () => {
                     .spyOn(console, 'log')
                     .mockImplementation();
 
-                await diveAR.Launch();
+                await diveAR.launch(mockUri);
 
                 expect(DIVESceneViewer.Launch).toHaveBeenCalledWith(
                     scene,
                     undefined,
                 );
-
-                expect(consoleLogSpy).toHaveBeenCalled();
+                expect(consoleLogSpy).toHaveBeenCalledWith(
+                    'DIVE: Launching AR with SceneViewer ...',
+                );
                 consoleLogSpy.mockRestore();
             });
-        });
 
-        describe('WebXR', () => {
-            it('should launch WebXR on Android with useWebXR option', async () => {
+            it('should launch SceneViewer on Android with options', async () => {
                 jest.spyOn(DIVEInfo, 'GetSystem').mockReturnValue('Android');
-                jest.spyOn(DIVEInfo, 'GetSupportsWebXR').mockResolvedValue(
-                    true,
-                );
+
+                const options: DIVEAROptions = {
+                    arPlacement: 'vertical',
+                    arScale: 'fixed',
+                };
 
                 const consoleLogSpy = jest
                     .spyOn(console, 'log')
                     .mockImplementation();
-                const consoleWarnSpy = jest
-                    .spyOn(console, 'warn')
-                    .mockImplementation();
 
-                await diveAR.Launch({
-                    useWebXR: true,
-                } as unknown as DIVEAROptions);
+                await diveAR.launch(mockUri, options);
 
-                expect(DIVEWebXR.Launch).toHaveBeenCalledWith(
-                    renderer,
+                expect(DIVESceneViewer.Launch).toHaveBeenCalledWith(
                     scene,
-                    controller,
+                    options,
                 );
-                expect(consoleWarnSpy).toHaveBeenCalled();
-                consoleWarnSpy.mockRestore();
-
-                expect(consoleLogSpy).toHaveBeenCalled();
-                consoleLogSpy.mockRestore();
-            });
-
-            it('should not launch WebXR on Android with useWebXR option', async () => {
-                jest.spyOn(DIVEInfo, 'GetSystem').mockReturnValue('Android');
-                jest.spyOn(DIVEInfo, 'GetSupportsWebXR').mockResolvedValue(
-                    false,
+                expect(consoleLogSpy).toHaveBeenCalledWith(
+                    'DIVE: Launching AR with SceneViewer ...',
                 );
-
-                const consoleLogSpy = jest
-                    .spyOn(console, 'log')
-                    .mockImplementation();
-                const consoleWarnSpy = jest
-                    .spyOn(console, 'warn')
-                    .mockImplementation();
-
-                await diveAR
-                    .Launch({
-                        useWebXR: true,
-                    } as unknown as DIVEAROptions)
-                    .catch(() => {});
-
-                expect(DIVEWebXR.Launch).toHaveBeenCalledWith(
-                    renderer,
-                    scene,
-                    controller,
-                );
-                expect(consoleWarnSpy).toHaveBeenCalled();
-                consoleWarnSpy.mockRestore();
-
-                expect(consoleLogSpy).toHaveBeenCalled();
                 consoleLogSpy.mockRestore();
             });
         });
 
-        it('should log AR not supported on non-mobile systems', async () => {
+        it('should reject on non-mobile systems', async () => {
+            jest.spyOn(DIVEInfo, 'GetSystem').mockReturnValue('Windows');
+
             const consoleLogSpy = jest
                 .spyOn(console, 'log')
                 .mockImplementation();
 
-            jest.spyOn(DIVEInfo, 'GetSystem').mockReturnValue('Windows');
-
-            await diveAR.Launch();
-
-            expect(consoleLogSpy).toHaveBeenCalled();
+            try {
+                await diveAR.launch(mockUri);
+                fail('Expected launch to reject');
+            } catch (error: unknown) {
+                if (error instanceof Error) {
+                    expect(error.message).toBe(
+                        'AR not supported on non-mobile systems',
+                    );
+                } else {
+                    fail('Expected error to be an Error instance');
+                }
+            }
+            expect(consoleLogSpy).toHaveBeenCalledWith(
+                'DIVE: AR not supported. Not a mobile system. (System is Windows)',
+            );
+            consoleLogSpy.mockRestore();
         });
     });
 });
