@@ -1,6 +1,10 @@
 import { Loader } from '../loader/Loader';
 import { Exporter } from '../exporter/Exporter';
-import { type FileType, SUPPORTED_FILE_TYPES } from '../types';
+import {
+    type FileType,
+    SUPPORTED_FILE_TYPES,
+    type ExportOptions,
+} from '../types';
 
 export class ConversionError extends Error {
     constructor(
@@ -41,7 +45,10 @@ export class Converter {
         return new Converter(uri);
     }
 
-    public async to<T extends FileType>(type: T): Promise<ArrayBuffer> {
+    public async to<T extends FileType>(
+        type: T,
+        options?: ExportOptions<T>,
+    ): Promise<ArrayBuffer> {
         try {
             const sourceType = this._getFileTypeFromUri();
 
@@ -52,7 +59,7 @@ export class Converter {
 
             // Otherwise, convert through Object3D
             const object3D = await this._loader.load(this._uri);
-            return await this._exporter.export(object3D, type);
+            return await this._exporter.export(object3D, type, options);
         } catch (error) {
             if (error instanceof ConversionError) {
                 throw error;
@@ -92,4 +99,19 @@ export class Converter {
 }
 
 // Example usage:
-// Converter.convert('https://example.com/model.glb').to('gltf');
+// Converter.convert('https://example.com/model.glb').to('usdz', {
+//     usdz: {
+//         ar: {
+//             anchoring: { type: 'plane' },
+//             planeAnchoring: { alignment: 'horizontal' }
+//         }
+//     }
+// });
+//
+// Converter.convert('https://example.com/model.usdz').to('gltf', {
+//     gltf: {
+//         onlyVisible: true,
+//         maxTextureSize: 2048,
+//         includeCustomExtensions: true
+//     }
+// });
