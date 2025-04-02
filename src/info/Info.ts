@@ -1,12 +1,13 @@
 export enum WebXRUnsupportedReason {
     'UNKNWON_ERROR' = 0,
-    'NO_HTTPS' = 1,
-    'IMMERSIVE_AR_NOT_SUPPORTED_BY_DEVICE' = 2,
-    'AR_SESSION_NOT_ALLOWED' = 3,
+    'NO_WEBXR_API' = 1,
+    'NO_HTTPS' = 2,
+    'IMMERSIVE_AR_NOT_SUPPORTED_BY_DEVICE' = 3,
+    'AR_SESSION_NOT_ALLOWED' = 4,
 }
 
 export class DIVEInfo {
-    private static _supportsWebXR: boolean | null = null;
+    private static _supportsWebXR: boolean = false;
     private static _webXRUnsupportedReason: WebXRUnsupportedReason | null =
         null;
 
@@ -35,47 +36,49 @@ export class DIVEInfo {
      * @returns A promise that resolves to a boolean indicating whether the user's device supports WebXR.
      */
     public static async GetSupportsWebXR(): Promise<boolean> {
-        if (this._supportsWebXR !== null) {
+        if (this._supportsWebXR !== false) {
             return this._supportsWebXR;
         }
 
-        // check if XRSystem is available && if https enabled
+        // Check if we're in a secure context (HTTPS)
+        if (!window.isSecureContext) {
+            this._supportsWebXR = false;
+            this._webXRUnsupportedReason = WebXRUnsupportedReason.NO_HTTPS;
+            return this._supportsWebXR;
+        }
+
+        // Check if XRSystem is available
         if (!navigator.xr) {
             this._supportsWebXR = false;
-
-            if (window.isSecureContext === false) {
-                this._webXRUnsupportedReason = WebXRUnsupportedReason.NO_HTTPS;
-            } else {
-                this._webXRUnsupportedReason =
-                    WebXRUnsupportedReason.UNKNWON_ERROR;
-            }
-
+            this._webXRUnsupportedReason = WebXRUnsupportedReason.NO_WEBXR_API;
             return this._supportsWebXR;
         }
 
-        // Check if immersive-vr session mode is supported
         try {
-            const supported =
-                await navigator.xr!.isSessionSupported('immersive-ar');
-            if (!supported) {
+            // Check specifically for immersive-ar support
+            const arSupported =
+                await navigator.xr.isSessionSupported('immersive-ar');
+            this._supportsWebXR = arSupported;
+
+            if (!this._supportsWebXR) {
                 this._webXRUnsupportedReason =
                     WebXRUnsupportedReason.IMMERSIVE_AR_NOT_SUPPORTED_BY_DEVICE;
             }
-            this._supportsWebXR = supported;
         } catch (error) {
             this._supportsWebXR = false;
             this._webXRUnsupportedReason =
                 WebXRUnsupportedReason.AR_SESSION_NOT_ALLOWED;
         }
+
         return this._supportsWebXR;
     }
 
     /**
-     * @returns The reason why WebXR is not supported on the user's device. Returns null if WebXR is supported nor not has been checked yet.
+     * @returns The reason why WebXR is not supported on the user's device. Returns null if WebXR is supported.
      */
     public static GetWebXRUnsupportedReason(): WebXRUnsupportedReason | null {
-        if (this._supportsWebXR === null) {
-            console.log('WebXR support has not been checked yet.');
+        if (this._supportsWebXR) {
+            console.log('WebXR is supported.');
             return null;
         }
         return this._webXRUnsupportedReason;

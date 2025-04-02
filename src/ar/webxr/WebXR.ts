@@ -72,10 +72,11 @@ export class DIVEWebXR {
         DIVEWebXR._options.domOverlay = { root: DIVEWebXR._overlay.Element };
 
         // request session
-        const session = await navigator.xr.requestSession(
-            'immersive-ar',
-            this._options,
-        );
+        const session = await navigator.xr
+            .requestSession('immersive-ar', this._options)
+            .catch((reason) => {
+                return Promise.reject(reason);
+            });
         session.addEventListener('end', () => {
             this._onSessionEnded();
         });

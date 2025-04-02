@@ -81,7 +81,18 @@ export class DIVEAR {
 
         console.log('DIVE: Launching AR with WebXR ...');
         // Launch WebXR
-        await DIVEWebXR.Launch(this._renderer, this._scene, this._controller);
+        await DIVEWebXR.Launch(
+            this._renderer,
+            this._scene,
+            this._controller,
+        ).catch((reason) => {
+            console.log(
+                'DIVE: WebXR failed to launch. Permissions have not been granted in the browser. (ERROR: ' +
+                    reason +
+                    ')',
+            );
+            return Promise.reject();
+        });
         return Promise.resolve();
     }
 
