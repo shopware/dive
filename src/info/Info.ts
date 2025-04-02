@@ -121,48 +121,12 @@ export class DIVEInfo {
 
     /**
      * @returns A boolean indicating whether the user's device supports AR Quick Look.
+     * This uses the modern relList.supports('ar') check which is the most reliable way
+     * to detect AR Quick Look support on modern browsers and devices.
      */
     public static GetSupportsARQuickLook(): boolean {
         const a = document.createElement('a');
-        if (a.relList.supports('ar')) {
-            return true;
-        }
-
-        // fallback check
-        const userAgent = navigator.userAgent;
-
-        // Check if the device is running iOS
-        const isIOS =
-            /iPad|iPhone|iPod/.test(userAgent) &&
-            !(window as unknown as Window & { MSStream?: string }).MSStream;
-        if (!isIOS) {
-            return false;
-        }
-
-        // Extract iOS version
-        const match = userAgent.match(/OS (\d+)_/);
-        if (!match || match.length < 2) {
-            return false;
-        }
-        const iOSVersion = parseInt(match[1], 10);
-
-        // Minimum iOS version for QuickLook support
-        const minQuickLookVersion = 12;
-
-        // Check if the iOS version is supported
-        if (iOSVersion < minQuickLookVersion) {
-            return false;
-        }
-
-        // Check for supported browser
-        const isSupportedBrowser =
-            /^((?!chrome|android).)*safari|CriOS|FxiOS/i.test(userAgent);
-        if (isSupportedBrowser) {
-            return true;
-        }
-
-        // Default to false if none of the conditions are met
-        return false;
+        return a.relList.supports('ar');
     }
 
     /**
