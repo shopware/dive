@@ -25,7 +25,7 @@ export class DIVESceneViewer {
         locationUrl.hash = noArViewerSigil;
 
         // modelUrl can contain title/link/sound etc.
-        params.set('mode', 'ar_only');
+        params.set('mode', 'ar_preferred');
 
         if (options?.arScale === 'fixed') {
             params.set('resizable', 'false');

@@ -9,7 +9,7 @@ const mockNavigator = (navigator: any) => {
 
 describe('dive/info/DIVEInfo', () => {
     beforeEach(() => {
-        DIVEInfo['_supportsWebXR'] = null;
+        DIVEInfo['_supportsWebXR'] = false;
         jest.clearAllMocks();
     });
 
@@ -65,19 +65,29 @@ describe('dive/info/DIVEInfo', () => {
                 isSessionSupported: jest.fn().mockResolvedValue(true),
             },
         });
+        const restoreSecureContext = window.isSecureContext;
+        window.isSecureContext = true;
+
         const supports = await DIVEInfo.GetSupportsWebXR();
         expect(supports).toBe(true);
+
+        window.isSecureContext = restoreSecureContext;
     });
 
     it('should not support webXR (xr undefined)', async () => {
         mockNavigator({
             xr: undefined,
         });
+        const restoreSecureContext = window.isSecureContext;
+        window.isSecureContext = true;
+
         const supports = await DIVEInfo.GetSupportsWebXR();
         expect(supports).toBe(false);
 
         const reason = DIVEInfo.GetWebXRUnsupportedReason();
-        expect(reason).toBe(WebXRUnsupportedReason.UNKNWON_ERROR);
+        expect(reason).toBe(WebXRUnsupportedReason.NO_WEBXR_API);
+
+        window.isSecureContext = restoreSecureContext;
     });
 
     it('should not support webXR (xr undefined & isSecureContext false)', async () => {
@@ -98,9 +108,15 @@ describe('dive/info/DIVEInfo', () => {
                 isSessionSupported: jest.fn().mockResolvedValue(true),
             },
         });
+        const restoreSecureContext = window.isSecureContext;
+        window.isSecureContext = true;
+
+        await DIVEInfo.GetSupportsWebXR();
         console.log = jest.fn();
         const reason = DIVEInfo.GetWebXRUnsupportedReason();
         expect(reason).toBe(null);
+
+        window.isSecureContext = restoreSecureContext;
     });
 
     it('should get empty reason (webXR supported)', async () => {
@@ -109,8 +125,14 @@ describe('dive/info/DIVEInfo', () => {
                 isSessionSupported: jest.fn().mockResolvedValue(true),
             },
         });
+        const restoreSecureContext = window.isSecureContext;
+        window.isSecureContext = true;
+
+        await DIVEInfo.GetSupportsWebXR();
         const reason = DIVEInfo.GetWebXRUnsupportedReason();
         expect(reason).toBe(null);
+
+        window.isSecureContext = restoreSecureContext;
     });
 
     it('should not support webXR', async () => {
@@ -119,6 +141,9 @@ describe('dive/info/DIVEInfo', () => {
                 isSessionSupported: jest.fn().mockResolvedValue(false),
             },
         });
+        const restoreSecureContext = window.isSecureContext;
+        window.isSecureContext = true;
+
         const supports = await DIVEInfo.GetSupportsWebXR();
         expect(supports).toBe(false);
 
@@ -126,6 +151,8 @@ describe('dive/info/DIVEInfo', () => {
         expect(reason).toBe(
             WebXRUnsupportedReason.IMMERSIVE_AR_NOT_SUPPORTED_BY_DEVICE,
         );
+
+        window.isSecureContext = restoreSecureContext;
     });
 
     it('should not support webXR on error', async () => {
@@ -134,11 +161,16 @@ describe('dive/info/DIVEInfo', () => {
                 isSessionSupported: jest.fn().mockRejectedValue('error'),
             },
         });
+        const restoreSecureContext = window.isSecureContext;
+        window.isSecureContext = true;
+
         const supports = await DIVEInfo.GetSupportsWebXR();
         expect(supports).toBe(false);
 
         const reason = DIVEInfo.GetWebXRUnsupportedReason();
         expect(reason).toBe(WebXRUnsupportedReason.AR_SESSION_NOT_ALLOWED);
+
+        window.isSecureContext = restoreSecureContext;
     });
 
     it('should return cached value', async () => {

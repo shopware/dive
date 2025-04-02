@@ -15,7 +15,7 @@ jest.mock('../arquicklook/ARQuickLook', () => ({
 
 jest.mock('../webxr/WebXR', () => ({
     DIVEWebXR: {
-        Launch: jest.fn(),
+        Launch: jest.fn(() => Promise.resolve()),
     },
 }));
 
