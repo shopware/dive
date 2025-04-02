@@ -168,7 +168,7 @@ describe('dive/info/DIVEInfo', () => {
         expect(supports).toBe(false);
 
         const reason = DIVEInfo.GetWebXRUnsupportedReason();
-        expect(reason).toBe(WebXRUnsupportedReason.AR_SESSION_NOT_ALLOWED);
+        expect(reason).toBe(WebXRUnsupportedReason.AR_PERMISSION_DENIED);
 
         window.isSecureContext = restoreSecureContext;
     });
