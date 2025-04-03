@@ -43,7 +43,7 @@ export class ARSystem {
         console.log('DIVE: Launching AR with ARQuickLook ...');
 
         try {
-            return new ARQuickLook(uri, options).launch();
+            return new ARQuickLook().launch(uri, options);
         } catch (error) {
             console.error('Error launching ARQuickLook:', error);
             return Promise.reject(error);
@@ -54,6 +54,7 @@ export class ARSystem {
         uri: string,
         options?: ARSystemOptions,
     ): Promise<void> {
+        // TODO refine this documentation
         // actually we don't have to try here, because SceneViewer is supported on all devices by now.
         // if there are no AR services (ARCore) installed on the device, SceneViewer will only show the model in 3D.
         // we also have no options to detect if SceneViewer is supported.
@@ -61,7 +62,7 @@ export class ARSystem {
         console.log('DIVE: Launching AR with SceneViewer ...');
 
         try {
-            return new SceneViewer(uri, options).launch();
+            return new SceneViewer().launch(uri, options);
         } catch (error) {
             console.error('Error launching SceneViewer:', error);
             return Promise.reject(error);

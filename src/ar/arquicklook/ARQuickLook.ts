@@ -3,25 +3,23 @@ import { Converter } from '../../converter/Converter';
 import { type USDZExporterOptions } from '../../types';
 
 export class ARQuickLook {
-    constructor(
-        private readonly _uri: string,
-        private readonly _options?: ARSystemOptions,
-    ) {}
-
-    public async launch(): Promise<void> {
-        const usdzUrl = await this.convertToUSDZ();
-        return this.launchARQuickLook(usdzUrl);
+    public async launch(uri: string, options?: ARSystemOptions): Promise<void> {
+        const usdzUrl = await this.convertToUSDZ(uri, options);
+        return this.launchARQuickLook(usdzUrl, options);
     }
 
-    private async convertToUSDZ(): Promise<string> {
+    private async convertToUSDZ(
+        uri: string,
+        options?: ARSystemOptions,
+    ): Promise<string> {
         // Convert the file to USDZ format
-        const usdzBuffer = await Converter.convert(this._uri).to('usdz', {
+        const usdzBuffer = await Converter.convert(uri).to('usdz', {
             quickLookCompatible: true,
             ar: {
                 anchoring: { type: 'plane' },
                 planeAnchoring: {
                     alignment:
-                        this._options?.arPlacement === 'vertical'
+                        options?.arPlacement === 'vertical'
                             ? 'vertical'
                             : 'horizontal',
                 },
@@ -33,9 +31,12 @@ export class ARQuickLook {
         return URL.createObjectURL(blob);
     }
 
-    private launchARQuickLook(uri: string): Promise<void> {
+    private launchARQuickLook(
+        uri: string,
+        options?: ARSystemOptions,
+    ): Promise<void> {
         return new Promise((resolve) => {
-            if (this._options?.arScale === 'fixed') {
+            if (options?.arScale === 'fixed') {
                 uri = uri.concat('#allowsContentScaling=0');
             }
 
