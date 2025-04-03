@@ -1,16 +1,11 @@
 import { type ARSystemOptions } from '../AR';
 
 export class SceneViewer {
-    constructor(
-        private readonly _uri: string,
-        private readonly _options?: ARSystemOptions,
-    ) {}
-
-    public launch(): void {
+    public launch(uri: string, options?: ARSystemOptions): void {
         const location = self.location.toString();
         const anchor = document.createElement('a');
-        const params = this._createParams(location);
-        const intent = this._createIntent(params, location);
+        const params = this._createParams(location, uri, options);
+        const intent = this._createIntent(location, uri, params);
 
         anchor.setAttribute('href', intent);
         anchor.click();
@@ -21,16 +16,20 @@ export class SceneViewer {
      * @param location Current page location URL
      * @returns URLSearchParams with base configuration
      */
-    private _createParams(location: string): URLSearchParams {
-        const modelUrl = new URL(this._uri, location);
+    private _createParams(
+        location: string,
+        uri: string,
+        options?: ARSystemOptions,
+    ): URLSearchParams {
+        const modelUrl = new URL(uri, location);
         const params = new URLSearchParams(modelUrl.search);
 
         // Set AR mode as preferred
         params.set('mode', 'ar_preferred');
 
         // Apply any custom options
-        this._applyScaleOption(params);
-        this._applyPlacementOption(params);
+        this._applyScaleOption(params, options);
+        this._applyPlacementOption(params, options);
 
         // Apply additional parameters if present
         this._applySoundOption(params, location);
@@ -44,8 +43,11 @@ export class SceneViewer {
      * If scale is set to 'fixed', the model will not be resizable in AR
      * @param params URLSearchParams to modify
      */
-    private _applyScaleOption(params: URLSearchParams): void {
-        if (this._options?.arScale === 'fixed') {
+    private _applyScaleOption(
+        params: URLSearchParams,
+        options?: ARSystemOptions,
+    ): void {
+        if (options?.arScale === 'fixed') {
             params.set('resizable', 'false');
         }
     }
@@ -55,8 +57,11 @@ export class SceneViewer {
      * If placement is set to 'vertical', vertical placement will be enabled
      * @param params URLSearchParams to modify
      */
-    private _applyPlacementOption(params: URLSearchParams): void {
-        if (this._options?.arPlacement === 'vertical') {
+    private _applyPlacementOption(
+        params: URLSearchParams,
+        options?: ARSystemOptions,
+    ): void {
+        if (options?.arPlacement === 'vertical') {
             params.set('enable_vertical_placement', 'true');
         }
     }
@@ -93,9 +98,13 @@ export class SceneViewer {
      * @param location Current page location URL
      * @returns The complete Intent URL
      */
-    private _createIntent(params: URLSearchParams, location: string): string {
+    private _createIntent(
+        location: string,
+        uri: string,
+        params: URLSearchParams,
+    ): string {
         const locationUrl = new URL(location);
-        const modelUrl = new URL(this._uri, location);
+        const modelUrl = new URL(uri, location);
         const noArViewerSigil = '#model-viewer-no-ar-fallback';
 
         locationUrl.hash = noArViewerSigil;

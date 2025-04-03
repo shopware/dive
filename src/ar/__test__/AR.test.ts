@@ -20,9 +20,10 @@ jest.mock('../arquicklook/ARQuickLook', () => ({
 }));
 
 // Mock SceneViewer
+const mockSceneViewerLaunch = jest.fn().mockResolvedValue(undefined);
 jest.mock('../sceneviewer/SceneViewer', () => ({
     SceneViewer: jest.fn().mockImplementation(() => ({
-        launch: jest.fn(),
+        launch: mockSceneViewerLaunch,
     })),
 }));
 
@@ -169,7 +170,10 @@ describe('ARSystem', () => {
 
                 await diveAR.launch(mockUri);
 
-                expect(SceneViewer).toHaveBeenCalledWith(mockUri, undefined);
+                expect(mockSceneViewerLaunch).toHaveBeenCalledWith(
+                    mockUri,
+                    undefined,
+                );
                 expect(consoleLogSpy).toHaveBeenCalledWith(
                     'DIVE: Launching AR with SceneViewer ...',
                 );
@@ -190,7 +194,10 @@ describe('ARSystem', () => {
 
                 await diveAR.launch(mockUri, options);
 
-                expect(SceneViewer).toHaveBeenCalledWith(mockUri, options);
+                expect(mockSceneViewerLaunch).toHaveBeenCalledWith(
+                    mockUri,
+                    options,
+                );
                 expect(consoleLogSpy).toHaveBeenCalledWith(
                     'DIVE: Launching AR with SceneViewer ...',
                 );

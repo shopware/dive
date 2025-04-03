@@ -59,21 +59,16 @@ describe('DIVESceneViewer', () => {
     });
 
     describe('constructor', () => {
-        it('should create an instance with URI and options', () => {
-            const sceneViewer = new SceneViewer(mockUri, mockOptions);
-            expect(sceneViewer).toBeInstanceOf(SceneViewer);
-        });
-
-        it('should create an instance with just URI', () => {
-            const sceneViewer = new SceneViewer(mockUri);
+        it('should create an instance', () => {
+            const sceneViewer = new SceneViewer();
             expect(sceneViewer).toBeInstanceOf(SceneViewer);
         });
     });
 
     describe('launch', () => {
         it('should launch with default options', () => {
-            const sceneViewer = new SceneViewer(mockUri);
-            sceneViewer.launch();
+            const sceneViewer = new SceneViewer();
+            sceneViewer.launch(mockUri);
 
             expect(mockCreateElement).toHaveBeenCalledWith('a');
             expect(mockSetAttribute).toHaveBeenCalledWith(
@@ -88,8 +83,8 @@ describe('DIVESceneViewer', () => {
                 arPlacement: 'vertical',
                 arScale: 'fixed',
             };
-            const sceneViewer = new SceneViewer(mockUri, options);
-            sceneViewer.launch();
+            const sceneViewer = new SceneViewer();
+            sceneViewer.launch(mockUri, options);
 
             expect(mockCreateElement).toHaveBeenCalledWith('a');
             expect(mockSetAttribute).toHaveBeenCalledWith(
@@ -104,7 +99,7 @@ describe('DIVESceneViewer', () => {
         });
 
         it('should handle sound parameter in URL', () => {
-            const sceneViewer = new SceneViewer(mockUri);
+            const sceneViewer = new SceneViewer();
             const params = new URLSearchParams();
             params.set('sound', 'sound.mp3');
 
@@ -116,7 +111,7 @@ describe('DIVESceneViewer', () => {
         });
 
         it('should handle link parameter in URL', () => {
-            const sceneViewer = new SceneViewer(mockUri);
+            const sceneViewer = new SceneViewer();
             const params = new URLSearchParams();
             params.set('link', 'details.html');
 
@@ -128,7 +123,7 @@ describe('DIVESceneViewer', () => {
         });
 
         it('should create intent URL with correct parameters', () => {
-            const sceneViewer = new SceneViewer(mockUri);
+            const sceneViewer = new SceneViewer();
             const params = new URLSearchParams();
             params.set('mode', 'ar_preferred');
 
@@ -136,7 +131,11 @@ describe('DIVESceneViewer', () => {
             const createIntent = (sceneViewer as any)._createIntent.bind(
                 sceneViewer,
             );
-            const intentUrl = createIntent(params, mockLocation.toString());
+            const intentUrl = createIntent(
+                mockLocation.toString(),
+                mockUri,
+                params,
+            );
 
             expect(intentUrl).toContain(
                 'intent://arvr.google.com/scene-viewer/1.2',
@@ -151,8 +150,8 @@ describe('DIVESceneViewer', () => {
 
         it('should handle relative model URLs', () => {
             const relativeUri = '/models/model.glb';
-            const sceneViewer = new SceneViewer(relativeUri);
-            sceneViewer.launch();
+            const sceneViewer = new SceneViewer();
+            sceneViewer.launch(relativeUri);
 
             expect(mockSetAttribute).toHaveBeenCalledWith(
                 'href',
@@ -164,8 +163,8 @@ describe('DIVESceneViewer', () => {
 
         it('should handle absolute model URLs', () => {
             const absoluteUri = 'https://cdn.example.com/model.glb';
-            const sceneViewer = new SceneViewer(absoluteUri);
-            sceneViewer.launch();
+            const sceneViewer = new SceneViewer();
+            sceneViewer.launch(absoluteUri);
 
             expect(mockSetAttribute).toHaveBeenCalledWith(
                 'href',
@@ -177,8 +176,8 @@ describe('DIVESceneViewer', () => {
 
         it('should handle special characters in model URL', () => {
             const specialUri = 'https://example.com/model with spaces.glb';
-            const sceneViewer = new SceneViewer(specialUri);
-            sceneViewer.launch();
+            const sceneViewer = new SceneViewer();
+            sceneViewer.launch(specialUri);
 
             expect(mockSetAttribute).toHaveBeenCalledWith(
                 'href',
