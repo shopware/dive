@@ -2,7 +2,6 @@ import { RaycasterIntersectObjectMock } from '../../../__mocks__/three';
 
 import { DIVEModel } from '../Model';
 import { DIVECommunication } from '../../com/Communication';
-import { GLTF } from 'three/examples/jsm/loaders/GLTFLoader';
 import { DIVEScene } from '../../scene/Scene';
 import {
     Vector3,
@@ -29,12 +28,6 @@ jest.mock('../../com/Communication.ts', () => {
 const object = new Object3D();
 object.children.push(new Mesh());
 
-const gltf = {
-    scene: {
-        ...object,
-    },
-} as unknown as GLTF;
-
 jest.spyOn(DIVECommunication, 'get').mockReturnValue({
     PerformAction: jest.fn(),
 } as unknown as DIVECommunication);
@@ -57,11 +50,11 @@ describe('dive/model/DIVEModel', () => {
     });
 
     it('should set model', () => {
-        expect(() => model.SetModel(gltf)).not.toThrow();
+        expect(() => model.SetModel(object)).not.toThrow();
     });
 
     it('should place on floor', () => {
-        model.SetModel(gltf);
+        model.SetModel(object);
 
         const com = DIVECommunication.get('id')!;
         const spyPerformAction = jest.spyOn(com, 'PerformAction');
@@ -204,14 +197,14 @@ describe('dive/model/DIVEModel', () => {
 
     it('should set model material when material already set before', () => {
         model.SetMaterial({ roughness: 0.5 } as COMMaterial);
-        expect(() => model.SetModel(gltf)).not.toThrow();
+        expect(() => model.SetModel(object)).not.toThrow();
         expect(
             (model['_mesh']?.material as MeshStandardMaterial).roughness,
         ).toBe(0.5);
     });
 
     it('should set material to model when model already set before', () => {
-        model.SetModel(gltf);
+        model.SetModel(object);
         expect(() =>
             model.SetMaterial({ roughness: 0.5 } as COMMaterial),
         ).not.toThrow();
