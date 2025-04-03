@@ -3,12 +3,29 @@ import { ESystem } from '../types/info';
 import { ARQuickLook } from './arquicklook/ARQuickLook';
 import { SceneViewer } from './sceneviewer/SceneViewer';
 
+/**
+ * Options for configuring the AR system behavior
+ */
 export type ARSystemOptions = {
+    /** The placement orientation for AR content - either horizontal or vertical */
     arPlacement: 'horizontal' | 'vertical';
+    /** The scaling behavior for AR content - either automatic or fixed */
     arScale: 'auto' | 'fixed';
 };
 
+/**
+ * Main class for handling AR functionality across different platforms
+ * Provides methods to launch AR experiences using platform-specific implementations
+ */
 export class ARSystem {
+    /**
+     * Launches an AR experience using the appropriate platform-specific implementation
+     *
+     * @param uri - The URI of the 3D model to display in AR
+     * @param options - Optional configuration for the AR experience
+     * @returns Promise that resolves when AR is launched successfully
+     * @throws Error if AR is not supported on the current platform
+     */
     public async launch(uri: string, options?: ARSystemOptions): Promise<void> {
         const system = SystemInfo.GetSystem();
 
@@ -30,6 +47,14 @@ export class ARSystem {
         );
     }
 
+    /**
+     * Attempts to launch AR using ARQuickLook (iOS-specific implementation)
+     *
+     * @param uri - The URI of the 3D model to display in AR
+     * @param options - Optional configuration for the AR experience
+     * @returns Promise that resolves when ARQuickLook is launched successfully
+     * @throws Error if ARQuickLook is not supported on the device
+     */
     private async tryARQuickLook(
         uri: string,
         options?: ARSystemOptions,
@@ -50,15 +75,20 @@ export class ARSystem {
         }
     }
 
+    /**
+     * Launches AR using SceneViewer (Android-specific implementation)
+     * Note: SceneViewer is supported on all Android devices. If ARCore is not installed,
+     * the model will be displayed in 3D view mode instead of AR mode.
+     *
+     * @param uri - The URI of the 3D model to display in AR
+     * @param options - Optional configuration for the AR experience
+     * @returns Promise that resolves when SceneViewer is launched successfully
+     * @throws Error if there's an issue launching SceneViewer
+     */
     private async trySceneViewer(
         uri: string,
         options?: ARSystemOptions,
     ): Promise<void> {
-        // TODO refine this documentation
-        // actually we don't have to try here, because SceneViewer is supported on all devices by now.
-        // if there are no AR services (ARCore) installed on the device, SceneViewer will only show the model in 3D.
-        // we also have no options to detect if SceneViewer is supported.
-
         console.log('DIVE: Launching AR with SceneViewer ...');
 
         try {
