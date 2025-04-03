@@ -1,6 +1,6 @@
 import { Exporter } from '../Exporter';
 import { Object3D } from 'three';
-import { FileTypeError, ParseError } from '../../types/error';
+import { FileTypeError, ParseError } from '../../error';
 
 // Mock TextEncoder
 class MockTextEncoder {
@@ -57,7 +57,10 @@ describe('Exporter', () => {
                 .fn()
                 .mockImplementation(async (obj, type) => {
                     // Simulate the switch-case default behavior
-                    throw new FileTypeError(`Unsupported file type: ${type}`);
+                    throw new FileTypeError(
+                        `Unsupported file type: ${type}`,
+                        type,
+                    );
                 }) as any;
 
             // Use a valid string but it will be caught by our mock

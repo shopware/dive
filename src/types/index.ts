@@ -7,7 +7,7 @@ export * from './SceneType';
 export * from './file';
 
 // Error types
-export * from './error';
+export * from '../error';
 
 // Info types
 export * from './info';

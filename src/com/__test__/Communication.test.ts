@@ -68,9 +68,9 @@ jest.mock('../../io/IO', () => {
     };
 });
 
-jest.mock('../../ar/AR', () => {
+jest.mock('../../ar/ARSystem', () => {
     return {
-        DIVEAR: jest.fn().mockImplementation(() => {
+        ARSystem: jest.fn().mockImplementation(() => {
             return {
                 Launch: jest.fn(),
             };

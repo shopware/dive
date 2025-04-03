@@ -1,31 +1,3 @@
-export class ParseError extends Error {
-    constructor(
-        message: string,
-        public readonly cause?: unknown,
-    ) {
-        super(message);
-        this.name = 'ParseError';
-    }
-}
-
-export class FileTypeError extends Error {
-    constructor(message: string) {
-        super(message);
-        this.name = 'FileTypeError';
-    }
-}
-
-export class NetworkError extends Error {
-    constructor(
-        public readonly url: string,
-        message: string,
-        public readonly cause?: unknown,
-    ) {
-        super(message);
-        this.name = 'NetworkError';
-    }
-}
-
 export class ARCompatibilityError extends Error {
     public readonly browserInfo: {
         userAgent: string;
@@ -54,13 +26,7 @@ export class ARCompatibilityError extends Error {
         const osMatch = userAgent.match(/\((.*?)\)/);
         const osInfo = osMatch ? osMatch[1] : 'Unknown';
         const osVersion = osInfo.match(/OS (\d+_\d+)/)?.[1] || 'Unknown';
-        const os = osInfo.includes('iPhone')
-            ? 'iOS'
-            : osInfo.includes('iPad')
-              ? 'iPadOS'
-              : osInfo.includes('Macintosh')
-                ? 'macOS'
-                : 'Unknown';
+        const os = determineOS(osInfo);
 
         // Build detailed error message based on detected information
         let detailedMessage = baseMessage;
@@ -87,4 +53,17 @@ export class ARCompatibilityError extends Error {
             osVersion,
         };
     }
+}
+
+function determineOS(osInfo: string): string {
+    if (osInfo.includes('iPhone')) {
+        return 'iOS';
+    }
+    if (osInfo.includes('iPad')) {
+        return 'iPadOS';
+    }
+    if (osInfo.includes('Macintosh')) {
+        return 'macOS';
+    }
+    return 'Unknown';
 }

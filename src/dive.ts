@@ -360,6 +360,6 @@ export * from './math/index.ts';
 
 export * from './ar/ARSystem.ts';
 
-export type * from './com/actions/index.ts';
-export type * from './com/types';
-export type * from './types';
+export * from './com/actions/index.ts';
+export * from './com/types';
+export * from './types';
