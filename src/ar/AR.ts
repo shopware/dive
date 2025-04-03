@@ -1,4 +1,5 @@
 import { SystemInfo } from '../info/Info';
+import { ARCompatibilityError } from '../types/error';
 import { ESystem } from '../types/info';
 import { ARQuickLook } from './arquicklook/ARQuickLook';
 import { SceneViewer } from './sceneviewer/SceneViewer';
@@ -43,7 +44,12 @@ export class ARSystem {
                 ')',
         );
         return Promise.reject(
-            new Error('AR not supported on non-mobile systems'),
+            new ARCompatibilityError(
+                'AR not supported on non-mobile systems',
+                window.navigator.userAgent,
+                window.navigator.platform,
+                window.navigator.vendor,
+            ),
         );
     }
 
@@ -59,13 +65,12 @@ export class ARSystem {
         uri: string,
         options?: ARSystemOptions,
     ): Promise<void> {
-        const support = SystemInfo.GetSupportsARQuickLook();
-        if (!support) {
-            console.log('ARQuickLook not supported');
-            return Promise.reject(new Error('ARQuickLook not supported'));
+        try {
+            SystemInfo.GetSupportsARQuickLook();
+        } catch (error) {
+            console.error('No AR Quick Look support:', error);
+            return Promise.reject(error);
         }
-
-        console.log('DIVE: Launching AR with ARQuickLook ...');
 
         try {
             return new ARQuickLook().launch(uri, options);
@@ -89,8 +94,6 @@ export class ARSystem {
         uri: string,
         options?: ARSystemOptions,
     ): Promise<void> {
-        console.log('DIVE: Launching AR with SceneViewer ...');
-
         try {
             return new SceneViewer().launch(uri, options);
         } catch (error) {

@@ -2,6 +2,11 @@ import { SystemInfo } from '../Info';
 import { ESystem, EWebXRUnsupportedReason } from '../../types/info';
 import { ARCompatibilityError } from '../../types/error';
 
+// Helper for test failures
+const fail = (message: string): never => {
+    throw new Error(message);
+};
+
 const mockNavigator = (navigator: any) => {
     Object.defineProperty(global, 'navigator', {
         value: navigator,
@@ -214,18 +219,33 @@ describe('dive/info/DIVEInfo', () => {
     });
 
     it('should not support ARQuickLook when relList does not support AR', () => {
+        const userAgent =
+            'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1';
+        const platform = 'iPhone';
+        const vendor = 'Apple Computer, Inc.';
+
         mockNavigator({
-            userAgent:
-                'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1',
-            platform: 'iPhone',
-            vendor: 'Apple Computer, Inc.',
+            userAgent,
+            platform,
+            vendor,
         });
+
         jest.spyOn(document, 'createElement').mockReturnValue({
             relList: { supports: () => false },
         } as unknown as HTMLAnchorElement);
-        expect(() => SystemInfo.GetSupportsARQuickLook()).toThrow(
-            ARCompatibilityError,
-        );
+
+        try {
+            SystemInfo.GetSupportsARQuickLook();
+            fail('Expected GetSupportsARQuickLook to throw');
+        } catch (error) {
+            expect(error).toBeInstanceOf(ARCompatibilityError);
+            const arError = error as ARCompatibilityError;
+            expect(arError.browserInfo.userAgent).toBe(userAgent);
+            expect(arError.browserInfo.platform).toBe(platform);
+            expect(arError.browserInfo.vendor).toBe(vendor);
+            expect(arError.browserInfo.browser).toBe('Safari');
+            expect(arError.browserInfo.os).toBe('iOS');
+        }
     });
 
     it('should be mobile (iOS)', () => {

@@ -3,6 +3,11 @@ import { SystemInfo } from '../../info/Info';
 import { ARQuickLook } from '../arquicklook/ARQuickLook';
 import { SceneViewer } from '../sceneviewer/SceneViewer';
 
+// Helper for test failures
+const fail = (message: string): never => {
+    throw new Error(message);
+};
+
 // Mock Info
 jest.mock('../../info/Info', () => ({
     SystemInfo: {
@@ -54,9 +59,6 @@ describe('ARSystem', () => {
                     mockUri,
                     undefined,
                 );
-                expect(consoleLogSpy).toHaveBeenCalledWith(
-                    'DIVE: Launching AR with ARQuickLook ...',
-                );
                 consoleLogSpy.mockRestore();
             });
 
@@ -81,36 +83,36 @@ describe('ARSystem', () => {
                     mockUri,
                     options,
                 );
-                expect(consoleLogSpy).toHaveBeenCalledWith(
-                    'DIVE: Launching AR with ARQuickLook ...',
-                );
                 consoleLogSpy.mockRestore();
             });
 
             it('should not launch ARQuickLook on iOS if not supported', async () => {
                 (SystemInfo.GetSystem as jest.Mock).mockReturnValue('iOS');
+
+                // Mock GetSupportsARQuickLook to throw an error
+                const mockError = new Error('ARQuickLook not supported');
                 (
                     SystemInfo.GetSupportsARQuickLook as jest.Mock
-                ).mockReturnValue(false);
+                ).mockImplementation(() => {
+                    throw mockError;
+                });
 
-                const consoleLogSpy = jest
-                    .spyOn(console, 'log')
+                const consoleErrorSpy = jest
+                    .spyOn(console, 'error')
                     .mockImplementation();
 
                 try {
                     await diveAR.launch(mockUri);
                     fail('Expected launch to reject');
                 } catch (error: unknown) {
-                    if (error instanceof Error) {
-                        expect(error.message).toBe('ARQuickLook not supported');
-                    } else {
-                        fail('Expected error to be an Error instance');
-                    }
+                    expect(error).toBe(mockError);
                 }
-                expect(consoleLogSpy).toHaveBeenCalledWith(
-                    'ARQuickLook not supported',
+
+                expect(consoleErrorSpy).toHaveBeenCalledWith(
+                    'No AR Quick Look support:',
+                    mockError,
                 );
-                consoleLogSpy.mockRestore();
+                consoleErrorSpy.mockRestore();
             });
 
             it('should handle ARQuickLook launch errors', async () => {
@@ -129,9 +131,6 @@ describe('ARSystem', () => {
                     () => mockInstance,
                 );
 
-                const consoleLogSpy = jest
-                    .spyOn(console, 'log')
-                    .mockImplementation();
                 const consoleErrorSpy = jest
                     .spyOn(console, 'error')
                     .mockImplementation();
@@ -147,15 +146,11 @@ describe('ARSystem', () => {
                     }
                 }
 
-                expect(consoleLogSpy).toHaveBeenCalledWith(
-                    'DIVE: Launching AR with ARQuickLook ...',
-                );
                 expect(consoleErrorSpy).toHaveBeenCalledWith(
                     'Error launching ARQuickLook:',
                     mockError,
                 );
 
-                consoleLogSpy.mockRestore();
                 consoleErrorSpy.mockRestore();
             });
         });
@@ -164,20 +159,12 @@ describe('ARSystem', () => {
             it('should launch SceneViewer on Android', async () => {
                 (SystemInfo.GetSystem as jest.Mock).mockReturnValue('Android');
 
-                const consoleLogSpy = jest
-                    .spyOn(console, 'log')
-                    .mockImplementation();
-
                 await diveAR.launch(mockUri);
 
                 expect(mockSceneViewerLaunch).toHaveBeenCalledWith(
                     mockUri,
                     undefined,
                 );
-                expect(consoleLogSpy).toHaveBeenCalledWith(
-                    'DIVE: Launching AR with SceneViewer ...',
-                );
-                consoleLogSpy.mockRestore();
             });
 
             it('should launch SceneViewer on Android with options', async () => {
@@ -188,20 +175,12 @@ describe('ARSystem', () => {
                     arScale: 'fixed',
                 };
 
-                const consoleLogSpy = jest
-                    .spyOn(console, 'log')
-                    .mockImplementation();
-
                 await diveAR.launch(mockUri, options);
 
                 expect(mockSceneViewerLaunch).toHaveBeenCalledWith(
                     mockUri,
                     options,
                 );
-                expect(consoleLogSpy).toHaveBeenCalledWith(
-                    'DIVE: Launching AR with SceneViewer ...',
-                );
-                consoleLogSpy.mockRestore();
             });
 
             it('should handle SceneViewer launch errors', async () => {
@@ -217,9 +196,6 @@ describe('ARSystem', () => {
                     () => mockInstance,
                 );
 
-                const consoleLogSpy = jest
-                    .spyOn(console, 'log')
-                    .mockImplementation();
                 const consoleErrorSpy = jest
                     .spyOn(console, 'error')
                     .mockImplementation();
@@ -235,21 +211,33 @@ describe('ARSystem', () => {
                     }
                 }
 
-                expect(consoleLogSpy).toHaveBeenCalledWith(
-                    'DIVE: Launching AR with SceneViewer ...',
-                );
                 expect(consoleErrorSpy).toHaveBeenCalledWith(
                     'Error launching SceneViewer:',
                     mockError,
                 );
 
-                consoleLogSpy.mockRestore();
                 consoleErrorSpy.mockRestore();
             });
         });
 
         it('should reject on non-mobile systems', async () => {
             (SystemInfo.GetSystem as jest.Mock).mockReturnValue('Windows');
+
+            // Mock navigator properties for the ARCompatibilityError constructor
+            const originalNavigator = window.navigator;
+            const mockNavigator = {
+                userAgent:
+                    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+                platform: 'Win32',
+                vendor: 'Google Inc.',
+            };
+
+            // Replace navigator properties temporarily
+            Object.defineProperty(window, 'navigator', {
+                value: mockNavigator,
+                writable: true,
+                configurable: true,
+            });
 
             const consoleLogSpy = jest
                 .spyOn(console, 'log')
@@ -271,6 +259,13 @@ describe('ARSystem', () => {
                 'DIVE: AR not supported. Not a mobile system. (System is Windows)',
             );
             consoleLogSpy.mockRestore();
+
+            // Restore original navigator
+            Object.defineProperty(window, 'navigator', {
+                value: originalNavigator,
+                writable: true,
+                configurable: true,
+            });
         });
     });
 });
