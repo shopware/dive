@@ -112,45 +112,15 @@ export class SystemInfo {
         const platform = window.navigator.platform;
         const vendor = window.navigator.vendor;
 
-        // Parse browser information
-        const browserMatch = userAgent.match(
-            /(Chrome|Safari|Firefox|Edge)\/(\d+\.\d+)/,
-        );
-        const browser = browserMatch ? browserMatch[1] : 'Unknown';
-        const version = browserMatch ? browserMatch[2] : 'Unknown';
+        // The base error message - the ARCompatibilityError constructor will add more details
+        const errorMessage = 'ARQuickLook is not supported';
 
-        // Parse OS information
-        const osMatch = userAgent.match(/\((.*?)\)/);
-        const osInfo = osMatch ? osMatch[1] : 'Unknown';
-        const osVersion = osInfo.match(/OS (\d+_\d+)/)?.[1] || 'Unknown';
-        const os = osInfo.includes('iPhone')
-            ? 'iOS'
-            : osInfo.includes('iPad')
-              ? 'iPadOS'
-              : osInfo.includes('Macintosh')
-                ? 'macOS'
-                : 'Unknown';
-
-        let errorMessage = 'ARQuickLook is not supported on this device. ';
-
-        if (browser !== 'Safari') {
-            errorMessage += `ARQuickLook is only supported in Safari browser. Current browser: ${browser} ${version}`;
-        } else if (parseFloat(osVersion.replace('_', '.')) < 13.0) {
-            errorMessage += `ARQuickLook requires iOS/iPadOS 13.0 or later. Current version: ${osVersion}`;
-        } else {
-            errorMessage +=
-                'Device may not have AR capabilities (ARKit support)';
-        }
-
-        throw new ARCompatibilityError(errorMessage, {
+        throw new ARCompatibilityError(
+            errorMessage,
             userAgent,
             platform,
             vendor,
-            browser,
-            version,
-            os,
-            osVersion,
-        });
+        );
     }
 
     /**
