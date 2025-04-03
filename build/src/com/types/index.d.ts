@@ -1,0 +1,11 @@
+import { COMEntity } from './COMEntity';
+import { COMPrimitive } from './COMPrimitive';
+import { COMModel } from './COMModel';
+import { COMLight } from './COMLight';
+import { COMPov } from './COMPov';
+import { COMGeometry } from './COMGeometry';
+import { COMMaterial } from './COMMaterial';
+import { COMGroup } from './COMGroup';
+import { COMEntityType } from './COMEntityType';
+import { COMGeometryType } from './COMGeometryType';
+export type { COMEntity, COMPrimitive, COMModel, COMLight, COMPov, COMGeometry, COMMaterial, COMGroup, COMEntityType, COMGeometryType, };
