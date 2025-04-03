@@ -1,16 +1,16 @@
-import {
-    Converter,
-    FileTypeError,
-    NetworkError,
-    ConversionError,
-} from '../Converter';
-import { SUPPORTED_FILE_TYPES } from '../../types/file/FileTypes';
+import { Converter } from '../Converter';
+import { SUPPORTED_FILE_TYPES } from '../../types/file';
 import { Loader } from '../../loader/Loader';
 import {
     Exporter,
     type FileTypeToExporterOptions,
 } from '../../exporter/Exporter';
 import { Object3D } from 'three';
+import {
+    FileTypeError,
+    NetworkError,
+    ConversionError,
+} from '../../types/error';
 
 // Mock the Loader class
 jest.mock('../../loader/Loader', () => {
