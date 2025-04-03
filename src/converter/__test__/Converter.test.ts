@@ -4,11 +4,13 @@ import {
     NetworkError,
     ConversionError,
 } from '../Converter';
-import { SUPPORTED_FILE_TYPES } from '../../types';
+import { SUPPORTED_FILE_TYPES } from '../../types/file/FileTypes';
 import { Loader } from '../../loader/Loader';
-import { Exporter } from '../../exporter/Exporter';
+import {
+    Exporter,
+    type FileTypeToExporterOptions,
+} from '../../exporter/Exporter';
 import { Object3D } from 'three';
-import { type ExportOptions } from '../../types/ExporterOptions';
 
 // Mock the Loader class
 jest.mock('../../loader/Loader', () => {
@@ -27,6 +29,7 @@ jest.mock('../../exporter/Exporter', () => {
         Exporter: jest.fn().mockImplementation(() => ({
             export: mockExport,
         })),
+        FileTypeToExporterOptions: {},
     };
 });
 
@@ -56,7 +59,7 @@ describe('Converter', () => {
             uris.forEach((uri) => {
                 const converter = Converter.convert(uri);
                 expect(() => converter['_getFileTypeFromUri']()).toThrow(
-                    `Unsupported file type: ${uri.split('.').pop()}. Supported types are: ${SUPPORTED_FILE_TYPES.join(', ')}`,
+                    `Unsupported file type: ${uri.split('.').pop()}. Supported types: ${SUPPORTED_FILE_TYPES.join(', ')}`,
                 );
             });
         });
@@ -218,7 +221,7 @@ describe('Converter', () => {
         it('should pass export options to exporter', async () => {
             const mockObject3D = new Object3D();
             const mockBuffer = new ArrayBuffer(100);
-            const mockOptions: ExportOptions<'usdz'> = {
+            const mockOptions: FileTypeToExporterOptions['usdz'] = {
                 quickLookCompatible: true,
                 ar: {
                     anchoring: { type: 'plane' },

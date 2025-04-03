@@ -1,10 +1,6 @@
 import { Loader } from '../loader/Loader';
-import { Exporter } from '../exporter/Exporter';
-import {
-    type FileType,
-    SUPPORTED_FILE_TYPES,
-    type ExportOptions,
-} from '../types';
+import { Exporter, type FileTypeToExporterOptions } from '../exporter/Exporter';
+import { type FileType, SUPPORTED_FILE_TYPES } from '../types/file/FileTypes';
 
 export class ConversionError extends Error {
     constructor(
@@ -16,18 +12,20 @@ export class ConversionError extends Error {
     }
 }
 
-export class FileTypeError extends ConversionError {
-    constructor(extension: string) {
-        super(
-            `Unsupported file type: ${extension}. Supported types are: ${SUPPORTED_FILE_TYPES.join(', ')}`,
-        );
+export class FileTypeError extends Error {
+    constructor(message: string) {
+        super(message);
         this.name = 'FileTypeError';
     }
 }
 
-export class NetworkError extends ConversionError {
-    constructor(uri: string, cause?: unknown) {
-        super(`Failed to fetch file from ${uri}`, cause);
+export class NetworkError extends Error {
+    constructor(
+        public readonly url: string,
+        message: string,
+        public readonly cause?: unknown,
+    ) {
+        super(message);
         this.name = 'NetworkError';
     }
 }
@@ -45,9 +43,49 @@ export class Converter {
         return new Converter(uri);
     }
 
+    private _getFileTypeFromUri(): FileType {
+        const extension = this._uri.split('.').pop()?.toLowerCase();
+        if (!extension) {
+            throw new FileTypeError('No file extension found in URI');
+        }
+
+        if (!SUPPORTED_FILE_TYPES.includes(extension as FileType)) {
+            throw new FileTypeError(
+                `Unsupported file type: ${extension}. Supported types: ${SUPPORTED_FILE_TYPES.join(
+                    ', ',
+                )}`,
+            );
+        }
+
+        return extension as FileType;
+    }
+
+    private async _loadFile(): Promise<ArrayBuffer> {
+        const response = await fetch(this._uri);
+        if (!response.ok) {
+            throw new NetworkError(
+                this._uri,
+                `Failed to fetch file from ${this._uri}`,
+            );
+        }
+
+        try {
+            return await response.arrayBuffer();
+        } catch (error) {
+            if (error instanceof NetworkError) {
+                throw error;
+            }
+            throw new NetworkError(
+                this._uri,
+                `Failed to fetch file from ${this._uri}`,
+                error,
+            );
+        }
+    }
+
     public async to<T extends FileType>(
         type: T,
-        options?: ExportOptions<T>,
+        options?: FileTypeToExporterOptions[T],
     ): Promise<ArrayBuffer> {
         const sourceType = this._getFileTypeFromUri();
 
@@ -65,40 +103,6 @@ export class Converter {
                 throw error;
             }
             throw new ConversionError('Failed to convert file', error);
-        }
-    }
-
-    private _getFileTypeFromUri(): FileType {
-        // Remove trailing slash if present and get the last part of the path
-        const path = this._uri.replace(/\/$/, '').split('/').pop();
-        if (!path) {
-            throw new FileTypeError('no extension');
-        }
-        const extension = path.split('.').pop()?.toLowerCase();
-        if (!extension || extension === '') {
-            throw new FileTypeError('no extension');
-        }
-        if (!SUPPORTED_FILE_TYPES.includes(extension as FileType)) {
-            throw new FileTypeError(extension);
-        }
-        return extension as FileType;
-    }
-
-    private async _loadFile(): Promise<ArrayBuffer> {
-        try {
-            const response = await fetch(this._uri);
-            if (!response.ok) {
-                throw new NetworkError(
-                    this._uri,
-                    `HTTP error! status: ${response.status}`,
-                );
-            }
-            return await response.arrayBuffer();
-        } catch (error) {
-            if (error instanceof NetworkError) {
-                throw error;
-            }
-            throw new NetworkError(this._uri, error);
         }
     }
 }

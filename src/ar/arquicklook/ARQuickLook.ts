@@ -1,6 +1,5 @@
 import { type ARSystemOptions } from '../AR';
 import { Converter } from '../../converter/Converter';
-import { type USDZExporterOptions } from '../../types';
 
 export class ARQuickLook {
     public async launch(uri: string, options?: ARSystemOptions): Promise<void> {
@@ -24,7 +23,7 @@ export class ARQuickLook {
                             : 'horizontal',
                 },
             },
-        } as USDZExporterOptions);
+        });
 
         // Create a blob from the USDZ buffer
         const blob = new Blob([usdzBuffer], { type: 'model/vnd.usdz+zip' });

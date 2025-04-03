@@ -1,7 +1,7 @@
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader';
 import { USDZLoader } from 'three/examples/jsm/loaders/USDZLoader';
 import { Object3D } from 'three';
-import { type FileType, SUPPORTED_FILE_TYPES } from '../types';
+import { FileType, SUPPORTED_FILE_TYPES } from '../types/file/FileTypes';
 
 export class Loader {
     private _gltfLoader: GLTFLoader;
@@ -13,36 +13,26 @@ export class Loader {
     }
 
     public async load(uri: string): Promise<Object3D> {
-        const type = this._getFileTypeFromUri(uri);
-        return this._load(uri, type);
-    }
-
-    private _getFileTypeFromUri(uri: string): FileType {
-        const extension = uri.split('.').pop()?.toLowerCase() as FileType;
-        if (!extension || !SUPPORTED_FILE_TYPES.includes(extension)) {
-            throw new Error(`Unsupported file type: ${extension}`);
+        const extension = uri.split('.').pop()?.toLowerCase();
+        if (!extension) {
+            throw new Error('No file extension found in URI');
         }
-        return extension;
-    }
 
-    private async _load(uri: string, type: FileType): Promise<Object3D> {
-        switch (type) {
+        if (!SUPPORTED_FILE_TYPES.includes(extension as FileType)) {
+            throw new Error(
+                `Unsupported file type: ${extension}. Supported types: ${SUPPORTED_FILE_TYPES.join(', ')}`,
+            );
+        }
+
+        switch (extension as FileType) {
             case 'glb':
-            case 'gltf': {
-                return this._loadGltf(uri);
-            }
-            case 'usdz': {
-                return this._loadUsdz(uri);
-            }
+            case 'gltf':
+                const gltf = await this._gltfLoader.loadAsync(uri);
+                return gltf.scene;
+            case 'usdz':
+                return await this._usdzLoader.loadAsync(uri);
+            default:
+                throw new Error(`Unsupported file type: ${extension}`);
         }
-    }
-
-    private async _loadGltf(uri: string): Promise<Object3D> {
-        const gltf = await this._gltfLoader.loadAsync(uri);
-        return gltf.scene;
-    }
-
-    private async _loadUsdz(uri: string): Promise<Object3D> {
-        return this._usdzLoader.loadAsync(uri);
     }
 }
