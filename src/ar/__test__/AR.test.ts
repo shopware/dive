@@ -12,9 +12,10 @@ jest.mock('../../info/Info', () => ({
 }));
 
 // Mock ARQuickLook
+const mockLaunchARQuickLook = jest.fn().mockResolvedValue(undefined);
 jest.mock('../arquicklook/ARQuickLook', () => ({
     ARQuickLook: jest.fn().mockImplementation(() => ({
-        launch: jest.fn().mockResolvedValue(undefined),
+        launch: mockLaunchARQuickLook,
     })),
 }));
 
@@ -48,7 +49,10 @@ describe('ARSystem', () => {
 
                 await diveAR.launch(mockUri);
 
-                expect(ARQuickLook).toHaveBeenCalledWith(mockUri, undefined);
+                expect(mockLaunchARQuickLook).toHaveBeenCalledWith(
+                    mockUri,
+                    undefined,
+                );
                 expect(consoleLogSpy).toHaveBeenCalledWith(
                     'DIVE: Launching AR with ARQuickLook ...',
                 );
@@ -72,7 +76,10 @@ describe('ARSystem', () => {
 
                 await diveAR.launch(mockUri, options);
 
-                expect(ARQuickLook).toHaveBeenCalledWith(mockUri, options);
+                expect(mockLaunchARQuickLook).toHaveBeenCalledWith(
+                    mockUri,
+                    options,
+                );
                 expect(consoleLogSpy).toHaveBeenCalledWith(
                     'DIVE: Launching AR with ARQuickLook ...',
                 );

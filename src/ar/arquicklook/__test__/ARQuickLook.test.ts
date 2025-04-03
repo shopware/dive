@@ -44,10 +44,10 @@ document.createElement = jest.fn().mockReturnValue({
     click: jest.fn(),
 });
 
-describe('DIVEARQuickLook', () => {
-    let mockScene: DIVEScene;
+describe('ARQuickLook', () => {
     let mockOptions: ARSystemOptions;
     let mockModels: Object3D[];
+    let quickLook: ARQuickLook;
     const mockUri = 'https://example.com/model.glb';
 
     beforeEach(() => {
@@ -59,30 +59,23 @@ describe('DIVEARQuickLook', () => {
         mockModels[1].userData = {
             uri: 'https://example.com',
         };
-        mockScene = new DIVEScene();
         mockOptions = {
             arPlacement: 'horizontal',
             arScale: 'auto',
         };
+        quickLook = new ARQuickLook();
         jest.clearAllMocks();
     });
 
     describe('constructor', () => {
-        it('should create an instance with URI and options', () => {
-            const quickLook = new ARQuickLook(mockUri, mockOptions);
-            expect(quickLook).toBeInstanceOf(ARQuickLook);
-        });
-
-        it('should create an instance with just URI', () => {
-            const quickLook = new ARQuickLook(mockUri);
+        it('should create an instance', () => {
             expect(quickLook).toBeInstanceOf(ARQuickLook);
         });
     });
 
     describe('launch', () => {
         it('should convert and launch with default options', async () => {
-            const quickLook = new ARQuickLook(mockUri);
-            await quickLook.launch();
+            await quickLook.launch(mockUri);
 
             expect(Converter.convert).toHaveBeenCalledWith(mockUri);
             expect((Converter as any).to).toHaveBeenCalledWith('usdz', {
@@ -101,8 +94,7 @@ describe('DIVEARQuickLook', () => {
                 arPlacement: 'vertical',
                 arScale: 'fixed',
             };
-            const quickLook = new ARQuickLook(mockUri, options);
-            await quickLook.launch();
+            await quickLook.launch(mockUri, options);
 
             expect(Converter.convert).toHaveBeenCalledWith(mockUri);
             expect((Converter as any).to).toHaveBeenCalledWith('usdz', {
@@ -120,8 +112,7 @@ describe('DIVEARQuickLook', () => {
             const error = new Error('Conversion failed');
             ((Converter as any).to as jest.Mock).mockRejectedValueOnce(error);
 
-            const quickLook = new ARQuickLook(mockUri);
-            await expect(quickLook.launch()).rejects.toThrow(error);
+            await expect(quickLook.launch(mockUri)).rejects.toThrow(error);
         });
 
         it('should create a blob with correct MIME type', async () => {
@@ -130,8 +121,7 @@ describe('DIVEARQuickLook', () => {
                 mockBuffer,
             );
 
-            const quickLook = new ARQuickLook(mockUri);
-            await quickLook.launch();
+            await quickLook.launch(mockUri);
 
             expect(URL.createObjectURL).toHaveBeenCalledWith(
                 expect.objectContaining({
@@ -145,8 +135,7 @@ describe('DIVEARQuickLook', () => {
                 arPlacement: 'horizontal',
                 arScale: 'fixed',
             };
-            const quickLook = new ARQuickLook(mockUri, options);
-            await quickLook.launch();
+            await quickLook.launch(mockUri, options);
 
             const anchor = document.createElement('a');
             expect(anchor.href).toContain('#allowsContentScaling=0');
