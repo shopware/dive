@@ -1,5 +1,6 @@
 import { SystemInfo } from '../Info';
 import { ESystem, EWebXRUnsupportedReason } from '../../types/info';
+import { ARCompatibilityError } from '../../types/error';
 
 const mockNavigator = (navigator: any) => {
     Object.defineProperty(global, 'navigator', {
@@ -213,11 +214,18 @@ describe('dive/info/DIVEInfo', () => {
     });
 
     it('should not support ARQuickLook when relList does not support AR', () => {
+        mockNavigator({
+            userAgent:
+                'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1',
+            platform: 'iPhone',
+            vendor: 'Apple Computer, Inc.',
+        });
         jest.spyOn(document, 'createElement').mockReturnValue({
             relList: { supports: () => false },
         } as unknown as HTMLAnchorElement);
-        const supports = SystemInfo.GetSupportsARQuickLook();
-        expect(supports).toBe(false);
+        expect(() => SystemInfo.GetSupportsARQuickLook()).toThrow(
+            ARCompatibilityError,
+        );
     });
 
     it('should be mobile (iOS)', () => {

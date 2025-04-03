@@ -8,6 +8,7 @@ import {
     type USDZExporterOptions as THREEUSDZExporterOptions,
 } from 'three/examples/jsm/exporters/USDZExporter';
 import { type FileType } from '../types/file/FileTypes';
+import { FileTypeError, ParseError } from '../types/error';
 
 export type USDZExporterOptions = THREEUSDZExporterOptions & {
     ar?: {
@@ -50,7 +51,7 @@ export class Exporter {
                 return this._exportUsdz(object, options);
             }
             default:
-                throw new Error(`Unsupported file type: ${type}`);
+                throw new FileTypeError(`Unsupported file type: ${type}`);
         }
     }
 
@@ -58,35 +59,56 @@ export class Exporter {
         object: Object3D,
         options?: GLTFExporterOptions,
     ): Promise<ArrayBuffer> {
-        const result = await this._gltfExporter.parseAsync(object, {
-            ...options,
-            binary: true,
-        });
-        if (result instanceof ArrayBuffer) {
-            return result;
+        try {
+            const result = await this._gltfExporter.parseAsync(object, {
+                ...options,
+                binary: true,
+            });
+            if (result instanceof ArrayBuffer) {
+                return result;
+            }
+            throw new ParseError('Failed to export GLB: expected ArrayBuffer');
+        } catch (error) {
+            if (error instanceof ParseError) {
+                throw error;
+            }
+            throw new ParseError('Failed to export GLB', error);
         }
-        throw new Error('Failed to export GLB: expected ArrayBuffer');
     }
 
     private async _exportGltf(
         object: Object3D,
         options?: GLTFExporterOptions,
     ): Promise<ArrayBuffer> {
-        const json = await this._gltfExporter.parseAsync(object, {
-            ...options,
-            binary: false,
-        });
-        const text = JSON.stringify(json);
-        const encoder = new TextEncoder();
-        const bytes = encoder.encode(text);
-        return bytes.buffer as ArrayBuffer;
+        try {
+            const json = await this._gltfExporter.parseAsync(object, {
+                ...options,
+                binary: false,
+            });
+            const text = JSON.stringify(json);
+            const encoder = new TextEncoder();
+            const bytes = encoder.encode(text);
+            return bytes.buffer as ArrayBuffer;
+        } catch (error) {
+            if (error instanceof ParseError) {
+                throw error;
+            }
+            throw new ParseError('Failed to export GLTF', error);
+        }
     }
 
     private async _exportUsdz(
         object: Object3D,
         options?: USDZExporterOptions,
     ): Promise<ArrayBuffer> {
-        const result = await this._usdzExporter.parse(object, options);
-        return result.buffer as ArrayBuffer;
+        try {
+            const result = await this._usdzExporter.parse(object, options);
+            return result.buffer as ArrayBuffer;
+        } catch (error) {
+            if (error instanceof ParseError) {
+                throw error;
+            }
+            throw new ParseError('Failed to export USDZ', error);
+        }
     }
 }
