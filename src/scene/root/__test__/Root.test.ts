@@ -26,11 +26,11 @@ jest.mock('../../../com/Communication.ts', () => {
     };
 });
 
-const mock_LoadGLTF = jest.fn().mockResolvedValue({});
-jest.mock('../../../loadingmanager/LoadingManager.ts', () => {
+const mock_Load = jest.fn().mockResolvedValue({});
+jest.mock('../../../loader/Loader.ts', () => {
     return {
-        DIVELoadingManager: jest.fn(function () {
-            this.LoadGLTF = mock_LoadGLTF;
+        Loader: jest.fn(function () {
+            this.load = mock_Load;
             return this;
         }),
     };
