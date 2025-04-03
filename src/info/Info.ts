@@ -1,4 +1,5 @@
 import { ESystem, EWebXRUnsupportedReason } from '../types/info';
+import { ARCompatibilityError } from '../types/error';
 
 export class SystemInfo {
     private static _supportsWebXR: boolean = false;
@@ -99,10 +100,57 @@ export class SystemInfo {
      * (Chrome, Firefox, etc.) do not support ARQuickLook, even on iOS.
      *
      * @returns boolean indicating if ARQuickLook is supported
+     * @throws ARCompatibilityError if ARQuickLook is not supported, with detailed browser information
      */
     public static GetSupportsARQuickLook(): boolean {
         const a = document.createElement('a');
-        return a.relList.supports('ar');
+        if (a.relList.supports('ar')) {
+            return true;
+        }
+
+        const userAgent = window.navigator.userAgent;
+        const platform = window.navigator.platform;
+        const vendor = window.navigator.vendor;
+
+        // Parse browser information
+        const browserMatch = userAgent.match(
+            /(Chrome|Safari|Firefox|Edge)\/(\d+\.\d+)/,
+        );
+        const browser = browserMatch ? browserMatch[1] : 'Unknown';
+        const version = browserMatch ? browserMatch[2] : 'Unknown';
+
+        // Parse OS information
+        const osMatch = userAgent.match(/\((.*?)\)/);
+        const osInfo = osMatch ? osMatch[1] : 'Unknown';
+        const osVersion = osInfo.match(/OS (\d+_\d+)/)?.[1] || 'Unknown';
+        const os = osInfo.includes('iPhone')
+            ? 'iOS'
+            : osInfo.includes('iPad')
+              ? 'iPadOS'
+              : osInfo.includes('Macintosh')
+                ? 'macOS'
+                : 'Unknown';
+
+        let errorMessage = 'ARQuickLook is not supported on this device. ';
+
+        if (browser !== 'Safari') {
+            errorMessage += `ARQuickLook is only supported in Safari browser. Current browser: ${browser} ${version}`;
+        } else if (parseFloat(osVersion.replace('_', '.')) < 13.0) {
+            errorMessage += `ARQuickLook requires iOS/iPadOS 13.0 or later. Current version: ${osVersion}`;
+        } else {
+            errorMessage +=
+                'Device may not have AR capabilities (ARKit support)';
+        }
+
+        throw new ARCompatibilityError(errorMessage, {
+            userAgent,
+            platform,
+            vendor,
+            browser,
+            version,
+            os,
+            osVersion,
+        });
     }
 
     /**

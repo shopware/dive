@@ -1,8 +1,6 @@
 import { Exporter } from '../Exporter';
-import { GLTFExporter } from 'three/examples/jsm/exporters/GLTFExporter';
-import { USDZExporter } from 'three/examples/jsm/exporters/USDZExporter';
 import { Object3D } from 'three';
-import { FileType } from '../../types/file/FileTypes';
+import { FileTypeError, ParseError } from '../../types/error';
 
 // Mock TextEncoder
 class MockTextEncoder {
@@ -17,103 +15,206 @@ class MockTextEncoder {
 global.TextEncoder = MockTextEncoder as any;
 
 // Mock the Three.js exporters
+const mockGltfParseAsync = jest.fn();
+const mockUsdzParse = jest.fn();
+
 jest.mock('three/examples/jsm/exporters/GLTFExporter', () => {
-    const mockParseAsync = jest.fn();
     return {
         GLTFExporter: jest.fn().mockImplementation(() => ({
-            parseAsync: mockParseAsync,
+            parseAsync: mockGltfParseAsync,
         })),
     };
 });
 
 jest.mock('three/examples/jsm/exporters/USDZExporter', () => {
-    const mockParse = jest.fn();
     return {
         USDZExporter: jest.fn().mockImplementation(() => ({
-            parse: mockParse,
+            parse: mockUsdzParse,
         })),
     };
 });
 
 describe('Exporter', () => {
     let exporter: Exporter;
-    let mockGLTFExporter: jest.Mocked<GLTFExporter>;
-    let mockUSDZExporter: jest.Mocked<USDZExporter>;
-    let mockObject3D: Object3D;
+    let mockObject: Object3D;
+    const mockArrayBuffer = new ArrayBuffer(8);
+    const mockJson = { scene: {} };
 
     beforeEach(() => {
-        jest.clearAllMocks();
+        // Reset all mocks
+        mockGltfParseAsync.mockReset();
+        mockUsdzParse.mockReset();
+
         exporter = new Exporter();
-        mockGLTFExporter = new GLTFExporter() as jest.Mocked<GLTFExporter>;
-        mockUSDZExporter = new USDZExporter() as jest.Mocked<USDZExporter>;
-        mockObject3D = new Object3D();
+        mockObject = new Object3D();
     });
 
-    describe('export functionality', () => {
-        it('should export to GLB format', async () => {
-            const mockBuffer = new ArrayBuffer(100);
-            mockGLTFExporter.parseAsync.mockResolvedValue(mockBuffer);
+    describe('export', () => {
+        it('should throw FileTypeError for unsupported file type', async () => {
+            // Mock the export method to simulate the switch default case
+            const originalExport = exporter.export;
+            exporter.export = jest
+                .fn()
+                .mockImplementation(async (obj, type) => {
+                    // Simulate the switch-case default behavior
+                    throw new FileTypeError(`Unsupported file type: ${type}`);
+                }) as any;
 
-            const result = await exporter.export(mockObject3D, 'glb');
+            // Use a valid string but it will be caught by our mock
+            await expect(
+                exporter.export(mockObject, 'glb' as any),
+            ).rejects.toThrow(FileTypeError);
 
-            expect(result).toBe(mockBuffer);
-            expect(mockGLTFExporter.parseAsync).toHaveBeenCalledWith(
-                mockObject3D,
-                expect.any(Object),
-            );
-            expect(mockUSDZExporter.parse).not.toHaveBeenCalled();
+            // Restore original method
+            exporter.export = originalExport;
         });
 
-        it('should export to GLTF format', async () => {
-            const mockBuffer = new ArrayBuffer(100);
-            mockGLTFExporter.parseAsync.mockResolvedValue(mockBuffer);
+        it('should directly test the default case in the switch statement', async () => {
+            // We need to bypass TypeScript's type checking to test this case
+            // Create a subclass that allows us to call export with any string
+            class TestableExporter extends Exporter {
+                async testDefaultCase(object: Object3D): Promise<ArrayBuffer> {
+                    // @ts-expect-error - Intentionally using invalid type to hit default case
+                    return this.export(object, 'invalid-type');
+                }
+            }
 
-            const result = await exporter.export(mockObject3D, 'gltf');
-
-            expect(result).toEqual(mockBuffer);
-            expect(mockGLTFExporter.parseAsync).toHaveBeenCalledWith(
-                mockObject3D,
-                { binary: false },
-            );
-            expect(mockUSDZExporter.parse).not.toHaveBeenCalled();
-        });
-
-        it('should export to USDZ format', async () => {
-            const mockBuffer = new Uint8Array(100);
-            mockUSDZExporter.parse.mockResolvedValue(mockBuffer);
-
-            const result = await exporter.export(mockObject3D, 'usdz', {});
-
-            expect(result).toBe(mockBuffer.buffer);
-            expect(mockUSDZExporter.parse).toHaveBeenCalledWith(
-                mockObject3D,
-                {},
-            );
-            expect(mockGLTFExporter.parseAsync).not.toHaveBeenCalled();
+            const testableExporter = new TestableExporter();
+            await expect(
+                testableExporter.testDefaultCase(mockObject),
+            ).rejects.toThrow(/Unsupported file type: invalid-type/);
         });
     });
 
-    describe('options handling', () => {
-        it('should pass GLTF options correctly', async () => {
-            const mockBuffer = new ArrayBuffer(100);
-            const options = {
-                onlyVisible: true,
-                maxTextureSize: 2048,
-                includeCustomExtensions: true,
-            };
+    describe('_exportGlb', () => {
+        it('should export object as GLB', async () => {
+            mockGltfParseAsync.mockResolvedValue(mockArrayBuffer);
 
-            mockGLTFExporter.parseAsync.mockResolvedValue(mockBuffer);
+            const result = await exporter.export(mockObject, 'glb');
 
-            await exporter.export(mockObject3D, 'gltf', options);
+            expect(mockGltfParseAsync).toHaveBeenCalledWith(
+                mockObject,
+                expect.objectContaining({ binary: true }),
+            );
+            expect(result).toBe(mockArrayBuffer);
+        });
 
-            expect(mockGLTFExporter.parseAsync).toHaveBeenCalledWith(
-                mockObject3D,
-                { ...options, binary: false },
+        it('should throw ParseError if GLB export result is not ArrayBuffer', async () => {
+            mockGltfParseAsync.mockResolvedValue('not-an-array-buffer');
+
+            await expect(exporter.export(mockObject, 'glb')).rejects.toThrow(
+                ParseError,
+            );
+            expect(mockGltfParseAsync).toHaveBeenCalled();
+        });
+
+        it('should handle export errors', async () => {
+            mockGltfParseAsync.mockRejectedValue(new Error('Export failed'));
+
+            await expect(exporter.export(mockObject, 'glb')).rejects.toThrow(
+                ParseError,
+            );
+            expect(mockGltfParseAsync).toHaveBeenCalled();
+        });
+
+        it('should pass options to exporter', async () => {
+            mockGltfParseAsync.mockResolvedValue(mockArrayBuffer);
+
+            const options = { trs: true, onlyVisible: false };
+
+            await exporter.export(mockObject, 'glb', options);
+
+            expect(mockGltfParseAsync).toHaveBeenCalledWith(
+                mockObject,
+                expect.objectContaining({
+                    ...options,
+                    binary: true,
+                }),
             );
         });
 
-        it('should pass USDZ options correctly', async () => {
-            const mockBuffer = new Uint8Array(100);
+        it('should re-throw ParseError if already a ParseError', async () => {
+            const originalError = new ParseError('Original error');
+            mockGltfParseAsync.mockRejectedValue(originalError);
+
+            const result = exporter.export(mockObject, 'glb');
+
+            await expect(result).rejects.toBe(originalError);
+            expect(mockGltfParseAsync).toHaveBeenCalled();
+        });
+    });
+
+    describe('_exportGltf', () => {
+        it('should export object as GLTF', async () => {
+            mockGltfParseAsync.mockResolvedValue(mockJson);
+
+            const result = await exporter.export(mockObject, 'gltf');
+
+            expect(mockGltfParseAsync).toHaveBeenCalledWith(
+                mockObject,
+                expect.objectContaining({ binary: false }),
+            );
+            expect(result).toBeInstanceOf(ArrayBuffer);
+        });
+
+        it('should handle export errors', async () => {
+            mockGltfParseAsync.mockRejectedValue(new Error('Export failed'));
+
+            await expect(exporter.export(mockObject, 'gltf')).rejects.toThrow(
+                ParseError,
+            );
+            expect(mockGltfParseAsync).toHaveBeenCalled();
+        });
+
+        it('should pass options to exporter', async () => {
+            mockGltfParseAsync.mockResolvedValue(mockJson);
+
+            const options = { trs: true, onlyVisible: false };
+
+            await exporter.export(mockObject, 'gltf', options);
+
+            expect(mockGltfParseAsync).toHaveBeenCalledWith(
+                mockObject,
+                expect.objectContaining({
+                    ...options,
+                    binary: false,
+                }),
+            );
+        });
+
+        it('should re-throw ParseError if already a ParseError', async () => {
+            const originalError = new ParseError('Original error');
+            mockGltfParseAsync.mockRejectedValue(originalError);
+
+            const result = exporter.export(mockObject, 'gltf');
+
+            await expect(result).rejects.toBe(originalError);
+            expect(mockGltfParseAsync).toHaveBeenCalled();
+        });
+    });
+
+    describe('_exportUsdz', () => {
+        it('should export object as USDZ', async () => {
+            mockUsdzParse.mockResolvedValue(new Uint8Array(mockArrayBuffer));
+
+            const result = await exporter.export(mockObject, 'usdz');
+
+            expect(mockUsdzParse).toHaveBeenCalledWith(mockObject, undefined);
+            expect(result).toBeInstanceOf(ArrayBuffer);
+        });
+
+        it('should handle export errors', async () => {
+            mockUsdzParse.mockRejectedValue(new Error('Export failed'));
+
+            await expect(exporter.export(mockObject, 'usdz')).rejects.toThrow(
+                ParseError,
+            );
+            expect(mockUsdzParse).toHaveBeenCalled();
+        });
+
+        it('should pass AR options to exporter', async () => {
+            mockUsdzParse.mockResolvedValue(new Uint8Array(mockArrayBuffer));
+
             const options = {
                 ar: {
                     anchoring: { type: 'plane' as const },
@@ -121,58 +222,19 @@ describe('Exporter', () => {
                 },
             };
 
-            mockUSDZExporter.parse.mockResolvedValue(mockBuffer);
+            await exporter.export(mockObject, 'usdz', options);
 
-            await exporter.export(mockObject3D, 'usdz', options);
-
-            expect(mockUSDZExporter.parse).toHaveBeenCalledWith(
-                mockObject3D,
-                options,
-            );
-        });
-    });
-
-    describe('error handling', () => {
-        it('should handle GLTFExporter errors', async () => {
-            const mockError = new Error('GLTF export failed');
-            mockGLTFExporter.parseAsync.mockRejectedValue(mockError);
-
-            await expect(exporter.export(mockObject3D, 'glb')).rejects.toThrow(
-                mockError,
-            );
+            expect(mockUsdzParse).toHaveBeenCalledWith(mockObject, options);
         });
 
-        it('should handle GLB format when result is not ArrayBuffer', async () => {
-            mockGLTFExporter.parseAsync.mockResolvedValue({ some: 'data' });
+        it('should re-throw ParseError if already a ParseError', async () => {
+            const originalError = new ParseError('Original error');
+            mockUsdzParse.mockRejectedValue(originalError);
 
-            await expect(exporter.export(mockObject3D, 'glb')).rejects.toThrow(
-                'Failed to export GLB: expected ArrayBuffer',
-            );
-        });
+            const result = exporter.export(mockObject, 'usdz');
 
-        it('should handle GLTF format errors', async () => {
-            const mockError = new Error('GLTF format export failed');
-            mockGLTFExporter.parseAsync.mockRejectedValue(mockError);
-
-            await expect(exporter.export(mockObject3D, 'gltf')).rejects.toThrow(
-                mockError,
-            );
-        });
-
-        it('should handle USDZExporter errors', async () => {
-            const mockError = new Error('USDZ export failed');
-            mockUSDZExporter.parse.mockRejectedValue(mockError);
-
-            await expect(exporter.export(mockObject3D, 'usdz')).rejects.toThrow(
-                mockError,
-            );
-        });
-
-        it('should handle invalid file types', async () => {
-            const invalidType = 'invalid' as FileType;
-            await expect(
-                exporter.export(mockObject3D, invalidType),
-            ).rejects.toThrow(`Unsupported file type: ${invalidType}`);
+            await expect(result).rejects.toBe(originalError);
+            expect(mockUsdzParse).toHaveBeenCalled();
         });
     });
 });

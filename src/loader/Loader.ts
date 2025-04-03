@@ -1,8 +1,13 @@
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader';
 import { USDZLoader } from 'three/examples/jsm/loaders/USDZLoader';
 import { Object3D } from 'three';
-import { FileType, SUPPORTED_FILE_TYPES } from '../types/file';
-import { FileTypeError } from '../types/error';
+import {
+    type FileType,
+    getFileTypeFromUri,
+    isFileTypeSupported,
+    SUPPORTED_FILE_TYPES,
+} from '../types/file';
+import { FileTypeError, NetworkError, ParseError } from '../types/error';
 
 export class Loader {
     private _gltfLoader: GLTFLoader;
@@ -13,25 +18,54 @@ export class Loader {
         this._usdzLoader = new USDZLoader();
     }
 
-    public async load(uri: string): Promise<Object3D> {
-        const extension = uri.split('.').pop()?.toLowerCase();
-        if (!extension) {
-            throw new FileTypeError('No file extension found in URI');
+    private async _loadFile(uri: string): Promise<ArrayBuffer> {
+        const response = await fetch(uri);
+        if (!response.ok) {
+            throw new NetworkError(uri, `Failed to fetch file from ${uri}`);
         }
 
-        if (!SUPPORTED_FILE_TYPES.includes(extension as FileType)) {
+        try {
+            return await response.arrayBuffer();
+        } catch (error) {
+            throw new NetworkError(uri, `Failed to fetch file from ${uri}`);
+        }
+    }
+
+    public async load(uri: string): Promise<Object3D> {
+        const extension = getFileTypeFromUri(uri);
+        if (extension.length === 0) {
+            throw new FileTypeError('No file extension found in URI');
+        }
+        if (!isFileTypeSupported(extension)) {
             throw new FileTypeError(
                 `Unsupported file type: ${extension}. Supported types: ${SUPPORTED_FILE_TYPES.join(', ')}`,
             );
         }
 
-        switch (extension as FileType) {
-            case 'glb':
-            case 'gltf':
-                const gltf = await this._gltfLoader.loadAsync(uri);
-                return gltf.scene;
-            case 'usdz':
-                return await this._usdzLoader.loadAsync(uri);
+        const arrayBuffer = await this._loadFile(uri);
+
+        try {
+            switch (extension as FileType) {
+                case 'glb':
+                case 'gltf': {
+                    const gltf = await this._gltfLoader.parseAsync(
+                        arrayBuffer,
+                        '',
+                    );
+                    return gltf.scene;
+                }
+                case 'usdz': {
+                    return await this._usdzLoader.parse(arrayBuffer);
+                }
+            }
+        } catch (error) {
+            if (error instanceof Error) {
+                throw new ParseError(
+                    `Failed to parse ${extension} file: ${error.message}`,
+                    error,
+                );
+            }
+            throw new ParseError(`Failed to parse ${extension} file`);
         }
     }
 }
