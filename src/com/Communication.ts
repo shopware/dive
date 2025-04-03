@@ -22,7 +22,7 @@ import { type DIVEMediaCreator } from '../mediacreator/MediaCreator.ts';
 import { type DIVERenderer } from '../renderer/Renderer.ts';
 import { type DIVESelectable } from '../interface/Selectable.ts';
 import { type DIVEIO } from '../io/IO.ts';
-import { type ARSystem } from '../ar/AR.ts';
+import { type ARSystem } from '../ar/ARSystem.ts';
 
 type EventListener<Action extends keyof Actions> = (
     payload: Actions[Action]['PAYLOAD'],

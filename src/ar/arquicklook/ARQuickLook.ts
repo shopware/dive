@@ -1,4 +1,4 @@
-import { type ARSystemOptions } from '../AR';
+import { type ARSystemOptions } from '../ARSystem';
 import { Converter } from '../../converter/Converter';
 
 export class ARQuickLook {
