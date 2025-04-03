@@ -1,12 +1,29 @@
 import { Object3D } from 'three';
-import { GLTFExporter } from 'three/examples/jsm/exporters/GLTFExporter';
-import { USDZExporter } from 'three/examples/jsm/exporters/USDZExporter';
 import {
-    type FileType,
-    type GLTFExporterOptions,
-    type USDZExporterOptions,
-    type ExportOptions,
-} from '../types';
+    GLTFExporter,
+    type GLTFExporterOptions as THREEGLTFExporterOptions,
+} from 'three/examples/jsm/exporters/GLTFExporter';
+import {
+    USDZExporter,
+    type USDZExporterOptions as THREEUSDZExporterOptions,
+} from 'three/examples/jsm/exporters/USDZExporter';
+import { type FileType } from '../types/file/FileTypes';
+
+export type USDZExporterOptions = THREEUSDZExporterOptions & {
+    ar?: {
+        anchoring: { type: 'plane' | 'image' | 'face' | 'none' }; // source: https://developer.apple.com/documentation/realitykit/preliminary-anchoring-type
+        planeAnchoring: { alignment: 'horizontal' | 'vertical' | 'any' }; // source: https://developer.apple.com/documentation/realitykit/preliminary-planeanchoring-alignment
+    };
+};
+
+export type GLTFExporterOptions = THREEGLTFExporterOptions;
+
+// Map file types to their corresponding exporter options
+export type FileTypeToExporterOptions = {
+    glb: GLTFExporterOptions;
+    gltf: GLTFExporterOptions;
+    usdz: USDZExporterOptions;
+};
 
 export class Exporter {
     private _gltfExporter: GLTFExporter;
@@ -20,7 +37,7 @@ export class Exporter {
     public async export<T extends FileType>(
         object: Object3D,
         type: T,
-        options?: ExportOptions<T>,
+        options?: FileTypeToExporterOptions[T],
     ): Promise<ArrayBuffer> {
         switch (type) {
             case 'glb': {
