@@ -12,17 +12,17 @@ export type FileTypeDefinition<T extends string, O> = {
 export const FILE_TYPES = {
     glb: {
         key: 'glb' as const,
-        extension: '.glb',
+        extension: 'glb',
         options: {} as GLTFExporterOptions,
     },
     gltf: {
         key: 'gltf' as const,
-        extension: '.gltf',
+        extension: 'gltf',
         options: {} as GLTFExporterOptions,
     },
     usdz: {
         key: 'usdz' as const,
-        extension: '.usdz',
+        extension: 'usdz',
         options: {} as USDZExporterOptions,
     },
 } as const;

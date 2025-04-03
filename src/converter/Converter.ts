@@ -49,15 +49,15 @@ export class Converter {
         type: T,
         options?: ExportOptions<T>,
     ): Promise<ArrayBuffer> {
+        const sourceType = this._getFileTypeFromUri();
+
+        // If source and target types match, just return the file content
+        if (sourceType === type) {
+            return await this._loadFile();
+        }
+
+        // Otherwise, convert through Object3D
         try {
-            const sourceType = this._getFileTypeFromUri();
-
-            // If source and target types match, just return the file content
-            if (sourceType === type) {
-                return await this._loadFile();
-            }
-
-            // Otherwise, convert through Object3D
             const object3D = await this._loader.load(this._uri);
             return await this._exporter.export(object3D, type, options);
         } catch (error) {
@@ -69,8 +69,13 @@ export class Converter {
     }
 
     private _getFileTypeFromUri(): FileType {
-        const extension = this._uri.split('.').pop()?.toLowerCase();
-        if (!extension) {
+        // Remove trailing slash if present and get the last part of the path
+        const path = this._uri.replace(/\/$/, '').split('/').pop();
+        if (!path) {
+            throw new FileTypeError('no extension');
+        }
+        const extension = path.split('.').pop()?.toLowerCase();
+        if (!extension || extension === '') {
             throw new FileTypeError('no extension');
         }
         if (!SUPPORTED_FILE_TYPES.includes(extension as FileType)) {
@@ -88,7 +93,7 @@ export class Converter {
                     `HTTP error! status: ${response.status}`,
                 );
             }
-            return response.arrayBuffer();
+            return await response.arrayBuffer();
         } catch (error) {
             if (error instanceof NetworkError) {
                 throw error;
