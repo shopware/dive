@@ -1,6 +1,6 @@
 import { Box3, Color, Euler, Mesh, Object3D, Vector3 } from 'three';
 import { DIVEScene } from '../../../scene/Scene';
-import { ARSystemOptions } from '../../AR';
+import { ARSystemOptions } from '../../ARSystem';
 import { ARQuickLook } from '../ARQuickLook';
 import { Converter } from '../../../converter/Converter';
 

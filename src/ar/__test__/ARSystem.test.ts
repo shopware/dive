@@ -1,4 +1,4 @@
-import { ARSystem, type ARSystemOptions } from '../AR';
+import { ARSystem, type ARSystemOptions } from '../ARSystem';
 import { SystemInfo } from '../../info/Info';
 import { ARQuickLook } from '../arquicklook/ARQuickLook';
 import { SceneViewer } from '../sceneviewer/SceneViewer';

@@ -34,7 +34,7 @@ import {
     type COMPov,
 } from '../types';
 import { type DIVESceneObject } from '../../types';
-import { type ARSystemOptions } from '../../ar/AR';
+import { type ARSystemOptions } from '../../ar/ARSystem';
 
 const mockModule: Record<string, any> = {
     get: jest.fn().mockReturnValue(Promise.resolve({})),

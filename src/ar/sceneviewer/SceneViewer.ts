@@ -1,4 +1,4 @@
-import { type ARSystemOptions } from '../AR';
+import { type ARSystemOptions } from '../ARSystem';
 
 export class SceneViewer {
     public launch(uri: string, options?: ARSystemOptions): void {
