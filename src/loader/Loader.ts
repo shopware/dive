@@ -1,13 +1,9 @@
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader';
 import { USDZLoader } from 'three/examples/jsm/loaders/USDZLoader';
 import { Object3D } from 'three';
-import {
-    type FileType,
-    getFileTypeFromUri,
-    isFileTypeSupported,
-    SUPPORTED_FILE_TYPES,
-} from '../types/file';
-import { FileTypeError, NetworkError, ParseError } from '../types/error';
+import { type FileType, SUPPORTED_FILE_TYPES } from '../types/file';
+import { FileTypeError, NetworkError, ParseError } from '../error';
+import { getFileTypeFromUri, isFileTypeSupported } from '../helper';
 
 export class Loader {
     private _gltfLoader: GLTFLoader;
@@ -34,11 +30,12 @@ export class Loader {
     public async load(uri: string): Promise<Object3D> {
         const extension = getFileTypeFromUri(uri);
         if (extension.length === 0) {
-            throw new FileTypeError('No file extension found in URI');
+            throw new FileTypeError('No file extension found in URI', '');
         }
         if (!isFileTypeSupported(extension)) {
             throw new FileTypeError(
                 `Unsupported file type: ${extension}. Supported types: ${SUPPORTED_FILE_TYPES.join(', ')}`,
+                extension,
             );
         }
 

@@ -97,22 +97,12 @@ describe('ARSystem', () => {
                     throw mockError;
                 });
 
-                const consoleErrorSpy = jest
-                    .spyOn(console, 'error')
-                    .mockImplementation();
-
                 try {
                     await diveAR.launch(mockUri);
                     fail('Expected launch to reject');
                 } catch (error: unknown) {
                     expect(error).toBe(mockError);
                 }
-
-                expect(consoleErrorSpy).toHaveBeenCalledWith(
-                    'No AR Quick Look support:',
-                    mockError,
-                );
-                consoleErrorSpy.mockRestore();
             });
 
             it('should handle ARQuickLook launch errors', async () => {
@@ -131,10 +121,6 @@ describe('ARSystem', () => {
                     () => mockInstance,
                 );
 
-                const consoleErrorSpy = jest
-                    .spyOn(console, 'error')
-                    .mockImplementation();
-
                 try {
                     await diveAR.launch(mockUri);
                     fail('Expected launch to reject');
@@ -145,13 +131,6 @@ describe('ARSystem', () => {
                         fail('Expected error to be an Error instance');
                     }
                 }
-
-                expect(consoleErrorSpy).toHaveBeenCalledWith(
-                    'Error launching ARQuickLook:',
-                    mockError,
-                );
-
-                consoleErrorSpy.mockRestore();
             });
         });
 
@@ -239,10 +218,6 @@ describe('ARSystem', () => {
                 configurable: true,
             });
 
-            const consoleLogSpy = jest
-                .spyOn(console, 'log')
-                .mockImplementation();
-
             try {
                 await diveAR.launch(mockUri);
                 fail('Expected launch to reject');
@@ -255,10 +230,6 @@ describe('ARSystem', () => {
                     fail('Expected error to be an Error instance');
                 }
             }
-            expect(consoleLogSpy).toHaveBeenCalledWith(
-                'DIVE: AR not supported. Not a mobile system. (System is Windows)',
-            );
-            consoleLogSpy.mockRestore();
 
             // Restore original navigator
             Object.defineProperty(window, 'navigator', {

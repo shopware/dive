@@ -2,7 +2,7 @@ import { Loader } from '../Loader';
 import { GLTF, GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader';
 import { USDZLoader } from 'three/examples/jsm/loaders/USDZLoader';
 import { Group } from 'three';
-import { FileTypeError, NetworkError, ParseError } from '../../types/error';
+import { FileTypeError, NetworkError, ParseError } from '../../error';
 
 // Mock fetch
 global.fetch = jest.fn().mockImplementation(async (uri) => ({
@@ -179,19 +179,17 @@ describe('Loader', () => {
     });
 
     it('should throw FileTypeError for a URI without a dot', async () => {
-        // When the URI doesn't have a dot, getFileTypeFromUri returns the whole string
-        // which is then checked against supported file types
+        // When the URI doesn't have a dot, getFileTypeFromUri returns an empty string
+        // which should result in a "No file extension found in URI" error
         await expect(loader.load('modelwithoutextension')).rejects.toThrow(
-            new FileTypeError(
-                'Unsupported file type: modelwithoutextension. Supported types: glb, gltf, usdz',
-            ),
+            new FileTypeError('No file extension found in URI', ''),
         );
     });
 
     it('should throw FileTypeError for a URI with a dot but no extension', async () => {
         // This test targets the case when a URI ends with a dot, resulting in an empty extension
         await expect(loader.load('model.')).rejects.toThrow(
-            new FileTypeError('No file extension found in URI'),
+            new FileTypeError('No file extension found in URI', ''),
         );
     });
 });

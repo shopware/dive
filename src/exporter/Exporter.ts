@@ -8,7 +8,7 @@ import {
     type USDZExporterOptions as THREEUSDZExporterOptions,
 } from 'three/examples/jsm/exporters/USDZExporter';
 import { type FileType } from '../types/file/FileTypes';
-import { FileTypeError, ParseError } from '../types/error';
+import { FileTypeError, ParseError } from '../error';
 
 export type USDZExporterOptions = THREEUSDZExporterOptions & {
     ar?: {
@@ -51,7 +51,7 @@ export class Exporter {
                 return this._exportUsdz(object, options);
             }
             default:
-                throw new FileTypeError(`Unsupported file type: ${type}`);
+                throw new FileTypeError(`Unsupported file type: ${type}`, type);
         }
     }
 

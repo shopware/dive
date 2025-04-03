@@ -1,5 +1,5 @@
 import { ESystem, EWebXRUnsupportedReason } from '../types/info';
-import { ARCompatibilityError } from '../types/error';
+import { ARCompatibilityError } from '../error';
 
 export class SystemInfo {
     private static _supportsWebXR: boolean = false;
