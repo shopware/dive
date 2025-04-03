@@ -175,10 +175,6 @@ describe('ARSystem', () => {
                     () => mockInstance,
                 );
 
-                const consoleErrorSpy = jest
-                    .spyOn(console, 'error')
-                    .mockImplementation();
-
                 try {
                     await diveAR.launch(mockUri);
                     fail('Expected launch to reject');
@@ -189,13 +185,6 @@ describe('ARSystem', () => {
                         fail('Expected error to be an Error instance');
                     }
                 }
-
-                expect(consoleErrorSpy).toHaveBeenCalledWith(
-                    'Error launching SceneViewer:',
-                    mockError,
-                );
-
-                consoleErrorSpy.mockRestore();
             });
         });
 

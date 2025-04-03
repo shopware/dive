@@ -90,7 +90,6 @@ export class ARSystem {
         try {
             return new SceneViewer().launch(uri, options);
         } catch (error) {
-            console.error('Error launching SceneViewer:', error);
             return Promise.reject(error);
         }
     }
