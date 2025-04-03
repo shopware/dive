@@ -24,10 +24,6 @@ export default defineConfig({
         },
         lib: {
             entry: 'src/dive.ts',
-            formats: [
-                'es',
-                'cjs',
-            ],
             fileName: 'dive',
         },
         sourcemap: true,
