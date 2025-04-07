@@ -25,7 +25,7 @@ describe('dive/info/DIVEInfo', () => {
             userAgent:
                 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.6478.153 Safari/537.36',
         });
-        expect(SystemInfo.GetSystem()).toBe(ESystem.WINDOWS);
+        expect(SystemInfo.getSystem()).toBe(ESystem.WINDOWS);
     });
 
     it('should get system: MacOS', () => {
@@ -33,7 +33,7 @@ describe('dive/info/DIVEInfo', () => {
             userAgent:
                 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.6478.153 Safari/537.36',
         });
-        expect(SystemInfo.GetSystem()).toBe(ESystem.MACOS);
+        expect(SystemInfo.getSystem()).toBe(ESystem.MACOS);
     });
 
     it('should get system: Linux', () => {
@@ -41,7 +41,7 @@ describe('dive/info/DIVEInfo', () => {
             userAgent:
                 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.6478.153 Safari/537.36',
         });
-        expect(SystemInfo.GetSystem()).toBe(ESystem.LINUX);
+        expect(SystemInfo.getSystem()).toBe(ESystem.LINUX);
     });
 
     it('should get system: Android', () => {
@@ -49,7 +49,7 @@ describe('dive/info/DIVEInfo', () => {
             userAgent:
                 'Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.6478.153 Mobile Safari/537.36',
         });
-        expect(SystemInfo.GetSystem()).toBe(ESystem.ANDROID);
+        expect(SystemInfo.getSystem()).toBe(ESystem.ANDROID);
     });
 
     it('should get system: iOS', () => {
@@ -57,20 +57,20 @@ describe('dive/info/DIVEInfo', () => {
             userAgent:
                 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1',
         });
-        expect(SystemInfo.GetSystem()).toBe(ESystem.IOS);
+        expect(SystemInfo.getSystem()).toBe(ESystem.IOS);
     });
 
     it('should get system: Unknown', () => {
         mockNavigator({
             userAgent: 'Unknown Browser',
         });
-        expect(SystemInfo.GetSystem()).toBe(ESystem.UNKNOWN);
+        expect(SystemInfo.getSystem()).toBe(ESystem.UNKNOWN);
     });
 
     it('should get system: Unknown when window is undefined', () => {
         const originalNavigator = window.navigator;
         window.navigator = undefined as any;
-        expect(SystemInfo.GetSystem()).toBe(ESystem.UNKNOWN);
+        expect(SystemInfo.getSystem()).toBe(ESystem.UNKNOWN);
         window.navigator = originalNavigator;
     });
 
@@ -83,7 +83,7 @@ describe('dive/info/DIVEInfo', () => {
         const restoreSecureContext = window.isSecureContext;
         window.isSecureContext = true;
 
-        const supports = await SystemInfo.GetSupportsWebXR();
+        const supports = await SystemInfo.getSupportsWebXR();
         expect(supports).toBe(true);
 
         window.isSecureContext = restoreSecureContext;
@@ -96,10 +96,10 @@ describe('dive/info/DIVEInfo', () => {
         const restoreSecureContext = window.isSecureContext;
         window.isSecureContext = true;
 
-        const supports = await SystemInfo.GetSupportsWebXR();
+        const supports = await SystemInfo.getSupportsWebXR();
         expect(supports).toBe(false);
 
-        const reason = SystemInfo.GetWebXRUnsupportedReason();
+        const reason = SystemInfo.getWebXRUnsupportedReason();
         expect(reason).toBe(EWebXRUnsupportedReason.NO_WEBXR_API);
 
         window.isSecureContext = restoreSecureContext;
@@ -110,10 +110,10 @@ describe('dive/info/DIVEInfo', () => {
         mockNavigator({
             xr: undefined,
         });
-        const supports = await SystemInfo.GetSupportsWebXR();
+        const supports = await SystemInfo.getSupportsWebXR();
         expect(supports).toBe(false);
 
-        const reason = SystemInfo.GetWebXRUnsupportedReason();
+        const reason = SystemInfo.getWebXRUnsupportedReason();
         expect(reason).toBe(EWebXRUnsupportedReason.NO_HTTPS);
     });
 
@@ -126,9 +126,9 @@ describe('dive/info/DIVEInfo', () => {
         const restoreSecureContext = window.isSecureContext;
         window.isSecureContext = true;
 
-        await SystemInfo.GetSupportsWebXR();
+        await SystemInfo.getSupportsWebXR();
         console.log = jest.fn();
-        const reason = SystemInfo.GetWebXRUnsupportedReason();
+        const reason = SystemInfo.getWebXRUnsupportedReason();
         expect(reason).toBe(null);
 
         window.isSecureContext = restoreSecureContext;
@@ -143,8 +143,8 @@ describe('dive/info/DIVEInfo', () => {
         const restoreSecureContext = window.isSecureContext;
         window.isSecureContext = true;
 
-        await SystemInfo.GetSupportsWebXR();
-        const reason = SystemInfo.GetWebXRUnsupportedReason();
+        await SystemInfo.getSupportsWebXR();
+        const reason = SystemInfo.getWebXRUnsupportedReason();
         expect(reason).toBe(null);
 
         window.isSecureContext = restoreSecureContext;
@@ -159,10 +159,10 @@ describe('dive/info/DIVEInfo', () => {
         const restoreSecureContext = window.isSecureContext;
         window.isSecureContext = true;
 
-        const supports = await SystemInfo.GetSupportsWebXR();
+        const supports = await SystemInfo.getSupportsWebXR();
         expect(supports).toBe(false);
 
-        const reason = SystemInfo.GetWebXRUnsupportedReason();
+        const reason = SystemInfo.getWebXRUnsupportedReason();
         expect(reason).toBe(
             EWebXRUnsupportedReason.IMMERSIVE_AR_NOT_SUPPORTED_BY_DEVICE,
         );
@@ -179,10 +179,10 @@ describe('dive/info/DIVEInfo', () => {
         const restoreSecureContext = window.isSecureContext;
         window.isSecureContext = true;
 
-        const supports = await SystemInfo.GetSupportsWebXR();
+        const supports = await SystemInfo.getSupportsWebXR();
         expect(supports).toBe(false);
 
-        const reason = SystemInfo.GetWebXRUnsupportedReason();
+        const reason = SystemInfo.getWebXRUnsupportedReason();
         expect(reason).toBe(EWebXRUnsupportedReason.AR_PERMISSION_DENIED);
 
         window.isSecureContext = restoreSecureContext;
@@ -195,7 +195,7 @@ describe('dive/info/DIVEInfo', () => {
                 isSessionSupported: jest.fn().mockRejectedValue('error'),
             },
         });
-        const supports = await SystemInfo.GetSupportsWebXR();
+        const supports = await SystemInfo.getSupportsWebXR();
         expect(supports).toBe(true);
     });
 
@@ -206,7 +206,7 @@ describe('dive/info/DIVEInfo', () => {
                 isSessionSupported: jest.fn().mockRejectedValue('error'),
             },
         });
-        const supports = await SystemInfo.GetSupportsWebXR();
+        const supports = await SystemInfo.getSupportsWebXR();
         expect(supports).toBe(false);
     });
 
@@ -214,7 +214,7 @@ describe('dive/info/DIVEInfo', () => {
         jest.spyOn(document, 'createElement').mockReturnValue({
             relList: { supports: () => true },
         } as unknown as HTMLAnchorElement);
-        const supports = SystemInfo.GetSupportsARQuickLook();
+        const supports = SystemInfo.getSupportsARQuickLook();
         expect(supports).toBe(true);
     });
 
@@ -235,8 +235,8 @@ describe('dive/info/DIVEInfo', () => {
         } as unknown as HTMLAnchorElement);
 
         try {
-            SystemInfo.GetSupportsARQuickLook();
-            fail('Expected GetSupportsARQuickLook to throw');
+            SystemInfo.getSupportsARQuickLook();
+            fail('Expected getSupportsARQuickLook to throw');
         } catch (error) {
             expect(error).toBeInstanceOf(ARCompatibilityError);
             const arError = error as ARCompatibilityError;
@@ -249,57 +249,57 @@ describe('dive/info/DIVEInfo', () => {
     });
 
     it('should be mobile (iOS)', () => {
-        jest.spyOn(SystemInfo, 'GetSystem').mockReturnValue(ESystem.IOS);
+        jest.spyOn(SystemInfo, 'getSystem').mockReturnValue(ESystem.IOS);
         expect(SystemInfo.isMobile).toBe(true);
         expect(SystemInfo.isDesktop).toBe(false);
     });
 
     it('should be mobile (Android)', () => {
-        jest.spyOn(SystemInfo, 'GetSystem').mockReturnValue(ESystem.ANDROID);
+        jest.spyOn(SystemInfo, 'getSystem').mockReturnValue(ESystem.ANDROID);
         expect(SystemInfo.isMobile).toBe(true);
         expect(SystemInfo.isDesktop).toBe(false);
     });
 
     it('should be desktop (Windows)', () => {
-        jest.spyOn(SystemInfo, 'GetSystem').mockReturnValue(ESystem.WINDOWS);
+        jest.spyOn(SystemInfo, 'getSystem').mockReturnValue(ESystem.WINDOWS);
         expect(SystemInfo.isMobile).toBe(false);
         expect(SystemInfo.isDesktop).toBe(true);
     });
 
     it('should be desktop (MacOS)', () => {
-        jest.spyOn(SystemInfo, 'GetSystem').mockReturnValue(ESystem.MACOS);
+        jest.spyOn(SystemInfo, 'getSystem').mockReturnValue(ESystem.MACOS);
         expect(SystemInfo.isMobile).toBe(false);
         expect(SystemInfo.isDesktop).toBe(true);
     });
 
     it('should be desktop (Linux)', () => {
-        jest.spyOn(SystemInfo, 'GetSystem').mockReturnValue(ESystem.LINUX);
+        jest.spyOn(SystemInfo, 'getSystem').mockReturnValue(ESystem.LINUX);
         expect(SystemInfo.isMobile).toBe(false);
         expect(SystemInfo.isDesktop).toBe(true);
     });
 
     it('should be desktop (Unknown)', () => {
-        jest.spyOn(SystemInfo, 'GetSystem').mockReturnValue(ESystem.UNKNOWN);
+        jest.spyOn(SystemInfo, 'getSystem').mockReturnValue(ESystem.UNKNOWN);
         expect(SystemInfo.isMobile).toBe(false);
         expect(SystemInfo.isDesktop).toBe(true);
     });
 
     it('should be capable of AR (ARQuickLook)', async () => {
-        jest.spyOn(SystemInfo, 'GetSupportsARQuickLook').mockReturnValue(true);
-        jest.spyOn(SystemInfo, 'GetSupportsWebXR').mockResolvedValue(false);
-        expect(await SystemInfo.GetIsARCapable()).toBe(true);
+        jest.spyOn(SystemInfo, 'getSupportsARQuickLook').mockReturnValue(true);
+        jest.spyOn(SystemInfo, 'getSupportsWebXR').mockResolvedValue(false);
+        expect(await SystemInfo.getIsARCapable()).toBe(true);
     });
 
     it('should be capable of AR (WebXR)', async () => {
-        jest.spyOn(SystemInfo, 'GetSupportsARQuickLook').mockReturnValue(false);
-        jest.spyOn(SystemInfo, 'GetSupportsWebXR').mockResolvedValue(true);
-        expect(await SystemInfo.GetIsARCapable()).toBe(true);
+        jest.spyOn(SystemInfo, 'getSupportsARQuickLook').mockReturnValue(false);
+        jest.spyOn(SystemInfo, 'getSupportsWebXR').mockResolvedValue(true);
+        expect(await SystemInfo.getIsARCapable()).toBe(true);
     });
 
     it('should not be capable of AR', async () => {
-        jest.spyOn(SystemInfo, 'GetSupportsARQuickLook').mockReturnValue(false);
-        jest.spyOn(SystemInfo, 'GetSupportsWebXR').mockResolvedValue(false);
-        expect(await SystemInfo.GetIsARCapable()).toBe(false);
+        jest.spyOn(SystemInfo, 'getSupportsARQuickLook').mockReturnValue(false);
+        jest.spyOn(SystemInfo, 'getSupportsWebXR').mockResolvedValue(false);
+        expect(await SystemInfo.getIsARCapable()).toBe(false);
     });
 
     it('should support SceneViewer (Android, Chrome 89+)', () => {
@@ -307,7 +307,7 @@ describe('dive/info/DIVEInfo', () => {
             userAgent:
                 'Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/89.0.4389.72 Mobile Safari/537.36',
         });
-        const supports = SystemInfo.GetSupportsSceneViewer();
+        const supports = SystemInfo.getSupportsSceneViewer();
         expect(supports).toBe(true);
     });
 
@@ -316,7 +316,7 @@ describe('dive/info/DIVEInfo', () => {
             userAgent:
                 'Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.6478.153 Mobile Safari/537.36',
         });
-        const supports = SystemInfo.GetSupportsSceneViewer();
+        const supports = SystemInfo.getSupportsSceneViewer();
         expect(supports).toBe(true);
     });
 
@@ -325,7 +325,7 @@ describe('dive/info/DIVEInfo', () => {
             userAgent:
                 'Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4389.72 Mobile Safari/537.36',
         });
-        const supports = SystemInfo.GetSupportsSceneViewer();
+        const supports = SystemInfo.getSupportsSceneViewer();
         expect(supports).toBe(false);
     });
 
@@ -334,7 +334,7 @@ describe('dive/info/DIVEInfo', () => {
             userAgent:
                 'Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Mobile Safari/537.36',
         });
-        const supports = SystemInfo.GetSupportsSceneViewer();
+        const supports = SystemInfo.getSupportsSceneViewer();
         expect(supports).toBe(false);
     });
 
@@ -343,7 +343,7 @@ describe('dive/info/DIVEInfo', () => {
             userAgent:
                 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1',
         });
-        const supports = SystemInfo.GetSupportsSceneViewer();
+        const supports = SystemInfo.getSupportsSceneViewer();
         expect(supports).toBe(false);
     });
 
@@ -352,14 +352,14 @@ describe('dive/info/DIVEInfo', () => {
             userAgent:
                 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.6478.153 Safari/537.36',
         });
-        const supports = SystemInfo.GetSupportsSceneViewer();
+        const supports = SystemInfo.getSupportsSceneViewer();
         expect(supports).toBe(false);
     });
 
     it('should not support SceneViewer (no window)', () => {
         const originalWindow = global.window;
         global.window = undefined as any;
-        const supports = SystemInfo.GetSupportsSceneViewer();
+        const supports = SystemInfo.getSupportsSceneViewer();
         expect(supports).toBe(false);
         global.window = originalWindow;
     });
@@ -367,7 +367,7 @@ describe('dive/info/DIVEInfo', () => {
     it('should not support SceneViewer (no navigator)', () => {
         const originalNavigator = global.navigator;
         global.navigator = undefined as any;
-        const supports = SystemInfo.GetSupportsSceneViewer();
+        const supports = SystemInfo.getSupportsSceneViewer();
         expect(supports).toBe(false);
         global.navigator = originalNavigator;
     });

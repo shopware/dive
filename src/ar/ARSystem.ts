@@ -28,7 +28,7 @@ export class ARSystem {
      * @throws Error if AR is not supported on the current platform
      */
     public async launch(uri: string, options?: ARSystemOptions): Promise<void> {
-        const system = SystemInfo.GetSystem();
+        const system = SystemInfo.getSystem();
 
         if (system === ESystem.IOS) {
             return this.tryARQuickLook(uri, options);
@@ -61,7 +61,7 @@ export class ARSystem {
         options?: ARSystemOptions,
     ): Promise<void> {
         try {
-            SystemInfo.GetSupportsARQuickLook();
+            SystemInfo.getSupportsARQuickLook();
         } catch (error) {
             return Promise.reject(error);
         }

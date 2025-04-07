@@ -10,7 +10,7 @@ export class SystemInfo {
      * Gets the current system (iOS, Android, Windows, etc.)
      * @returns DIVESystem The current system
      */
-    public static GetSystem(): ESystem {
+    public static getSystem(): ESystem {
         if (typeof window === 'undefined' || !window.navigator) {
             return ESystem.UNKNOWN;
         }
@@ -37,7 +37,7 @@ export class SystemInfo {
     /**
      * @returns A promise that resolves to a boolean indicating whether the user's device supports WebXR.
      */
-    public static async GetSupportsWebXR(): Promise<boolean> {
+    public static async getSupportsWebXR(): Promise<boolean> {
         if (this._supportsWebXR !== false) {
             return this._supportsWebXR;
         }
@@ -78,7 +78,7 @@ export class SystemInfo {
     /**
      * @returns The reason why WebXR is not supported on the user's device. Returns null if WebXR is supported.
      */
-    public static GetWebXRUnsupportedReason(): EWebXRUnsupportedReason | null {
+    public static getWebXRUnsupportedReason(): EWebXRUnsupportedReason | null {
         if (this._supportsWebXR) {
             console.log('WebXR is supported.');
             return null;
@@ -102,7 +102,7 @@ export class SystemInfo {
      * @returns boolean indicating if ARQuickLook is supported
      * @throws ARCompatibilityError if ARQuickLook is not supported, with detailed browser information
      */
-    public static GetSupportsARQuickLook(): boolean {
+    public static getSupportsARQuickLook(): boolean {
         const a = document.createElement('a');
         if (a.relList.supports('ar')) {
             return true;
@@ -139,7 +139,7 @@ export class SystemInfo {
      *
      * @returns boolean indicating if SceneViewer is supported
      */
-    public static GetSupportsSceneViewer(): boolean {
+    public static getSupportsSceneViewer(): boolean {
         // Check if we're in a browser environment
         if (typeof window === 'undefined' || !window.navigator) {
             return false;
@@ -171,8 +171,8 @@ export class SystemInfo {
      */
     public static get isMobile(): boolean {
         return (
-            this.GetSystem() === ESystem.ANDROID ||
-            this.GetSystem() === ESystem.IOS
+            this.getSystem() === ESystem.ANDROID ||
+            this.getSystem() === ESystem.IOS
         );
     }
 
@@ -186,11 +186,11 @@ export class SystemInfo {
     /**
      * @returns A promise that resolves to a boolean indicating whether the user's device is capable of AR.
      */
-    public static async GetIsARCapable(): Promise<boolean> {
-        if (this.GetSupportsARQuickLook()) {
+    public static async getIsARCapable(): Promise<boolean> {
+        if (this.getSupportsARQuickLook()) {
             return true;
         }
 
-        return await this.GetSupportsWebXR();
+        return await this.getSupportsWebXR();
     }
 }

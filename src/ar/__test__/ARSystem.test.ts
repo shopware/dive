@@ -11,8 +11,8 @@ const fail = (message: string): never => {
 // Mock Info
 jest.mock('../../info/Info', () => ({
     SystemInfo: {
-        GetSystem: jest.fn(),
-        GetSupportsARQuickLook: jest.fn(),
+        getSystem: jest.fn(),
+        getSupportsARQuickLook: jest.fn(),
     },
 }));
 
@@ -44,9 +44,9 @@ describe('ARSystem', () => {
     describe('launch', () => {
         describe('AR Quick Look', () => {
             it('should launch ARQuickLook on iOS', async () => {
-                (SystemInfo.GetSystem as jest.Mock).mockReturnValue('iOS');
+                (SystemInfo.getSystem as jest.Mock).mockReturnValue('iOS');
                 (
-                    SystemInfo.GetSupportsARQuickLook as jest.Mock
+                    SystemInfo.getSupportsARQuickLook as jest.Mock
                 ).mockReturnValue(true);
 
                 const consoleLogSpy = jest
@@ -63,9 +63,9 @@ describe('ARSystem', () => {
             });
 
             it('should launch ARQuickLook on iOS with options', async () => {
-                (SystemInfo.GetSystem as jest.Mock).mockReturnValue('iOS');
+                (SystemInfo.getSystem as jest.Mock).mockReturnValue('iOS');
                 (
-                    SystemInfo.GetSupportsARQuickLook as jest.Mock
+                    SystemInfo.getSupportsARQuickLook as jest.Mock
                 ).mockReturnValue(true);
 
                 const options: ARSystemOptions = {
@@ -87,12 +87,12 @@ describe('ARSystem', () => {
             });
 
             it('should not launch ARQuickLook on iOS if not supported', async () => {
-                (SystemInfo.GetSystem as jest.Mock).mockReturnValue('iOS');
+                (SystemInfo.getSystem as jest.Mock).mockReturnValue('iOS');
 
                 // Mock GetSupportsARQuickLook to throw an error
                 const mockError = new Error('ARQuickLook not supported');
                 (
-                    SystemInfo.GetSupportsARQuickLook as jest.Mock
+                    SystemInfo.getSupportsARQuickLook as jest.Mock
                 ).mockImplementation(() => {
                     throw mockError;
                 });
@@ -106,9 +106,9 @@ describe('ARSystem', () => {
             });
 
             it('should handle ARQuickLook launch errors', async () => {
-                (SystemInfo.GetSystem as jest.Mock).mockReturnValue('iOS');
+                (SystemInfo.getSystem as jest.Mock).mockReturnValue('iOS');
                 (
-                    SystemInfo.GetSupportsARQuickLook as jest.Mock
+                    SystemInfo.getSupportsARQuickLook as jest.Mock
                 ).mockReturnValue(true);
 
                 const mockError = new Error('Launch failed');
@@ -136,7 +136,7 @@ describe('ARSystem', () => {
 
         describe('Scene Viewer', () => {
             it('should launch SceneViewer on Android', async () => {
-                (SystemInfo.GetSystem as jest.Mock).mockReturnValue('Android');
+                (SystemInfo.getSystem as jest.Mock).mockReturnValue('Android');
 
                 await diveAR.launch(mockUri);
 
@@ -147,7 +147,7 @@ describe('ARSystem', () => {
             });
 
             it('should launch SceneViewer on Android with options', async () => {
-                (SystemInfo.GetSystem as jest.Mock).mockReturnValue('Android');
+                (SystemInfo.getSystem as jest.Mock).mockReturnValue('Android');
 
                 const options: ARSystemOptions = {
                     arPlacement: 'vertical',
@@ -163,7 +163,7 @@ describe('ARSystem', () => {
             });
 
             it('should handle SceneViewer launch errors', async () => {
-                (SystemInfo.GetSystem as jest.Mock).mockReturnValue('Android');
+                (SystemInfo.getSystem as jest.Mock).mockReturnValue('Android');
 
                 const mockError = new Error('Launch failed');
                 const mockInstance = {
@@ -189,7 +189,7 @@ describe('ARSystem', () => {
         });
 
         it('should reject on non-mobile systems', async () => {
-            (SystemInfo.GetSystem as jest.Mock).mockReturnValue('Windows');
+            (SystemInfo.getSystem as jest.Mock).mockReturnValue('Windows');
 
             // Mock navigator properties for the ARCompatibilityError constructor
             const originalNavigator = window.navigator;
