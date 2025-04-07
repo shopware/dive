@@ -1,5 +1,4 @@
-import { Box3, Color, Euler, Mesh, Object3D, Vector3 } from 'three';
-import { DIVEScene } from '../../../scene/Scene';
+import { Object3D } from 'three';
 import { ARSystemOptions } from '../../ARSystem';
 import { ARQuickLook } from '../ARQuickLook';
 import { AssetConverter } from '../../../asset/converter/AssetConverter';
@@ -22,15 +21,16 @@ jest.mock('../../../scene/Scene', () => {
     };
 });
 
-// Mock the Converter class
-jest.mock('../../../asset/converter/AssetConverter', () => {
-    return {
-        AssetConverter: {
-            convert: jest.fn().mockReturnThis(),
-            to: jest.fn().mockResolvedValue(new ArrayBuffer(0)),
-        },
-    };
-});
+// Mock the dependencies
+const mockConvert = jest.fn().mockReturnThis();
+const mockTo = jest.fn().mockResolvedValue(new ArrayBuffer(0));
+
+jest.mock('../../../asset/converter/AssetConverter', () => ({
+    AssetConverter: jest.fn().mockImplementation(() => ({
+        convert: mockConvert,
+        to: mockTo,
+    })),
+}));
 
 // Mock URL.createObjectURL
 URL.createObjectURL = jest.fn(() => 'blob:http://localhost:8080/');
@@ -63,13 +63,14 @@ describe('ARQuickLook', () => {
             arPlacement: 'horizontal',
             arScale: 'auto',
         };
-        quickLook = new ARQuickLook();
         jest.clearAllMocks();
+        quickLook = new ARQuickLook();
     });
 
     describe('constructor', () => {
         it('should create an instance', () => {
             expect(quickLook).toBeInstanceOf(ARQuickLook);
+            expect(AssetConverter).toHaveBeenCalledTimes(1);
         });
     });
 
@@ -77,8 +78,8 @@ describe('ARQuickLook', () => {
         it('should convert and launch with default options', async () => {
             await quickLook.launch(mockUri);
 
-            expect(AssetConverter.convert).toHaveBeenCalledWith(mockUri);
-            expect((AssetConverter as any).to).toHaveBeenCalledWith('usdz', {
+            expect(mockConvert).toHaveBeenCalledWith(mockUri);
+            expect(mockTo).toHaveBeenCalledWith('usdz', {
                 quickLookCompatible: true,
                 ar: {
                     anchoring: { type: 'plane' },
@@ -96,8 +97,8 @@ describe('ARQuickLook', () => {
             };
             await quickLook.launch(mockUri, options);
 
-            expect(AssetConverter.convert).toHaveBeenCalledWith(mockUri);
-            expect((AssetConverter as any).to).toHaveBeenCalledWith('usdz', {
+            expect(mockConvert).toHaveBeenCalledWith(mockUri);
+            expect(mockTo).toHaveBeenCalledWith('usdz', {
                 quickLookCompatible: true,
                 ar: {
                     anchoring: { type: 'plane' },
@@ -110,18 +111,14 @@ describe('ARQuickLook', () => {
 
         it('should handle conversion errors', async () => {
             const error = new Error('Conversion failed');
-            ((AssetConverter as any).to as jest.Mock).mockRejectedValueOnce(
-                error,
-            );
+            mockTo.mockRejectedValueOnce(error);
 
             await expect(quickLook.launch(mockUri)).rejects.toThrow(error);
         });
 
         it('should create a blob with correct MIME type', async () => {
             const mockBuffer = new ArrayBuffer(100);
-            ((AssetConverter as any).to as jest.Mock).mockResolvedValueOnce(
-                mockBuffer,
-            );
+            mockTo.mockResolvedValueOnce(mockBuffer);
 
             await quickLook.launch(mockUri);
 

@@ -1,7 +1,14 @@
 import { type ARSystemOptions } from '../ARSystem';
 import { AssetConverter } from '../../asset/converter/AssetConverter';
+import { AssetLoader } from '../../asset/loader/AssetLoader';
+import { AssetExporter } from '../../asset/exporter/AssetExporter';
 
 export class ARQuickLook {
+    private converter = new AssetConverter(
+        new AssetLoader(),
+        new AssetExporter(),
+    );
+
     public async launch(uri: string, options?: ARSystemOptions): Promise<void> {
         const usdzUrl = await this.convertToUSDZ(uri, options);
         return this.launchARQuickLook(usdzUrl, options);
@@ -12,7 +19,7 @@ export class ARQuickLook {
         options?: ARSystemOptions,
     ): Promise<string> {
         // Convert the file to USDZ format
-        const usdzBuffer = await AssetConverter.convert(uri).to('usdz', {
+        const usdzBuffer = await this.converter.convert(uri).to('usdz', {
             quickLookCompatible: true,
             ar: {
                 anchoring: { type: 'plane' },

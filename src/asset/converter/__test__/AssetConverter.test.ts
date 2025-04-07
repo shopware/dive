@@ -2,6 +2,7 @@ import { AssetConverter } from '../AssetConverter';
 import { AssetLoader } from '../../loader/AssetLoader';
 import { AssetExporter } from '../../exporter/AssetExporter';
 import { Object3D } from 'three';
+import { FileType } from '../../../types/file';
 
 // Mock the Loader class
 jest.mock('../../loader/AssetLoader', () => {
@@ -24,17 +25,33 @@ jest.mock('../../exporter/AssetExporter', () => {
 });
 
 describe('AssetConverter', () => {
-    let mockLoaderLoad: jest.Mock;
-    let mockExporterExport: jest.Mock;
+    let mockLoaderLoad: jest.Mock<Promise<Object3D>, [string]>;
+    let mockExporterExport: jest.Mock<
+        Promise<ArrayBuffer>,
+        [Object3D, FileType, any?]
+    >;
+    let mockLoader: AssetLoader;
+    let mockExporter: AssetExporter;
     const testUri = 'https://example.com/model.glb';
     const mockObject3D = new Object3D();
     const mockArrayBuffer = new ArrayBuffer(8);
 
     beforeEach(() => {
         // Get the mocked function and reset them before each test
-        mockLoaderLoad = require('../../loader/AssetLoader').AssetLoader().load;
-        mockExporterExport =
-            require('../../exporter/AssetExporter').AssetExporter().export;
+        const loaderModule = require('../../loader/AssetLoader');
+        const exporterModule = require('../../exporter/AssetExporter');
+
+        mockLoader = new loaderModule.AssetLoader();
+        mockExporter = new exporterModule.AssetExporter();
+
+        mockLoaderLoad = mockLoader.load as jest.Mock<
+            Promise<Object3D>,
+            [string]
+        >;
+        mockExporterExport = mockExporter.export as jest.Mock<
+            Promise<ArrayBuffer>,
+            [Object3D, FileType, any?]
+        >;
 
         // Reset mocks
         jest.clearAllMocks();
@@ -45,28 +62,23 @@ describe('AssetConverter', () => {
     });
 
     describe('constructor', () => {
-        it('should initialize with the provided URI', () => {
-            const converter = new AssetConverter(testUri);
-            expect(
-                require('../../loader/AssetLoader').AssetLoader,
-            ).toHaveBeenCalled();
-            expect(
-                require('../../exporter/AssetExporter').AssetExporter,
-            ).toHaveBeenCalled();
-        });
-    });
-
-    describe('convert static method', () => {
-        it('should return a new converter instance', () => {
-            const converter = AssetConverter.convert(testUri);
+        it('should initialize with the provided loader and exporter', () => {
+            const converter = new AssetConverter(mockLoader, mockExporter);
             expect(converter).toBeInstanceOf(AssetConverter);
         });
     });
 
-    describe('to method', () => {
+    describe('convert method', () => {
+        it('should return an object with a to method', () => {
+            const converter = new AssetConverter(mockLoader, mockExporter);
+            const result = converter.convert(testUri);
+            expect(result).toHaveProperty('to');
+            expect(typeof result.to).toBe('function');
+        });
+
         it('should load the model and export it to the requested format', async () => {
-            const converter = new AssetConverter(testUri);
-            const result = await converter.to('glb');
+            const converter = new AssetConverter(mockLoader, mockExporter);
+            const result = await converter.convert(testUri).to('glb');
 
             expect(mockLoaderLoad).toHaveBeenCalledWith(testUri);
             expect(mockExporterExport).toHaveBeenCalledWith(
@@ -79,8 +91,8 @@ describe('AssetConverter', () => {
 
         it('should pass options to the exporter', async () => {
             const options = { binary: true };
-            const converter = new AssetConverter(testUri);
-            await converter.to('glb', options);
+            const converter = new AssetConverter(mockLoader, mockExporter);
+            await converter.convert(testUri).to('glb', options);
 
             expect(mockExporterExport).toHaveBeenCalledWith(
                 mockObject3D,
@@ -90,16 +102,16 @@ describe('AssetConverter', () => {
         });
 
         it('should support different file types', async () => {
-            const converter = new AssetConverter(testUri);
+            const converter = new AssetConverter(mockLoader, mockExporter);
 
-            await converter.to('gltf');
+            await converter.convert(testUri).to('gltf');
             expect(mockExporterExport).toHaveBeenCalledWith(
                 mockObject3D,
                 'gltf',
                 undefined,
             );
 
-            await converter.to('usdz');
+            await converter.convert(testUri).to('usdz');
             expect(mockExporterExport).toHaveBeenCalledWith(
                 mockObject3D,
                 'usdz',
@@ -111,16 +123,20 @@ describe('AssetConverter', () => {
             const error = new Error('Loader error');
             mockLoaderLoad.mockRejectedValueOnce(error);
 
-            const converter = new AssetConverter(testUri);
-            await expect(converter.to('glb')).rejects.toThrow('Loader error');
+            const converter = new AssetConverter(mockLoader, mockExporter);
+            await expect(converter.convert(testUri).to('glb')).rejects.toThrow(
+                'Loader error',
+            );
         });
 
         it('should propagate exporter errors', async () => {
             const error = new Error('Exporter error');
             mockExporterExport.mockRejectedValueOnce(error);
 
-            const converter = new AssetConverter(testUri);
-            await expect(converter.to('glb')).rejects.toThrow('Exporter error');
+            const converter = new AssetConverter(mockLoader, mockExporter);
+            await expect(converter.convert(testUri).to('glb')).rejects.toThrow(
+                'Exporter error',
+            );
         });
     });
 });

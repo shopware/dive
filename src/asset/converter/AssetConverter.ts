@@ -6,19 +6,26 @@ import {
 import { type FileType } from '../../types/file';
 
 export class AssetConverter {
-    private _loader: AssetLoader;
-    private _exporter: AssetExporter;
+    private _uri: string = '';
 
-    constructor(private readonly _uri: string) {
-        this._loader = new AssetLoader();
-        this._exporter = new AssetExporter();
+    constructor(
+        private _loader: AssetLoader,
+        private _exporter: AssetExporter,
+    ) {}
+
+    public convert(uri: string): {
+        to: <T extends FileType>(
+            type: T,
+            options?: FileTypeToExporterOptions[T],
+        ) => Promise<ArrayBuffer>;
+    } {
+        this._uri = uri;
+        return {
+            to: this._to.bind(this),
+        };
     }
 
-    public static convert(uri: string): AssetConverter {
-        return new AssetConverter(uri);
-    }
-
-    public async to<T extends FileType>(
+    private async _to<T extends FileType>(
         type: T,
         options?: FileTypeToExporterOptions[T],
     ): Promise<ArrayBuffer> {
