@@ -1,5 +1,5 @@
 import { type ARSystemOptions } from '../ARSystem';
-import { Converter } from '../../converter/Converter';
+import { AssetConverter } from '../../asset/converter/AssetConverter';
 
 export class ARQuickLook {
     public async launch(uri: string, options?: ARSystemOptions): Promise<void> {
@@ -12,7 +12,7 @@ export class ARQuickLook {
         options?: ARSystemOptions,
     ): Promise<string> {
         // Convert the file to USDZ format
-        const usdzBuffer = await Converter.convert(uri).to('usdz', {
+        const usdzBuffer = await AssetConverter.convert(uri).to('usdz', {
             quickLookCompatible: true,
             ar: {
                 anchoring: { type: 'plane' },

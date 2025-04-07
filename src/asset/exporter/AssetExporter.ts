@@ -7,8 +7,8 @@ import {
     USDZExporter,
     type USDZExporterOptions as THREEUSDZExporterOptions,
 } from 'three/examples/jsm/exporters/USDZExporter';
-import { type FileType } from '../types/file/FileTypes';
-import { FileTypeError, ParseError } from '../error';
+import { type FileType } from '../../types/file/FileTypes';
+import { FileTypeError, ParseError } from '../../error';
 
 export type USDZExporterOptions = THREEUSDZExporterOptions & {
     ar?: {
@@ -26,7 +26,7 @@ export type FileTypeToExporterOptions = {
     usdz: USDZExporterOptions;
 };
 
-export class Exporter {
+export class AssetExporter {
     private _gltfExporter: GLTFExporter;
     private _usdzExporter: USDZExporter;
 

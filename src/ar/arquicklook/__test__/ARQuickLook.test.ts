@@ -2,7 +2,7 @@ import { Box3, Color, Euler, Mesh, Object3D, Vector3 } from 'three';
 import { DIVEScene } from '../../../scene/Scene';
 import { ARSystemOptions } from '../../ARSystem';
 import { ARQuickLook } from '../ARQuickLook';
-import { Converter } from '../../../converter/Converter';
+import { AssetConverter } from '../../../asset/converter/AssetConverter';
 
 jest.mock('../../../scene/Scene', () => {
     return {
@@ -23,9 +23,9 @@ jest.mock('../../../scene/Scene', () => {
 });
 
 // Mock the Converter class
-jest.mock('../../../converter/Converter', () => {
+jest.mock('../../../asset/converter/AssetConverter', () => {
     return {
-        Converter: {
+        AssetConverter: {
             convert: jest.fn().mockReturnThis(),
             to: jest.fn().mockResolvedValue(new ArrayBuffer(0)),
         },
@@ -77,8 +77,8 @@ describe('ARQuickLook', () => {
         it('should convert and launch with default options', async () => {
             await quickLook.launch(mockUri);
 
-            expect(Converter.convert).toHaveBeenCalledWith(mockUri);
-            expect((Converter as any).to).toHaveBeenCalledWith('usdz', {
+            expect(AssetConverter.convert).toHaveBeenCalledWith(mockUri);
+            expect((AssetConverter as any).to).toHaveBeenCalledWith('usdz', {
                 quickLookCompatible: true,
                 ar: {
                     anchoring: { type: 'plane' },
@@ -96,8 +96,8 @@ describe('ARQuickLook', () => {
             };
             await quickLook.launch(mockUri, options);
 
-            expect(Converter.convert).toHaveBeenCalledWith(mockUri);
-            expect((Converter as any).to).toHaveBeenCalledWith('usdz', {
+            expect(AssetConverter.convert).toHaveBeenCalledWith(mockUri);
+            expect((AssetConverter as any).to).toHaveBeenCalledWith('usdz', {
                 quickLookCompatible: true,
                 ar: {
                     anchoring: { type: 'plane' },
@@ -110,14 +110,16 @@ describe('ARQuickLook', () => {
 
         it('should handle conversion errors', async () => {
             const error = new Error('Conversion failed');
-            ((Converter as any).to as jest.Mock).mockRejectedValueOnce(error);
+            ((AssetConverter as any).to as jest.Mock).mockRejectedValueOnce(
+                error,
+            );
 
             await expect(quickLook.launch(mockUri)).rejects.toThrow(error);
         });
 
         it('should create a blob with correct MIME type', async () => {
             const mockBuffer = new ArrayBuffer(100);
-            ((Converter as any).to as jest.Mock).mockResolvedValueOnce(
+            ((AssetConverter as any).to as jest.Mock).mockResolvedValueOnce(
                 mockBuffer,
             );
 

@@ -1,8 +1,8 @@
-import { Loader } from '../Loader';
+import { AssetLoader } from '../AssetLoader';
 import { GLTF, GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader';
 import { USDZLoader } from 'three/examples/jsm/loaders/USDZLoader';
 import { Group } from 'three';
-import { FileTypeError, NetworkError, ParseError } from '../../error';
+import { FileTypeError, NetworkError, ParseError } from '../../../error';
 
 // Mock fetch
 global.fetch = jest.fn().mockImplementation(async (uri) => ({
@@ -34,13 +34,13 @@ jest.mock('three/examples/jsm/loaders/USDZLoader', () => {
 });
 
 describe('Loader', () => {
-    let loader: Loader;
+    let loader: AssetLoader;
     let mockGLTFLoader: jest.Mocked<GLTFLoader>;
     let mockUSDZLoader: jest.Mocked<USDZLoader>;
 
     beforeEach(() => {
         jest.clearAllMocks();
-        loader = new Loader();
+        loader = new AssetLoader();
         mockGLTFLoader = new GLTFLoader() as jest.Mocked<GLTFLoader>;
         mockUSDZLoader = new USDZLoader() as jest.Mocked<USDZLoader>;
         (global.fetch as jest.Mock).mockClear();

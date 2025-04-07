@@ -1,11 +1,11 @@
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader';
 import { USDZLoader } from 'three/examples/jsm/loaders/USDZLoader';
 import { Object3D } from 'three';
-import { type FileType, SUPPORTED_FILE_TYPES } from '../types/file';
-import { FileTypeError, NetworkError, ParseError } from '../error';
-import { getFileTypeFromUri, isFileTypeSupported } from '../helper';
+import { type FileType, SUPPORTED_FILE_TYPES } from '../../types/file';
+import { FileTypeError, NetworkError, ParseError } from '../../error';
+import { getFileTypeFromUri, isFileTypeSupported } from '../../helper';
 
-export class Loader {
+export class AssetLoader {
     private _gltfLoader: GLTFLoader;
     private _usdzLoader: USDZLoader;
 

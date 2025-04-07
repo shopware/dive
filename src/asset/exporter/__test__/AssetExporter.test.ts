@@ -1,6 +1,6 @@
-import { Exporter } from '../Exporter';
+import { AssetExporter } from '../AssetExporter';
 import { Object3D } from 'three';
-import { FileTypeError, ParseError } from '../../error';
+import { FileTypeError, ParseError } from '../../../error';
 
 // Mock TextEncoder
 class MockTextEncoder {
@@ -35,7 +35,7 @@ jest.mock('three/examples/jsm/exporters/USDZExporter', () => {
 });
 
 describe('Exporter', () => {
-    let exporter: Exporter;
+    let exporter: AssetExporter;
     let mockObject: Object3D;
     const mockArrayBuffer = new ArrayBuffer(8);
     const mockJson = { scene: {} };
@@ -45,7 +45,7 @@ describe('Exporter', () => {
         mockGltfParseAsync.mockReset();
         mockUsdzParse.mockReset();
 
-        exporter = new Exporter();
+        exporter = new AssetExporter();
         mockObject = new Object3D();
     });
 
@@ -75,7 +75,7 @@ describe('Exporter', () => {
         it('should directly test the default case in the switch statement', async () => {
             // We need to bypass TypeScript's type checking to test this case
             // Create a subclass that allows us to call export with any string
-            class TestableExporter extends Exporter {
+            class TestableExporter extends AssetExporter {
                 async testDefaultCase(object: Object3D): Promise<ArrayBuffer> {
                     // @ts-expect-error - Intentionally using invalid type to hit default case
                     return this.export(object, 'invalid-type');
