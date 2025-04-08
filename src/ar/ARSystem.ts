@@ -66,11 +66,7 @@ export class ARSystem {
             return Promise.reject(error);
         }
 
-        try {
-            return new ARQuickLook().launch(uri, options);
-        } catch (error) {
-            return Promise.reject(error);
-        }
+        return new ARQuickLook().launch(uri, options);
     }
 
     /**
