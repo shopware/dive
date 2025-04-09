@@ -148,6 +148,45 @@ describe('DIVESceneViewer', () => {
             );
         });
 
+        it('should include all input parameters in the intent URL', () => {
+            const sceneViewer = new SceneViewer();
+            const options: ARSystemOptions = {
+                arPlacement: 'vertical',
+                arScale: 'fixed',
+            };
+
+            // Create a URL with additional parameters
+            const uriWithParams = `${mockUri}?sound=sound.mp3&link=details.html`;
+
+            sceneViewer.launch(uriWithParams, options);
+
+            // Get the last call to setAttribute which contains the complete intent URL
+            const lastCall =
+                mockSetAttribute.mock.calls[
+                    mockSetAttribute.mock.calls.length - 1
+                ];
+            const intentUrl = lastCall[1];
+
+            // Verify all expected parameters are present
+            expect(intentUrl).toContain('mode=ar_preferred');
+            expect(intentUrl).toContain('enable_vertical_placement=true');
+            expect(intentUrl).toContain('resizable=false');
+            expect(intentUrl).toContain(
+                'sound=https%3A%2F%2Fexample.com%2Fsound.mp3',
+            );
+            expect(intentUrl).toContain(
+                'link=https%3A%2F%2Fexample.com%2Fdetails.html',
+            );
+            expect(intentUrl).toContain(`file=${mockUri}`);
+            expect(intentUrl).toContain('scheme=https');
+            expect(intentUrl).toContain(
+                'package=com.google.android.googlequicksearchbox',
+            );
+            expect(intentUrl).toContain('action=android.intent.action.VIEW');
+            expect(intentUrl).toContain('S.browser_fallback_url');
+            expect(intentUrl).toContain('%23model-viewer-no-ar-fallback');
+        });
+
         it('should handle relative model URLs', () => {
             const relativeUri = '/models/model.glb';
             const sceneViewer = new SceneViewer();
