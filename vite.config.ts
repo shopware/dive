@@ -16,26 +16,44 @@ function moduleRegistrationPlugin(): Plugin {
         name: 'module-registration',
         configResolved(config: ResolvedConfig) {
             // Find all TypeScript files that contain Modules.register
-            const files = globSync('src/**/*.ts');
+            const files = globSync('src/**/*.ts', {
+                ignore: [
+                    '**/__test__/**',
+                    '**/*.test.ts',
+                    '**/*.spec.ts',
+                ],
+            });
+            console.log('Found files:', files);
             const registrations: ModuleRegistration[] = [];
 
             files.forEach((file) => {
                 const content = fs.readFileSync(file, 'utf-8');
-                const matches = content.match(
-                    /Modules\.register\(['"]([^'"]+)['"],\s*['"]([^'"]+)['"]\)/g,
-                );
-                if (matches) {
-                    matches.forEach((match) => {
-                        const result = match.match(
-                            /Modules\.register\(['"]([^'"]+)['"],\s*['"]([^'"]+)['"]\)/,
-                        );
-                        if (result) {
+
+                // First find all potential module registration blocks
+                const blocks = content.split(/ModuleRegistry\.register/);
+                if (blocks.length > 1) {
+                    blocks.slice(1).forEach((block) => {
+                        // Extract content between parentheses
+                        const parenContent = block.match(/\(([^)]+)\)/);
+                        if (parenContent) {
                             const [
-                                ,
                                 name,
                                 path,
-                            ] = result;
-                            registrations.push({ name, path });
+                            ] = parenContent[1]
+                                .split(',')
+                                .map((s) => s.trim().replace(/['"]/g, ''));
+
+                            if (
+                                name &&
+                                path &&
+                                path.startsWith('src/modules/') &&
+                                path.endsWith('.ts')
+                            ) {
+                                console.log(
+                                    `Found registration: ${name} -> ${path}\n`,
+                                );
+                                registrations.push({ name, path });
+                            }
                         }
                     });
                 }
