@@ -5,6 +5,17 @@ import type DIVEOrbitControls from '../../controls/OrbitControls';
 import { type Vector3Like } from 'three';
 import { ModuleRegistry } from '../registry/ModuleRegistry';
 
+declare global {
+    interface ModuleClasses {
+        MediaCreator: MediaCreator;
+    }
+}
+
+ModuleRegistry.register(
+    'MediaCreator',
+    'src/modules/mediacreator/MediaCreator.ts',
+);
+
 /**
  * Creates renderings of the current scene
  *
@@ -74,14 +85,3 @@ export class MediaCreator {
         return returnCanvas;
     }
 }
-
-declare global {
-    interface ModuleClasses {
-        MediaCreator: MediaCreator;
-    }
-}
-
-ModuleRegistry.register(
-    'MediaCreator',
-    'src/modules/mediacreator/MediaCreator.ts',
-);

@@ -5,6 +5,15 @@ import { ARQuickLook } from './arquicklook/ARQuickLook';
 import { SceneViewer } from './sceneviewer/SceneViewer';
 import { ModuleRegistry } from '../registry/ModuleRegistry';
 
+declare global {
+    interface ModuleClasses {
+        ARSystem: ARSystem;
+    }
+}
+
+// Register this module
+ModuleRegistry.register('ARSystem', 'src/modules/ar/ARSystem.ts');
+
 /**
  * Options for configuring the AR system behavior
  */
@@ -91,12 +100,3 @@ export class ARSystem {
         }
     }
 }
-
-declare global {
-    interface ModuleClasses {
-        ARSystem: ARSystem;
-    }
-}
-
-// Register this module
-ModuleRegistry.register('ARSystem', 'src/modules/ar/ARSystem.ts');

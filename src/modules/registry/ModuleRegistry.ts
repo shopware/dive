@@ -7,8 +7,6 @@ declare global {
     interface ModuleClasses {}
 }
 
-type ModuleId = keyof ModuleClasses;
-
 interface ModuleInfo {
     path: string;
 }
@@ -17,10 +15,10 @@ interface ModuleInfo {
 class ModuleRegistryClass {
     private static _instance = new ModuleRegistryClass();
     private _modules = new Map<
-        ModuleId,
+        keyof ModuleClasses,
         Module<new (...args: unknown[]) => unknown>
     >();
-    private _moduleInfo = new Map<ModuleId, ModuleInfo>();
+    private _moduleInfo = new Map<keyof ModuleClasses, ModuleInfo>();
 
     private constructor() {}
 
@@ -45,7 +43,10 @@ class ModuleRegistryClass {
      * Register a module
      * @internal
      */
-    public register<Id extends ModuleId>(name: Id, path: string): void {
+    public register<Id extends keyof ModuleClasses>(
+        name: Id,
+        path: string,
+    ): void {
         this._modules.set(name, new Module(name, path));
         this._moduleInfo.set(name, { path });
     }
@@ -54,7 +55,7 @@ class ModuleRegistryClass {
      * Get a singleton instance of the module
      * @internal
      */
-    public async getInstance<Id extends ModuleId>(
+    public async getInstance<Id extends keyof ModuleClasses>(
         name: Id,
     ): Promise<ModuleClasses[Id]> {
         const module = this._modules.get(name);

@@ -1,5 +1,3 @@
-type ModuleId = keyof ModuleClasses;
-
 /** @internal */
 export class Module<T extends new (...args: unknown[]) => unknown> {
     private _promise: Promise<T> | null = null;
@@ -7,7 +5,7 @@ export class Module<T extends new (...args: unknown[]) => unknown> {
     private _importFn: () => Promise<T>;
 
     constructor(
-        private _name: ModuleId,
+        private _name: keyof ModuleClasses,
         private _path: string,
     ) {
         this._importFn = async (): Promise<T> => {
