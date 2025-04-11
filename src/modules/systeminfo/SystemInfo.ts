@@ -7,6 +7,34 @@ declare global {
     }
 }
 
+/**
+ * @module SystemInfo
+ *
+ * Provides information about the system's capabilities and performance:
+ *
+ * ```ts
+ * import { SystemInfo } from '@shopware-ag/dive/modules/systeminfo';
+ * const systemInfo = new SystemInfo();
+ *
+ * // Get system information
+ * const system = systemInfo.getSystem(); // Returns ESystem enum (IOS, ANDROID, etc.)
+ *
+ * // Check AR capabilities
+ * const supportsAR = systemInfo.getSupportsAR();
+ *
+ * // Check device type
+ * const isMobile = systemInfo.isMobile;
+ * const isDesktop = systemInfo.isDesktop;
+ * ```
+ *
+ * Features:
+ * - System detection (iOS, Android, Windows, etc.)
+ * - WebXR support detection
+ * - AR capability checking
+ * - Device type detection
+ * - SceneViewer support detection
+ */
+
 export class SystemInfo {
     private static _supportsWebXR: boolean = false;
     private static _webXRUnsupportedReason: EWebXRUnsupportedReason | null =

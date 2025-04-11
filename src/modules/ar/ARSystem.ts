@@ -11,6 +11,28 @@ declare global {
 }
 
 /**
+ * @module ARSystem
+ *
+ * The AR module enables Augmented Reality features across different platforms:
+ *
+ * ```ts
+ * import { ARSystem } from '@shopware-ag/dive/modules/ar';
+ * const arSystem = new ARSystem();
+ *
+ * // Launch AR with options
+ * await arSystem.launch('path/to/model.glb', {
+ *     arPlacement: 'horizontal', // or 'vertical'
+ *     arScale: 'auto' // or 'fixed'
+ * });
+ * ```
+ *
+ * Features:
+ * - Platform-specific AR implementations (ARQuickLook for iOS, SceneViewer for Android)
+ * - Automatic format conversion for AR compatibility
+ * - Configurable placement and scaling options
+ */
+
+/**
  * Options for configuring the AR system behavior
  */
 export type ARSystemOptions = {
