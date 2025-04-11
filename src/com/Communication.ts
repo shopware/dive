@@ -2,7 +2,7 @@ import { Actions } from './actions/index.ts';
 import { generateUUID } from 'three/src/math/MathUtils';
 import { isSelectTool } from '../toolbox/select/SelectTool.ts';
 import { merge } from 'lodash';
-import { ModuleRegistry } from '../module/ModuleRegistry.ts';
+import { ModuleRegistry } from '../modules/registry/ModuleRegistry.ts';
 
 // type imports
 import { type Color, type MeshStandardMaterial } from 'three';
@@ -55,9 +55,8 @@ export interface ActionDependencies {
     renderer: DIVERenderer;
     controls: DIVEOrbitControls;
     toolbox: DIVEToolbox;
-    mediaCreator: import('../mediacreator/MediaCreator.ts').DIVEMediaCreator;
-    io: import('../io/IO.ts').DIVEIO;
-    ar: import('../ar/ARSystem.ts').ARSystem;
+    mediaCreator: import('../modules/mediacreator/MediaCreator.ts').MediaCreator;
+    ar: import('../modules/ar/ARSystem.ts').ARSystem;
 }
 
 /**
@@ -740,7 +739,7 @@ export class DIVECommunication {
             target = payload.target;
         }
 
-        return ModuleRegistry.getInstance('DIVEMediaCreator').then((module) => {
+        return ModuleRegistry.getInstance('MediaCreator').then((module) => {
             return module.GenerateMedia(
                 position,
                 target,
@@ -813,13 +812,9 @@ export class DIVECommunication {
     private exportScene(
         payload: Actions['EXPORT_SCENE']['PAYLOAD'],
     ): Actions['EXPORT_SCENE']['RETURN'] {
-        return new Promise<string | null>((resolve, reject) => {
-            ModuleRegistry.getInstance('DIVEIO')
-                .then((io) => {
-                    resolve(io.Export(payload.type));
-                })
-                .catch(reject);
-        });
+        return Promise.reject(
+            new Error(`Export is currently deactivated. (payload: ${payload})`),
+        );
     }
 
     private async getDependencies<D extends Partial<ActionDependencies>>(
@@ -834,11 +829,10 @@ export class DIVECommunication {
         if ('toolbox' in requiredDeps) deps.toolbox = this.toolbox;
         if ('mediaCreator' in requiredDeps)
             deps.mediaCreator =
-                await ModuleRegistry.getInstance('DIVEMediaCreator');
-        if ('io' in requiredDeps)
-            deps.io = await ModuleRegistry.getInstance('DIVEIO');
-        if ('ar' in requiredDeps)
+                await ModuleRegistry.getInstance('MediaCreator');
+        if ('ar' in requiredDeps) {
             deps.ar = await ModuleRegistry.getInstance('ARSystem');
+        }
 
         return deps as D;
     }

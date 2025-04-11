@@ -14,6 +14,14 @@ import { DIVECommunication } from '../../../com/Communication';
 import { type DIVESceneObject } from '../../../types';
 import { Object3D } from 'three';
 
+jest.mock('../../../modules/registry/ModuleRegistry', () => ({
+    ModuleRegistry: {
+        getInstance: jest.fn().mockResolvedValue({
+            load: jest.fn().mockResolvedValue({}),
+        }),
+    },
+}));
+
 jest.mock('../../../com/Communication.ts', () => {
     return {
         DIVECommunication: {
@@ -23,16 +31,6 @@ jest.mock('../../../com/Communication.ts', () => {
                 };
             }),
         },
-    };
-});
-
-const mock_Load = jest.fn().mockResolvedValue({});
-jest.mock('../../../asset/loader/AssetLoader.ts', () => {
-    return {
-        AssetLoader: jest.fn(function () {
-            this.load = mock_Load;
-            return this;
-        }),
     };
 });
 
