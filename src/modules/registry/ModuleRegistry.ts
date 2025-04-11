@@ -1,4 +1,7 @@
 /** @internal */
+
+import { Module } from './module/Module';
+
 // Define the base interface that modules will augment
 declare global {
     interface ModuleClasses {}
@@ -8,31 +11,6 @@ type ModuleId = keyof ModuleClasses;
 
 interface ModuleInfo {
     path: string;
-}
-
-/** @internal */
-class Module<T extends new (...args: unknown[]) => unknown> {
-    private _promise: Promise<T> | null = null;
-    private _instance: InstanceType<T> | null = null;
-
-    constructor(private _importFn: () => Promise<T>) {}
-
-    /**
-     * Get or create a singleton instance of the module
-     * @internal
-     */
-    public async getInstance(): Promise<InstanceType<T>> {
-        if (this._instance !== null) {
-            return this._instance;
-        }
-
-        if (!this._promise) {
-            this._promise = this._importFn();
-        }
-        const ModuleClass = await this._promise;
-        this._instance = new ModuleClass() as InstanceType<T>;
-        return this._instance;
-    }
 }
 
 /** @internal */
@@ -68,21 +46,7 @@ class ModuleRegistryClass {
      * @internal
      */
     public register<Id extends ModuleId>(name: Id, path: string): void {
-        const importFn = async (): Promise<
-            new (...args: unknown[]) => ModuleClasses[Id]
-        > => {
-            // Convert the path to a relative import path
-            const relativePath = path.startsWith('src/')
-                ? `../../../${path}` // Relative to module directory
-                : path;
-
-            const module = await import(/* @vite-ignore */ relativePath);
-            return module[name] as new (
-                ...args: unknown[]
-            ) => ModuleClasses[Id];
-        };
-
-        this._modules.set(name, new Module(importFn));
+        this._modules.set(name, new Module(name, path));
         this._moduleInfo.set(name, { path });
     }
 

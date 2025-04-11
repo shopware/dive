@@ -1,146 +1,83 @@
-// Mock the dynamic import before importing the module
-const mockImport = jest.fn();
-// @ts-expect-error - mocking import
-global.import = mockImport;
-
-// Mock the module
-jest.mock('../ModuleRegistry', () => {
-    const modules = new Map();
-    const moduleInfo = new Map();
-
-    return {
-        ModuleRegistry: {
-            _modules: modules,
-            _moduleInfo: moduleInfo,
-            register: (name: string, path: string) => {
-                const importFn = async () => {
-                    const module = await mockImport(
-                        path.startsWith('src/') ? `../../${path}` : path,
-                    );
-                    return module[name];
-                };
-
-                modules.set(name, {
-                    _promise: null,
-                    _instance: null,
-                    getInstance: async function () {
-                        if (this._instance !== null) {
-                            return this._instance;
-                        }
-                        if (!this._promise) {
-                            this._promise = importFn();
-                        }
-                        const ModuleClass = await this._promise;
-                        this._instance = new ModuleClass();
-                        return this._instance;
-                    },
-                });
-                moduleInfo.set(name, { path });
-            },
-            getInstance: async (name: string) => {
-                const module = modules.get(name);
-                if (!module) {
-                    throw new Error(`Module '${name}' not registered`);
-                }
-                return module.getInstance();
-            },
-            getBuildConfig: () => {
-                const entries: Record<string, string> = {};
-                moduleInfo.forEach((info, id) => {
-                    entries[id] = info.path;
-                });
-                return entries;
-            },
-        },
-    };
-});
-
 import { ModuleRegistry } from '../ModuleRegistry';
+import { Module } from '../module/Module';
 
-// Mock module for testing
+// Extend ModuleClasses for our test modules
 declare global {
     interface ModuleClasses {
-        TestModule: TestModule;
+        TestModule: any;
+        TestModule1: any;
+        TestModule2: any;
+        NonExistentModule: never;
     }
 }
 
-class TestModule {
-    public value = 'test';
-}
+// Mock the Module class
+jest.mock('../module/Module', () => {
+    return {
+        Module: jest.fn().mockImplementation((name, path) => ({
+            getInstance: jest.fn().mockResolvedValue({ name, path }),
+        })),
+    };
+});
 
 describe('ModuleRegistry', () => {
     beforeEach(() => {
-        // Clear any registered modules before each test
+        // Clear the registry before each test
         jest.clearAllMocks();
-        // @ts-expect-error accessing private property for testing
-        ModuleRegistry._modules.clear();
-        // @ts-expect-error accessing private property for testing
-        ModuleRegistry._moduleInfo.clear();
-        mockImport.mockClear();
+    });
+
+    afterEach(() => {
+        ModuleRegistry['_moduleInfo'].clear();
     });
 
     describe('register', () => {
-        it('should register a module successfully', () => {
-            expect(() => {
-                ModuleRegistry.register('TestModule', 'src/path/to/module');
-            }).not.toThrow();
+        it('should register a module with name and path', () => {
+            ModuleRegistry.register('TestModule', '/test/path');
+            expect(Module).toHaveBeenCalledWith('TestModule', '/test/path');
+        });
 
-            // @ts-expect-error accessing private property for testing
-            expect(ModuleRegistry._modules.has('TestModule')).toBe(true);
-            // @ts-expect-error accessing private property for testing
-            expect(ModuleRegistry._moduleInfo.get('TestModule')).toEqual({
-                path: 'src/path/to/module',
-            });
+        it('should allow registering multiple modules', () => {
+            ModuleRegistry.register('TestModule1', '/test/path1');
+            ModuleRegistry.register('TestModule2', '/test/path2');
+
+            expect(Module).toHaveBeenCalledTimes(2);
+            expect(Module).toHaveBeenCalledWith('TestModule1', '/test/path1');
+            expect(Module).toHaveBeenCalledWith('TestModule2', '/test/path2');
         });
     });
 
     describe('getInstance', () => {
-        it('should throw error for non-registered module', async () => {
+        it('should return instance of registered module', async () => {
+            ModuleRegistry.register('TestModule', '/test/path');
+            const instance = await ModuleRegistry.getInstance('TestModule');
+
+            expect(instance).toEqual({
+                name: 'TestModule',
+                path: '/test/path',
+            });
+        });
+
+        it('should throw error when getting instance of non-existent module', async () => {
             await expect(
-                ModuleRegistry.getInstance('TestModule'),
-            ).rejects.toThrow("Module 'TestModule' not registered");
-        });
-
-        it('should return the same instance for multiple calls', async () => {
-            mockImport.mockResolvedValue({
-                TestModule,
-            });
-
-            ModuleRegistry.register('TestModule', 'src/path/to/module');
-
-            const instance1 = await ModuleRegistry.getInstance('TestModule');
-            const instance2 = await ModuleRegistry.getInstance('TestModule');
-
-            expect(instance1).toBeDefined();
-            expect(instance1).toBe(instance2);
-            expect(instance1).toBeInstanceOf(TestModule);
-            expect(mockImport).toHaveBeenCalledTimes(1);
-            expect(mockImport).toHaveBeenCalledWith('../../src/path/to/module');
-        });
-
-        it('should handle non-src path imports correctly', async () => {
-            mockImport.mockResolvedValue({
-                TestModule,
-            });
-
-            const externalPath = '@scope/module';
-            ModuleRegistry.register('TestModule', externalPath);
-
-            await ModuleRegistry.getInstance('TestModule');
-            expect(mockImport).toHaveBeenCalledWith(externalPath);
+                ModuleRegistry.getInstance('NonExistentModule'),
+            ).rejects.toThrow("Module 'NonExistentModule' not registered");
         });
     });
 
     describe('getBuildConfig', () => {
-        it('should return empty object when no modules registered', () => {
-            expect(ModuleRegistry.getBuildConfig()).toEqual({});
+        it('should return empty object when no modules are registered', () => {
+            const config = ModuleRegistry.getBuildConfig();
+            expect(config).toEqual({});
         });
 
-        it('should return correct build config for registered modules', () => {
-            ModuleRegistry.register('TestModule', 'src/path/to/module');
+        it('should return all registered module paths', () => {
+            ModuleRegistry.register('TestModule1', '/test/path1');
+            ModuleRegistry.register('TestModule2', '/test/path2');
 
-            expect(ModuleRegistry.getBuildConfig()).toEqual({
-                TestModule: 'src/path/to/module',
+            const config = ModuleRegistry.getBuildConfig();
+            expect(config).toEqual({
+                TestModule1: '/test/path1',
+                TestModule2: '/test/path2',
             });
         });
     });
