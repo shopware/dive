@@ -9,7 +9,7 @@ jest.mock('../ModuleRegistry', () => {
     const moduleInfo = new Map();
 
     return {
-        Modules: {
+        ModuleRegistry: {
             _modules: modules,
             _moduleInfo: moduleInfo,
             register: (name: string, path: string) => {
@@ -55,7 +55,7 @@ jest.mock('../ModuleRegistry', () => {
     };
 });
 
-import { Modules } from '../ModuleRegistry';
+import { ModuleRegistry } from '../ModuleRegistry';
 
 // Mock module for testing
 declare global {
@@ -73,22 +73,22 @@ describe('ModuleRegistry', () => {
         // Clear any registered modules before each test
         jest.clearAllMocks();
         // @ts-expect-error accessing private property for testing
-        Modules._modules.clear();
+        ModuleRegistry._modules.clear();
         // @ts-expect-error accessing private property for testing
-        Modules._moduleInfo.clear();
+        ModuleRegistry._moduleInfo.clear();
         mockImport.mockClear();
     });
 
     describe('register', () => {
         it('should register a module successfully', () => {
             expect(() => {
-                Modules.register('TestModule', 'src/path/to/module');
+                ModuleRegistry.register('TestModule', 'src/path/to/module');
             }).not.toThrow();
 
             // @ts-expect-error accessing private property for testing
-            expect(Modules._modules.has('TestModule')).toBe(true);
+            expect(ModuleRegistry._modules.has('TestModule')).toBe(true);
             // @ts-expect-error accessing private property for testing
-            expect(Modules._moduleInfo.get('TestModule')).toEqual({
+            expect(ModuleRegistry._moduleInfo.get('TestModule')).toEqual({
                 path: 'src/path/to/module',
             });
         });
@@ -96,9 +96,9 @@ describe('ModuleRegistry', () => {
 
     describe('getInstance', () => {
         it('should throw error for non-registered module', async () => {
-            await expect(Modules.getInstance('TestModule')).rejects.toThrow(
-                "Module 'TestModule' not registered",
-            );
+            await expect(
+                ModuleRegistry.getInstance('TestModule'),
+            ).rejects.toThrow("Module 'TestModule' not registered");
         });
 
         it('should return the same instance for multiple calls', async () => {
@@ -106,10 +106,10 @@ describe('ModuleRegistry', () => {
                 TestModule,
             });
 
-            Modules.register('TestModule', 'src/path/to/module');
+            ModuleRegistry.register('TestModule', 'src/path/to/module');
 
-            const instance1 = await Modules.getInstance('TestModule');
-            const instance2 = await Modules.getInstance('TestModule');
+            const instance1 = await ModuleRegistry.getInstance('TestModule');
+            const instance2 = await ModuleRegistry.getInstance('TestModule');
 
             expect(instance1).toBeDefined();
             expect(instance1).toBe(instance2);
@@ -124,22 +124,22 @@ describe('ModuleRegistry', () => {
             });
 
             const externalPath = '@scope/module';
-            Modules.register('TestModule', externalPath);
+            ModuleRegistry.register('TestModule', externalPath);
 
-            await Modules.getInstance('TestModule');
+            await ModuleRegistry.getInstance('TestModule');
             expect(mockImport).toHaveBeenCalledWith(externalPath);
         });
     });
 
     describe('getBuildConfig', () => {
         it('should return empty object when no modules registered', () => {
-            expect(Modules.getBuildConfig()).toEqual({});
+            expect(ModuleRegistry.getBuildConfig()).toEqual({});
         });
 
         it('should return correct build config for registered modules', () => {
-            Modules.register('TestModule', 'src/path/to/module');
+            ModuleRegistry.register('TestModule', 'src/path/to/module');
 
-            expect(Modules.getBuildConfig()).toEqual({
+            expect(ModuleRegistry.getBuildConfig()).toEqual({
                 TestModule: 'src/path/to/module',
             });
         });

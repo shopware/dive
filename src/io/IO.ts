@@ -2,7 +2,7 @@ import { DIVEGLTFIO } from './gltf/GLTFIO';
 
 import { type DIVESceneFileType } from '../types';
 import { type DIVEScene } from '../scene/Scene';
-import { Modules } from '../module/ModuleRegistry';
+import { ModuleRegistry } from '../module/ModuleRegistry';
 
 export class DIVEIO {
     private _scene: DIVEScene;
@@ -68,4 +68,4 @@ declare global {
     }
 }
 
-Modules.register('DIVEIO', 'src/io/IO.ts');
+ModuleRegistry.register('DIVEIO', 'src/io/IO.ts');

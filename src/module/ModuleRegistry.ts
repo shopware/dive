@@ -102,5 +102,4 @@ class ModuleRegistryClass {
 }
 
 // Internal singleton instance
-const internalModules = ModuleRegistryClass.instance;
-export { internalModules as Modules };
+export const ModuleRegistry = ModuleRegistryClass.instance;

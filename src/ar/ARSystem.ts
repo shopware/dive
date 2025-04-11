@@ -3,7 +3,7 @@ import { ARCompatibilityError } from '../error';
 import { ESystem } from '../types/info';
 import { ARQuickLook } from './arquicklook/ARQuickLook';
 import { SceneViewer } from './sceneviewer/SceneViewer';
-import { Modules } from '../module/ModuleRegistry';
+import { ModuleRegistry } from '../module/ModuleRegistry';
 
 declare global {
     interface ModuleClasses {
@@ -12,7 +12,7 @@ declare global {
 }
 
 // Register this module
-Modules.register('ARSystem', 'src/ar/ARSystem.ts');
+ModuleRegistry.register('ARSystem', 'src/ar/ARSystem.ts');
 
 /**
  * Options for configuring the AR system behavior
