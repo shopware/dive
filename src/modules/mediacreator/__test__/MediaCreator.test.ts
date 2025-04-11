@@ -112,7 +112,7 @@ jest.mock('../../../animation/AnimationSystem', () => {
 
 let mediaCreator: MediaCreator;
 
-describe('dive/mediacreator/DIVEMediaCreator', () => {
+describe('MediaCreator', () => {
     beforeEach(() => {
         jest.clearAllMocks();
         mediaCreator = new MediaCreator(

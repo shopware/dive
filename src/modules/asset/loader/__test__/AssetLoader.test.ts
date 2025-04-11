@@ -33,7 +33,7 @@ jest.mock('three/examples/jsm/loaders/USDZLoader', () => {
     };
 });
 
-describe('Loader', () => {
+describe('AssetLoader', () => {
     let loader: AssetLoader;
     let mockGLTFLoader: jest.Mocked<GLTFLoader>;
     let mockUSDZLoader: jest.Mocked<USDZLoader>;

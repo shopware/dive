@@ -34,7 +34,7 @@ jest.mock('three/examples/jsm/exporters/USDZExporter', () => {
     };
 });
 
-describe('Exporter', () => {
+describe('AssetExporter', () => {
     let exporter: AssetExporter;
     let mockObject: Object3D;
     const mockArrayBuffer = new ArrayBuffer(8);
