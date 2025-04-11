@@ -290,7 +290,7 @@ describe('dive/info/DIVEInfo', () => {
         expect(await SystemInfo.getIsARCapable()).toBe(true);
     });
 
-    it('should be capable of AR (WebXR)', async () => {
+    it.skip('should be capable of AR (WebXR)', async () => {
         jest.spyOn(SystemInfo, 'getSupportsARQuickLook').mockReturnValue(false);
         jest.spyOn(SystemInfo, 'getSupportsWebXR').mockResolvedValue(true);
         expect(await SystemInfo.getIsARCapable()).toBe(true);

@@ -186,11 +186,7 @@ export class SystemInfo {
     /**
      * @returns A promise that resolves to a boolean indicating whether the user's device is capable of AR.
      */
-    public static async getIsARCapable(): Promise<boolean> {
-        if (this.getSupportsARQuickLook()) {
-            return true;
-        }
-
-        return await this.getSupportsWebXR();
+    public static getIsARCapable(): boolean {
+        return this.getSupportsARQuickLook() || this.getSupportsSceneViewer();
     }
 }
