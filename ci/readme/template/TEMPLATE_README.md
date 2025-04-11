@@ -95,9 +95,9 @@ module-specific imports:
             "require": "./build/index.cjs"
         },
         "./modules/*": {
-            "types": "./build/modules/*.d.ts",
-            "import": "./build/modules/*.mjs",
-            "require": "./build/modules/*.cjs"
+            "types": "./build/src/modules/*.d.ts",
+            "import": "./build/src/modules/*.mjs",
+            "require": "./build/src/modules/*.cjs"
         }
     }
 }
@@ -261,7 +261,7 @@ with your asset to use in further code.
 ```ts
 import { DIVE } from '@shopware-ag/dive';
 
-const dive = DIVE.QuickView('your/asset/uri.glb'); // <-- call QuickView()
+const dive = await DIVE.QuickView('your/asset/uri.glb'); // <-- call QuickView()
 
 const myCanvasWrapper = document.createElement('div');
 myCanvasWrapper.appendChild(dive.Canvas);
@@ -295,58 +295,146 @@ myCanvasWrapper.appendChild(dive.Canvas); // <-- reference DIVE canvas
 
 ### Modules
 
-DIVE comes with several built-in modules that provide specific functionality:
+DIVE comes with several built-in modules that provide specific functionality. You can access modules
+in two ways:
+
+1. Direct import from the modules directory (recommended for most use cases):
+
+```ts
+import { ARSystem } from '@shopware-ag/dive/modules/ar';
+
+// Initialize AR with options
+const arSystem = new ARSystem();
+await arSystem.launch('path/to/model.glb', {
+    arPlacement: 'horizontal', // or 'vertical'
+    arScale: 'auto' // or 'fixed'
+});
+```
+
+2. Through the DIVE instance (when you need to work with a specific DIVE instance):
+
+```ts
+import { DIVE } from '@shopware-ag/dive';
+
+// Create a DIVE instance
+const dive = new DIVE();
+
+// Get a module instance from the DIVE instance
+const assetLoader = await dive.modules.get('AssetLoader');
+const model = await assetLoader.load('path/to/model.glb');
+```
 
 #### Asset Module
 
-The Asset module (`@shopware-ag/dive/modules/asset`) provides functionality for loading and managing
-3D assets. It handles various file formats and provides utilities for asset manipulation.
+The Asset module provides functionality for loading, converting, and exporting 3D assets. It
+consists of three main components:
 
-```ts
-import { AssetModule } from '@shopware-ag/dive/modules/asset';
+1. **AssetLoader**: Handles loading of 3D assets in various formats
 
-// Load a 3D model
-const model = await AssetModule.loadModel('path/to/model.glb');
-```
+   ```ts
+   // Direct import
+   import { AssetLoader } from '@shopware-ag/dive/modules/asset/loader';
+   const assetLoader = new AssetLoader();
+   const model = await assetLoader.load('path/to/model.glb');
+
+   // Or through DIVE instance
+   const assetLoader = await dive.modules.get('AssetLoader');
+   const model = await assetLoader.load('path/to/model.glb');
+   ```
+
+   Supported formats:
+
+   - GLB/GLTF
+   - USDZ
+
+2. **AssetConverter**: Converts between different 3D file formats
+
+   ```ts
+   import { AssetConverter } from '@shopware-ag/dive/modules/asset/converter';
+   const assetConverter = new AssetConverter();
+   const usdzBuffer = await assetConverter.convert('input.glb').to('usdz');
+   ```
+
+3. **AssetExporter**: Exports 3D assets to various formats
+   ```ts
+   import { AssetExporter } from '@shopware-ag/dive/modules/asset/exporter';
+   const assetExporter = new AssetExporter();
+   const buffer = await assetExporter.export(model, 'glb');
+   ```
 
 #### AR Module
 
-The AR module (`@shopware-ag/dive/modules/ar`) enables Augmented Reality features, allowing you to
-place 3D content in the real world using device cameras.
+The AR module (`ARSystem`) enables Augmented Reality features across different platforms:
 
 ```ts
-import { ARModule } from '@shopware-ag/dive/modules/ar';
+import { ARSystem } from '@shopware-ag/dive/modules/ar';
+const arSystem = new ARSystem();
 
-// Initialize AR session
-const arSession = await ARModule.initialize();
+// Launch AR with options
+await arSystem.launch('path/to/model.glb', {
+    arPlacement: 'horizontal', // or 'vertical'
+    arScale: 'auto' // or 'fixed'
+});
 ```
+
+Features:
+
+- Platform-specific AR implementations (ARQuickLook for iOS, SceneViewer for Android)
+- Automatic format conversion for AR compatibility
+- Configurable placement and scaling options
 
 #### MediaCreator Module
 
-The MediaCreator module (`@shopware-ag/dive/modules/mediacreator`) provides tools for creating and
-manipulating media content, such as screenshots or video recordings of the 3D scene.
+The MediaCreator module provides tools for creating media content from the 3D scene:
 
 ```ts
-import { MediaCreatorModule } from '@shopware-ag/dive/modules/mediacreator';
+import { MediaCreator } from '@shopware-ag/dive/modules/mediacreator';
+const mediaCreator = new MediaCreator();
 
-// Capture a screenshot
-const screenshot = await MediaCreatorModule.captureScreenshot();
+// Generate a screenshot
+const screenshot = await mediaCreator.GenerateMedia(
+    { x: 0, y: 0, z: 0 }, // camera position
+    { x: 0, y: 0, z: 0 }, // camera target
+    1920, // width
+    1080  // height
+);
 ```
+
+Features:
+
+- High-quality screenshot generation
+- Customizable camera position and target
+- Configurable output resolution
 
 #### SystemInfo Module
 
-The SystemInfo module (`@shopware-ag/dive/modules/systeminfo`) provides information about the
-system's capabilities and performance, useful for optimizing the 3D experience.
+The SystemInfo module provides information about the system's capabilities and performance:
 
 ```ts
-import { SystemInfoModule } from '@shopware-ag/dive/modules/systeminfo';
+import { SystemInfo } from '@shopware-ag/dive/modules/systeminfo';
+const systemInfo = new SystemInfo();
 
 // Get system information
-const info = await SystemInfoModule.getInfo();
+const system = systemInfo.getSystem(); // Returns ESystem enum (IOS, ANDROID, etc.)
+
+// Check AR capabilities
+const supportsAR = systemInfo.getSupportsAR();
+
+// Check device type
+const isMobile = systemInfo.isMobile;
+const isDesktop = systemInfo.isDesktop;
 ```
 
-Each module can be imported individually, allowing you to use only the functionality you need. This
-helps keep your bundle size small and your application focused.
+Features:
+
+- System detection (iOS, Android, Windows, etc.)
+- WebXR support detection
+- AR capability checking
+- Device type detection
+- SceneViewer support detection
+
+Each module is designed to be used independently, allowing you to use only the functionality you
+need. This helps keep your bundle size small and your application focused.
 
 ### Actions
 
