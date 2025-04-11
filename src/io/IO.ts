@@ -2,7 +2,7 @@ import { DIVEGLTFIO } from './gltf/GLTFIO';
 
 import { type DIVESceneFileType } from '../types';
 import { type DIVEScene } from '../scene/Scene';
-import { Modules } from '../module/Module';
+import { Modules } from '../module/ModuleRegistry';
 
 export class DIVEIO {
     private _scene: DIVEScene;

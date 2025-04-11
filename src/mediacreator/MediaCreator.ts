@@ -3,7 +3,7 @@ import { type DIVEScene } from '../scene/Scene.ts';
 import { type DIVERenderer } from '../renderer/Renderer.ts';
 import type DIVEOrbitControls from '../controls/OrbitControls.ts';
 import { type Vector3Like } from 'three';
-import { Modules } from '../module/Module.ts';
+import { Modules } from '../module/ModuleRegistry.ts';
 
 /**
  * Creates renderings of the current scene

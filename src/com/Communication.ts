@@ -2,7 +2,7 @@ import { Actions } from './actions/index.ts';
 import { generateUUID } from 'three/src/math/MathUtils';
 import { isSelectTool } from '../toolbox/select/SelectTool.ts';
 import { merge } from 'lodash';
-import { Modules } from '../module/Module.ts';
+import { Modules } from '../module/ModuleRegistry.ts';
 
 // type imports
 import { type Color, type MeshStandardMaterial } from 'three';
