@@ -1,12 +1,14 @@
 import { type DIVESceneFileType } from '../../../types';
 import { Action } from '../action';
+import { type ActionDependencies } from '../../Communication';
 
 const TestAction1 = Action.define<
     keyof DIVESceneFileType,
-    Promise<string | null>
+    Promise<string | null>,
+    Pick<ActionDependencies, 'scene'>
 >(
     'Exports the current scene to a blob and returns the URL.',
-    async (payload) => {
+    async (payload, { scene }) => {
         console.log('Trying to export as type:', payload);
         try {
             // TODO: Implement actual scene export logic here

@@ -22,7 +22,7 @@ import { type DIVEMediaCreator } from '../mediacreator/MediaCreator.ts';
 import { type DIVERenderer } from '../renderer/Renderer.ts';
 import { type DIVESelectable } from '../interface/Selectable.ts';
 import { type ARSystem } from '../ar/ARSystem.ts';
-import { ActionDependencies } from './actions/types';
+import { type DIVEIO } from '../io/IO.ts';
 
 type EventListener<Action extends keyof Actions> = (
     payload: Actions[Action]['PAYLOAD'],
@@ -33,18 +33,35 @@ type Unsubscribe = () => boolean;
 // Extracted types for PerformAction_new
 type ActionPayload<T> = T extends new (
     payload: infer P,
-    dependencies: Partial<ActionDependencies>,
+    dependencies: infer D,
 ) => unknown
     ? P
     : never;
 type ActionReturn<T> = T extends new (
     payload: unknown,
-    dependencies: Partial<ActionDependencies>,
+    dependencies: infer D,
 ) => infer R
     ? R extends { execute(): infer E }
         ? E
         : never
     : never;
+type ActionDeps<T> = T extends new (
+    payload: unknown,
+    dependencies: infer D,
+) => unknown
+    ? D extends Partial<ActionDependencies>
+        ? D
+        : never
+    : never;
+export interface ActionDependencies {
+    scene: DIVEScene;
+    renderer: DIVERenderer;
+    controls: DIVEOrbitControls;
+    toolbox: DIVEToolbox;
+    mediaCreator: DIVEMediaCreator;
+    io: DIVEIO;
+    ar: ARSystem;
+}
 
 /**
  * Main class for communicating with DIVE.
@@ -821,43 +838,41 @@ export class DIVECommunication {
         });
     }
 
-    private async getDependencies(): Promise<ActionDependencies> {
-        const [
-            mediaCreator,
-            io,
-            ar,
-        ] = await Promise.all([
-            this._mediaGenerator.get(),
-            this._io.get(),
-            this._ar.get(),
-        ]);
+    private async getDependencies<D extends Partial<ActionDependencies>>(
+        requiredDeps: D,
+    ): Promise<D> {
+        const deps: Partial<ActionDependencies> = {};
 
-        return {
-            scene: this.scene,
-            renderer: this.renderer,
-            controls: this.controller,
-            toolbox: this.toolbox,
-            mediaCreator,
-            io,
-            ar,
-        };
+        // Only load the dependencies that are actually needed
+        if ('scene' in requiredDeps) deps.scene = this.scene;
+        if ('renderer' in requiredDeps) deps.renderer = this.renderer;
+        if ('controls' in requiredDeps) deps.controls = this.controller;
+        if ('toolbox' in requiredDeps) deps.toolbox = this.toolbox;
+        if ('mediaCreator' in requiredDeps)
+            deps.mediaCreator = await this._mediaGenerator.get();
+        if ('io' in requiredDeps) deps.io = await this._io.get();
+        if ('ar' in requiredDeps) deps.ar = await this._ar.get();
+
+        return deps as D;
     }
 
     public async PerformAction_new<ActionType extends keyof ActionClasses>(
         action: ActionType,
         payload: ActionPayload<ActionClasses[ActionType]>,
     ): Promise<ActionReturn<ActionClasses[ActionType]>> {
-        const dependencies = await this.getDependencies();
-
-        // Create and execute the action with proper type casting
         const ActionClass = Actions[action] as unknown as {
             new (
                 payload: ActionPayload<ActionClasses[ActionType]>,
-                dependencies: Partial<ActionDependencies>,
+                dependencies: ActionDeps<ActionClasses[ActionType]>,
             ): InstanceType<ActionClasses[ActionType]>;
         };
 
-        const actionInstance = new ActionClass(payload, dependencies);
+        // Get only the dependencies this action needs
+        const requiredDeps = await this.getDependencies<
+            ActionDeps<ActionClasses[ActionType]>
+        >({} as ActionDeps<ActionClasses[ActionType]>);
+
+        const actionInstance = new ActionClass(payload, requiredDeps);
         const result = await actionInstance.execute();
         return result as ActionReturn<ActionClasses[ActionType]>;
     }
