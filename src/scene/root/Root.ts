@@ -17,7 +17,7 @@ import {
 } from '../../com/types';
 import { type DIVESceneObject } from '../../types';
 import { DIVEGroup } from '../../group/Group.ts';
-import { ModuleRegistry } from '../../modules/_system/ModuleRegistry.ts';
+import { ModuleRegistry } from '../../modules';
 
 /**
  * A basic scene node to hold grid, floor and all lower level roots.

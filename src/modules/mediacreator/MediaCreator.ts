@@ -3,18 +3,12 @@ import { type DIVEScene } from '../../scene/Scene';
 import { type DIVERenderer } from '../../renderer/Renderer';
 import type DIVEOrbitControls from '../../controls/OrbitControls';
 import { type Vector3Like } from 'three';
-import { ModuleRegistry } from '../_system/ModuleRegistry';
 
 declare global {
     interface ModuleClasses {
         MediaCreator: MediaCreator;
     }
 }
-
-ModuleRegistry.register(
-    'MediaCreator',
-    'src/modules/mediacreator/MediaCreator.ts',
-);
 
 /**
  * Creates renderings of the current scene

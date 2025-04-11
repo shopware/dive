@@ -4,18 +4,12 @@ import {
     type FileTypeToExporterOptions,
 } from '../exporter/AssetExporter';
 import { type FileType } from '../../../types/file';
-import { ModuleRegistry } from '../../_system/ModuleRegistry';
 
 declare global {
     interface ModuleClasses {
         AssetConverter: AssetConverter;
     }
 }
-
-ModuleRegistry.register(
-    'AssetConverter',
-    'src/modules/asset/converter/AssetConverter.ts',
-);
 
 export class AssetConverter {
     private _uri: string = '';

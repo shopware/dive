@@ -35,9 +35,9 @@ import {
 } from '../types';
 import { type DIVESceneObject } from '../../types';
 import { type ARSystemOptions } from '../../modules/ar/ARSystem';
-import { ModuleRegistry } from '../../modules/_system/ModuleRegistry';
+import { ModuleRegistry } from '../../modules';
 
-jest.mock('../../modules/_system/ModuleRegistry', () => {
+jest.mock('../../modules', () => {
     return {
         ModuleRegistry: {
             getInstance: jest.fn(),

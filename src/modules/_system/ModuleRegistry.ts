@@ -1,4 +1,8 @@
-/** @internal */
+/**
+ * @internal
+ * This module contains the internal module registry implementation.
+ * Do not import directly - use the central export from 'src/modules/index.ts' instead.
+ */
 
 import { Module } from './Module';
 
@@ -28,6 +32,7 @@ class ModuleRegistryClass {
 
     /**
      * Get all registered module paths for build configuration
+     * @internal
      */
     public getBuildConfig(): Record<string, string> {
         const entries: Record<string, string> = {};
@@ -67,4 +72,5 @@ class ModuleRegistryClass {
 }
 
 // Internal singleton instance
-export const ModuleRegistry = ModuleRegistryClass.instance;
+/** @internal */
+export const internalModuleRegistry = ModuleRegistryClass.instance;

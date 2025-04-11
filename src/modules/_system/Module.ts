@@ -55,14 +55,27 @@ export class Module<T extends new (...args: unknown[]) => unknown> {
             return path;
         }
 
-        // For absolute paths (starting with src/), convert to relative
-        if (path.startsWith('src/')) {
-            // Calculate the relative path from the current file location
-            // This assumes the Module.ts file is in src/modules/registry/module/
-            return `../../../${path}`;
+        // For absolute paths starting with src/modules/, convert to a relative build path
+        if (path.startsWith('src/modules/')) {
+            // Extract just the filename (without extension) from the original source path
+            const filename = path.split('/').pop()?.replace(/\.ts$/, '') || '';
+            if (!filename) {
+                console.error(
+                    `[ModuleRegistry] Could not extract filename from path: ${path}`,
+                );
+                // Return something that will likely fail, but prevents crashing here
+                return `invalid-module-path-${path}`;
+            }
+            // Use a path relative to the built file executing this import.
+            // Assuming the executing code is in `build/` and modules are in `build/modules/`
+            // Explicitly add the .mjs extension for ES Module resolution.
+            return `./modules/${filename}.mjs`;
         }
 
-        // For node_modules or other special paths, use as is
+        // For other paths (e.g., node_modules, though unlikely here), use as is
+        console.warn(
+            `[ModuleRegistry] Unexpected path format for dynamic import: ${path}`,
+        );
         return path;
     }
 }

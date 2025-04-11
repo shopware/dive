@@ -4,18 +4,12 @@ import { Object3D } from 'three';
 import { type FileType, SUPPORTED_FILE_TYPES } from '../../../types/file';
 import { FileTypeError, NetworkError, ParseError } from '../../../error';
 import { getFileTypeFromUri, isFileTypeSupported } from '../../../helper';
-import { ModuleRegistry } from '../../_system/ModuleRegistry';
 
 declare global {
     interface ModuleClasses {
         AssetLoader: AssetLoader;
     }
 }
-
-ModuleRegistry.register(
-    'AssetLoader',
-    'src/modules/asset/loader/AssetLoader.ts',
-);
 
 export class AssetLoader {
     private _gltfLoader: GLTFLoader;

@@ -127,6 +127,15 @@ export default class DIVE {
             floorColor: 0xffffff,
         });
 
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        if (!(window as any).DIVE.instances) {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            (window as any).DIVE.instances = [];
+        }
+
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        (window as any).DIVE.instances.push(dive);
+
         return dive;
     }
 

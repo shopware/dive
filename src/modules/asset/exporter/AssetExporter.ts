@@ -9,18 +9,12 @@ import {
 } from 'three/examples/jsm/exporters/USDZExporter';
 import { type FileType } from '../../../types/file';
 import { FileTypeError, ParseError } from '../../../error';
-import { ModuleRegistry } from '../../_system/ModuleRegistry';
 
 declare global {
     interface ModuleClasses {
         AssetExporter: AssetExporter;
     }
 }
-
-ModuleRegistry.register(
-    'AssetExporter',
-    'src/modules/asset/exporter/AssetExporter.ts',
-);
 
 export type USDZExporterOptions = THREEUSDZExporterOptions & {
     ar?: {

@@ -1,4 +1,4 @@
-import { ModuleRegistry } from '../ModuleRegistry';
+import { internalModuleRegistry } from '../ModuleRegistry';
 import { Module } from '../Module';
 
 // Extend ModuleClasses for our test modules
@@ -27,18 +27,18 @@ describe('ModuleRegistry', () => {
     });
 
     afterEach(() => {
-        ModuleRegistry['_moduleInfo'].clear();
+        internalModuleRegistry['_moduleInfo'].clear();
     });
 
     describe('register', () => {
         it('should register a module with name and path', () => {
-            ModuleRegistry.register('TestModule', '/test/path');
+            internalModuleRegistry.register('TestModule', '/test/path');
             expect(Module).toHaveBeenCalledWith('TestModule', '/test/path');
         });
 
         it('should allow registering multiple modules', () => {
-            ModuleRegistry.register('TestModule1', '/test/path1');
-            ModuleRegistry.register('TestModule2', '/test/path2');
+            internalModuleRegistry.register('TestModule1', '/test/path1');
+            internalModuleRegistry.register('TestModule2', '/test/path2');
 
             expect(Module).toHaveBeenCalledTimes(2);
             expect(Module).toHaveBeenCalledWith('TestModule1', '/test/path1');
@@ -48,8 +48,9 @@ describe('ModuleRegistry', () => {
 
     describe('getInstance', () => {
         it('should return instance of registered module', async () => {
-            ModuleRegistry.register('TestModule', '/test/path');
-            const instance = await ModuleRegistry.getInstance('TestModule');
+            internalModuleRegistry.register('TestModule', '/test/path');
+            const instance =
+                await internalModuleRegistry.getInstance('TestModule');
 
             expect(instance).toEqual({
                 name: 'TestModule',
@@ -59,22 +60,22 @@ describe('ModuleRegistry', () => {
 
         it('should throw error when getting instance of non-existent module', async () => {
             await expect(
-                ModuleRegistry.getInstance('NonExistentModule'),
+                internalModuleRegistry.getInstance('NonExistentModule'),
             ).rejects.toThrow("Module 'NonExistentModule' not registered");
         });
     });
 
     describe('getBuildConfig', () => {
         it('should return empty object when no modules are registered', () => {
-            const config = ModuleRegistry.getBuildConfig();
+            const config = internalModuleRegistry.getBuildConfig();
             expect(config).toEqual({});
         });
 
         it('should return all registered module paths', () => {
-            ModuleRegistry.register('TestModule1', '/test/path1');
-            ModuleRegistry.register('TestModule2', '/test/path2');
+            internalModuleRegistry.register('TestModule1', '/test/path1');
+            internalModuleRegistry.register('TestModule2', '/test/path2');
 
-            const config = ModuleRegistry.getBuildConfig();
+            const config = internalModuleRegistry.getBuildConfig();
             expect(config).toEqual({
                 TestModule1: '/test/path1',
                 TestModule2: '/test/path2',

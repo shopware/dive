@@ -1,14 +1,11 @@
 import { ESystem, EWebXRUnsupportedReason } from '../../types/info';
 import { ARCompatibilityError } from '../../error';
-import { ModuleRegistry } from '../_system/ModuleRegistry';
 
 declare global {
     interface ModuleClasses {
         SystemInfo: SystemInfo;
     }
 }
-
-ModuleRegistry.register('SystemInfo', 'src/modules/systemInfo/SystemInfo.ts');
 
 export class SystemInfo {
     private static _supportsWebXR: boolean = false;
