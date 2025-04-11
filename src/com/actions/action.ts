@@ -6,8 +6,8 @@ export abstract class Action<
     D extends Partial<ActionDependencies> = Partial<ActionDependencies>,
 > {
     protected abstract readonly _description: string;
-    protected _payload: P;
     protected readonly _dependencies: D;
+    protected _payload: P;
     public abstract execute(): R;
 
     constructor(payload: P, dependencies: D) {
