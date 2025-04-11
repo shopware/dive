@@ -11,18 +11,19 @@ declare global {
     interface ModuleClasses {}
 }
 
-interface ModuleInfo {
-    path: string;
-}
+// interface ModuleInfo { // No longer needed to store path here
+//     path: string;
+// }
 
 /** @internal */
 class ModuleRegistryClass {
     private static _instance = new ModuleRegistryClass();
+    // Map now only stores Module instances, keyed by name
     private _modules = new Map<
         keyof ModuleClasses,
         Module<new (...args: unknown[]) => unknown>
     >();
-    private _moduleInfo = new Map<keyof ModuleClasses, ModuleInfo>();
+    // private _moduleInfo = new Map<keyof ModuleClasses, ModuleInfo>(); // Removed _moduleInfo
 
     private constructor() {}
 
@@ -34,26 +35,33 @@ class ModuleRegistryClass {
      * Get all registered module paths for build configuration
      * @internal
      */
-    public getBuildConfig(): Record<string, string> {
-        const entries: Record<string, string> = {};
-
-        this._moduleInfo.forEach((info, id) => {
-            entries[id] = info.path;
-        });
-
-        return entries;
-    }
+    // public getBuildConfig(): Record<string, string> { // Removed getBuildConfig
+    //     const entries: Record<string, string> = {};
+    //
+    //     this._moduleInfo.forEach((info, id) => {
+    //         entries[id] = info.path;
+    //     });
+    //
+    //     return entries;
+    // }
 
     /**
      * Register a module
      * @internal
      */
+    // Path argument is only used by the build plugin now
     public register<Id extends keyof ModuleClasses>(
         name: Id,
-        path: string,
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        _path: string, // Re-add path param for signature compatibility, marked unused
     ): void {
-        this._modules.set(name, new Module(name, path));
-        this._moduleInfo.set(name, { path });
+        if (this._modules.has(name)) {
+            console.warn(
+                `Module '${name}' is already registered. Overwriting.`,
+            );
+        }
+        // Pass only the name to the Module constructor
+        this._modules.set(name, new Module(name));
     }
 
     /**

@@ -4,7 +4,8 @@
  */
 import { internalModuleRegistry as ModuleRegistry } from './_system/ModuleRegistry';
 
-// Register all modules with their paths
+// Register all modules with their names and source paths.
+// The path is used by the build process but ignored by the runtime registry.
 ModuleRegistry.register(
     'AssetLoader',
     'src/modules/asset/loader/AssetLoader.ts',
