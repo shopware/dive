@@ -27,7 +27,6 @@ import USE_TOOL from './toolbox/usetool.ts';
 import SET_PARENT from './object/setparent.ts';
 import EXPORT_SCENE from './scene/exportscene.ts';
 import LAUNCH_AR from './scene/launchar.ts';
-
 export interface Actions {
     START_RENDER: START_RENDER;
     GET_ALL_SCENE_DATA: GET_ALL_SCENE_DATA;
@@ -59,3 +58,9 @@ export interface Actions {
     EXPORT_SCENE: EXPORT_SCENE;
     LAUNCH_AR: LAUNCH_AR;
 }
+
+declare global {
+    interface ActionClasses {}
+}
+
+export const Actions = {} as ActionClasses;

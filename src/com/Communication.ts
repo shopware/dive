@@ -21,14 +21,30 @@ import { type DIVEModel } from '../model/Model.ts';
 import { type DIVEMediaCreator } from '../mediacreator/MediaCreator.ts';
 import { type DIVERenderer } from '../renderer/Renderer.ts';
 import { type DIVESelectable } from '../interface/Selectable.ts';
-import { type DIVEIO } from '../io/IO.ts';
 import { type ARSystem } from '../ar/ARSystem.ts';
+import { ActionDependencies } from './actions/types';
 
 type EventListener<Action extends keyof Actions> = (
     payload: Actions[Action]['PAYLOAD'],
 ) => void;
 
 type Unsubscribe = () => boolean;
+
+// Extracted types for PerformAction_new
+type ActionPayload<T> = T extends new (
+    payload: infer P,
+    dependencies: Partial<ActionDependencies>,
+) => unknown
+    ? P
+    : never;
+type ActionReturn<T> = T extends new (
+    payload: unknown,
+    dependencies: Partial<ActionDependencies>,
+) => infer R
+    ? R extends { execute(): infer E }
+        ? E
+        : never
+    : never;
 
 /**
  * Main class for communicating with DIVE.
@@ -42,7 +58,7 @@ type Unsubscribe = () => boolean;
  *
  * dive.Communication.Subscribe('GET_ALL_SCENE_DATA', () => {
  *  // do something
- * }));
+ * });
  *
  * dive.Communication.PerformAction('GET_ALL_SCENE_DATA', {});
  * ```
@@ -79,7 +95,10 @@ export class DIVECommunication {
         '../mediacreator/MediaCreator.ts',
         'DIVEMediaCreator',
     );
-    private _io: DIVEModule<DIVEIO> = new DIVEModule('../io/IO.ts', 'DIVEIO');
+    private _io: DIVEModule<import('../io/IO.ts').DIVEIO> = new DIVEModule(
+        '../io/IO.ts',
+        'DIVEIO',
+    );
 
     private _ar: DIVEModule<ARSystem> = new DIVEModule('../ar/AR.ts', 'DIVEAR');
 
@@ -800,6 +819,47 @@ export class DIVECommunication {
                 })
                 .catch(reject);
         });
+    }
+
+    private async getDependencies(): Promise<ActionDependencies> {
+        const [
+            mediaCreator,
+            io,
+            ar,
+        ] = await Promise.all([
+            this._mediaGenerator.get(),
+            this._io.get(),
+            this._ar.get(),
+        ]);
+
+        return {
+            scene: this.scene,
+            renderer: this.renderer,
+            controls: this.controller,
+            toolbox: this.toolbox,
+            mediaCreator,
+            io,
+            ar,
+        };
+    }
+
+    public async PerformAction_new<ActionType extends keyof ActionClasses>(
+        action: ActionType,
+        payload: ActionPayload<ActionClasses[ActionType]>,
+    ): Promise<ActionReturn<ActionClasses[ActionType]>> {
+        const dependencies = await this.getDependencies();
+
+        // Create and execute the action with proper type casting
+        const ActionClass = Actions[action] as unknown as {
+            new (
+                payload: ActionPayload<ActionClasses[ActionType]>,
+                dependencies: Partial<ActionDependencies>,
+            ): InstanceType<ActionClasses[ActionType]>;
+        };
+
+        const actionInstance = new ActionClass(payload, dependencies);
+        const result = await actionInstance.execute();
+        return result as ActionReturn<ActionClasses[ActionType]>;
     }
 }
 
