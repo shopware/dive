@@ -23,7 +23,6 @@ function moduleRegistrationPlugin(): Plugin {
                     '**/*.spec.ts',
                 ],
             });
-            console.log('Found files:', files);
             const registrations: ModuleRegistration[] = [];
 
             files.forEach((file) => {
@@ -50,7 +49,7 @@ function moduleRegistrationPlugin(): Plugin {
                                 path.endsWith('.ts')
                             ) {
                                 console.log(
-                                    `Found registration: ${name} -> ${path}\n`,
+                                    `Found registration: ${name} -> ${path}`,
                                 );
                                 registrations.push({ name, path });
                             }

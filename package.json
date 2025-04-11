@@ -12,20 +12,10 @@
             "import": "./build/index.mjs",
             "require": "./build/index.cjs"
         },
-        "./ARSystem": {
-            "types": "./build/modules/ARSystem.d.ts",
-            "import": "./build/modules/ARSystem.mjs",
-            "require": "./build/modules/ARSystem.cjs"
-        },
-        "./DIVEMediaCreator": {
-            "types": "./build/modules/DIVEMediaCreator.d.ts",
-            "import": "./build/modules/DIVEMediaCreator.mjs",
-            "require": "./build/modules/DIVEMediaCreator.cjs"
-        },
-        "./DIVEIO": {
-            "types": "./build/modules/DIVEIO.d.ts",
-            "import": "./build/modules/DIVEIO.mjs",
-            "require": "./build/modules/DIVEIO.cjs"
+        "./modules/*": {
+            "types": "./build/modules/*.d.ts",
+            "import": "./build/modules/*.mjs",
+            "require": "./build/modules/*.cjs"
         }
     },
     "files": [
