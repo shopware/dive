@@ -9,8 +9,7 @@ declare global {
 describe('Module', () => {
     let module: Module<any>;
     const moduleName = 'TestModule';
-    const modulePath =
-        'src/modules/registry/module/__test__/__mocks__/TestModule';
+    const modulePath = 'src/modules/_system/__test__/__mocks__/TestModule';
 
     beforeEach(() => {
         module = new Module(moduleName, modulePath);
@@ -33,11 +32,11 @@ describe('Module', () => {
             // Mock a failing import
             const failingModule = new Module(
                 'TestModule' as keyof ModuleClasses,
-                'src/modules/registry/module/__test__/__mocks__/NonExistentModule',
+                'src/modules/_system/__test__/__mocks__/NonExistentModule',
             );
 
             await expect(failingModule.getInstance()).rejects.toThrow(
-                'Failed to instantiate module TestModule: Module TestModule not found in ../../../../src/modules/registry/module/__test__/__mocks__/NonExistentModule',
+                'Failed to instantiate module TestModule: Module TestModule not found in ../../../src/modules/_system/__test__/__mocks__/NonExistentModule',
             );
         });
     });
@@ -47,7 +46,7 @@ describe('Module', () => {
             const path = 'src/modules/test/TestModule';
             // @ts-ignore - accessing private method for testing
             const importPath = module.getImportPath(path);
-            expect(importPath).toBe('../../../../src/modules/test/TestModule');
+            expect(importPath).toBe('../../../src/modules/test/TestModule');
         });
 
         it('should not convert non-src/ paths', () => {

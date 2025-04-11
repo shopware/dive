@@ -1,6 +1,6 @@
 import { ESystem, EWebXRUnsupportedReason } from '../../types/info';
 import { ARCompatibilityError } from '../../error';
-import { ModuleRegistry } from '../registry/ModuleRegistry';
+import { ModuleRegistry } from '../_system/ModuleRegistry';
 
 declare global {
     interface ModuleClasses {

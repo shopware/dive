@@ -14,7 +14,7 @@ import { DIVECommunication } from '../../../com/Communication';
 import { type DIVESceneObject } from '../../../types';
 import { Object3D } from 'three';
 
-jest.mock('../../../modules/registry/ModuleRegistry', () => ({
+jest.mock('../../../modules/_system/ModuleRegistry', () => ({
     ModuleRegistry: {
         getInstance: jest.fn().mockResolvedValue({
             load: jest.fn().mockResolvedValue({}),

@@ -4,7 +4,7 @@ import { Object3D } from 'three';
 import { type FileType, SUPPORTED_FILE_TYPES } from '../../../types/file';
 import { FileTypeError, NetworkError, ParseError } from '../../../error';
 import { getFileTypeFromUri, isFileTypeSupported } from '../../../helper';
-import { ModuleRegistry } from '../../registry/ModuleRegistry';
+import { ModuleRegistry } from '../../_system/ModuleRegistry';
 
 declare global {
     interface ModuleClasses {

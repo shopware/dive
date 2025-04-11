@@ -59,7 +59,7 @@ export class Module<T extends new (...args: unknown[]) => unknown> {
         if (path.startsWith('src/')) {
             // Calculate the relative path from the current file location
             // This assumes the Module.ts file is in src/modules/registry/module/
-            return `../../../../${path}`;
+            return `../../../${path}`;
         }
 
         // For node_modules or other special paths, use as is

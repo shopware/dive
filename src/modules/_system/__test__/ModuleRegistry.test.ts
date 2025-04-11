@@ -1,5 +1,5 @@
 import { ModuleRegistry } from '../ModuleRegistry';
-import { Module } from '../module/Module';
+import { Module } from '../Module';
 
 // Extend ModuleClasses for our test modules
 declare global {
@@ -12,7 +12,7 @@ declare global {
 }
 
 // Mock the Module class
-jest.mock('../module/Module', () => {
+jest.mock('../Module', () => {
     return {
         Module: jest.fn().mockImplementation((name, path) => ({
             getInstance: jest.fn().mockResolvedValue({ name, path }),

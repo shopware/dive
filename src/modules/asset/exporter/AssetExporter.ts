@@ -9,7 +9,7 @@ import {
 } from 'three/examples/jsm/exporters/USDZExporter';
 import { type FileType } from '../../../types/file';
 import { FileTypeError, ParseError } from '../../../error';
-import { ModuleRegistry } from '../../registry/ModuleRegistry';
+import { ModuleRegistry } from '../../_system/ModuleRegistry';
 
 declare global {
     interface ModuleClasses {

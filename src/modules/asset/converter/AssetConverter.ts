@@ -4,7 +4,7 @@ import {
     type FileTypeToExporterOptions,
 } from '../exporter/AssetExporter';
 import { type FileType } from '../../../types/file';
-import { ModuleRegistry } from '../../registry/ModuleRegistry';
+import { ModuleRegistry } from '../../_system/ModuleRegistry';
 
 declare global {
     interface ModuleClasses {

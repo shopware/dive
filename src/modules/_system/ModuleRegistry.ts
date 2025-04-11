@@ -1,6 +1,6 @@
 /** @internal */
 
-import { Module } from './module/Module';
+import { Module } from './Module';
 
 // Define the base interface that modules will augment
 declare global {

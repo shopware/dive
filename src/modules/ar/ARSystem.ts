@@ -3,7 +3,7 @@ import { ARCompatibilityError } from '../../error';
 import { ESystem } from '../../types/info';
 import { ARQuickLook } from './arquicklook/ARQuickLook';
 import { SceneViewer } from './sceneviewer/SceneViewer';
-import { ModuleRegistry } from '../registry/ModuleRegistry';
+import { ModuleRegistry } from '../_system/ModuleRegistry';
 
 declare global {
     interface ModuleClasses {
