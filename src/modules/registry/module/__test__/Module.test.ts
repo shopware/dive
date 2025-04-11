@@ -37,7 +37,7 @@ describe('Module', () => {
             );
 
             await expect(failingModule.getInstance()).rejects.toThrow(
-                'Failed to import module TestModule',
+                'Failed to instantiate module TestModule: Module TestModule not found in ../../../../src/modules/registry/module/__test__/__mocks__/NonExistentModule',
             );
         });
     });
