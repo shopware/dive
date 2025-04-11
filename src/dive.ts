@@ -358,8 +358,6 @@ export { DIVE, DIVECommunication };
 
 export * from './math/index.ts';
 
-export * from './ar/ARSystem.ts';
-
 export * from './com/actions/index.ts';
 export * from './com/types';
 export * from './types';

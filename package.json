@@ -3,22 +3,29 @@
     "version": "1.19.0",
     "description": "Shopware Spatial Framework",
     "type": "module",
-    "main": "build/dive.cjs",
-    "module": "build/dive.js",
-    "types": "build/dive.d.ts",
+    "main": "build/index.cjs",
+    "module": "build/index.mjs",
+    "types": "build/index.d.ts",
     "exports": {
         ".": {
-            "types": "./build/dive.d.ts",
-            "node": {
-                "import": {
-                    "default": "./build/dive.mjs"
-                },
-                "require": {
-                    "default": "./build/dive.cjs"
-                }
-            },
-            "import": "./build/dive.mjs",
-            "require": "./build/dive.cjs"
+            "types": "./build/index.d.ts",
+            "import": "./build/index.mjs",
+            "require": "./build/index.cjs"
+        },
+        "./ARSystem": {
+            "types": "./build/modules/ARSystem.d.ts",
+            "import": "./build/modules/ARSystem.mjs",
+            "require": "./build/modules/ARSystem.cjs"
+        },
+        "./DIVEMediaCreator": {
+            "types": "./build/modules/DIVEMediaCreator.d.ts",
+            "import": "./build/modules/DIVEMediaCreator.mjs",
+            "require": "./build/modules/DIVEMediaCreator.cjs"
+        },
+        "./DIVEIO": {
+            "types": "./build/modules/DIVEIO.d.ts",
+            "import": "./build/modules/DIVEIO.mjs",
+            "require": "./build/modules/DIVEIO.cjs"
         }
     },
     "files": [
@@ -55,6 +62,7 @@
         "@types/node": "^20.12.7",
         "@types/three": "^0.163.0",
         "eslint": "^9.1.1",
+        "glob": "^11.0.1",
         "globals": "^15.0.0",
         "jest": "^29.7.0",
         "jest-environment-jsdom": "^29.7.0",

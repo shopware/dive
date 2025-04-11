@@ -3,6 +3,16 @@ import { ARCompatibilityError } from '../error';
 import { ESystem } from '../types/info';
 import { ARQuickLook } from './arquicklook/ARQuickLook';
 import { SceneViewer } from './sceneviewer/SceneViewer';
+import { Modules } from '../module/Module';
+
+declare global {
+    interface ModuleClasses {
+        ARSystem: ARSystem;
+    }
+}
+
+// Register this module
+Modules.register('ARSystem', 'src/ar/ARSystem.ts');
 
 /**
  * Options for configuring the AR system behavior

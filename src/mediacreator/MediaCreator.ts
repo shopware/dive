@@ -3,6 +3,7 @@ import { type DIVEScene } from '../scene/Scene.ts';
 import { type DIVERenderer } from '../renderer/Renderer.ts';
 import type DIVEOrbitControls from '../controls/OrbitControls.ts';
 import { type Vector3Like } from 'three';
+import { Modules } from '../module/Module.ts';
 
 /**
  * Creates renderings of the current scene
@@ -73,3 +74,11 @@ export class DIVEMediaCreator {
         return returnCanvas;
     }
 }
+
+declare global {
+    interface ModuleClasses {
+        DIVEMediaCreator: DIVEMediaCreator;
+    }
+}
+
+Modules.register('DIVEMediaCreator', 'src/mediacreator/MediaCreator.ts');

@@ -19,10 +19,13 @@ export abstract class Action<
         T,
         R,
         D extends Partial<ActionDependencies> = Partial<ActionDependencies>,
-    >(
-        description: string,
-        execute: (payload: T, dependencies: D) => R,
-    ): new (payload: T, dependencies: D) => Action<T, R, D> {
+    >({
+        description,
+        execute,
+    }: {
+        description: string;
+        execute: (payload: T, dependencies: D) => R;
+    }): new (payload: T, dependencies: D) => Action<T, R, D> {
         return class extends Action<T, R, D> {
             readonly _description = description;
             readonly _payload: T;

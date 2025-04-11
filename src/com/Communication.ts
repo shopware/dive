@@ -2,7 +2,7 @@ import { Actions } from './actions/index.ts';
 import { generateUUID } from 'three/src/math/MathUtils';
 import { isSelectTool } from '../toolbox/select/SelectTool.ts';
 import { merge } from 'lodash';
-import { DIVEModule } from '../module/Module.ts';
+import { Modules } from '../module/Module.ts';
 
 // type imports
 import { type Color, type MeshStandardMaterial } from 'three';
@@ -107,17 +107,6 @@ export class DIVECommunication {
     private scene: DIVEScene;
     private controller: DIVEOrbitControls;
     private toolbox: DIVEToolbox;
-
-    private _mediaGenerator: DIVEModule<DIVEMediaCreator> = new DIVEModule(
-        '../mediacreator/MediaCreator.ts',
-        'DIVEMediaCreator',
-    );
-    private _io: DIVEModule<import('../io/IO.ts').DIVEIO> = new DIVEModule(
-        '../io/IO.ts',
-        'DIVEIO',
-    );
-
-    private _ar: DIVEModule<ARSystem> = new DIVEModule('../ar/AR.ts', 'DIVEAR');
 
     private registered: Map<string, COMEntity> = new Map();
 
@@ -327,8 +316,7 @@ export class DIVECommunication {
                 const { uri, options } =
                     payload as Actions['LAUNCH_AR']['PAYLOAD'];
                 returnValue = new Promise<void>((resolve, reject) => {
-                    this._ar
-                        .get()
+                    Modules.getInstance('ARSystem')
                         .then((ar) => {
                             resolve(ar.launch(uri, options));
                         })
@@ -755,7 +743,7 @@ export class DIVECommunication {
             target = payload.target;
         }
 
-        return this._mediaGenerator.get().then((module) => {
+        return Modules.getInstance('DIVEMediaCreator').then((module) => {
             return module.GenerateMedia(
                 position,
                 target,
@@ -829,8 +817,7 @@ export class DIVECommunication {
         payload: Actions['EXPORT_SCENE']['PAYLOAD'],
     ): Actions['EXPORT_SCENE']['RETURN'] {
         return new Promise<string | null>((resolve, reject) => {
-            this._io
-                .get()
+            Modules.getInstance('DIVEIO')
                 .then((io) => {
                     resolve(io.Export(payload.type));
                 })
@@ -849,9 +836,10 @@ export class DIVECommunication {
         if ('controls' in requiredDeps) deps.controls = this.controller;
         if ('toolbox' in requiredDeps) deps.toolbox = this.toolbox;
         if ('mediaCreator' in requiredDeps)
-            deps.mediaCreator = await this._mediaGenerator.get();
-        if ('io' in requiredDeps) deps.io = await this._io.get();
-        if ('ar' in requiredDeps) deps.ar = await this._ar.get();
+            deps.mediaCreator = await Modules.getInstance('DIVEMediaCreator');
+        if ('io' in requiredDeps) deps.io = await Modules.getInstance('DIVEIO');
+        if ('ar' in requiredDeps)
+            deps.ar = await Modules.getInstance('ARSystem');
 
         return deps as D;
     }

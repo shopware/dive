@@ -2,6 +2,7 @@ import { DIVEGLTFIO } from './gltf/GLTFIO';
 
 import { type DIVESceneFileType } from '../types';
 import { type DIVEScene } from '../scene/Scene';
+import { Modules } from '../module/Module';
 
 export class DIVEIO {
     private _scene: DIVEScene;
@@ -60,3 +61,11 @@ export class DIVEIO {
         return URL.createObjectURL(new Blob([data]));
     }
 }
+
+declare global {
+    interface ModuleClasses {
+        DIVEIO: DIVEIO;
+    }
+}
+
+Modules.register('DIVEIO', 'src/io/IO.ts');

@@ -1,45 +1,106 @@
-export class DIVEModule<T> {
-    constructor(
-        private _path: string,
-        private _ctor: string,
-    ) {}
+/** @internal */
+// Define the base interface that modules will augment
+declare global {
+    interface ModuleClasses {}
+}
 
+type ModuleId = keyof ModuleClasses;
+
+interface ModuleInfo {
+    path: string;
+}
+
+/** @internal */
+class Module<T extends new (...args: unknown[]) => unknown> {
     private _promise: Promise<T> | null = null;
-    private _instance: T | null = null;
+    private _instance: InstanceType<T> | null = null;
 
-    public async get(): Promise<T> {
-        // if we already have an instance, return it
-        if (this._instance) {
-            return Promise.resolve(this._instance);
-        }
+    constructor(private _importFn: () => Promise<T>) {}
 
-        // if we already have a loading process ongoing, return the already created promise
-        if (this._promise) {
-            return this._promise;
-        }
-
-        // if we don't have a promise yet, it means that we are not already loading the module
-        this._promise = (async () => {
-            const module = await import(this._path);
-
-            const ModuleConstructor = module[this._ctor];
-
-            if (!ModuleConstructor) {
-                throw new Error(
-                    `DIVE: Module class ${this._ctor} not found in ${this._path}`,
-                );
-            }
-
-            if (typeof ModuleConstructor !== 'function') {
-                throw new Error(
-                    `DIVE: Module at ${this._path} does not export a valid constructor (${this._ctor} wanted)`,
-                );
-            }
-
-            this._instance = new ModuleConstructor() as T;
+    /**
+     * Get or create a singleton instance of the module
+     * @internal
+     */
+    public async getInstance(): Promise<InstanceType<T>> {
+        if (this._instance !== null) {
             return this._instance;
-        })();
+        }
 
-        return this._promise;
+        if (!this._promise) {
+            this._promise = this._importFn();
+        }
+        const ModuleClass = await this._promise;
+        this._instance = new ModuleClass() as InstanceType<T>;
+        return this._instance;
     }
 }
+
+/** @internal */
+class ModuleRegistryClass {
+    private static _instance = new ModuleRegistryClass();
+    private _modules = new Map<
+        ModuleId,
+        Module<new (...args: unknown[]) => unknown>
+    >();
+    private _moduleInfo = new Map<ModuleId, ModuleInfo>();
+
+    private constructor() {}
+
+    public static get instance(): ModuleRegistryClass {
+        return this._instance;
+    }
+
+    /**
+     * Get all registered module paths for build configuration
+     */
+    public getBuildConfig(): Record<string, string> {
+        const entries: Record<string, string> = {};
+
+        this._moduleInfo.forEach((info, id) => {
+            entries[id] = info.path;
+        });
+
+        return entries;
+    }
+
+    /**
+     * Register a module
+     * @internal
+     */
+    public register<Id extends ModuleId>(name: Id, path: string): void {
+        const importFn = async (): Promise<
+            new (...args: unknown[]) => ModuleClasses[Id]
+        > => {
+            // Convert the path to a relative import path
+            const relativePath = path.startsWith('src/')
+                ? `../../${path}` // Relative to module directory
+                : path;
+
+            const module = await import(/* @vite-ignore */ relativePath);
+            return module[name] as new (
+                ...args: unknown[]
+            ) => ModuleClasses[Id];
+        };
+
+        this._modules.set(name, new Module(importFn));
+        this._moduleInfo.set(name, { path });
+    }
+
+    /**
+     * Get a singleton instance of the module
+     * @internal
+     */
+    public async getInstance<Id extends ModuleId>(
+        name: Id,
+    ): Promise<ModuleClasses[Id]> {
+        const module = this._modules.get(name);
+        if (!module) {
+            throw new Error(`Module '${name}' not registered`);
+        }
+        return module.getInstance() as Promise<ModuleClasses[Id]>;
+    }
+}
+
+// Internal singleton instance
+const internalModules = ModuleRegistryClass.instance;
+export { internalModules as Modules };

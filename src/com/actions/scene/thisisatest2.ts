@@ -6,9 +6,9 @@ const TestAction2 = Action.define<
     Vector3Like,
     Promise<string | null>,
     Pick<ActionDependencies, 'scene'>
->(
-    'Exports the current scene to a blob and returns the URL.',
-    async (payload, { scene }) => {
+>({
+    description: 'Exports the current scene to a blob and returns the URL.',
+    execute: async (payload, { scene }) => {
         console.log('Trying to export as type:', payload);
         try {
             // TODO: Implement actual scene export logic here
@@ -24,7 +24,7 @@ const TestAction2 = Action.define<
             return null;
         }
     },
-);
+});
 
 declare global {
     interface ActionClasses {
