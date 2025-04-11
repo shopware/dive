@@ -1,5 +1,13 @@
-import { type DIVESceneObject } from './SceneObjects';
-import { type DIVESceneFileType } from './SceneType';
-import { type DIVESceneData } from './SceneData';
+// Scene types
+export * from './SceneData';
+export * from './SceneObjects';
+export * from './SceneType';
 
-export { type DIVESceneObject, type DIVESceneFileType, type DIVESceneData };
+// File types
+export * from './file';
+
+// Error types
+export * from '../error';
+
+// Info types
+export * from './info';

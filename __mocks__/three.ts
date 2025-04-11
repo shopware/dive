@@ -133,6 +133,11 @@ export const Object3D = jest.fn(function () {
     return this;
 });
 
+export const Group = jest.fn(function () {
+    this.isGroup = true;
+    return this;
+});
+
 export const Scene = jest.fn(function () {
     this.add = jest.fn();
     this.background = new Color();

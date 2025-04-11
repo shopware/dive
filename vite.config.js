@@ -18,16 +18,12 @@ export default defineConfig({
                 {
                     format: 'iife', // For traditional .js files
                     entryFileNames: '[name].js', // Name for .js files
-                    name: 'dive'
-                }
-            ]
+                    name: 'dive',
+                },
+            ],
         },
         lib: {
             entry: 'src/dive.ts',
-            formats: [
-                'es',
-                'cjs',
-            ],
             fileName: 'dive',
         },
         sourcemap: true,

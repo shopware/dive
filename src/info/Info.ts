@@ -1,137 +1,179 @@
-export enum WebXRUnsupportedReason {
-    'UNKNWON_ERROR' = 0,
-    'NO_HTTPS' = 1,
-    'IMMERSIVE_AR_NOT_SUPPORTED_BY_DEVICE' = 2,
-    'AR_SESSION_NOT_ALLOWED' = 3,
-}
+import { ESystem, EWebXRUnsupportedReason } from '../types/info';
+import { ARCompatibilityError } from '../error';
 
-export class DIVEInfo {
-    private static _supportsWebXR: boolean | null = null;
-    private static _webXRUnsupportedReason: WebXRUnsupportedReason | null =
+export class SystemInfo {
+    private static _supportsWebXR: boolean = false;
+    private static _webXRUnsupportedReason: EWebXRUnsupportedReason | null =
         null;
 
     /**
-     *
-     * @returns The system the user is using. Possible values are "Android", "iOS", "Windows", "MacOS", "Linux" or "Unknown".
+     * Gets the current system (iOS, Android, Windows, etc.)
+     * @returns DIVESystem The current system
      */
-    public static GetSystem(): string {
-        const platform = navigator.platform;
-        if (/Android/.test(navigator.userAgent)) {
-            return 'Android';
-        } else if (/iPhone|iPad|iPod/.test(navigator.userAgent)) {
-            return 'iOS';
-        } else if (platform.startsWith('Win')) {
-            return 'Windows';
-        } else if (platform.startsWith('Mac')) {
-            return 'MacOS';
-        } else if (platform.startsWith('Linux')) {
-            return 'Linux';
-        } else {
-            return 'Unknown';
+    public static getSystem(): ESystem {
+        if (typeof window === 'undefined' || !window.navigator) {
+            return ESystem.UNKNOWN;
         }
+
+        const userAgent = window.navigator.userAgent.toLowerCase();
+        if (userAgent.includes('iphone') || userAgent.includes('ipad')) {
+            return ESystem.IOS;
+        }
+        if (userAgent.includes('android')) {
+            return ESystem.ANDROID;
+        }
+        if (userAgent.includes('windows')) {
+            return ESystem.WINDOWS;
+        }
+        if (userAgent.includes('macintosh')) {
+            return ESystem.MACOS;
+        }
+        if (userAgent.includes('linux')) {
+            return ESystem.LINUX;
+        }
+        return ESystem.UNKNOWN;
     }
 
     /**
      * @returns A promise that resolves to a boolean indicating whether the user's device supports WebXR.
      */
-    public static async GetSupportsWebXR(): Promise<boolean> {
-        if (this._supportsWebXR !== null) {
+    public static async getSupportsWebXR(): Promise<boolean> {
+        if (this._supportsWebXR !== false) {
             return this._supportsWebXR;
         }
 
-        // check if XRSystem is available && if https enabled
+        // Check if we're in a secure context (HTTPS)
+        if (!window.isSecureContext) {
+            this._supportsWebXR = false;
+            this._webXRUnsupportedReason = EWebXRUnsupportedReason.NO_HTTPS;
+            return this._supportsWebXR;
+        }
+
+        // Check if XRSystem is available
         if (!navigator.xr) {
             this._supportsWebXR = false;
-
-            if (window.isSecureContext === false) {
-                this._webXRUnsupportedReason = WebXRUnsupportedReason.NO_HTTPS;
-            } else {
-                this._webXRUnsupportedReason =
-                    WebXRUnsupportedReason.UNKNWON_ERROR;
-            }
-
+            this._webXRUnsupportedReason = EWebXRUnsupportedReason.NO_WEBXR_API;
             return this._supportsWebXR;
         }
 
-        // Check if immersive-vr session mode is supported
         try {
-            const supported =
-                await navigator.xr!.isSessionSupported('immersive-ar');
-            if (!supported) {
+            // Check specifically for immersive-ar support
+            const arSupported =
+                await navigator.xr.isSessionSupported('immersive-ar');
+            this._supportsWebXR = arSupported;
+
+            if (!this._supportsWebXR) {
                 this._webXRUnsupportedReason =
-                    WebXRUnsupportedReason.IMMERSIVE_AR_NOT_SUPPORTED_BY_DEVICE;
+                    EWebXRUnsupportedReason.IMMERSIVE_AR_NOT_SUPPORTED_BY_DEVICE;
             }
-            this._supportsWebXR = supported;
         } catch (error) {
             this._supportsWebXR = false;
             this._webXRUnsupportedReason =
-                WebXRUnsupportedReason.AR_SESSION_NOT_ALLOWED;
+                EWebXRUnsupportedReason.AR_PERMISSION_DENIED;
         }
+
         return this._supportsWebXR;
     }
 
     /**
-     * @returns The reason why WebXR is not supported on the user's device. Returns null if WebXR is supported nor not has been checked yet.
+     * @returns The reason why WebXR is not supported on the user's device. Returns null if WebXR is supported.
      */
-    public static GetWebXRUnsupportedReason(): WebXRUnsupportedReason | null {
-        if (this._supportsWebXR === null) {
-            console.log('WebXR support has not been checked yet.');
+    public static getWebXRUnsupportedReason(): EWebXRUnsupportedReason | null {
+        if (this._supportsWebXR) {
+            console.log('WebXR is supported.');
             return null;
         }
         return this._webXRUnsupportedReason;
     }
 
     /**
-     * @returns A boolean indicating whether the user's device supports AR Quick Look.
+     * Checks if ARQuickLook is supported on the current device
+     * This checks for:
+     * 1. AR support via relList
+     *
+     * Requirements:
+     * - iOS 13.0 or later
+     * - Safari browser (ARQuickLook is only supported in Safari)
+     * - Device with AR capabilities (iPhone/iPad with LiDAR scanner or ARKit support)
+     *
+     * Note: ARQuickLook is only available in Safari on iOS. Other browsers
+     * (Chrome, Firefox, etc.) do not support ARQuickLook, even on iOS.
+     *
+     * @returns boolean indicating if ARQuickLook is supported
+     * @throws ARCompatibilityError if ARQuickLook is not supported, with detailed browser information
      */
-    public static GetSupportsARQuickLook(): boolean {
+    public static getSupportsARQuickLook(): boolean {
         const a = document.createElement('a');
         if (a.relList.supports('ar')) {
             return true;
         }
 
-        // fallback check
-        const userAgent = navigator.userAgent;
+        const userAgent = window.navigator.userAgent;
+        const platform = window.navigator.platform;
+        const vendor = window.navigator.vendor;
 
-        // Check if the device is running iOS
-        const isIOS =
-            /iPad|iPhone|iPod/.test(userAgent) &&
-            !(window as unknown as Window & { MSStream?: string }).MSStream;
-        if (!isIOS) {
+        // The base error message - the ARCompatibilityError constructor will add more details
+        const errorMessage = 'ARQuickLook is not supported';
+
+        throw new ARCompatibilityError(
+            errorMessage,
+            userAgent,
+            platform,
+            vendor,
+        );
+    }
+
+    /**
+     * Checks if SceneViewer is supported on the current device
+     * This checks for:
+     * 1. Android device
+     * 2. Chrome browser (version 89 or later)
+     *
+     * Requirements:
+     * - Android 7.0 (API level 24) or later
+     * - Chrome for Android 89 or later
+     *
+     * Note: According to Google's documentation, if these requirements are met,
+     * SceneViewer will be available. If ARCore is not installed, SceneViewer will
+     * fall back to showing the model in 3D.
+     *
+     * @returns boolean indicating if SceneViewer is supported
+     */
+    public static getSupportsSceneViewer(): boolean {
+        // Check if we're in a browser environment
+        if (typeof window === 'undefined' || !window.navigator) {
             return false;
         }
 
-        // Extract iOS version
-        const match = userAgent.match(/OS (\d+)_/);
-        if (!match || match.length < 2) {
-            return false;
-        }
-        const iOSVersion = parseInt(match[1], 10);
+        const userAgent = window.navigator.userAgent.toLowerCase();
 
-        // Minimum iOS version for QuickLook support
-        const minQuickLookVersion = 12;
-
-        // Check if the iOS version is supported
-        if (iOSVersion < minQuickLookVersion) {
+        // Check if we're on Android
+        if (!userAgent.includes('android')) {
             return false;
         }
 
-        // Check for supported browser
-        const isSupportedBrowser =
-            /^((?!chrome|android).)*safari|CriOS|FxiOS/i.test(userAgent);
-        if (isSupportedBrowser) {
-            return true;
+        // Check if we're using Chrome
+        if (!userAgent.includes('chrome')) {
+            return false;
         }
 
-        // Default to false if none of the conditions are met
-        return false;
+        // Check Chrome version (89 or later)
+        const chromeVersion = userAgent.match(/chrome\/(\d+)/);
+        if (!chromeVersion || parseInt(chromeVersion[1]) < 89) {
+            return false;
+        }
+
+        return true;
     }
 
     /**
      * @returns A boolean indicating whether the user's device is a mobile device.
      */
     public static get isMobile(): boolean {
-        return this.GetSystem() === 'Android' || this.GetSystem() === 'iOS';
+        return (
+            this.getSystem() === ESystem.ANDROID ||
+            this.getSystem() === ESystem.IOS
+        );
     }
 
     /**
@@ -144,11 +186,7 @@ export class DIVEInfo {
     /**
      * @returns A promise that resolves to a boolean indicating whether the user's device is capable of AR.
      */
-    public static async GetIsARCapable(): Promise<boolean> {
-        if (this.GetSupportsARQuickLook()) {
-            return true;
-        }
-
-        return await this.GetSupportsWebXR();
+    public static getIsARCapable(): boolean {
+        return this.getSupportsARQuickLook() || this.getSupportsSceneViewer();
     }
 }

@@ -1,74 +1,119 @@
-import { type DIVEScene } from '../../scene/Scene';
-import { type DIVEAROptions } from '../AR';
+import { type ARSystemOptions } from '../ARSystem';
 
-export class DIVESceneViewer {
-    public static Launch(scene: DIVEScene, options?: DIVEAROptions): void {
-        // find url in scene (first object found that has a set uri)
-        const url = this.findSceneViewerSrc(scene);
-
-        // launch SceneViewer
-        this.launchSceneViewer(url, options);
-    }
-
-    private static launchSceneViewer(
-        url: string,
-        options?: DIVEAROptions,
-    ): void {
-        const anchor = document.createElement('a');
-        const noArViewerSigil = '#model-viewer-no-ar-fallback';
-
+export class SceneViewer {
+    public launch(uri: string, options?: ARSystemOptions): void {
         const location = self.location.toString();
-        const locationUrl = new URL(location);
-        const modelUrl = new URL(url, location);
-        const params = new URLSearchParams(modelUrl.search);
-
-        locationUrl.hash = noArViewerSigil;
-
-        // modelUrl can contain title/link/sound etc.
-        params.set('mode', 'ar_only');
-
-        if (options?.arScale === 'fixed') {
-            params.set('resizable', 'false');
-        }
-
-        if (options?.arPlacement === 'vertical') {
-            params.set('enable_vertical_placement', 'true');
-        }
-
-        // will be added later if needed
-        // if (params.has('sound')) {
-        //     const soundUrl = new URL(params.get('sound')!, location);
-        //     params.set('sound', soundUrl.toString());
-        // }
-        // if (params.has('link')) {
-        //     const linkUrl = new URL(params.get('link')!, location);
-        //     params.set('link', linkUrl.toString());
-        // }
-
-        const intent = `intent://arvr.google.com/scene-viewer/1.2?${
-            params.toString() + '&file=' + modelUrl.toString()
-        }#Intent;scheme=https;package=com.google.android.googlequicksearchbox;action=android.intent.action.VIEW;S.browser_fallback_url=${encodeURIComponent(
-            locationUrl.toString(),
-        )};end;`;
+        const anchor = document.createElement('a');
+        const params = this._createParams(location, uri, options);
+        const intent = this._createIntent(location, uri, params);
 
         anchor.setAttribute('href', intent);
         anchor.click();
     }
 
-    private static findSceneViewerSrc(scene: DIVEScene): string {
-        let uri: string | null = null;
+    /**
+     * Creates the base URL parameters for SceneViewer
+     * @param location Current page location URL
+     * @returns URLSearchParams with base configuration
+     */
+    private _createParams(
+        location: string,
+        uri: string,
+        options?: ARSystemOptions,
+    ): URLSearchParams {
+        const modelUrl = new URL(uri, location);
+        const params = new URLSearchParams(modelUrl.search);
 
-        scene.traverse((object) => {
-            if (uri) return;
-            if (object.userData.uri) {
-                uri = object.userData.uri;
-            }
-        });
+        // Set AR mode as preferred
+        params.set('mode', 'ar_preferred');
 
-        if (!uri) {
-            throw new Error('No model found in scene');
+        // Apply any custom options
+        this._applyScaleOption(params, options);
+        this._applyPlacementOption(params, options);
+
+        // Apply additional parameters if present
+        this._applySoundOption(params, location);
+        this._applyLinkOption(params, location);
+
+        return params;
+    }
+
+    /**
+     * Applies the scale option to the parameters
+     * If scale is set to 'fixed', the model will not be resizable in AR
+     * @param params URLSearchParams to modify
+     */
+    private _applyScaleOption(
+        params: URLSearchParams,
+        options?: ARSystemOptions,
+    ): void {
+        if (options?.arScale === 'fixed') {
+            params.set('resizable', 'false');
         }
+    }
 
-        return uri;
+    /**
+     * Applies the placement option to the parameters
+     * If placement is set to 'vertical', vertical placement will be enabled
+     * @param params URLSearchParams to modify
+     */
+    private _applyPlacementOption(
+        params: URLSearchParams,
+        options?: ARSystemOptions,
+    ): void {
+        if (options?.arPlacement === 'vertical') {
+            params.set('enable_vertical_placement', 'true');
+        }
+    }
+
+    /**
+     * Applies the sound option to the parameters if present
+     * This will resolve any relative sound URLs to absolute URLs
+     * @param params URLSearchParams to modify
+     * @param location Current page location URL
+     */
+    private _applySoundOption(params: URLSearchParams, location: string): void {
+        if (params.has('sound')) {
+            const soundUrl = new URL(params.get('sound')!, location);
+            params.set('sound', soundUrl.toString());
+        }
+    }
+
+    /**
+     * Applies the link option to the parameters if present
+     * This will resolve any relative link URLs to absolute URLs
+     * @param params URLSearchParams to modify
+     * @param location Current page location URL
+     */
+    private _applyLinkOption(params: URLSearchParams, location: string): void {
+        if (params.has('link')) {
+            const linkUrl = new URL(params.get('link')!, location);
+            params.set('link', linkUrl.toString());
+        }
+    }
+
+    /**
+     * Creates the Android Intent URL for SceneViewer
+     * @param params URLSearchParams containing all configuration
+     * @param location Current page location URL
+     * @returns The complete Intent URL
+     */
+    private _createIntent(
+        location: string,
+        uri: string,
+        params: URLSearchParams,
+    ): string {
+        const locationUrl = new URL(location);
+        const modelUrl = new URL(uri, location);
+        const noArViewerSigil = '#model-viewer-no-ar-fallback';
+
+        locationUrl.hash = noArViewerSigil;
+
+        // Construct the intent URL with all parameters
+        return `intent://arvr.google.com/scene-viewer/1.2?${
+            params.toString() + '&file=' + modelUrl.toString()
+        }#Intent;scheme=https;package=com.google.android.googlequicksearchbox;action=android.intent.action.VIEW;S.browser_fallback_url=${encodeURIComponent(
+            locationUrl.toString(),
+        )};end;`;
     }
 }

@@ -3,7 +3,6 @@ import DIVEAmbientLight from '../../light/AmbientLight.ts';
 import DIVEPointLight from '../../light/PointLight.ts';
 import DIVESceneLight from '../../light/SceneLight.ts';
 import { DIVEModel } from '../../model/Model.ts';
-import { DIVELoadingManager } from '../../loadingmanager/LoadingManager.ts';
 import { DIVECommunication } from '../../com/Communication.ts';
 import { DIVEPrimitive } from '../../primitive/Primitive.ts';
 
@@ -18,6 +17,7 @@ import {
 } from '../../com/types';
 import { type DIVESceneObject } from '../../types';
 import { DIVEGroup } from '../../group/Group.ts';
+import { AssetLoader } from '../../asset/loader/AssetLoader.ts';
 
 /**
  * A basic scene node to hold grid, floor and all lower level roots.
@@ -28,13 +28,13 @@ import { DIVEGroup } from '../../group/Group.ts';
 export class DIVERoot extends Object3D {
     readonly isDIVERoot: true = true;
 
-    private loadingManager: DIVELoadingManager;
+    private loader: AssetLoader;
 
     constructor() {
         super();
         this.name = 'Root';
 
-        this.loadingManager = new DIVELoadingManager();
+        this.loader = new AssetLoader();
     }
 
     public ComputeSceneBB(): Box3 {
@@ -243,7 +243,7 @@ export class DIVERoot extends Object3D {
         }
 
         if (model.uri !== undefined) {
-            this.loadingManager.LoadGLTF(model.uri).then((gltf) => {
+            this.loader.load(model.uri).then((gltf) => {
                 (sceneObject as DIVEModel).SetModel(gltf);
                 DIVECommunication.get(model.id!)?.PerformAction(
                     'MODEL_LOADED',

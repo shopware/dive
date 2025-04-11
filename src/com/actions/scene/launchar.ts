@@ -1,7 +1,7 @@
-import { type DIVEAROptions } from '../../../ar/AR';
+import { type ARSystemOptions } from '../../../ar/ARSystem';
 
 export default interface LAUNCH_AR {
     DESCRIPTION: 'Launches AR mode in native capabilities. (iOS: AR Quick Look, Android: Google Scene Viewer)';
-    PAYLOAD?: DIVEAROptions;
+    PAYLOAD: { uri: string; options?: ARSystemOptions };
     RETURN: Promise<void>;
 }

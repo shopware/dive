@@ -12,7 +12,7 @@ import {
 import { type DIVEScene } from '../../Scene';
 import { DIVECommunication } from '../../../com/Communication';
 import { type DIVESceneObject } from '../../../types';
-import { Vector3, Mesh, Box3, Object3D } from 'three';
+import { Object3D } from 'three';
 
 jest.mock('../../../com/Communication.ts', () => {
     return {
@@ -26,11 +26,11 @@ jest.mock('../../../com/Communication.ts', () => {
     };
 });
 
-const mock_LoadGLTF = jest.fn().mockResolvedValue({});
-jest.mock('../../../loadingmanager/LoadingManager.ts', () => {
+const mock_Load = jest.fn().mockResolvedValue({});
+jest.mock('../../../asset/loader/AssetLoader.ts', () => {
     return {
-        DIVELoadingManager: jest.fn(function () {
-            this.LoadGLTF = mock_LoadGLTF;
+        AssetLoader: jest.fn(function () {
+            this.load = mock_Load;
             return this;
         }),
     };

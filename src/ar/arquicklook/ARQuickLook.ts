@@ -1,20 +1,45 @@
-import { type DIVEScene } from '../../scene/Scene';
-import { type DIVEAROptions } from '../AR';
+import { type ARSystemOptions } from '../ARSystem';
+import { AssetConverter } from '../../asset/converter/AssetConverter';
+import { AssetLoader } from '../../asset/loader/AssetLoader';
+import { AssetExporter } from '../../asset/exporter/AssetExporter';
 
-export class DIVEARQuickLook {
-    public static Launch(
-        scene: DIVEScene,
-        options?: DIVEAROptions,
-    ): Promise<void> {
-        const url = this.findARQuickLookSrc(scene);
+export class ARQuickLook {
+    private converter = new AssetConverter(
+        new AssetLoader(),
+        new AssetExporter(),
+    );
 
-        // launch ARQuickLook
-        return this.launchARQuickLook(url, options);
+    public async launch(uri: string, options?: ARSystemOptions): Promise<void> {
+        const usdzUrl = await this.convertToUSDZ(uri, options);
+        return this.launchARQuickLook(usdzUrl, options);
     }
 
-    private static launchARQuickLook(
+    private async convertToUSDZ(
         uri: string,
-        options?: DIVEAROptions,
+        options?: ARSystemOptions,
+    ): Promise<string> {
+        // Convert the file to USDZ format
+        const usdzBuffer = await this.converter.convert(uri).to('usdz', {
+            quickLookCompatible: true,
+            ar: {
+                anchoring: { type: 'plane' },
+                planeAnchoring: {
+                    alignment:
+                        options?.arPlacement === 'vertical'
+                            ? 'vertical'
+                            : 'horizontal',
+                },
+            },
+        });
+
+        // Create a blob from the USDZ buffer
+        const blob = new Blob([usdzBuffer], { type: 'model/vnd.usdz+zip' });
+        return URL.createObjectURL(blob);
+    }
+
+    private launchARQuickLook(
+        uri: string,
+        options?: ARSystemOptions,
     ): Promise<void> {
         return new Promise((resolve) => {
             if (options?.arScale === 'fixed') {
@@ -31,63 +56,4 @@ export class DIVEARQuickLook {
             a.click();
         });
     }
-
-    private static findARQuickLookSrc(scene: DIVEScene): string {
-        let uri: string | null = null;
-
-        scene.traverse((object) => {
-            if (uri) return;
-            if (object.userData.uri) {
-                uri = object.userData.uri;
-            }
-        });
-
-        if (!uri) {
-            throw new Error('No model found in scene');
-        }
-
-        return uri;
-    }
-
-    // private static extractModels(scene: DIVEScene): Object3D[] {
-    //     // extract models
-    //     return scene.Root.children;
-    // }
-
-    // private static launchARFromNode(
-    //     node: Object3D,
-    //     options?: DIVEAROptions,
-    // ): Promise<void> {
-    //     // bundle USDZ
-    //     return this._usdzExporter
-    //         .parse(node, {
-    //             quickLookCompatible: true,
-    //             ar: {
-    //                 anchoring: { type: 'plane' },
-    //                 planeAnchoring: {
-    //                     alignment:
-    //                         options?.arPlacement === 'vertical'
-    //                             ? 'vertical'
-    //                             : 'horizontal',
-    //                 },
-    //             },
-    //         })
-    //         .then((usdz: Uint8Array) => {
-    //             // create blob
-    //             const blob = new Blob([usdz], { type: 'model/vnd.usdz+zip' });
-    //             let url = URL.createObjectURL(blob);
-
-    //             if (options?.arScale === 'fixed') {
-    //                 url = url.concat('#allowsContentScaling=0');
-    //             }
-
-    //             // launch ARQuickLook
-    //             const a = document.createElement('a');
-    //             a.innerHTML = '<picture></picture>'; // This is actually needed so the viewer opens instantly
-    //             a.rel = 'ar';
-    //             a.href = url;
-    //             a.download = 'scene.usdz';
-    //             a.click();
-    //         });
-    // }
 }

@@ -1,7 +1,7 @@
-import { Box3, Color, Euler, Mesh, Object3D, Vector3 } from 'three';
-import { DIVEScene } from '../../../scene/Scene';
-import { DIVEAROptions } from '../../AR';
-import { DIVEARQuickLook } from '../ARQuickLook';
+import { Object3D } from 'three';
+import { ARSystemOptions } from '../../ARSystem';
+import { ARQuickLook } from '../ARQuickLook';
+import { AssetConverter } from '../../../asset/converter/AssetConverter';
 
 jest.mock('../../../scene/Scene', () => {
     return {
@@ -21,12 +21,34 @@ jest.mock('../../../scene/Scene', () => {
     };
 });
 
+// Mock the dependencies
+const mockConvert = jest.fn().mockReturnThis();
+const mockTo = jest.fn().mockResolvedValue(new ArrayBuffer(0));
+
+jest.mock('../../../asset/converter/AssetConverter', () => ({
+    AssetConverter: jest.fn().mockImplementation(() => ({
+        convert: mockConvert,
+        to: mockTo,
+    })),
+}));
+
+// Mock URL.createObjectURL
 URL.createObjectURL = jest.fn(() => 'blob:http://localhost:8080/');
 
-describe('DIVEARQuickLook', () => {
-    let mockScene: DIVEScene;
-    let mockOptions: DIVEAROptions;
+// Mock document.createElement
+document.createElement = jest.fn().mockReturnValue({
+    innerHTML: '',
+    rel: '',
+    href: '',
+    download: '',
+    click: jest.fn(),
+});
+
+describe('ARQuickLook', () => {
+    let mockOptions: ARSystemOptions;
     let mockModels: Object3D[];
+    let quickLook: ARQuickLook;
+    const mockUri = 'https://example.com/model.glb';
 
     beforeEach(() => {
         mockModels = [
@@ -37,57 +59,85 @@ describe('DIVEARQuickLook', () => {
         mockModels[1].userData = {
             uri: 'https://example.com',
         };
-        mockScene = new DIVEScene();
         mockOptions = {
             arPlacement: 'horizontal',
             arScale: 'auto',
-        } as DIVEAROptions;
+        };
+        jest.clearAllMocks();
+        quickLook = new ARQuickLook();
     });
 
-    describe('Launch', () => {
-        it('should be a function', () => {
-            expect(DIVEARQuickLook.Launch).toBeInstanceOf(Function);
+    describe('constructor', () => {
+        it('should create an instance', () => {
+            expect(quickLook).toBeInstanceOf(ARQuickLook);
+            expect(AssetConverter).toHaveBeenCalledTimes(1);
+        });
+    });
+
+    describe('launch', () => {
+        it('should convert and launch with default options', async () => {
+            await quickLook.launch(mockUri);
+
+            expect(mockConvert).toHaveBeenCalledWith(mockUri);
+            expect(mockTo).toHaveBeenCalledWith('usdz', {
+                quickLookCompatible: true,
+                ar: {
+                    anchoring: { type: 'plane' },
+                    planeAnchoring: { alignment: 'horizontal' },
+                },
+            });
+            expect(URL.createObjectURL).toHaveBeenCalled();
+            expect(document.createElement).toHaveBeenCalledWith('a');
         });
 
-        it('should not throw without options', () => {
-            mockScene.Root.children = mockModels;
-
-            expect(() => {
-                DIVEARQuickLook.Launch(mockScene);
-            }).not.toThrow();
-        });
-
-        it('should not throw with options', () => {
-            mockScene.Root.children = mockModels;
-
-            expect(() => {
-                DIVEARQuickLook.Launch(mockScene, mockOptions);
-            }).not.toThrow();
-        });
-
-        it('should not throw with alternated options', () => {
-            mockScene.Root.children = mockModels;
-
-            mockOptions = {
+        it('should convert and launch with custom options', async () => {
+            const options: ARSystemOptions = {
                 arPlacement: 'vertical',
                 arScale: 'fixed',
-            } as DIVEAROptions;
+            };
+            await quickLook.launch(mockUri, options);
 
-            expect(() => {
-                DIVEARQuickLook.Launch(mockScene, mockOptions);
-            }).not.toThrow();
+            expect(mockConvert).toHaveBeenCalledWith(mockUri);
+            expect(mockTo).toHaveBeenCalledWith('usdz', {
+                quickLookCompatible: true,
+                ar: {
+                    anchoring: { type: 'plane' },
+                    planeAnchoring: { alignment: 'vertical' },
+                },
+            });
+            expect(URL.createObjectURL).toHaveBeenCalled();
+            expect(document.createElement).toHaveBeenCalledWith('a');
         });
 
-        it('should throw if no url is found', () => {
-            mockScene.Root.children = [
-                new Object3D(),
-                new Object3D(),
-                new Object3D(),
-            ];
+        it('should handle conversion errors', async () => {
+            const error = new Error('Conversion failed');
+            mockTo.mockRejectedValueOnce(error);
 
-            expect(() => {
-                DIVEARQuickLook.Launch(mockScene, mockOptions);
-            }).toThrow();
+            await expect(quickLook.launch(mockUri)).rejects.toThrow(error);
+        });
+
+        it('should create a blob with correct MIME type', async () => {
+            const mockBuffer = new ArrayBuffer(100);
+            mockTo.mockResolvedValueOnce(mockBuffer);
+
+            await quickLook.launch(mockUri);
+
+            expect(URL.createObjectURL).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    type: 'model/vnd.usdz+zip',
+                }),
+            );
+        });
+
+        it('should add scale parameter when arScale is fixed', async () => {
+            const options: ARSystemOptions = {
+                arPlacement: 'horizontal',
+                arScale: 'fixed',
+            };
+            await quickLook.launch(mockUri, options);
+
+            const anchor = document.createElement('a');
+            expect(anchor.href).toContain('#allowsContentScaling=0');
         });
     });
 });

@@ -1,6 +1,11 @@
-import { Mesh, MeshStandardMaterial, Raycaster, Vector3 } from 'three';
+import {
+    Mesh,
+    MeshStandardMaterial,
+    type Object3D,
+    Raycaster,
+    Vector3,
+} from 'three';
 import { PRODUCT_LAYER_MASK } from '../constant/VisibilityLayerMask';
-import type { GLTF } from 'three/examples/jsm/loaders/GLTFLoader';
 import { findSceneRecursive } from '../helper/findSceneRecursive/findSceneRecursive';
 import { type COMMaterial } from '../com/types';
 import { DIVENode } from '../node/Node';
@@ -22,11 +27,11 @@ export class DIVEModel extends DIVENode {
     private _mesh: Mesh | null = null;
     private _material: MeshStandardMaterial | null = null;
 
-    public SetModel(gltf: GLTF): void {
+    public SetModel(gltf: Object3D): void {
         this.clear();
         this._boundingBox.makeEmpty();
 
-        gltf.scene.traverse((child) => {
+        gltf.traverse((child) => {
             child.castShadow = true;
             child.receiveShadow = true;
 
@@ -47,7 +52,7 @@ export class DIVEModel extends DIVENode {
             }
         });
 
-        this.add(gltf.scene);
+        this.add(gltf);
     }
 
     public SetMaterial(material: Partial<COMMaterial>): void {

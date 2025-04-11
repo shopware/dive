@@ -22,7 +22,7 @@ import { type DIVEMediaCreator } from '../mediacreator/MediaCreator.ts';
 import { type DIVERenderer } from '../renderer/Renderer.ts';
 import { type DIVESelectable } from '../interface/Selectable.ts';
 import { type DIVEIO } from '../io/IO.ts';
-import { type DIVEAR } from '../ar/AR.ts';
+import { type ARSystem } from '../ar/ARSystem.ts';
 
 type EventListener<Action extends keyof Actions> = (
     payload: Actions[Action]['PAYLOAD'],
@@ -81,7 +81,7 @@ export class DIVECommunication {
     );
     private _io: DIVEModule<DIVEIO> = new DIVEModule('../io/IO.ts', 'DIVEIO');
 
-    private _ar: DIVEModule<DIVEAR> = new DIVEModule('../ar/AR.ts', 'DIVEAR');
+    private _ar: DIVEModule<ARSystem> = new DIVEModule('../ar/AR.ts', 'DIVEAR');
 
     private registered: Map<string, COMEntity> = new Map();
 
@@ -288,15 +288,13 @@ export class DIVECommunication {
                 break;
             }
             case 'LAUNCH_AR': {
+                const { uri, options } =
+                    payload as Actions['LAUNCH_AR']['PAYLOAD'];
                 returnValue = new Promise<void>((resolve, reject) => {
                     this._ar
                         .get()
                         .then((ar) => {
-                            resolve(
-                                ar.Launch(
-                                    payload as Actions['LAUNCH_AR']['PAYLOAD'],
-                                ),
-                            );
+                            resolve(ar.launch(uri, options));
                         })
                         .catch(reject);
                 });
