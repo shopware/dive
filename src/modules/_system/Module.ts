@@ -62,6 +62,4 @@ export class Module<T extends new (...args: unknown[]) => unknown> {
             );
         }
     }
-
-    // getImportPath method is removed entirely
 }

@@ -215,12 +215,17 @@ describe('dive/DIVE', () => {
 
     it('should have Canvas', () => {
         const dive = new DIVE();
-        expect(dive.Canvas).toBeDefined();
+        expect(dive.canvas).toBeDefined();
     });
 
     it('should have Communication', () => {
         const dive = new DIVE();
-        expect(dive.Communication).toBeDefined();
+        expect(dive.communication).toBeDefined();
+    });
+
+    it('should have Modules', () => {
+        const dive = new DIVE();
+        expect(dive.modules).toBeDefined();
     });
 
     it('should resize', () => {
@@ -256,7 +261,7 @@ describe('dive/DIVE', () => {
             autoResize: true,
         };
 
-        Object.assign(dive.Canvas, { parentElement: null });
+        Object.assign(dive.canvas, { parentElement: null });
 
         dive.Settings = {
             autoResize: false,

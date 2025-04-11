@@ -11,10 +11,6 @@ declare global {
     interface ModuleClasses {}
 }
 
-// interface ModuleInfo { // No longer needed to store path here
-//     path: string;
-// }
-
 /** @internal */
 class ModuleRegistryClass {
     private static _instance = new ModuleRegistryClass();
@@ -23,27 +19,12 @@ class ModuleRegistryClass {
         keyof ModuleClasses,
         Module<new (...args: unknown[]) => unknown>
     >();
-    // private _moduleInfo = new Map<keyof ModuleClasses, ModuleInfo>(); // Removed _moduleInfo
 
     private constructor() {}
 
     public static get instance(): ModuleRegistryClass {
         return this._instance;
     }
-
-    /**
-     * Get all registered module paths for build configuration
-     * @internal
-     */
-    // public getBuildConfig(): Record<string, string> { // Removed getBuildConfig
-    //     const entries: Record<string, string> = {};
-    //
-    //     this._moduleInfo.forEach((info, id) => {
-    //         entries[id] = info.path;
-    //     });
-    //
-    //     return entries;
-    // }
 
     /**
      * Register a module
@@ -62,7 +43,7 @@ class ModuleRegistryClass {
      * Get a singleton instance of the module
      * @internal
      */
-    public async getInstance<Id extends keyof ModuleClasses>(
+    public async get<Id extends keyof ModuleClasses>(
         name: Id,
     ): Promise<ModuleClasses[Id]> {
         const module = this._modules.get(name);

@@ -287,19 +287,19 @@ describe('dive/info/DIVEInfo', () => {
     it('should be capable of AR (ARQuickLook)', async () => {
         jest.spyOn(SystemInfo, 'getSupportsARQuickLook').mockReturnValue(true);
         jest.spyOn(SystemInfo, 'getSupportsWebXR').mockResolvedValue(false);
-        expect(await SystemInfo.getIsARCapable()).toBe(true);
+        expect(await SystemInfo.getSupportsAR()).toBe(true);
     });
 
     it.skip('should be capable of AR (WebXR)', async () => {
         jest.spyOn(SystemInfo, 'getSupportsARQuickLook').mockReturnValue(false);
         jest.spyOn(SystemInfo, 'getSupportsWebXR').mockResolvedValue(true);
-        expect(await SystemInfo.getIsARCapable()).toBe(true);
+        expect(await SystemInfo.getSupportsAR()).toBe(true);
     });
 
     it('should not be capable of AR', async () => {
         jest.spyOn(SystemInfo, 'getSupportsARQuickLook').mockReturnValue(false);
         jest.spyOn(SystemInfo, 'getSupportsWebXR').mockResolvedValue(false);
-        expect(await SystemInfo.getIsARCapable()).toBe(false);
+        expect(await SystemInfo.getSupportsAR()).toBe(false);
     });
 
     it('should support SceneViewer (Android, Chrome 89+)', () => {

@@ -50,8 +50,7 @@ describe('ModuleRegistry', () => {
     describe('getInstance', () => {
         it('should return instance of registered module', async () => {
             internalModuleRegistry.register('TestModule');
-            const instance =
-                await internalModuleRegistry.getInstance('TestModule');
+            const instance = await internalModuleRegistry.get('TestModule');
 
             expect(instance).toEqual({
                 name: 'TestModule',
@@ -60,7 +59,7 @@ describe('ModuleRegistry', () => {
 
         it('should throw error when getting instance of non-existent module', async () => {
             await expect(
-                internalModuleRegistry.getInstance('NonExistentModule'),
+                internalModuleRegistry.get('NonExistentModule'),
             ).rejects.toThrow("Module 'NonExistentModule' not registered");
         });
     });

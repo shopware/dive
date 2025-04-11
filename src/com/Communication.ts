@@ -2,7 +2,7 @@ import { Actions } from './actions/index.ts';
 import { generateUUID } from 'three/src/math/MathUtils';
 import { isSelectTool } from '../toolbox/select/SelectTool.ts';
 import { merge } from 'lodash';
-import { ModuleRegistry } from '../modules';
+import { Modules } from '../modules';
 
 // type imports
 import { type Color, type MeshStandardMaterial } from 'three';
@@ -289,7 +289,7 @@ export class DIVECommunication {
                 const { uri, options } =
                     payload as Actions['LAUNCH_AR']['PAYLOAD'];
                 returnValue = new Promise<void>((resolve, reject) => {
-                    ModuleRegistry.getInstance('ARSystem')
+                    Modules.get('ARSystem')
                         .then((ar) => {
                             resolve(ar.launch(uri, options));
                         })
@@ -716,7 +716,7 @@ export class DIVECommunication {
             target = payload.target;
         }
 
-        return ModuleRegistry.getInstance('MediaCreator').then((module) => {
+        return Modules.get('MediaCreator').then((module) => {
             return module.GenerateMedia(
                 position,
                 target,
@@ -805,10 +805,9 @@ export class DIVECommunication {
         if ('controls' in requiredDeps) deps.controls = this.controller;
         if ('toolbox' in requiredDeps) deps.toolbox = this.toolbox;
         if ('mediaCreator' in requiredDeps)
-            deps.mediaCreator =
-                await ModuleRegistry.getInstance('MediaCreator');
+            deps.mediaCreator = await Modules.get('MediaCreator');
         if ('ar' in requiredDeps) {
-            deps.ar = await ModuleRegistry.getInstance('ARSystem');
+            deps.ar = await Modules.get('ARSystem');
         }
 
         return deps as D;
