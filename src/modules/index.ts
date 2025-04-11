@@ -4,26 +4,21 @@
  */
 import { internalModuleRegistry as ModuleRegistry } from './_system/ModuleRegistry';
 
-// Register all modules with their names and source paths.
-// The path is used by the build process but ignored by the runtime registry.
-ModuleRegistry.register(
-    'AssetLoader',
-    'src/modules/asset/loader/AssetLoader.ts',
-);
-ModuleRegistry.register(
-    'AssetConverter',
-    'src/modules/asset/converter/AssetConverter.ts',
-);
-ModuleRegistry.register(
-    'AssetExporter',
-    'src/modules/asset/exporter/AssetExporter.ts',
-);
-ModuleRegistry.register('ARSystem', 'src/modules/ar/ARSystem.ts');
-ModuleRegistry.register(
-    'MediaCreator',
-    'src/modules/mediacreator/MediaCreator.ts',
-);
-ModuleRegistry.register('SystemInfo', 'src/modules/systeminfo/SystemInfo.ts');
+// Define module source paths for the build process to discover.
+// This map is only used by the build process, not at runtime.
+export const MODULE_PATHS = {
+    AssetLoader: 'src/modules/asset/loader/AssetLoader.ts',
+    AssetConverter: 'src/modules/asset/converter/AssetConverter.ts',
+    AssetExporter: 'src/modules/asset/exporter/AssetExporter.ts',
+    ARSystem: 'src/modules/ar/ARSystem.ts',
+    MediaCreator: 'src/modules/mediacreator/MediaCreator.ts',
+    SystemInfo: 'src/modules/systeminfo/SystemInfo.ts',
+};
+
+// Register all modules with just their names
+Object.keys(MODULE_PATHS).forEach((name) => {
+    ModuleRegistry.register(name as keyof typeof MODULE_PATHS);
+});
 
 // Re-export the ModuleRegistry as the only public access point
 export { ModuleRegistry };

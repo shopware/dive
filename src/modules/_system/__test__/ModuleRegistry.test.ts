@@ -9,13 +9,16 @@ declare global {
         TestModule2: any;
         NonExistentModule: never;
     }
+    interface Window {
+        __MODULE_BUILD_PATHS__: Record<keyof ModuleClasses, string>;
+    }
 }
 
 // Mock the Module class
 jest.mock('../Module', () => {
     return {
-        Module: jest.fn().mockImplementation((name, path) => ({
-            getInstance: jest.fn().mockResolvedValue({ name, path }),
+        Module: jest.fn().mockImplementation((name) => ({
+            getInstance: jest.fn().mockResolvedValue({ name }),
         })),
     };
 });
@@ -24,37 +27,33 @@ describe('ModuleRegistry', () => {
     beforeEach(() => {
         // Clear the registry before each test
         jest.clearAllMocks();
-    });
-
-    afterEach(() => {
-        internalModuleRegistry['_moduleInfo'].clear();
+        (window as any).__MODULE_BUILD_PATHS__ = {};
     });
 
     describe('register', () => {
-        it('should register a module with name and path', () => {
-            internalModuleRegistry.register('TestModule', '/test/path');
-            expect(Module).toHaveBeenCalledWith('TestModule', '/test/path');
+        it('should register a module with name', () => {
+            internalModuleRegistry.register('TestModule');
+            expect(Module).toHaveBeenCalledWith('TestModule');
         });
 
         it('should allow registering multiple modules', () => {
-            internalModuleRegistry.register('TestModule1', '/test/path1');
-            internalModuleRegistry.register('TestModule2', '/test/path2');
+            internalModuleRegistry.register('TestModule1');
+            internalModuleRegistry.register('TestModule2');
 
             expect(Module).toHaveBeenCalledTimes(2);
-            expect(Module).toHaveBeenCalledWith('TestModule1', '/test/path1');
-            expect(Module).toHaveBeenCalledWith('TestModule2', '/test/path2');
+            expect(Module).toHaveBeenCalledWith('TestModule1');
+            expect(Module).toHaveBeenCalledWith('TestModule2');
         });
     });
 
     describe('getInstance', () => {
         it('should return instance of registered module', async () => {
-            internalModuleRegistry.register('TestModule', '/test/path');
+            internalModuleRegistry.register('TestModule');
             const instance =
                 await internalModuleRegistry.getInstance('TestModule');
 
             expect(instance).toEqual({
                 name: 'TestModule',
-                path: '/test/path',
             });
         });
 
@@ -62,24 +61,6 @@ describe('ModuleRegistry', () => {
             await expect(
                 internalModuleRegistry.getInstance('NonExistentModule'),
             ).rejects.toThrow("Module 'NonExistentModule' not registered");
-        });
-    });
-
-    describe('getBuildConfig', () => {
-        it('should return empty object when no modules are registered', () => {
-            const config = internalModuleRegistry.getBuildConfig();
-            expect(config).toEqual({});
-        });
-
-        it('should return all registered module paths', () => {
-            internalModuleRegistry.register('TestModule1', '/test/path1');
-            internalModuleRegistry.register('TestModule2', '/test/path2');
-
-            const config = internalModuleRegistry.getBuildConfig();
-            expect(config).toEqual({
-                TestModule1: '/test/path1',
-                TestModule2: '/test/path2',
-            });
         });
     });
 });

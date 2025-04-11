@@ -49,18 +49,12 @@ class ModuleRegistryClass {
      * Register a module
      * @internal
      */
-    // Path argument is only used by the build plugin now
-    public register<Id extends keyof ModuleClasses>(
-        name: Id,
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        _path: string, // Re-add path param for signature compatibility, marked unused
-    ): void {
+    public register<Id extends keyof ModuleClasses>(name: Id): void {
         if (this._modules.has(name)) {
             console.warn(
                 `Module '${name}' is already registered. Overwriting.`,
             );
         }
-        // Pass only the name to the Module constructor
         this._modules.set(name, new Module(name));
     }
 

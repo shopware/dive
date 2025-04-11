@@ -22,56 +22,76 @@ function moduleBuildPlugin(): Plugin {
 
     try {
         const content = fs.readFileSync(registrationFilePath, 'utf-8');
-        // Alternative: Use JS string splitting
-        const registrationBlocks = content.split('ModuleRegistry.register');
+        console.log(
+            `Read ${content.length} characters from ${registrationFilePath}`,
+        );
 
-        // Start from the second element (index 1) as the first is content before any registration
-        for (let i = 1; i < registrationBlocks.length; i++) {
-            const block = registrationBlocks[i];
+        // Log a snippet of the file content
+        console.log(`File content snippet:\n${content.substring(0, 500)}...`);
 
-            // Find the first opening parenthesis
-            const openParenIndex = block.indexOf('(');
-            if (openParenIndex === -1) continue; // Malformed block
+        // Look for the MODULE_PATHS object definition with more permissive regex
+        const mapRegex = /export\s+const\s+MODULE_PATHS\s*=\s*({[\s\S]*?})\s*;/;
+        const mapMatch = content.match(mapRegex);
 
-            // Find the matching closing parenthesis (simple approach: find first one after open)
-            // A more robust parser might handle nested parentheses, but unlikely here.
-            const closeParenIndex = block.indexOf(')', openParenIndex);
-            if (closeParenIndex === -1) continue; // Malformed block
-
-            // Extract content between parentheses
-            const argsContent = block.substring(
-                openParenIndex + 1,
-                closeParenIndex,
+        if (!mapMatch || !mapMatch[1]) {
+            console.error('MODULE_PATHS map not found in src/modules/index.ts');
+            // Continue with empty registrations array instead of returning
+        } else {
+            // Extract the object literal as a string
+            const mapLiteral = mapMatch[1];
+            console.log(
+                `Found map literal: ${mapLiteral.substring(0, 200)}...`,
             );
 
-            // Use regex to find the two quoted arguments within the parentheses content
-            const argRegex = /['"]([^'"]+)['"]\s*,\s*['"]([^'"]+)['"]/;
-            const argMatch = argsContent.match(argRegex);
+            // Try a simpler approach - split by lines and look for key-value pairs
+            const lines = mapLiteral.split('\n');
+            console.log(`Map has ${lines.length} lines`);
 
-            if (!argMatch || argMatch.length < 3) {
-                console.warn(
-                    `  Skipping block - could not extract 2 quoted args from: ${argsContent.trim().substring(0, 50)}...`,
-                );
-                continue;
+            for (const line of lines) {
+                // Skip empty lines or lines without a colon (not key-value)
+                if (!line.trim() || !line.includes(':')) continue;
+
+                // Extract key and value with regex
+                const lineRegex =
+                    /\s*['"]?([^'":\s]+)['"]?\s*:\s*['"]([^'"]+)['"]/;
+                const match = line.match(lineRegex);
+
+                if (match && match.length >= 3) {
+                    const name = match[1];
+                    const path = match[2];
+
+                    console.log(
+                        `[Debug] Found module in line: '${line.trim()}' -> Name='${name}', Path='${path}'`,
+                    );
+
+                    // Validate the source path exists
+                    const absoluteSrcPath = resolve(projectRoot, path);
+                    if (!fs.existsSync(absoluteSrcPath)) {
+                        console.error(
+                            `[Build Error] Source file for module '${name}' not found at expected path: ${absoluteSrcPath}`,
+                        );
+                        // Skip this invalid registration
+                        continue;
+                    }
+
+                    // Add to registrations array
+                    registrations.push({ name, path });
+                } else {
+                    // This line might contain a key-value pair but our regex didn't match
+                    if (line.includes(':') && line.includes("'")) {
+                        console.log(
+                            `[Debug] Couldn't parse line: '${line.trim()}'`,
+                        );
+                    }
+                }
             }
 
-            // Captured groups are index 1 and 2
-            const name = argMatch[1]; // No extra trim/replace needed if captured correctly
-            const path = argMatch[2];
-
-            // Validate the extracted path
-            if (
-                name &&
-                path &&
-                path.startsWith('src/modules/') &&
-                path.endsWith('.ts')
-            ) {
-                console.log(`  Processing registration: ${name} -> ${path}`);
-                registrations.push({ name, path });
-            } else {
-                console.warn(
-                    `  Skipping potentially invalid registration found: Name='${name}', Path='${path}'`,
+            // If no entries were found, try to inspect why
+            if (registrations.length === 0) {
+                console.error(
+                    `No entries found in map literal. Double-check the format:`,
                 );
+                console.error(mapLiteral);
             }
         }
     } catch (error) {
@@ -79,7 +99,7 @@ function moduleBuildPlugin(): Plugin {
             `Error reading or processing ${registrationFilePath}:`,
             error,
         );
-        // Decide if build should fail here? For now, continue with potentially empty registrations.
+        // Continue with potentially empty registrations
     }
 
     console.log(`Found ${registrations.length} module registrations.`);

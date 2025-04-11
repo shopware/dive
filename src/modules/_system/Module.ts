@@ -12,9 +12,6 @@ export class Module<T extends new (...args: unknown[]) => unknown> {
     constructor(private _name: keyof ModuleClasses) {
         this._importFn = async (): Promise<T> => {
             // Get the correct build path from the injected map
-            console.log(
-                `__MODULE_BUILD_PATHS__: ${JSON.stringify(__MODULE_BUILD_PATHS__)}`,
-            );
             const importPath = __MODULE_BUILD_PATHS__[this._name];
 
             if (!importPath) {
