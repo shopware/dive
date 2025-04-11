@@ -3,30 +3,47 @@ import dts from 'vite-plugin-dts';
 import { resolve } from 'path';
 import { globSync } from 'glob';
 import fs from 'fs';
+import type { Plugin, ResolvedConfig } from 'vite';
+
+interface ModuleRegistration {
+    name: string;
+    path: string;
+}
 
 // Plugin to inject module registration info
-function moduleRegistrationPlugin() {
+function moduleRegistrationPlugin(): Plugin {
     return {
         name: 'module-registration',
-        configResolved(config) {
+        configResolved(config: ResolvedConfig) {
             // Find all TypeScript files that contain Modules.register
             const files = globSync('src/**/*.ts');
-            const registrations = [];
+            const registrations: ModuleRegistration[] = [];
 
-            files.forEach(file => {
+            files.forEach((file) => {
                 const content = fs.readFileSync(file, 'utf-8');
-                const matches = content.match(/Modules\.register\(['"]([^'"]+)['"],\s*['"]([^'"]+)['"]\)/g);
+                const matches = content.match(
+                    /Modules\.register\(['"]([^'"]+)['"],\s*['"]([^'"]+)['"]\)/g,
+                );
                 if (matches) {
-                    matches.forEach(match => {
-                        const [_, name, path] = match.match(/Modules\.register\(['"]([^'"]+)['"],\s*['"]([^'"]+)['"]\)/);
-                        registrations.push({ name, path });
+                    matches.forEach((match) => {
+                        const result = match.match(
+                            /Modules\.register\(['"]([^'"]+)['"],\s*['"]([^'"]+)['"]\)/,
+                        );
+                        if (result) {
+                            const [
+                                ,
+                                name,
+                                path,
+                            ] = result;
+                            registrations.push({ name, path });
+                        }
                     });
                 }
             });
 
             // Create entries for each module
-            const input = {
-                'index': resolve(__dirname, 'src/index.ts'),
+            const input: Record<string, string> = {
+                index: resolve(__dirname, 'src/index.ts'),
             };
 
             // Add each registered module as an entry point
@@ -42,24 +59,24 @@ function moduleRegistrationPlugin() {
                     entryFileNames: '[name].mjs',
                     chunkFileNames: 'chunks/[name]-[hash].mjs',
                     exports: 'named',
-                    inlineDynamicImports: false
+                    inlineDynamicImports: false,
                 },
                 {
                     format: 'cjs',
                     entryFileNames: '[name].cjs',
                     chunkFileNames: 'chunks/[name]-[hash].cjs',
                     exports: 'named',
-                    inlineDynamicImports: false
-                }
+                    inlineDynamicImports: false,
+                },
             ];
 
             // Mark external dependencies
             config.build.rollupOptions.external = [
                 'three',
                 '@tweenjs/tween.js',
-                'three-spritetext'
+                'three-spritetext',
             ];
-        }
+        },
     };
 }
 
@@ -69,22 +86,25 @@ export default defineConfig({
         lib: {
             entry: resolve(__dirname, 'src/index.ts'),
             name: 'dive',
-            formats: ['iife'],
-            fileName: () => 'dive.js'
+            fileName: () => 'dive.js',
         },
         sourcemap: true,
         emptyOutDir: true,
         outDir: 'build',
         rollupOptions: {
-            external: ['three', '@tweenjs/tween.js', 'three-spritetext'],
+            external: [
+                'three',
+                '@tweenjs/tween.js',
+                'three-spritetext',
+            ],
             output: {
                 globals: {
-                    'three': 'THREE',
+                    three: 'THREE',
                     '@tweenjs/tween.js': 'TWEEN',
-                    'three-spritetext': 'SpriteText'
-                }
-            }
-        }
+                    'three-spritetext': 'SpriteText',
+                },
+            },
+        },
     },
     server: {
         watch: {
@@ -95,8 +115,8 @@ export default defineConfig({
         moduleRegistrationPlugin(),
         dts({
             insertTypesEntry: true,
-            outputDir: 'build',
-            tsConfigFilePath: './tsconfig.json',
+            outDir: 'build',
+            tsconfigPath: './tsconfig.json',
             include: ['src/**/*.ts'],
             exclude: [
                 '**/*.test.ts',
