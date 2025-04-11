@@ -13,9 +13,9 @@
             "require": "./build/index.cjs"
         },
         "./modules/*": {
-            "types": "./build/modules/*.d.ts",
-            "import": "./build/modules/*.mjs",
-            "require": "./build/modules/*.cjs"
+            "types": "./build/src/modules/*.d.ts",
+            "import": "./build/src/modules/*.mjs",
+            "require": "./build/src/modules/*.cjs"
         }
     },
     "files": [

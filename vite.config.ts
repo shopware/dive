@@ -1,9 +1,11 @@
 import { defineConfig, UserConfig } from 'vite';
 import dts from 'vite-plugin-dts';
-import { resolve } from 'path';
+import { resolve, join } from 'path';
 // import { globSync } from 'glob'; // No longer needed
 import fs from 'fs';
 import type { Plugin } from 'vite';
+
+const MODULES_PATH = 'src/modules';
 
 interface ModuleRegistration {
     name: string;
@@ -13,39 +15,32 @@ interface ModuleRegistration {
 // Plugin to discover modules, configure library build, and inject path map
 function moduleBuildPlugin(): Plugin {
     // --- Discover Registrations (Done outside hooks, runs once when vite.config.js is loaded) ---
-    console.log(
-        '[Dive Build] Discovering module registrations from src/modules/index.ts...',
-    );
+    console.log(`[Dive Build] Discovering module registrations...`);
     const projectRoot = process.cwd(); // Get project root directory
-    const registrationFilePath = resolve(projectRoot, 'src/modules/index.ts');
+    const registrationFilePath = resolve(
+        projectRoot,
+        `${MODULES_PATH}/index.ts`,
+    );
     const registrations: ModuleRegistration[] = [];
 
     try {
         const content = fs.readFileSync(registrationFilePath, 'utf-8');
-        console.log(
-            `Read ${content.length} characters from ${registrationFilePath}`,
-        );
-
-        // Log a snippet of the file content
-        console.log(`File content snippet:\n${content.substring(0, 500)}...`);
 
         // Look for the MODULE_PATHS object definition with more permissive regex
         const mapRegex = /export\s+const\s+MODULE_PATHS\s*=\s*({[\s\S]*?})\s*;/;
         const mapMatch = content.match(mapRegex);
 
         if (!mapMatch || !mapMatch[1]) {
-            console.error('MODULE_PATHS map not found in src/modules/index.ts');
+            console.error(
+                `MODULE_PATHS map not found in ${MODULES_PATH}/index.ts`,
+            );
             // Continue with empty registrations array instead of returning
         } else {
             // Extract the object literal as a string
             const mapLiteral = mapMatch[1];
-            console.log(
-                `Found map literal: ${mapLiteral.substring(0, 200)}...`,
-            );
 
             // Try a simpler approach - split by lines and look for key-value pairs
             const lines = mapLiteral.split('\n');
-            console.log(`Map has ${lines.length} lines`);
 
             for (const line of lines) {
                 // Skip empty lines or lines without a colon (not key-value)
@@ -60,12 +55,12 @@ function moduleBuildPlugin(): Plugin {
                     const name = match[1];
                     const path = match[2];
 
-                    console.log(
-                        `[Debug] Found module in line: '${line.trim()}' -> Name='${name}', Path='${path}'`,
+                    // Convert relative path to absolute path for validation
+                    const absoluteSrcPath = resolve(
+                        projectRoot,
+                        MODULES_PATH,
+                        path,
                     );
-
-                    // Validate the source path exists
-                    const absoluteSrcPath = resolve(projectRoot, path);
                     if (!fs.existsSync(absoluteSrcPath)) {
                         console.error(
                             `[Build Error] Source file for module '${name}' not found at expected path: ${absoluteSrcPath}`,
@@ -74,15 +69,11 @@ function moduleBuildPlugin(): Plugin {
                         continue;
                     }
 
-                    // Add to registrations array
-                    registrations.push({ name, path });
-                } else {
-                    // This line might contain a key-value pair but our regex didn't match
-                    if (line.includes(':') && line.includes("'")) {
-                        console.log(
-                            `[Debug] Couldn't parse line: '${line.trim()}'`,
-                        );
-                    }
+                    // Add to registrations array with the relative path
+                    registrations.push({
+                        name,
+                        path: join(MODULES_PATH, path), // Use path.join to maintain relative paths
+                    });
                 }
             }
 
@@ -90,8 +81,8 @@ function moduleBuildPlugin(): Plugin {
             if (registrations.length === 0) {
                 console.error(
                     `No entries found in map literal. Double-check the format:`,
+                    mapLiteral,
                 );
-                console.error(mapLiteral);
             }
         }
     } catch (error) {
@@ -105,15 +96,23 @@ function moduleBuildPlugin(): Plugin {
     console.log(`Found ${registrations.length} module registrations.`);
     if (registrations.length === 0) {
         console.warn(
-            'No module registrations found in src/modules/index.ts. Build might be incomplete.',
+            `No module registrations found in ${MODULES_PATH}/index.ts. Build might be incomplete.`,
         );
+    } else {
+        console.log('Found modules:');
+        registrations.forEach(({ name, path }) => {
+            console.log(`- ${name}: ${path}`);
+        });
     }
 
     // --- Prepare Build Path Map (Done outside hooks) ---
     const moduleBuildPathMap: Record<string, string> = {};
     registrations.forEach(({ name, path }) => {
         // Extract relative path: remove 'src/modules/' and '.ts'
-        const relativePath = path.replace(/^src\/modules\/|\.ts$/g, '');
+        const relativePath = path.replace(
+            new RegExp(`^${MODULES_PATH}/|\\.ts$`, 'g'),
+            '',
+        );
         if (!relativePath) {
             console.error(
                 `Could not determine relative path for ${name} (${path})`,
@@ -121,7 +120,7 @@ function moduleBuildPlugin(): Plugin {
             return;
         }
         // Value for runtime import (relative from build/index.mjs)
-        moduleBuildPathMap[name] = `./modules/${relativePath}.mjs`;
+        moduleBuildPathMap[name] = `./src/modules/${relativePath}.mjs`;
     });
 
     return {
@@ -130,23 +129,25 @@ function moduleBuildPlugin(): Plugin {
         // Use the config hook to modify the config before it's resolved
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
         config(_userConfig, { command: _command }) {
-            console.log('[Dive Build] config hook running...');
+            console.log('[Dive Build] Configuring build...');
             // --- Prepare Build Config ---
             const rollupInput: Record<string, string> = {
                 index: resolve(projectRoot, 'src/index.ts'), // Main entry point
             };
             registrations.forEach(({ path }) => {
                 // Extract relative path again (or pass from outer scope)
-                const relativePath = path.replace(/^src\/modules\/|\.ts$/g, '');
+                const relativePath = path.replace(
+                    new RegExp(`^${MODULES_PATH}/|\\.ts$`, 'g'),
+                    '',
+                );
                 if (!relativePath) return; // Skip if path is invalid
 
                 // Key for Rollup output file structure
-                rollupInput[`modules/${relativePath}`] = resolve(
+                rollupInput[`${MODULES_PATH}/${relativePath}`] = resolve(
                     projectRoot,
                     path,
                 );
             });
-            console.log('Generated Rollup inputs:', Object.keys(rollupInput));
 
             // --- Define Build Options ---
             const buildConfig: UserConfig['build'] = {
@@ -188,9 +189,6 @@ function moduleBuildPlugin(): Plugin {
             const defineConfig: Record<string, string> = {
                 __MODULE_BUILD_PATHS__: JSON.stringify(moduleBuildPathMap),
             };
-            console.log(
-                `Defining __MODULE_BUILD_PATHS__ with ${Object.keys(moduleBuildPathMap).length} entries.`,
-            );
 
             // Return the modifications to be merged into the user config
             return {
