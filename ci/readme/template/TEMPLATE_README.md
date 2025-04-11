@@ -19,13 +19,25 @@
 
 ## Table of Contents
 
-1. [About](#about)
-2. [Installation](#installation)
-3. [Local development](#local-development)
-4. [Setup in Shopware](#setup-in-shopware)
-5. [Usage](#usage)
-6. [Unit Tests](#unit-tests)
-7. [Formatting](#formatting)
+- [Table of Contents](#table-of-contents)
+- [About](#about)
+- [Installation](#installation)
+- [Module System and Build Process](#module-system-and-build-process)
+  - [Module Exports](#module-exports)
+  - [Build Process](#build-process)
+  - [Development Workflow](#development-workflow)
+- [Using yalc for local development](#using-yalc-for-local-development)
+- [Setup in Shopware](#setup-in-shopware)
+- [Usage](#usage)
+  - [Quick View](#quick-view)
+  - [Example with Error Handling:](#example-with-error-handling)
+  - [Getting started](#getting-started)
+    - [Import:](#import)
+    - [Instantiate:](#instantiate)
+  - [Actions](#actions)
+    - [Actions List](#actions-list)
+- [Unit Tests](#unit-tests)
+- [Formatting](#formatting)
 
 ## About
 
@@ -49,57 +61,109 @@ or
 yarn add @shopware-ag/dive
 ```
 
-## Local development
+## Module System and Build Process
 
-### with devenv
+DIVE uses a modern module system with support for both ESM and CommonJS formats. The package is built using Vite and supports the following module formats:
 
-If you are using `devenv`, you have to make sure that you are in the correct shell while linking. `nix` (what `devenv` is
-based on) uses it's own instances of `npm` so we need to make sure that the `npm link` get's executed within the correct `devenv` environment a.k.a `nix/store`.
-To make sure you are using the correct instance of `npm` you have to browse to your `devenv` project:
+-   ESM (`.mjs` files)
+-   CommonJS (`.cjs` files)
+-   TypeScript type definitions (`.d.ts` files)
 
-```bash
-cd path/to/your/devenv.nix
+### Module Exports
+
+The package exports are configured in `package.json` to support both direct imports and module-specific imports:
+
+```json
+{
+    "exports": {
+        ".": {
+            "types": "./build/index.d.ts",
+            "import": "./build/index.mjs",
+            "require": "./build/index.cjs"
+        },
+        "./modules/*": {
+            "types": "./build/modules/*.d.ts",
+            "import": "./build/modules/*.mjs",
+            "require": "./build/modules/*.cjs"
+        }
+    }
+}
 ```
 
-#### with direnv
+This configuration allows you to:
 
-If you use `direnv` you should be launched into the correct shell automatically.
+-   Import the main package: `import { DIVE } from '@shopware-ag/dive'`
+-   Import specific modules: `import { ModuleName } from '@shopware-ag/dive/modules/ModuleName'`
 
-#### without direnv
+### Build Process
 
-If you don't use `direnv` you can start the correct shell manually by running
-
-```bash
-devenv shell
-```
-
-Within the `devenv shell` you have to browse to your DIVE folder
+The build process is handled by Vite and can be triggered using:
 
 ```bash
-cd path/to/@shopware-ag/dive
+yarn build        # One-time build
+yarn dev          # Watch mode for development
 ```
 
-### without devenv
+The build process:
 
-You don't have to do anything special if you don't use `devenv`.
+1. Compiles TypeScript code
+2. Generates type definitions
+3. Creates both ESM and CommonJS versions of the code
+4. Places all output in the `build/` directory
 
-### npm link
+### Development Workflow
 
-If you want to link DIVE package locally after checking out, you can to that in the package's project folder:
+For local development, you can use the watch mode to automatically rebuild when files change:
 
 ```bash
-cd path/to/@shopware-ag/dive
-npm link
+yarn dev
 ```
 
-After registering the package in npm, you can use the sym-link in your project:
+This is particularly useful when working with the module system as it ensures your changes are immediately reflected in the build output.
+
+## Using yalc for local development
+
+[Yalc](https://github.com/wclr/yalc) is the recommended way to test local changes in your project. It provides better dependency management and more reliable linking than npm link.
+
+First, install yalc globally if you haven't already:
 
 ```bash
-cd path/to/your/package.json
-npm link @shopware-ag/dive
+npm install -g yalc
 ```
 
-After successfully linking DIVE into your project you will find the according sym-link in your `node_modules`.
+Then, in your DIVE project directory:
+
+```bash
+# Publish the package to yalc's local store
+yalc publish
+
+# In your project that uses DIVE:
+yalc add @shopware-ag/dive
+```
+
+When you make changes to DIVE, you'll need to:
+
+```bash
+# In DIVE directory:
+yalc push
+
+# Or if you want to republish:
+yalc publish --force
+```
+
+To remove the local package from your project:
+
+```bash
+yalc remove @shopware-ag/dive
+```
+
+Benefits of using yalc:
+
+-   Better dependency management
+-   More reliable than npm link
+-   Works well with package managers (npm, yarn, pnpm)
+-   Maintains proper package.json dependencies
+-   Supports multiple projects using the same local package
 
 ## Setup in Shopware
 
