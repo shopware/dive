@@ -7,7 +7,7 @@ import truncateExp from './truncate/truncateExp.ts';
 import radToDeg from './radToDeg/radToDeg.ts';
 import degToRad from './degToRad/degToRad.ts';
 
-export const DIVEMath: {
+export const DiveMath: {
     ceilExp: typeof ceilExp;
     floorExp: typeof floorExp;
     roundExp: typeof roundExp;
