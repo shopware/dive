@@ -1,11 +1,9 @@
-import { Box3, Color, Euler, Mesh, Object3D, Vector3 } from 'three';
-import { DIVEScene } from '../../../scene/Scene';
+import { Object3D } from 'three';
 import { ARSystemOptions } from '../../ARSystem';
 import { SceneViewer } from '../SceneViewer';
-import { SystemInfo } from '../../../info/Info';
 
 // Mock DIVEInfo
-jest.mock('../../../info/Info', () => ({
+jest.mock('../../../systeminfo/SystemInfo', () => ({
     DIVEInfo: {
         GetSystem: jest.fn().mockReturnValue('Android'),
         GetSupportsARQuickLook: jest.fn().mockReturnValue(false),

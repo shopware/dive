@@ -1,4 +1,4 @@
-import { SystemInfo } from '../info/Info';
+import { SystemInfo } from '../systeminfo/SystemInfo';
 import { ARCompatibilityError } from '../error';
 import { ESystem } from '../types/info';
 import { ARQuickLook } from './arquicklook/ARQuickLook';

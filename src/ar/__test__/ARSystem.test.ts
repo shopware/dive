@@ -1,5 +1,5 @@
 import { ARSystem, type ARSystemOptions } from '../ARSystem';
-import { SystemInfo } from '../../info/Info';
+import { SystemInfo } from '../../systeminfo/SystemInfo';
 import { ARQuickLook } from '../arquicklook/ARQuickLook';
 import { SceneViewer } from '../sceneviewer/SceneViewer';
 
@@ -9,7 +9,7 @@ const fail = (message: string): never => {
 };
 
 // Mock Info
-jest.mock('../../info/Info', () => ({
+jest.mock('../../systeminfo/SystemInfo', () => ({
     SystemInfo: {
         getSystem: jest.fn(),
         getSupportsARQuickLook: jest.fn(),

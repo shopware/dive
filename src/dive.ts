@@ -18,7 +18,7 @@ import { DIVEAnimationSystem } from './animation/AnimationSystem.ts';
 import DIVEAxisCamera from './axiscamera/AxisCamera.ts';
 import { getObjectDelta } from './helper/getObjectDelta/getObjectDelta.ts';
 import { MathUtils } from 'three';
-import { SystemInfo } from './info/Info.ts';
+import { SystemInfo } from './systeminfo/SystemInfo.ts';
 import pkgjson from '../package.json';
 
 export type DIVESettings = {

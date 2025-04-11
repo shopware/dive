@@ -35,6 +35,7 @@ import {
 } from '../types';
 import { type DIVESceneObject } from '../../types';
 import { type ARSystemOptions } from '../../ar/ARSystem';
+import { Modules } from '../../module/Module';
 
 const mockModule: Record<string, any> = {
     get: jest.fn().mockReturnValue(Promise.resolve({})),
@@ -873,7 +874,8 @@ describe('dive/communication/DIVECommunication', () => {
         jest.spyOn(mockModule, 'get').mockResolvedValue({
             GenerateMedia: jest.fn(),
         });
-        const mediaGeneratorModule = await testCom['_mediaGenerator'].get();
+        const mediaGeneratorModule =
+            await Modules.getInstance('DIVEMediaCreator');
 
         jest.spyOn(mediaGeneratorModule, 'GenerateMedia').mockReturnValue(
             blobUri,
@@ -994,7 +996,7 @@ describe('dive/communication/DIVECommunication', () => {
         jest.spyOn(mockModule, 'get').mockResolvedValue({
             Export: jest.fn(),
         });
-        const ioModule = await testCom['_io'].get();
+        const ioModule = await Modules.getInstance('DIVEIO');
 
         jest.spyOn(ioModule, 'Export').mockResolvedValueOnce(url);
 
@@ -1008,7 +1010,7 @@ describe('dive/communication/DIVECommunication', () => {
         jest.spyOn(mockModule, 'get').mockResolvedValue({
             launch: jest.fn(),
         });
-        const arModule = await testCom['_ar'].get();
+        const arModule = await Modules.getInstance('ARSystem');
         const arLaunchSpy = jest
             .spyOn(arModule, 'launch')
             .mockResolvedValueOnce();

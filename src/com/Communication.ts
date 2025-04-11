@@ -18,11 +18,8 @@ import { type DIVEScene } from '../scene/Scene.ts';
 import type DIVEToolbox from '../toolbox/Toolbox.ts';
 import type DIVEOrbitControls from '../controls/OrbitControls.ts';
 import { type DIVEModel } from '../model/Model.ts';
-import { type DIVEMediaCreator } from '../mediacreator/MediaCreator.ts';
 import { type DIVERenderer } from '../renderer/Renderer.ts';
 import { type DIVESelectable } from '../interface/Selectable.ts';
-import { type ARSystem } from '../ar/ARSystem.ts';
-import { type DIVEIO } from '../io/IO.ts';
 
 type EventListener<Action extends keyof Actions> = (
     payload: Actions[Action]['PAYLOAD'],
@@ -58,9 +55,9 @@ export interface ActionDependencies {
     renderer: DIVERenderer;
     controls: DIVEOrbitControls;
     toolbox: DIVEToolbox;
-    mediaCreator: DIVEMediaCreator;
-    io: DIVEIO;
-    ar: ARSystem;
+    mediaCreator: import('../mediacreator/MediaCreator.ts').DIVEMediaCreator;
+    io: import('../io/IO.ts').DIVEIO;
+    ar: import('../ar/ARSystem.ts').ARSystem;
 }
 
 /**

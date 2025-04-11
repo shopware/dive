@@ -1,4 +1,4 @@
-import { SystemInfo } from '../Info';
+import { SystemInfo } from '../SystemInfo';
 import { ESystem, EWebXRUnsupportedReason } from '../../types/info';
 import { ARCompatibilityError } from '../../error';
 
