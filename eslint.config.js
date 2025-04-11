@@ -17,6 +17,8 @@ export default tseslint.config(
             'node_modules',
             'build',
             'jest.config.cjs',
+            'ci/**/*',
+            '__mocks__/**/*',
             '**/*.test.*',
             '**/*.skip.*',
             '**/*.js',

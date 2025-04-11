@@ -50,13 +50,13 @@
 
 ## About
 
-DIVE is a spatial framework made by and optimized for Shopware. It can be used
-directly integrated in a Shopware frontend such as Storefront or in any other
-frontend you want to use it in, it is not tied to Shopware.
+DIVE is a spatial framework made by and optimized for Shopware. It can be used directly integrated
+in a Shopware frontend such as Storefront or in any other frontend you want to use it in, it is not
+tied to Shopware.
 
-DIVE supplies your frontend application with all needed tooling to set up a
-basic 3D application with event-based controls called "Actions". For further
-information, see [Getting started](#getting-started).
+DIVE supplies your frontend application with all needed tooling to set up a basic 3D application
+with event-based controls called "Actions". For further information, see
+[Getting started](#getting-started).
 
 ## Setup and Maintenance
 
@@ -74,15 +74,17 @@ yarn add @shopware-ag/dive
 
 ### Module System
 
-DIVE uses a modern module system with support for both ESM and CommonJS formats. The package is built using Vite and supports the following module formats:
+DIVE uses a modern module system with support for both ESM and CommonJS formats. The package is
+built using Vite and supports the following module formats:
 
--   ESM (`.mjs` files)
--   CommonJS (`.cjs` files)
--   TypeScript type definitions (`.d.ts` files)
+- ESM (`.mjs` files)
+- CommonJS (`.cjs` files)
+- TypeScript type definitions (`.d.ts` files)
 
 #### Module Exports
 
-The package exports are configured in `package.json` to support both direct imports and module-specific imports:
+The package exports are configured in `package.json` to support both direct imports and
+module-specific imports:
 
 ```json
 {
@@ -125,11 +127,13 @@ For local development, you can use the watch mode to automatically rebuild when 
 yarn dev
 ```
 
-This is particularly useful when working with the module system as it ensures your changes are immediately reflected in the build output.
+This is particularly useful when working with the module system as it ensures your changes are
+immediately reflected in the build output.
 
 ### Local Development with Yalc
 
-[Yalc](https://github.com/wclr/yalc) is the recommended way to test local changes in your project. It provides better dependency management and more reliable linking than npm link.
+[Yalc](https://github.com/wclr/yalc) is the recommended way to test local changes in your project.
+It provides better dependency management and more reliable linking than npm link.
 
 First, install yalc globally if you haven't already:
 
@@ -165,11 +169,11 @@ yalc remove @shopware-ag/dive
 
 Benefits of using yalc:
 
--   Better dependency management
--   More reliable than npm link
--   Works well with package managers (npm, yarn, pnpm)
--   Maintains proper package.json dependencies
--   Supports multiple projects using the same local package
+- Better dependency management
+- More reliable than npm link
+- Works well with package managers (npm, yarn, pnpm)
+- Maintains proper package.json dependencies
+- Supports multiple projects using the same local package
 
 ### Shopware Integration
 
@@ -228,11 +232,17 @@ module.exports = () => {
 
 #### Unit Tests
 
-All relevant files are covered by Jest tests. If you find any file that has not been covered yet, feel free to add unit tests accordingly.
+All relevant files are covered by Jest tests. If you find any file that has not been covered yet,
+feel free to add unit tests accordingly.
 
-If there are any modules that have to be mocked (like `three`) you can create a given file in the `__mocks__` folder in project root. Jest manages to mock modules with a given file with the modules name as a file name (for example `three.ts`). Every export will be part of the modules mock. You don't need to mock the module in your test anymore, you only extend the module mock.
+If there are any modules that have to be mocked (like `three`) you can create a given file in the
+`__mocks__` folder in project root. Jest manages to mock modules with a given file with the modules
+name as a file name (for example `three.ts`). Every export will be part of the modules mock. You
+don't need to mock the module in your test anymore, you only extend the module mock.
 
-If you have any other things from a module to import, you can simply create a folder structure and place the mock file at the end of your structure. To understand better please take a look at the `__mocks__` folder for yourself.
+If you have any other things from a module to import, you can simply create a folder structure and
+place the mock file at the end of your structure. To understand better please take a look at the
+`__mocks__` folder for yourself.
 
 #### Code Formatting
 
@@ -244,9 +254,9 @@ DIVE uses Prettier as a preconfigured formatter.
 
 #### Quick View
 
-QuickView is used to quickly display your assets with as few lines of code as
-possible. Simply call the static `QuickView()` method, with your data URI as a
-parameter, to create an instance of DIVE with your asset to use in further code.
+QuickView is used to quickly display your assets with as few lines of code as possible. Simply call
+the static `QuickView()` method, with your data URI as a parameter, to create an instance of DIVE
+with your asset to use in further code.
 
 ```ts
 import { DIVE } from '@shopware-ag/dive';
@@ -273,9 +283,8 @@ import { DIVE } from '@shopware-ag/dive';
 const dive = new DIVE(); // <-- instantiate DIVE
 ```
 
-DIVE supplies your application with a HTMLCanvasElement that it uses as a render
-target. After instantiating, you can use the supplied canvas within your frontend
-code to attach it to your DOM.
+DIVE supplies your application with a HTMLCanvasElement that it uses as a render target. After
+instantiating, you can use the supplied canvas within your frontend code to attach it to your DOM.
 
 ```ts
 const dive = new DIVE();
@@ -290,7 +299,8 @@ DIVE comes with several built-in modules that provide specific functionality:
 
 #### Asset Module
 
-The Asset module (`@shopware-ag/dive/modules/asset`) provides functionality for loading and managing 3D assets. It handles various file formats and provides utilities for asset manipulation.
+The Asset module (`@shopware-ag/dive/modules/asset`) provides functionality for loading and managing
+3D assets. It handles various file formats and provides utilities for asset manipulation.
 
 ```ts
 import { AssetModule } from '@shopware-ag/dive/modules/asset';
@@ -301,7 +311,8 @@ const model = await AssetModule.loadModel('path/to/model.glb');
 
 #### AR Module
 
-The AR module (`@shopware-ag/dive/modules/ar`) enables Augmented Reality features, allowing you to place 3D content in the real world using device cameras.
+The AR module (`@shopware-ag/dive/modules/ar`) enables Augmented Reality features, allowing you to
+place 3D content in the real world using device cameras.
 
 ```ts
 import { ARModule } from '@shopware-ag/dive/modules/ar';
@@ -312,7 +323,8 @@ const arSession = await ARModule.initialize();
 
 #### MediaCreator Module
 
-The MediaCreator module (`@shopware-ag/dive/modules/mediacreator`) provides tools for creating and manipulating media content, such as screenshots or video recordings of the 3D scene.
+The MediaCreator module (`@shopware-ag/dive/modules/mediacreator`) provides tools for creating and
+manipulating media content, such as screenshots or video recordings of the 3D scene.
 
 ```ts
 import { MediaCreatorModule } from '@shopware-ag/dive/modules/mediacreator';
@@ -323,7 +335,8 @@ const screenshot = await MediaCreatorModule.captureScreenshot();
 
 #### SystemInfo Module
 
-The SystemInfo module (`@shopware-ag/dive/modules/systeminfo`) provides information about the system's capabilities and performance, useful for optimizing the 3D experience.
+The SystemInfo module (`@shopware-ag/dive/modules/systeminfo`) provides information about the
+system's capabilities and performance, useful for optimizing the 3D experience.
 
 ```ts
 import { SystemInfoModule } from '@shopware-ag/dive/modules/systeminfo';
@@ -332,11 +345,14 @@ import { SystemInfoModule } from '@shopware-ag/dive/modules/systeminfo';
 const info = await SystemInfoModule.getInfo();
 ```
 
-Each module can be imported individually, allowing you to use only the functionality you need. This helps keep your bundle size small and your application focused.
+Each module can be imported individually, allowing you to use only the functionality you need. This
+helps keep your bundle size small and your application focused.
 
 ### Actions
 
-Actions are the primary way to communicate between your frontend application and the 3D space in DIVE. They can be used to control various aspects of the 3D scene, such as camera movement, object manipulation, and scene state management.
+Actions are the primary way to communicate between your frontend application and the 3D space in
+DIVE. They can be used to control various aspects of the 3D scene, such as camera movement, object
+manipulation, and scene state management.
 
 #### Basic Usage
 
@@ -372,4 +388,5 @@ The following table lists all available actions in DIVE:
 
 <!-- INSERT_TABLE -->
 
-Each action has specific parameters and return values. For detailed information about each action, refer to the TypeScript type definitions in the source code.
+Each action has specific parameters and return values. For detailed information about each action,
+refer to the TypeScript type definitions in the source code.

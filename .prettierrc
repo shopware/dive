@@ -11,5 +11,16 @@
     "endOfLine": "lf",
     "plugins": [
         "prettier-plugin-multiline-arrays"
+    ],
+    "overrides": [
+        {
+            "files": "*.md",
+            "options": {
+                "proseWrap": "always",
+                "printWidth": 100,
+                "tabWidth": 2,
+                "embeddedLanguageFormatting": "off"
+            }
+        }
     ]
 }

@@ -27,6 +27,7 @@ describe('ModuleRegistry', () => {
     beforeEach(() => {
         // Clear the registry before each test
         jest.clearAllMocks();
+        internalModuleRegistry['_modules'].clear();
         (window as any).__MODULE_BUILD_PATHS__ = {};
     });
 

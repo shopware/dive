@@ -29,13 +29,13 @@
 
 ## About
 
-DIVE is a spatial framework made by and optimized for Shopware. It can be used
-directly integrated in a Shopware frontend such as Storefront or in any other
-frontend you want to use it in, it is not tied to Shopware.
+DIVE is a spatial framework made by and optimized for Shopware. It can be used directly integrated
+in a Shopware frontend such as Storefront or in any other frontend you want to use it in, it is not
+tied to Shopware.
 
-DIVE supplies your frontend application with all needed tooling to set up a
-basic 3D application with event-based controls called "Actions". For further
-information, see [Getting started](#getting-started).
+DIVE supplies your frontend application with all needed tooling to set up a basic 3D application
+with event-based controls called "Actions". For further information, see
+[Getting started](#getting-started).
 
 ## Installation
 
@@ -53,9 +53,10 @@ yarn add @shopware-ag/dive
 
 ### with devenv
 
-If you are using `devenv`, you have to make sure that you are in the correct shell while linking. `nix` (what `devenv` is
-based on) uses it's own instances of `npm` so we need to make sure that the `npm link` get's executed within the correct `devenv` environment a.k.a `nix/store`.
-To make sure you are using the correct instance of `npm` you have to browse to your `devenv` project:
+If you are using `devenv`, you have to make sure that you are in the correct shell while linking.
+`nix` (what `devenv` is based on) uses it's own instances of `npm` so we need to make sure that the
+`npm link` get's executed within the correct `devenv` environment a.k.a `nix/store`. To make sure
+you are using the correct instance of `npm` you have to browse to your `devenv` project:
 
 ```bash
 cd path/to/your/devenv.nix
@@ -85,7 +86,8 @@ You don't have to do anything special if you don't use `devenv`.
 
 ### npm link
 
-If you want to link DIVE package locally after checking out, you can to that in the package's project folder:
+If you want to link DIVE package locally after checking out, you can to that in the package's
+project folder:
 
 ```bash
 cd path/to/@shopware-ag/dive
@@ -99,7 +101,8 @@ cd path/to/your/package.json
 npm link @shopware-ag/dive
 ```
 
-After successfully linking DIVE into your project you will find the according sym-link in your `node_modules`.
+After successfully linking DIVE into your project you will find the according sym-link in your
+`node_modules`.
 
 ## Setup in Shopware
 
@@ -158,9 +161,9 @@ module.exports = () => {
 
 ### Quick View
 
-QuickView is used to quickly display your assets with as few lines of code as
-possible. Simply call the static `QuickView()` method, with your data URI as a
-parameter, to create an instance of DIVE with your asset to use in further code.
+QuickView is used to quickly display your assets with as few lines of code as possible. Simply call
+the static `QuickView()` method, with your data URI as a parameter, to create an instance of DIVE
+with your asset to use in further code.
 
 ```ts
 import { DIVE } from '@shopware-ag/dive';
@@ -202,9 +205,8 @@ import { DIVE } from '@shopware-ag/dive';
 const dive = new DIVE(); // <-- instantiate DIVE
 ```
 
-DIVE supplies your application with a HTMLCanvasElement that it uses as a render
-target. After instantiating, you can use the supplied canvas within your frontend
-code to attach it to your DOM.
+DIVE supplies your application with a HTMLCanvasElement that it uses as a render target. After
+instantiating, you can use the supplied canvas within your frontend code to attach it to your DOM.
 
 ```ts
 const dive = new DIVE();
@@ -213,8 +215,8 @@ const myCanvasWrapper = document.createElement('div'); // <-- create wrapper ele
 myCanvasWrapper.appendChild(dive.Canvas); // <-- reference DIVE canvas
 ```
 
-To interact with your newly created DIVE instance you have to perform actions
-via DIVECommunication. For further information, see [Actions](#actions).
+To interact with your newly created DIVE instance you have to perform actions via DIVECommunication.
+For further information, see [Actions](#actions).
 
 ```ts
 const dive = new DIVE();
@@ -233,11 +235,10 @@ com.PerformAction('SET_CAMERA_TRANSFORM', {
 
 ### Actions
 
-Actions symbolize the communication between frontend and 3D space. All actions
-can be performed anywhere, no matter if you are in frontend or 3D.
+Actions symbolize the communication between frontend and 3D space. All actions can be performed
+anywhere, no matter if you are in frontend or 3D.
 
-In addition to the impact that specific actions have, every action can be
-subscribed to.
+In addition to the impact that specific actions have, every action can be subscribed to.
 
 ```ts
 const myCanvasWrapper = document.createElement('div');
@@ -258,8 +259,8 @@ com.PerformAction('SET_CAMERA_TRANSFORM', {
 });
 ```
 
-Subscribing to an action returns a `unsubscribe()`-callback that should be
-executed when not needed anymore.
+Subscribing to an action returns a `unsubscribe()`-callback that should be executed when not needed
+anymore.
 
 ```ts
 const myCanvasWrapper = document.createElement('div');
@@ -284,24 +285,27 @@ unsubscribe(); // <-- execute unsubscribe callback when done
 
 #### Actions List
 
-In the following you find a list of all available actions to perform on
-DIVECommunication class via
+In the following you find a list of all available actions to perform on DIVECommunication class via
 [`com.PerformAction()`](https://github.com/shopware/dive/blob/2e193c58843939ce07a1d35bfbd5b3c9d26eeeca/src/com/Communication.ts#L85).
 
-| Action | Description | Input | Return |
-|--------|-------------|-------|--------|
-| [ExportSceneAction](src/com/actions/scene/thisisatest.ts) | Exports the current scene to a blob and returns the URL. | <code>Map<string, keyof [DIVESceneFileType](src/types/SceneType.ts)></code> | <code>Promise<string \| null></code> |
-| [ExportSceneAction2](src/com/actions/scene/thisisatest2.ts) | Exports the current scene to a blob and returns the URL. | <code>[Vector3Like](https://threejs.org/docs/#api/en/math/Vector3)</code> | <code>Promise<string \| null></code> |
-
-
+| Action                                                      | Description                                              | Input                                                                       | Return                               |
+| ----------------------------------------------------------- | -------------------------------------------------------- | --------------------------------------------------------------------------- | ------------------------------------ |
+| [ExportSceneAction](src/com/actions/scene/thisisatest.ts)   | Exports the current scene to a blob and returns the URL. | <code>Map<string, keyof [DIVESceneFileType](src/types/SceneType.ts)></code> | <code>Promise<string \| null></code> |
+| [ExportSceneAction2](src/com/actions/scene/thisisatest2.ts) | Exports the current scene to a blob and returns the URL. | <code>[Vector3Like](https://threejs.org/docs/#api/en/math/Vector3)</code>   | <code>Promise<string \| null></code> |
 
 ## Unit Tests
 
-All relevant files are covered by Jest tests. If you find any file that has not been covered yet, feel free to add unit tests accordingly.
+All relevant files are covered by Jest tests. If you find any file that has not been covered yet,
+feel free to add unit tests accordingly.
 
-If there are any modules that have to be mocked (like `three`) you can create a given file in the `__mocks__` folder in project root. Jest manages to mock modules with a given file with the modules name as a file name (for example `three.ts`). Every export will be part of the modules mock. You don't need to mock the module in your test anymore, you only extend the module mock.
+If there are any modules that have to be mocked (like `three`) you can create a given file in the
+`__mocks__` folder in project root. Jest manages to mock modules with a given file with the modules
+name as a file name (for example `three.ts`). Every export will be part of the modules mock. You
+don't need to mock the module in your test anymore, you only extend the module mock.
 
-If you have any other things from a module to import, you can simply create a folder structure and place the mock file at the end of your structure. To understand better please take a look at the `__mocks__` folder for yourself.
+If you have any other things from a module to import, you can simply create a folder structure and
+place the mock file at the end of your structure. To understand better please take a look at the
+`__mocks__` folder for yourself.
 
 ## Formatting
 
