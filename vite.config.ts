@@ -1,7 +1,6 @@
 import { defineConfig, UserConfig } from 'vite';
 import dts from 'vite-plugin-dts';
 import { resolve, join } from 'path';
-// import { globSync } from 'glob'; // No longer needed
 import fs from 'fs';
 import type { Plugin } from 'vite';
 
@@ -10,6 +9,46 @@ const MODULES_PATH = 'src/modules';
 interface ModuleRegistration {
     name: string;
     path: string; // Original src path
+}
+
+// Function to update package.json exports
+function updatePackageJsonExports(registrations: ModuleRegistration[]): void {
+    const packageJsonPath = resolve(process.cwd(), 'package.json');
+    const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, 'utf-8'));
+
+    // Start with the main entry point
+    const exports: Record<
+        string,
+        {
+            types: string;
+            import: string;
+            require: string;
+        }
+    > = {
+        '.': {
+            types: './build/index.d.ts',
+            import: './build/index.mjs',
+            require: './build/index.cjs',
+        },
+    };
+
+    // Add each module to exports
+    registrations.forEach(({ name }) => {
+        const modulePath = `./${name}`;
+        exports[modulePath] = {
+            types: `./build/src/modules/${name}.d.ts`,
+            import: `./build/src/modules/${name}.mjs`,
+            require: `./build/src/modules/${name}.cjs`,
+        };
+    });
+
+    // Update package.json
+    packageJson.exports = exports;
+    fs.writeFileSync(
+        packageJsonPath,
+        JSON.stringify(packageJson, null, 2) + '\n',
+    );
+    console.log('[Dive Build] Updated package.json exports');
 }
 
 // Plugin to discover modules, configure library build, and inject path map
@@ -104,6 +143,9 @@ function moduleBuildPlugin(): Plugin {
             console.log(`- ${name}: ${path}`);
         });
     }
+
+    // Update package.json exports
+    updatePackageJsonExports(registrations);
 
     // --- Prepare Build Path Map (Done outside hooks) ---
     const moduleBuildPathMap: Record<string, string> = {};
@@ -201,16 +243,9 @@ function moduleBuildPlugin(): Plugin {
 
 // --- Main Vite Export ---
 export default defineConfig({
-    // Most build config is now handled by the plugin
-    // Keep other top-level configs like server, resolve, etc. if needed
-
     plugins: [
         moduleBuildPlugin(),
         dts({
-            // Handles .d.ts generation
-            // Review DTS config for multi-entry: rollupTypes might be better
-            // to generate individual .d.ts files alongside modules if desired.
-            // Current setup likely focuses on src/index.ts -> build/index.d.ts
             insertTypesEntry: true,
             outDir: 'build',
             tsconfigPath: './tsconfig.json',

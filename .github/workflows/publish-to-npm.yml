@@ -97,6 +97,12 @@ jobs:
               if: steps.yarn-cache.outputs.cache-hit != 'true'
               run: yarn
 
+            - name: Build DIVE
+              run: yarn build
+
+            - name: 'Add package.json to git'
+              run: git add package.json
+
             - name: Generate README.md
               run: yarn docs
 
@@ -126,8 +132,7 @@ jobs:
 
             - name: 'Create release branch'
               run: git checkout -b release/v$(node -p "require('./package.json').version")
-            - name: Build DIVE
-              run: yarn build
+
             - name: 'Add Build files to git'
               run: git add ./build -f && echo "Staged build files! Status:" && git status
             - name: 'Commit changes'
