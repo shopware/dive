@@ -16,7 +16,7 @@ export const MODULE_PATHS = {
 
 // Register all modules with just their names
 Object.keys(MODULE_PATHS).forEach((name) => {
-    Modules.register(name as keyof typeof MODULE_PATHS);
+    Modules.register(name as keyof ModuleClasses);
 });
 
 // Re-export the ModuleRegistry as the only public access point

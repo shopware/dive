@@ -19,13 +19,37 @@
 
 ## Table of Contents
 
-1. [About](#about)
-2. [Installation](#installation)
-3. [Local development](#local-development)
-4. [Setup in Shopware](#setup-in-shopware)
-5. [Usage](#usage)
-6. [Unit Tests](#unit-tests)
-7. [Formatting](#formatting)
+- [Table of Contents](#table-of-contents)
+- [About](#about)
+- [Setup and Maintenance](#setup-and-maintenance)
+  - [Installation](#installation)
+  - [Module System](#module-system)
+    - [Module Exports](#module-exports)
+    - [Build Process](#build-process)
+    - [Development Workflow](#development-workflow)
+  - [Local Development with Yalc](#local-development-with-yalc)
+  - [Shopware Integration](#shopware-integration)
+  - [Testing and Quality Assurance](#testing-and-quality-assurance)
+    - [Unit Tests](#unit-tests)
+    - [Code Formatting](#code-formatting)
+- [Usage Guide](#usage-guide)
+  - [Core Concepts](#core-concepts)
+    - [Quick View](#quick-view)
+    - [Getting Started](#getting-started)
+      - [Import](#import)
+      - [Instantiate](#instantiate)
+  - [Modules](#modules)
+  - [Available Modules](#available-modules)
+    - [AssetLoader](#assetloader)
+    - [AssetConverter](#assetconverter)
+    - [AssetExporter](#assetexporter)
+    - [ARSystem](#arsystem)
+    - [MediaCreator](#mediacreator)
+    - [SystemInfo](#systeminfo)
+  - [Actions](#actions)
+    - [Basic Usage](#basic-usage)
+    - [Subscribing to Actions](#subscribing-to-actions)
+    - [Actions List](#actions-list)
 
 ## About
 
@@ -37,7 +61,9 @@ DIVE supplies your frontend application with all needed tooling to set up a basi
 with event-based controls called "Actions". For further information, see
 [Getting started](#getting-started).
 
-## Installation
+## Setup and Maintenance
+
+### Installation
 
 The `@shopware-ag/dive` package can be installed via
 
@@ -49,62 +75,110 @@ or
 yarn add @shopware-ag/dive
 ```
 
-## Local development
+### Module System
 
-### with devenv
+DIVE uses a modern module system with support for both ESM and CommonJS formats. The package is
+built using Vite and supports the following module formats:
 
-If you are using `devenv`, you have to make sure that you are in the correct shell while linking.
-`nix` (what `devenv` is based on) uses it's own instances of `npm` so we need to make sure that the
-`npm link` get's executed within the correct `devenv` environment a.k.a `nix/store`. To make sure
-you are using the correct instance of `npm` you have to browse to your `devenv` project:
+- ESM (`.mjs` files)
+- CommonJS (`.cjs` files)
+- TypeScript type definitions (`.d.ts` files)
 
-```bash
-cd path/to/your/devenv.nix
+#### Module Exports
+
+The package exports are configured in `package.json` to support both direct imports and
+module-specific imports:
+
+```json
+{
+    "exports": {
+        ".": {
+            "types": "./build/index.d.ts",
+            "import": "./build/index.mjs",
+            "require": "./build/index.cjs"
+        },
+        "./modules/*": {
+            "types": "./build/src/modules/*.d.ts",
+            "import": "./build/src/modules/*.mjs",
+            "require": "./build/src/modules/*.cjs"
+        }
+    }
+}
 ```
 
-#### with direnv
+#### Build Process
 
-If you use `direnv` you should be launched into the correct shell automatically.
-
-#### without direnv
-
-If you don't use `direnv` you can start the correct shell manually by running
+The build process is handled by Vite and can be triggered using:
 
 ```bash
-devenv shell
+yarn build        # One-time build
+yarn dev          # Watch mode for development
 ```
 
-Within the `devenv shell` you have to browse to your DIVE folder
+The build process:
+
+1. Compiles TypeScript code
+2. Generates type definitions
+3. Creates both ESM and CommonJS versions of the code
+4. Places all output in the `build/` directory
+
+#### Development Workflow
+
+For local development, you can use the watch mode to automatically rebuild when files change:
 
 ```bash
-cd path/to/@shopware-ag/dive
+yarn dev
 ```
 
-### without devenv
+This is particularly useful when working with the module system as it ensures your changes are
+immediately reflected in the build output.
 
-You don't have to do anything special if you don't use `devenv`.
+### Local Development with Yalc
 
-### npm link
+[Yalc](https://github.com/wclr/yalc) is the recommended way to test local changes in your project.
+It provides better dependency management and more reliable linking than npm link.
 
-If you want to link DIVE package locally after checking out, you can to that in the package's
-project folder:
+First, install yalc globally if you haven't already:
 
 ```bash
-cd path/to/@shopware-ag/dive
-npm link
+npm install -g yalc
 ```
 
-After registering the package in npm, you can use the sym-link in your project:
+Then, in your DIVE project directory:
 
 ```bash
-cd path/to/your/package.json
-npm link @shopware-ag/dive
+# Publish the package to yalc's local store
+yalc publish
+
+# In your project that uses DIVE:
+yalc add @shopware-ag/dive
 ```
 
-After successfully linking DIVE into your project you will find the according sym-link in your
-`node_modules`.
+When you make changes to DIVE, you'll need to:
 
-## Setup in Shopware
+```bash
+# In DIVE directory:
+yalc push
+
+# Or if you want to republish:
+yalc publish --force
+```
+
+To remove the local package from your project:
+
+```bash
+yalc remove @shopware-ag/dive
+```
+
+Benefits of using yalc:
+
+- Better dependency management
+- More reliable than npm link
+- Works well with package managers (npm, yarn, pnpm)
+- Maintains proper package.json dependencies
+- Supports multiple projects using the same local package
+
+### Shopware Integration
 
 Don't forget to include DIVE in your `webpack.config.js`:
 
@@ -157,9 +231,31 @@ module.exports = () => {
 };
 ```
 
-## Usage
+### Testing and Quality Assurance
 
-### Quick View
+#### Unit Tests
+
+All relevant files are covered by Jest tests. If you find any file that has not been covered yet,
+feel free to add unit tests accordingly.
+
+If there are any modules that have to be mocked (like `three`) you can create a given file in the
+`__mocks__` folder in project root. Jest manages to mock modules with a given file with the modules
+name as a file name (for example `three.ts`). Every export will be part of the modules mock. You
+don't need to mock the module in your test anymore, you only extend the module mock.
+
+If you have any other things from a module to import, you can simply create a folder structure and
+place the mock file at the end of your structure. To understand better please take a look at the
+`__mocks__` folder for yourself.
+
+#### Code Formatting
+
+DIVE uses Prettier as a preconfigured formatter.
+
+## Usage Guide
+
+### Core Concepts
+
+#### Quick View
 
 QuickView is used to quickly display your assets with as few lines of code as possible. Simply call
 the static `QuickView()` method, with your data URI as a parameter, to create an instance of DIVE
@@ -168,36 +264,21 @@ with your asset to use in further code.
 ```ts
 import { DIVE } from '@shopware-ag/dive';
 
-const dive = DIVE.QuickView('your/asset/uri.glb'); // <-- call QuickView()
+const dive = await DIVE.QuickView('your/asset/uri.glb'); // <-- call QuickView()
 
 const myCanvasWrapper = document.createElement('div');
 myCanvasWrapper.appendChild(dive.Canvas);
 ```
 
-### Example with Error Handling:
+#### Getting Started
 
-```ts
-import { DIVE } from '@shopware-ag/dive';
-
-try {
-    const dive = DIVE.QuickView('your/asset/uri.glb'); // <-- call QuickView()
-
-    const myCanvasWrapper = document.createElement('div');
-    myCanvasWrapper.appendChild(dive.Canvas);
-} catch (error) {
-    console.error('Failed to load asset:', error);
-}
-```
-
-### Getting started
-
-#### Import:
+##### Import
 
 ```ts
 import { DIVE } from '@shopware-ag/dive'; // <-- import DIVE
 ```
 
-#### Instantiate:
+##### Instantiate
 
 ```ts
 import { DIVE } from '@shopware-ag/dive';
@@ -215,98 +296,197 @@ const myCanvasWrapper = document.createElement('div'); // <-- create wrapper ele
 myCanvasWrapper.appendChild(dive.Canvas); // <-- reference DIVE canvas
 ```
 
-To interact with your newly created DIVE instance you have to perform actions via DIVECommunication.
-For further information, see [Actions](#actions).
+### Modules
+
+DIVE comes with several built-in modules that provide specific functionality. You can access modules
+in two ways:
+
+1. Direct import from the modules directory (recommended for most use cases):
 
 ```ts
-const dive = new DIVE();
+import { ARSystem } from '@shopware-ag/dive/modules/ar';
 
-const myCanvasWrapper = document.createElement('div');
-myCanvasWrapper.appendChild(dive.Canvas);
-
-const com = dive.Communication; // <-- reference DIVECommunication
-
-com.PerformAction('SET_CAMERA_TRANSFORM', {
-    // <-- perform action on DIVECommunication
-    position: { x: 0, y: 2, z: 2 },
-    target: { x: 0, y: 0.5, z: 0 },
+// Initialize AR with options
+const arSystem = new ARSystem();
+await arSystem.launch('path/to/model.glb', {
+    arPlacement: 'horizontal', // or 'vertical'
+    arScale: 'auto' // or 'fixed'
 });
 ```
+
+2. Through the DIVE instance (when you need to work with a specific DIVE instance):
+
+```ts
+import { DIVE } from '@shopware-ag/dive';
+
+// Create a DIVE instance
+const dive = new DIVE();
+
+// Get a module instance from the DIVE instance
+const assetLoader = await dive.modules.get('AssetLoader');
+const model = await assetLoader.load('path/to/model.glb');
+```
+
+### Available Modules
+
+DIVE provides several specialized modules for different aspects of 3D content handling:
+
+#### AssetLoader
+
+Handles loading of 3D assets in various formats:
+
+```ts
+// Direct import
+import { AssetLoader } from '@shopware-ag/dive/modules/asset/loader';
+const assetLoader = new AssetLoader();
+const model = await assetLoader.load('path/to/model.glb');
+
+// Or through DIVE instance
+const assetLoader = await dive.modules.get('AssetLoader');
+const model = await assetLoader.load('path/to/model.glb');
+```
+
+Supported formats:
+
+- GLB/GLTF
+- USDZ
+
+#### AssetConverter
+
+Converts between different 3D file formats:
+
+```ts
+import { AssetConverter } from '@shopware-ag/dive/modules/asset/converter';
+const assetConverter = new AssetConverter();
+const usdzBuffer = await assetConverter.convert('input.glb').to('usdz');
+```
+
+#### AssetExporter
+
+Exports 3D assets to various formats:
+
+```ts
+import { AssetExporter } from '@shopware-ag/dive/modules/asset/exporter';
+const assetExporter = new AssetExporter();
+const buffer = await assetExporter.export(model, 'glb');
+```
+
+#### ARSystem
+
+Enables Augmented Reality features across different platforms:
+
+```ts
+import { ARSystem } from '@shopware-ag/dive/modules/ar';
+const arSystem = new ARSystem();
+
+// Launch AR with options
+await arSystem.launch('path/to/model.glb', {
+    arPlacement: 'horizontal', // or 'vertical'
+    arScale: 'auto' // or 'fixed'
+});
+```
+
+Features:
+
+- Platform-specific AR implementations (ARQuickLook for iOS, SceneViewer for Android)
+- Automatic format conversion for AR compatibility
+- Configurable placement and scaling options
+
+#### MediaCreator
+
+Provides tools for creating media content from the 3D scene:
+
+```ts
+import { MediaCreator } from '@shopware-ag/dive/modules/mediacreator';
+const mediaCreator = new MediaCreator();
+
+// Generate a screenshot
+const screenshot = await mediaCreator.GenerateMedia(
+    { x: 0, y: 0, z: 0 }, // camera position
+    { x: 0, y: 0, z: 0 }, // camera target
+    1920, // width
+    1080  // height
+);
+```
+
+Features:
+
+- High-quality screenshot generation
+- Customizable camera position and target
+- Configurable output resolution
+
+#### SystemInfo
+
+Provides information about the system's capabilities and performance:
+
+```ts
+import { SystemInfo } from '@shopware-ag/dive/modules/systeminfo';
+const systemInfo = new SystemInfo();
+
+// Get system information
+const system = systemInfo.getSystem(); // Returns ESystem enum (IOS, ANDROID, etc.)
+
+// Check AR capabilities
+const supportsAR = systemInfo.getSupportsAR();
+
+// Check device type
+const isMobile = systemInfo.isMobile;
+const isDesktop = systemInfo.isDesktop;
+```
+
+Features:
+
+- System detection (iOS, Android, Windows, etc.)
+- WebXR support detection
+- AR capability checking
+- Device type detection
+- SceneViewer support detection
+
+Each module is designed to be used independently, allowing you to use only the functionality you
+need. This helps keep your bundle size small and your application focused.
 
 ### Actions
 
-Actions symbolize the communication between frontend and 3D space. All actions can be performed
-anywhere, no matter if you are in frontend or 3D.
+Actions are the primary way to communicate between your frontend application and the 3D space in
+DIVE. They can be used to control various aspects of the 3D scene, such as camera movement, object
+manipulation, and scene state management.
 
-In addition to the impact that specific actions have, every action can be subscribed to.
+#### Basic Usage
+
+To perform an action, use the `DIVECommunication` instance:
 
 ```ts
-const myCanvasWrapper = document.createElement('div');
 const dive = new DIVE();
-
-myCanvasWrapper.appendChild(dive.Canvas);
-
 const com = dive.Communication;
 
-com.Subscribe('SET_CAMERA_TRANSFORM', () => {
-    // <-- add subscription
-    // do something
-});
-
+// Perform an action
 com.PerformAction('SET_CAMERA_TRANSFORM', {
     position: { x: 0, y: 2, z: 2 },
     target: { x: 0, y: 0.5, z: 0 },
 });
 ```
 
-Subscribing to an action returns a `unsubscribe()`-callback that should be executed when not needed
-anymore.
+#### Subscribing to Actions
+
+You can subscribe to actions to react to changes in the 3D space:
 
 ```ts
-const myCanvasWrapper = document.createElement('div');
-const dive = new DIVE();
-
-myCanvasWrapper.appendChild(dive.Canvas);
-
-const com = dive.Communication;
-
-const unsubscribe = com.Subscribe('SET_CAMERA_TRANSFORM', () => {
-    // <-- save unsubscribe callback
-    // do something
+const unsubscribe = com.Subscribe('SET_CAMERA_TRANSFORM', (data) => {
+    console.log('Camera position changed:', data);
 });
 
-com.PerformAction('SET_CAMERA_TRANSFORM', {
-    position: { x: 0, y: 2, z: 2 },
-    target: { x: 0, y: 0.5, z: 0 },
-});
-
-unsubscribe(); // <-- execute unsubscribe callback when done
+// Don't forget to unsubscribe when done
+unsubscribe();
 ```
 
 #### Actions List
 
-In the following you find a list of all available actions to perform on DIVECommunication class via
-[`com.PerformAction()`](https://github.com/shopware/dive/blob/2e193c58843939ce07a1d35bfbd5b3c9d26eeeca/src/com/Communication.ts#L85).
+The following table lists all available actions in DIVE:
 
-| Action                                                      | Description                                              | Input                                                                       | Return                               |
-| ----------------------------------------------------------- | -------------------------------------------------------- | --------------------------------------------------------------------------- | ------------------------------------ |
-| [ExportSceneAction](src/com/actions/scene/thisisatest.ts)   | Exports the current scene to a blob and returns the URL. | <code>Map<string, keyof [DIVESceneFileType](src/types/SceneType.ts)></code> | <code>Promise<string \| null></code> |
-| [ExportSceneAction2](src/com/actions/scene/thisisatest2.ts) | Exports the current scene to a blob and returns the URL. | <code>[Vector3Like](https://threejs.org/docs/#api/en/math/Vector3)</code>   | <code>Promise<string \| null></code> |
+| Action | Description | Input | Return |
+|--------|-------------|-------|--------|
 
-## Unit Tests
 
-All relevant files are covered by Jest tests. If you find any file that has not been covered yet,
-feel free to add unit tests accordingly.
 
-If there are any modules that have to be mocked (like `three`) you can create a given file in the
-`__mocks__` folder in project root. Jest manages to mock modules with a given file with the modules
-name as a file name (for example `three.ts`). Every export will be part of the modules mock. You
-don't need to mock the module in your test anymore, you only extend the module mock.
-
-If you have any other things from a module to import, you can simply create a folder structure and
-place the mock file at the end of your structure. To understand better please take a look at the
-`__mocks__` folder for yourself.
-
-## Formatting
-
-DIVE uses Prettier as a preconfigured formatter.
+Each action has specific parameters and return values. For detailed information about each action,
+refer to the TypeScript type definitions in the source code.

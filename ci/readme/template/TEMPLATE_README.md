@@ -39,10 +39,13 @@
       - [Import](#import)
       - [Instantiate](#instantiate)
   - [Modules](#modules)
-    - [Asset Module](#asset-module)
-    - [AR Module](#ar-module)
-    - [MediaCreator Module](#mediacreator-module)
-    - [SystemInfo Module](#systeminfo-module)
+  - [Available Modules](#available-modules)
+    - [AssetLoader](#assetloader)
+    - [AssetConverter](#assetconverter)
+    - [AssetExporter](#assetexporter)
+    - [ARSystem](#arsystem)
+    - [MediaCreator](#mediacreator)
+    - [SystemInfo](#systeminfo)
   - [Actions](#actions)
     - [Basic Usage](#basic-usage)
     - [Subscribing to Actions](#subscribing-to-actions)
@@ -324,47 +327,53 @@ const assetLoader = await dive.modules.get('AssetLoader');
 const model = await assetLoader.load('path/to/model.glb');
 ```
 
-#### Asset Module
+### Available Modules
 
-The Asset module provides functionality for loading, converting, and exporting 3D assets. It
-consists of three main components:
+DIVE provides several specialized modules for different aspects of 3D content handling:
 
-1. **AssetLoader**: Handles loading of 3D assets in various formats
+#### AssetLoader
 
-   ```ts
-   // Direct import
-   import { AssetLoader } from '@shopware-ag/dive/modules/asset/loader';
-   const assetLoader = new AssetLoader();
-   const model = await assetLoader.load('path/to/model.glb');
+Handles loading of 3D assets in various formats:
 
-   // Or through DIVE instance
-   const assetLoader = await dive.modules.get('AssetLoader');
-   const model = await assetLoader.load('path/to/model.glb');
-   ```
+```ts
+// Direct import
+import { AssetLoader } from '@shopware-ag/dive/modules/asset/loader';
+const assetLoader = new AssetLoader();
+const model = await assetLoader.load('path/to/model.glb');
 
-   Supported formats:
+// Or through DIVE instance
+const assetLoader = await dive.modules.get('AssetLoader');
+const model = await assetLoader.load('path/to/model.glb');
+```
 
-   - GLB/GLTF
-   - USDZ
+Supported formats:
 
-2. **AssetConverter**: Converts between different 3D file formats
+- GLB/GLTF
+- USDZ
 
-   ```ts
-   import { AssetConverter } from '@shopware-ag/dive/modules/asset/converter';
-   const assetConverter = new AssetConverter();
-   const usdzBuffer = await assetConverter.convert('input.glb').to('usdz');
-   ```
+#### AssetConverter
 
-3. **AssetExporter**: Exports 3D assets to various formats
-   ```ts
-   import { AssetExporter } from '@shopware-ag/dive/modules/asset/exporter';
-   const assetExporter = new AssetExporter();
-   const buffer = await assetExporter.export(model, 'glb');
-   ```
+Converts between different 3D file formats:
 
-#### AR Module
+```ts
+import { AssetConverter } from '@shopware-ag/dive/modules/asset/converter';
+const assetConverter = new AssetConverter();
+const usdzBuffer = await assetConverter.convert('input.glb').to('usdz');
+```
 
-The AR module (`ARSystem`) enables Augmented Reality features across different platforms:
+#### AssetExporter
+
+Exports 3D assets to various formats:
+
+```ts
+import { AssetExporter } from '@shopware-ag/dive/modules/asset/exporter';
+const assetExporter = new AssetExporter();
+const buffer = await assetExporter.export(model, 'glb');
+```
+
+#### ARSystem
+
+Enables Augmented Reality features across different platforms:
 
 ```ts
 import { ARSystem } from '@shopware-ag/dive/modules/ar';
@@ -383,9 +392,9 @@ Features:
 - Automatic format conversion for AR compatibility
 - Configurable placement and scaling options
 
-#### MediaCreator Module
+#### MediaCreator
 
-The MediaCreator module provides tools for creating media content from the 3D scene:
+Provides tools for creating media content from the 3D scene:
 
 ```ts
 import { MediaCreator } from '@shopware-ag/dive/modules/mediacreator';
@@ -406,9 +415,9 @@ Features:
 - Customizable camera position and target
 - Configurable output resolution
 
-#### SystemInfo Module
+#### SystemInfo
 
-The SystemInfo module provides information about the system's capabilities and performance:
+Provides information about the system's capabilities and performance:
 
 ```ts
 import { SystemInfo } from '@shopware-ag/dive/modules/systeminfo';

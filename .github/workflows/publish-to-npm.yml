@@ -98,7 +98,7 @@ jobs:
               run: yarn
 
             - name: Generate README.md
-              run: yarn generate-readme
+              run: yarn docs
 
             - name: 'Add README file to git'
               run: git add README.md -f
