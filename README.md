@@ -40,12 +40,6 @@
       - [Instantiate](#instantiate)
   - [Modules](#modules)
   - [Available Modules](#available-modules)
-    - [AssetLoader](#assetloader)
-    - [AssetConverter](#assetconverter)
-    - [AssetExporter](#assetexporter)
-    - [ARSystem](#arsystem)
-    - [MediaCreator](#mediacreator)
-    - [SystemInfo](#systeminfo)
   - [Actions](#actions)
     - [Basic Usage](#basic-usage)
     - [Subscribing to Actions](#subscribing-to-actions)
@@ -331,25 +325,26 @@ const model = await assetLoader.load('path/to/model.glb');
 
 DIVE provides several specialized modules for different aspects of 3D content handling:
 
-#### AssetLoader
+#### ARSystem
 
-Handles loading of 3D assets in various formats:
+The AR module enables Augmented Reality features across different platforms:
 
 ```ts
-// Direct import
-import { AssetLoader } from '@shopware-ag/dive/modules/asset/loader';
-const assetLoader = new AssetLoader();
-const model = await assetLoader.load('path/to/model.glb');
+import { ARSystem } from '@shopware-ag/dive/modules/ar';
+const arSystem = new ARSystem();
 
-// Or through DIVE instance
-const assetLoader = await dive.modules.get('AssetLoader');
-const model = await assetLoader.load('path/to/model.glb');
+// Launch AR with options
+await arSystem.launch('path/to/model.glb', {
+   arPlacement: 'horizontal', // or 'vertical'
+   arScale: 'auto' // or 'fixed'
+});
 ```
 
-Supported formats:
+Features:
 
-- GLB/GLTF
-- USDZ
+- Platform-specific AR implementations (ARQuickLook for iOS, SceneViewer for Android)
+- Automatic format conversion for AR compatibility
+- Configurable placement and scaling options
 
 #### AssetConverter
 
@@ -371,26 +366,25 @@ const assetExporter = new AssetExporter();
 const buffer = await assetExporter.export(model, 'glb');
 ```
 
-#### ARSystem
+#### AssetLoader
 
-Enables Augmented Reality features across different platforms:
+Handles loading of 3D assets in various formats:
 
 ```ts
-import { ARSystem } from '@shopware-ag/dive/modules/ar';
-const arSystem = new ARSystem();
+// Direct import
+import { AssetLoader } from '@shopware-ag/dive/modules/asset/loader';
+const assetLoader = new AssetLoader();
+const model = await assetLoader.load('path/to/model.glb');
 
-// Launch AR with options
-await arSystem.launch('path/to/model.glb', {
-    arPlacement: 'horizontal', // or 'vertical'
-    arScale: 'auto' // or 'fixed'
-});
+// Or through DIVE instance
+const assetLoader = await dive.modules.get('AssetLoader');
+const model = await assetLoader.load('path/to/model.glb');
 ```
 
-Features:
+Supported formats:
 
-- Platform-specific AR implementations (ARQuickLook for iOS, SceneViewer for Android)
-- Automatic format conversion for AR compatibility
-- Configurable placement and scaling options
+- GLB/GLTF
+- USDZ
 
 #### MediaCreator
 
@@ -402,10 +396,10 @@ const mediaCreator = new MediaCreator();
 
 // Generate a screenshot
 const screenshot = await mediaCreator.GenerateMedia(
-    { x: 0, y: 0, z: 0 }, // camera position
-    { x: 0, y: 0, z: 0 }, // camera target
-    1920, // width
-    1080  // height
+   { x: 0, y: 0, z: 0 }, // camera position
+   { x: 0, y: 0, z: 0 }, // camera target
+   1920, // width
+   1080  // height
 );
 ```
 
@@ -441,6 +435,8 @@ Features:
 - AR capability checking
 - Device type detection
 - SceneViewer support detection
+
+
 
 Each module is designed to be used independently, allowing you to use only the functionality you
 need. This helps keep your bundle size small and your application focused.

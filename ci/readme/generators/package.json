@@ -1,0 +1,19 @@
+{
+    "name": "dive-docs-generator",
+    "version": "1.0.0",
+    "description": "Documentation generator for DIVE modules",
+    "main": "generate-modules-docs.ts",
+    "type": "module",
+    "scripts": {
+        "generate": "node --loader ts-node/esm generate-modules-docs.ts"
+    },
+    "dependencies": {
+        "glob": "^10.3.10"
+    },
+    "devDependencies": {
+        "@types/glob": "^8.1.0",
+        "@types/node": "^20.11.19",
+        "ts-node": "^10.9.2",
+        "typescript": "^5.3.3"
+    }
+}

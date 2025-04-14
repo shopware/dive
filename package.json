@@ -79,9 +79,8 @@
         "prettier:fix": "prettier --write .",
         "unit": "jest",
         "coverage": "jest --coverage",
-        "docs": "node ci/readme/generate-readme.mjs",
-        "predocs": "yarn tsc --resolveJsonModule --esModuleInterop --module ES2020 --moduleResolution node ci/readme/generate-readme.ts && mv ci/readme/generate-readme.js ci/readme/generate-readme.mjs",
+        "docs": "yarn tsc --resolveJsonModule --esModuleInterop --module ES2020 --moduleResolution node ci/readme/generate-readme.ts && mv ci/readme/generate-readme.js ci/readme/generate-readme.mjs && node ci/readme/generate-readme.mjs && cd ci/readme/generators && npm run generate",
         "postdocs": "node -e \"const fs = require('fs'); const path = require('path'); const baseDir = 'ci/readme'; ['generate-readme.mjs', 'generate-readme.js', 'generators/actions-table.js', 'generators/module-docs.js'].forEach(file => { const fullPath = path.join(baseDir, file); if (fs.existsSync(fullPath)) fs.unlinkSync(fullPath); });\"",
-        "ci": "yarn lint && yarn coverage && yarn prettier:check && yarn build && bash ci/lint/lint-actions.sh"
+        "ci": "yarn lint && yarn lint:actions && yarn prettier:check && yarn docs && yarn coverage && yarn build"
     }
 }
