@@ -335,13 +335,12 @@ const arSystem = new ARSystem();
 
 // Launch AR with options
 await arSystem.launch('path/to/model.glb', {
-   arPlacement: 'horizontal', // or 'vertical'
-   arScale: 'auto' // or 'fixed'
+    arPlacement: 'horizontal', // or 'vertical'
+    arScale: 'auto' // or 'fixed'
 });
 ```
 
 Features:
-
 - Platform-specific AR implementations (ARQuickLook for iOS, SceneViewer for Android)
 - Automatic format conversion for AR compatibility
 - Configurable placement and scaling options
@@ -382,7 +381,6 @@ const model = await assetLoader.load('path/to/model.glb');
 ```
 
 Supported formats:
-
 - GLB/GLTF
 - USDZ
 
@@ -396,15 +394,14 @@ const mediaCreator = new MediaCreator();
 
 // Generate a screenshot
 const screenshot = await mediaCreator.GenerateMedia(
-   { x: 0, y: 0, z: 0 }, // camera position
-   { x: 0, y: 0, z: 0 }, // camera target
-   1920, // width
-   1080  // height
+    { x: 0, y: 0, z: 0 }, // camera position
+    { x: 0, y: 0, z: 0 }, // camera target
+    1920, // width
+    1080  // height
 );
 ```
 
 Features:
-
 - High-quality screenshot generation
 - Customizable camera position and target
 - Configurable output resolution
@@ -429,14 +426,11 @@ const isDesktop = systemInfo.isDesktop;
 ```
 
 Features:
-
 - System detection (iOS, Android, Windows, etc.)
 - WebXR support detection
 - AR capability checking
 - Device type detection
 - SceneViewer support detection
-
-
 
 Each module is designed to be used independently, allowing you to use only the functionality you
 need. This helps keep your bundle size small and your application focused.
@@ -480,9 +474,7 @@ unsubscribe();
 The following table lists all available actions in DIVE:
 
 | Action | Description | Input | Return |
-|--------|-------------|-------|--------|
-
-
+| ------ | ----------- | ----- | ------ |
 
 Each action has specific parameters and return values. For detailed information about each action,
 refer to the TypeScript type definitions in the source code.

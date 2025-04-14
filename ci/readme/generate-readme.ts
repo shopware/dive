@@ -258,7 +258,7 @@ function generateReadme(): void {
 
     // Generate actions section
     let actionsSection = '| Action | Description | Input | Return |\n';
-    actionsSection += '|--------|-------------|-------|--------|\n';
+    actionsSection += '| ------ | ----------- | ----- | ------ |';
 
     for (const action of actions) {
         const relativePath = path.relative(process.cwd(), action.sourceFile);
@@ -267,7 +267,7 @@ function generateReadme(): void {
         actionsSection += `| [${action.name}](${relativePath}) | ${action.description} | <code>${formattedPayloadType}</code> | <code>${formattedReturnType.replace(/\|/g, '\\|')}</code> |\n`;
     }
 
-    actionsSection += '\n';
+    actionsSection += '';
 
     // Replace the placeholder in the template
     const newContent = template.replace(
