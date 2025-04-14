@@ -39,7 +39,7 @@
       - [Import](#import)
       - [Instantiate](#instantiate)
   - [Modules](#modules)
-  - [Available Modules](#available-modules)
+  - [Modules (List)](#modules-list)
   - [Actions](#actions)
     - [Basic Usage](#basic-usage)
     - [Subscribing to Actions](#subscribing-to-actions)
@@ -321,7 +321,7 @@ const assetLoader = await dive.modules.get('AssetLoader');
 const model = await assetLoader.load('path/to/model.glb');
 ```
 
-### Available Modules
+### Modules (List)
 
 DIVE provides several specialized modules for different aspects of 3D content handling:
 

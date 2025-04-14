@@ -39,7 +39,7 @@ type Unsubscribe = () => boolean;
  *
  * dive.Communication.Subscribe('GET_ALL_SCENE_DATA', () => {
  *  // do something
- * }));
+ * });
  *
  * dive.Communication.PerformAction('GET_ALL_SCENE_DATA', {});
  * ```
