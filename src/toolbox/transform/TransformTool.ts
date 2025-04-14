@@ -1,5 +1,5 @@
 import { DIVEBaseTool } from '../BaseTool.ts';
-import { type DIVEScene } from '../../scene/Scene.ts';
+import { type DIVEScene } from '../../engine/scene/Scene.ts';
 import type DIVEOrbitControls from '../../controls/OrbitControls.ts';
 import { TransformControls } from 'three/examples/jsm/controls/TransformControls';
 import { type DIVEMovable } from '../../interface/Movable.ts';

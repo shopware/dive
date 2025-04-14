@@ -9,7 +9,7 @@ import {
     PRODUCT_LAYER_MASK,
     UI_LAYER_MASK,
 } from '../constant/VisibilityLayerMask';
-import { type DIVEScene } from '../scene/Scene';
+import { type DIVEScene } from '../engine/scene/Scene';
 import type DIVEOrbitControls from '../controls/OrbitControls';
 import { type DIVEDraggable } from '../interface/Draggable';
 import { type DIVEHoverable } from '../interface/Hoverable';

@@ -6,8 +6,8 @@ import {
     Vector3,
     WebXRArrayCamera,
 } from 'three';
-import { DIVERenderer } from '../../../../renderer/Renderer';
-import { DIVEScene } from '../../../../scene/Scene';
+import { DIVERenderer } from '../../../../engine/renderer/Renderer';
+import { DIVEScene } from '../../../../engine/scene/Scene';
 import { DIVEWebXRCrosshair } from '../crosshair/WebXRCrosshair';
 import { DIVEWebXRRaycaster } from '../raycaster/WebXRRaycaster';
 import { DIVEWebXROrigin } from '../origin/WebXROrigin';

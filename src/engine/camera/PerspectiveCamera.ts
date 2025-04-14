@@ -4,7 +4,7 @@ import {
     HELPER_LAYER_MASK,
     PRODUCT_LAYER_MASK,
     UI_LAYER_MASK,
-} from '../constant/VisibilityLayerMask.ts';
+} from '../../constant/VisibilityLayerMask';
 
 export type DIVEPerspectiveCameraSettings = {
     fov: number;
@@ -25,7 +25,7 @@ export const DIVEPerspectiveCameraDefaultSettings: DIVEPerspectiveCameraSettings
  * @module
  */
 
-export default class DIVEPerspectiveCamera extends PerspectiveCamera {
+export class DIVEPerspectiveCamera extends PerspectiveCamera {
     public static readonly EDITOR_VIEW_LAYER_MASK =
         DEFAULT_LAYER_MASK |
         UI_LAYER_MASK |

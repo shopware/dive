@@ -1,7 +1,7 @@
 import { Vector3 } from 'three';
 import DIVEOrbitControls from '../../../controls/OrbitControls';
-import { type DIVERenderer } from '../../../renderer/Renderer';
-import { type DIVEScene } from '../../../scene/Scene';
+import { type DIVERenderer } from '../../../engine/renderer/Renderer';
+import { type DIVEScene } from '../../../engine/scene/Scene';
 import { Overlay } from './overlay/Overlay';
 import { DIVEWebXRController } from './controller/WebXRController';
 

@@ -1,5 +1,5 @@
 import { Tween, update as updateTween } from '@tweenjs/tween.js';
-import { DIVERenderer } from '../renderer/Renderer';
+import { DIVERenderer } from '../engine/renderer/Renderer';
 
 /**
  * Updates all animations.

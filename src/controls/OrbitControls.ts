@@ -1,6 +1,6 @@
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
-import DIVEPerspectiveCamera from '../camera/PerspectiveCamera.ts';
-import { DIVERenderer } from '../renderer/Renderer.ts';
+import { DIVEPerspectiveCamera } from '../engine/camera/PerspectiveCamera.ts';
+import { DIVERenderer } from '../engine/renderer/Renderer.ts';
 import { type Box3, MathUtils, Vector3, Vector3Like } from 'three';
 import { Easing } from '@tweenjs/tween.js';
 import { type DIVEAnimationSystem } from '../animation/AnimationSystem.ts';
