@@ -39,7 +39,7 @@ type Unsubscribe = () => boolean;
  *
  * dive.Communication.Subscribe('GET_ALL_SCENE_DATA', () => {
  *  // do something
- * });
+ * }));
  *
  * dive.Communication.PerformAction('GET_ALL_SCENE_DATA', {});
  * ```
@@ -780,9 +780,9 @@ export class DIVECommunication {
     private exportScene(
         payload: Actions['EXPORT_SCENE']['PAYLOAD'],
     ): Actions['EXPORT_SCENE']['RETURN'] {
-        return Promise.reject(
-            new Error(`Export is currently deactivated. (payload: ${payload})`),
-        );
+        return Modules.get('AssetExporter').then((module) => {
+            return module.export(this.scene.Root, payload.type, {});
+        });
     }
 }
 

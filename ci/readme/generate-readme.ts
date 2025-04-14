@@ -6,275 +6,187 @@ import * as ts from 'typescript';
 import * as fs from 'fs';
 import * as path from 'path';
 
-interface ActionDefinition {
+const ACTIONS_PATH = 'src/com/actions/index.ts';
+
+const templatePath = path.resolve(__dirname, './template/TEMPLATE_README.md');
+const targetPath = path.resolve('./README.md');
+const actionIndexFile = path.resolve(ACTIONS_PATH);
+
+function extractInterfaces(mainFile: string): {
     name: string;
     description: string;
-    payloadType: string;
+    payload: string;
     returnType: string;
-    sourceFile: string;
-}
+    filePath: string;
+}[] {
+    function extractInterfaceDetails(filePath: string): {
+        name: string;
+        description: string;
+        payload: string;
+        returnType: string;
+        filePath: string;
+    }[] {
+        const sourceCode = fs.readFileSync(filePath, 'utf8');
+        const sourceFile = ts.createSourceFile(
+            path.basename(filePath),
+            sourceCode,
+            ts.ScriptTarget.Latest,
+        );
+        const interfaces: {
+            name: string;
+            description: string;
+            payload: string;
+            returnType: string;
+            filePath: string;
+        }[] = [];
 
-function findTypeDefinition(type: string): string | null {
-    // Handle built-in types
-    if (
-        [
-            'string',
-            'number',
-            'boolean',
-            'void',
-            'unknown',
-            'null',
-            'undefined',
-            'object',
-        ].includes(type)
-    ) {
-        return null;
-    }
+        function visit(node: ts.Node): void {
+            // Look for interface declarations
+            if (ts.isInterfaceDeclaration(node)) {
+                const name = node.name.text;
+                let description = '';
+                let payload = '';
+                let returnType = '';
 
-    // Handle special cases
-    const specialTypes: Record<string, string> = {
-        Vector3Like: 'https://threejs.org/docs/#api/en/math/Vector3',
-        DIVESceneFileType: 'src/types/SceneType.ts',
-        DIVESceneData: 'src/types/SceneData.ts',
-        DIVESceneObject: 'src/types/SceneObjects.ts',
-        COMEntity: 'src/com/types.ts',
-    };
-
-    if (type in specialTypes) {
-        return specialTypes[type];
-    }
-
-    // Search in types directory
-    const typesDir = path.join(process.cwd(), 'src/types');
-    if (fs.existsSync(typesDir)) {
-        for (const file of fs.readdirSync(typesDir)) {
-            if (file.endsWith('.ts')) {
-                const content = fs.readFileSync(
-                    path.join(typesDir, file),
-                    'utf-8',
-                );
-                if (
-                    new RegExp(`(type|interface|enum)\\s+${type}\\b`).test(
-                        content,
-                    )
-                ) {
-                    return `src/types/${file}`;
-                }
-            }
-        }
-    }
-
-    // Search in src directory
-    const srcDir = path.join(process.cwd(), 'src');
-    if (fs.existsSync(srcDir)) {
-        for (const file of fs.readdirSync(srcDir)) {
-            if (file.endsWith('.ts')) {
-                const content = fs.readFileSync(
-                    path.join(srcDir, file),
-                    'utf-8',
-                );
-                if (
-                    new RegExp(`(type|interface|enum)\\s+${type}\\b`).test(
-                        content,
-                    )
-                ) {
-                    return `src/${file}`;
-                }
-            }
-        }
-    }
-
-    return null;
-}
-
-function formatType(type: string): string {
-    // Handle generic types (Map, Array, Promise, etc.)
-    const genericMatch = type.match(/^([A-Za-z0-9_]+)<(.+)>$/);
-    if (genericMatch) {
-        const [
-            ,
-            baseType,
-            genericParams,
-        ] = genericMatch;
-        const typeDef = findTypeDefinition(baseType);
-        const formattedBaseType = typeDef
-            ? `[${baseType}](${typeDef})`
-            : baseType;
-
-        // Format each generic parameter
-        const formattedParams = genericParams
-            .split(',')
-            .map((param) => {
-                param = param.trim();
-                // Handle keyof operator in generic parameters
-                if (param.startsWith('keyof ')) {
-                    const baseType = param.substring(6);
-                    const typeDef = findTypeDefinition(baseType);
-                    return `keyof ${typeDef ? `[${baseType}](${typeDef})` : baseType}`;
-                }
-                // Handle complex types in generic parameters
-                if (
-                    param.includes('{') ||
-                    param.includes('|') ||
-                    param.includes('&')
-                ) {
-                    return param.replace(/\b([A-Za-z0-9_]+)\b/g, (match) => {
-                        const typeDef = findTypeDefinition(match);
-                        return typeDef ? `[${match}](${typeDef})` : match;
-                    });
-                }
-                // Handle simple types in generic parameters
-                const typeDef = findTypeDefinition(param);
-                return typeDef ? `[${param}](${typeDef})` : param;
-            })
-            .join(', ');
-
-        return `${formattedBaseType}<${formattedParams}>`;
-    }
-
-    // Handle keyof operator
-    if (type.startsWith('keyof ')) {
-        const baseType = type.substring(6);
-        const typeDef = findTypeDefinition(baseType);
-        return `keyof ${typeDef ? `[${baseType}](${typeDef})` : baseType}`;
-    }
-
-    // Handle complex types (objects, unions, etc.)
-    if (type.includes('{') || type.includes('|') || type.includes('&')) {
-        return type.replace(/\b([A-Za-z0-9_]+)\b/g, (match) => {
-            const typeDef = findTypeDefinition(match);
-            return typeDef ? `[${match}](${typeDef})` : match;
-        });
-    }
-
-    const typeDef = findTypeDefinition(type);
-    if (typeDef) {
-        return `[${type}](${typeDef})`;
-    }
-    return type;
-}
-
-function extractActionDefinitions(
-    sourceFile: ts.SourceFile,
-): ActionDefinition[] {
-    const actions: ActionDefinition[] = [];
-
-    function visit(node: ts.Node): void {
-        // Handle Action.define
-        if (ts.isVariableStatement(node)) {
-            const declaration = node.declarationList.declarations[0];
-            if (
-                ts.isVariableDeclaration(declaration) &&
-                ts.isIdentifier(declaration.name)
-            ) {
-                const initializer = declaration.initializer;
-                if (initializer && ts.isCallExpression(initializer)) {
-                    const callExpr = initializer;
-                    if (
-                        ts.isPropertyAccessExpression(callExpr.expression) &&
-                        callExpr.expression.name.text === 'define' &&
-                        ts.isIdentifier(callExpr.expression.expression) &&
-                        callExpr.expression.expression.text === 'Action'
-                    ) {
-                        const typeArgs = callExpr.typeArguments;
-                        if (typeArgs && typeArgs.length === 2) {
-                            const payloadType = typeArgs[0].getText();
-                            const returnType = typeArgs[1].getText();
-                            const description = callExpr.arguments[0]
-                                .getText()
-                                .slice(1, -1);
-
-                            actions.push({
-                                name: declaration.name.text,
-                                description,
-                                payloadType,
-                                returnType,
-                                sourceFile: sourceFile.fileName,
-                            });
+                // Extract DESCRIPTION, PAYLOAD, and RETURN
+                node.members.forEach((member) => {
+                    if (ts.isPropertySignature(member)) {
+                        const memberName = member.name.getText(sourceFile);
+                        if (member.type && memberName === 'DESCRIPTION') {
+                            description = member.type.getText(sourceFile);
+                        } else if (member.type && memberName === 'PAYLOAD') {
+                            payload = member.type.getText(sourceFile);
+                        } else if (member.type && memberName === 'RETURN') {
+                            returnType = member.type.getText(sourceFile);
                         }
                     }
-                }
+                });
+
+                // create a relative path to the file for adding to the table
+                const relativeFilePath = path.relative(process.cwd(), filePath);
+                interfaces.push({
+                    name,
+                    description,
+                    payload,
+                    returnType,
+                    filePath: relativeFilePath,
+                });
             }
+
+            ts.forEachChild(node, visit);
         }
 
-        ts.forEachChild(node, visit);
+        ts.forEachChild(sourceFile, visit);
+        return interfaces;
     }
 
-    visit(sourceFile);
-    return actions;
-}
-
-function findActionFiles(dir: string): string[] {
-    const files: string[] = [];
-    const entries = fs.readdirSync(dir);
-
-    for (const entry of entries) {
-        const fullPath = path.join(dir, entry);
-        const stat = fs.statSync(fullPath);
-
-        if (stat.isDirectory()) {
-            files.push(...findActionFiles(fullPath));
-        } else if (
-            stat.isFile() &&
-            entry.endsWith('.ts') &&
-            entry !== 'action.ts' &&
-            entry !== 'index.ts'
-        ) {
-            files.push(fullPath);
-        }
-    }
-
-    return files;
-}
-
-function generateReadme(): void {
-    const actionsDir = path.join(process.cwd(), 'src/com/actions');
-    const templatePath = path.join(
-        process.cwd(),
-        'ci/readme/template/TEMPLATE_README.md',
-    );
-    const readmePath = path.join(process.cwd(), 'README.md');
-
-    // Read template
-    const template = fs.readFileSync(templatePath, 'utf-8');
-
-    // Find all TypeScript files in actions directory recursively
-    const actionFiles = findActionFiles(actionsDir);
-
-    // Extract action definitions
-    const actions: ActionDefinition[] = [];
-    for (const file of actionFiles) {
+    function getImportedInterfaces(mainFilePath: string): string[] {
+        const sourceCode = fs.readFileSync(mainFilePath, 'utf8');
         const sourceFile = ts.createSourceFile(
-            file,
-            fs.readFileSync(file, 'utf-8'),
+            path.basename(mainFilePath),
+            sourceCode,
             ts.ScriptTarget.Latest,
-            true,
         );
-        actions.push(...extractActionDefinitions(sourceFile));
+        const importPaths: string[] = [];
+
+        function visit(node: ts.Node): void {
+            // Collect import declarations
+            if (
+                ts.isImportDeclaration(node) &&
+                node.moduleSpecifier &&
+                ts.isStringLiteral(node.moduleSpecifier)
+            ) {
+                const importPath = node.moduleSpecifier.text;
+                const resolvedPath = path.resolve(
+                    path.dirname(mainFilePath),
+                    importPath.replace('.js', '.ts'),
+                );
+                importPaths.push(resolvedPath);
+            }
+
+            ts.forEachChild(node, visit);
+        }
+
+        ts.forEachChild(sourceFile, visit);
+        return importPaths;
     }
 
-    // Sort actions by name
-    actions.sort((a, b) => a.name.localeCompare(b.name));
+    // Change this to your main TS file path
+    const mainFilePath = path.resolve(__dirname, mainFile);
 
-    // Generate actions section
-    let actionsSection = '| Action | Description | Input | Return |\n';
-    actionsSection += '| ------ | ----------- | ----- | ------ |';
-
-    for (const action of actions) {
-        const relativePath = path.relative(process.cwd(), action.sourceFile);
-        const formattedPayloadType = formatType(action.payloadType);
-        const formattedReturnType = formatType(action.returnType);
-        actionsSection += `| [${action.name}](${relativePath}) | ${action.description} | <code>${formattedPayloadType}</code> | <code>${formattedReturnType.replace(/\|/g, '\\|')}</code> |\n`;
-    }
-
-    actionsSection += '';
-
-    // Replace the placeholder in the template
-    const newContent = template.replace(
-        '<!-- INSERT_TABLE -->',
-        actionsSection,
+    // Get all imported interface files
+    const importPaths = getImportedInterfaces(mainFilePath);
+    const extractedInterfaces = importPaths.flatMap((importPath) =>
+        extractInterfaceDetails(importPath),
     );
-    fs.writeFileSync(readmePath, newContent);
+    return extractedInterfaces;
 }
 
-generateReadme();
+// extract interfaces from the action index file
+const interfaces = extractInterfaces(actionIndexFile).sort((a, b) =>
+    a.name.toLowerCase().localeCompare(b.name.toLowerCase()),
+);
+
+// create table
+let table = `<table>
+    <tr>
+        <th>Actions</th>
+        <th>Description</th>
+    </tr>`;
+
+// add each interface to the table
+interfaces.forEach(({ name, description, filePath }) => {
+    table += `
+    <tr>
+        <td>
+            <a href="${filePath}"> ${name} </a>
+        </td>
+        <td>
+            ${description.slice(1, description.length - 1)}
+        </td>
+    </tr>`;
+});
+
+// close table
+table += `\n</table>`;
+
+// finally, write the markdown to the README.md file
+fs.access(templatePath, fs.constants.F_OK, (err) => {
+    if (err) throw err;
+
+    fs.readFile(templatePath, 'utf8', (err, templateMarkdown) => {
+        if (err) throw err;
+
+        fs.access(targetPath, fs.constants.F_OK, (err) => {
+            if (err) {
+                // File does not exist, create it
+                fs.writeFile(targetPath, templateMarkdown, (err) => {
+                    if (err) throw err;
+                });
+            } else {
+                // File exists, open a stream and write to it
+                const writeStream = fs.createWriteStream(targetPath, {
+                    flags: 'w',
+                });
+
+                writeStream.write(
+                    `<!--
+
+
+This file is automatically generated
+You can find the template in ci/readme/template/TEMPLATE_README.md
+
+
+-->\n\n`,
+                );
+
+                const templateWithTable = templateMarkdown.replace(
+                    '<!-- INSERT_TABLE -->',
+                    table,
+                );
+                writeStream.write(templateWithTable);
+                writeStream.end();
+            }
+        });
+    });
+});
