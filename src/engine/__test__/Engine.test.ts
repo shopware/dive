@@ -18,6 +18,7 @@ const mockRendererInstance = {
         callback();
         return 'resize-observer-id';
     }),
+    StartRenderer: jest.fn(),
     RemovePreRenderCallback: jest.fn(),
     dispose: jest.fn(),
     domElement: mockCanvasElement,
