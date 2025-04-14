@@ -239,7 +239,7 @@ export default class DIVE {
 
 export { DIVE, DIVECommunication };
 
-export { DiveMath } from './math/index.ts';
+export { DIVEMath as DiveMath } from './math/index.ts';
 
 export * from './com/actions/index.ts';
 export * from './com/types';
