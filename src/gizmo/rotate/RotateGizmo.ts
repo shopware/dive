@@ -8,7 +8,7 @@ import DIVEOrbitControls from '../../controls/OrbitControls';
 import { DIVERadialHandle } from '../handles/RadialHandle';
 import { DIVEGizmo, DIVEGizmoAxis } from '../Gizmo';
 import { DraggableEvent } from '../../toolbox/BaseTool';
-import { DiveMath } from '../../math';
+import { DIVEMath } from '../../math';
 
 export class DIVERotateGizmo extends Object3D {
     public children: DIVERadialHandle[];
@@ -123,7 +123,7 @@ export class DIVERotateGizmo extends Object3D {
             .clone()
             .sub(this.parent.parent.position)
             .normalize();
-        const signedAngle = DiveMath.signedAngleTo(
+        const signedAngle = DIVEMath.signedAngleTo(
             startVector,
             currentVector,
             handle.forwardVector,

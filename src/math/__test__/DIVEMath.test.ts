@@ -1,12 +1,12 @@
-import { DiveMath } from '../index';
+import { DIVEMath } from '../index';
 
 describe('dive/math', () => {
     it('should be defined', () => {
-        expect(DiveMath).toBeDefined();
-        expect(DiveMath.ceilExp).toBeDefined();
-        expect(DiveMath.floorExp).toBeDefined();
-        expect(DiveMath.roundExp).toBeDefined();
-        expect(DiveMath.toFixedExp).toBeDefined();
-        expect(DiveMath.truncateExp).toBeDefined();
+        expect(DIVEMath).toBeDefined();
+        expect(DIVEMath.ceilExp).toBeDefined();
+        expect(DIVEMath.floorExp).toBeDefined();
+        expect(DIVEMath.roundExp).toBeDefined();
+        expect(DIVEMath.toFixedExp).toBeDefined();
+        expect(DIVEMath.truncateExp).toBeDefined();
     });
 });
