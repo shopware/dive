@@ -12,35 +12,35 @@
             "import": "./build/index.mjs",
             "require": "./build/index.cjs"
         },
-        "./AssetLoader": {
-            "types": "./build/src/modules/AssetLoader.d.ts",
-            "import": "./build/src/modules/AssetLoader.mjs",
-            "require": "./build/src/modules/AssetLoader.cjs"
+        "./modules/AssetLoader": {
+            "types": "./build/modules/asset/loader/AssetLoader.d.ts",
+            "import": "./build/modules/asset/loader/AssetLoader.mjs",
+            "require": "./build/modules/asset/loader/AssetLoader.cjs"
         },
-        "./AssetConverter": {
-            "types": "./build/src/modules/AssetConverter.d.ts",
-            "import": "./build/src/modules/AssetConverter.mjs",
-            "require": "./build/src/modules/AssetConverter.cjs"
+        "./modules/AssetConverter": {
+            "types": "./build/modules/asset/converter/AssetConverter.d.ts",
+            "import": "./build/modules/asset/converter/AssetConverter.mjs",
+            "require": "./build/modules/asset/converter/AssetConverter.cjs"
         },
-        "./AssetExporter": {
-            "types": "./build/src/modules/AssetExporter.d.ts",
-            "import": "./build/src/modules/AssetExporter.mjs",
-            "require": "./build/src/modules/AssetExporter.cjs"
+        "./modules/AssetExporter": {
+            "types": "./build/modules/asset/exporter/AssetExporter.d.ts",
+            "import": "./build/modules/asset/exporter/AssetExporter.mjs",
+            "require": "./build/modules/asset/exporter/AssetExporter.cjs"
         },
-        "./ARSystem": {
-            "types": "./build/src/modules/ARSystem.d.ts",
-            "import": "./build/src/modules/ARSystem.mjs",
-            "require": "./build/src/modules/ARSystem.cjs"
+        "./modules/ARSystem": {
+            "types": "./build/modules/ar/ARSystem.d.ts",
+            "import": "./build/modules/ar/ARSystem.mjs",
+            "require": "./build/modules/ar/ARSystem.cjs"
         },
-        "./MediaCreator": {
-            "types": "./build/src/modules/MediaCreator.d.ts",
-            "import": "./build/src/modules/MediaCreator.mjs",
-            "require": "./build/src/modules/MediaCreator.cjs"
+        "./modules/MediaCreator": {
+            "types": "./build/modules/mediacreator/MediaCreator.d.ts",
+            "import": "./build/modules/mediacreator/MediaCreator.mjs",
+            "require": "./build/modules/mediacreator/MediaCreator.cjs"
         },
-        "./SystemInfo": {
-            "types": "./build/src/modules/SystemInfo.d.ts",
-            "import": "./build/src/modules/SystemInfo.mjs",
-            "require": "./build/src/modules/SystemInfo.cjs"
+        "./modules/SystemInfo": {
+            "types": "./build/modules/systeminfo/SystemInfo.d.ts",
+            "import": "./build/modules/systeminfo/SystemInfo.mjs",
+            "require": "./build/modules/systeminfo/SystemInfo.cjs"
         }
     },
     "files": [
@@ -95,6 +95,7 @@
     },
     "scripts": {
         "build": "vite build",
+        "postbuild": "NODE_OPTIONS='--loader ts-node/esm' ts-node scripts/validate-build-paths.ts",
         "dev": "vite build --watch",
         "lint": "eslint",
         "lint:actions": "bash ci/lint/lint-actions.sh",
