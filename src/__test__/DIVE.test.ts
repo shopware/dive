@@ -20,7 +20,7 @@ jest.mock('../com/Communication.ts', () => {
     };
 });
 
-jest.mock('../renderer/Renderer.ts', () => {
+jest.mock('../engine/renderer/Renderer.ts', () => {
     return {
         DIVERenderer: jest.fn(function () {
             this.domElement = {
@@ -50,7 +50,7 @@ jest.mock('../renderer/Renderer.ts', () => {
     };
 });
 
-jest.mock('../scene/Scene.ts', () => {
+jest.mock('../engine/scene/Scene.ts', () => {
     return {
         DIVEScene: jest.fn(function () {
             this.add = jest.fn();
@@ -72,24 +72,26 @@ jest.mock('../scene/Scene.ts', () => {
     };
 });
 
-jest.mock('../camera/PerspectiveCamera.ts', () => {
-    return jest.fn(function () {
-        this.isObject3D = true;
-        this.parent = null;
-        this.dispatchEvent = jest.fn();
-        this.position = {
-            set: jest.fn(),
-        };
-        this.SetIntensity = jest.fn();
-        this.SetEnabled = jest.fn();
-        this.SetColor = jest.fn();
-        this.userData = {
-            id: undefined,
-        };
-        this.removeFromParent = jest.fn();
-        this.OnResize = jest.fn();
-        return this;
-    });
+jest.mock('../engine/camera/PerspectiveCamera.ts', () => {
+    return {
+        DIVEPerspectiveCamera: jest.fn(function () {
+            this.isObject3D = true;
+            this.parent = null;
+            this.dispatchEvent = jest.fn();
+            this.position = {
+                set: jest.fn(),
+            };
+            this.SetIntensity = jest.fn();
+            this.SetEnabled = jest.fn();
+            this.SetColor = jest.fn();
+            this.userData = {
+                id: undefined,
+            };
+            this.removeFromParent = jest.fn();
+            this.OnResize = jest.fn();
+            return this;
+        }),
+    };
 });
 
 jest.mock('../controls/OrbitControls.ts', () => {
@@ -223,52 +225,8 @@ describe('dive/DIVE', () => {
         expect(dive.communication).toBeDefined();
     });
 
-    it('should have Modules', () => {
-        const dive = new DIVE();
-        expect(dive.modules).toBeDefined();
-    });
-
     it('should resize', () => {
         const dive = new DIVE();
-        expect(() => dive.OnResize(800, 600)).not.toThrow();
-    });
-
-    it('should update settings', () => {
-        const dive = new DIVE();
-        dive.Settings = {
-            autoResize: false,
-            displayAxes: true,
-            renderer: {
-                antialias: false,
-                alpha: false,
-                stencil: false,
-                shadowMapEnabled: false,
-                shadowMapType: 0,
-                toneMapping: 0,
-            },
-            perspectiveCamera: {
-                fov: 0,
-                near: 0,
-                far: 0,
-            },
-            orbitControls: {
-                enableDamping: false,
-                dampingFactor: 0,
-            },
-        };
-
-        dive.Settings = {
-            autoResize: true,
-        };
-
-        Object.assign(dive.canvas, { parentElement: null });
-
-        dive.Settings = {
-            autoResize: false,
-        };
-
-        dive.Settings = {
-            autoResize: true,
-        };
+        expect(() => dive.engine.onResize(800, 600)).not.toThrow();
     });
 });

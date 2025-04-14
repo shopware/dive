@@ -1,8 +1,8 @@
 import {
     WebGLRendererRenderMock,
     WebGLRendererSetSizeMock,
-} from '../../../__mocks__/three';
-import type DIVEPerspectiveCamera from '../../camera/PerspectiveCamera';
+} from '../../../../__mocks__/three';
+import { type DIVEPerspectiveCamera } from '../../camera/PerspectiveCamera';
 import { type DIVEScene } from '../../scene/Scene';
 import { DIVERenderer, DIVERendererDefaultSettings } from '../Renderer';
 

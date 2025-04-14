@@ -1,21 +1,23 @@
 import DIVEOrbitControls from '../OrbitControls';
-import type DIVEPerspectiveCamera from '../../camera/PerspectiveCamera';
-import { DIVERenderer } from '../../renderer/Renderer';
+import { type DIVEPerspectiveCamera } from '../../engine/camera/PerspectiveCamera';
+import { DIVERenderer } from '../../engine/renderer/Renderer';
 import { Box3 } from 'three';
 import { DIVEAnimationSystem } from '../../animation/AnimationSystem';
 import { Tween } from '@tweenjs/tween.js';
 
-jest.mock('../../renderer/Renderer', () => {
-    return jest.fn(function () {
-        this.domElement = {
-            style: {},
-        };
-        this.AddPreRenderCallback = (callback: () => void) => {
-            callback();
-        };
+jest.mock('../../engine/renderer/Renderer', () => {
+    return {
+        DIVERenderer: jest.fn(function () {
+            this.domElement = {
+                style: {},
+            };
+            this.AddPreRenderCallback = (callback: () => void) => {
+                callback();
+            };
 
-        return this;
-    });
+            return this;
+        }),
+    };
 });
 
 jest.mock('../../animation/AnimationSystem', () => {

@@ -1,4 +1,4 @@
-import DIVEPerspectiveCamera from '../PerspectiveCamera';
+import { DIVEPerspectiveCamera } from '../PerspectiveCamera';
 
 let cam: DIVEPerspectiveCamera;
 

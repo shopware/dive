@@ -1,9 +1,9 @@
 import { Color, Scene, type Box3, type ColorRepresentation } from 'three';
-import { type COMModel, type COMEntity } from '../com/types';
+import { type COMModel, type COMEntity } from '../../com/types';
 import { DIVERoot } from './root/Root';
-import { DIVEGrid } from '../grid/Grid';
-import { DIVEFloor } from '../primitive/floor/Floor';
-import { type DIVESceneObject } from '../types';
+import { DIVEGrid } from '../../grid/Grid';
+import { DIVEFloor } from '../../primitive/floor/Floor';
+import { type DIVESceneObject } from '../../types';
 import { DIVEXRRoot } from './xrroot/XRRoot';
 import { type DIVERenderer } from '../renderer/Renderer';
 

@@ -1,4 +1,4 @@
-import { DIVERenderer } from '../../renderer/Renderer';
+import { DIVERenderer } from '../../engine/renderer/Renderer';
 import { DIVEAnimationSystem } from '../AnimationSystem';
 
 const mockRenderer = {

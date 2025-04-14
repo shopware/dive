@@ -8,10 +8,10 @@ import {
     type COMGeometry,
     type COMGroup,
     type COMEntityType,
-} from '../../../com/types';
+} from '../../../../com/types';
 import { type DIVEScene } from '../../Scene';
-import { DIVECommunication } from '../../../com/Communication';
-import { type DIVESceneObject } from '../../../types';
+import { DIVECommunication } from '../../../../com/Communication';
+import { type DIVESceneObject } from '../../../../types';
 import { Object3D } from 'three';
 
 jest.mock('../../../modules', () => ({
@@ -22,7 +22,7 @@ jest.mock('../../../modules', () => ({
     },
 }));
 
-jest.mock('../../../com/Communication.ts', () => {
+jest.mock('../../../../com/Communication.ts', () => {
     return {
         DIVECommunication: {
             get: jest.fn(() => {
@@ -34,7 +34,7 @@ jest.mock('../../../com/Communication.ts', () => {
     };
 });
 
-jest.mock('../../../primitive/floor/Floor', () => {
+jest.mock('../../../../primitive/floor/Floor', () => {
     return jest.fn(function () {
         this.isObject3D = true;
         this.parent = null;
@@ -45,7 +45,7 @@ jest.mock('../../../primitive/floor/Floor', () => {
     });
 });
 
-jest.mock('../../../grid/Grid', () => {
+jest.mock('../../../../grid/Grid', () => {
     return jest.fn(function () {
         this.isObject3D = true;
         this.parent = null;
@@ -56,7 +56,7 @@ jest.mock('../../../grid/Grid', () => {
     });
 });
 
-jest.mock('../../../light/AmbientLight.ts', () => {
+jest.mock('../../../../light/AmbientLight.ts', () => {
     return jest.fn(function () {
         this.isObject3D = true;
         this.parent = null;
@@ -82,7 +82,7 @@ jest.mock('../../../light/AmbientLight.ts', () => {
     });
 });
 
-jest.mock('../../../light/PointLight.ts', () => {
+jest.mock('../../../../light/PointLight.ts', () => {
     return jest.fn(function () {
         this.isObject3D = true;
         this.parent = null;
@@ -108,7 +108,7 @@ jest.mock('../../../light/PointLight.ts', () => {
     });
 });
 
-jest.mock('../../../light/SceneLight.ts', () => {
+jest.mock('../../../../light/SceneLight.ts', () => {
     return jest.fn(function () {
         this.isObject3D = true;
         this.parent = null;
@@ -134,7 +134,7 @@ jest.mock('../../../light/SceneLight.ts', () => {
     });
 });
 
-jest.mock('../../../model/Model.ts', () => {
+jest.mock('../../../../model/Model.ts', () => {
     return {
         DIVEModel: jest.fn(function () {
             this.isObject3D = true;
@@ -163,7 +163,7 @@ jest.mock('../../../model/Model.ts', () => {
     };
 });
 
-jest.mock('../../../primitive/Primitive.ts', () => {
+jest.mock('../../../../primitive/Primitive.ts', () => {
     return {
         DIVEPrimitive: jest.fn(function () {
             this.isObject3D = true;
@@ -192,7 +192,7 @@ jest.mock('../../../primitive/Primitive.ts', () => {
     };
 });
 
-jest.mock('../../../group/Group.ts', () => {
+jest.mock('../../../../group/Group.ts', () => {
     return {
         DIVEGroup: jest.fn(function () {
             this.isDIVEGroup = true;
