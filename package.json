@@ -12,10 +12,35 @@
             "import": "./build/index.mjs",
             "require": "./build/index.cjs"
         },
-        "./modules/*": {
-            "types": "./build/src/modules/*.d.ts",
-            "import": "./build/src/modules/*.mjs",
-            "require": "./build/src/modules/*.cjs"
+        "./AssetLoader": {
+            "types": "./build/src/modules/AssetLoader.d.ts",
+            "import": "./build/src/modules/AssetLoader.mjs",
+            "require": "./build/src/modules/AssetLoader.cjs"
+        },
+        "./AssetConverter": {
+            "types": "./build/src/modules/AssetConverter.d.ts",
+            "import": "./build/src/modules/AssetConverter.mjs",
+            "require": "./build/src/modules/AssetConverter.cjs"
+        },
+        "./AssetExporter": {
+            "types": "./build/src/modules/AssetExporter.d.ts",
+            "import": "./build/src/modules/AssetExporter.mjs",
+            "require": "./build/src/modules/AssetExporter.cjs"
+        },
+        "./ARSystem": {
+            "types": "./build/src/modules/ARSystem.d.ts",
+            "import": "./build/src/modules/ARSystem.mjs",
+            "require": "./build/src/modules/ARSystem.cjs"
+        },
+        "./MediaCreator": {
+            "types": "./build/src/modules/MediaCreator.d.ts",
+            "import": "./build/src/modules/MediaCreator.mjs",
+            "require": "./build/src/modules/MediaCreator.cjs"
+        },
+        "./SystemInfo": {
+            "types": "./build/src/modules/SystemInfo.d.ts",
+            "import": "./build/src/modules/SystemInfo.mjs",
+            "require": "./build/src/modules/SystemInfo.cjs"
         }
     },
     "files": [

@@ -141,7 +141,7 @@ jobs:
               run: yarn build
 
             - name: Add build files
-              run: git add ./build -f
+              run: git add ./build -f && git add package.json
 
             - name: Commit changes
               run: |
