@@ -33,12 +33,15 @@ function updatePackageJsonExports(registrations: ModuleRegistration[]): void {
     };
 
     // Add each module to exports
-    registrations.forEach(({ name }) => {
-        const modulePath = `./${name}`;
+    registrations.forEach(({ name, path }) => {
+        // Convert the source path to the build path structure
+        const buildPath = path.replace(/\.ts$/, '');
+        const modulePath = `./modules/${name}`;
+
         exports[modulePath] = {
-            types: `./build/src/modules/${name}.d.ts`,
-            import: `./build/src/modules/${name}.mjs`,
-            require: `./build/src/modules/${name}.cjs`,
+            types: `./build/${buildPath}.d.ts`,
+            import: `./build/${buildPath}.mjs`,
+            require: `./build/${buildPath}.cjs`,
         };
     });
 
