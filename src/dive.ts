@@ -48,80 +48,82 @@ export const DIVEDefaultSettings: DIVESettings = {
 
 export default class DIVE {
     // static members
-    public static QuickView(
+    public static async QuickView(
         uri: string,
         settings?: Partial<DIVESettings>,
-    ): DIVE {
-        const dive = new DIVE(settings);
+    ): Promise<DIVE> {
+        return new Promise((resolve) => {
+            const dive = new DIVE(settings);
 
-        dive._communication.PerformAction('SET_CAMERA_TRANSFORM', {
-            position: { x: 0, y: 2, z: 2 },
-            target: { x: 0, y: 0.5, z: 0 },
-        });
-
-        // generate scene light id
-        const lightid = MathUtils.generateUUID();
-
-        // add scene light
-        dive._communication.PerformAction('ADD_OBJECT', {
-            entityType: 'light',
-            type: 'scene',
-            name: 'light',
-            id: lightid,
-            enabled: true,
-            visible: true,
-            intensity: 1,
-            color: 0xffffff,
-        });
-
-        // generate model id
-        const modelid = MathUtils.generateUUID();
-
-        // add loaded listener
-        dive._communication.Subscribe('MODEL_LOADED', (data) => {
-            if (data.id !== modelid) return;
-
-            const transform = dive._communication.PerformAction(
-                'COMPUTE_ENCOMPASSING_VIEW',
-                {},
-            );
+            // set scene properties
+            dive._communication.PerformAction('UPDATE_SCENE', {
+                backgroundColor: 0xffffff,
+                gridEnabled: false,
+                floorColor: 0xffffff,
+            });
 
             dive._communication.PerformAction('SET_CAMERA_TRANSFORM', {
-                position: transform.position,
-                target: transform.target,
+                position: { x: 0, y: 2, z: 2 },
+                target: { x: 0, y: 0.5, z: 0 },
+            });
+
+            // generate scene light id
+            const lightid = MathUtils.generateUUID();
+
+            // add scene light
+            dive._communication.PerformAction('ADD_OBJECT', {
+                entityType: 'light',
+                type: 'scene',
+                name: 'light',
+                id: lightid,
+                enabled: true,
+                visible: true,
+                intensity: 1,
+                color: 0xffffff,
+            });
+
+            // generate model id
+            const modelid = MathUtils.generateUUID();
+
+            // add loaded listener
+            dive._communication.Subscribe('MODEL_LOADED', (data) => {
+                if (data.id !== modelid) return;
+
+                const transform = dive._communication.PerformAction(
+                    'COMPUTE_ENCOMPASSING_VIEW',
+                    {},
+                );
+
+                dive._communication.PerformAction('SET_CAMERA_TRANSFORM', {
+                    position: transform.position,
+                    target: transform.target,
+                });
+
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                if (!(window as any).DIVE.instances) {
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                    (window as any).DIVE.instances = [];
+                }
+
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                (window as any).DIVE.instances.push(dive);
+
+                resolve(dive);
+            });
+
+            // instantiate model
+            dive._communication.PerformAction('ADD_OBJECT', {
+                entityType: 'model',
+                name: 'object',
+                id: modelid,
+                position: { x: 0, y: 0, z: 0 },
+                rotation: { x: 0, y: 0, z: 0 },
+                scale: { x: 1, y: 1, z: 1 },
+                uri: uri,
+                visible: true,
+                loaded: false,
             });
         });
-
-        // instantiate model
-        dive._communication.PerformAction('ADD_OBJECT', {
-            entityType: 'model',
-            name: 'object',
-            id: modelid,
-            position: { x: 0, y: 0, z: 0 },
-            rotation: { x: 0, y: 0, z: 0 },
-            scale: { x: 1, y: 1, z: 1 },
-            uri: uri,
-            visible: true,
-            loaded: false,
-        });
-
-        // set scene properties
-        dive._communication.PerformAction('UPDATE_SCENE', {
-            backgroundColor: 0xffffff,
-            gridEnabled: false,
-            floorColor: 0xffffff,
-        });
-
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        if (!(window as any).DIVE.instances) {
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            (window as any).DIVE.instances = [];
-        }
-
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        (window as any).DIVE.instances.push(dive);
-
-        return dive;
     }
 
     // descriptive members
