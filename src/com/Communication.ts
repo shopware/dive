@@ -27,15 +27,6 @@ type EventListener<Action extends keyof Actions> = (
 
 type Unsubscribe = () => boolean;
 
-export interface ActionDependencies {
-    scene: DIVEScene;
-    renderer: DIVERenderer;
-    controls: DIVEOrbitControls;
-    toolbox: DIVEToolbox;
-    mediaCreator: import('../modules/mediacreator/MediaCreator.ts').MediaCreator;
-    ar: import('../modules/ar/ARSystem.ts').ARSystem;
-}
-
 /**
  * Main class for communicating with DIVE.
  *
@@ -792,25 +783,6 @@ export class DIVECommunication {
         return Promise.reject(
             new Error(`Export is currently deactivated. (payload: ${payload})`),
         );
-    }
-
-    private async getDependencies<D extends Partial<ActionDependencies>>(
-        requiredDeps: D,
-    ): Promise<D> {
-        const deps: Partial<ActionDependencies> = {};
-
-        // Only load the dependencies that are actually needed
-        if ('scene' in requiredDeps) deps.scene = this.scene;
-        if ('renderer' in requiredDeps) deps.renderer = this.renderer;
-        if ('controls' in requiredDeps) deps.controls = this.controller;
-        if ('toolbox' in requiredDeps) deps.toolbox = this.toolbox;
-        if ('mediaCreator' in requiredDeps)
-            deps.mediaCreator = await Modules.get('MediaCreator');
-        if ('ar' in requiredDeps) {
-            deps.ar = await Modules.get('ARSystem');
-        }
-
-        return deps as D;
     }
 }
 

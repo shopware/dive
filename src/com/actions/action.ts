@@ -1,36 +1,28 @@
-import { type ActionDependencies } from '../Communication';
+import { ActionDependencies } from './types';
 
-export abstract class Action<
-    P = unknown,
-    R = void,
-    D extends Partial<ActionDependencies> = Partial<ActionDependencies>,
-> {
+export abstract class Action<P = unknown, R = void> {
     protected abstract readonly _description: string;
     protected _payload: P;
-    protected readonly _dependencies: D;
+    protected readonly _dependencies: Partial<ActionDependencies>;
     public abstract execute(): R;
 
-    constructor(payload: P, dependencies: D) {
+    constructor(payload: P, dependencies: Partial<ActionDependencies>) {
         this._payload = payload;
         this._dependencies = dependencies;
     }
 
-    public static define<
-        T,
-        R,
-        D extends Partial<ActionDependencies> = Partial<ActionDependencies>,
-    >({
-        description,
-        execute,
-    }: {
-        description: string;
-        execute: (payload: T, dependencies: D) => R;
-    }): new (payload: T, dependencies: D) => Action<T, R, D> {
-        return class extends Action<T, R, D> {
+    public static define<T, R>(
+        description: string,
+        execute: (payload: T, dependencies: Partial<ActionDependencies>) => R,
+    ): new (
+        payload: T,
+        dependencies: Partial<ActionDependencies>,
+    ) => Action<T, R> {
+        return class extends Action<T, R> {
             readonly _description = description;
             readonly _payload: T;
 
-            constructor(payload: T, dependencies: D) {
+            constructor(payload: T, dependencies: Partial<ActionDependencies>) {
                 super(payload, dependencies);
                 this._payload = payload;
             }
