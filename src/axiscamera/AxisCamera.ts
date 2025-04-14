@@ -16,8 +16,8 @@ import {
     AxesColorGreenLetter,
     AxesColorBlueLetter,
 } from '../constant/AxisHelperColors.ts';
-import { type DIVERenderer } from '../renderer/Renderer.ts';
-import { type DIVEScene } from '../scene/Scene.ts';
+import { type DIVERenderer } from '../engine/renderer/Renderer.ts';
+import { type DIVEScene } from '../engine/scene/Scene.ts';
 import type DIVEOrbitControls from '../controls/OrbitControls.ts';
 
 /**

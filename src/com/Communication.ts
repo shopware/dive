@@ -14,12 +14,12 @@ import {
     type COMPrimitive,
     type COMGroup,
 } from './types';
-import { type DIVEScene } from '../scene/Scene.ts';
-import type DIVEToolbox from '../toolbox/Toolbox.ts';
-import type DIVEOrbitControls from '../controls/OrbitControls.ts';
-import { type DIVEModel } from '../model/Model.ts';
-import { type DIVERenderer } from '../renderer/Renderer.ts';
-import { type DIVESelectable } from '../interface/Selectable.ts';
+import { type DIVEScene } from '../engine/scene/Scene';
+import type DIVEToolbox from '../toolbox/Toolbox';
+import type DIVEOrbitControls from '../controls/OrbitControls';
+import { type DIVEModel } from '../model/Model';
+import { type DIVERenderer } from '../engine/renderer/Renderer';
+import { type DIVESelectable } from '../interface/Selectable';
 
 type EventListener<Action extends keyof Actions> = (
     payload: Actions[Action]['PAYLOAD'],

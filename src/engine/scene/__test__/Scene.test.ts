@@ -1,6 +1,5 @@
 import { DIVEScene } from '../Scene';
-import { type Color } from 'three';
-import { type COMEntity } from '../../com/types';
+import { type COMEntity } from '../../../com/types';
 import { DIVERenderer } from '../../renderer/Renderer';
 
 const mock_AddSceneObject = jest.fn();

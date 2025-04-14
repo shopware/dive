@@ -7,7 +7,7 @@ import {
     type Texture,
     type MeshStandardMaterial,
 } from 'three';
-import type { DIVEScene } from '../../scene/Scene';
+import type { DIVEScene } from '../../engine/scene/Scene';
 import {
     type COMMaterial,
     type COMGeometry,
