@@ -1,0 +1,31 @@
+import { Matrix4, Quaternion, Vector3 } from 'three';
+import { DIVERenderer } from '../../../../engine/renderer/Renderer';
+export declare class DIVEWebXROrigin {
+    private _renderer;
+    private _session;
+    private _requesting;
+    private _initialized;
+    private _referenceSpaceBuffer;
+    private _hitTestSource;
+    private _entityTypes;
+    private _hitTestResultBuffer;
+    private _raycastHitCounter;
+    private _originSet;
+    private _originSetResolve;
+    get originSet(): Promise<void>;
+    private _matrix;
+    get matrix(): Matrix4;
+    private set matrix(value);
+    private _position;
+    get position(): Vector3;
+    private _quaternion;
+    get quaternion(): Quaternion;
+    private _scale;
+    get scale(): Vector3;
+    constructor(session: XRSession, renderer: DIVERenderer, entityTypes?: XRHitTestTrackableType[]);
+    Init(): Promise<this>;
+    Dispose(): void;
+    Update(frame: XRFrame): void;
+    private onHitFound;
+    private onHitLost;
+}
