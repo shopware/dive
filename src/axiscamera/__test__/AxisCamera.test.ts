@@ -1,7 +1,7 @@
 import { AxesHelper, Matrix4, OrthographicCamera, Vector4 } from 'three';
 import DIVEAxisCamera from '../AxisCamera';
-import { DIVERenderer } from '../../renderer/Renderer';
-import { DIVEScene } from '../../scene/Scene';
+import { DIVERenderer } from '../../engine/renderer/Renderer';
+import { DIVEScene } from '../../engine/scene/Scene';
 import DIVEOrbitControls from '../../controls/OrbitControls';
 
 const mockRenderer = {

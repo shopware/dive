@@ -2,7 +2,7 @@ import { RaycasterIntersectObjectMock } from '../../../__mocks__/three';
 
 import { DIVEModel } from '../Model';
 import { DIVECommunication } from '../../com/Communication';
-import { DIVEScene } from '../../scene/Scene';
+import { DIVEScene } from '../../engine/scene/Scene';
 import {
     Vector3,
     Box3,

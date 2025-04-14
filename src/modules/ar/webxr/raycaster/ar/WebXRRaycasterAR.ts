@@ -1,5 +1,5 @@
 import { Matrix4, Vector3 } from 'three';
-import { type DIVERenderer } from '../../../../../renderer/Renderer';
+import { type DIVERenderer } from '../../../../../engine/renderer/Renderer';
 import { type DIVEHitResult } from '../WebXRRaycaster';
 
 export class DIVEWebXRRaycasterAR {
