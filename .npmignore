@@ -1,0 +1,7 @@
+docs/
+README.md
+assets/
+ci/
+tests/
+*.test.ts
+*.spec.ts
