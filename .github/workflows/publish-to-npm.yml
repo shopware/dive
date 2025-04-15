@@ -103,11 +103,11 @@ jobs:
             - name: 'Add package.json to git'
               run: git add package.json
 
-            - name: Generate README.md
+            - name: Generate docs
               run: yarn docs
 
-            - name: 'Add README file to git'
-              run: git add README.md -f
+            - name: 'Add docs folder to git'
+              run: git add git add docs -f
 
             - name: 'Automated Version Bump'
               uses: 'phips28/gh-action-bump-version@master'

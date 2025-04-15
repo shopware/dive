@@ -6,6 +6,9 @@ import { glob } from 'glob';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
+const INSERT_MARKER = '<!-- INSERT_MODULES -->';
+const END_MARKER = '<!-- END_MODULES -->';
+
 interface ModuleDoc {
     name: string;
     content: string;
@@ -43,25 +46,24 @@ function extractModuleDoc(filePath: string): ModuleDoc | null {
     return { name, content };
 }
 
-async function generateModulesDocumentation() {
+async function generateModulesDocumentation(): Promise<void> {
     // Find all module files
     const moduleFiles = await glob('src/modules/**/*.ts', {
         ignore: [
             '**/__test__/**',
             '**/_system/**',
         ],
-        cwd: join(__dirname, '../../..'), // Set the working directory to the project root
+        cwd: join(__dirname, '../..'), // Set the working directory to the project root
     });
 
     // Extract documentation from each module file
     const moduleDocs = moduleFiles
-        .map((file) => extractModuleDoc(join(__dirname, '../../..', file)))
+        .map((file) => extractModuleDoc(join(__dirname, '../..', file)))
         .filter((doc): doc is { name: string; content: string } => doc !== null)
         .map(({ name, content }) => ({ name, content }));
 
-    // Read the README file
-    const readmePath = join(__dirname, '../../../README.md');
-    let readme = readFileSync(readmePath, 'utf-8');
+    const moduleReferencePath = join(__dirname, '../module-reference.md');
+    let moduleReferenceFile = readFileSync(moduleReferencePath, 'utf-8');
 
     const completeModuleDocs = moduleDocs
         .sort((a, b) => a.name.localeCompare(b.name))
@@ -69,13 +71,12 @@ async function generateModulesDocumentation() {
         .join('\n\n');
 
     // Replace content between existing markers
-    readme = readme.replace(
-        /(<!-- INSERT_MODULES -->)([\s\S]*?)/,
-        `${completeModuleDocs}`,
+    moduleReferenceFile = moduleReferenceFile.replace(
+        new RegExp(`${INSERT_MARKER}[\\s\\S]*?${END_MARKER}`, 'g'),
+        `${INSERT_MARKER}\n${completeModuleDocs}${END_MARKER}`,
     );
 
-    // Write the updated README back
-    writeFileSync(readmePath, readme);
+    writeFileSync(moduleReferencePath, moduleReferenceFile);
 
     console.log('Module documentation generated successfully!');
 }

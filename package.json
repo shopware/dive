@@ -45,6 +45,7 @@
     },
     "files": [
         "build",
+        "docs",
         "LICENSE",
         "package.json",
         "README.md"
@@ -106,8 +107,9 @@
         "prettier:fix": "prettier --write .",
         "unit": "jest",
         "coverage": "jest --coverage",
-        "docs": "yarn tsc --resolveJsonModule --esModuleInterop --module ES2020 --moduleResolution node ci/readme/generate-readme.ts && mv ci/readme/generate-readme.js ci/readme/generate-readme.mjs && node ci/readme/generate-readme.mjs && cd ci/readme/generators && npm run generate",
-        "postdocs": "node -e \"const fs = require('fs'); const path = require('path'); const baseDir = 'ci/readme'; ['generate-readme.mjs', 'generate-readme.js', 'generators/actions-table.js', 'generators/module-docs.js'].forEach(file => { const fullPath = path.join(baseDir, file); if (fs.existsSync(fullPath)) fs.unlinkSync(fullPath); });\"",
+        "docs": "yarn docs:actions && yarn docs:modules",
+        "docs:actions": "NODE_OPTIONS='--loader ts-node/esm' ts-node docs/generators/generate-actions-docs.ts",
+        "docs:modules": "NODE_OPTIONS='--loader ts-node/esm' ts-node docs/generators/generate-modules-docs.ts",
         "ci": "yarn lint && yarn lint:actions && yarn prettier:check && yarn docs && yarn coverage && yarn build"
     }
 }

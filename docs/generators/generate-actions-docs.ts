@@ -1,10 +1,8 @@
-/**
- * This script generates a README.md file based on the interfaces defined in the source code.
- */
-
 import * as ts from 'typescript';
 import * as fs from 'fs';
 import * as path from 'path';
+import { fileURLToPath } from 'url';
+import { dirname } from 'path';
 
 interface ActionDefinition {
     name: string;
@@ -13,6 +11,12 @@ interface ActionDefinition {
     returnType: string;
     sourceFile: string;
 }
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+
+const INSERT_MARKER = '<!-- INSERT_ACTIONS -->';
+const END_MARKER = '<!-- END_ACTIONS -->';
 
 function findTypeDefinition(type: string): string | null {
     // Handle built-in types
@@ -229,14 +233,13 @@ function findActionFiles(dir: string): string[] {
 
 function generateReadme(): void {
     const actionsDir = path.join(process.cwd(), 'src/com/actions');
-    const templatePath = path.join(
-        process.cwd(),
-        'ci/readme/template/TEMPLATE_README.md',
+    const actionsReferencePath = path.join(
+        __dirname,
+        '../actions-reference.md',
     );
-    const readmePath = path.join(process.cwd(), 'README.md');
 
     // Read template
-    const template = fs.readFileSync(templatePath, 'utf-8');
+    const actionsReferenceFile = fs.readFileSync(actionsReferencePath, 'utf-8');
 
     // Find all TypeScript files in actions directory recursively
     const actionFiles = findActionFiles(actionsDir);
@@ -270,11 +273,13 @@ function generateReadme(): void {
     actionsSection += '\n';
 
     // Replace the placeholder in the template
-    const newContent = template.replace(
-        '<!-- INSERT_TABLE -->',
-        actionsSection,
+    const newContent = actionsReferenceFile.replace(
+        new RegExp(`${INSERT_MARKER}[\\s\\S]*?${END_MARKER}`, 'g'),
+        `${INSERT_MARKER}\n${actionsSection}${END_MARKER}`,
     );
-    fs.writeFileSync(readmePath, newContent);
+    fs.writeFileSync(actionsReferencePath, newContent);
+
+    console.log('Actions documentation generated successfully!');
 }
 
 generateReadme();

@@ -18,7 +18,7 @@ declare global {
  *
  * ```ts
  * // Direct import
- * import { AssetLoader } from '@shopware-ag/dive/modules/asset/loader';
+ * import { AssetLoader } from '@shopware-ag/dive/modules/AssetLoader';
  * const assetLoader = new AssetLoader();
  * const model = await assetLoader.load('path/to/model.glb');
  *

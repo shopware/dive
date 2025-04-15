@@ -17,7 +17,7 @@ declare global {
  * Converts between different 3D file formats:
  *
  * ```ts
- * import { AssetConverter } from '@shopware-ag/dive/modules/asset/converter';
+ * import { AssetConverter } from '@shopware-ag/dive/modules/AssetConverter';
  * const assetConverter = new AssetConverter();
  * const usdzBuffer = await assetConverter.convert('input.glb').to('usdz');
  * ```

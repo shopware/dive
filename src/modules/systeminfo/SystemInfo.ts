@@ -13,7 +13,7 @@ declare global {
  * Provides information about the system's capabilities and performance:
  *
  * ```ts
- * import { SystemInfo } from '@shopware-ag/dive/modules/systeminfo';
+ * import { SystemInfo } from '@shopware-ag/dive/modules/SystemInfo';
  * const systemInfo = new SystemInfo();
  *
  * // Get system information
