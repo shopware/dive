@@ -7,7 +7,7 @@ import { getFileTypeFromUri, isFileTypeSupported } from '../../../helper';
 
 declare global {
     interface ModuleClasses {
-        AssetLoader: AssetLoader;
+        AssetLoader: typeof AssetLoader;
     }
 }
 

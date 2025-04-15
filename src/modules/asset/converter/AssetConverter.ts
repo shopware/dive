@@ -7,7 +7,7 @@ import { type FileType } from '../../../types/file';
 
 declare global {
     interface ModuleClasses {
-        AssetConverter: AssetConverter;
+        AssetConverter: typeof AssetConverter;
     }
 }
 

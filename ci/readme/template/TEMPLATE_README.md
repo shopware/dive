@@ -292,10 +292,10 @@ myCanvasWrapper.appendChild(dive.Canvas); // <-- reference DIVE canvas
 
 ### Modules
 
-DIVE comes with several built-in modules that provide specific functionality. You can access modules
-in two ways:
+DIVE comes with several built-in modules that provide specific functionality. Served modules are
+independent You can access modules like so:
 
-1. Direct import from the modules directory (recommended for most use cases):
+Direct import from the modules directory (recommended for most use cases):
 
 ```ts
 import { ARSystem } from '@shopware-ag/dive/modules/ar';
@@ -308,18 +308,7 @@ await arSystem.launch('path/to/model.glb', {
 });
 ```
 
-2. Through the DIVE instance (when you need to work with a specific DIVE instance):
-
-```ts
-import { DIVE } from '@shopware-ag/dive';
-
-// Create a DIVE instance
-const dive = new DIVE();
-
-// Get a module instance from the DIVE instance
-const assetLoader = await dive.modules.get('AssetLoader');
-const model = await assetLoader.load('path/to/model.glb');
-```
+When
 
 ### Modules (List)
 

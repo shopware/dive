@@ -42,7 +42,9 @@ export class Module<T extends new (...args: unknown[]) => unknown> {
      * Get or create a singleton instance of the module
      * @internal
      */
-    public async getInstance(): Promise<InstanceType<T>> {
+    public async getInstance(
+        factory?: (ModuleClass: new (...args: unknown[]) => unknown) => unknown,
+    ): Promise<InstanceType<T>> {
         if (this._instance !== null) {
             return this._instance;
         }
@@ -53,7 +55,9 @@ export class Module<T extends new (...args: unknown[]) => unknown> {
 
         try {
             const ModuleClass = await this._promise;
-            this._instance = new ModuleClass() as InstanceType<T>;
+            this._instance = factory
+                ? (factory(ModuleClass) as InstanceType<T>)
+                : (new ModuleClass() as InstanceType<T>);
             return this._instance;
         } catch (error) {
             // Error from _importFn already includes details, re-throw or wrap

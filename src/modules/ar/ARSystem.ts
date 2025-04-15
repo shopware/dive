@@ -6,7 +6,7 @@ import { SceneViewer } from './sceneviewer/SceneViewer';
 
 declare global {
     interface ModuleClasses {
-        ARSystem: ARSystem;
+        ARSystem: typeof ARSystem;
     }
 }
 

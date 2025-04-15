@@ -3,7 +3,7 @@ import { ARCompatibilityError } from '../../error';
 
 declare global {
     interface ModuleClasses {
-        SystemInfo: SystemInfo;
+        SystemInfo: typeof SystemInfo;
     }
 }
 

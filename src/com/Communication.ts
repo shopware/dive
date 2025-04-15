@@ -90,6 +90,15 @@ export class DIVECommunication {
         this.controller = controls;
         this.toolbox = toolbox;
 
+        // Set up factory for MediaCreator module
+        Modules.factorize('MediaCreator', (ModuleClass) => {
+            return new ModuleClass(this.renderer, this.scene, this.controller);
+        });
+
+        Modules.factorize('ARSystem', (ModuleClass) => {
+            return new ModuleClass();
+        });
+
         DIVECommunication.__instances.push(this);
     }
 
@@ -708,6 +717,7 @@ export class DIVECommunication {
         }
 
         return Modules.get('MediaCreator').then((module) => {
+            console.log('MediaCreator', module);
             return module.GenerateMedia(
                 position,
                 target,

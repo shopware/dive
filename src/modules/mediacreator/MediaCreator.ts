@@ -6,7 +6,11 @@ import { type Vector3Like } from 'three';
 
 declare global {
     interface ModuleClasses {
-        MediaCreator: MediaCreator;
+        MediaCreator: new (
+            renderer: DIVERenderer,
+            scene: DIVEScene,
+            controller: DIVEOrbitControls,
+        ) => MediaCreator;
     }
 }
 
@@ -17,7 +21,7 @@ declare global {
  *
  * ```ts
  * import { MediaCreator } from '@shopware-ag/dive/modules/mediacreator';
- * const mediaCreator = new MediaCreator();
+ * const mediaCreator = new MediaCreator(renderer, scene, controller);
  *
  * // Generate a screenshot
  * const screenshot = await mediaCreator.GenerateMedia(
@@ -34,19 +38,22 @@ declare global {
  * - Configurable output resolution
  */
 
+/**
+ * @internal
+ */
 export class MediaCreator {
-    private renderer: DIVERenderer;
-    private scene: DIVEScene;
-    private controller: DIVEOrbitControls;
+    private _renderer: DIVERenderer;
+    private _scene: DIVEScene;
+    private _controller: DIVEOrbitControls;
 
     constructor(
         renderer: DIVERenderer,
         scene: DIVEScene,
         controller: DIVEOrbitControls,
     ) {
-        this.renderer = renderer;
-        this.scene = scene;
-        this.controller = controller;
+        this._renderer = renderer;
+        this._scene = scene;
+        this._controller = controller;
     }
 
     public GenerateMedia(
@@ -55,43 +62,43 @@ export class MediaCreator {
         width: number,
         height: number,
     ): string {
-        const resetPosition = this.controller.object.position.clone();
-        const resetRotation = this.controller.object.quaternion.clone();
+        const resetPosition = this._controller.object.position.clone();
+        const resetRotation = this._controller.object.quaternion.clone();
 
-        this.renderer.OnResize(width, height);
-        this.controller.object.OnResize(width, height);
+        this._renderer.OnResize(width, height);
+        this._controller.object.OnResize(width, height);
 
-        this.controller.object.position.copy(position);
-        this.controller.target.copy(target);
-        this.controller.update();
+        this._controller.object.position.copy(position);
+        this._controller.target.copy(target);
+        this._controller.update();
 
         const dataUri = this.DrawCanvas().toDataURL();
 
-        this.controller.object.position.copy(resetPosition);
-        this.controller.object.quaternion.copy(resetRotation);
+        this._controller.object.position.copy(resetPosition);
+        this._controller.object.quaternion.copy(resetRotation);
 
         return dataUri;
     }
 
     public DrawCanvas(canvasElement?: HTMLCanvasElement): HTMLCanvasElement {
         // save current canvas
-        const restore = this.renderer.domElement;
+        const restore = this._renderer.domElement;
         if (canvasElement) {
-            this.renderer.domElement = canvasElement;
+            this._renderer.domElement = canvasElement;
         }
 
         // draw canvas
-        this.controller.object.layers.mask =
+        this._controller.object.layers.mask =
             DIVEPerspectiveCamera.LIVE_VIEW_LAYER_MASK;
-        this.renderer.render(this.scene, this.controller.object);
-        this.controller.object.layers.mask =
+        this._renderer.render(this._scene, this._controller.object);
+        this._controller.object.layers.mask =
             DIVEPerspectiveCamera.EDITOR_VIEW_LAYER_MASK;
 
-        const returnCanvas = this.renderer.domElement;
+        const returnCanvas = this._renderer.domElement;
 
         // restore canvas
         if (canvasElement) {
-            this.renderer.domElement = restore;
+            this._renderer.domElement = restore;
         }
 
         return returnCanvas;

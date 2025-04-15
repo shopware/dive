@@ -5,11 +5,19 @@
  */
 
 import { Module } from './Module';
-
 // Define the base interface that modules will augment
 declare global {
     interface ModuleClasses {}
 }
+
+/** @internal */
+type ModuleConstructors = {
+    [K in keyof ModuleClasses]: K extends keyof ModuleClasses
+        ? ModuleClasses[K] extends { new (...args: infer P): infer R }
+            ? new (...args: P) => R
+            : never
+        : never;
+};
 
 /** @internal */
 class ModuleRegistryClass {
@@ -18,6 +26,11 @@ class ModuleRegistryClass {
     private _modules = new Map<
         keyof ModuleClasses,
         Module<new (...args: unknown[]) => unknown>
+    >();
+    // Map to store factory functions
+    private _factories = new Map<
+        keyof ModuleClasses,
+        (ModuleClass: new (...args: unknown[]) => unknown) => unknown
     >();
 
     private constructor() {}
@@ -40,17 +53,37 @@ class ModuleRegistryClass {
     }
 
     /**
+     * Set a factory function for a module
+     * @internal
+     */
+    public factorize<Id extends keyof ModuleClasses>(
+        name: Id,
+        factory: (
+            ModuleClass: ModuleConstructors[Id],
+        ) => InstanceType<ModuleConstructors[Id]>,
+    ): void {
+        this._factories.set(
+            name,
+            factory as (
+                ModuleClass: new (...args: unknown[]) => unknown,
+            ) => unknown,
+        );
+    }
+
+    /**
      * Get a singleton instance of the module
      * @internal
      */
     public async get<Id extends keyof ModuleClasses>(
         name: Id,
-    ): Promise<ModuleClasses[Id]> {
+    ): Promise<InstanceType<ModuleClasses[Id]>> {
         const module = this._modules.get(name);
         if (!module) {
             throw new Error(`Module '${name}' not registered`);
         }
-        return module.getInstance() as Promise<ModuleClasses[Id]>;
+        return module.getInstance(this._factories.get(name)) as Promise<
+            InstanceType<ModuleClasses[Id]>
+        >;
     }
 }
 

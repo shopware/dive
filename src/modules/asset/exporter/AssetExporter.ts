@@ -24,7 +24,7 @@ import { FileTypeError, ParseError } from '../../../error';
 
 declare global {
     interface ModuleClasses {
-        AssetExporter: AssetExporter;
+        AssetExporter: typeof AssetExporter;
     }
 }
 
