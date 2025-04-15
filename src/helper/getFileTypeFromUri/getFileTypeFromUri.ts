@@ -13,6 +13,6 @@ export function getFileTypeFromUri(uri: string): string {
     }
 
     // Get the extension (everything after the last dot)
-    const extension = filename.split('.').pop()?.toLowerCase();
+    const extension = filename.split('.').pop()?.toLowerCase().split('?')[0];
     return extension || '';
 }
