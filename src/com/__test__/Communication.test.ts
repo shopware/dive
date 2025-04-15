@@ -41,6 +41,7 @@ jest.mock('../../modules', () => {
     return {
         Modules: {
             get: jest.fn(),
+            factorize: jest.fn(),
         },
     };
 });
