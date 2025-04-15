@@ -96,7 +96,7 @@
     },
     "scripts": {
         "build": "vite build",
-        "postbuild": "NODE_OPTIONS='--loader ts-node/esm' ts-node scripts/validate-build-paths.ts",
+        "postbuild": "NODE_OPTIONS='--loader ts-node/esm' ts-node ci/build/validate-build-paths.ts",
         "dev": "vite build --watch",
         "lint": "eslint",
         "lint:actions": "bash ci/lint/lint-actions.sh",

@@ -17,8 +17,8 @@
     "include": [
         "src/**/*",
         "vite.config.ts",
-        "scripts/**/*",
-        "docs/**/*"
+        "docs/**/*",
+        "ci/**/*"
     ],
     "exclude": [
         "node_modules",
