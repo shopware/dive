@@ -2,6 +2,7 @@
     "name": "@shopware-ag/dive",
     "version": "1.19.0",
     "description": "Shopware Spatial Framework",
+    "type": "module",
     "main": "build/index.cjs",
     "module": "build/index.mjs",
     "types": "build/index.d.ts",
