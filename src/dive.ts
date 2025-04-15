@@ -19,7 +19,7 @@ import DIVEAxisCamera from './axiscamera/AxisCamera.ts';
 import { getObjectDelta } from './helper/getObjectDelta/getObjectDelta.ts';
 import { MathUtils } from 'three';
 import pkgjson from '../package.json';
-import { Modules } from './modules';
+import { ModuleRegistry } from './modules';
 
 export type DIVESettings = {
     autoResize: boolean;
@@ -167,8 +167,8 @@ export default class DIVE {
         return this.renderer.domElement;
     }
 
-    public get modules(): typeof Modules {
-        return Modules;
+    public get modules(): typeof ModuleRegistry {
+        return ModuleRegistry;
     }
 
     // setters

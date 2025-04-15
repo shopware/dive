@@ -35,11 +35,11 @@ import {
 } from '../types';
 import { type DIVESceneObject } from '../../types';
 import { type ARSystemOptions } from '../../modules/ar/ARSystem';
-import { Modules } from '../../modules';
+import { ModuleRegistry } from '../../modules';
 
 jest.mock('../../modules', () => {
     return {
-        Modules: {
+        ModuleRegistry: {
             get: jest.fn(),
             factorize: jest.fn(),
         },
@@ -860,7 +860,7 @@ describe('dive/communication/DIVECommunication', () => {
         const mockMediaCreator = {
             GenerateMedia: jest.fn().mockReturnValue(blobUri),
         };
-        jest.spyOn(Modules, 'get').mockResolvedValue(mockMediaCreator);
+        jest.spyOn(ModuleRegistry, 'get').mockResolvedValue(mockMediaCreator);
 
         const mock1 = {
             entityType: 'pov',
@@ -975,7 +975,7 @@ describe('dive/communication/DIVECommunication', () => {
         const mockIO = {
             Export: jest.fn().mockResolvedValue(url),
         };
-        jest.spyOn(Modules, 'get').mockResolvedValue(mockIO);
+        jest.spyOn(ModuleRegistry, 'get').mockResolvedValue(mockIO);
 
         const result = await testCom.PerformAction('EXPORT_SCENE', {
             type: 'glb',
@@ -987,7 +987,7 @@ describe('dive/communication/DIVECommunication', () => {
         const mockAR = {
             launch: jest.fn().mockResolvedValue(undefined),
         };
-        jest.spyOn(Modules, 'get').mockResolvedValue(mockAR);
+        jest.spyOn(ModuleRegistry, 'get').mockResolvedValue(mockAR);
 
         await testCom.PerformAction('LAUNCH_AR', {
             uri: 'https://example.com',

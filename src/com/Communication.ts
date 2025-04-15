@@ -2,7 +2,7 @@ import { Actions } from './actions/index.ts';
 import { generateUUID } from 'three/src/math/MathUtils';
 import { isSelectTool } from '../toolbox/select/SelectTool.ts';
 import { merge } from 'lodash';
-import { Modules } from '../modules';
+import { ModuleRegistry } from '../modules';
 
 // type imports
 import { type Color, type MeshStandardMaterial } from 'three';
@@ -91,11 +91,11 @@ export class DIVECommunication {
         this.toolbox = toolbox;
 
         // Set up factory for MediaCreator module
-        Modules.factorize('MediaCreator', (ModuleClass) => {
+        ModuleRegistry.factorize('MediaCreator', (ModuleClass) => {
             return new ModuleClass(this.renderer, this.scene, this.controller);
         });
 
-        Modules.factorize('ARSystem', (ModuleClass) => {
+        ModuleRegistry.factorize('ARSystem', (ModuleClass) => {
             return new ModuleClass();
         });
 
@@ -289,7 +289,7 @@ export class DIVECommunication {
                 const { uri, options } =
                     payload as Actions['LAUNCH_AR']['PAYLOAD'];
                 returnValue = new Promise<void>((resolve, reject) => {
-                    Modules.get('ARSystem')
+                    ModuleRegistry.get('ARSystem')
                         .then((ar) => {
                             resolve(ar.launch(uri, options));
                         })
@@ -716,7 +716,7 @@ export class DIVECommunication {
             target = payload.target;
         }
 
-        return Modules.get('MediaCreator').then((module) => {
+        return ModuleRegistry.get('MediaCreator').then((module) => {
             console.log('MediaCreator', module);
             return module.GenerateMedia(
                 position,
@@ -790,7 +790,7 @@ export class DIVECommunication {
     private exportScene(
         payload: Actions['EXPORT_SCENE']['PAYLOAD'],
     ): Actions['EXPORT_SCENE']['RETURN'] {
-        return Modules.get('AssetExporter').then((module) => {
+        return ModuleRegistry.get('AssetExporter').then((module) => {
             return module.export(this.scene.Root, payload.type, {});
         });
     }

@@ -15,7 +15,7 @@ import { type DIVESceneObject } from '../../../types';
 import { Object3D } from 'three';
 
 jest.mock('../../../modules', () => ({
-    Modules: {
+    ModuleRegistry: {
         get: jest.fn().mockResolvedValue({
             load: jest.fn().mockResolvedValue({}),
         }),

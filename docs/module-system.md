@@ -16,7 +16,7 @@ To register a module, you need to:
 
 1. Define the module class
 2. Declare the module in the global `ModuleClasses` interface
-3. Register the module using `Modules.register()`
+3. Register the module using `ModuleRegistry.register()`
 
 Example:
 
@@ -36,7 +36,7 @@ declare global {
 }
 
 // 3. Register the module in src/modules/index.ts
-Modules.register('MyModule');
+ModuleRegistry.register('MyModule');
 ```
 
 ## Factory Pattern
@@ -45,12 +45,12 @@ Modules can be instantiated with dependencies using factory functions:
 
 ```typescript
 // Set up factory for a module
-Modules.factorize('MyModule', (ModuleClass) => {
+ModuleRegistry.factorize('MyModule', (ModuleClass) => {
     return new ModuleClass(dependency1, dependency2);
 });
 
 // Later, get the module instance
-const myModule = await Modules.get('MyModule');
+const myModule = await ModuleRegistry.get('MyModule');
 ```
 
 The factory function receives the module class as a parameter and returns an instance of the module.
