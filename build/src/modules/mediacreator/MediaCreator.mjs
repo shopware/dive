@@ -1,0 +1,28 @@
+var a = Object.defineProperty;
+var h = (t, e, r) => e in t ? a(t, e, { enumerable: !0, configurable: !0, writable: !0, value: r }) : t[e] = r;
+var n = (t, e, r) => h(t, typeof e != "symbol" ? e + "" : e, r);
+import { a as i } from "../../../chunks/PerspectiveCamera-ACx6umAu.mjs";
+class p {
+  constructor(e, r, o) {
+    n(this, "_renderer");
+    n(this, "_scene");
+    n(this, "_controller");
+    this._renderer = e, this._scene = r, this._controller = o;
+  }
+  GenerateMedia(e, r, o, s) {
+    const c = this._controller.object.position.clone(), l = this._controller.object.quaternion.clone();
+    this._renderer.OnResize(o, s), this._controller.object.OnResize(o, s), this._controller.object.position.copy(e), this._controller.target.copy(r), this._controller.update();
+    const _ = this.DrawCanvas().toDataURL();
+    return this._controller.object.position.copy(c), this._controller.object.quaternion.copy(l), _;
+  }
+  DrawCanvas(e) {
+    const r = this._renderer.domElement;
+    e && (this._renderer.domElement = e), this._controller.object.layers.mask = i.LIVE_VIEW_LAYER_MASK, this._renderer.render(this._scene, this._controller.object), this._controller.object.layers.mask = i.EDITOR_VIEW_LAYER_MASK;
+    const o = this._renderer.domElement;
+    return e && (this._renderer.domElement = r), o;
+  }
+}
+export {
+  p as MediaCreator
+};
+//# sourceMappingURL=MediaCreator.mjs.map
