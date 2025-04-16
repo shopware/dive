@@ -24,15 +24,16 @@ describe('Module', () => {
         module = new Module(moduleName);
     });
 
-    describe('getInstance', () => {
-        it('should return the same instance on multiple calls', async () => {
-            const instance1 = await module.getInstance();
-            const instance2 = await module.getInstance();
-            expect(instance1).toBe(instance2);
+    describe('getClass', () => {
+        it('should return the same class on multiple calls', async () => {
+            const class1 = await module.getClass();
+            const class2 = await module.getClass();
+            expect(class1).toBe(class2);
         });
 
-        it('should create a new instance if none exists', async () => {
-            const instance = await module.getInstance();
+        it('should return the correct class', async () => {
+            const ModuleClass = await module.getClass();
+            const instance = new ModuleClass();
             expect(instance).toBeDefined();
             expect(instance.name).toBe('test');
         });
@@ -42,7 +43,7 @@ describe('Module', () => {
             (window as any).__MODULE_BUILD_PATHS__ = {};
             const nonExistentModule = new Module('NonExistentModule');
 
-            await expect(nonExistentModule.getInstance()).rejects.toThrow(
+            await expect(nonExistentModule.getClass()).rejects.toThrow(
                 'Build path for module NonExistentModule not found in __MODULE_BUILD_PATHS__',
             );
         });
@@ -53,7 +54,7 @@ describe('Module', () => {
                 TestModule: './__test__/__mocks__/EmptyModule',
             };
 
-            await expect(module.getInstance()).rejects.toThrow(
+            await expect(module.getClass()).rejects.toThrow(
                 'Module class TestModule not found in dynamically imported module',
             );
         });
@@ -65,8 +66,8 @@ describe('Module', () => {
                     'src/modules/_system/__test__/__mocks__/NonExistentModule',
             };
 
-            await expect(module.getInstance()).rejects.toThrow(
-                'Failed to instantiate module TestModule: Failed to dynamically import module TestModule from path src/modules/_system/__test__/__mocks__/NonExistentModule: Error: Cannot find module',
+            await expect(module.getClass()).rejects.toThrow(
+                'Failed to dynamically import module TestModule from path src/modules/_system/__test__/__mocks__/NonExistentModule: Error: Cannot find module',
             );
         });
     });

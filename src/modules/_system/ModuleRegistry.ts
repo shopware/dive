@@ -10,27 +10,30 @@ declare global {
     interface ModuleClasses {}
 }
 
+/**
+ * @internal
+ * Helper type to get the instance type of a module
+ */
+export type ModuleInstance<Id extends keyof ModuleClasses> = InstanceType<
+    ModuleClasses[Id]
+>;
+
 /** @internal */
 type ModuleConstructors = {
     [K in keyof ModuleClasses]: K extends keyof ModuleClasses
         ? ModuleClasses[K] extends { new (...args: infer P): infer R }
             ? new (...args: P) => R
-            : never
+            : new (...args: unknown[]) => ModuleClasses[K]
         : never;
 };
 
 /** @internal */
 class ModuleRegistryClass {
     private static _instance = new ModuleRegistryClass();
-    // Map now only stores Module instances, keyed by name
+    // Map stores Module instances, keyed by name
     private _modules = new Map<
         keyof ModuleClasses,
         Module<new (...args: unknown[]) => unknown>
-    >();
-    // Map to store factory functions
-    private _factories = new Map<
-        keyof ModuleClasses,
-        (ModuleClass: new (...args: unknown[]) => unknown) => unknown
     >();
 
     private constructor() {}
@@ -53,37 +56,17 @@ class ModuleRegistryClass {
     }
 
     /**
-     * Set a factory function for a module
-     * @internal
-     */
-    public factorize<Id extends keyof ModuleClasses>(
-        name: Id,
-        factory: (
-            ModuleClass: ModuleConstructors[Id],
-        ) => InstanceType<ModuleConstructors[Id]>,
-    ): void {
-        this._factories.set(
-            name,
-            factory as (
-                ModuleClass: new (...args: unknown[]) => unknown,
-            ) => unknown,
-        );
-    }
-
-    /**
-     * Get a singleton instance of the module
+     * Get the module class
      * @internal
      */
     public async get<Id extends keyof ModuleClasses>(
         name: Id,
-    ): Promise<InstanceType<ModuleClasses[Id]>> {
+    ): Promise<ModuleConstructors[Id]> {
         const module = this._modules.get(name);
         if (!module) {
             throw new Error(`Module '${name}' not registered`);
         }
-        return module.getInstance(this._factories.get(name)) as Promise<
-            InstanceType<ModuleClasses[Id]>
-        >;
+        return module.getClass() as Promise<ModuleConstructors[Id]>;
     }
 }
 

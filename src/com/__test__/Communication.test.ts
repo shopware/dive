@@ -35,13 +35,20 @@ import {
 } from '../types';
 import { type DIVESceneObject } from '../../types';
 import { type ARSystemOptions } from '../../modules/ar/ARSystem';
-import { ModuleRegistry } from '../../modules';
+import { ModuleRegistry, type ModuleInstance } from '../../modules';
+import { MediaCreator } from '../../modules/mediacreator/MediaCreator';
+import { ARSystem } from '../../modules/ar/ARSystem';
 
 jest.mock('../../modules', () => {
     return {
         ModuleRegistry: {
-            get: jest.fn(),
-            factorize: jest.fn(),
+            get: jest.fn().mockResolvedValue(
+                class {
+                    constructor() {
+                        return {};
+                    }
+                },
+            ),
         },
     };
 });
@@ -856,11 +863,10 @@ describe('dive/communication/DIVECommunication', () => {
     });
 
     it('should perform action GENERATE_MEDIA', async () => {
-        const blobUri = 'blob:http://localhost:3000/1234';
         const mockMediaCreator = {
-            GenerateMedia: jest.fn().mockReturnValue(blobUri),
-        };
-        jest.spyOn(ModuleRegistry, 'get').mockResolvedValue(mockMediaCreator);
+            GenerateMedia: jest.fn().mockResolvedValue('test'),
+        } as unknown as MediaCreator;
+        testCom['_mediaCreator'] = Promise.resolve(mockMediaCreator);
 
         const mock1 = {
             entityType: 'pov',
@@ -875,7 +881,7 @@ describe('dive/communication/DIVECommunication', () => {
             width: 800,
             height: 600,
         });
-        expect(success0).toBe(blobUri);
+        expect(success0).toBe('test');
 
         const success1 = await testCom.PerformAction('GENERATE_MEDIA', {
             position: { x: 0, y: 0, z: 0 },
@@ -883,7 +889,7 @@ describe('dive/communication/DIVECommunication', () => {
             width: 800,
             height: 600,
         });
-        expect(success1).toBe(blobUri);
+        expect(success1).toBe('test');
     });
 
     it('should perform action SET_PARENT', () => {
@@ -971,23 +977,28 @@ describe('dive/communication/DIVECommunication', () => {
     });
 
     it.skip('should perform action EXPORT_SCENE', async () => {
-        const url = 'https://example.com';
         const mockIO = {
-            Export: jest.fn().mockResolvedValue(url),
+            Export: jest.fn().mockResolvedValue('test'),
         };
-        jest.spyOn(ModuleRegistry, 'get').mockResolvedValue(mockIO);
+        jest.spyOn(ModuleRegistry, 'get').mockResolvedValue(
+            class {
+                constructor() {
+                    return mockIO;
+                }
+            },
+        );
 
         const result = await testCom.PerformAction('EXPORT_SCENE', {
             type: 'glb',
         });
-        expect(result).toBe(url);
+        expect(result).toBe('test');
     });
 
     it('should perform action LAUNCH_AR', async () => {
         const mockAR = {
             launch: jest.fn().mockResolvedValue(undefined),
-        };
-        jest.spyOn(ModuleRegistry, 'get').mockResolvedValue(mockAR);
+        } as unknown as ARSystem;
+        testCom['_arSystem'] = Promise.resolve(mockAR);
 
         await testCom.PerformAction('LAUNCH_AR', {
             uri: 'https://example.com',

@@ -2,7 +2,10 @@
  * Central export point for the module system.
  * This is the only place where ModuleRegistry should be imported from.
  */
-import { internalModuleRegistry as ModuleRegistry } from './_system/ModuleRegistry';
+import {
+    internalModuleRegistry as ModuleRegistry,
+    type ModuleInstance,
+} from './_system/ModuleRegistry';
 
 // Define module source paths for build process and module registry.
 export const MODULE_PATHS = {
@@ -20,4 +23,4 @@ Object.keys(MODULE_PATHS).forEach((name) => {
 });
 
 // Re-export the ModuleRegistry as the only public access point
-export { ModuleRegistry };
+export { ModuleRegistry, type ModuleInstance };

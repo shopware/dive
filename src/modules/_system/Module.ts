@@ -5,10 +5,8 @@ declare const __MODULE_BUILD_PATHS__: Record<keyof ModuleClasses, string>;
 
 export class Module<T extends new (...args: unknown[]) => unknown> {
     private _promise: Promise<T> | null = null;
-    private _instance: InstanceType<T> | null = null;
     private _importFn: () => Promise<T>;
 
-    // Constructor now only needs the module name
     constructor(private _name: keyof ModuleClasses) {
         this._importFn = async (): Promise<T> => {
             // Get the correct build path from the injected map
@@ -39,31 +37,14 @@ export class Module<T extends new (...args: unknown[]) => unknown> {
     }
 
     /**
-     * Get or create a singleton instance of the module
+     * Get the module class
      * @internal
      */
-    public async getInstance(
-        factory?: (ModuleClass: new (...args: unknown[]) => unknown) => unknown,
-    ): Promise<InstanceType<T>> {
-        if (this._instance !== null) {
-            return this._instance;
-        }
-
+    public async getClass(): Promise<T> {
         if (!this._promise) {
             this._promise = this._importFn();
         }
 
-        try {
-            const ModuleClass = await this._promise;
-            this._instance = factory
-                ? (factory(ModuleClass) as InstanceType<T>)
-                : (new ModuleClass() as InstanceType<T>);
-            return this._instance;
-        } catch (error) {
-            // Error from _importFn already includes details, re-throw or wrap
-            throw new Error(
-                `Failed to instantiate module ${this._name}: ${error instanceof Error ? error.message : String(error)}`,
-            );
-        }
+        return this._promise;
     }
 }

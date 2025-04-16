@@ -6,11 +6,7 @@ import { type Vector3Like } from 'three';
 
 declare global {
     interface ModuleClasses {
-        MediaCreator: new (
-            renderer: DIVERenderer,
-            scene: DIVEScene,
-            controller: DIVEOrbitControls,
-        ) => MediaCreator;
+        MediaCreator: typeof MediaCreator;
     }
 }
 

@@ -16,9 +16,15 @@ import { Object3D } from 'three';
 
 jest.mock('../../../modules', () => ({
     ModuleRegistry: {
-        get: jest.fn().mockResolvedValue({
-            load: jest.fn().mockResolvedValue({}),
-        }),
+        get: jest.fn().mockResolvedValue(
+            class {
+                constructor() {
+                    return {
+                        load: jest.fn().mockResolvedValue({}),
+                    };
+                }
+            },
+        ),
     },
 }));
 

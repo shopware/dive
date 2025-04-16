@@ -18,7 +18,14 @@ declare global {
 jest.mock('../Module', () => {
     return {
         Module: jest.fn().mockImplementation((name) => ({
-            getInstance: jest.fn().mockResolvedValue({ name }),
+            getClass: jest.fn().mockResolvedValue(
+                class {
+                    name: string;
+                    constructor() {
+                        this.name = name;
+                    }
+                },
+            ),
         })),
     };
 });
@@ -47,17 +54,18 @@ describe('ModuleRegistry', () => {
         });
     });
 
-    describe('getInstance', () => {
-        it('should return instance of registered module', async () => {
+    describe('get', () => {
+        it('should return class of registered module', async () => {
             internalModuleRegistry.register('TestModule');
-            const instance = await internalModuleRegistry.get('TestModule');
+            const ModuleClass = await internalModuleRegistry.get('TestModule');
+            const instance = new ModuleClass();
 
             expect(instance).toEqual({
                 name: 'TestModule',
             });
         });
 
-        it('should throw error when getting instance of non-existent module', async () => {
+        it('should throw error when getting class of non-existent module', async () => {
             await expect(
                 internalModuleRegistry.get('NonExistentModule'),
             ).rejects.toThrow("Module 'NonExistentModule' not registered");
