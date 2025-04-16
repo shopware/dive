@@ -12,35 +12,10 @@
             "import": "./build/index.mjs",
             "require": "./build/index.cjs"
         },
-        "./modules/AssetLoader": {
-            "types": "./build/src/modules/asset/loader/AssetLoader.d.ts",
-            "import": "./build/src/modules/asset/loader/AssetLoader.mjs",
-            "require": "./build/src/modules/asset/loader/AssetLoader.cjs"
-        },
-        "./modules/AssetConverter": {
-            "types": "./build/src/modules/asset/converter/AssetConverter.d.ts",
-            "import": "./build/src/modules/asset/converter/AssetConverter.mjs",
-            "require": "./build/src/modules/asset/converter/AssetConverter.cjs"
-        },
-        "./modules/AssetExporter": {
-            "types": "./build/src/modules/asset/exporter/AssetExporter.d.ts",
-            "import": "./build/src/modules/asset/exporter/AssetExporter.mjs",
-            "require": "./build/src/modules/asset/exporter/AssetExporter.cjs"
-        },
-        "./modules/ARSystem": {
-            "types": "./build/src/modules/ar/ARSystem.d.ts",
-            "import": "./build/src/modules/ar/ARSystem.mjs",
-            "require": "./build/src/modules/ar/ARSystem.cjs"
-        },
-        "./modules/MediaCreator": {
-            "types": "./build/src/modules/mediacreator/MediaCreator.d.ts",
-            "import": "./build/src/modules/mediacreator/MediaCreator.mjs",
-            "require": "./build/src/modules/mediacreator/MediaCreator.cjs"
-        },
-        "./modules/SystemInfo": {
-            "types": "./build/src/modules/systeminfo/SystemInfo.d.ts",
-            "import": "./build/src/modules/systeminfo/SystemInfo.mjs",
-            "require": "./build/src/modules/systeminfo/SystemInfo.cjs"
+        "./modules": {
+            "types": "./build/src/modules/index.d.ts",
+            "import": "./build/src/modules/index.mjs",
+            "require": "./build/src/modules/index.cjs"
         }
     },
     "files": [
@@ -94,7 +69,6 @@
     },
     "scripts": {
         "build": "vite build",
-        "postbuild": "NODE_OPTIONS='--loader ts-node/esm' ts-node ci/build/validate-build-paths.ts",
         "dev": "vite build --watch",
         "lint": "eslint",
         "lint:actions": "bash ci/lint/lint-actions.sh",

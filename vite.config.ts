@@ -11,48 +11,48 @@ interface ModuleRegistration {
     path: string; // Original src path
 }
 
-// Function to update package.json exports
-function updatePackageJsonExports(registrations: ModuleRegistration[]): void {
-    const packageJsonPath = resolve(process.cwd(), 'package.json');
-    const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, 'utf-8'));
+// // Function to update package.json exports
+// function updatePackageJsonExports(registrations: ModuleRegistration[]): void {
+//     const packageJsonPath = resolve(process.cwd(), 'package.json');
+//     const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, 'utf-8'));
 
-    // Start with the main entry point
-    const exports: Record<
-        string,
-        {
-            types: string;
-            import: string;
-            require: string;
-        }
-    > = {
-        '.': {
-            types: './build/index.d.ts',
-            import: './build/index.mjs',
-            require: './build/index.cjs',
-        },
-    };
+//     // Start with the main entry point
+//     const exports: Record<
+//         string,
+//         {
+//             types: string;
+//             import: string;
+//             require: string;
+//         }
+//     > = {
+//         '.': {
+//             types: './build/index.d.ts',
+//             import: './build/index.mjs',
+//             require: './build/index.cjs',
+//         },
+//     };
 
-    // Add each module to exports
-    registrations.forEach(({ name, path }) => {
-        // Convert the source path to the build path structure
-        const buildPath = path.replace(/\.ts$/, '');
-        const modulePath = `./modules/${name}`;
+//     // Add each module to exports
+//     registrations.forEach(({ name, path }) => {
+//         // Convert the source path to the build path structure
+//         const buildPath = path.replace(/\.ts$/, '');
+//         const modulePath = `./modules/${name}`;
 
-        exports[modulePath] = {
-            types: `./build/${buildPath}.d.ts`,
-            import: `./build/${buildPath}.mjs`,
-            require: `./build/${buildPath}.cjs`,
-        };
-    });
+//         exports[modulePath] = {
+//             types: `./build/${buildPath}.d.ts`,
+//             import: `./build/${buildPath}.mjs`,
+//             require: `./build/${buildPath}.cjs`,
+//         };
+//     });
 
-    // Update package.json
-    packageJson.exports = exports;
-    fs.writeFileSync(
-        packageJsonPath,
-        JSON.stringify(packageJson, null, 4) + '\n',
-    );
-    console.log('[Dive Build] Updated package.json exports');
-}
+//     // Update package.json
+//     packageJson.exports = exports;
+//     fs.writeFileSync(
+//         packageJsonPath,
+//         JSON.stringify(packageJson, null, 4) + '\n',
+//     );
+//     console.log('[Dive Build] Updated package.json exports');
+// }
 
 // Plugin to discover modules, configure library build, and inject path map
 function moduleBuildPlugin(): Plugin {
@@ -148,7 +148,7 @@ function moduleBuildPlugin(): Plugin {
     }
 
     // Update package.json exports
-    updatePackageJsonExports(registrations);
+    // updatePackageJsonExports(registrations);
 
     // --- Prepare Build Path Map (Done outside hooks) ---
     const moduleBuildPathMap: Record<string, string> = {};
