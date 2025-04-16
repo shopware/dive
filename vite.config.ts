@@ -165,7 +165,7 @@ function moduleBuildPlugin(): Plugin {
             return;
         }
         // Value for runtime import (relative from build/index.mjs)
-        moduleBuildPathMap[name] = `./src/modules/${relativePath}.mjs`;
+        moduleBuildPathMap[name] = `./${relativePath}.mjs`;
     });
 
     return {
@@ -178,6 +178,10 @@ function moduleBuildPlugin(): Plugin {
             // --- Prepare Build Config ---
             const rollupInput: Record<string, string> = {
                 index: resolve(projectRoot, 'src/index.ts'), // Main entry point
+                'src/modules/index': resolve(
+                    projectRoot,
+                    'src/modules/index.ts',
+                ),
             };
             registrations.forEach(({ path }) => {
                 // Extract relative path again (or pass from outer scope)
