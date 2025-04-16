@@ -1,5 +1,5 @@
 import { internalModuleRegistry } from '../ModuleRegistry';
-import { Module } from '../Module';
+import { ModuleImporter } from '../ModuleImporter';
 
 // Extend ModuleClasses for our test modules
 declare global {
@@ -15,9 +15,9 @@ declare global {
 }
 
 // Mock the Module class
-jest.mock('../Module', () => {
+jest.mock('../ModuleImporter', () => {
     return {
-        Module: jest.fn().mockImplementation((name) => ({
+        ModuleImporter: jest.fn().mockImplementation((name) => ({
             getClass: jest.fn().mockResolvedValue(
                 class {
                     name: string;
@@ -41,16 +41,16 @@ describe('ModuleRegistry', () => {
     describe('register', () => {
         it('should register a module with name', () => {
             internalModuleRegistry.register('TestModule');
-            expect(Module).toHaveBeenCalledWith('TestModule');
+            expect(ModuleImporter).toHaveBeenCalledWith('TestModule');
         });
 
         it('should allow registering multiple modules', () => {
             internalModuleRegistry.register('TestModule1');
             internalModuleRegistry.register('TestModule2');
 
-            expect(Module).toHaveBeenCalledTimes(2);
-            expect(Module).toHaveBeenCalledWith('TestModule1');
-            expect(Module).toHaveBeenCalledWith('TestModule2');
+            expect(ModuleImporter).toHaveBeenCalledTimes(2);
+            expect(ModuleImporter).toHaveBeenCalledWith('TestModule1');
+            expect(ModuleImporter).toHaveBeenCalledWith('TestModule2');
         });
     });
 

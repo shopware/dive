@@ -3,7 +3,15 @@
 // Declare the global variable injected by the build process
 declare const __MODULE_BUILD_PATHS__: Record<keyof ModuleClasses, string>;
 
-export class Module<T extends new (...args: unknown[]) => unknown> {
+/**
+ * @internal
+ * Handles the dynamic importing and caching of module classes.
+ * This class is responsible for:
+ * 1. Resolving the build path for a module
+ * 2. Dynamically importing the module class
+ * 3. Caching the imported class to avoid multiple imports
+ */
+export class ModuleImporter<T extends new (...args: unknown[]) => unknown> {
     private _promise: Promise<T> | null = null;
     private _importFn: () => Promise<T>;
 
@@ -37,8 +45,9 @@ export class Module<T extends new (...args: unknown[]) => unknown> {
     }
 
     /**
-     * Get the module class
      * @internal
+     * Get the module class, importing it if not already cached.
+     * @returns A Promise that resolves to the module's class constructor.
      */
     public async getClass(): Promise<T> {
         if (!this._promise) {

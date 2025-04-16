@@ -1,4 +1,4 @@
-import { Module } from '../Module';
+import { ModuleImporter } from '../ModuleImporter';
 
 declare global {
     interface ModuleClasses {
@@ -17,11 +17,11 @@ declare const __MODULE_BUILD_PATHS__: Record<keyof ModuleClasses, string>;
 };
 
 describe('Module', () => {
-    let module: Module<any>;
+    let module: ModuleImporter<any>;
     const moduleName = 'TestModule';
 
     beforeEach(() => {
-        module = new Module(moduleName);
+        module = new ModuleImporter(moduleName);
     });
 
     describe('getClass', () => {
@@ -41,7 +41,7 @@ describe('Module', () => {
         it('should throw error if module path is not found in __MODULE_BUILD_PATHS__', async () => {
             // Clear the build paths
             (window as any).__MODULE_BUILD_PATHS__ = {};
-            const nonExistentModule = new Module('NonExistentModule');
+            const nonExistentModule = new ModuleImporter('NonExistentModule');
 
             await expect(nonExistentModule.getClass()).rejects.toThrow(
                 'Build path for module NonExistentModule not found in __MODULE_BUILD_PATHS__',

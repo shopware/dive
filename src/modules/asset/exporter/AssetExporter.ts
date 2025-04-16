@@ -4,7 +4,9 @@
  * Exports 3D assets to various formats:
  *
  * ```ts
- * import { AssetExporter } from '@shopware-ag/dive/modules/AssetExporter';
+ * import { ModuleRegistry } from '@shopware-ag/dive/modules';
+ *
+ * const AssetExporter = await ModuleRegistry.get('AssetExporter');
  * const assetExporter = new AssetExporter();
  * const buffer = await assetExporter.export(model, 'glb');
  * ```

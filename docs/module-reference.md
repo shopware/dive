@@ -8,7 +8,9 @@ DIVE provides several specialized modules for different aspects of 3D content ha
 The AR module enables Augmented Reality features across different platforms:
 
 ```ts
-import { ARSystem } from '@shopware-ag/dive/modules/ARSystem';
+import { ModuleRegistry } from '@shopware-ag/dive/modules';
+
+const ARSystem = await ModuleRegistry.get('ARSystem');
 const arSystem = new ARSystem();
 
 // Launch AR with options
@@ -28,7 +30,9 @@ Features:
 Converts between different 3D file formats:
 
 ```ts
-import { AssetConverter } from '@shopware-ag/dive/modules/AssetConverter';
+import { ModuleRegistry } from '@shopware-ag/dive/modules';
+
+const AssetConverter = await ModuleRegistry.get('AssetConverter');
 const assetConverter = new AssetConverter();
 const usdzBuffer = await assetConverter.convert('input.glb').to('usdz');
 ```
@@ -38,7 +42,9 @@ const usdzBuffer = await assetConverter.convert('input.glb').to('usdz');
 Exports 3D assets to various formats:
 
 ```ts
-import { AssetExporter } from '@shopware-ag/dive/modules/AssetExporter';
+import { ModuleRegistry } from '@shopware-ag/dive/modules';
+
+const AssetExporter = await ModuleRegistry.get('AssetExporter');
 const assetExporter = new AssetExporter();
 const buffer = await assetExporter.export(model, 'glb');
 ```
@@ -49,12 +55,10 @@ Handles loading of 3D assets in various formats:
 
 ```ts
 // Direct import
-import { AssetLoader } from '@shopware-ag/dive/modules/AssetLoader';
-const assetLoader = new AssetLoader();
-const model = await assetLoader.load('path/to/model.glb');
+import { ModuleRegistry } from '@shopware-ag/dive/modules';
 
-// Or through DIVE instance
-const assetLoader = await dive.modules.get('AssetLoader');
+const AssetLoader = await ModuleRegistry.get('AssetLoader');
+const assetLoader = new AssetLoader();
 const model = await assetLoader.load('path/to/model.glb');
 ```
 
@@ -67,7 +71,9 @@ Supported formats:
 Provides tools for creating media content from the 3D scene:
 
 ```ts
-import { MediaCreator } from '@shopware-ag/dive/modules/MediaCreator';
+import { ModuleRegistry } from '@shopware-ag/dive/modules';
+
+const MediaCreator = await ModuleRegistry.get('MediaCreator');
 const mediaCreator = new MediaCreator(renderer, scene, controller);
 
 // Generate a screenshot
@@ -89,7 +95,9 @@ Features:
 Provides information about the system's capabilities and performance:
 
 ```ts
-import { SystemInfo } from '@shopware-ag/dive/modules/SystemInfo';
+import { ModuleRegistry } from '@shopware-ag/dive/modules';
+
+const SystemInfo = await ModuleRegistry.get('SystemInfo');
 const systemInfo = new SystemInfo();
 
 // Get system information

@@ -16,7 +16,9 @@ declare global {
  * The AR module enables Augmented Reality features across different platforms:
  *
  * ```ts
- * import { ARSystem } from '@shopware-ag/dive/modules/ARSystem';
+ * import { ModuleRegistry } from '@shopware-ag/dive/modules';
+ *
+ * const ARSystem = await ModuleRegistry.get('ARSystem');
  * const arSystem = new ARSystem();
  *
  * // Launch AR with options

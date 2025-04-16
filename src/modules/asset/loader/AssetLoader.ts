@@ -18,12 +18,10 @@ declare global {
  *
  * ```ts
  * // Direct import
- * import { AssetLoader } from '@shopware-ag/dive/modules/AssetLoader';
- * const assetLoader = new AssetLoader();
- * const model = await assetLoader.load('path/to/model.glb');
+ * import { ModuleRegistry } from '@shopware-ag/dive/modules';
  *
- * // Or through DIVE instance
- * const assetLoader = await dive.modules.get('AssetLoader');
+ * const AssetLoader = await ModuleRegistry.get('AssetLoader');
+ * const assetLoader = new AssetLoader();
  * const model = await assetLoader.load('path/to/model.glb');
  * ```
  *
