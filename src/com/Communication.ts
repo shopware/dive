@@ -2,7 +2,7 @@ import { Actions } from './actions/index.ts';
 import { generateUUID } from 'three/src/math/MathUtils';
 import { isSelectTool } from '../toolbox/select/SelectTool.ts';
 import { merge } from 'lodash';
-import { ModuleRegistry } from '../modules';
+import { ModuleInstance, ModuleRegistry } from '../modules';
 
 // type imports
 import { type Color, type MeshStandardMaterial } from 'three';
@@ -14,13 +14,12 @@ import {
     type COMPrimitive,
     type COMGroup,
 } from './types';
-import { type DIVEScene } from '../scene/Scene.ts';
-import type DIVEToolbox from '../toolbox/Toolbox.ts';
-import type DIVEOrbitControls from '../controls/OrbitControls.ts';
-import { type DIVEModel } from '../model/Model.ts';
-import { type DIVERenderer } from '../renderer/Renderer.ts';
-import { type DIVESelectable } from '../interface/Selectable.ts';
-import { type ModuleInstance } from '../modules/_system/ModuleRegistry.ts';
+import { type DIVEScene } from '../engine/scene/Scene';
+import type DIVEToolbox from '../toolbox/Toolbox';
+import type DIVEOrbitControls from '../controls/OrbitControls';
+import { type DIVEModel } from '../model/Model';
+import { type DIVERenderer } from '../engine/renderer/Renderer';
+import { type DIVESelectable } from '../interface/Selectable';
 
 type EventListener<Action extends keyof Actions> = (
     payload: Actions[Action]['PAYLOAD'],

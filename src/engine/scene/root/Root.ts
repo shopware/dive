@@ -1,10 +1,10 @@
 import { Box3, Color, Object3D } from 'three';
-import DIVEAmbientLight from '../../light/AmbientLight.ts';
-import DIVEPointLight from '../../light/PointLight.ts';
-import DIVESceneLight from '../../light/SceneLight.ts';
-import { DIVEModel } from '../../model/Model.ts';
-import { DIVECommunication } from '../../com/Communication.ts';
-import { DIVEPrimitive } from '../../primitive/Primitive.ts';
+import DIVEAmbientLight from '../../../light/AmbientLight.ts';
+import DIVEPointLight from '../../../light/PointLight.ts';
+import DIVESceneLight from '../../../light/SceneLight.ts';
+import { DIVEModel } from '../../../model/Model.ts';
+import { DIVECommunication } from '../../../com/Communication.ts';
+import { DIVEPrimitive } from '../../../primitive/Primitive.ts';
 
 import { type DIVEScene } from '../Scene.ts';
 import { type TransformControls } from 'three/examples/jsm/controls/TransformControls';
@@ -14,10 +14,10 @@ import {
     type COMEntity,
     type COMPrimitive,
     type COMGroup,
-} from '../../com/types';
-import { type DIVESceneObject } from '../../types';
-import { DIVEGroup } from '../../group/Group.ts';
-import { ModuleRegistry, type ModuleInstance } from '../../modules';
+} from '../../../com/types';
+import { type DIVESceneObject } from '../../../types';
+import { DIVEGroup } from '../../../group/Group';
+import { ModuleInstance, ModuleRegistry } from '../../../modules';
 
 /**
  * A basic scene node to hold grid, floor and all lower level roots.
