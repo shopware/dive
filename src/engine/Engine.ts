@@ -65,6 +65,11 @@ export class Engine {
         if (this._settings.autoResize) {
             this._addResizeObserver();
         }
+
+        if (this._settings.autoStart) {
+            // when everything is done, start the renderer
+            this.renderer.StartRenderer(this.scene, this.perspectiveCamera);
+        }
     }
 
     /**
