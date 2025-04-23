@@ -17,15 +17,9 @@ import { Object3D } from 'three';
 jest.mock('../../../modules/index.ts', () => {
     return {
         ModuleImporter: jest.fn(function () {
-            this.import = jest.fn().mockResolvedValue(
-                class {
-                    constructor() {
-                        return {
-                            load: jest.fn().mockResolvedValue({}),
-                        };
-                    }
-                },
-            );
+            this.instantiate = jest.fn().mockResolvedValue({
+                load: jest.fn().mockResolvedValue({}),
+            });
             return this;
         }),
     };

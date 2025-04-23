@@ -1,10 +1,25 @@
 /** @internal */
 
-import { ModuleConstructors } from '..';
-
 declare global {
     interface ModuleClasses {}
 }
+
+/** @internal */
+export type ModuleConstructors = {
+    [K in keyof ModuleClasses]: K extends keyof ModuleClasses
+        ? ModuleClasses[K] extends { new (...args: infer P): infer R }
+            ? new (...args: P) => R
+            : new (...args: unknown[]) => ModuleClasses[K]
+        : never;
+};
+
+/**
+ * @internal
+ * Helper type to get the instance type of a module
+ */
+export type ModuleInstance<Id extends keyof ModuleClasses> = InstanceType<
+    ModuleClasses[Id]
+>;
 
 /**
  * @internal
@@ -15,6 +30,7 @@ declare global {
  */
 export class ModuleImporter<Id extends keyof ModuleClasses> {
     private _promise: Promise<ModuleConstructors[Id]> | null = null;
+    private _instance: ModuleInstance<Id> | null = null;
     private _importFn: () => Promise<ModuleConstructors[Id]>;
 
     constructor(private _path: string) {
@@ -49,6 +65,25 @@ export class ModuleImporter<Id extends keyof ModuleClasses> {
         }
 
         return this._promise;
+    }
+
+    /**
+     * @internal
+     * Get an instance of the module class, importing it if not already cached.
+     * @returns A Promise that resolves to an instance of the module's class.
+     */
+    public async instantiate(
+        ...args: ConstructorParameters<ModuleConstructors[Id]>
+    ): Promise<ModuleInstance<Id>> {
+        if (this._instance !== null) {
+            return Promise.resolve(this._instance);
+        }
+
+        const module = await this.import();
+        this._instance = new (module as new (
+            ...args: ConstructorParameters<ModuleConstructors[Id]>
+        ) => ModuleInstance<Id>)(...args);
+        return this._instance;
     }
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any

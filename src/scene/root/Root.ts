@@ -17,7 +17,7 @@ import {
 } from '../../com/types';
 import { type DIVESceneObject } from '../../types';
 import { DIVEGroup } from '../../group/Group.ts';
-import { ModuleImporter, type ModuleInstance } from '../../modules/index.ts';
+import { ModuleImporter } from '../../modules/index.ts';
 
 /**
  * A basic scene node to hold grid, floor and all lower level roots.
@@ -28,7 +28,7 @@ import { ModuleImporter, type ModuleInstance } from '../../modules/index.ts';
 export class DIVERoot extends Object3D {
     readonly isDIVERoot: true = true;
 
-    private _assetLoader: Promise<ModuleInstance<'AssetLoader'>>;
+    private _assetLoader: ModuleImporter<'AssetLoader'>;
 
     constructor() {
         super();
@@ -36,11 +36,7 @@ export class DIVERoot extends Object3D {
 
         this._assetLoader = new ModuleImporter<'AssetLoader'>(
             'src/modules/asset/loader/AssetLoader.ts',
-        )
-            .import()
-            .then((ModuleClass) => {
-                return new ModuleClass();
-            });
+        );
     }
 
     public ComputeSceneBB(): Box3 {
@@ -250,6 +246,7 @@ export class DIVERoot extends Object3D {
 
         if (model.uri !== undefined) {
             this._assetLoader
+                .instantiate()
                 .then((loader) => {
                     return loader.load(model.uri!);
                 })

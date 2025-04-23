@@ -49,6 +49,7 @@ jest.mock('../../modules', () => {
                     }
                 },
             );
+            this.instantiate = jest.fn().mockResolvedValue({});
             return this;
         }),
     };
@@ -867,7 +868,9 @@ describe('dive/communication/DIVECommunication', () => {
         const mockMediaCreator = {
             GenerateMedia: jest.fn().mockResolvedValue('test'),
         } as unknown as MediaCreator;
-        testCom['_mediaCreator'] = Promise.resolve(mockMediaCreator);
+        jest.spyOn(testCom['_mediaCreator'], 'instantiate').mockResolvedValue(
+            mockMediaCreator,
+        );
 
         const mock1 = {
             entityType: 'pov',
@@ -999,7 +1002,9 @@ describe('dive/communication/DIVECommunication', () => {
         const mockAR = {
             launch: jest.fn().mockResolvedValue(undefined),
         } as unknown as ARSystem;
-        testCom['_arSystem'] = Promise.resolve(mockAR);
+        jest.spyOn(testCom['_arSystem'], 'instantiate').mockResolvedValue(
+            mockAR,
+        );
 
         await testCom.PerformAction('LAUNCH_AR', {
             uri: 'https://example.com',
