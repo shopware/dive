@@ -1,5 +1,11 @@
 /** @internal */
 
+import { ModuleConstructors } from '..';
+
+declare global {
+    interface ModuleClasses {}
+}
+
 // Declare the global variable injected by the build process
 declare const __MODULE_BUILD_PATHS__: Record<keyof ModuleClasses, string>;
 
@@ -11,12 +17,12 @@ declare const __MODULE_BUILD_PATHS__: Record<keyof ModuleClasses, string>;
  * 2. Dynamically importing the module class
  * 3. Caching the imported class to avoid multiple imports
  */
-export class ModuleImporter<T extends new (...args: unknown[]) => unknown> {
-    private _promise: Promise<T> | null = null;
-    private _importFn: () => Promise<T>;
+export class ModuleImporter<Id extends keyof ModuleClasses> {
+    private _promise: Promise<ModuleConstructors[Id]> | null = null;
+    private _importFn: () => Promise<ModuleConstructors[Id]>;
 
-    constructor(private _name: keyof ModuleClasses) {
-        this._importFn = async (): Promise<T> => {
+    constructor(private _name: Id) {
+        this._importFn = async (): Promise<ModuleConstructors[Id]> => {
             // Get the correct build path from the injected map
             const importPath = __MODULE_BUILD_PATHS__[this._name];
 
@@ -35,7 +41,7 @@ export class ModuleImporter<T extends new (...args: unknown[]) => unknown> {
                         `Module class ${this._name} not found in dynamically imported module: ${importPath}`,
                     );
                 }
-                return module[this._name] as T;
+                return module[this._name] as ModuleConstructors[Id];
             } catch (err) {
                 throw new Error(
                     `Failed to dynamically import module ${this._name} from path ${importPath}: ${err instanceof Error ? err.message : String(err)}`,
@@ -49,7 +55,7 @@ export class ModuleImporter<T extends new (...args: unknown[]) => unknown> {
      * Get the module class, importing it if not already cached.
      * @returns A Promise that resolves to the module's class constructor.
      */
-    public async getClass(): Promise<T> {
+    public async import(): Promise<ModuleConstructors[Id]> {
         if (!this._promise) {
             this._promise = this._importFn();
         }

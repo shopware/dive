@@ -35,21 +35,22 @@ import {
 } from '../types';
 import { type DIVESceneObject } from '../../types';
 import { type ARSystemOptions } from '../../modules/ar/ARSystem';
-import { ModuleRegistry, type ModuleInstance } from '../../modules';
+import { ModuleImporter } from '../../modules';
 import { MediaCreator } from '../../modules/mediacreator/MediaCreator';
 import { ARSystem } from '../../modules/ar/ARSystem';
 
 jest.mock('../../modules', () => {
     return {
-        ModuleRegistry: {
-            get: jest.fn().mockResolvedValue(
+        ModuleImporter: jest.fn(function () {
+            this.import = jest.fn().mockResolvedValue(
                 class {
                     constructor() {
                         return {};
                     }
                 },
-            ),
-        },
+            );
+            return this;
+        }),
     };
 });
 
@@ -980,7 +981,7 @@ describe('dive/communication/DIVECommunication', () => {
         const mockIO = {
             Export: jest.fn().mockResolvedValue('test'),
         };
-        jest.spyOn(ModuleRegistry, 'get').mockResolvedValue(
+        jest.spyOn(ModuleImporter.prototype, 'import').mockResolvedValue(
             class {
                 constructor() {
                     return mockIO;

@@ -223,11 +223,6 @@ describe('dive/DIVE', () => {
         expect(dive.communication).toBeDefined();
     });
 
-    it('should have Modules', () => {
-        const dive = new DIVE();
-        expect(dive.modules).toBeDefined();
-    });
-
     it('should resize', () => {
         const dive = new DIVE();
         expect(() => dive.OnResize(800, 600)).not.toThrow();

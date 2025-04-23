@@ -19,7 +19,6 @@ import DIVEAxisCamera from './axiscamera/AxisCamera.ts';
 import { getObjectDelta } from './helper/getObjectDelta/getObjectDelta.ts';
 import { MathUtils } from 'three';
 import pkgjson from '../package.json';
-import { ModuleRegistry } from './modules';
 
 export type DIVESettings = {
     autoResize: boolean;
@@ -165,10 +164,6 @@ export default class DIVE {
 
     public get canvas(): HTMLCanvasElement {
         return this.renderer.domElement;
-    }
-
-    public get modules(): typeof ModuleRegistry {
-        return ModuleRegistry;
     }
 
     // setters

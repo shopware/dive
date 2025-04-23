@@ -2,7 +2,6 @@ import { Actions } from './actions/index.ts';
 import { generateUUID } from 'three/src/math/MathUtils';
 import { isSelectTool } from '../toolbox/select/SelectTool.ts';
 import { merge } from 'lodash';
-import { ModuleRegistry } from '../modules';
 
 // type imports
 import { type Color, type MeshStandardMaterial } from 'three';
@@ -20,7 +19,7 @@ import type DIVEOrbitControls from '../controls/OrbitControls.ts';
 import { type DIVEModel } from '../model/Model.ts';
 import { type DIVERenderer } from '../renderer/Renderer.ts';
 import { type DIVESelectable } from '../interface/Selectable.ts';
-import { type ModuleInstance } from '../modules/_system/ModuleRegistry.ts';
+import { ModuleImporter, type ModuleInstance } from '../modules/index.ts';
 
 type EventListener<Action extends keyof Actions> = (
     payload: Actions[Action]['PAYLOAD'],
@@ -95,25 +94,27 @@ export class DIVECommunication {
         this.controller = controls;
         this.toolbox = toolbox;
 
-        this._mediaCreator = ModuleRegistry.get('MediaCreator').then(
-            (ModuleClass) => {
+        this._mediaCreator = new ModuleImporter('MediaCreator')
+            .import()
+            .then((ModuleClass) => {
                 return new ModuleClass(
                     this.renderer,
                     this.scene,
                     this.controller,
                 );
-            },
-        );
+            });
 
-        this._arSystem = ModuleRegistry.get('ARSystem').then((ModuleClass) => {
-            return new ModuleClass();
-        });
-
-        this._assetExporter = ModuleRegistry.get('AssetExporter').then(
-            (ModuleClass) => {
+        this._arSystem = new ModuleImporter('ARSystem')
+            .import()
+            .then((ModuleClass) => {
                 return new ModuleClass();
-            },
-        );
+            });
+
+        this._assetExporter = new ModuleImporter('AssetExporter')
+            .import()
+            .then((ModuleClass) => {
+                return new ModuleClass();
+            });
 
         DIVECommunication.__instances.push(this);
     }

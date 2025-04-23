@@ -2,10 +2,8 @@
  * Central export point for the module system.
  * This is the only place where ModuleRegistry should be imported from.
  */
-import {
-    internalModuleRegistry as ModuleRegistry,
-    type ModuleInstance,
-} from './_system/ModuleRegistry';
+
+import { ModuleImporter } from './_system/ModuleImporter';
 
 // Define module source paths for build process and module registry.
 export const MODULE_PATHS = {
@@ -17,10 +15,22 @@ export const MODULE_PATHS = {
     SystemInfo: './systeminfo/SystemInfo.ts',
 };
 
-// Register all modules with just their names
-Object.keys(MODULE_PATHS).forEach((name) => {
-    ModuleRegistry.register(name as keyof ModuleClasses);
-});
+/** @internal */
+export type ModuleConstructors = {
+    [K in keyof ModuleClasses]: K extends keyof ModuleClasses
+        ? ModuleClasses[K] extends { new (...args: infer P): infer R }
+            ? new (...args: P) => R
+            : new (...args: unknown[]) => ModuleClasses[K]
+        : never;
+};
+
+/**
+ * @internal
+ * Helper type to get the instance type of a module
+ */
+export type ModuleInstance<Id extends keyof ModuleClasses> = InstanceType<
+    ModuleClasses[Id]
+>;
 
 // Re-export the ModuleRegistry as the only public access point
-export { ModuleRegistry, type ModuleInstance };
+export { ModuleImporter };

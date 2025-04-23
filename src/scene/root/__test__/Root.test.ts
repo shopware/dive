@@ -14,19 +14,22 @@ import { DIVECommunication } from '../../../com/Communication';
 import { type DIVESceneObject } from '../../../types';
 import { Object3D } from 'three';
 
-jest.mock('../../../modules', () => ({
-    ModuleRegistry: {
-        get: jest.fn().mockResolvedValue(
-            class {
-                constructor() {
-                    return {
-                        load: jest.fn().mockResolvedValue({}),
-                    };
-                }
-            },
-        ),
-    },
-}));
+jest.mock('../../../modules/index.ts', () => {
+    return {
+        ModuleImporter: jest.fn(function () {
+            this.import = jest.fn().mockResolvedValue(
+                class {
+                    constructor() {
+                        return {
+                            load: jest.fn().mockResolvedValue({}),
+                        };
+                    }
+                },
+            );
+            return this;
+        }),
+    };
+});
 
 jest.mock('../../../com/Communication.ts', () => {
     return {
