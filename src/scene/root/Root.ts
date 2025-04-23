@@ -34,7 +34,9 @@ export class DIVERoot extends Object3D {
         super();
         this.name = 'Root';
 
-        this._assetLoader = new ModuleImporter('AssetLoader')
+        this._assetLoader = new ModuleImporter<'AssetLoader'>(
+            'src/modules/asset/loader/AssetLoader.ts',
+        )
             .import()
             .then((ModuleClass) => {
                 return new ModuleClass();

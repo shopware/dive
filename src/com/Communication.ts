@@ -94,7 +94,9 @@ export class DIVECommunication {
         this.controller = controls;
         this.toolbox = toolbox;
 
-        this._mediaCreator = new ModuleImporter('MediaCreator')
+        this._mediaCreator = new ModuleImporter<'MediaCreator'>(
+            'src/modules/mediacreator/MediaCreator.ts',
+        )
             .import()
             .then((ModuleClass) => {
                 return new ModuleClass(
@@ -104,13 +106,17 @@ export class DIVECommunication {
                 );
             });
 
-        this._arSystem = new ModuleImporter('ARSystem')
+        this._arSystem = new ModuleImporter<'ARSystem'>(
+            'src/modules/ar/ARSystem.ts',
+        )
             .import()
             .then((ModuleClass) => {
                 return new ModuleClass();
             });
 
-        this._assetExporter = new ModuleImporter('AssetExporter')
+        this._assetExporter = new ModuleImporter<'AssetExporter'>(
+            'src/modules/asset/exporter/AssetExporter.ts',
+        )
             .import()
             .then((ModuleClass) => {
                 return new ModuleClass();
