@@ -1,8 +1,8 @@
 import { Matrix4, Mesh, Vector3 } from 'three';
-import { DIVERenderer } from '../../../../renderer/Renderer';
+import { DIVERenderer } from '../../../../engine/renderer/Renderer';
 import { DIVEWebXRRaycasterAR } from './ar/WebXRRaycasterAR';
 import { DIVEWebXRRaycasterTHREE } from './three/WebXRRaycasterTHREE';
-import { DIVEScene } from '../../../../scene/Scene';
+import { DIVEScene } from '../../../../engine/scene/Scene';
 import { DIVEEventExecutor } from '../../../../events/EventExecutor';
 
 /**

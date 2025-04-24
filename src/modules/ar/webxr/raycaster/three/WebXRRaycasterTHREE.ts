@@ -4,8 +4,8 @@ import {
     Raycaster,
     type XRTargetRaySpace,
 } from 'three';
-import { type DIVERenderer } from '../../../../../renderer/Renderer';
-import { type DIVEScene } from '../../../../../scene/Scene';
+import { type DIVERenderer } from '../../../../../engine/renderer/Renderer';
+import { type DIVEScene } from '../../../../../engine/scene/Scene';
 import { type DIVEHitResult } from '../WebXRRaycaster';
 
 export class DIVEWebXRRaycasterTHREE {

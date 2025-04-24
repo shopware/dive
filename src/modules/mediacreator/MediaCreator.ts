@@ -1,6 +1,6 @@
-import DIVEPerspectiveCamera from '../../camera/PerspectiveCamera';
-import { type DIVEScene } from '../../scene/Scene';
-import { type DIVERenderer } from '../../renderer/Renderer';
+import { DIVEPerspectiveCamera } from '../../engine/camera/PerspectiveCamera';
+import { type DIVEScene } from '../../engine/scene/Scene';
+import { type DIVERenderer } from '../../engine/renderer/Renderer';
 import type DIVEOrbitControls from '../../controls/OrbitControls';
 import { type Vector3Like } from 'three';
 

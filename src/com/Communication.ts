@@ -13,11 +13,11 @@ import {
     type COMPrimitive,
     type COMGroup,
 } from './types';
-import { type DIVEScene } from '../scene/Scene.ts';
+import { type DIVEScene } from '../engine/scene/Scene.ts';
 import type DIVEToolbox from '../toolbox/Toolbox.ts';
 import type DIVEOrbitControls from '../controls/OrbitControls.ts';
 import { type DIVEModel } from '../model/Model.ts';
-import { type DIVERenderer } from '../renderer/Renderer.ts';
+import { type DIVERenderer } from '../engine/renderer/Renderer.ts';
 import { type DIVESelectable } from '../interface/Selectable.ts';
 import { ModuleImporter } from '../modules/index.ts';
 

@@ -1,9 +1,10 @@
 import { MediaCreator } from '../MediaCreator';
-import { DIVERenderer } from '../../../renderer/Renderer';
-import { DIVEScene } from '../../../scene/Scene';
-import DIVEPerspectiveCamera, {
+import { DIVERenderer } from '../../../engine/renderer/Renderer';
+import { DIVEScene } from '../../../engine/scene/Scene';
+import {
+    DIVEPerspectiveCamera,
     DIVEPerspectiveCameraDefaultSettings,
-} from '../../../camera/PerspectiveCamera';
+} from '../../../engine/camera/PerspectiveCamera';
 import { type COMPov } from '../../../com/types';
 import DIVEOrbitControls from '../../../controls/OrbitControls';
 import { DIVEAnimationSystem } from '../../../animation/AnimationSystem';
@@ -15,7 +16,7 @@ import { DIVEAnimationSystem } from '../../../animation/AnimationSystem';
 const mock_render = jest.fn();
 const mock_toDataURL = jest.fn();
 
-jest.mock('../../../scene/Scene', () => {
+jest.mock('../../../engine/scene/Scene', () => {
     return {
         DIVEScene: jest.fn(function () {
             this.add = jest.fn();
@@ -28,28 +29,30 @@ jest.mock('../../../scene/Scene', () => {
     };
 });
 
-jest.mock('../../../camera/PerspectiveCamera', () => {
-    return jest.fn(function () {
-        this.position = {
-            clone: jest.fn(),
-            copy: jest.fn(),
-        };
-        this.quaternion = {
-            clone: jest.fn(),
-            copy: jest.fn(),
-        };
-        this.orbitControls = {
-            target: {
+jest.mock('../../../engine/camera/PerspectiveCamera', () => {
+    return {
+        DIVEPerspectiveCamera: jest.fn(function () {
+            this.position = {
                 clone: jest.fn(),
                 copy: jest.fn(),
-            },
-            update: jest.fn(),
-        };
-        this.layers = {
-            mask: 0,
-        };
-        return this;
-    });
+            };
+            this.quaternion = {
+                clone: jest.fn(),
+                copy: jest.fn(),
+            };
+            this.orbitControls = {
+                target: {
+                    clone: jest.fn(),
+                    copy: jest.fn(),
+                },
+                update: jest.fn(),
+            };
+            this.layers = {
+                mask: 0,
+            };
+            return this;
+        }),
+    };
 });
 
 jest.mock('../../../controls/OrbitControls', () => {
@@ -80,7 +83,7 @@ jest.mock('../../../controls/OrbitControls', () => {
     });
 });
 
-jest.mock('../../../renderer/Renderer', () => {
+jest.mock('../../../engine/renderer/Renderer', () => {
     return {
         DIVERenderer: jest.fn(function () {
             this.domElement = {

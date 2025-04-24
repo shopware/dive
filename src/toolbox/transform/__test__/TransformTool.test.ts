@@ -1,20 +1,20 @@
 import DIVETransformTool, { isTransformTool } from '../TransformTool';
-import { DIVEScene } from '../../../scene/Scene';
+import { DIVEScene } from '../../../engine/scene/Scene';
 import DIVEOrbitControls from '../../../controls/OrbitControls';
-import DIVEPerspectiveCamera from '../../../camera/PerspectiveCamera';
-import { DIVERenderer } from '../../../renderer/Renderer';
+import { DIVEPerspectiveCamera } from '../../../engine/camera/PerspectiveCamera';
+import { DIVERenderer } from '../../../engine/renderer/Renderer';
 import { type DIVEBaseTool } from '../../BaseTool';
 import { Tween } from '@tweenjs/tween.js';
 import { DIVEAnimationSystem } from '../../../animation/AnimationSystem';
 import { type TransformControls } from 'three/examples/jsm/controls/TransformControls';
 
-jest.mock('../../../renderer/Renderer', () => {
+jest.mock('../../../engine/renderer/Renderer', () => {
     return jest.fn(function () {
         return this;
     });
 });
 
-jest.mock('../../../camera/PerspectiveCamera', () => {
+jest.mock('../../../engine/camera/PerspectiveCamera', () => {
     return jest.fn(function () {
         this.isPerspectiveCamera = true;
         this.layers = {
@@ -40,7 +40,7 @@ jest.mock('../../../controls/OrbitControls', () => {
     });
 });
 
-jest.mock('../../../scene/Scene', () => {
+jest.mock('../../../engine/scene/Scene', () => {
     return {
         DIVEScene: jest.fn(function () {
             this.add = jest.fn();

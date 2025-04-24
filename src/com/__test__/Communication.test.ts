@@ -21,10 +21,10 @@ import '../actions/scene/updatescene';
 import '../actions/toolbox/select/setgizmomode';
 import '../actions/toolbox/transform/setgizmovisible';
 import '../actions/camera/getcameratransform';
-import { type DIVEScene } from '../../scene/Scene';
+import { type DIVEScene } from '../../engine/scene/Scene';
 import type DIVEToolbox from '../../toolbox/Toolbox';
 import type DIVEOrbitControls from '../../controls/OrbitControls';
-import { type DIVERenderer } from '../../renderer/Renderer';
+import { type DIVERenderer } from '../../engine/renderer/Renderer';
 import {
     type COMGroup,
     type COMEntity,
