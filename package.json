@@ -3,29 +3,50 @@
     "version": "1.19.0",
     "description": "Shopware Spatial Framework",
     "type": "module",
-    "main": "build/dive.cjs",
-    "module": "build/dive.js",
-    "types": "build/dive.d.ts",
+    "main": "build/index.cjs",
+    "module": "build/index.mjs",
+    "types": "build/index.d.ts",
     "exports": {
         ".": {
-            "types": "./build/dive.d.ts",
-            "node": {
-                "import": {
-                    "default": "./build/dive.mjs"
-                },
-                "require": {
-                    "default": "./build/dive.cjs"
-                }
-            },
-            "import": "./build/dive.mjs",
-            "require": "./build/dive.cjs"
+            "types": "./build/index.d.ts",
+            "import": "./build/index.mjs",
+            "require": "./build/index.cjs"
+        },
+        "./modules/ARSystem": {
+            "types": "./build/src/modules/ar/ARSystem.d.ts",
+            "import": "./build/src/modules/ar/ARSystem.mjs",
+            "require": "./build/src/modules/ar/ARSystem.cjs"
+        },
+        "./modules/AssetConverter": {
+            "types": "./build/src/modules/asset/converter/AssetConverter.d.ts",
+            "import": "./build/src/modules/asset/converter/AssetConverter.mjs",
+            "require": "./build/src/modules/asset/converter/AssetConverter.cjs"
+        },
+        "./modules/AssetExporter": {
+            "types": "./build/src/modules/asset/exporter/AssetExporter.d.ts",
+            "import": "./build/src/modules/asset/exporter/AssetExporter.mjs",
+            "require": "./build/src/modules/asset/exporter/AssetExporter.cjs"
+        },
+        "./modules/AssetLoader": {
+            "types": "./build/src/modules/asset/loader/AssetLoader.d.ts",
+            "import": "./build/src/modules/asset/loader/AssetLoader.mjs",
+            "require": "./build/src/modules/asset/loader/AssetLoader.cjs"
+        },
+        "./modules/MediaCreator": {
+            "types": "./build/src/modules/mediacreator/MediaCreator.d.ts",
+            "import": "./build/src/modules/mediacreator/MediaCreator.mjs",
+            "require": "./build/src/modules/mediacreator/MediaCreator.cjs"
+        },
+        "./modules/SystemInfo": {
+            "types": "./build/src/modules/systeminfo/SystemInfo.d.ts",
+            "import": "./build/src/modules/systeminfo/SystemInfo.mjs",
+            "require": "./build/src/modules/systeminfo/SystemInfo.cjs"
         }
     },
     "files": [
         "build",
         "LICENSE",
-        "package.json",
-        "README.md"
+        "package.json"
     ],
     "keywords": [
         "dive",
@@ -54,15 +75,20 @@
         "@types/lodash": "^4.17.12",
         "@types/node": "^20.12.7",
         "@types/three": "^0.163.0",
+        "acorn": "^8.14.1",
+        "acorn-walk": "^8.3.4",
         "eslint": "^9.1.1",
+        "glob": "^11.0.1",
         "globals": "^15.0.0",
         "jest": "^29.7.0",
         "jest-environment-jsdom": "^29.7.0",
         "jest-junit": "^16.0.0",
         "jsdom": "^24.0.0",
+        "magic-string": "^0.30.17",
         "prettier": "^3.3.3",
         "prettier-plugin-multiline-arrays": "^3.0.6",
         "ts-jest": "^29.1.2",
+        "ts-morph": "^25.0.1",
         "ts-node": "^10.9.2",
         "tsc": "^2.0.4",
         "typescript": "^5.8.2",
@@ -71,10 +97,13 @@
         "vite-plugin-dts": "^4.5.3"
     },
     "scripts": {
+        "validate-build-paths": "NODE_OPTIONS='--loader ts-node/esm' ts-node ci/build/validate-build-paths.ts",
+        "validate-import-paths": "NODE_OPTIONS='--loader ts-node/esm' ts-node ci/build/validate-import-paths.ts",
         "build": "vite build",
+        "postbuild": "yarn validate-import-paths && yarn validate-build-paths",
         "dev": "vite build --watch",
         "lint": "eslint",
-        "lint:actions": "yarn lint:actions:transpile && yarn lint:actions:check && yarn lint:actions:cleanup",
+        "lint:actions": "bash ci/lint/lint-actions.sh",
         "lint:actions:transpile": "yarn tsc --resolveJsonModule --esModuleInterop ci/lint/lint-actions.ts && mv ci/lint/lint-actions.js ci/lint/lint-actions.cjs",
         "lint:actions:check": "yarn node ci/lint/lint-actions.cjs",
         "lint:actions:cleanup": "node -e \"require('fs').unlinkSync('ci/lint/lint-actions.cjs')\"",
@@ -82,10 +111,9 @@
         "prettier:fix": "prettier --write .",
         "unit": "jest",
         "coverage": "jest --coverage",
-        "generate-readme": "yarn generate-readme:transpile && yarn generate-readme:write && yarn generate-readme:cleanup",
-        "generate-readme:transpile": "yarn tsc --resolveJsonModule --esModuleInterop ci/readme/generate-readme.ts && mv ci/readme/generate-readme.js ci/readme/generate-readme.cjs",
-        "generate-readme:write": "node ci/readme/generate-readme.cjs",
-        "generate-readme:cleanup": "node -e \"require('fs').unlinkSync('ci/readme/generate-readme.cjs')\"",
-        "ci": "yarn lint && yarn coverage && yarn prettier:check && yarn build && bash ci/lint/lint-actions.sh"
+        "docs": "yarn docs:actions && yarn docs:modules",
+        "docs:actions": "NODE_OPTIONS='--loader ts-node/esm' ts-node docs/generators/generate-actions-docs.ts",
+        "docs:modules": "NODE_OPTIONS='--loader ts-node/esm' ts-node docs/generators/generate-modules-docs.ts",
+        "ci": "yarn lint && yarn lint:actions && yarn prettier:check && yarn docs && yarn coverage && yarn build"
     }
 }

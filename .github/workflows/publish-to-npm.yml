@@ -97,11 +97,17 @@ jobs:
               if: steps.yarn-cache.outputs.cache-hit != 'true'
               run: yarn
 
-            - name: Generate README.md
-              run: yarn generate-readme
+            - name: Build DIVE
+              run: yarn build
 
-            - name: 'Add README file to git'
-              run: git add README.md -f
+            - name: 'Add package.json to git'
+              run: git add package.json
+
+            - name: Generate docs
+              run: yarn docs
+
+            - name: 'Add docs folder to git'
+              run: git add git add docs -f
 
             - name: 'Automated Version Bump'
               uses: 'phips28/gh-action-bump-version@master'
@@ -126,8 +132,7 @@ jobs:
 
             - name: 'Create release branch'
               run: git checkout -b release/v$(node -p "require('./package.json').version")
-            - name: Build DIVE
-              run: yarn build
+
             - name: 'Add Build files to git'
               run: git add ./build -f && echo "Staged build files! Status:" && git status
             - name: 'Commit changes'

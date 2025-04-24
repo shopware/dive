@@ -2,7 +2,6 @@ import { Actions } from './actions/index.ts';
 import { generateUUID } from 'three/src/math/MathUtils';
 import { isSelectTool } from '../toolbox/select/SelectTool.ts';
 import { merge } from 'lodash';
-import { DIVEModule } from '../module/Module.ts';
 
 // type imports
 import { type Color, type MeshStandardMaterial } from 'three';
@@ -18,11 +17,9 @@ import { type DIVEScene } from '../scene/Scene.ts';
 import type DIVEToolbox from '../toolbox/Toolbox.ts';
 import type DIVEOrbitControls from '../controls/OrbitControls.ts';
 import { type DIVEModel } from '../model/Model.ts';
-import { type DIVEMediaCreator } from '../mediacreator/MediaCreator.ts';
 import { type DIVERenderer } from '../renderer/Renderer.ts';
 import { type DIVESelectable } from '../interface/Selectable.ts';
-import { type DIVEIO } from '../io/IO.ts';
-import { type ARSystem } from '../ar/ARSystem.ts';
+import { ModuleImporter } from '../modules/index.ts';
 
 type EventListener<Action extends keyof Actions> = (
     payload: Actions[Action]['PAYLOAD'],
@@ -42,7 +39,7 @@ type Unsubscribe = () => boolean;
  *
  * dive.Communication.Subscribe('GET_ALL_SCENE_DATA', () => {
  *  // do something
- * }));
+ * });
  *
  * dive.Communication.PerformAction('GET_ALL_SCENE_DATA', {});
  * ```
@@ -75,17 +72,13 @@ export class DIVECommunication {
     private controller: DIVEOrbitControls;
     private toolbox: DIVEToolbox;
 
-    private _mediaGenerator: DIVEModule<DIVEMediaCreator> = new DIVEModule(
-        '../mediacreator/MediaCreator.ts',
-        'DIVEMediaCreator',
-    );
-    private _io: DIVEModule<DIVEIO> = new DIVEModule('../io/IO.ts', 'DIVEIO');
-
-    private _ar: DIVEModule<ARSystem> = new DIVEModule('../ar/AR.ts', 'DIVEAR');
+    // modules
+    private _mediaCreator: ModuleImporter<'MediaCreator'>;
+    private _arSystem: ModuleImporter<'ARSystem'>;
+    private _assetExporter: ModuleImporter<'AssetExporter'>;
 
     private registered: Map<string, COMEntity> = new Map();
 
-    // private listeners: { [key: string]: EventListener[] } = {};
     private listeners: Map<keyof Actions, EventListener<keyof Actions>[]> =
         new Map();
 
@@ -100,6 +93,18 @@ export class DIVECommunication {
         this.scene = scene;
         this.controller = controls;
         this.toolbox = toolbox;
+
+        this._mediaCreator = new ModuleImporter<'MediaCreator'>(
+            'src/modules/mediacreator/MediaCreator.ts',
+        );
+
+        this._arSystem = new ModuleImporter<'ARSystem'>(
+            'src/modules/ar/ARSystem.ts',
+        );
+
+        this._assetExporter = new ModuleImporter<'AssetExporter'>(
+            'src/modules/asset/exporter/AssetExporter.ts',
+        );
 
         DIVECommunication.__instances.push(this);
     }
@@ -291,10 +296,10 @@ export class DIVECommunication {
                 const { uri, options } =
                     payload as Actions['LAUNCH_AR']['PAYLOAD'];
                 returnValue = new Promise<void>((resolve, reject) => {
-                    this._ar
-                        .get()
-                        .then((ar) => {
-                            resolve(ar.launch(uri, options));
+                    this._arSystem
+                        .instantiate()
+                        .then((arSystem) => {
+                            resolve(arSystem.launch(uri, options));
                         })
                         .catch(reject);
                 });
@@ -719,14 +724,16 @@ export class DIVECommunication {
             target = payload.target;
         }
 
-        return this._mediaGenerator.get().then((module) => {
-            return module.GenerateMedia(
-                position,
-                target,
-                payload.width,
-                payload.height,
-            );
-        });
+        return this._mediaCreator
+            .instantiate(this.renderer, this.scene, this.controller)
+            .then((mediaCreator) => {
+                return mediaCreator.GenerateMedia(
+                    position,
+                    target,
+                    payload.width,
+                    payload.height,
+                );
+            });
     }
 
     private setParent(
@@ -792,13 +799,8 @@ export class DIVECommunication {
     private exportScene(
         payload: Actions['EXPORT_SCENE']['PAYLOAD'],
     ): Actions['EXPORT_SCENE']['RETURN'] {
-        return new Promise<string | null>((resolve, reject) => {
-            this._io
-                .get()
-                .then((io) => {
-                    resolve(io.Export(payload.type));
-                })
-                .catch(reject);
+        return this._assetExporter.instantiate().then((assetExporter) => {
+            return assetExporter.export(this.scene.Root, payload.type, {});
         });
     }
 }

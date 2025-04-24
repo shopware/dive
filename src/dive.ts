@@ -18,7 +18,6 @@ import { DIVEAnimationSystem } from './animation/AnimationSystem.ts';
 import DIVEAxisCamera from './axiscamera/AxisCamera.ts';
 import { getObjectDelta } from './helper/getObjectDelta/getObjectDelta.ts';
 import { MathUtils } from 'three';
-import { SystemInfo } from './info/Info.ts';
 import pkgjson from '../package.json';
 
 export type DIVESettings = {
@@ -70,7 +69,7 @@ export default class DIVE {
     ): DIVE {
         const dive = new DIVE(settings);
 
-        dive.Communication.PerformAction('SET_CAMERA_TRANSFORM', {
+        dive._communication.PerformAction('SET_CAMERA_TRANSFORM', {
             position: { x: 0, y: 2, z: 2 },
             target: { x: 0, y: 0.5, z: 0 },
         });
@@ -79,7 +78,7 @@ export default class DIVE {
         const lightid = MathUtils.generateUUID();
 
         // add scene light
-        dive.Communication.PerformAction('ADD_OBJECT', {
+        dive._communication.PerformAction('ADD_OBJECT', {
             entityType: 'light',
             type: 'scene',
             name: 'light',
@@ -94,22 +93,22 @@ export default class DIVE {
         const modelid = MathUtils.generateUUID();
 
         // add loaded listener
-        dive.Communication.Subscribe('MODEL_LOADED', (data) => {
+        dive._communication.Subscribe('MODEL_LOADED', (data) => {
             if (data.id !== modelid) return;
 
-            const transform = dive.Communication.PerformAction(
+            const transform = dive._communication.PerformAction(
                 'COMPUTE_ENCOMPASSING_VIEW',
                 {},
             );
 
-            dive.Communication.PerformAction('SET_CAMERA_TRANSFORM', {
+            dive._communication.PerformAction('SET_CAMERA_TRANSFORM', {
                 position: transform.position,
                 target: transform.target,
             });
         });
 
         // instantiate model
-        dive.Communication.PerformAction('ADD_OBJECT', {
+        dive._communication.PerformAction('ADD_OBJECT', {
             entityType: 'model',
             name: 'object',
             id: modelid,
@@ -122,11 +121,20 @@ export default class DIVE {
         });
 
         // set scene properties
-        dive.Communication.PerformAction('UPDATE_SCENE', {
+        dive._communication.PerformAction('UPDATE_SCENE', {
             backgroundColor: 0xffffff,
             gridEnabled: false,
             floorColor: 0xffffff,
         });
+
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        if (!(window as any).DIVE.instances) {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            (window as any).DIVE.instances = [];
+        }
+
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        (window as any).DIVE.instances.push(dive);
 
         return dive;
     }
@@ -143,23 +151,19 @@ export default class DIVE {
     private perspectiveCamera: DIVEPerspectiveCamera;
     private orbitControls: DIVEOrbitControls;
     private toolbox: DIVEToolbox;
-    private communication: DIVECommunication;
+    private _communication: DIVECommunication;
 
     // additional components
     private animationSystem: DIVEAnimationSystem;
     private axisCamera: DIVEAxisCamera | null;
 
     // getters
-    public get Communication(): DIVECommunication {
-        return this.communication;
+    public get communication(): DIVECommunication {
+        return this._communication;
     }
 
-    public get Canvas(): HTMLCanvasElement {
+    public get canvas(): HTMLCanvasElement {
         return this.renderer.domElement;
-    }
-
-    public get Info(): SystemInfo {
-        return SystemInfo;
     }
 
     // setters
@@ -245,7 +249,7 @@ export default class DIVE {
             this._settings.orbitControls,
         );
         this.toolbox = new DIVEToolbox(this.scene, this.orbitControls);
-        this.communication = new DIVECommunication(
+        this._communication = new DIVECommunication(
             this.renderer,
             this.scene,
             this.orbitControls,
@@ -320,7 +324,7 @@ export default class DIVE {
         this.axisCamera?.Dispose();
         this.animationSystem.Dispose();
         this.toolbox.Dispose();
-        this.communication.DestroyInstance();
+        this._communication.DestroyInstance();
     }
 
     // methods
@@ -356,9 +360,7 @@ export default class DIVE {
 
 export { DIVE, DIVECommunication };
 
-export * from './math/index.ts';
-
-export * from './ar/ARSystem.ts';
+export { DIVEMath } from './math/index.ts';
 
 export * from './com/actions/index.ts';
 export * from './com/types';

@@ -1,14 +1,27 @@
 {
-  "compilerOptions": {
-    "target": "esnext",
-    "module": "esnext",
-    "moduleResolution": "Node10",
-    "allowImportingTsExtensions": true,
-    "resolveJsonModule": true,
-    "noEmit": true,
-    "esModuleInterop": true,
-    "forceConsistentCasingInFileNames": true,
-    "strict": true,
-    "skipLibCheck": true
-  }
+    "compilerOptions": {
+        "target": "esnext",
+        "module": "esnext",
+        "moduleResolution": "Node10",
+        "allowImportingTsExtensions": true,
+        "resolveJsonModule": true,
+        "noEmit": false,
+        "declaration": true,
+        "declarationDir": "./build/types",
+        "emitDeclarationOnly": true,
+        "esModuleInterop": true,
+        "forceConsistentCasingInFileNames": true,
+        "strict": true,
+        "skipLibCheck": true
+    },
+    "include": [
+        "src/**/*",
+        "vite.config.ts",
+        "docs/**/*",
+        "ci/**/*"
+    ],
+    "exclude": [
+        "node_modules",
+        "build"
+    ]
 }

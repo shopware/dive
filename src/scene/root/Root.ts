@@ -17,7 +17,7 @@ import {
 } from '../../com/types';
 import { type DIVESceneObject } from '../../types';
 import { DIVEGroup } from '../../group/Group.ts';
-import { AssetLoader } from '../../asset/loader/AssetLoader.ts';
+import { ModuleImporter } from '../../modules/index.ts';
 
 /**
  * A basic scene node to hold grid, floor and all lower level roots.
@@ -28,13 +28,15 @@ import { AssetLoader } from '../../asset/loader/AssetLoader.ts';
 export class DIVERoot extends Object3D {
     readonly isDIVERoot: true = true;
 
-    private loader: AssetLoader;
+    private _assetLoader: ModuleImporter<'AssetLoader'>;
 
     constructor() {
         super();
         this.name = 'Root';
 
-        this.loader = new AssetLoader();
+        this._assetLoader = new ModuleImporter<'AssetLoader'>(
+            'src/modules/asset/loader/AssetLoader.ts',
+        );
     }
 
     public ComputeSceneBB(): Box3 {
@@ -243,13 +245,18 @@ export class DIVERoot extends Object3D {
         }
 
         if (model.uri !== undefined) {
-            this.loader.load(model.uri).then((gltf) => {
-                (sceneObject as DIVEModel).SetModel(gltf);
-                DIVECommunication.get(model.id!)?.PerformAction(
-                    'MODEL_LOADED',
-                    { id: model.id! },
-                );
-            });
+            this._assetLoader
+                .instantiate()
+                .then((loader) => {
+                    return loader.load(model.uri!);
+                })
+                .then((gltf) => {
+                    (sceneObject as DIVEModel).SetModel(gltf);
+                    DIVECommunication.get(model.id!)?.PerformAction(
+                        'MODEL_LOADED',
+                        { id: model.id! },
+                    );
+                });
         }
 
         if (model.name !== undefined) sceneObject.name = model.name;
