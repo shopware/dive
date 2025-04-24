@@ -109,7 +109,7 @@ const mockScene = {
     },
     Root: {
         attach: jest.fn(),
-        Floor: {
+        floor: {
             isFloor: true,
             visible: true,
             material: {
@@ -1011,7 +1011,9 @@ describe('dive/communication/DIVECommunication', () => {
         const mockExporter = {
             export: jest.fn().mockResolvedValue(new ArrayBuffer(0)),
         } as unknown as AssetExporter;
-        testCom['_assetExporter'] = Promise.resolve(mockExporter);
+        jest.spyOn(testCom['_assetExporter'], 'instantiate').mockResolvedValue(
+            mockExporter,
+        );
 
         const result = await testCom.PerformAction('EXPORT_SCENE', {
             type: 'glb',

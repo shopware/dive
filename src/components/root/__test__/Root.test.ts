@@ -240,7 +240,7 @@ describe('components/root/DIVERoot', () => {
         it('should initialize with correct properties', () => {
             expect(root.isDIVERoot).toBe(true);
             expect(root.name).toBe('Root');
-            expect(root.Floor).toBeDefined();
+            expect(root.floor).toBeDefined();
         });
 
         it('should initialize asset loader', async () => {
@@ -248,8 +248,8 @@ describe('components/root/DIVERoot', () => {
                 load: jest.fn().mockResolvedValue({}),
             };
 
-            root['_assetLoader'] = new Promise((resolve) =>
-                resolve(mockLoader as unknown as AssetLoader),
+            jest.spyOn(root['_assetLoader'], 'instantiate').mockResolvedValue(
+                mockLoader as unknown as AssetLoader,
             );
 
             const newRoot = new DIVERoot();
@@ -259,16 +259,11 @@ describe('components/root/DIVERoot', () => {
         it('should handle asset loader initialization error', async () => {
             // Mock ModuleImporter to reject for this specific test
             const mockError = new Error('Failed to load');
-            jest.requireMock(
-                '../../../modules/index.ts',
-            ).ModuleImporter.mockImplementationOnce(() => {
-                return {
-                    import: jest.fn().mockRejectedValue(mockError),
-                };
-            });
+            jest.spyOn(root['_assetLoader'], 'instantiate').mockRejectedValue(
+                mockError,
+            );
 
-            const newRoot = new DIVERoot();
-            await expect((newRoot as any)._assetLoader).rejects.toThrow(
+            await expect(root['_assetLoader'].instantiate()).rejects.toThrow(
                 'Failed to load',
             );
         });
@@ -904,8 +899,8 @@ describe('components/root/DIVERoot', () => {
                 mockCommunication as any,
             );
 
-            root['_assetLoader'] = new Promise((resolve) =>
-                resolve(mockLoader as unknown as AssetLoader),
+            jest.spyOn(root['_assetLoader'], 'instantiate').mockResolvedValue(
+                mockLoader as unknown as AssetLoader,
             );
 
             root.AddSceneObject(modelData);
