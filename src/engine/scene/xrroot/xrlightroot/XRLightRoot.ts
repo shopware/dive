@@ -37,7 +37,7 @@ export class DIVEXRLightRoot extends Object3D {
 
     public InitLightEstimation(renderer: DIVERenderer): void {
         if (!this._xrLight) {
-            this._xrLight = new XREstimatedLight(renderer, true);
+            this._xrLight = new XREstimatedLight(renderer.webglrenderer, true);
             this._xrLight.layers.mask = PRODUCT_LAYER_MASK;
             this.add(this._xrLight);
         }

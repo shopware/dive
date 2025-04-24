@@ -55,7 +55,8 @@ export class DIVEWebXRRaycasterAR {
             .requestHitTestSourceForTransientInput!({
             profile: 'generic-touchscreen',
         });
-        this._referenceSpaceBuffer = this._renderer.xr.getReferenceSpace();
+        this._referenceSpaceBuffer =
+            this._renderer.webglrenderer.xr.getReferenceSpace();
         this._requesting = false;
 
         if (!this._transientHitTestSource) {

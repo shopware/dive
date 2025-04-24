@@ -5,17 +5,15 @@ import {
     type COMModel,
     type COMPov,
     type COMEntity,
-    type COMGeometry,
     type COMGroup,
     type COMEntityType,
 } from '../../../modules/com/types';
-import { type DIVEScene } from '../../../engine/scene/Scene';
 import { DIVECommunication } from '../../../modules/com/Communication';
-import { type DIVESceneObject } from '../../../types';
 import { Object3D, Vector3, Box3 } from 'three';
 import { DIVEGroup } from '../../group/Group';
 import { type DIVEModel } from '../../model/Model';
 import { type DIVEPrimitive } from '../../primitive/Primitive';
+import { AssetLoader } from '../../../modules/asset/loader/AssetLoader';
 
 jest.mock('../../../modules/index.ts', () => {
     return {
@@ -239,21 +237,6 @@ describe('components/root/DIVERoot', () => {
     });
 
     describe('constructor', () => {
-        afterEach(() => {
-            const mockModuleRegistry =
-                require('../../../modules').ModuleRegistry;
-            mockModuleRegistry.get.mockReset();
-            mockModuleRegistry.get.mockResolvedValue(
-                class {
-                    constructor() {
-                        return {
-                            load: jest.fn().mockResolvedValue({}),
-                        };
-                    }
-                },
-            );
-        });
-
         it('should initialize with correct properties', () => {
             expect(root.isDIVERoot).toBe(true);
             expect(root.name).toBe('Root');
@@ -265,28 +248,24 @@ describe('components/root/DIVERoot', () => {
                 load: jest.fn().mockResolvedValue({}),
             };
 
-            const mockModuleRegistry =
-                require('../../../modules').ModuleRegistry;
-            mockModuleRegistry.get.mockResolvedValue(
-                class {
-                    constructor() {
-                        return mockLoader;
-                    }
-                },
+            root['_assetLoader'] = new Promise((resolve) =>
+                resolve(mockLoader as unknown as AssetLoader),
             );
 
             const newRoot = new DIVERoot();
-            await (newRoot as any)._assetLoader;
-
-            expect(mockModuleRegistry.get).toHaveBeenCalledWith('AssetLoader');
+            await newRoot['_assetLoader'];
         });
 
         it('should handle asset loader initialization error', async () => {
-            const mockModuleRegistry =
-                require('../../../modules').ModuleRegistry;
-            mockModuleRegistry.get.mockRejectedValue(
-                new Error('Failed to load'),
-            );
+            // Mock ModuleImporter to reject for this specific test
+            const mockError = new Error('Failed to load');
+            jest.requireMock(
+                '../../../modules/index.ts',
+            ).ModuleImporter.mockImplementationOnce(() => {
+                return {
+                    import: jest.fn().mockRejectedValue(mockError),
+                };
+            });
 
             const newRoot = new DIVERoot();
             await expect((newRoot as any)._assetLoader).rejects.toThrow(
@@ -925,22 +904,9 @@ describe('components/root/DIVERoot', () => {
                 mockCommunication as any,
             );
 
-            const mockModuleRegistry =
-                require('../../../modules').ModuleRegistry;
-            mockModuleRegistry.get.mockResolvedValue(
-                class {
-                    constructor() {
-                        return mockLoader;
-                    }
-                },
+            root['_assetLoader'] = new Promise((resolve) =>
+                resolve(mockLoader as unknown as AssetLoader),
             );
-
-            // Reset the asset loader promise
-            (root as any)._assetLoader = mockModuleRegistry
-                .get('AssetLoader')
-                .then((ModuleClass: new () => { load: jest.Mock }) => {
-                    return new ModuleClass();
-                });
 
             root.AddSceneObject(modelData);
             const model = root.GetSceneObject<DIVEModel>(modelData);

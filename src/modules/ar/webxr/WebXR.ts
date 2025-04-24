@@ -4,6 +4,7 @@ import { type DIVERenderer } from '../../../engine/renderer/Renderer';
 import { type DIVEScene } from '../../../engine/scene/Scene';
 import { Overlay } from './overlay/Overlay';
 import { DIVEWebXRController } from './controller/WebXRController';
+import { DIVEEngine } from '../../../engine';
 
 export class DIVEWebXR {
     // general members
@@ -43,12 +44,11 @@ export class DIVEWebXR {
     private static _xrController: DIVEWebXRController | null = null;
 
     public static async Launch(
-        renderer: DIVERenderer,
-        scene: DIVEScene,
+        engine: DIVEEngine,
         controller: DIVEOrbitController,
     ): Promise<void> {
-        this._renderer = renderer;
-        this._scene = scene;
+        this._renderer = engine.renderer;
+        this._scene = engine.scene;
         this._controller = controller;
 
         // setting camera reset values
@@ -61,7 +61,7 @@ export class DIVEWebXR {
         }
 
         // setup current instance
-        this._renderer.xr.enabled = true;
+        this._renderer.webglrenderer.xr.enabled = true;
         // this._scene.InitXR(renderer);
 
         // creating overlay
@@ -82,8 +82,10 @@ export class DIVEWebXR {
         });
 
         // build up session
-        renderer.xr.setReferenceSpaceType(this._referenceSpaceType);
-        await renderer.xr.setSession(session);
+        this._renderer.webglrenderer.xr.setReferenceSpaceType(
+            this._referenceSpaceType,
+        );
+        await this._renderer.webglrenderer.xr.setSession(session);
         DIVEWebXR._overlay.Element.style.display = '';
         this._session = session;
 
@@ -115,11 +117,11 @@ export class DIVEWebXR {
         if (!this._session) return;
 
         // add update callback to render loop
-        this._renderCallbackId = this._renderer.AddPreRenderCallback(
-            (time: DOMHighResTimeStamp, frame: XRFrame) => {
-                this.Update(time, frame);
-            },
-        );
+        // this._renderCallbackId = this._renderer.AddPreRenderCallback(
+        //     (time: DOMHighResTimeStamp, frame: XRFrame) => {
+        //         this.Update(time, frame);
+        //     },
+        // );
 
         this._xrController = new DIVEWebXRController(
             this._session,
@@ -142,12 +144,12 @@ export class DIVEWebXR {
 
         // remove Update() callback
         if (this._renderCallbackId) {
-            this._renderer.RemovePreRenderCallback(this._renderCallbackId);
+            // this._renderer.RemovePreRenderCallback(this._renderCallbackId);
             this._renderCallbackId = null;
         }
 
         // disable XR on renderer to restore canvas rendering
-        this._renderer.xr.enabled = false;
+        this._renderer.webglrenderer.xr.enabled = false;
 
         // resize renderer
         const canvasWrapper = this._renderer.domElement.parentElement;

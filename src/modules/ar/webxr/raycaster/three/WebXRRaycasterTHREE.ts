@@ -21,7 +21,7 @@ export class DIVEWebXRRaycasterTHREE {
         this._renderer = renderer;
         this._scene = scene;
 
-        this._controller = this._renderer.xr.getController(0);
+        this._controller = this._renderer.webglrenderer.xr.getController(0);
     }
 
     public async Init(): Promise<this> {
