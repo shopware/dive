@@ -1,5 +1,5 @@
 import { Mesh, Object3D, PlaneGeometry, ShadowMaterial } from 'three';
-import { DIVERoot } from '../root/Root';
+import { DIVERoot } from '../../../components/root/Root';
 import { type DIVERenderer } from '../../renderer/Renderer';
 import { DIVEXRLightRoot } from './xrlightroot/XRLightRoot';
 import { type DIVEScene } from '../Scene';

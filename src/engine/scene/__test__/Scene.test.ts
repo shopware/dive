@@ -8,7 +8,7 @@ const mock_DeleteSceneObject = jest.fn();
 const mock_PlaceOnFloor = jest.fn();
 const mock_GetSceneObject = jest.fn();
 
-jest.mock('../root/Root', () => {
+jest.mock('../../../components/root/Root', () => {
     return {
         DIVERoot: jest.fn(function () {
             this.isObject3D = true;
@@ -21,22 +21,6 @@ jest.mock('../root/Root', () => {
             this.GetSceneObject = mock_GetSceneObject;
             this.removeFromParent = jest.fn();
             this.ComputeSceneBB = jest.fn();
-            return this;
-        }),
-    };
-});
-
-jest.mock('../xrroot/XRRoot', () => {
-    return {
-        DIVEXRRoot: jest.fn(function (scene: DIVEScene) {
-            this.visible = true;
-            this.isObject3D = true;
-            this.parent = null;
-            this.dispatchEvent = jest.fn();
-            this.removeFromParent = jest.fn();
-            this.visible = true;
-            this.InitLightEstimation = jest.fn();
-            this.DisposeLightEstimation = jest.fn();
             return this;
         }),
     };
@@ -68,24 +52,8 @@ describe('dive/scene/DIVEScene', () => {
         expect(scene.Root).toBeDefined();
     });
 
-    it('should have XRRoot', () => {
-        expect(scene.XRRoot).toBeDefined();
-    });
-
-    it('should have Floor', () => {
-        expect(scene.Floor).toBeDefined();
-    });
-
     it('should have Grid', () => {
         expect(scene.Grid).toBeDefined();
-    });
-
-    it('should InitXR', () => {
-        expect(() => scene.InitXR(mockRenderer)).not.toThrow();
-    });
-
-    it('should DisposeXR', () => {
-        expect(() => scene.DisposeXR()).not.toThrow();
     });
 
     it('should set background color', () => {

@@ -4,7 +4,7 @@ import type DIVEOrbitControls from '../../controls/OrbitControls.ts';
 import { TransformControls } from 'three/examples/jsm/controls/TransformControls';
 import { type DIVEMovable } from '../../interface/Movable.ts';
 import { implementsInterface } from '../../helper/isInterface/implementsInterface.ts';
-import { DIVEGizmo } from '../../gizmo/Gizmo.ts';
+import { DIVEGizmo } from '../../components/gizmo/Gizmo.ts';
 import { type Mesh, type MeshBasicMaterial } from 'three';
 import {
     AxesColorBlue,

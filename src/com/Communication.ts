@@ -16,7 +16,7 @@ import {
 import { type DIVEScene } from '../engine/scene/Scene.ts';
 import type DIVEToolbox from '../toolbox/Toolbox.ts';
 import type DIVEOrbitControls from '../controls/OrbitControls.ts';
-import { type DIVEModel } from '../model/Model.ts';
+import { type DIVEModel } from '../components/model/Model.ts';
 import { type DIVERenderer } from '../engine/renderer/Renderer.ts';
 import { type DIVESelectable } from '../interface/Selectable.ts';
 import { ModuleImporter } from '../modules/index.ts';
@@ -360,11 +360,11 @@ export class DIVECommunication {
             mediaItem: null,
             backgroundColor:
                 '#' + (this.scene.background as Color).getHexString(),
-            floorEnabled: this.scene.Floor.visible,
+            floorEnabled: this.scene.Root.Floor.visible,
             floorColor:
                 '#' +
                 (
-                    this.scene.Floor.material as MeshStandardMaterial
+                    this.scene.Root.Floor.material as MeshStandardMaterial
                 ).color.getHexString(),
             userCamera: {
                 position: this.controller.object.position.clone(),
@@ -691,9 +691,9 @@ export class DIVECommunication {
             this.scene.Grid.SetVisibility(payload.gridEnabled);
 
         if (payload.floorEnabled !== undefined)
-            this.scene.Floor.SetVisibility(payload.floorEnabled);
+            this.scene.Root.Floor.SetVisibility(payload.floorEnabled);
         if (payload.floorColor !== undefined)
-            this.scene.Floor.SetColor(payload.floorColor);
+            this.scene.Root.Floor.SetColor(payload.floorColor);
 
         // fill payload with current values
         // TODO optmize this
@@ -701,11 +701,11 @@ export class DIVECommunication {
         payload.backgroundColor =
             '#' + (this.scene.background as Color).getHexString();
         payload.gridEnabled = this.scene.Grid.visible;
-        payload.floorEnabled = this.scene.Floor.visible;
+        payload.floorEnabled = this.scene.Root.Floor.visible;
         payload.floorColor =
             '#' +
             (
-                this.scene.Floor.material as MeshStandardMaterial
+                this.scene.Root.Floor.material as MeshStandardMaterial
             ).color.getHexString();
 
         return true;

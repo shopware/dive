@@ -35,7 +35,6 @@ import {
 } from '../types';
 import { type DIVESceneObject } from '../../types';
 import { type ARSystemOptions } from '../../modules/ar/ARSystem';
-import { ModuleImporter } from '../../modules';
 import { MediaCreator } from '../../modules/mediacreator/MediaCreator';
 import { ARSystem } from '../../modules/ar/ARSystem';
 import { AssetExporter } from '../../modules/asset/exporter/AssetExporter';
@@ -109,17 +108,17 @@ const mockScene = {
     },
     Root: {
         attach: jest.fn(),
-    },
-    Floor: {
-        isFloor: true,
-        visible: true,
-        material: {
-            color: {
-                getHexString: jest.fn().mockReturnValue('ffffff'),
+        Floor: {
+            isFloor: true,
+            visible: true,
+            material: {
+                color: {
+                    getHexString: jest.fn().mockReturnValue('ffffff'),
+                },
             },
+            SetVisibility: jest.fn(),
+            SetColor: jest.fn(),
         },
-        SetVisibility: jest.fn(),
-        SetColor: jest.fn(),
     },
     Grid: {
         SetVisibility: jest.fn(),

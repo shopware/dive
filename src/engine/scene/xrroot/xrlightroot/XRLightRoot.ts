@@ -3,7 +3,7 @@ import { type DIVERenderer } from '../../../renderer/Renderer';
 import { Object3D } from 'three';
 import { type DIVEScene } from '../../Scene';
 import { PRODUCT_LAYER_MASK } from '../../../../constant/VisibilityLayerMask';
-import { DIVERoot } from '../../root/Root';
+import { DIVERoot } from '../../../../components/root/Root';
 
 export class DIVEXRLightRoot extends Object3D {
     private _scene: DIVEScene;

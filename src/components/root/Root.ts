@@ -1,0 +1,443 @@
+import { Box3, Color, Object3D } from 'three';
+import { DIVEAmbientLight } from '../light/AmbientLight';
+import { DIVEPointLight } from '../light/PointLight';
+import { DIVESceneLight } from '../light/SceneLight';
+import { DIVEModel } from '../model/Model';
+import { DIVECommunication } from '../../com/Communication';
+import { DIVEPrimitive } from '../primitive/Primitive';
+
+import { type DIVEScene } from '../../engine/scene/Scene.ts';
+import { type TransformControls } from 'three/examples/jsm/controls/TransformControls';
+import {
+    type COMLight,
+    type COMModel,
+    type COMEntity,
+    type COMPrimitive,
+    type COMGroup,
+} from '../../com/types/index.ts';
+import { type DIVESceneObject } from '../../types/index.ts';
+import { DIVEGroup } from '../group/Group.ts';
+import { ModuleImporter } from '../../modules/index.ts';
+import { DIVEFloor } from '../floor/Floor.ts';
+
+/**
+ * A basic scene node to hold grid, floor and all lower level roots.
+ *
+ * @module
+ */
+
+export class DIVERoot extends Object3D {
+    readonly isDIVERoot: true = true;
+
+    public get floor(): DIVEFloor {
+        return this._floor;
+    }
+
+    private _floor: DIVEFloor;
+
+    private _assetLoader: ModuleImporter<'AssetLoader'>;
+
+    constructor() {
+        super();
+        this.name = 'Root';
+
+        this._floor = new DIVEFloor();
+        this.add(this._floor);
+
+        this._assetLoader = new ModuleImporter<'AssetLoader'>(
+            'src/modules/asset/loader/AssetLoader.ts',
+        );
+    }
+
+    public ComputeSceneBB(): Box3 {
+        const bb = new Box3();
+        this.traverse((object: Object3D) => {
+            if ('isObject3D' in object) {
+                bb.expandByObject(object);
+            }
+        });
+        return bb;
+    }
+
+    public GetSceneObject<T extends DIVESceneObject>(
+        object: Partial<COMEntity> & { id: string },
+    ): T | undefined {
+        let foundObject: T | undefined;
+        this.traverse((object3D) => {
+            if (foundObject) return;
+            if (object3D.userData.id === object.id) {
+                foundObject = object3D as T;
+            }
+        });
+        return foundObject;
+    }
+
+    public AddSceneObject(object: COMEntity): void {
+        switch (object.entityType) {
+            case 'pov': {
+                break;
+            }
+            case 'light': {
+                this.updateLight(object as COMLight);
+                break;
+            }
+            case 'model': {
+                this.updateModel(object);
+                break;
+            }
+            case 'primitive': {
+                this.updatePrimitive(object);
+                break;
+            }
+            case 'group': {
+                this.updateGroup(object);
+                break;
+            }
+            default: {
+                console.warn(
+                    `DIVERoot.AddSceneObject: Unknown entity type: ${object.entityType}`,
+                );
+            }
+        }
+    }
+
+    public UpdateSceneObject(
+        object: Partial<COMEntity> & { id: string; entityType: string },
+    ): void {
+        switch (object.entityType) {
+            case 'pov': {
+                break;
+            }
+            case 'light': {
+                this.updateLight(object as COMLight);
+                break;
+            }
+            case 'model': {
+                this.updateModel(object);
+                break;
+            }
+            case 'primitive': {
+                this.updatePrimitive(object);
+                break;
+            }
+            case 'group': {
+                this.updateGroup(object);
+                break;
+            }
+            default: {
+                console.warn(
+                    `DIVERoot.UpdateSceneObject: Unknown entity type: ${object.entityType}`,
+                );
+            }
+        }
+    }
+
+    public DeleteSceneObject(
+        object: Partial<COMEntity> & { id: string; entityType: string },
+    ): void {
+        switch (object.entityType) {
+            case 'pov': {
+                break;
+            }
+            case 'light': {
+                this.deleteLight(object);
+                break;
+            }
+            case 'model': {
+                this.deleteModel(object);
+                break;
+            }
+            case 'primitive': {
+                this.deletePrimitive(object);
+                break;
+            }
+            case 'group': {
+                this.deleteGroup(object);
+                break;
+            }
+            default: {
+                console.warn(
+                    `DIVERoot.DeleteSceneObject: Unknown entity type: ${object.entityType}`,
+                );
+            }
+        }
+    }
+
+    public PlaceOnFloor(
+        object: Partial<COMEntity> & { id: string; entityType: string },
+    ): void {
+        switch (object.entityType) {
+            case 'pov':
+            case 'light': {
+                break;
+            }
+            case 'model':
+            case 'primitive': {
+                this.placeOnFloor(object);
+                break;
+            }
+            default: {
+                console.warn(
+                    `DIVERoot.PlaceOnFloor: Unknown entity type: ${object.entityType}`,
+                );
+            }
+        }
+    }
+
+    private updateLight(
+        light: Partial<COMLight> & {
+            id: string;
+            entityType: string;
+            type: string;
+        },
+    ): void {
+        let sceneObject = this.GetSceneObject(light);
+        if (!sceneObject) {
+            switch (light.type) {
+                case 'scene': {
+                    sceneObject = new DIVESceneLight();
+                    break;
+                }
+                case 'ambient': {
+                    sceneObject = new DIVEAmbientLight();
+                    break;
+                }
+                case 'point': {
+                    sceneObject = new DIVEPointLight();
+                    break;
+                }
+                default: {
+                    console.warn(
+                        `DIVERoot.updateLight: Unknown light type: ${light.type}`,
+                    );
+                    return;
+                }
+            }
+            sceneObject.userData.id = light.id;
+            this.add(sceneObject);
+        }
+
+        if (light.name !== undefined && light.name !== null)
+            sceneObject.name = light.name;
+        if (light.position !== undefined && light.position !== null)
+            sceneObject.position.set(
+                light.position.x,
+                light.position.y,
+                light.position.z,
+            );
+        if (light.intensity !== undefined && light.intensity !== null)
+            (sceneObject as DIVEAmbientLight | DIVEPointLight).SetIntensity(
+                light.intensity,
+            );
+        if (light.enabled !== undefined && light.enabled !== null)
+            (sceneObject as DIVEAmbientLight | DIVEPointLight).SetEnabled(
+                light.enabled,
+            );
+        if (light.color !== undefined && light.color !== null)
+            (sceneObject as DIVEAmbientLight | DIVEPointLight).SetColor(
+                new Color(light.color),
+            );
+        if (light.visible !== undefined && light.visible !== null)
+            (sceneObject as DIVEAmbientLight | DIVEPointLight).visible =
+                light.visible;
+        if (light.parentId !== undefined)
+            this.setParent({ ...light, parentId: light.parentId });
+    }
+
+    private updateModel(model: Partial<COMModel> & { id: string }): void {
+        let sceneObject = this.GetSceneObject<DIVESceneObject>(model);
+        if (!sceneObject) {
+            const created = new DIVEModel();
+            sceneObject = created;
+            sceneObject.userData.id = model.id;
+            sceneObject.userData.uri = model.uri;
+            this.add(sceneObject);
+        }
+
+        if (model.uri !== undefined) {
+            this._assetLoader
+                .instantiate()
+                .then((loader) => {
+                    return loader.load(model.uri!);
+                })
+                .then((gltf) => {
+                    (sceneObject as DIVEModel).SetModel(gltf);
+                    DIVECommunication.get(model.id!)?.PerformAction(
+                        'MODEL_LOADED',
+                        { id: model.id! },
+                    );
+                });
+        }
+
+        if (model.name !== undefined) sceneObject.name = model.name;
+        if (model.position !== undefined)
+            (sceneObject as DIVEModel).SetPosition(model.position);
+        if (model.rotation !== undefined)
+            (sceneObject as DIVEModel).SetRotation(model.rotation);
+        if (model.scale !== undefined)
+            (sceneObject as DIVEModel).SetScale(model.scale);
+        if (model.visible !== undefined)
+            (sceneObject as DIVEModel).SetVisibility(model.visible);
+        if (model.material !== undefined)
+            (sceneObject as DIVEModel).SetMaterial(model.material);
+        if (model.parentId !== undefined)
+            this.setParent({ ...model, parentId: model.parentId });
+    }
+
+    private updatePrimitive(
+        primitive: Partial<COMPrimitive> & { id: string },
+    ): void {
+        let sceneObject = this.GetSceneObject<DIVESceneObject>(primitive);
+        if (!sceneObject) {
+            const created = new DIVEPrimitive();
+            sceneObject = created;
+            sceneObject.userData.id = primitive.id;
+            this.add(sceneObject);
+        }
+
+        if (primitive.name !== undefined) sceneObject.name = primitive.name;
+        if (primitive.geometry !== undefined)
+            (sceneObject as DIVEPrimitive).SetGeometry(primitive.geometry);
+        if (primitive.position !== undefined)
+            (sceneObject as DIVEPrimitive).SetPosition(primitive.position);
+        if (primitive.rotation !== undefined)
+            (sceneObject as DIVEPrimitive).SetRotation(primitive.rotation);
+        if (primitive.scale !== undefined)
+            (sceneObject as DIVEPrimitive).SetScale(primitive.scale);
+        if (primitive.visible !== undefined)
+            (sceneObject as DIVEPrimitive).SetVisibility(primitive.visible);
+        if (primitive.material !== undefined)
+            (sceneObject as DIVEPrimitive).SetMaterial(primitive.material);
+        if (primitive.parentId !== undefined)
+            this.setParent({ ...primitive, parentId: primitive.parentId });
+    }
+
+    private updateGroup(group: Partial<COMGroup> & { id: string }): void {
+        let sceneObject = this.GetSceneObject<DIVESceneObject>(group);
+        if (!sceneObject) {
+            const created = new DIVEGroup();
+            sceneObject = created;
+            sceneObject.userData.id = group.id;
+            this.add(sceneObject);
+        }
+
+        if (group.name !== undefined) sceneObject.name = group.name;
+        if (group.position !== undefined)
+            (sceneObject as DIVEGroup).SetPosition(group.position);
+        if (group.rotation !== undefined)
+            (sceneObject as DIVEGroup).SetRotation(group.rotation);
+        if (group.scale !== undefined)
+            (sceneObject as DIVEGroup).SetScale(group.scale);
+        if (group.visible !== undefined)
+            (sceneObject as DIVEGroup).SetVisibility(group.visible);
+        if (group.bbVisible !== undefined)
+            (sceneObject as DIVEGroup).SetLinesVisibility(group.bbVisible);
+        if (group.parentId !== undefined)
+            this.setParent({ ...group, parentId: group.parentId });
+    }
+
+    private deleteLight(light: Partial<COMLight> & { id: string }): void {
+        const sceneObject = this.GetSceneObject(light);
+        if (!sceneObject) {
+            console.warn(
+                `DIVERoot.deleteLight: Light with id ${light.id} not found`,
+            );
+            return;
+        }
+
+        this.detachTransformControls(sceneObject);
+
+        sceneObject.parent!.remove(sceneObject);
+    }
+
+    private deleteModel(model: Partial<COMModel> & { id: string }): void {
+        const sceneObject = this.GetSceneObject(model);
+        if (!sceneObject) {
+            console.warn(
+                `DIVERoot.deleteModel: Model with id ${model.id} not found`,
+            );
+            return;
+        }
+
+        this.detachTransformControls(sceneObject);
+
+        sceneObject.parent!.remove(sceneObject);
+    }
+
+    private deletePrimitive(
+        primitive: Partial<COMPrimitive> & { id: string },
+    ): void {
+        const sceneObject = this.GetSceneObject(primitive);
+        if (!sceneObject) {
+            console.warn(
+                `DIVERoot.deletePrimitive: Primitive with id ${primitive.id} not found`,
+            );
+            return;
+        }
+
+        this.detachTransformControls(sceneObject);
+
+        sceneObject.parent!.remove(sceneObject);
+    }
+
+    private deleteGroup(group: Partial<COMGroup> & { id: string }): void {
+        const sceneObject = this.GetSceneObject<DIVEGroup>(group);
+        if (!sceneObject) {
+            console.warn(
+                `DIVERoot.deleteGroup: Group with id ${group.id} not found`,
+            );
+            return;
+        }
+
+        this.detachTransformControls(sceneObject);
+
+        for (let i = sceneObject.members.length - 1; i >= 0; i--) {
+            this.attach(sceneObject.members[i]);
+        }
+
+        sceneObject.parent!.remove(sceneObject);
+    }
+
+    private placeOnFloor(object: Partial<COMEntity> & { id: string }): void {
+        const sceneObject = this.GetSceneObject(object);
+        if (!sceneObject) return;
+
+        (sceneObject as DIVEModel | DIVEPrimitive).PlaceOnFloor();
+    }
+
+    private setParent(
+        object: Partial<COMEntity> & { id: string; parentId: string | null },
+    ): void {
+        const sceneObject = this.GetSceneObject<DIVESceneObject>(object);
+        if (!sceneObject) return;
+
+        if (object.parentId !== null) {
+            const parent = this.GetSceneObject<DIVESceneObject>({
+                id: object.parentId,
+            });
+            if (!parent) return;
+
+            // attach to new parent (if exists in scene)
+            parent.attach(sceneObject);
+        } else {
+            // attach to root if no parent is found
+            this.attach(sceneObject);
+        }
+    }
+
+    private detachTransformControls(object: Object3D): void {
+        // this is only neccessary due to using the old TransformControls instead of the new DIVEGizmo
+        this.findScene(object).children.find((object) => {
+            if ('isTransformControls' in object) {
+                (object as TransformControls).detach();
+            }
+        });
+    }
+
+    private findScene(object: Object3D): DIVEScene {
+        if (object.parent !== null) {
+            return this.findScene(object.parent);
+        }
+        return object as DIVEScene;
+    }
+}
