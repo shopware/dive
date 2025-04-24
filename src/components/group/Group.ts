@@ -4,9 +4,9 @@ import {
     LineDashedMaterial,
     Vector3,
     Vector3Like,
+    Object3D,
 } from 'three';
 import { DIVENode } from '../node/Node.ts';
-import { type Object3D } from 'three';
 import { type DIVESceneObject } from '../../types/index.ts';
 
 export class DIVEGroup extends DIVENode {
@@ -75,10 +75,17 @@ export class DIVEGroup extends DIVENode {
         return this;
     }
 
+    /**
+     * Removes an object from the group.
+     * @param object - The object to remove.
+     * @returns The group instance.
+     */
     public remove(object: DIVESceneObject): this {
         // remove line first
         const index = this._members.indexOf(object);
-        if (index === -1) return this;
+        if (index === -1) {
+            return this;
+        }
 
         const line = this._lines[index];
         super.remove(line);
@@ -99,7 +106,7 @@ export class DIVEGroup extends DIVENode {
     }
 
     /**
-     * Adds a line to this grouo as last child.
+     * Creates a line for visualization.
      */
     private createLine(): Line {
         const geo = new BufferGeometry();
@@ -117,10 +124,11 @@ export class DIVEGroup extends DIVENode {
      * Updates a line to the object.
      */
     private updateLineTo(line: Line, object: Object3D): void {
-        line.geometry.setFromPoints([
+        const points = [
             new Vector3(0, 0, 0),
             object.position.clone(),
-        ]);
+        ];
+        line.geometry.setFromPoints(points);
         line.computeLineDistances();
     }
 

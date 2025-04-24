@@ -12,14 +12,13 @@ import {
     type COMPrimitive,
     type COMGroup,
 } from './types';
-import { type DIVEScene } from '../../engine/scene/Scene';
 import { type DIVEToolbox } from '../../modules/toolbox/Toolbox';
 import { type DIVEOrbitController } from '../../modules/controller/orbit/OrbitController';
 import { type DIVEModel } from '../../components/model/Model.ts';
-import { type DIVERenderer } from '../../engine/renderer/Renderer';
 import { type DIVESelectable } from '../../interfaces/Selectable.ts';
 import { Actions } from './actions/index.ts';
 import { ModuleImporter } from '../index.ts';
+import { DIVEEngine } from '../../engine/Engine.ts';
 
 type EventListener<Action extends keyof Actions> = (
     payload: Actions[Action]['PAYLOAD'],
@@ -67,8 +66,7 @@ export class DIVECommunication {
         return this._id;
     }
 
-    private renderer: DIVERenderer;
-    private scene: DIVEScene;
+    private engine: DIVEEngine;
     private controller: DIVEOrbitController;
     private toolbox: DIVEToolbox;
 
@@ -83,14 +81,12 @@ export class DIVECommunication {
         new Map();
 
     constructor(
-        renderer: DIVERenderer,
-        scene: DIVEScene,
+        engine: DIVEEngine,
         controller: DIVEOrbitController,
         toolbox: DIVEToolbox,
     ) {
         this._id = generateUUID();
-        this.renderer = renderer;
-        this.scene = scene;
+        this.engine = engine;
         this.controller = controller;
         this.toolbox = toolbox;
 
@@ -126,7 +122,8 @@ export class DIVECommunication {
 
         switch (action) {
             case 'START_RENDER': {
-                this.renderer.StartRenderer(this.scene, this.controller.object);
+                1;
+                this.engine.start();
                 returnValue = true;
                 break;
             }
@@ -356,15 +353,16 @@ export class DIVECommunication {
         payload: Actions['GET_ALL_SCENE_DATA']['PAYLOAD'],
     ): Actions['GET_ALL_SCENE_DATA']['RETURN'] {
         const sceneData = {
-            name: this.scene.name,
+            name: this.engine.scene.name,
             mediaItem: null,
             backgroundColor:
-                '#' + (this.scene.background as Color).getHexString(),
-            floorEnabled: this.scene.Root.floor.visible,
+                '#' + (this.engine.scene.background as Color).getHexString(),
+            floorEnabled: this.engine.scene.Root.floor.visible,
             floorColor:
                 '#' +
                 (
-                    this.scene.Root.floor.material as MeshStandardMaterial
+                    this.engine.scene.Root.floor
+                        .material as MeshStandardMaterial
                 ).color.getHexString(),
             userCamera: {
                 position: this.controller.object.position.clone(),
@@ -421,7 +419,7 @@ export class DIVECommunication {
 
         this.registered.set(payload.id, payload);
 
-        this.scene.AddSceneObject(payload);
+        this.engine.scene.AddSceneObject(payload);
 
         return true;
     }
@@ -435,7 +433,7 @@ export class DIVECommunication {
         this.registered.set(payload.id, merge(objectToUpdate, payload));
 
         const updatedObject = this.registered.get(payload.id)!;
-        this.scene.UpdateSceneObject({
+        this.engine.scene.UpdateSceneObject({
             ...payload,
             id: updatedObject.id,
             entityType: updatedObject.entityType,
@@ -478,14 +476,7 @@ export class DIVECommunication {
 
         this.registered.delete(payload.id);
 
-        // detach all children from parent if we delete a group
-        Array.from(this.registered.values()).forEach((object) => {
-            if (!object.parentId) return;
-            if (object.parentId !== payload.id) return;
-            object.parentId = null;
-        });
-
-        this.scene.DeleteSceneObject(deletedObject);
+        this.engine.scene.DeleteSceneObject(deletedObject);
 
         return true;
     }
@@ -496,7 +487,7 @@ export class DIVECommunication {
         const object = this.registered.get(payload.id);
         if (!object) return false;
 
-        const sceneObject = this.scene.GetSceneObject(object);
+        const sceneObject = this.engine.scene.GetSceneObject(object);
         if (!sceneObject) return false;
 
         if (!('isSelectable' in sceneObject)) return false;
@@ -518,7 +509,7 @@ export class DIVECommunication {
         const object = this.registered.get(payload.id);
         if (!object) return false;
 
-        const sceneObject = this.scene.GetSceneObject(object);
+        const sceneObject = this.engine.scene.GetSceneObject(object);
         if (!sceneObject) return false;
 
         if (!('isSelectable' in sceneObject)) return false;
@@ -537,7 +528,7 @@ export class DIVECommunication {
     private setBackground(
         payload: Actions['SET_BACKGROUND']['PAYLOAD'],
     ): Actions['SET_BACKGROUND']['RETURN'] {
-        this.scene.SetBackground(payload.color);
+        this.engine.scene.SetBackground(payload.color);
 
         return true;
     }
@@ -548,7 +539,7 @@ export class DIVECommunication {
         const object = this.registered.get(payload.id);
         if (!object) return false;
 
-        const model = this.scene.GetSceneObject(object) as DIVEModel;
+        const model = this.engine.scene.GetSceneObject(object) as DIVEModel;
         model.DropIt();
 
         return true;
@@ -560,7 +551,7 @@ export class DIVECommunication {
         const object = this.registered.get(payload.id);
         if (!object) return false;
 
-        this.scene.PlaceOnFloor(object);
+        this.engine.scene.PlaceOnFloor(object);
 
         return true;
     }
@@ -612,7 +603,7 @@ export class DIVECommunication {
     private setCameraLayer(
         payload: Actions['SET_CAMERA_LAYER']['PAYLOAD'],
     ): Actions['SET_CAMERA_LAYER']['RETURN'] {
-        this.controller.object.SetCameraLayer(payload.layer);
+        this.controller.object.setCameraLayer(payload.layer);
 
         return true;
     }
@@ -628,7 +619,7 @@ export class DIVECommunication {
     private computeEncompassingView(
         payload: Actions['COMPUTE_ENCOMPASSING_VIEW']['PAYLOAD'],
     ): Actions['COMPUTE_ENCOMPASSING_VIEW']['RETURN'] {
-        const sceneBB = this.scene.ComputeSceneBB();
+        const sceneBB = this.engine.scene.ComputeSceneBB();
 
         const transform = this.controller.ComputeEncompassingView(sceneBB);
         Object.assign(payload, transform);
@@ -683,29 +674,29 @@ export class DIVECommunication {
     private updateScene(
         payload: Actions['UPDATE_SCENE']['PAYLOAD'],
     ): Actions['UPDATE_SCENE']['RETURN'] {
-        if (payload.name !== undefined) this.scene.name = payload.name;
+        if (payload.name !== undefined) this.engine.scene.name = payload.name;
         if (payload.backgroundColor !== undefined)
-            this.scene.SetBackground(payload.backgroundColor);
+            this.engine.scene.SetBackground(payload.backgroundColor);
 
         if (payload.gridEnabled !== undefined)
-            this.scene.Grid.SetVisibility(payload.gridEnabled);
+            this.engine.scene.Grid.SetVisibility(payload.gridEnabled);
 
         if (payload.floorEnabled !== undefined)
-            this.scene.Root.floor.SetVisibility(payload.floorEnabled);
+            this.engine.scene.Root.floor.SetVisibility(payload.floorEnabled);
         if (payload.floorColor !== undefined)
-            this.scene.Root.floor.SetColor(payload.floorColor);
+            this.engine.scene.Root.floor.SetColor(payload.floorColor);
 
         // fill payload with current values
         // TODO optmize this
-        payload.name = this.scene.name;
+        payload.name = this.engine.scene.name;
         payload.backgroundColor =
-            '#' + (this.scene.background as Color).getHexString();
-        payload.gridEnabled = this.scene.Grid.visible;
-        payload.floorEnabled = this.scene.Root.floor.visible;
+            '#' + (this.engine.scene.background as Color).getHexString();
+        payload.gridEnabled = this.engine.scene.Grid.visible;
+        payload.floorEnabled = this.engine.scene.Root.floor.visible;
         payload.floorColor =
             '#' +
             (
-                this.scene.Root.floor.material as MeshStandardMaterial
+                this.engine.scene.Root.floor.material as MeshStandardMaterial
             ).color.getHexString();
 
         return true;
@@ -725,7 +716,11 @@ export class DIVECommunication {
         }
 
         return this._mediaCreator
-            .instantiate(this.renderer, this.scene, this.controller)
+            .instantiate(
+                this.engine.renderer,
+                this.engine.scene,
+                this.controller,
+            )
             .then((mediaCreator) => {
                 return mediaCreator.GenerateMedia(
                     position,
@@ -742,12 +737,12 @@ export class DIVECommunication {
         const object = this.registered.get(payload.object.id);
         if (!object) return false;
 
-        const sceneObject = this.scene.GetSceneObject(object);
+        const sceneObject = this.engine.scene.GetSceneObject(object);
         if (!sceneObject) return false;
 
         if (payload.parent === null) {
             // detach from current parent
-            this.scene.Root.attach(sceneObject);
+            this.engine.scene.Root.attach(sceneObject);
             // Update registration to reflect no parent
             this.updateObject({
                 id: object.id,
@@ -764,7 +759,7 @@ export class DIVECommunication {
         const parent = this.registered.get(payload.parent.id);
         if (!parent) {
             // detach from current parent
-            this.scene.Root.attach(sceneObject);
+            this.engine.scene.Root.attach(sceneObject);
             // Update registration to reflect no parent
             this.updateObject({
                 id: object.id,
@@ -774,10 +769,10 @@ export class DIVECommunication {
         }
 
         // attach to new parent
-        const parentObject = this.scene.GetSceneObject(parent);
+        const parentObject = this.engine.scene.GetSceneObject(parent);
         if (!parentObject) {
             // detach from current parent
-            this.scene.Root.attach(sceneObject);
+            this.engine.scene.Root.attach(sceneObject);
             // Update registration to reflect no parent
             this.updateObject({
                 id: object.id,
@@ -800,7 +795,11 @@ export class DIVECommunication {
         payload: Actions['EXPORT_SCENE']['PAYLOAD'],
     ): Actions['EXPORT_SCENE']['RETURN'] {
         return this._assetExporter.instantiate().then((assetExporter) => {
-            return assetExporter.export(this.scene.Root, payload.type, {});
+            return assetExporter.export(
+                this.engine.scene.Root,
+                payload.type,
+                {},
+            );
         });
     }
 }

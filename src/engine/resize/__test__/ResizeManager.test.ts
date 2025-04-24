@@ -1,0 +1,100 @@
+import { DIVEResizeManager } from '../ResizeManager.ts';
+import { DIVERenderer } from '../../renderer/Renderer.ts';
+import { DIVEPerspectiveCamera } from '../../camera/PerspectiveCamera.ts';
+
+jest.mock('../../renderer/Renderer.ts', () => {
+    return {
+        DIVERenderer: jest.fn(function () {
+            return {
+                domElement: document.createElement('canvas'),
+                onResize: jest.fn(),
+            };
+        }),
+    };
+});
+jest.mock('../../camera/PerspectiveCamera.ts', () => {
+    return {
+        DIVEPerspectiveCamera: jest.fn(function () {
+            return {
+                onResize: jest.fn(),
+            };
+        }),
+    };
+});
+
+describe('DIVEResizeManager', () => {
+    let resizeManager: DIVEResizeManager;
+    let renderer: DIVERenderer;
+    let camera: DIVEPerspectiveCamera;
+    let mockResizeObserver: jest.Mock;
+    let mockObserve: jest.Mock;
+    let mockDisconnect: jest.Mock;
+
+    beforeEach(() => {
+        jest.clearAllMocks();
+        renderer = new DIVERenderer();
+        camera = new DIVEPerspectiveCamera();
+
+        // Mock ResizeObserver
+        mockObserve = jest.fn();
+        mockDisconnect = jest.fn();
+        mockResizeObserver = jest.fn().mockImplementation(() => ({
+            observe: mockObserve,
+            disconnect: mockDisconnect,
+        }));
+        global.ResizeObserver = mockResizeObserver;
+
+        // Mock canvas parent element
+        Object.defineProperty(renderer.domElement, 'parentElement', {
+            value: document.createElement('div'),
+            writable: true,
+        });
+
+        resizeManager = new DIVEResizeManager(renderer, camera);
+    });
+
+    it('should instantiate with components', () => {
+        expect(resizeManager).toBeDefined();
+        expect(mockResizeObserver).toHaveBeenCalled();
+    });
+
+    it('should observe canvas parent element', () => {
+        expect(mockObserve).toHaveBeenCalledWith(
+            renderer.domElement.parentElement,
+        );
+    });
+
+    it('should handle resize events', () => {
+        const resizeObserver = mockResizeObserver.mock.instances[0];
+        const callback = mockResizeObserver.mock.calls[0][0];
+
+        const width = 800;
+        const height = 600;
+        callback([{ contentRect: { width, height } }]);
+
+        expect(renderer.onResize).toHaveBeenCalledWith(width, height);
+        expect(camera.onResize).toHaveBeenCalledWith(width, height);
+    });
+
+    it('should not trigger resize if dimensions are the same', () => {
+        const resizeObserver = mockResizeObserver.mock.instances[0];
+        const callback = mockResizeObserver.mock.calls[0][0];
+
+        const width = 800;
+        const height = 600;
+
+        // First call
+        callback([{ contentRect: { width, height } }]);
+
+        // Second call with same dimensions
+        callback([{ contentRect: { width, height } }]);
+
+        expect(renderer.onResize).toHaveBeenCalledTimes(1);
+        expect(camera.onResize).toHaveBeenCalledTimes(1);
+    });
+
+    it('should dispose by disconnecting observer', () => {
+        resizeManager.dispose();
+        expect(mockDisconnect).toHaveBeenCalled();
+    });
+});

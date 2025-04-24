@@ -7,12 +7,15 @@ import {
 } from '../../constants/VisibilityLayerMask';
 
 export type DIVEPerspectiveCameraSettings = {
+    /** Field of view in degrees */
     fov: number;
+    /** Near clipping plane */
     near: number;
+    /** Far clipping plane */
     far: number;
 };
 
-export const DIVEPerspectiveCameraDefaultSettings: DIVEPerspectiveCameraSettings =
+export const DIVEPerspectiveCameraDefaultSettings: Required<DIVEPerspectiveCameraSettings> =
     {
         fov: 70,
         near: 0.1,
@@ -48,12 +51,12 @@ export class DIVEPerspectiveCamera extends PerspectiveCamera {
         this.layers.mask = DIVEPerspectiveCamera.EDITOR_VIEW_LAYER_MASK;
     }
 
-    public OnResize(width: number, height: number): void {
+    public onResize(width: number, height: number): void {
         this.aspect = width / height;
         this.updateProjectionMatrix();
     }
 
-    public SetCameraLayer(layer: 'LIVE' | 'EDITOR'): void {
+    public setCameraLayer(layer: 'LIVE' | 'EDITOR'): void {
         this.layers.mask =
             layer === 'LIVE'
                 ? DIVEPerspectiveCamera.LIVE_VIEW_LAYER_MASK

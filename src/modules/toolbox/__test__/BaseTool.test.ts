@@ -624,4 +624,152 @@ describe('dive/toolbox/DIVEBaseTool', () => {
         const toolBox = new abstractWrapper(mockScene, mockController);
         expect(() => toolBox.onWheel({} as WheelEvent)).not.toThrow();
     });
+
+    it('should handle onPointerMove with no intersects', () => {
+        const toolBox = new abstractWrapper(mockScene, mockController);
+        jest.spyOn(toolBox['_raycaster'], 'setFromCamera').mockImplementation();
+        jest.spyOn(toolBox['_raycaster'], 'intersectObjects').mockReturnValue(
+            [],
+        );
+
+        expect(() =>
+            toolBox.onPointerMove({
+                button: 0,
+                offsetX: 100,
+                offsetY: 100,
+            } as PointerEvent),
+        ).not.toThrow();
+    });
+
+    it('should handle onPointerMove with non-hoverable object', () => {
+        const toolBox = new abstractWrapper(mockScene, mockController);
+        jest.spyOn(toolBox['_raycaster'], 'setFromCamera').mockImplementation();
+        jest.spyOn(toolBox['_raycaster'], 'intersectObjects').mockReturnValue([
+            {
+                distance: 1,
+                point: {
+                    x: 1,
+                    y: 1,
+                    z: 1,
+                } as unknown as Vector3,
+                object: {
+                    uuid: 'uuid',
+                    visible: true,
+                } as Object3D,
+            },
+        ]);
+
+        expect(() =>
+            toolBox.onPointerMove({
+                button: 0,
+                offsetX: 100,
+                offsetY: 100,
+            } as PointerEvent),
+        ).not.toThrow();
+    });
+
+    it('should handle onDrag with no intersects', () => {
+        const toolBox = new abstractWrapper(mockScene, mockController);
+        toolBox['_draggable'] = {
+            onDrag() {
+                return;
+            },
+        } as unknown as Object3D & DIVEDraggable;
+        jest.spyOn(toolBox['_raycaster'], 'intersectObjects').mockReturnValue(
+            [],
+        );
+
+        expect(() => toolBox.onDrag({} as PointerEvent)).not.toThrow();
+    });
+
+    it('should handle onDragEnd with no intersects', () => {
+        const toolBox = new abstractWrapper(mockScene, mockController);
+        toolBox['_draggable'] = {
+            onDragEnd() {
+                return;
+            },
+        } as unknown as Object3D & DIVEDraggable;
+        jest.spyOn(toolBox['_raycaster'], 'intersectObjects').mockReturnValue(
+            [],
+        );
+
+        expect(() => toolBox.onDragEnd({} as PointerEvent)).not.toThrow();
+    });
+
+    it('should handle onPointerUp with no drag', () => {
+        const toolBox = new abstractWrapper(mockScene, mockController);
+        toolBox['pointerWasDragged'] = () => false;
+        toolBox['_dragging'] = false;
+
+        expect(() =>
+            toolBox.onPointerUp({ button: 0 } as PointerEvent),
+        ).not.toThrow();
+    });
+
+    it('should handle onPointerUp with drag but no draggable', () => {
+        const toolBox = new abstractWrapper(mockScene, mockController);
+        toolBox['pointerWasDragged'] = () => true;
+        toolBox['_dragging'] = true;
+        toolBox['_draggable'] = null;
+
+        expect(() =>
+            toolBox.onPointerUp({ button: 0 } as PointerEvent),
+        ).not.toThrow();
+    });
+
+    it('should handle onDragStart with no draggable', () => {
+        const toolBox = new abstractWrapper(mockScene, mockController);
+        toolBox['_draggable'] = null;
+
+        expect(() => toolBox.onDragStart({} as PointerEvent)).not.toThrow();
+    });
+
+    it('should handle onDragStart with draggable but no intersects', () => {
+        const toolBox = new abstractWrapper(mockScene, mockController);
+        toolBox['_draggable'] = {
+            onDragStart() {
+                return;
+            },
+        } as unknown as Object3D & DIVEDraggable;
+        toolBox['_dragRaycastOnObjects'] = [];
+        jest.spyOn(toolBox['_raycaster'], 'intersectObjects').mockReturnValue(
+            [],
+        );
+
+        expect(() => toolBox.onDragStart({} as PointerEvent)).not.toThrow();
+    });
+
+    it('should handle onPointerMove with hoverable object and onPointerEnter', () => {
+        const toolBox = new abstractWrapper(mockScene, mockController);
+        jest.spyOn(toolBox['_raycaster'], 'setFromCamera').mockImplementation();
+
+        const mockHoverable = {
+            uuid: 'uuid',
+            isHoverable: true,
+            visible: true,
+            onPointerEnter: jest.fn(),
+        } as unknown as Object3D & DIVEHoverable;
+
+        jest.spyOn(toolBox['_raycaster'], 'intersectObjects').mockReturnValue([
+            {
+                distance: 1,
+                point: {
+                    x: 1,
+                    y: 1,
+                    z: 1,
+                } as unknown as Vector3,
+                object: mockHoverable,
+            },
+        ]);
+
+        expect(() =>
+            toolBox.onPointerMove({
+                button: 0,
+                offsetX: 100,
+                offsetY: 100,
+            } as PointerEvent),
+        ).not.toThrow();
+
+        expect(mockHoverable.onPointerEnter).toHaveBeenCalled();
+    });
 });

@@ -177,8 +177,9 @@ export abstract class DIVEBaseTool {
         );
         if (this._intersects[0] && hoverable) {
             if (!this._hovered) {
-                if (hoverable.onPointerEnter)
+                if (hoverable.onPointerEnter) {
                     hoverable.onPointerEnter(this._intersects[0]);
+                }
                 this._hovered = hoverable;
                 return;
             }

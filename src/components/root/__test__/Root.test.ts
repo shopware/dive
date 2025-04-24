@@ -12,7 +12,10 @@ import {
 import { type DIVEScene } from '../../../engine/scene/Scene';
 import { DIVECommunication } from '../../../modules/com/Communication';
 import { type DIVESceneObject } from '../../../types';
-import { Object3D } from 'three';
+import { Object3D, Vector3, Box3 } from 'three';
+import { DIVEGroup } from '../../group/Group';
+import { type DIVEModel } from '../../model/Model';
+import { type DIVEPrimitive } from '../../primitive/Primitive';
 
 jest.mock('../../../modules/index.ts', () => {
     return {
@@ -71,12 +74,7 @@ jest.mock('../../light/AmbientLight.ts', () => {
             this.isObject3D = true;
             this.parent = null;
             this.dispatchEvent = jest.fn();
-            this.position = {
-                set: jest.fn(),
-            };
-            this.parent = {
-                attach: jest.fn(),
-            };
+            this.position = new Vector3();
             this.attach = jest.fn();
             this.applyMatrix4 = jest.fn();
             this.updateWorldMatrix = jest.fn();
@@ -99,12 +97,7 @@ jest.mock('../../light/PointLight.ts', () => {
             this.isObject3D = true;
             this.parent = null;
             this.dispatchEvent = jest.fn();
-            this.position = {
-                set: jest.fn(),
-            };
-            this.parent = {
-                attach: jest.fn(),
-            };
+            this.position = new Vector3();
             this.attach = jest.fn();
             this.applyMatrix4 = jest.fn();
             this.updateWorldMatrix = jest.fn();
@@ -127,12 +120,7 @@ jest.mock('../../light/SceneLight.ts', () => {
             this.isObject3D = true;
             this.parent = null;
             this.dispatchEvent = jest.fn();
-            this.position = {
-                set: jest.fn(),
-            };
-            this.parent = {
-                attach: jest.fn(),
-            };
+            this.position = new Vector3();
             this.attach = jest.fn();
             this.applyMatrix4 = jest.fn();
             this.updateWorldMatrix = jest.fn();
@@ -158,9 +146,6 @@ jest.mock('../../model/Model.ts', () => {
             this.userData = {
                 id: undefined,
             };
-            this.parent = {
-                attach: jest.fn(),
-            };
             this.attach = jest.fn();
             this.applyMatrix4 = jest.fn();
             this.updateWorldMatrix = jest.fn();
@@ -173,6 +158,7 @@ jest.mock('../../model/Model.ts', () => {
             this.SetMaterial = jest.fn();
             this.PlaceOnFloor = jest.fn();
             this.removeFromParent = jest.fn();
+            this.position = new Vector3();
             return this;
         }),
     };
@@ -187,9 +173,6 @@ jest.mock('../../primitive/Primitive.ts', () => {
             this.userData = {
                 id: undefined,
             };
-            this.parent = {
-                attach: jest.fn(),
-            };
             this.attach = jest.fn();
             this.applyMatrix4 = jest.fn();
             this.updateWorldMatrix = jest.fn();
@@ -202,6 +185,7 @@ jest.mock('../../primitive/Primitive.ts', () => {
             this.SetVisibility = jest.fn();
             this.PlaceOnFloor = jest.fn();
             this.removeFromParent = jest.fn();
+            this.position = new Vector3();
             return this;
         }),
     };
@@ -217,9 +201,6 @@ jest.mock('../../group/Group.ts', () => {
             this.userData = {
                 id: undefined,
             };
-            this.parent = {
-                attach: jest.fn(),
-            };
             this.attach = jest.fn();
             this.applyMatrix4 = jest.fn();
             this.updateWorldMatrix = jest.fn();
@@ -233,20 +214,20 @@ jest.mock('../../group/Group.ts', () => {
             this.SetLinesVisibility = jest.fn();
             this.PlaceOnFloor = jest.fn();
             this.removeFromParent = jest.fn();
+            this.position = new Vector3();
+            this.members = [];
             return this;
         }),
     };
 });
 
 let root: DIVERoot;
-
 let spyConsoleWarn = jest.spyOn(console, 'warn').mockImplementation(() => {});
-
-Object3D.prototype.attach = jest.fn();
 
 describe('components/root/DIVERoot', () => {
     beforeEach(() => {
         root = new DIVERoot();
+        jest.clearAllMocks();
     });
 
     afterEach(() => {
@@ -257,660 +238,1276 @@ describe('components/root/DIVERoot', () => {
         spyConsoleWarn.mockRestore();
     });
 
-    it('should instantiate', () => {
-        expect(root).toBeDefined();
-    });
-
-    it('should ComputeSceneBB', () => {
-        const bb = root.ComputeSceneBB();
-        expect(bb).toBeDefined();
-    });
-
-    it('should get scene object', async () => {
-        root.children = [
-            {
-                userData: {
-                    id: 'different_id',
+    describe('constructor', () => {
+        afterEach(() => {
+            const mockModuleRegistry =
+                require('../../../modules').ModuleRegistry;
+            mockModuleRegistry.get.mockReset();
+            mockModuleRegistry.get.mockResolvedValue(
+                class {
+                    constructor() {
+                        return {
+                            load: jest.fn().mockResolvedValue({}),
+                        };
+                    }
                 },
-            },
-        ] as unknown as DIVESceneObject[];
-        expect(root.GetSceneObject({ id: 'test_id' })).toBeUndefined();
+            );
+        });
 
-        expect(() =>
-            root.AddSceneObject({
-                id: 'test_id',
-                name: 'test',
-                entityType: 'primitive',
-                position: { x: 1, y: 2, z: 3 },
-                rotation: { x: 1, y: 2, z: 3 },
-                scale: { x: 1, y: 2, z: 3 },
-                geometry: {} as COMGeometry,
-                visible: true,
-                parentId: null,
-            }),
-        ).not.toThrow();
-        root.children = [
-            {
-                userData: {
-                    id: 'test_id',
+        it('should initialize with correct properties', () => {
+            expect(root.isDIVERoot).toBe(true);
+            expect(root.name).toBe('Root');
+            expect(root.Floor).toBeDefined();
+        });
+
+        it('should initialize asset loader', async () => {
+            const mockLoader = {
+                load: jest.fn().mockResolvedValue({}),
+            };
+
+            const mockModuleRegistry =
+                require('../../../modules').ModuleRegistry;
+            mockModuleRegistry.get.mockResolvedValue(
+                class {
+                    constructor() {
+                        return mockLoader;
+                    }
                 },
-            },
-        ] as unknown as DIVESceneObject[];
-        expect(root.GetSceneObject({ id: 'test_id' })).toBeDefined();
+            );
+
+            const newRoot = new DIVERoot();
+            await (newRoot as any)._assetLoader;
+
+            expect(mockModuleRegistry.get).toHaveBeenCalledWith('AssetLoader');
+        });
+
+        it('should handle asset loader initialization error', async () => {
+            const mockModuleRegistry =
+                require('../../../modules').ModuleRegistry;
+            mockModuleRegistry.get.mockRejectedValue(
+                new Error('Failed to load'),
+            );
+
+            const newRoot = new DIVERoot();
+            await expect((newRoot as any)._assetLoader).rejects.toThrow(
+                'Failed to load',
+            );
+        });
     });
 
-    it('should add object', () => {
-        expect(() =>
-            root.AddSceneObject({
-                id: 'id',
-                name: 'pov',
-                entityType: 'pov',
-                visible: true,
-            } as COMPov),
-        ).not.toThrow();
+    describe('ComputeSceneBB', () => {
+        it('should compute bounding box for scene objects', () => {
+            const mockObject: Partial<Object3D> = {
+                isObject3D: true,
+                position: new Vector3(1, 2, 3),
+                traverse: jest.fn((callback: (obj: Object3D) => void) =>
+                    callback(mockObject as Object3D),
+                ),
+            };
+            root.traverse = jest.fn((callback) =>
+                callback(mockObject as Object3D),
+            );
 
-        spyConsoleWarn.mockClear();
-        expect(() =>
-            root.AddSceneObject({
-                id: 'id',
-                name: 'light',
-                entityType: 'light',
-                visible: true,
-            } as COMLight),
-        ).not.toThrow();
-        expect(spyConsoleWarn).toHaveBeenCalled();
+            const bb = root.ComputeSceneBB();
+            expect(bb).toBeDefined();
+            expect(bb).toBeInstanceOf(Box3);
+            expect(root.traverse).toHaveBeenCalled();
+        });
+    });
 
-        spyConsoleWarn.mockClear();
-        expect(() =>
-            root.AddSceneObject({
-                id: 'id_scene',
-                name: 'light',
+    describe('GetSceneObject', () => {
+        it('should find object by id', () => {
+            const mockObject = new Object3D();
+            mockObject.userData = { id: 'test-id' };
+            root.add(mockObject);
+
+            const found = root.GetSceneObject({ id: 'test-id' });
+            expect(found).toBeDefined();
+        });
+
+        it('should return undefined for non-existent id', () => {
+            const found = root.GetSceneObject({ id: 'non-existent' });
+            expect(found).toBeUndefined();
+        });
+    });
+
+    describe('AddSceneObject', () => {
+        it('should add different types of lights', () => {
+            const sceneLightData: COMLight = {
+                id: 'scene-light-1',
                 entityType: 'light',
-                visible: true,
                 type: 'scene',
-            } as COMLight),
-        ).not.toThrow();
-        expect(spyConsoleWarn).not.toHaveBeenCalled();
-
-        spyConsoleWarn.mockClear();
-        expect(() =>
-            root.AddSceneObject({
-                id: 'id_ambient',
-                name: 'light',
-                entityType: 'light',
+                name: 'Test Scene Light',
                 visible: true,
+                position: { x: 1, y: 2, z: 3 },
+                intensity: 1.0,
+                enabled: true,
+                color: '#ffffff',
+            };
+
+            const ambientLightData: COMLight = {
+                id: 'ambient-light-1',
+                entityType: 'light',
                 type: 'ambient',
-            } as COMLight),
-        ).not.toThrow();
-        expect(spyConsoleWarn).not.toHaveBeenCalled();
+                name: 'Test Ambient Light',
+                visible: true,
+                position: { x: 1, y: 2, z: 3 },
+                intensity: 1.0,
+                enabled: true,
+                color: '#ffffff',
+            };
 
-        spyConsoleWarn.mockClear();
-        expect(() =>
-            root.AddSceneObject({
-                id: 'id_point',
-                name: 'light',
+            const pointLightData: COMLight = {
+                id: 'point-light-1',
                 entityType: 'light',
-                visible: true,
                 type: 'point',
-                position: { x: 0, y: 0, z: 0 },
-                intensity: 1,
-                enabled: false,
-                color: 0xffffff,
-                parentId: 'id',
-            } as COMLight),
-        ).not.toThrow();
-        expect(spyConsoleWarn).not.toHaveBeenCalled();
+                name: 'Test Point Light',
+                visible: true,
+                position: { x: 1, y: 2, z: 3 },
+                intensity: 1.0,
+                enabled: true,
+                color: '#ffffff',
+            };
 
-        expect(() =>
-            root.AddSceneObject({
-                id: 'id',
-                name: 'model',
-                entityType: 'model',
+            const unknownLightData: COMLight = {
+                id: 'unknown-light-1',
+                entityType: 'light',
+                type: 'unknown',
+                name: 'Test Unknown Light',
                 visible: true,
-            } as COMModel),
-        ).not.toThrow();
-        expect(() =>
-            root.AddSceneObject({
-                id: 'id_uri0',
-                name: 'model',
-                entityType: 'model',
+                position: { x: 1, y: 2, z: 3 },
+                intensity: 1.0,
+                enabled: true,
+                color: '#ffffff',
+            } as any;
+
+            root.AddSceneObject(sceneLightData);
+            root.AddSceneObject(ambientLightData);
+            root.AddSceneObject(pointLightData);
+            root.AddSceneObject(unknownLightData);
+
+            const sceneLight = root.GetSceneObject(sceneLightData);
+            const ambientLight = root.GetSceneObject(ambientLightData);
+            const pointLight = root.GetSceneObject(pointLightData);
+            const unknownLight = root.GetSceneObject(unknownLightData);
+
+            expect(sceneLight).toBeDefined();
+            expect(ambientLight).toBeDefined();
+            expect(pointLight).toBeDefined();
+            expect(unknownLight).toBeUndefined();
+            expect(spyConsoleWarn).toHaveBeenCalledWith(
+                'DIVERoot.updateLight: Unknown light type: unknown',
+            );
+        });
+
+        it('should update all light properties', () => {
+            const lightData: COMLight = {
+                id: 'light-1',
+                entityType: 'light',
+                type: 'point',
+                name: 'Test Light',
                 visible: true,
-                uri: 'uri',
-                position: { x: 0, y: 0, z: 0 },
+                position: { x: 1, y: 2, z: 3 },
+                intensity: 1.0,
+                enabled: true,
+                color: '#ffffff',
+                parentId: null,
+            };
+
+            root.AddSceneObject(lightData);
+            const light = root.GetSceneObject(lightData);
+            expect(light).toBeDefined();
+            expect(light?.name).toBe('Test Light');
+            expect(light?.position.x).toBe(1);
+            expect(light?.position.y).toBe(2);
+            expect(light?.position.z).toBe(3);
+            expect((light as any).SetIntensity).toHaveBeenCalledWith(1.0);
+            expect((light as any).SetEnabled).toHaveBeenCalledWith(true);
+            expect((light as any).SetColor).toHaveBeenCalled();
+            expect(light?.visible).toBe(true);
+        });
+
+        it('should update all model properties', () => {
+            const modelData: COMModel = {
+                id: 'model-1',
+                entityType: 'model',
+                name: 'Test Model',
+                visible: true,
+                uri: 'test.glb',
+                position: { x: 1, y: 2, z: 3 },
                 rotation: { x: 0, y: 0, z: 0 },
                 scale: { x: 1, y: 1, z: 1 },
-                material: {},
-                parentId: 'id',
-            } as COMModel),
-        ).not.toThrow();
-        jest.spyOn(DIVECommunication, 'get').mockReturnValueOnce(undefined);
-        expect(() =>
-            root.AddSceneObject({
-                id: 'id_uri1',
-                name: 'model',
-                entityType: 'model',
+                loaded: false,
+                material: { color: '#ffffff' },
+                parentId: null,
+            };
+
+            root.AddSceneObject(modelData);
+            const model = root.GetSceneObject<DIVEModel>(modelData);
+            expect(model).toBeDefined();
+            expect(model?.name).toBe('Test Model');
+            expect(model?.SetPosition).toHaveBeenCalledWith(modelData.position);
+            expect(model?.SetRotation).toHaveBeenCalledWith(modelData.rotation);
+            expect(model?.SetScale).toHaveBeenCalledWith(modelData.scale);
+            expect(model?.SetVisibility).toHaveBeenCalledWith(
+                modelData.visible,
+            );
+            expect(model?.SetMaterial).toHaveBeenCalledWith(modelData.material);
+        });
+
+        it('should update all primitive properties', () => {
+            const primitiveData: COMPrimitive = {
+                id: 'primitive-1',
+                entityType: 'primitive',
+                name: 'Test Primitive',
                 visible: true,
-                uri: 'uri',
-                position: { x: 0, y: 0, z: 0 },
+                geometry: { name: 'box', width: 1, height: 1, depth: 1 },
+                position: { x: 1, y: 2, z: 3 },
                 rotation: { x: 0, y: 0, z: 0 },
                 scale: { x: 1, y: 1, z: 1 },
-                material: {},
-            } as COMModel),
-        ).not.toThrow();
+                material: { color: '#ffffff' },
+                parentId: null,
+            };
 
-        expect(() =>
-            root.AddSceneObject({
-                id: 'id0',
-                name: 'primitive',
-                entityType: 'primitive',
-                visible: true,
-            } as COMPrimitive),
-        ).not.toThrow();
-        expect(() =>
-            root.AddSceneObject({
-                id: 'id1',
-                name: 'primitive',
-                entityType: 'primitive',
-                visible: true,
-                material: {},
-                parentId: 'id',
-            } as COMPrimitive),
-        ).not.toThrow();
+            root.AddSceneObject(primitiveData);
+            const primitive = root.GetSceneObject<DIVEPrimitive>(primitiveData);
+            expect(primitive).toBeDefined();
+            expect(primitive?.name).toBe('Test Primitive');
+            expect(primitive?.SetGeometry).toHaveBeenCalledWith(
+                primitiveData.geometry,
+            );
+            expect(primitive?.SetPosition).toHaveBeenCalledWith(
+                primitiveData.position,
+            );
+            expect(primitive?.SetRotation).toHaveBeenCalledWith(
+                primitiveData.rotation,
+            );
+            expect(primitive?.SetScale).toHaveBeenCalledWith(
+                primitiveData.scale,
+            );
+            expect(primitive?.SetVisibility).toHaveBeenCalledWith(
+                primitiveData.visible,
+            );
+            expect(primitive?.SetMaterial).toHaveBeenCalledWith(
+                primitiveData.material,
+            );
+        });
 
-        expect(() =>
-            root.AddSceneObject({
-                id: 'id0',
-                name: 'Group',
+        it('should update all group properties', () => {
+            const groupData: COMGroup = {
+                id: 'group-1',
                 entityType: 'group',
+                name: 'Test Group',
                 visible: true,
-            } as COMGroup),
-        ).not.toThrow();
-        expect(() =>
-            root.AddSceneObject({
-                id: 'id10',
-                name: 'Group',
-                entityType: 'group',
-                visible: true,
-                position: { x: 0, y: 0, z: 0 },
+                position: { x: 1, y: 2, z: 3 },
                 rotation: { x: 0, y: 0, z: 0 },
                 scale: { x: 1, y: 1, z: 1 },
                 bbVisible: true,
-                parentId: 'id',
-            } as COMGroup),
-        ).not.toThrow();
-    });
-
-    it('should update object', () => {
-        root.children = [
-            {
-                userData: {
-                    id: 'id',
-                },
-                SetVisibility: jest.fn(),
-                parent: root,
-                children: [],
-            } as unknown as Object3D,
-            {
-                userData: {
-                    id: 'id_groupparent',
-                },
-                attach: jest.fn(),
-                parent: root,
-                children: [],
-            } as unknown as Object3D,
-            {
-                userData: {
-                    id: 'id_modelparent',
-                },
-                attach: jest.fn(),
-                parent: root,
-                children: [],
-            } as unknown as Object3D,
-            {
-                userData: {
-                    id: 'id_groupchild',
-                },
-                SetVisibility: jest.fn(),
-                parent: {
-                    isDIVEGroup: true,
-                    remove: jest.fn(),
-                },
-                children: [],
-            } as unknown as Object3D,
-        ];
-        expect(() =>
-            root.UpdateSceneObject({
-                id: 'id',
-                name: 'pov',
-                entityType: 'pov',
-                visible: true,
-            } as COMPov),
-        ).not.toThrow();
-        expect(() =>
-            root.UpdateSceneObject({
-                id: 'id',
-                name: 'light',
-                entityType: 'light',
-                visible: true,
-            } as COMLight),
-        ).not.toThrow();
-        expect(() =>
-            root.UpdateSceneObject({
-                id: 'id',
-                name: 'model',
-                entityType: 'model',
-                visible: true,
-            } as COMModel),
-        ).not.toThrow();
-        expect(() =>
-            root.UpdateSceneObject({
-                id: 'id',
-                name: 'primitive',
-                entityType: 'primitive',
-                visible: true,
-            } as COMPrimitive),
-        ).not.toThrow();
-        expect(() =>
-            root.UpdateSceneObject({
-                id: 'id',
-                name: 'group',
-                entityType: 'group',
-                visible: true,
-            } as COMGroup),
-        ).not.toThrow();
-
-        expect(() =>
-            root.AddSceneObject({
-                id: 'id_groupparent',
-                name: 'Group',
-                entityType: 'group',
-            } as COMGroup),
-        ).not.toThrow();
-        expect(() =>
-            root.UpdateSceneObject({
-                id: 'id_groupchild',
-                name: 'group',
-                entityType: 'group',
-                parentId: 'id_groupparent',
-            } as COMGroup),
-        ).not.toThrow();
-
-        expect(() =>
-            root.UpdateSceneObject({
-                id: 'id_groupchild',
-                name: 'group',
-                entityType: 'group',
                 parentId: null,
-            } as COMGroup),
-        ).not.toThrow();
-        expect(() =>
-            root.UpdateSceneObject({
-                id: 'id_groupchild',
-                name: 'group',
-                entityType: 'group',
-                parentId: 'id_modelparent',
-            } as COMGroup),
-        ).not.toThrow();
-        expect(() =>
-            root.UpdateSceneObject({
-                id: 'id_groupchild',
-                name: 'group',
-                entityType: 'group',
-                parentId: 'does_not_exist',
-            } as COMGroup),
-        ).not.toThrow();
+            };
 
-        jest.spyOn(console, 'warn').mockImplementationOnce(() => {});
-        expect(() =>
-            root.UpdateSceneObject({
-                entityType: 'INVALID' as COMEntityType,
-            } as COMPrimitive),
-        ).not.toThrow();
-        expect(console.warn).toHaveBeenCalled();
+            root.AddSceneObject(groupData);
+            const group = root.GetSceneObject<DIVEGroup>(groupData);
+            expect(group).toBeDefined();
+            expect(group?.name).toBe('Test Group');
+            expect(group?.SetPosition).toHaveBeenCalledWith(groupData.position);
+            expect(group?.SetRotation).toHaveBeenCalledWith(groupData.rotation);
+            expect(group?.SetScale).toHaveBeenCalledWith(groupData.scale);
+            expect(group?.SetVisibility).toHaveBeenCalledWith(
+                groupData.visible,
+            );
+            expect(group?.SetLinesVisibility).toHaveBeenCalledWith(
+                groupData.bbVisible,
+            );
+        });
 
-        jest.spyOn(console, 'warn').mockImplementationOnce(() => {});
-        expect(() =>
-            root.UpdateSceneObject({
-                entityType: undefined,
-            } as unknown as COMPrimitive),
-        ).not.toThrow();
-        expect(console.warn).toHaveBeenCalled();
-    });
-
-    it('should delete object', () => {
-        const sceneParent = {
-            parent: null,
-            remove: jest.fn(),
-            children: [
-                {
-                    isTransformControls: true,
-                    detach: jest.fn(),
-                },
-            ],
-        };
-        root.parent = sceneParent as unknown as DIVEScene;
-
-        root.children = [
-            {
-                userData: {
-                    id: 'id',
-                },
-                SetVisibility: jest.fn(),
-                parent: root,
-                children: [],
-            } as unknown as Object3D,
-        ];
-
-        spyConsoleWarn.mockClear();
-        expect(() =>
-            root.DeleteSceneObject({
-                id: 'does_not_exist',
-                name: 'pov',
-                entityType: 'pov',
-                visible: true,
-            } as COMPov),
-        ).not.toThrow();
-
-        spyConsoleWarn.mockClear();
-        expect(() =>
-            root.DeleteSceneObject({
-                id: 'id',
-                name: 'pov',
-                entityType: 'pov',
-                visible: true,
-            } as COMPov),
-        ).not.toThrow();
-        expect(spyConsoleWarn).not.toHaveBeenCalled();
-
-        spyConsoleWarn.mockClear();
-        expect(() =>
-            root.DeleteSceneObject({
-                id: 'does_not_exist',
-                name: 'light',
-                entityType: 'light',
-                visible: true,
-                type: 'scene',
-            } as COMLight),
-        ).not.toThrow();
-        expect(spyConsoleWarn).toHaveBeenCalled();
-
-        spyConsoleWarn.mockClear();
-        expect(() =>
-            root.DeleteSceneObject({
-                id: 'id',
-                name: 'light',
-                entityType: 'light',
-                visible: true,
-                type: 'scene',
-            } as COMLight),
-        ).not.toThrow();
-        expect(spyConsoleWarn).not.toHaveBeenCalled();
-
-        spyConsoleWarn.mockClear();
-        expect(() =>
-            root.DeleteSceneObject({
-                id: 'does_not_exist',
-                name: 'model',
+        it('should add a model object', () => {
+            const modelData: COMModel = {
+                id: 'model-1',
                 entityType: 'model',
+                name: 'Test Model',
                 visible: true,
-            } as COMModel),
-        ).not.toThrow();
-        expect(spyConsoleWarn).toHaveBeenCalled();
+                uri: 'test.glb',
+                position: { x: 1, y: 2, z: 3 },
+                rotation: { x: 0, y: 0, z: 0 },
+                scale: { x: 1, y: 1, z: 1 },
+                loaded: false,
+            };
 
-        spyConsoleWarn.mockClear();
-        expect(() =>
-            root.DeleteSceneObject({
-                id: 'id',
-                name: 'model',
-                entityType: 'model',
-                visible: true,
-            } as COMModel),
-        ).not.toThrow();
+            root.AddSceneObject(modelData);
+            const model = root.GetSceneObject(modelData);
+            expect(model).toBeDefined();
+            expect(model?.userData.uri).toBe('test.glb');
+            expect(model?.userData.id).toBe('model-1');
+        });
 
-        expect(() =>
-            root.DeleteSceneObject({
-                id: 'does_not_exist',
-                name: 'primitive',
+        it('should add a primitive object', () => {
+            const primitiveData: COMPrimitive = {
+                id: 'primitive-1',
                 entityType: 'primitive',
+                name: 'Test Primitive',
                 visible: true,
-            } as COMPrimitive),
-        ).not.toThrow();
-        expect(spyConsoleWarn).toHaveBeenCalled();
+                geometry: { name: 'box', width: 1, height: 1, depth: 1 },
+                position: { x: 1, y: 2, z: 3 },
+                rotation: { x: 0, y: 0, z: 0 },
+                scale: { x: 1, y: 1, z: 1 },
+            };
 
-        spyConsoleWarn.mockClear();
-        expect(() =>
-            root.DeleteSceneObject({
-                id: 'id',
-                name: 'primitive',
-                entityType: 'primitive',
-                visible: true,
-            } as COMPrimitive),
-        ).not.toThrow();
-        expect(spyConsoleWarn).toHaveBeenCalled();
+            root.AddSceneObject(primitiveData);
+            const primitive = root.GetSceneObject(primitiveData);
+            expect(primitive).toBeDefined();
+            expect(primitive?.userData.id).toBe('primitive-1');
+        });
 
-        spyConsoleWarn.mockClear();
-        expect(() =>
-            root.DeleteSceneObject({
-                id: 'does_not_exist',
-                name: 'group',
+        it('should add a group object', () => {
+            const groupData: COMGroup = {
+                id: 'group-1',
                 entityType: 'group',
+                name: 'Test Group',
                 visible: true,
-            } as COMGroup),
-        ).not.toThrow();
-        expect(spyConsoleWarn).toHaveBeenCalled();
+                position: { x: 1, y: 2, z: 3 },
+                rotation: { x: 0, y: 0, z: 0 },
+                scale: { x: 1, y: 1, z: 1 },
+            };
 
-        spyConsoleWarn.mockClear();
-        root['detachTransformControls'] = jest.fn();
-        jest.spyOn(root, 'GetSceneObject').mockReturnValueOnce({
-            members: [new Object3D()],
-            parent: {
-                remove: jest.fn(),
-            },
-        } as unknown as DIVESceneObject);
+            root.AddSceneObject(groupData);
+            const group = root.GetSceneObject(groupData);
+            expect(group).toBeDefined();
+            expect(group?.userData.id).toBe('group-1');
+        });
 
-        expect(() =>
-            root.DeleteSceneObject({
-                id: 'id',
-                name: 'group',
-                entityType: 'group',
-                visible: true,
-            } as COMGroup),
-        ).not.toThrow();
-        expect(spyConsoleWarn).not.toHaveBeenCalled();
-
-        const firstFind = root.GetSceneObject({ id: 'id' });
-        jest.spyOn(root, 'GetSceneObject').mockReturnValueOnce({
-            ...firstFind,
-            members: [new Object3D()],
-            parent: sceneParent,
-            children: [
-                {
-                    isObject3D: true,
-                },
-            ],
-        } as unknown as DIVESceneObject);
-
-        expect(() =>
-            root.DeleteSceneObject({
-                id: 'id',
-                name: 'group',
-                entityType: 'group',
-                visible: true,
-            } as COMGroup),
-        ).not.toThrow();
-
-        jest.spyOn(console, 'warn').mockImplementationOnce(() => {});
-        expect(() =>
-            root.DeleteSceneObject({
-                entityType: 'INVALID' as COMEntityType,
-            } as COMPrimitive),
-        ).not.toThrow();
-        expect(console.warn).toHaveBeenCalled();
-
-        jest.spyOn(console, 'warn').mockImplementationOnce(() => {});
-        expect(() =>
-            root.DeleteSceneObject({
-                entityType: undefined,
-            } as unknown as COMPrimitive),
-        ).not.toThrow();
-        expect(console.warn).toHaveBeenCalled();
-    });
-
-    it('should place object on floor', () => {
-        root.children = [
-            {
-                userData: {
-                    id: 'id',
-                },
-                SetVisibility: jest.fn(),
-                PlaceOnFloor: jest.fn(),
-                parent: root,
-                children: [],
-            } as unknown as Object3D,
-        ];
-
-        expect(() =>
-            root.PlaceOnFloor({
-                id: 'does_not_exist',
-                name: 'pov',
+        it('should handle POV objects', () => {
+            const povData: COMPov = {
+                id: 'pov-1',
                 entityType: 'pov',
+                name: 'Test POV',
                 visible: true,
-            } as COMPov),
-        ).not.toThrow();
-        expect(() =>
-            root.PlaceOnFloor({
-                id: 'id',
-                name: 'pov',
+                position: { x: 1, y: 2, z: 3 },
+                target: { x: 0, y: 0, z: 0 },
+            };
+
+            root.AddSceneObject(povData);
+            // POV objects are not added to the scene
+            const pov = root.GetSceneObject(povData);
+            expect(pov).toBeUndefined();
+        });
+
+        it('should warn for unknown entity type', () => {
+            const unknownData = {
+                id: 'unknown',
+                entityType: 'unknown' as COMEntityType,
+                name: 'Unknown',
+                visible: true,
+                position: { x: 0, y: 0, z: 0 },
+                rotation: { x: 0, y: 0, z: 0 },
+                scale: { x: 1, y: 1, z: 1 },
+            } as unknown as COMEntity;
+
+            root.AddSceneObject(unknownData);
+            expect(spyConsoleWarn).toHaveBeenCalledWith(
+                'DIVERoot.AddSceneObject: Unknown entity type: unknown',
+            );
+        });
+    });
+
+    describe('UpdateSceneObject', () => {
+        it('should update existing object properties', () => {
+            const modelData: COMModel = {
+                id: 'model-1',
+                entityType: 'model',
+                name: 'Test Model',
+                visible: true,
+                uri: 'test.glb',
+                position: { x: 1, y: 2, z: 3 },
+                rotation: { x: 0, y: 0, z: 0 },
+                scale: { x: 1, y: 1, z: 1 },
+                loaded: false,
+            };
+
+            root.AddSceneObject(modelData);
+            const model = root.GetSceneObject<DIVEModel>(modelData);
+            expect(model).toBeDefined();
+
+            const updatedData = {
+                ...modelData,
+                position: { x: 2, y: 3, z: 4 },
+            };
+
+            root.UpdateSceneObject(updatedData);
+            expect(model?.SetPosition).toHaveBeenCalledWith(
+                updatedData.position,
+            );
+        });
+
+        it('should update existing light properties', () => {
+            const lightData: COMLight = {
+                id: 'light-1',
+                entityType: 'light',
+                type: 'point',
+                name: 'Test Light',
+                visible: true,
+                position: { x: 1, y: 2, z: 3 },
+                intensity: 1.0,
+                enabled: true,
+                color: '#ffffff',
+            };
+
+            root.AddSceneObject(lightData);
+            const light = root.GetSceneObject(lightData);
+            expect(light).toBeDefined();
+
+            const updatedData = {
+                ...lightData,
+                intensity: 2.0,
+                color: '#ff0000',
+            };
+
+            root.UpdateSceneObject(updatedData);
+            expect((light as any).SetIntensity).toHaveBeenCalledWith(2.0);
+            expect((light as any).SetColor).toHaveBeenCalled();
+        });
+
+        it('should update existing primitive properties', () => {
+            const primitiveData: COMPrimitive = {
+                id: 'primitive-1',
+                entityType: 'primitive',
+                name: 'Test Primitive',
+                visible: true,
+                geometry: { name: 'box', width: 1, height: 1, depth: 1 },
+                position: { x: 1, y: 2, z: 3 },
+                rotation: { x: 0, y: 0, z: 0 },
+                scale: { x: 1, y: 1, z: 1 },
+            };
+
+            root.AddSceneObject(primitiveData);
+            const primitive = root.GetSceneObject(primitiveData);
+            expect(primitive).toBeDefined();
+
+            const updatedData = {
+                ...primitiveData,
+                geometry: { name: 'box', width: 2, height: 2, depth: 2 },
+            };
+
+            root.UpdateSceneObject(updatedData);
+            expect((primitive as any).SetGeometry).toHaveBeenCalledWith(
+                updatedData.geometry,
+            );
+        });
+
+        it('should update existing group properties', () => {
+            const groupData: COMGroup = {
+                id: 'group-1',
+                entityType: 'group',
+                name: 'Test Group',
+                visible: true,
+                position: { x: 0, y: 0, z: 0 },
+                rotation: { x: 0, y: 0, z: 0 },
+                scale: { x: 1, y: 1, z: 1 },
+            };
+
+            root.AddSceneObject(groupData);
+            const group = root.GetSceneObject(groupData);
+            expect(group).toBeDefined();
+
+            const updatedData = {
+                ...groupData,
+                visible: false,
+                bbVisible: true,
+            };
+
+            root.UpdateSceneObject(updatedData);
+            expect((group as any).SetVisibility).toHaveBeenCalledWith(false);
+            expect((group as any).SetLinesVisibility).toHaveBeenCalledWith(
+                true,
+            );
+        });
+
+        it('should handle update of non-existent object', () => {
+            const nonExistentData = {
+                id: 'non-existent',
+                entityType: 'model' as COMEntityType,
+                name: 'Non Existent',
+                visible: true,
+            };
+            root.UpdateSceneObject(nonExistentData);
+            expect(spyConsoleWarn).not.toHaveBeenCalled();
+        });
+
+        it('should handle POV update', () => {
+            const povData = {
+                id: 'pov-1',
+                entityType: 'pov' as COMEntityType,
+                name: 'Test POV',
+                visible: true,
+            };
+            root.UpdateSceneObject(povData);
+            expect(spyConsoleWarn).not.toHaveBeenCalled();
+        });
+
+        it('should warn for unknown entity type in update', () => {
+            const unknownData = {
+                id: 'unknown',
+                entityType: 'unknown' as COMEntityType,
+                name: 'Unknown',
+            };
+            root.UpdateSceneObject(unknownData);
+            expect(spyConsoleWarn).toHaveBeenCalledWith(
+                'DIVERoot.UpdateSceneObject: Unknown entity type: unknown',
+            );
+        });
+    });
+
+    describe('DeleteSceneObject', () => {
+        it('should remove object from scene', () => {
+            const modelData: COMModel = {
+                id: 'model-1',
+                entityType: 'model',
+                name: 'Test Model',
+                visible: true,
+                uri: 'test.glb',
+                position: { x: 1, y: 2, z: 3 },
+                rotation: { x: 0, y: 0, z: 0 },
+                scale: { x: 1, y: 1, z: 1 },
+                loaded: false,
+            };
+
+            root.AddSceneObject(modelData);
+            const model = root.GetSceneObject(modelData);
+            expect(model).toBeDefined();
+
+            if (model) {
+                model.parent = root;
+                root.children = [model];
+            }
+
+            root.DeleteSceneObject(modelData);
+            const deletedModel = root.GetSceneObject(modelData);
+            expect(deletedModel).toBeUndefined();
+        });
+
+        it('should warn when trying to delete non-existent object', () => {
+            const nonExistentData = {
+                id: 'non-existent',
+                entityType: 'model' as COMEntityType,
+                name: 'Non Existent',
+                visible: true,
+            };
+            root.DeleteSceneObject(nonExistentData);
+            expect(spyConsoleWarn).toHaveBeenCalled();
+        });
+
+        it('should handle POV deletion', () => {
+            const povData: COMPov = {
+                id: 'pov-1',
                 entityType: 'pov',
+                name: 'Test POV',
                 visible: true,
-            } as COMPov),
-        ).not.toThrow();
+                position: { x: 1, y: 2, z: 3 },
+                target: { x: 0, y: 0, z: 0 },
+            };
 
-        expect(() =>
-            root.PlaceOnFloor({
-                id: 'does_not_exist',
-                name: 'light',
-                entityType: 'light',
-                visible: true,
-            } as COMLight),
-        ).not.toThrow();
-        expect(() =>
-            root.PlaceOnFloor({
-                id: 'id',
-                name: 'light',
-                entityType: 'light',
-                visible: true,
-            } as COMLight),
-        ).not.toThrow();
+            root.DeleteSceneObject(povData);
+            expect(spyConsoleWarn).not.toHaveBeenCalled();
+        });
 
-        expect(() =>
-            root.PlaceOnFloor({
-                id: 'does_not_exist',
-                name: 'model',
+        it('should warn for unknown entity type in deletion', () => {
+            const unknownData = {
+                id: 'unknown',
+                entityType: 'unknown' as COMEntityType,
+                name: 'Unknown',
+            };
+            root.DeleteSceneObject(unknownData as any);
+            expect(spyConsoleWarn).toHaveBeenCalledWith(
+                'DIVERoot.DeleteSceneObject: Unknown entity type: unknown',
+            );
+        });
+
+        it('should handle group member detachment', () => {
+            const groupData: COMGroup = {
+                id: 'group-1',
+                entityType: 'group',
+                name: 'Test Group',
+                visible: true,
+                position: { x: 0, y: 0, z: 0 },
+                rotation: { x: 0, y: 0, z: 0 },
+                scale: { x: 1, y: 1, z: 1 },
+            };
+
+            const memberData: COMModel = {
+                id: 'member-1',
                 entityType: 'model',
+                name: 'Test Member',
                 visible: true,
-            } as COMModel),
-        ).not.toThrow();
-        expect(() =>
-            root.PlaceOnFloor({
-                id: 'id',
-                name: 'model',
+                uri: 'test.glb',
+                position: { x: 1, y: 2, z: 3 },
+                rotation: { x: 0, y: 0, z: 0 },
+                scale: { x: 1, y: 1, z: 1 },
+                loaded: false,
+                parentId: 'group-1',
+            };
+
+            root.AddSceneObject(groupData);
+            root.AddSceneObject(memberData);
+
+            const group = root.GetSceneObject<DIVEGroup>(groupData);
+            const member = root.GetSceneObject(memberData);
+
+            expect(group).toBeDefined();
+            expect(member).toBeDefined();
+
+            if (group && member) {
+                (group as any).members = [member];
+                group.parent = root;
+            }
+
+            root.DeleteSceneObject(groupData);
+            expect(root.attach).toHaveBeenCalledWith(member);
+        });
+
+        it('should handle transform controls detachment', () => {
+            const modelData: COMModel = {
+                id: 'model-1',
                 entityType: 'model',
+                name: 'Test Model',
                 visible: true,
-            } as COMModel),
-        ).not.toThrow();
+                uri: 'test.glb',
+                position: { x: 1, y: 2, z: 3 },
+                rotation: { x: 0, y: 0, z: 0 },
+                scale: { x: 1, y: 1, z: 1 },
+                loaded: false,
+            };
 
-        expect(() =>
-            root.PlaceOnFloor({
-                id: 'does_not_exist',
-                name: 'primitive',
+            const mockTransformControls = Object.assign(new Object3D(), {
+                isTransformControls: true,
+                detach: jest.fn(),
+            });
+
+            const mockScene = new Object3D();
+            mockScene.children = [mockTransformControls];
+
+            root.AddSceneObject(modelData);
+            const model = root.GetSceneObject(modelData);
+            expect(model).toBeDefined();
+
+            if (model) {
+                model.parent = root;
+                root.parent = mockScene;
+            }
+
+            root.DeleteSceneObject(modelData);
+            expect(mockTransformControls.detach).toHaveBeenCalled();
+        });
+
+        it('should handle model loading', async () => {
+            const modelData: COMModel = {
+                id: 'model-1',
+                entityType: 'model',
+                name: 'Test Model',
+                visible: true,
+                uri: 'test.glb',
+                position: { x: 1, y: 2, z: 3 },
+                rotation: { x: 0, y: 0, z: 0 },
+                scale: { x: 1, y: 1, z: 1 },
+                loaded: false,
+            };
+
+            const mockGLTF = { scene: new Object3D() };
+            const mockLoader = {
+                load: jest.fn().mockResolvedValue(mockGLTF),
+            };
+
+            const mockPerformAction = jest.fn();
+            const mockCommunication = {
+                PerformAction: mockPerformAction,
+            };
+
+            jest.spyOn(DIVECommunication, 'get').mockReturnValue(
+                mockCommunication as any,
+            );
+
+            const mockModuleRegistry =
+                require('../../../modules').ModuleRegistry;
+            mockModuleRegistry.get.mockResolvedValue(
+                class {
+                    constructor() {
+                        return mockLoader;
+                    }
+                },
+            );
+
+            // Reset the asset loader promise
+            (root as any)._assetLoader = mockModuleRegistry
+                .get('AssetLoader')
+                .then((ModuleClass: new () => { load: jest.Mock }) => {
+                    return new ModuleClass();
+                });
+
+            root.AddSceneObject(modelData);
+            const model = root.GetSceneObject<DIVEModel>(modelData);
+            expect(model).toBeDefined();
+
+            // Wait for all promises to resolve
+            await new Promise((resolve) => setTimeout(resolve, 0));
+
+            expect(mockLoader.load).toHaveBeenCalledWith('test.glb');
+            expect(model?.SetModel).toHaveBeenCalledWith(mockGLTF);
+            expect(DIVECommunication.get).toHaveBeenCalledWith('model-1');
+            expect(mockPerformAction).toHaveBeenCalledWith('MODEL_LOADED', {
+                id: 'model-1',
+            });
+        });
+
+        it('should handle primitive deletion', () => {
+            const primitiveData: COMPrimitive = {
+                id: 'primitive-1',
                 entityType: 'primitive',
+                name: 'Test Primitive',
                 visible: true,
-            } as COMPrimitive),
-        ).not.toThrow();
-        expect(() =>
-            root.PlaceOnFloor({
-                id: 'id',
-                name: 'primitive',
+                geometry: { name: 'box', width: 1, height: 1, depth: 1 },
+                position: { x: 1, y: 2, z: 3 },
+                rotation: { x: 0, y: 0, z: 0 },
+                scale: { x: 1, y: 1, z: 1 },
+            };
+
+            const mockTransformControls = Object.assign(new Object3D(), {
+                isTransformControls: true,
+                detach: jest.fn(),
+            });
+
+            const mockScene = new Object3D();
+            mockScene.children = [mockTransformControls];
+
+            root.AddSceneObject(primitiveData);
+            const primitive = root.GetSceneObject(primitiveData);
+            expect(primitive).toBeDefined();
+
+            if (primitive) {
+                primitive.parent = root;
+                root.parent = mockScene;
+            }
+
+            root.DeleteSceneObject(primitiveData);
+            expect(mockTransformControls.detach).toHaveBeenCalled();
+        });
+
+        it('should handle group deletion with transform controls', () => {
+            const groupData: COMGroup = {
+                id: 'group-1',
+                entityType: 'group',
+                name: 'Test Group',
+                visible: true,
+                position: { x: 0, y: 0, z: 0 },
+                rotation: { x: 0, y: 0, z: 0 },
+                scale: { x: 1, y: 1, z: 1 },
+            };
+
+            const mockTransformControls = Object.assign(new Object3D(), {
+                isTransformControls: true,
+                detach: jest.fn(),
+            });
+
+            const mockScene = new Object3D();
+            mockScene.children = [mockTransformControls];
+
+            root.AddSceneObject(groupData);
+            const group = root.GetSceneObject<DIVEGroup>(groupData);
+            expect(group).toBeDefined();
+
+            if (group) {
+                group.parent = root;
+                root.parent = mockScene;
+                (group as any).members = [new Object3D()];
+            }
+
+            root.DeleteSceneObject(groupData);
+            expect(mockTransformControls.detach).toHaveBeenCalled();
+            expect(root.attach).toHaveBeenCalled();
+        });
+    });
+
+    describe('PlaceOnFloor', () => {
+        it('should place model on floor', () => {
+            const modelData: COMModel = {
+                id: 'model-1',
+                entityType: 'model',
+                name: 'Test Model',
+                visible: true,
+                uri: 'test.glb',
+                position: { x: 1, y: 2, z: 3 },
+                rotation: { x: 0, y: 0, z: 0 },
+                scale: { x: 1, y: 1, z: 1 },
+                loaded: false,
+            };
+
+            root.AddSceneObject(modelData);
+            const model = root.GetSceneObject<DIVEModel>(modelData);
+            expect(model).toBeDefined();
+
+            root.PlaceOnFloor(modelData);
+            expect(model?.PlaceOnFloor).toHaveBeenCalled();
+        });
+
+        it('should handle placing non-existent object on floor', () => {
+            const nonExistentData = {
+                id: 'non-existent',
+                entityType: 'model' as COMEntityType,
+            };
+            root.PlaceOnFloor(nonExistentData);
+            expect(spyConsoleWarn).not.toHaveBeenCalled();
+        });
+
+        it('should handle POV placement', () => {
+            const povData: COMPov = {
+                id: 'pov-1',
+                entityType: 'pov',
+                name: 'Test POV',
+                visible: true,
+                position: { x: 1, y: 2, z: 3 },
+                target: { x: 0, y: 0, z: 0 },
+            };
+
+            root.PlaceOnFloor(povData);
+            expect(spyConsoleWarn).not.toHaveBeenCalled();
+        });
+
+        it('should warn for unknown entity type in placement', () => {
+            const unknownData = {
+                id: 'unknown',
+                entityType: 'unknown' as COMEntityType,
+                name: 'Unknown',
+            };
+            root.PlaceOnFloor(unknownData as any);
+            expect(spyConsoleWarn).toHaveBeenCalledWith(
+                'DIVERoot.PlaceOnFloor: Unknown entity type: unknown',
+            );
+        });
+    });
+
+    describe('setParent', () => {
+        it('should set parent-child relationship', () => {
+            const parentData: COMGroup = {
+                id: 'parent-1',
+                entityType: 'group',
+                name: 'Parent Group',
+                visible: true,
+                position: { x: 0, y: 0, z: 0 },
+                rotation: { x: 0, y: 0, z: 0 },
+                scale: { x: 1, y: 1, z: 1 },
+            };
+
+            const childData: COMModel = {
+                id: 'child-1',
+                entityType: 'model',
+                name: 'Child Model',
+                visible: true,
+                uri: 'test.glb',
+                position: { x: 1, y: 2, z: 3 },
+                rotation: { x: 0, y: 0, z: 0 },
+                scale: { x: 1, y: 1, z: 1 },
+                loaded: false,
+                parentId: 'parent-1',
+            };
+
+            root.AddSceneObject(parentData);
+            root.AddSceneObject(childData);
+
+            const parent = root.GetSceneObject(parentData);
+            const child = root.GetSceneObject(childData);
+
+            expect(parent).toBeDefined();
+            expect(child).toBeDefined();
+            expect(parent?.attach).toHaveBeenCalled();
+        });
+
+        it('should attach to root when parent is null', () => {
+            const childData: COMModel = {
+                id: 'child-1',
+                entityType: 'model',
+                name: 'Child Model',
+                visible: true,
+                uri: 'test.glb',
+                position: { x: 1, y: 2, z: 3 },
+                rotation: { x: 0, y: 0, z: 0 },
+                scale: { x: 1, y: 1, z: 1 },
+                loaded: false,
+                parentId: null,
+            };
+
+            root.AddSceneObject(childData);
+            const child = root.GetSceneObject(childData);
+            expect(child).toBeDefined();
+            expect(root.attach).toHaveBeenCalled();
+        });
+
+        it('should handle non-existent parent', () => {
+            const childData: COMModel = {
+                id: 'child-1',
+                entityType: 'model',
+                name: 'Child Model',
+                visible: true,
+                uri: 'test.glb',
+                position: { x: 1, y: 2, z: 3 },
+                rotation: { x: 0, y: 0, z: 0 },
+                scale: { x: 1, y: 1, z: 1 },
+                loaded: false,
+                parentId: 'non-existent',
+            };
+
+            root.AddSceneObject(childData);
+            const child = root.GetSceneObject(childData);
+            expect(child).toBeDefined();
+            // When parent doesn't exist, the object should remain where it is
+            expect(root.attach).not.toHaveBeenCalled();
+        });
+
+        it('should handle non-existent object', () => {
+            const modelData: COMModel = {
+                id: 'model-1',
+                entityType: 'model',
+                name: 'Test Model',
+                visible: true,
+                uri: 'test.glb',
+                position: { x: 1, y: 2, z: 3 },
+                rotation: { x: 0, y: 0, z: 0 },
+                scale: { x: 1, y: 1, z: 1 },
+                loaded: false,
+                parentId: 'parent-1',
+            };
+
+            // Don't add the object to the scene
+            root.UpdateSceneObject(modelData);
+            expect(root.attach).not.toHaveBeenCalled();
+        });
+    });
+
+    describe('updateLight', () => {
+        it('should handle light with undefined properties', () => {
+            const lightData: Partial<COMLight> & {
+                id: string;
+                entityType: string;
+                type: string;
+            } = {
+                id: 'light-1',
+                entityType: 'light',
+                type: 'point',
+                name: undefined,
+                visible: undefined,
+                position: undefined,
+                intensity: undefined,
+                enabled: undefined,
+                color: undefined,
+            };
+
+            root.AddSceneObject(lightData as COMLight);
+            const light = root.GetSceneObject(lightData);
+            expect(light).toBeDefined();
+        });
+
+        it('should handle light with null properties', () => {
+            const lightData: Partial<COMLight> & {
+                id: string;
+                entityType: string;
+                type: string;
+            } = {
+                id: 'light-1',
+                entityType: 'light',
+                type: 'point',
+                name: null as unknown as string,
+                visible: null as unknown as boolean,
+                position: null as unknown as {
+                    x: number;
+                    y: number;
+                    z: number;
+                },
+                intensity: null as unknown as number,
+                enabled: null as unknown as boolean,
+                color: null as unknown as string,
+            };
+
+            root.AddSceneObject(lightData as COMLight);
+            const light = root.GetSceneObject(lightData);
+            expect(light).toBeDefined();
+        });
+    });
+
+    describe('deleteLight', () => {
+        it('should handle light with transform controls', () => {
+            const lightData: COMLight = {
+                id: 'light-1',
+                entityType: 'light',
+                type: 'point',
+                name: 'Test Light',
+                visible: true,
+                position: { x: 1, y: 2, z: 3 },
+                intensity: 1.0,
+                enabled: true,
+                color: '#ffffff',
+            };
+
+            const mockTransformControls = Object.assign(new Object3D(), {
+                isTransformControls: true,
+                detach: jest.fn(),
+            });
+
+            const mockScene = new Object3D();
+            mockScene.children = [mockTransformControls];
+
+            root.AddSceneObject(lightData);
+            const light = root.GetSceneObject(lightData);
+            expect(light).toBeDefined();
+
+            if (light) {
+                light.parent = root;
+                root.parent = mockScene;
+            }
+
+            root.DeleteSceneObject(lightData);
+            expect(mockTransformControls.detach).toHaveBeenCalled();
+        });
+
+        it('should handle non-existent light', () => {
+            const lightData: COMLight = {
+                id: 'non-existent-light',
+                entityType: 'light',
+                type: 'point',
+                name: 'Test Light',
+                visible: true,
+                position: { x: 1, y: 2, z: 3 },
+                intensity: 1.0,
+                enabled: true,
+                color: '#ffffff',
+            };
+
+            root.DeleteSceneObject(lightData);
+            expect(spyConsoleWarn).toHaveBeenCalledWith(
+                'DIVERoot.deleteLight: Light with id non-existent-light not found',
+            );
+        });
+    });
+
+    describe('deleteGroup', () => {
+        it('should handle group with transform controls and members', () => {
+            const groupData: COMGroup = {
+                id: 'group-1',
+                entityType: 'group',
+                name: 'Test Group',
+                visible: true,
+                position: { x: 0, y: 0, z: 0 },
+                rotation: { x: 0, y: 0, z: 0 },
+                scale: { x: 1, y: 1, z: 1 },
+            };
+
+            const mockTransformControls = Object.assign(new Object3D(), {
+                isTransformControls: true,
+                detach: jest.fn(),
+            });
+
+            const mockScene = new Object3D();
+            mockScene.children = [mockTransformControls];
+
+            root.AddSceneObject(groupData);
+            const group = root.GetSceneObject<DIVEGroup>(groupData);
+            expect(group).toBeDefined();
+
+            if (group) {
+                group.parent = root;
+                root.parent = mockScene;
+                (group as any).members = [new Object3D()];
+            }
+
+            root.DeleteSceneObject(groupData);
+            expect(mockTransformControls.detach).toHaveBeenCalled();
+            expect(root.attach).toHaveBeenCalled();
+        });
+
+        it('should handle non-existent group', () => {
+            const groupData: COMGroup = {
+                id: 'non-existent-group',
+                entityType: 'group',
+                name: 'Test Group',
+                visible: true,
+                position: { x: 0, y: 0, z: 0 },
+                rotation: { x: 0, y: 0, z: 0 },
+                scale: { x: 1, y: 1, z: 1 },
+            };
+
+            root.DeleteSceneObject(groupData);
+            expect(spyConsoleWarn).toHaveBeenCalledWith(
+                'DIVERoot.deleteGroup: Group with id non-existent-group not found',
+            );
+        });
+    });
+
+    describe('setParent', () => {
+        it('should handle object with null parentId', () => {
+            const modelData: COMModel = {
+                id: 'model-1',
+                entityType: 'model',
+                name: 'Test Model',
+                visible: true,
+                uri: 'test.glb',
+                position: { x: 1, y: 2, z: 3 },
+                rotation: { x: 0, y: 0, z: 0 },
+                scale: { x: 1, y: 1, z: 1 },
+                loaded: false,
+                parentId: null,
+            };
+
+            root.AddSceneObject(modelData);
+            const model = root.GetSceneObject(modelData);
+            expect(model).toBeDefined();
+            expect(root.attach).toHaveBeenCalled();
+        });
+
+        it('should handle object with non-existent parent', () => {
+            const modelData: COMModel = {
+                id: 'model-1',
+                entityType: 'model',
+                name: 'Test Model',
+                visible: true,
+                uri: 'test.glb',
+                position: { x: 1, y: 2, z: 3 },
+                rotation: { x: 0, y: 0, z: 0 },
+                scale: { x: 1, y: 1, z: 1 },
+                loaded: false,
+                parentId: 'non-existent',
+            };
+
+            root.AddSceneObject(modelData);
+            const model = root.GetSceneObject(modelData);
+            expect(model).toBeDefined();
+            expect(root.attach).not.toHaveBeenCalled();
+        });
+    });
+
+    describe('updateModel', () => {
+        it('should handle model with undefined properties', () => {
+            const modelData: Partial<COMModel> & {
+                id: string;
+                entityType: string;
+            } = {
+                id: 'model-1',
+                entityType: 'model',
+                name: undefined,
+                visible: undefined,
+                position: undefined,
+                rotation: undefined,
+                scale: undefined,
+                uri: undefined,
+                loaded: undefined,
+                material: undefined,
+            };
+
+            root.AddSceneObject(modelData as COMModel);
+            const model = root.GetSceneObject(modelData);
+            expect(model).toBeDefined();
+        });
+
+        it('should handle model with null properties', () => {
+            const modelData: Partial<COMModel> & {
+                id: string;
+                entityType: string;
+            } = {
+                id: 'model-1',
+                entityType: 'model',
+                name: null as unknown as string,
+                visible: null as unknown as boolean,
+                position: null as unknown as {
+                    x: number;
+                    y: number;
+                    z: number;
+                },
+                rotation: null as unknown as {
+                    x: number;
+                    y: number;
+                    z: number;
+                },
+                scale: null as unknown as { x: number; y: number; z: number },
+                uri: null as unknown as string,
+                loaded: null as unknown as boolean,
+                material: null as unknown as { color: string },
+            };
+
+            root.AddSceneObject(modelData as COMModel);
+            const model = root.GetSceneObject(modelData);
+            expect(model).toBeDefined();
+        });
+    });
+
+    describe('updatePrimitive', () => {
+        it('should handle primitive with undefined properties', () => {
+            const primitiveData: Partial<COMPrimitive> & {
+                id: string;
+                entityType: string;
+            } = {
+                id: 'primitive-1',
                 entityType: 'primitive',
-                visible: true,
-            } as COMPrimitive),
-        ).not.toThrow();
+                name: undefined,
+                visible: undefined,
+                position: undefined,
+                rotation: undefined,
+                scale: undefined,
+                geometry: undefined,
+                material: undefined,
+            };
 
-        jest.spyOn(console, 'warn').mockImplementationOnce(() => {});
-        expect(() =>
-            root.PlaceOnFloor({
-                entityType: 'INVALID' as COMEntityType,
-            } as COMPrimitive),
-        ).not.toThrow();
-        expect(console.warn).toHaveBeenCalled();
+            root.AddSceneObject(primitiveData as COMPrimitive);
+            const primitive = root.GetSceneObject(primitiveData);
+            expect(primitive).toBeDefined();
+        });
 
-        jest.spyOn(console, 'warn').mockImplementationOnce(() => {});
-        expect(() =>
-            root.PlaceOnFloor({
-                entityType: undefined,
-            } as unknown as COMPrimitive),
-        ).not.toThrow();
-        expect(console.warn).toHaveBeenCalled();
+        it('should handle primitive with null properties', () => {
+            const primitiveData: Partial<COMPrimitive> & {
+                id: string;
+                entityType: string;
+            } = {
+                id: 'primitive-1',
+                entityType: 'primitive',
+                name: null as unknown as string,
+                visible: null as unknown as boolean,
+                position: null as unknown as {
+                    x: number;
+                    y: number;
+                    z: number;
+                },
+                rotation: null as unknown as {
+                    x: number;
+                    y: number;
+                    z: number;
+                },
+                scale: null as unknown as { x: number; y: number; z: number },
+                geometry: null as unknown as {
+                    name: 'box';
+                    width: number;
+                    height: number;
+                    depth: number;
+                },
+                material: null as unknown as { color: string },
+            };
+
+            root.AddSceneObject(primitiveData as COMPrimitive);
+            const primitive = root.GetSceneObject(primitiveData);
+            expect(primitive).toBeDefined();
+        });
     });
 
-    it('should warn if entity type is invalid while adding object', () => {
-        const spy = jest
-            .spyOn(console, 'warn')
-            .mockImplementationOnce(() => {});
-        expect(() =>
-            root.AddSceneObject({
-                id: 'id',
-                name: 'entity',
-                entityType: 'INVALID' as COMEntityType,
+    describe('deletePrimitive', () => {
+        it('should handle non-existent primitive', () => {
+            const primitiveData: COMPrimitive = {
+                id: 'non-existent-primitive',
+                entityType: 'primitive',
+                name: 'Test Primitive',
                 visible: true,
-            } as COMEntity),
-        ).not.toThrow();
-        expect(spy).toHaveBeenCalled();
-    });
+                geometry: { name: 'box', width: 1, height: 1, depth: 1 },
+                position: { x: 1, y: 2, z: 3 },
+                rotation: { x: 0, y: 0, z: 0 },
+                scale: { x: 1, y: 1, z: 1 },
+            };
 
-    it('should warn if entity type is invalid while updating object', () => {
-        const spy = jest
-            .spyOn(console, 'warn')
-            .mockImplementationOnce(() => {});
-        expect(() =>
-            root.UpdateSceneObject({
-                id: 'id',
-                name: 'entity',
-                entityType: 'INVALID' as COMEntityType,
-                visible: true,
-            } as COMEntity),
-        ).not.toThrow();
-        expect(spy).toHaveBeenCalled();
-    });
-
-    it('should warn if entity type is invalid while deleting object', () => {
-        const spy = jest
-            .spyOn(console, 'warn')
-            .mockImplementationOnce(() => {});
-        expect(() =>
-            root.DeleteSceneObject({
-                id: 'id',
-                name: 'entity',
-                entityType: 'INVALID' as COMEntityType,
-                visible: true,
-            } as COMEntity),
-        ).not.toThrow();
-        expect(spy).toHaveBeenCalled();
-    });
-
-    it('should warn if entity type is invalid while placing on floor', () => {
-        const spy = jest
-            .spyOn(console, 'warn')
-            .mockImplementationOnce(() => {});
-        expect(() =>
-            root.PlaceOnFloor({
-                id: 'id',
-                name: 'entity',
-                entityType: 'INVALID' as COMEntityType,
-                visible: true,
-            } as COMEntity),
-        ).not.toThrow();
-        expect(spy).toHaveBeenCalled();
+            root.DeleteSceneObject(primitiveData);
+            expect(spyConsoleWarn).toHaveBeenCalledWith(
+                'DIVERoot.deletePrimitive: Primitive with id non-existent-primitive not found',
+            );
+        });
     });
 });

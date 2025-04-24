@@ -1,38 +1,32 @@
-import {
-    Camera,
-    MathUtils,
-    NoToneMapping,
-    PCFSoftShadowMap,
-    Scene,
-    ShadowMapType,
-    ToneMapping,
-    WebGLRenderer,
-} from 'three';
+import { Camera, WebGLRenderer } from 'three';
+import { DIVEScene } from '../scene/Scene.ts';
 
 export type DIVERendererSettings = {
+    /** Whether to enable antialiasing */
     antialias: boolean;
+    /** Whether to enable alpha channel */
     alpha: boolean;
+    /** Power preference for the WebGL context */
+    powerPreference: 'high-performance' | 'low-power';
+    /** Precision of the shader */
+    precision: 'highp' | 'mediump' | 'lowp';
+    /** Whether to enable stencil buffer */
     stencil: boolean;
-    shadowMapEnabled: boolean;
-    shadowMapType: ShadowMapType;
-    toneMapping: ToneMapping;
-    canvas?: HTMLCanvasElement;
+    /** Whether to enable depth buffer */
+    depth: boolean;
+    /** Whether to use logarithmic depth buffer */
+    logarithmicDepthBuffer: boolean;
 };
 
-export const DIVERendererDefaultSettings: DIVERendererSettings = {
+export const DIVERendererDefaultSettings: Required<DIVERendererSettings> = {
     antialias: true,
     alpha: true,
+    powerPreference: 'high-performance',
+    precision: 'highp',
     stencil: false,
-    shadowMapEnabled: true,
-    shadowMapType: PCFSoftShadowMap,
-    toneMapping: NoToneMapping,
-    canvas: undefined,
+    depth: true,
+    logarithmicDepthBuffer: false,
 };
-
-export type DIVERenderCallback = (
-    time: DOMHighResTimeStamp,
-    frame: XRFrame,
-) => void;
 
 /**
  * A changed version of the WebGLRenderer.
@@ -42,174 +36,48 @@ export type DIVERenderCallback = (
  * @module
  */
 
-export class DIVERenderer extends WebGLRenderer {
-    // basic functionality members
-    private paused: boolean = false;
-    private running: boolean = false;
-    private force: boolean = false;
+export class DIVERenderer {
+    private _webglrenderer: WebGLRenderer;
+    private _settings: DIVERendererSettings;
 
-    // pre- and post-render callbacks
-    private preRenderCallbacks: Map<string, DIVERenderCallback> = new Map<
-        string,
-        DIVERenderCallback
-    >();
-    private postRenderCallbacks: Map<string, DIVERenderCallback> = new Map<
-        string,
-        DIVERenderCallback
-    >();
+    constructor(settings?: Partial<DIVERendererSettings>) {
+        this._settings = {
+            ...DIVERendererDefaultSettings,
+            ...(settings ?? {}),
+        };
 
-    constructor(
-        rendererSettings: Partial<DIVERendererSettings> = DIVERendererDefaultSettings,
-    ) {
-        super({
-            antialias:
-                rendererSettings.antialias ||
-                DIVERendererDefaultSettings.antialias,
-            alpha: rendererSettings.alpha || DIVERendererDefaultSettings.alpha,
-            preserveDrawingBuffer: true,
-            canvas: rendererSettings.canvas,
+        this._webglrenderer = new WebGLRenderer({
+            antialias: this._settings.antialias,
+            alpha: this._settings.alpha,
+            powerPreference: this._settings.powerPreference,
+            precision: this._settings.precision,
+            stencil: this._settings.stencil,
+            depth: this._settings.depth,
+            logarithmicDepthBuffer: this._settings.logarithmicDepthBuffer,
         });
-        this.setPixelRatio(window.devicePixelRatio);
-
-        this.shadowMap.enabled =
-            rendererSettings.shadowMapEnabled ||
-            DIVERendererDefaultSettings.shadowMapEnabled;
-        this.shadowMap.type =
-            rendererSettings.shadowMapType ||
-            DIVERendererDefaultSettings.shadowMapType;
-
-        this.toneMapping =
-            rendererSettings.toneMapping ||
-            DIVERendererDefaultSettings.toneMapping;
-
-        this.debug.checkShaderErrors = false;
     }
 
-    // Stops renderings and disposes the renderer.
-    public Dispose(): void {
-        this.StopRenderer();
-        this.dispose();
+    public get webglrenderer(): WebGLRenderer {
+        return this._webglrenderer;
     }
 
-    // Starts the renderer with the given scene and camera.
-    public StartRenderer(scene: Scene, cam: Camera): void {
-        this.setAnimationLoop((time: DOMHighResTimeStamp, frame: XRFrame) => {
-            this.internal_render(scene, cam, time, frame);
-        });
-        this.running = true;
+    public get domElement(): HTMLCanvasElement {
+        return this._webglrenderer.domElement;
     }
 
-    // Pauses the renderer.
-    public PauseRenderer(): void {
-        this.paused = true;
+    public set domElement(element: HTMLCanvasElement) {
+        this._webglrenderer.domElement = element;
     }
 
-    // Resumes the renderer after pausing.
-    public ResumeRenderer(): void {
-        this.paused = false;
+    public render(scene: DIVEScene, camera: Camera): void {
+        this._webglrenderer.render(scene, camera);
     }
 
-    // Stops the renderer completely. Has to be started again with StartRenderer().
-    public StopRenderer(): void {
-        this.setAnimationLoop(null);
-        this.running = false;
+    public onResize(width: number, height: number): void {
+        this._webglrenderer.setSize(width, height, false);
     }
 
-    // Resizes the renderer to the given width and height.
-    public OnResize(width: number, height: number): void {
-        this.setSize(width, height);
-    }
-
-    /**
-     * Adds a callback to the render loop before actual render call.
-     * @param callback Executed before rendering.
-     * @returns uuid to remove the callback.
-     */
-    public AddPreRenderCallback(callback: DIVERenderCallback): string {
-        // add callback to renderloop
-        const newUUID = MathUtils.generateUUID();
-        this.preRenderCallbacks.set(newUUID, callback);
-
-        return newUUID;
-    }
-
-    /**
-     * Removes a callback from the render loop before actual render call.
-     * @param uuid of callback to remove.
-     * @returns if removing was successful.
-     */
-    public RemovePreRenderCallback(uuid: string): boolean {
-        // check if callback exists
-        if (!this.preRenderCallbacks.has(uuid)) return false;
-
-        // remove callback from renderloop
-        this.preRenderCallbacks.delete(uuid);
-
-        return true;
-    }
-
-    /**
-     * Adds a callback to the render loop after actual render call.
-     * @param callback Executed after rendering.
-     * @returns uuid to remove the callback.
-     */
-    public AddPostRenderCallback(callback: DIVERenderCallback): string {
-        // add callback to renderloop
-        const newUUID = MathUtils.generateUUID();
-        this.postRenderCallbacks.set(newUUID, callback);
-
-        return newUUID;
-    }
-
-    /**
-     * Removes a callback from the render loop after actual render call.
-     * @param uuid of callback to remove.
-     * @returns if removing was successful.
-     */
-    public RemovePostRenderCallback(uuid: string): boolean {
-        // check if callback exists
-        if (!this.postRenderCallbacks.has(uuid)) return false;
-
-        // remove callback from renderloop
-        this.postRenderCallbacks.delete(uuid);
-
-        return true;
-    }
-
-    /**
-     * Forces the renderer to render the next frame.
-     */
-    public ForceRendering(): void {
-        this.force = true;
-    }
-
-    /**
-     * Internal render loop.
-     *
-     * To control renderloop you can add callbacks via AddPreRenderCallback() and AddPostRenderCallback().
-     * @param scene Scene to render.
-     * @param cam Camera to render with.
-     */
-    private internal_render(
-        scene: Scene,
-        cam: Camera,
-        time: DOMHighResTimeStamp,
-        frame: XRFrame,
-    ): void {
-        // execute background render loop callbacks
-        if ((this.paused || !this.running) && !this.force) return;
-
-        // execute render loop callbacks
-        this.preRenderCallbacks.forEach((callback) => {
-            callback(time, frame);
-        });
-
-        this.render(scene, cam);
-
-        this.postRenderCallbacks.forEach((callback) => {
-            callback(time, frame);
-        });
-
-        this.force = false;
+    public dispose(): void {
+        this._webglrenderer.dispose();
     }
 }

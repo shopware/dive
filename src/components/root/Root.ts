@@ -408,8 +408,7 @@ export class DIVERoot extends Object3D {
     private setParent(
         object: Partial<COMEntity> & { id: string; parentId: string | null },
     ): void {
-        const sceneObject = this.GetSceneObject<DIVESceneObject>(object);
-        if (!sceneObject) return;
+        const sceneObject = this.GetSceneObject<DIVESceneObject>(object)!;
 
         if (object.parentId !== null) {
             const parent = this.GetSceneObject<DIVESceneObject>({

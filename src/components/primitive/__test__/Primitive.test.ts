@@ -278,4 +278,59 @@ describe('dive/primitive/DIVEPrimitive', () => {
         expect((material as MeshStandardMaterial).metalness).toBe(0);
         expect((material as MeshStandardMaterial).metalnessMap).toBeDefined();
     });
+
+    it('should handle PlaceOnFloor with no mesh or geometry', () => {
+        primitive.userData.id = 'something';
+
+        // Test with no geometry
+        (primitive['_mesh'].geometry as unknown) = null;
+        expect(() => primitive.PlaceOnFloor()).not.toThrow();
+
+        // Test with no mesh
+        (primitive['_mesh'] as unknown) = null;
+        expect(() => primitive.PlaceOnFloor()).not.toThrow();
+    });
+
+    it('should handle PlaceOnFloor when position does not change', () => {
+        primitive.userData.id = 'something';
+
+        // Mock localToWorld to return same Y value as current position
+        jest.spyOn(primitive['_mesh']!, 'localToWorld').mockReturnValueOnce(
+            new Vector3(0, primitive.position.y, 0),
+        );
+
+        const comMock = {
+            PerformAction: jest.fn(),
+        } as unknown as DIVECommunication;
+        jest.spyOn(DIVECommunication, 'get').mockReturnValue(comMock);
+
+        primitive.PlaceOnFloor();
+        expect(comMock.PerformAction).not.toHaveBeenCalled();
+    });
+
+    it('should set material with all properties', () => {
+        const material = {
+            vertexColors: true,
+            color: 0xff0000,
+            map: {} as Texture,
+            normalMap: {} as Texture,
+            roughness: 0.5,
+            roughnessMap: {} as Texture,
+            metalness: 0.7,
+            metalnessMap: {} as Texture,
+        };
+
+        primitive.SetMaterial(material);
+
+        const primitiveMaterial = primitive['_mesh']
+            .material as MeshStandardMaterial;
+        expect(primitiveMaterial.vertexColors).toBe(true);
+        expect(primitiveMaterial.color.getHex()).toBe(0xff0000);
+        expect(primitiveMaterial.map).toBeDefined();
+        expect(primitiveMaterial.normalMap).toBeDefined();
+        expect(primitiveMaterial.roughness).toBe(1.0); // Should be 1.0 because roughnessMap is set
+        expect(primitiveMaterial.roughnessMap).toBeDefined();
+        expect(primitiveMaterial.metalness).toBe(0.0); // Should be 0.0 because metalnessMap is set
+        expect(primitiveMaterial.metalnessMap).toBeDefined();
+    });
 });

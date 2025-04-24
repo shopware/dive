@@ -1,40 +1,24 @@
-import { DIVERenderer } from '../../../engine/renderer/Renderer';
 import { DIVEAnimationSystem } from '../AnimationSystem';
-
-const mockRenderer = {
-    render: jest.fn(),
-    OnResize: jest.fn(),
-    getViewport: jest.fn(),
-    setViewport: jest.fn(),
-    AddPreRenderCallback: jest.fn((callback) => {
-        callback();
-    }),
-    AddPostRenderCallback: jest.fn((callback) => {
-        callback();
-    }),
-    RemovePreRenderCallback: jest.fn(),
-    RemovePostRenderCallback: jest.fn(),
-} as unknown as DIVERenderer;
 
 describe('dive/animation/DIVEAnimationSystem', () => {
     it('should instantiate', () => {
-        const anim = new DIVEAnimationSystem(mockRenderer);
+        const anim = new DIVEAnimationSystem();
         expect(anim).toBeDefined();
     });
 
     it('should Animate', () => {
-        const anim = new DIVEAnimationSystem(mockRenderer);
+        const anim = new DIVEAnimationSystem();
         const tween = anim.Animate({});
         expect(tween).toBeDefined();
     });
 
     it('should update', () => {
-        const anim = new DIVEAnimationSystem(mockRenderer);
+        const anim = new DIVEAnimationSystem();
         expect(() => anim.Update()).not.toThrow();
     });
 
     it('should dispose', () => {
-        const anim = new DIVEAnimationSystem(mockRenderer);
+        const anim = new DIVEAnimationSystem();
         expect(() => anim.Dispose()).not.toThrow();
     });
 });

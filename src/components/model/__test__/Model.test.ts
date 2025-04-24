@@ -212,4 +212,42 @@ describe('dive/model/DIVEModel', () => {
             (model['_mesh']?.material as MeshStandardMaterial).roughness,
         ).toBe(0.5);
     });
+
+    it('should handle PlaceOnFloor with no mesh or geometry', () => {
+        model.userData.id = 'something';
+        expect(() => model.PlaceOnFloor()).not.toThrow();
+
+        // Set mesh but no geometry
+        model['_mesh'] = new Mesh();
+        expect(() => model.PlaceOnFloor()).not.toThrow();
+    });
+
+    it('should handle PlaceOnFloor when position does not change', () => {
+        model.SetModel(object);
+        model.userData.id = 'something';
+
+        // Mock localToWorld to return same Y value as current position
+        jest.spyOn(model['_mesh']!, 'localToWorld').mockReturnValueOnce(
+            new Vector3(0, model.position.y, 0),
+        );
+
+        const com = DIVECommunication.get('id')!;
+        const spyPerformAction = jest.spyOn(com, 'PerformAction');
+
+        model.PlaceOnFloor();
+        expect(spyPerformAction).not.toHaveBeenCalled();
+    });
+
+    it('should handle SetMaterial with null material and mesh', () => {
+        // Test with null material and mesh
+        (model['_material'] as unknown) = null;
+        (model['_mesh'] as unknown) = null;
+        expect(() => model.SetMaterial({ roughness: 0.5 })).not.toThrow();
+
+        // Verify new material was created
+        expect(model['_material']).toBeInstanceOf(MeshStandardMaterial);
+        expect((model['_material'] as MeshStandardMaterial).roughness).toBe(
+            0.5,
+        );
+    });
 });

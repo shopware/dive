@@ -62,8 +62,8 @@ export class MediaCreator {
         const resetPosition = this._controller.object.position.clone();
         const resetRotation = this._controller.object.quaternion.clone();
 
-        this._renderer.OnResize(width, height);
-        this._controller.object.OnResize(width, height);
+        this._renderer.onResize(width, height);
+        this._controller.object.onResize(width, height);
 
         this._controller.object.position.copy(position);
         this._controller.target.copy(target);

@@ -8,6 +8,8 @@ import { type Object3D } from 'three';
 import { type DIVEBaseTool } from '../../BaseTool';
 import { DIVEAnimationSystem } from '../../../animation/AnimationSystem';
 import { Tween } from '@tweenjs/tween.js';
+import { DIVERenderPipeline } from '../../../../engine/pipeline/RenderPipeline';
+import { type DIVEMovable } from '../../../../interfaces/Movable';
 
 jest.mock('../../../../engine/renderer/Renderer', () => {
     return {
@@ -80,11 +82,20 @@ const mockRenderer = {
     render: jest.fn(),
     OnResize: jest.fn(),
 } as unknown as DIVERenderer;
+const mockPipeline = {
+    addPreRenderStep: jest.fn(),
+    removePreRenderStep: jest.fn(),
+    addPostRenderStep: jest.fn(),
+    removePostRenderStep: jest.fn(),
+    tick: jest.fn(),
+    dispose: jest.fn(),
+} as unknown as DIVERenderPipeline;
 const mockScene: DIVEScene = new DIVEScene();
-const mockAnimSystem = new DIVEAnimationSystem(mockRenderer);
+const mockAnimSystem = new DIVEAnimationSystem();
 const mockController: DIVEOrbitController = new DIVEOrbitController(
     mockCamera,
     mockRenderer,
+    mockPipeline,
     mockAnimSystem,
 );
 
@@ -239,5 +250,157 @@ describe('dive/toolbox/select/DIVESelectTool', () => {
 
     it('should set gizmo mode', () => {
         expect(() => selectTool.SetGizmoMode('translate')).not.toThrow();
+    });
+
+    it('should identify as SelectTool', () => {
+        const selectTool = new DIVESelectTool(mockScene, mockController);
+        expect(isSelectTool(selectTool)).toBe(true);
+    });
+
+    it('should not identify non-SelectTool as SelectTool', () => {
+        const nonSelectTool = {} as DIVEBaseTool;
+        expect(isSelectTool(nonSelectTool)).toBe(false);
+    });
+
+    it('should select object with onSelect callback', () => {
+        const selectTool = new DIVESelectTool(mockScene, mockController);
+        const mockSelectable = {
+            onSelect: jest.fn(),
+        } as unknown as DIVESelectable;
+
+        selectTool.Select(mockSelectable);
+        expect(mockSelectable.onSelect).toHaveBeenCalled();
+    });
+
+    it('should select object without onSelect callback', () => {
+        const selectTool = new DIVESelectTool(mockScene, mockController);
+        const mockSelectable = {} as unknown as DIVESelectable;
+
+        expect(() => selectTool.Select(mockSelectable)).not.toThrow();
+    });
+
+    it('should deselect object with onDeselect callback', () => {
+        const selectTool = new DIVESelectTool(mockScene, mockController);
+        const mockSelectable = {
+            onDeselect: jest.fn(),
+        } as unknown as DIVESelectable;
+
+        selectTool.Deselect(mockSelectable);
+        expect(mockSelectable.onDeselect).toHaveBeenCalled();
+    });
+
+    it('should deselect object without onDeselect callback', () => {
+        const selectTool = new DIVESelectTool(mockScene, mockController);
+        const mockSelectable = {} as unknown as DIVESelectable;
+
+        expect(() => selectTool.Deselect(mockSelectable)).not.toThrow();
+    });
+
+    it('should attach gizmo to movable object', () => {
+        const selectTool = new DIVESelectTool(mockScene, mockController);
+        const mockMovable = {
+            isMovable: true,
+            visible: true,
+        } as unknown as Object3D & DIVESelectable & DIVEMovable;
+
+        selectTool['_gizmo'] = {
+            attach: jest.fn(),
+        } as any;
+
+        selectTool.AttachGizmo(mockMovable);
+        expect(selectTool['_gizmo'].attach).toHaveBeenCalledWith(mockMovable);
+    });
+
+    it('should detach gizmo', () => {
+        const selectTool = new DIVESelectTool(mockScene, mockController);
+        selectTool['_gizmo'] = {
+            detach: jest.fn(),
+        } as any;
+
+        selectTool.DetachGizmo();
+        expect(selectTool['_gizmo'].detach).toHaveBeenCalled();
+    });
+
+    it('should handle click with no intersections', () => {
+        const selectTool = new DIVESelectTool(mockScene, mockController);
+        const mockSelectable = {
+            uuid: 'test',
+            onDeselect: jest.fn(),
+            isSelectable: true,
+        } as unknown as Object3D & DIVESelectable;
+
+        selectTool['_gizmo'] = {
+            object: mockSelectable,
+            detach: jest.fn(),
+        } as any;
+
+        jest.spyOn(
+            selectTool['_raycaster'],
+            'intersectObjects',
+        ).mockReturnValue([]);
+
+        selectTool.onClick({} as PointerEvent);
+        expect(mockSelectable.onDeselect).toHaveBeenCalled();
+    });
+
+    it('should handle click on same object', () => {
+        const selectTool = new DIVESelectTool(mockScene, mockController);
+        const mockSelectable = {
+            uuid: 'test',
+            isSelectable: true,
+            visible: true,
+        } as unknown as Object3D & DIVESelectable;
+
+        selectTool['_gizmo'] = {
+            object: mockSelectable,
+        } as any;
+
+        jest.spyOn(
+            selectTool['_raycaster'],
+            'intersectObjects',
+        ).mockReturnValue([
+            {
+                object: mockSelectable,
+            } as any,
+        ]);
+
+        selectTool.onClick({} as PointerEvent);
+        // No deselect should happen
+        expect(selectTool['_gizmo'].object).toBe(mockSelectable);
+    });
+
+    it('should handle click on different object', () => {
+        const selectTool = new DIVESelectTool(mockScene, mockController);
+        const oldSelectable = {
+            uuid: 'old',
+            isSelectable: true,
+            visible: true,
+            onDeselect: jest.fn(),
+        } as unknown as Object3D & DIVESelectable;
+
+        const newSelectable = {
+            uuid: 'new',
+            isSelectable: true,
+            visible: true,
+            onSelect: jest.fn(),
+        } as unknown as Object3D & DIVESelectable;
+
+        selectTool['_gizmo'] = {
+            object: oldSelectable,
+            detach: jest.fn(),
+        } as any;
+
+        jest.spyOn(
+            selectTool['_raycaster'],
+            'intersectObjects',
+        ).mockReturnValue([
+            {
+                object: newSelectable,
+            } as any,
+        ]);
+
+        selectTool.onClick({} as PointerEvent);
+        expect(oldSelectable.onDeselect).toHaveBeenCalled();
+        expect(newSelectable.onSelect).toHaveBeenCalled();
     });
 });

@@ -8,10 +8,19 @@ import {
 import { type COMPov } from '../../../modules/com/types';
 import { DIVEOrbitController } from '../../../modules/controller/orbit/OrbitController';
 import { DIVEAnimationSystem } from '../../../modules/animation/AnimationSystem';
+import { DIVERenderPipeline } from '../../../engine/pipeline/RenderPipeline';
 
 /**
  * @jest-environment jsdom
  */
+
+// Mock ResizeObserver
+class MockResizeObserver {
+    observe() {}
+    unobserve() {}
+    disconnect() {}
+}
+global.ResizeObserver = MockResizeObserver as any;
 
 const mock_render = jest.fn();
 const mock_toDataURL = jest.fn();
@@ -50,6 +59,7 @@ jest.mock('../../../engine/camera/PerspectiveCamera', () => {
             this.layers = {
                 mask: 0,
             };
+            this.onResize = jest.fn();
             return this;
         }),
     };
@@ -70,7 +80,7 @@ jest.mock('../../../modules/controller/orbit/OrbitController', () => {
                 layers: {
                     mask: 0,
                 },
-                OnResize: jest.fn(),
+                onResize: jest.fn(),
             };
 
             this.target = {
@@ -92,7 +102,7 @@ jest.mock('../../../engine/renderer/Renderer', () => {
                 toDataURL: mock_toDataURL,
             };
             this.render = mock_render;
-            this.OnResize = jest.fn();
+            this.onResize = jest.fn();
             return this;
         }),
     };
@@ -115,19 +125,30 @@ jest.mock('../../../modules/animation/AnimationSystem', () => {
     };
 });
 
+const mockRenderer = new DIVERenderer();
+const mockScene = new DIVEScene();
+const mockCamera = new DIVEPerspectiveCamera();
+const mockPipeline = new DIVERenderPipeline(
+    mockRenderer,
+    mockScene,
+    mockCamera,
+);
+const mockAnimationSystem = new DIVEAnimationSystem();
+const mockOrbitController = new DIVEOrbitController(
+    mockCamera,
+    mockRenderer,
+    mockPipeline,
+    mockAnimationSystem,
+);
 let mediaCreator: MediaCreator;
 
 describe('MediaCreator', () => {
     beforeEach(() => {
         jest.clearAllMocks();
         mediaCreator = new MediaCreator(
-            new DIVERenderer(),
-            new DIVEScene(),
-            new DIVEOrbitController(
-                new DIVEPerspectiveCamera(DIVEPerspectiveCameraDefaultSettings),
-                new DIVERenderer(),
-                new DIVEAnimationSystem(new DIVERenderer()),
-            ),
+            mockRenderer,
+            mockScene,
+            mockOrbitController,
         );
     });
 

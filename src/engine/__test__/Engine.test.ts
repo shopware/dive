@@ -1,146 +1,128 @@
-import { DIVEEngine, EngineSettings } from '../Engine';
+import { DIVEEngine, EngineDefaultSettings } from '../Engine.ts';
+import { DIVEPerspectiveCamera } from '../camera/PerspectiveCamera.ts';
+import { DIVERenderer } from '../renderer/Renderer.ts';
+import { DIVEScene } from '../scene/Scene.ts';
+import { DIVERenderPipeline } from '../pipeline/RenderPipeline.ts';
+import { DIVEResizeManager } from '../resize/ResizeManager.ts';
+import { DIVEClock } from '../clock/Clock.ts';
 
-const mockCanvasElement = {
-    parentElement: {
-        clientWidth: 800,
-        clientHeight: 600,
-    } as HTMLElement,
-} as HTMLCanvasElement;
+jest.mock('../camera/PerspectiveCamera.ts', () => {
+    return {
+        DIVEPerspectiveCamera: jest.fn(),
+    };
+});
 
-const mockRendererInstance = {
-    OnResize: jest.fn(),
-    AddPreRenderCallback: jest.fn((callback: () => void) => {
-        callback();
-        callback();
-        mockRendererInstance.domElement = {
-            parentElement: undefined,
-        } as unknown as HTMLCanvasElement;
-        callback();
-        return 'resize-observer-id';
-    }),
-    StartRenderer: jest.fn(),
-    RemovePreRenderCallback: jest.fn(),
-    dispose: jest.fn(),
-    domElement: mockCanvasElement,
-};
+jest.mock('../renderer/Renderer.ts', () => {
+    return {
+        DIVERenderer: jest.fn(function () {
+            this.dispose = jest.fn();
+            return this;
+        }),
+    };
+});
 
-const mockSceneInstance = {};
+jest.mock('../scene/Scene.ts', () => {
+    return {
+        DIVEScene: jest.fn(function () {
+            return this;
+        }),
+    };
+});
 
-const mockCameraInstance = {
-    OnResize: jest.fn(),
-};
+jest.mock('../pipeline/RenderPipeline.ts', () => {
+    return {
+        DIVERenderPipeline: jest.fn(function () {
+            this.dispose = jest.fn();
+            return this;
+        }),
+    };
+});
 
-jest.mock('../renderer/Renderer', () => ({
-    DIVERenderer: jest.fn().mockImplementation(() => mockRendererInstance),
-}));
+jest.mock('../resize/ResizeManager.ts', () => {
+    return {
+        DIVEResizeManager: jest.fn(function () {
+            this.dispose = jest.fn();
+            return this;
+        }),
+    };
+});
 
-jest.mock('../scene/Scene', () => ({
-    DIVEScene: jest.fn().mockImplementation(() => mockSceneInstance),
-}));
+jest.mock('../clock/Clock.ts', () => {
+    return {
+        DIVEClock: jest.fn(function () {
+            this.addTicker = jest.fn();
+            this.start = jest.fn();
+            this.stop = jest.fn();
+            this.dispose = jest.fn();
+            return this;
+        }),
+    };
+});
 
-jest.mock('../camera/PerspectiveCamera', () => ({
-    DIVEPerspectiveCamera: jest
-        .fn()
-        .mockImplementation(() => mockCameraInstance),
-}));
-
-describe('Engine', () => {
+describe('DIVEEngine', () => {
     let engine: DIVEEngine;
 
     beforeEach(() => {
+        jest.clearAllMocks();
         engine = new DIVEEngine();
     });
 
-    afterEach(() => {
-        jest.clearAllMocks();
+    it('should instantiate with default settings', () => {
+        expect(engine).toBeDefined();
+        expect(DIVEPerspectiveCamera).toHaveBeenCalledWith(
+            EngineDefaultSettings.perspectiveCamera,
+        );
+        expect(DIVERenderer).toHaveBeenCalled();
+        expect(DIVEScene).toHaveBeenCalled();
+        expect(DIVERenderPipeline).toHaveBeenCalled();
+        expect(DIVEResizeManager).toHaveBeenCalled();
+        expect(DIVEClock).toHaveBeenCalled();
     });
 
-    describe('initialization', () => {
-        it('should initialize with default settings when no settings are provided', () => {
-            expect(engine).toBeDefined();
-            expect(engine.renderer).toBeDefined();
-            expect(engine.scene).toBeDefined();
-            expect(engine.perspectiveCamera).toBeDefined();
-        });
-
-        it('should initialize with custom settings when provided', () => {
-            const customSettings: Partial<EngineSettings> = {
-                autoResize: false,
-                autoStart: false,
-                displayAxes: true,
-            };
-
-            engine = new DIVEEngine(customSettings);
-            expect(engine).toBeDefined();
-        });
+    it('should instantiate with custom settings', () => {
+        const customSettings = {
+            autoStart: false,
+            displayAxes: true,
+            perspectiveCamera: {
+                fov: 45,
+                near: 0.5,
+                far: 2000,
+            },
+        };
+        engine = new DIVEEngine(customSettings);
+        expect(engine).toBeDefined();
+        expect(DIVEPerspectiveCamera).toHaveBeenCalledWith(
+            customSettings.perspectiveCamera,
+        );
     });
 
-    describe('resize handling', () => {
-        beforeEach(() => {
-            jest.clearAllMocks();
-        });
-
-        it('should handle resize events correctly', () => {
-            const width = 1024;
-            const height = 768;
-
-            engine.onResize(width, height);
-
-            expect(mockRendererInstance.OnResize).toHaveBeenCalledWith(
-                width,
-                height,
-            );
-            expect(mockCameraInstance.OnResize).toHaveBeenCalledWith(
-                width,
-                height,
-            );
-        });
-
-        it('should add resize observer when autoResize is true', () => {
-            const settings: Partial<EngineSettings> = {
-                autoResize: true,
-            };
-
-            engine = new DIVEEngine(settings);
-            expect(
-                mockRendererInstance.AddPreRenderCallback,
-            ).toHaveBeenCalled();
-        });
-
-        it('should not add resize observer when autoResize is false', () => {
-            const settings: Partial<EngineSettings> = {
-                autoResize: false,
-            };
-
-            engine = new DIVEEngine(settings);
-            expect(
-                mockRendererInstance.AddPreRenderCallback,
-            ).not.toHaveBeenCalled();
-        });
+    it('should provide access to components', () => {
+        expect(engine.scene).toBeDefined();
+        expect(engine.camera).toBeDefined();
+        expect(engine.renderer).toBeDefined();
+        expect(engine.pipeline).toBeDefined();
     });
 
-    describe('disposal', () => {
-        it('should properly dispose of resources', () => {
-            engine.dispose();
-
-            expect(
-                mockRendererInstance.RemovePreRenderCallback,
-            ).toHaveBeenCalledWith('resize-observer-id');
-            expect(mockRendererInstance.dispose).toHaveBeenCalled();
-        });
+    it('should start and stop the engine', () => {
+        const clock = (DIVEClock as jest.Mock).mock.instances[0];
+        engine.start();
+        expect(clock.start).toHaveBeenCalled();
+        engine.stop();
+        expect(clock.stop).toHaveBeenCalled();
     });
 
-    describe('getters', () => {
-        it('should return the correct renderer instance', () => {
-            expect(engine.renderer).toBe(mockRendererInstance);
-        });
+    it('should dispose all components', () => {
+        const clock = (DIVEClock as jest.Mock).mock.instances[0];
+        const resizeManager = (DIVEResizeManager as jest.Mock).mock
+            .instances[0];
+        const pipeline = (DIVERenderPipeline as jest.Mock).mock.instances[0];
+        const renderer = (DIVERenderer as jest.Mock).mock.instances[0];
 
-        it('should return the correct scene instance', () => {
-            expect(engine.scene).toBe(mockSceneInstance);
-        });
+        engine.dispose();
 
-        it('should return the correct camera instance', () => {
-            expect(engine.perspectiveCamera).toBe(mockCameraInstance);
-        });
+        expect(clock.dispose).toHaveBeenCalled();
+        expect(resizeManager.dispose).toHaveBeenCalled();
+        expect(pipeline.dispose).toHaveBeenCalled();
+        expect(renderer.dispose).toHaveBeenCalled();
     });
 });

@@ -4,16 +4,20 @@ import { DIVERenderer } from '../../../engine/renderer/Renderer';
 import { type Box3, MathUtils, Vector3, Vector3Like } from 'three';
 import { Easing } from '@tweenjs/tween.js';
 import { type DIVEAnimationSystem } from '../../animation/AnimationSystem';
+import { DIVERenderPipeline } from '../../../engine/pipeline/RenderPipeline';
 
-export type DIVEOrbitControlsSettings = {
+export type DIVEOrbitControllerSettings = {
+    /** Whether to enable damping for smooth camera movement */
     enableDamping: boolean;
+    /** Damping factor for camera movement */
     dampingFactor: number;
 };
 
-export const DIVEOrbitControlsDefaultSettings: DIVEOrbitControlsSettings = {
-    enableDamping: true,
-    dampingFactor: 0.04,
-};
+export const DIVEOrbitControllerDefaultSettings: Required<DIVEOrbitControllerSettings> =
+    {
+        enableDamping: true,
+        dampingFactor: 0.05,
+    };
 
 /**
  * Orbit Controls. Basic functionality to orbit around a given target point in the scene.
@@ -25,6 +29,7 @@ export class DIVEOrbitController extends OrbitControls {
     public static readonly DEFAULT_ZOOM_FACTOR = 1;
 
     private _animationSystem: DIVEAnimationSystem;
+    private _pipeline: DIVERenderPipeline;
 
     private last: { pos: Vector3Like; target: Vector3Like } | null = null;
 
@@ -37,36 +42,29 @@ export class DIVEOrbitController extends OrbitControls {
     public object: DIVEPerspectiveCamera;
     public domElement: HTMLCanvasElement;
 
-    private _removePreRenderCallback: () => void = () => {};
-
     constructor(
         camera: DIVEPerspectiveCamera,
         renderer: DIVERenderer,
+        pipeline: DIVERenderPipeline,
         animationSystem: DIVEAnimationSystem,
-        settings: Partial<DIVEOrbitControlsSettings> = DIVEOrbitControlsDefaultSettings,
+        settings: Partial<DIVEOrbitControllerSettings> = DIVEOrbitControllerDefaultSettings,
     ) {
         super(camera, renderer.domElement);
 
         this._animationSystem = animationSystem;
-
+        this._pipeline = pipeline;
         this.domElement = renderer.domElement;
 
         this.object = camera;
 
-        const id = renderer.AddPreRenderCallback(() => {
-            this.preRenderCallback();
-        });
-
-        this._removePreRenderCallback = () => {
-            renderer.RemovePreRenderCallback(id);
-        };
+        this._pipeline.addPreRenderStep(this.preRenderCallback);
 
         this.enableDamping =
             settings.enableDamping ||
-            DIVEOrbitControlsDefaultSettings.enableDamping;
+            DIVEOrbitControllerDefaultSettings.enableDamping;
         this.dampingFactor =
             settings.dampingFactor ||
-            DIVEOrbitControlsDefaultSettings.dampingFactor;
+            DIVEOrbitControllerDefaultSettings.dampingFactor;
 
         // initialize camera transformation
         this.object.position.set(0, 2, 2);
@@ -75,7 +73,7 @@ export class DIVEOrbitController extends OrbitControls {
     }
 
     public Dispose(): void {
-        this._removePreRenderCallback();
+        this._pipeline.removePreRenderStep(this.preRenderCallback);
         this.dispose();
     }
 

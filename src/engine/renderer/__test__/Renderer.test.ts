@@ -1,228 +1,92 @@
-import {
-    WebGLRendererRenderMock,
-    WebGLRendererSetSizeMock,
-} from '../../../../__mocks__/three';
-import { type DIVEPerspectiveCamera } from '../../camera/PerspectiveCamera';
-import { type DIVEScene } from '../../scene/Scene';
-import { DIVERenderer, DIVERendererDefaultSettings } from '../Renderer';
+import { WebGLRenderer } from 'three';
+import { DIVERenderer, DIVERendererDefaultSettings } from '../Renderer.ts';
+import { DIVEScene } from '../../scene/Scene.ts';
+import { DIVEPerspectiveCamera } from '../../camera/PerspectiveCamera.ts';
 
-/**
- * @jest-environment jsdom
- */
+jest.mock('three', () => ({
+    WebGLRenderer: jest.fn().mockImplementation(() => ({
+        domElement: document.createElement('canvas'),
+        render: jest.fn(),
+        setSize: jest.fn(),
+        dispose: jest.fn(),
+    })),
+}));
 
-const test_uuid = 'test_uuid';
+describe('DIVERenderer', () => {
+    let renderer: DIVERenderer;
+    let scene: DIVEScene;
+    let camera: DIVEPerspectiveCamera;
 
-let renderer: DIVERenderer;
-
-describe('dive/renderer/DIVERenderer', () => {
     beforeEach(() => {
         jest.clearAllMocks();
         renderer = new DIVERenderer();
+        scene = {} as DIVEScene;
+        camera = {} as DIVEPerspectiveCamera;
     });
 
-    it('should instantiate', () => {
-        renderer = new DIVERenderer({});
+    it('should instantiate with default settings', () => {
         expect(renderer).toBeDefined();
-    });
-
-    it('should instantiate', () => {
-        renderer = new DIVERenderer({
-            alpha: true,
-            shadowMapEnabled: true,
-            shadowMapType: 1,
-            toneMapping: 1,
-            antialias: true,
+        expect(WebGLRenderer).toHaveBeenCalledWith({
+            antialias: DIVERendererDefaultSettings.antialias,
+            alpha: DIVERendererDefaultSettings.alpha,
+            powerPreference: DIVERendererDefaultSettings.powerPreference,
+            precision: DIVERendererDefaultSettings.precision,
+            stencil: DIVERendererDefaultSettings.stencil,
+            depth: DIVERendererDefaultSettings.depth,
+            logarithmicDepthBuffer:
+                DIVERendererDefaultSettings.logarithmicDepthBuffer,
         });
     });
 
-    it('should instantiate with settings parameter', () => {
-        renderer = new DIVERenderer(DIVERendererDefaultSettings);
-        expect(renderer).toBeDefined();
+    it('should instantiate with custom settings', () => {
+        const customSettings = {
+            antialias: false,
+            alpha: false,
+            powerPreference: 'low-power' as const,
+            precision: 'mediump' as const,
+            stencil: true,
+            depth: false,
+            logarithmicDepthBuffer: true,
+        };
+        renderer = new DIVERenderer(customSettings);
+        expect(WebGLRenderer).toHaveBeenCalledWith(customSettings);
     });
 
-    it('should dispose', () => {
-        renderer.Dispose();
+    it('should provide access to domElement', () => {
+        expect(renderer.domElement).toBeDefined();
+        expect(renderer.domElement).toBeInstanceOf(HTMLCanvasElement);
     });
 
-    it('should start render', () => {
-        expect(() => {
-            renderer.StartRenderer(
-                {} as DIVEScene,
-                {} as DIVEPerspectiveCamera,
-            );
-        }).not.toThrow();
-        expect(renderer['running']).toBe(true);
+    it('should set domElement', () => {
+        const newCanvas = document.createElement('canvas');
+        renderer.domElement = newCanvas;
+        const mockInstance = (WebGLRenderer as jest.Mock).mock.results[0].value;
+        expect(mockInstance.domElement).toBe(newCanvas);
     });
 
-    it('should pause render', () => {
-        renderer.StartRenderer({} as DIVEScene, {} as DIVEPerspectiveCamera);
-        expect(() => {
-            renderer.PauseRenderer();
-        }).not.toThrow();
-        expect(renderer['paused']).toBe(true);
+    it('should provide access to webglrenderer', () => {
+        const mockInstance = (WebGLRenderer as jest.Mock).mock.results[0].value;
+        expect(renderer.webglrenderer).toBe(mockInstance);
     });
 
-    it('should resume render', () => {
-        renderer.StartRenderer({} as DIVEScene, {} as DIVEPerspectiveCamera);
-        renderer.PauseRenderer();
-        expect(() => {
-            renderer.ResumeRenderer();
-        }).not.toThrow();
-        expect(renderer['paused']).toBe(false);
+    it('should render scene and camera', () => {
+        renderer.render(scene, camera);
+        expect(WebGLRenderer).toHaveBeenCalled();
+        const mockInstance = (WebGLRenderer as jest.Mock).mock.results[0].value;
+        expect(mockInstance.render).toHaveBeenCalledWith(scene, camera);
     });
 
-    it('should stop render', () => {
-        expect(() => {
-            renderer.StopRenderer();
-        }).not.toThrow();
-        expect(renderer['running']).toBe(false);
+    it('should handle resize', () => {
+        const width = 800;
+        const height = 600;
+        renderer.onResize(width, height);
+        const mockInstance = (WebGLRenderer as jest.Mock).mock.results[0].value;
+        expect(mockInstance.setSize).toHaveBeenCalledWith(width, height, false);
     });
 
-    it('should resize renderer', () => {
-        expect(() => {
-            renderer.OnResize(500, 500);
-        }).not.toThrow();
-        expect(WebGLRendererSetSizeMock).toHaveBeenCalledTimes(1);
-    });
-
-    it('should render', () => {
-        expect(WebGLRendererRenderMock).toHaveBeenCalledTimes(0);
-
-        renderer.StartRenderer({} as DIVEScene, {} as DIVEPerspectiveCamera);
-        expect(() => {
-            renderer['internal_render'](
-                {} as DIVEScene,
-                {} as DIVEPerspectiveCamera,
-                0.016,
-                {} as XRFrame,
-            );
-        }).not.toThrow();
-        expect(WebGLRendererRenderMock).toHaveBeenCalledTimes(1);
-    });
-
-    it('should force render', () => {
-        expect(() => {
-            renderer.ForceRendering();
-        }).not.toThrow();
-    });
-
-    it('should not render when not started', () => {
-        expect(WebGLRendererRenderMock).toHaveBeenCalledTimes(0);
-        renderer['internal_render'](
-            {} as DIVEScene,
-            {} as DIVEPerspectiveCamera,
-            0.016,
-            {} as XRFrame,
-        );
-        expect(WebGLRendererRenderMock).toHaveBeenCalledTimes(0);
-    });
-
-    it('should not render when stopped', () => {
-        renderer.StartRenderer({} as DIVEScene, {} as DIVEPerspectiveCamera);
-        renderer['internal_render'](
-            {} as DIVEScene,
-            {} as DIVEPerspectiveCamera,
-            0.016,
-            {} as XRFrame,
-        );
-        expect(WebGLRendererRenderMock).toHaveBeenCalledTimes(1);
-
-        renderer.StopRenderer();
-        renderer['internal_render'](
-            {} as DIVEScene,
-            {} as DIVEPerspectiveCamera,
-            0.016,
-            {} as XRFrame,
-        );
-        expect(WebGLRendererRenderMock).toHaveBeenCalledTimes(1);
-    });
-
-    it('should not render when paused', () => {
-        renderer.StartRenderer({} as DIVEScene, {} as DIVEPerspectiveCamera);
-        renderer['internal_render'](
-            {} as DIVEScene,
-            {} as DIVEPerspectiveCamera,
-            0.016,
-            {} as XRFrame,
-        );
-        expect(WebGLRendererRenderMock).toHaveBeenCalledTimes(1);
-
-        renderer.PauseRenderer();
-        renderer['internal_render'](
-            {} as DIVEScene,
-            {} as DIVEPerspectiveCamera,
-            0.016,
-            {} as XRFrame,
-        );
-        expect(WebGLRendererRenderMock).toHaveBeenCalledTimes(1);
-    });
-
-    it('should resume render when running', () => {
-        renderer.StartRenderer({} as DIVEScene, {} as DIVEPerspectiveCamera);
-        renderer.PauseRenderer();
-        renderer['internal_render'](
-            {} as DIVEScene,
-            {} as DIVEPerspectiveCamera,
-            0.016,
-            {} as XRFrame,
-        );
-        expect(WebGLRendererRenderMock).toHaveBeenCalledTimes(0);
-
-        renderer.ResumeRenderer();
-        renderer['internal_render'](
-            {} as DIVEScene,
-            {} as DIVEPerspectiveCamera,
-            0.016,
-            {} as XRFrame,
-        );
-        expect(WebGLRendererRenderMock).toHaveBeenCalledTimes(1);
-    });
-
-    it('should add pre render callback', () => {
-        expect(renderer.AddPreRenderCallback(() => {})).toBe(test_uuid);
-        expect(renderer['preRenderCallbacks'].size).toBe(1);
-    });
-
-    it('should remove pre render callback', () => {
-        const uuid = renderer.AddPreRenderCallback(() => {});
-        expect(renderer.RemovePreRenderCallback(uuid)).toBe(true);
-    });
-
-    it('should not crash while removing non-existing pre render callback', () => {
-        expect(() => {
-            renderer.RemovePreRenderCallback(test_uuid);
-        }).not.toThrow();
-    });
-
-    it('should add post render callback', () => {
-        expect(renderer.AddPostRenderCallback(() => {})).toBe(test_uuid);
-        expect(renderer['postRenderCallbacks'].size).toBe(1);
-    });
-
-    it('should remove post render callback', () => {
-        const uuid = renderer.AddPostRenderCallback(() => {});
-        expect(renderer.RemovePostRenderCallback(uuid)).toBe(true);
-    });
-
-    it('should not crash while removing non-existing post render callback', () => {
-        expect(() => {
-            renderer.RemovePostRenderCallback(test_uuid);
-        }).not.toThrow();
-    });
-
-    it('should execute pre and post render callbacks', () => {
-        renderer.StartRenderer({} as DIVEScene, {} as DIVEPerspectiveCamera);
-        const precallback = jest.fn();
-        const postcallback = jest.fn();
-        renderer.AddPreRenderCallback(precallback);
-        renderer.AddPostRenderCallback(postcallback);
-        renderer['internal_render'](
-            {} as DIVEScene,
-            {} as DIVEPerspectiveCamera,
-            0.016,
-            {} as XRFrame,
-        );
-        expect(precallback).toHaveBeenCalledTimes(1);
-        expect(postcallback).toHaveBeenCalledTimes(1);
+    it('should dispose WebGLRenderer', () => {
+        renderer.dispose();
+        const mockInstance = (WebGLRenderer as jest.Mock).mock.results[0].value;
+        expect(mockInstance.dispose).toHaveBeenCalled();
     });
 });

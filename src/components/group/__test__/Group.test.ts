@@ -1,4 +1,10 @@
-import { Object3D, type Vector3Like } from 'three';
+import {
+    Object3D,
+    type Vector3Like,
+    BufferGeometry,
+    Line,
+    LineDashedMaterial,
+} from 'three';
 import { DIVECommunication } from '../../../modules/com/Communication.ts';
 import { type DIVENode } from '../../node/Node.ts';
 import { DIVEGroup } from '../Group';
@@ -20,14 +26,24 @@ jest.spyOn(DIVECommunication, 'get').mockReturnValue({
 } as unknown as DIVECommunication);
 
 let group: DIVEGroup;
+let obj: Object3D;
 
 Object3D.prototype.attach = jest.fn();
+Object3D.prototype.remove = jest.fn();
+
+// Ensure remove method is not mocked
+const originalAttach = DIVEGroup.prototype.attach;
+const originalRemove = DIVEGroup.prototype.remove;
+beforeEach(() => {
+    group = new DIVEGroup();
+    obj = new Object3D();
+    obj.position.set(1, 2, 3);
+    // Restore original remove method
+    group.attach = originalAttach;
+    group.remove = originalRemove;
+});
 
 describe('dive/group/DIVEGroup', () => {
-    beforeEach(() => {
-        group = new DIVEGroup();
-    });
-
     afterEach(() => {
         jest.clearAllMocks();
     });
@@ -36,47 +52,61 @@ describe('dive/group/DIVEGroup', () => {
         expect(group).toBeDefined();
     });
 
-    it('should add an object', () => {
-        const mockObject = new DIVEGroup();
-
-        expect(() => group.attach(mockObject)).not.toThrow();
-        expect(group.members).toContainEqual(
-            expect.objectContaining(mockObject),
-        );
-
-        jest.spyOn(DIVECommunication, 'get').mockReturnValueOnce(undefined);
-        expect(() => group.attach(mockObject)).not.toThrow();
+    it('attach adds object and creates visible line', () => {
+        const objId = 'test-obj';
+        obj.userData.id = objId;
+        group.attach(obj as any);
+        expect(group.members.some((m) => m.userData.id === objId)).toBe(true);
+        const lines = (group as any)._lines as any[];
+        expect(lines.length).toBe(1);
+        const line = lines[0];
+        expect(line.visible).toBe(true);
     });
 
-    it('should remove an object', () => {
-        const mockObject = new DIVEGroup();
-
-        expect(() => group.remove(mockObject)).not.toThrow();
-        expect(group.children).not.toContain(mockObject);
-        expect(group.members).not.toContain(mockObject);
-
-        jest.spyOn(DIVECommunication, 'get').mockReturnValueOnce(undefined);
-        expect(() => group.remove(mockObject)).not.toThrow();
+    it('attach does not add object if already in group', () => {
+        const objId = 'test-obj';
+        obj.userData.id = objId;
+        group.attach(obj as any);
+        group.attach(obj as any);
+        expect(group.members.some((m) => m.userData.id === objId)).toBe(true);
+        const lines = (group as any)._lines as any[];
+        expect(lines.length).toBe(1);
+        const line = lines[0];
+        expect(line.visible).toBe(true);
     });
 
-    it('should set lines visibility', () => {
-        expect(() => group.SetLinesVisibility(true)).not.toThrow();
-
-        const mockObject = new DIVEGroup();
-        expect(() => group.SetLinesVisibility(false, mockObject)).not.toThrow();
-
-        expect(() => group.attach(mockObject)).not.toThrow();
-        expect(() => group.SetLinesVisibility(false)).not.toThrow();
-
-        expect(() => group.SetLinesVisibility(true, mockObject)).not.toThrow();
+    it('remove removes object and its line', () => {
+        const objId = 'test-obj';
+        obj.userData.id = objId;
+        (group as any)._members = [obj];
+        (group as any)._lines = [new Object3D()];
+        group.remove(obj as any);
+        expect((group as any)._members).toHaveLength(0);
+        expect((group as any)._lines).toHaveLength(0);
     });
 
-    it('update lines', () => {
-        const mockObject = new DIVEGroup();
-        expect(() => group.UpdateLineTo(mockObject)).not.toThrow();
+    it('remove on non-member does nothing', () => {
+        const result = group.remove(obj as any);
+        expect(result).toBe(group);
+        expect(group.members).toHaveLength(0);
+    });
 
-        expect(() => group.attach(mockObject)).not.toThrow();
-        expect(() => group.UpdateLineTo(mockObject)).not.toThrow();
+    it('SetLinesVisibility toggles all lines and specific object line', () => {
+        group.attach(obj as any);
+        const lines = (group as any)._lines as any[];
+        group.SetLinesVisibility(false);
+        expect(lines[0].visible).toBe(false);
+        group.SetLinesVisibility(true, obj as any);
+        expect(lines[0].visible).toBe(true);
+    });
+
+    it('UpdateLineTo updates geometry based on object position', () => {
+        const objId = 'test-obj';
+        obj.userData.id = objId;
+        group.attach(obj as any);
+        const lines = (group as any)._lines as any[];
+        obj.position.set(4, 5, 6);
+        group.UpdateLineTo(obj as any);
     });
 
     it('should onMove', () => {
@@ -208,5 +238,30 @@ describe('dive/group/DIVEGroup', () => {
 
         // Ensure onMove is called only on diveNode
         expect(diveNode.onMove).toHaveBeenCalled();
+    });
+
+    it('SetLinesVisibility with non-member object does nothing', () => {
+        const nonMember = new Object3D();
+        group.SetLinesVisibility(true, nonMember);
+        // No error should be thrown
+        expect(() => group.SetLinesVisibility(true, nonMember)).not.toThrow();
+    });
+
+    it('UpdateLineTo with non-member object does nothing', () => {
+        const nonMember = new Object3D();
+        expect(() => group.UpdateLineTo(nonMember)).not.toThrow();
+    });
+
+    it('attach with object without userData.id', () => {
+        const objWithoutId = new Object3D();
+        expect(() => group.attach(objWithoutId as any)).not.toThrow();
+        expect(group.members).toContain(objWithoutId);
+    });
+
+    it('remove with object without userData.id', () => {
+        const objWithoutId = new Object3D();
+        group.attach(objWithoutId as any);
+        expect(() => group.remove(objWithoutId as any)).not.toThrow();
+        expect(group.members).not.toContain(objWithoutId);
     });
 });

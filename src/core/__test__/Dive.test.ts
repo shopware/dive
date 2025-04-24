@@ -1,4 +1,33 @@
+/**
+ * @jest-environment jsdom
+ */
+
 import { DIVE, DIVESettings } from '../Dive.ts';
+import { DIVERenderer } from '../../engine/renderer/Renderer.ts';
+// Mock ResizeObserver
+class MockResizeObserver {
+    observe() {}
+    unobserve() {}
+    disconnect() {}
+}
+global.ResizeObserver = MockResizeObserver as any;
+
+jest.mock('../../engine/Engine.ts', () => {
+    return {
+        DIVEEngine: jest.fn(function () {
+            this.renderer = new DIVERenderer();
+            this.pipeline = {
+                addPreRenderStep: jest.fn((callback: () => void) => {
+                    callback();
+                }),
+                removePreRenderStep: jest.fn((callback: () => void) => {
+                    callback();
+                }),
+            };
+            return this;
+        }),
+    };
+});
 
 jest.mock('../../modules/com/Communication.ts', () => {
     return {
@@ -15,80 +44,6 @@ jest.mock('../../modules/com/Communication.ts', () => {
             );
             this.DestroyInstance = jest.fn();
 
-            return this;
-        }),
-    };
-});
-
-jest.mock('../../engine/renderer/Renderer.ts', () => {
-    return {
-        DIVERenderer: jest.fn(function () {
-            this.domElement = {
-                clientWidth: 800,
-                clientHeight: 600,
-                style: {
-                    position: 'absolute',
-                },
-            };
-            this.domElement.parentElement = this.domElement;
-            this.AddPreRenderCallback = (callback: () => void) => {
-                callback();
-            };
-            this.RemovePreRenderCallback = jest.fn();
-            this.AddPostRenderCallback = (callback: () => void) => {
-                callback();
-            };
-            this.getViewport = jest.fn();
-            this.setViewport = jest.fn();
-            this.autoClear = false;
-            this.render = jest.fn();
-            this.StartRenderer = jest.fn();
-            this.OnResize = jest.fn();
-            this.Dispose = jest.fn();
-            return this;
-        }),
-    };
-});
-
-jest.mock('../../engine/scene/Scene.ts', () => {
-    return {
-        DIVEScene: jest.fn(function () {
-            this.add = jest.fn();
-            this.isObject3D = true;
-            this.parent = null;
-            this.dispatchEvent = jest.fn();
-            this.position = {
-                set: jest.fn(),
-            };
-            this.SetIntensity = jest.fn();
-            this.SetEnabled = jest.fn();
-            this.SetColor = jest.fn();
-            this.userData = {
-                id: undefined,
-            };
-            this.removeFromParent = jest.fn();
-            return this;
-        }),
-    };
-});
-
-jest.mock('../../engine/camera/PerspectiveCamera.ts', () => {
-    return {
-        DIVEPerspectiveCamera: jest.fn(function () {
-            this.isObject3D = true;
-            this.parent = null;
-            this.dispatchEvent = jest.fn();
-            this.position = {
-                set: jest.fn(),
-            };
-            this.SetIntensity = jest.fn();
-            this.SetEnabled = jest.fn();
-            this.SetColor = jest.fn();
-            this.userData = {
-                id: undefined,
-            };
-            this.removeFromParent = jest.fn();
-            this.OnResize = jest.fn();
             return this;
         }),
     };
@@ -161,11 +116,21 @@ jest.mock('../../modules/axiscamera/AxisCamera.ts', () => {
     };
 });
 
+jest.mock('../../modules/animation/AnimationSystem.ts', () => {
+    return {
+        DIVEAnimationSystem: jest.fn(function () {
+            this.Update = jest.fn();
+            this.Dispose = jest.fn();
+            return this;
+        }),
+    };
+});
+
 console.log = jest.fn();
 
 describe('dive/DIVE', () => {
-    it('should QuickView', () => {
-        const dive = DIVE.QuickView('test_uri');
+    it('should QuickView', async () => {
+        const dive = await DIVE.QuickView('test_uri');
         expect(dive).toBeDefined();
     });
 
@@ -199,6 +164,8 @@ describe('dive/DIVE', () => {
         const settings = {
             autoResize: false,
             displayAxes: true,
+            autoStart: true,
+            renderPipeline: {},
             renderer: {
                 antialias: false,
                 alpha: false,
@@ -212,7 +179,7 @@ describe('dive/DIVE', () => {
                 near: 0,
                 far: 0,
             },
-            orbitControls: {
+            orbitController: {
                 enableDamping: false,
                 dampingFactor: 0,
             },
@@ -233,6 +200,57 @@ describe('dive/DIVE', () => {
 
     it('should resize', () => {
         const dive = new DIVE();
-        expect(() => dive.engine.onResize(800, 600)).not.toThrow();
+        expect(() => dive.engine.renderer.onResize(800, 600)).not.toThrow();
+    });
+
+    it('should handle QuickView with multiple instances', async () => {
+        const dive1 = await DIVE.QuickView('test_uri1');
+
+        expect((window as any).DIVE.instances).toHaveLength(1);
+        expect((window as any).DIVE.instances[0]).toBe(dive1);
+    });
+
+    it('should initialize with axis camera when displayAxes is true', () => {
+        const settings = {
+            displayAxes: true,
+        } as DIVESettings;
+
+        const dive = new DIVE(settings);
+        expect(dive['axisCamera']).toBeDefined();
+    });
+
+    it('should not initialize axis camera when displayAxes is false', () => {
+        const settings = {
+            displayAxes: false,
+        } as DIVESettings;
+
+        const dive = new DIVE(settings);
+        expect(dive['axisCamera']).toBeNull();
+    });
+
+    it('should properly dispose all components', () => {
+        const settings = {
+            displayAxes: true,
+        } as DIVESettings;
+
+        const dive = new DIVE(settings);
+
+        dive.Dispose();
+
+        expect(dive['orbitControls'].Dispose).toHaveBeenCalled();
+        expect(dive['axisCamera']?.Dispose).toHaveBeenCalled();
+        expect(dive['animationSystem'].Dispose).toHaveBeenCalled();
+        expect(dive['toolbox'].Dispose).toHaveBeenCalled();
+        expect(dive['_communication'].DestroyInstance).toHaveBeenCalled();
+    });
+
+    it('should handle dispose when animation system pipeline is not initialized', () => {
+        const settings = {
+            displayAxes: true,
+        } as DIVESettings;
+
+        const dive = new DIVE(settings);
+
+        expect(() => dive.Dispose()).not.toThrow();
     });
 });

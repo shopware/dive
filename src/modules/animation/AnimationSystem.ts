@@ -1,5 +1,4 @@
 import { Tween, update as updateTween } from '@tweenjs/tween.js';
-import { DIVERenderer } from '../../engine/renderer/Renderer';
 
 /**
  * Updates all animations.
@@ -9,19 +8,8 @@ import { DIVERenderer } from '../../engine/renderer/Renderer';
  */
 
 export class DIVEAnimationSystem {
-    private _renderer: DIVERenderer;
-    private _rendererCallbackId: string;
-
-    constructor(renderer: DIVERenderer) {
-        this._renderer = renderer;
-
-        this._rendererCallbackId = this._renderer.AddPreRenderCallback(() => {
-            this.Update();
-        });
-    }
-
     public Dispose(): void {
-        this._renderer.RemovePreRenderCallback(this._rendererCallbackId);
+        // nothing to do here
     }
 
     public Update(): void {

@@ -1,150 +1,178 @@
-import { Matrix4 } from 'three';
+import { Matrix4, Vector4, Color, AxesHelper, Material } from 'three';
 import { DIVEAxisCamera } from '../AxisCamera';
 import { DIVERenderer } from '../../../engine/renderer/Renderer';
 import { DIVEScene } from '../../../engine/scene/Scene';
 import { DIVEOrbitController } from '../../controller/orbit/OrbitController';
+import { DIVERenderPipeline } from '../../../engine/pipeline/RenderPipeline';
+import { COORDINATE_LAYER_MASK } from '../../../constants/VisibilityLayerMask';
 
 const mockRenderer = {
     render: jest.fn(),
-    OnResize: jest.fn(),
-    getViewport: jest.fn(),
-    setViewport: jest.fn(),
-    AddPostRenderCallback: jest.fn((callback) => {
-        callback();
-    }),
-    RemovePostRenderCallback: jest.fn(),
+    webglrenderer: {
+        getViewport: jest.fn().mockReturnValue(new Vector4(0, 0, 800, 600)),
+        setViewport: jest.fn(),
+        autoClear: true,
+    },
 } as unknown as DIVERenderer;
 
 const mockScene = {
     add: jest.fn(),
     remove: jest.fn(),
-    SetBackground: jest.fn(),
-    AddSceneObject: jest.fn(),
-    UpdateSceneObject: jest.fn(),
-    DeleteSceneObject: jest.fn(),
-    PlaceOnFloor: jest.fn(),
-    GetSceneObject: jest.fn(),
-    background: {
-        getHexString: jest.fn().mockReturnValue('ffffff'),
-    },
-    Root: {
-        Floor: {
-            isFloor: true,
-            visible: true,
-            material: {
-                color: {
-                    getHexString: jest.fn().mockReturnValue('ffffff'),
-                },
-            },
-            SetVisibility: jest.fn(),
-            SetColor: jest.fn(),
-        },
-        Grid: {
-            SetVisibility: jest.fn(),
-        },
-        HelperRoot: {
-            add: jest.fn(),
-            remove: jest.fn(),
-        },
-    },
+    background: null,
 } as unknown as DIVEScene;
 
+const mockPipeline = {
+    addPostRenderStep: jest.fn(),
+    removePostRenderStep: jest.fn(),
+} as unknown as DIVERenderPipeline;
+
 const mockController = {
-    enableDamping: true,
-    dampingFactor: 0.25,
-    enableZoom: true,
-    enablePan: true,
-    minPolarAngle: 0,
-    maxPolarAngle: Math.PI,
-    minDistance: 0,
-    maxDistance: Infinity,
-    rotateSpeed: 0.5,
-    panSpeed: 0.5,
-    zoomSpeed: 0.5,
-    keyPanSpeed: 0.5,
-    screenSpacePanning: true,
-    autoRotate: false,
-    autoRotateSpeed: 2.0,
-    enableKeys: true,
-    keys: {
-        LEFT: 37,
-        UP: 38,
-        RIGHT: 39,
-        BOTTOM: 40,
-    },
-    mouseButtons: {
-        LEFT: 0,
-        MIDDLE: 1,
-        RIGHT: 2,
-    },
-    target: {
-        x: 4,
-        y: 5,
-        z: 6,
-        set: jest.fn(),
-        clone: jest.fn().mockReturnValue({ x: 4, y: 5, z: 6 }),
-        copy: jest.fn(),
-    },
-    update: jest.fn(),
-    dispose: jest.fn(),
-    ZoomIn: jest.fn(),
-    ZoomOut: jest.fn(),
     object: {
-        position: {
-            x: 1,
-            y: 2,
-            z: 3,
-            clone: jest.fn().mockReturnValue({ x: 1, y: 2, z: 3 }),
-            copy: jest.fn(),
-        },
-        quaternion: {
-            x: 1,
-            y: 2,
-            z: 3,
-            w: 4,
-            clone: jest.fn().mockReturnValue({ x: 1, y: 2, z: 3, w: 4 }),
-            copy: jest.fn(),
-        },
-        SetCameraLayer: jest.fn(),
-        OnResize: jest.fn(),
-        layers: {
-            mask: 1,
-        },
+        matrix: new Matrix4(),
     },
-    MoveTo: jest.fn(),
-    RevertLast: jest.fn(),
 } as unknown as DIVEOrbitController;
 
-let textAxisCamera: DIVEAxisCamera;
+describe('DIVEAxisCamera', () => {
+    let axisCamera: DIVEAxisCamera;
 
-describe('modules/axiscamera/DIVEAxisCamera', () => {
     beforeEach(() => {
-        textAxisCamera = new DIVEAxisCamera(
+        jest.clearAllMocks();
+        mockRenderer.webglrenderer.autoClear = true;
+        axisCamera = new DIVEAxisCamera(
             mockRenderer,
+            mockPipeline,
             mockScene,
             mockController,
         );
     });
 
-    it('should instantiate', () => {
-        expect(textAxisCamera).toBeDefined();
+    describe('constructor', () => {
+        it('should initialize with correct properties', () => {
+            expect(axisCamera).toBeInstanceOf(DIVEAxisCamera);
+            expect(axisCamera.layers.mask).toBe(COORDINATE_LAYER_MASK);
+            expect(mockScene.add).toHaveBeenCalledWith(axisCamera);
+            expect(mockPipeline.addPostRenderStep).toHaveBeenCalled();
+        });
+
+        it('should create and configure axes helper', () => {
+            expect(axisCamera['axesHelper'].layers.mask).toBe(
+                COORDINATE_LAYER_MASK,
+            );
+            expect(axisCamera['axesHelper'].position.set).toHaveBeenCalledWith(
+                0,
+                0,
+                -1,
+            );
+            expect(
+                (axisCamera['axesHelper'].material as Material).depthTest,
+            ).toBe(false);
+        });
+
+        it('should create and configure axis labels', () => {
+            expect(axisCamera['axesHelper'].children.length).toBe(3);
+            expect(axisCamera['axesHelper'].children[0].position.x).toEqual(
+                0.7,
+            );
+            expect(axisCamera['axesHelper'].children[0].position.y).toEqual(0);
+            expect(axisCamera['axesHelper'].children[0].position.z).toEqual(0);
+            expect(axisCamera['axesHelper'].children[1].position.x).toEqual(0);
+            expect(axisCamera['axesHelper'].children[1].position.y).toEqual(
+                0.7,
+            );
+            expect(axisCamera['axesHelper'].children[1].position.z).toEqual(0);
+            expect(axisCamera['axesHelper'].children[2].position.x).toEqual(0);
+            expect(axisCamera['axesHelper'].children[2].position.y).toEqual(0);
+            expect(axisCamera['axesHelper'].children[2].position.z).toEqual(
+                0.7,
+            );
+        });
     });
 
-    it('should set rotation from Matrix4', () => {
-        expect.assertions(0);
-        const matrix = {
-            // prettier-multiline-arrays-next-line-pattern: 4
-            elements: [
-                1, 0, 0, 0,
-                0, 1, 0, 0,
-                0, 0, 1, 0,
-                0, 0, 0, 1,
-            ],
-        } as Matrix4;
-        textAxisCamera.SetFromCameraMatrix(matrix);
+    describe('Dispose', () => {
+        it('should clean up resources', () => {
+            axisCamera.Dispose();
+            expect(mockPipeline.removePostRenderStep).toHaveBeenCalled();
+            expect(mockScene.remove).toHaveBeenCalledWith(axisCamera);
+        });
+
+        it('should not throw when called multiple times', () => {
+            expect(() => {
+                axisCamera.Dispose();
+                axisCamera.Dispose();
+            }).not.toThrow();
+        });
     });
 
-    it('should dispose', () => {
-        textAxisCamera.Dispose();
+    describe('SetFromCameraMatrix', () => {
+        it('should update axes helper rotation based on camera matrix', () => {
+            const testMatrix = new Matrix4();
+            testMatrix.elements = [
+                1,
+                0,
+                0,
+                0,
+                0,
+                0,
+                -1,
+                0,
+                0,
+                1,
+                0,
+                0,
+                0,
+                0,
+                0,
+                1,
+            ];
+
+            axisCamera.SetFromCameraMatrix(testMatrix);
+
+            expect(
+                axisCamera['axesHelper'].rotation.setFromRotationMatrix,
+            ).toHaveBeenCalled();
+        });
+
+        it('should handle identity matrix', () => {
+            const identityMatrix = new Matrix4();
+            expect(() => {
+                axisCamera.SetFromCameraMatrix(identityMatrix);
+            }).not.toThrow();
+        });
+    });
+
+    describe('_postRenderCallback', () => {
+        it('should handle viewport and rendering correctly', () => {
+            const originalBackground = new Color(0x000000);
+            mockScene.background = originalBackground;
+            const viewport = new Vector4();
+
+            axisCamera['_postRenderCallback']();
+
+            expect(mockRenderer.webglrenderer.getViewport).toHaveBeenCalledWith(
+                viewport,
+            );
+            expect(mockRenderer.webglrenderer.setViewport).toHaveBeenCalledWith(
+                0,
+                0,
+                150,
+                150,
+            );
+            expect(mockRenderer.render).toHaveBeenCalledWith(
+                mockScene,
+                axisCamera,
+            );
+            expect(mockRenderer.webglrenderer.setViewport).toHaveBeenCalledWith(
+                viewport,
+            );
+            expect(mockScene.background).toBe(originalBackground);
+        });
+
+        it('should handle null background', () => {
+            mockScene.background = null;
+
+            axisCamera['_postRenderCallback']();
+
+            expect(mockScene.background).toBeNull();
+        });
     });
 });

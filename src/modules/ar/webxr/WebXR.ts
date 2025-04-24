@@ -153,10 +153,10 @@ export class DIVEWebXR {
         const canvasWrapper = this._renderer.domElement.parentElement;
         if (canvasWrapper) {
             const { clientWidth, clientHeight } = canvasWrapper;
-            this._renderer.OnResize(clientWidth, clientHeight);
+            this._renderer.onResize(clientWidth, clientHeight);
 
             // resize camera
-            this._controller.object.OnResize(clientWidth, clientHeight);
+            this._controller.object.onResize(clientWidth, clientHeight);
         }
 
         // reset camera

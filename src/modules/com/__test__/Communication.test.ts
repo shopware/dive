@@ -38,6 +38,7 @@ import { type ARSystemOptions } from '../../ar/ARSystem';
 import { MediaCreator } from '../../mediacreator/MediaCreator';
 import { ARSystem } from '../../ar/ARSystem';
 import { AssetExporter } from '../../asset/exporter/AssetExporter';
+import { DIVEEngine } from '../../../engine/Engine';
 
 jest.mock('../..', () => {
     return {
@@ -126,6 +127,12 @@ const mockScene = {
     ComputeSceneBB: jest.fn(),
 } as unknown as DIVEScene;
 
+const mockEngine = {
+    scene: mockScene,
+    renderer: mockRenderer,
+    start: jest.fn(),
+} as unknown as DIVEEngine;
+
 const mockController = {
     enableDamping: true,
     dampingFactor: 0.25,
@@ -182,8 +189,8 @@ const mockController = {
             clone: jest.fn().mockReturnValue({ x: 1, y: 2, z: 3, w: 4 }),
             copy: jest.fn(),
         },
-        SetCameraLayer: jest.fn(),
-        OnResize: jest.fn(),
+        setCameraLayer: jest.fn(),
+        onResize: jest.fn(),
         layers: {
             mask: 1,
         },
@@ -212,8 +219,7 @@ describe('dive/communication/DIVECommunication', () => {
 
     beforeEach(() => {
         testCom = new DIVECommunication(
-            mockRenderer,
-            mockScene,
+            mockEngine,
             mockController,
             mockToolBox,
         );
@@ -288,7 +294,7 @@ describe('dive/communication/DIVECommunication', () => {
 
     it('should perform action START_RENDER', () => {
         const success = testCom.PerformAction('START_RENDER');
-        expect(mockRenderer.StartRenderer).toHaveBeenCalledTimes(1);
+        expect(mockEngine.start).toHaveBeenCalledTimes(1);
         expect(success).toBe(true);
     });
 
@@ -351,6 +357,7 @@ describe('dive/communication/DIVECommunication', () => {
         const payload = {
             entityType: 'group',
             id: 'group00',
+            parentId: 'some-parent-id',
         } as COMGroup;
 
         testCom.PerformAction('ADD_OBJECT', payload);
@@ -384,9 +391,29 @@ describe('dive/communication/DIVECommunication', () => {
             parentId: 'group01',
         } as COMLight);
 
+        // Verify initial state
+        const objectsBefore = testCom.PerformAction(
+            'GET_ALL_OBJECTS',
+            new Map(),
+        );
+        expect(objectsBefore.size).toBe(4);
+        expect(objectsBefore.get('ambient00')?.parentId).toBe('group00');
+        expect(objectsBefore.get('ambient01')?.parentId).toBeNull();
+        expect(objectsBefore.get('ambient02')?.parentId).toBe('group01');
+
         const successDelete = testCom.PerformAction('DELETE_OBJECT', payload);
         expect(mockScene.DeleteSceneObject).toHaveBeenCalledTimes(1);
         expect(successDelete).toBe(true);
+
+        // Verify final state
+        const objectsAfter = testCom.PerformAction(
+            'GET_ALL_OBJECTS',
+            new Map(),
+        );
+        expect(objectsAfter.size).toBe(3); // group00 should be deleted
+        expect(objectsAfter.get('ambient00')?.parentId).toBeNull(); // child should be detached
+        expect(objectsAfter.get('ambient01')?.parentId).toBeNull(); // unchanged
+        expect(objectsAfter.get('ambient02')?.parentId).toBe('group01'); // unchanged
     });
 
     it('should perform action DELETE_OBJECT without existing object', () => {

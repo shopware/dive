@@ -95,7 +95,10 @@ export const Object3D = jest.fn(function () {
         this.children.push(obj);
         return this;
     });
-    // this.attach = jest.fn();
+    this.attach = jest.fn((obj: THREEObject3D) => {
+        this.children.push(obj);
+        return this;
+    });
     this.remove = jest.fn((obj: THREEObject3D) => {
         const index = this.children.indexOf(obj);
         if (index !== -1) {
@@ -130,6 +133,13 @@ export const Object3D = jest.fn(function () {
     this.clone = jest.fn(() => {
         return this;
     });
+    this.isObject3D = true;
+    this.name = '';
+    this.parent = null;
+    this.dispatchEvent = jest.fn();
+    this.updateMatrixWorld = jest.fn();
+    this.applyMatrix4 = jest.fn();
+    this.updateWorldMatrix = jest.fn();
     return this;
 });
 
@@ -139,7 +149,18 @@ export const Group = jest.fn(function () {
 });
 
 export const Scene = jest.fn(function () {
-    this.add = jest.fn();
+    this.add = jest.fn((obj: THREEObject3D) => {
+        this.children.push(obj);
+        return this;
+    });
+    this.remove = jest.fn((obj: THREEObject3D) => {
+        const index = this.children.indexOf(obj);
+        if (index !== -1) {
+            this.children.splice(index, 1);
+        }
+        return this;
+    });
+    this.children = [];
     this.background = new Color();
     return this;
 });
@@ -198,11 +219,7 @@ export const MeshStandardMaterial = jest.fn(function () {
     return this;
 });
 
-export const Color = jest.fn(function () {
-    this.set = jest.fn();
-    this.getHex = jest.fn();
-    return this;
-});
+export const Color = jest.requireActual('three').Color;
 
 export const WebGLRendererRenderMock = jest.fn();
 export const WebGLRendererSetSizeMock = jest.fn();
@@ -260,7 +277,12 @@ export const Matrix4 = jest.fn(function () {
     return this;
 });
 
-export const PerspectiveCamera = jest.fn(function () {
+export const PerspectiveCamera = jest.fn(function (
+    fov?: number,
+    aspect?: number,
+    near?: number,
+    far?: number,
+) {
     this.isObject3D = true;
     this.parent = null;
     this.dispatchEvent = jest.fn();
@@ -272,6 +294,10 @@ export const PerspectiveCamera = jest.fn(function () {
     };
     this.add = jest.fn();
     this.updateProjectionMatrix = jest.fn();
+    this.aspect = aspect;
+    this.fov = fov;
+    this.near = near;
+    this.far = far;
     return this;
 });
 
@@ -286,6 +312,7 @@ export const OrthographicCamera = jest.fn(function () {
         set: jest.fn(),
     };
     this.add = jest.fn();
+    this.removeFromParent = jest.fn();
     return this;
 });
 
@@ -299,7 +326,12 @@ export const AxesHelper = jest.fn(function () {
     this.position = {
         set: jest.fn(),
     };
-    this.add = jest.fn();
+    this.add = jest.fn((obj: THREEObject3D) => {
+        this.children.push(obj);
+        return this;
+    });
+    this.children = [];
+    this.removeFromParent = jest.fn();
     this.material = {
         depthTest: false,
     };

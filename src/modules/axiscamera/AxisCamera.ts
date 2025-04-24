@@ -19,6 +19,7 @@ import {
 import { type DIVERenderer } from '../../engine/renderer/Renderer';
 import { type DIVEScene } from '../../engine/scene/Scene';
 import { type DIVEOrbitController } from '../controller/orbit/OrbitController';
+import { DIVERenderPipeline } from '../../engine/pipeline/RenderPipeline';
 
 /**
  * Shows the scene axes in the bottom left corner of the screen.
@@ -30,14 +31,17 @@ export class DIVEAxisCamera extends OrthographicCamera {
     private axesHelper: AxesHelper;
 
     private _renderer: DIVERenderer;
+    private _pipeline: DIVERenderPipeline;
     private _scene: DIVEScene;
+    private _controller: DIVEOrbitController;
 
-    private _renderCallbackId: string;
+    private _restoreViewport: Vector4 = new Vector4();
 
     constructor(
         renderer: DIVERenderer,
+        pipeline: DIVERenderPipeline,
         scene: DIVEScene,
-        controls: DIVEOrbitController,
+        controller: DIVEOrbitController,
     ) {
         super(-1, 1, 1, -1, 0.1, 100);
 
@@ -71,32 +75,16 @@ export class DIVEAxisCamera extends OrthographicCamera {
 
         // attach everything to current scene and render cycle
         this._renderer = renderer;
+        this._pipeline = pipeline;
         this._scene = scene;
+        this._controller = controller;
         this._scene.add(this);
 
-        const restoreViewport = new Vector4();
-
-        this._renderCallbackId = renderer.AddPostRenderCallback(() => {
-            const restoreBackground = scene.background;
-            scene.background = null;
-
-            renderer.getViewport(restoreViewport);
-            renderer.setViewport(0, 0, 150, 150);
-            renderer.autoClear = false;
-
-            this.SetFromCameraMatrix(controls.object.matrix);
-
-            renderer.render(scene, this);
-
-            renderer.setViewport(restoreViewport);
-            renderer.autoClear = true;
-
-            scene.background = restoreBackground;
-        });
+        this._pipeline.addPostRenderStep(this._postRenderCallback);
     }
 
     public Dispose(): void {
-        this._renderer.RemovePostRenderCallback(this._renderCallbackId);
+        this._pipeline.removePostRenderStep(this._postRenderCallback);
         this._scene.remove(this);
     }
 
@@ -105,4 +93,22 @@ export class DIVEAxisCamera extends OrthographicCamera {
             new Matrix4().extractRotation(matrix).invert(),
         );
     }
+
+    private _postRenderCallback = (): void => {
+        const restoreBackground = this._scene.background;
+        this._scene.background = null;
+
+        this._renderer.webglrenderer.getViewport(this._restoreViewport);
+        this._renderer.webglrenderer.setViewport(0, 0, 150, 150);
+        this._renderer.webglrenderer.autoClear = false;
+
+        this.SetFromCameraMatrix(this._controller.object.matrix);
+
+        this._renderer.render(this._scene, this);
+
+        this._renderer.webglrenderer.setViewport(this._restoreViewport);
+        this._renderer.webglrenderer.autoClear = true;
+
+        this._scene.background = restoreBackground;
+    };
 }

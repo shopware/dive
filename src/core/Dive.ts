@@ -1,7 +1,7 @@
 import {
     DIVEOrbitController,
-    DIVEOrbitControlsDefaultSettings,
-    DIVEOrbitControlsSettings,
+    DIVEOrbitControllerDefaultSettings,
+    DIVEOrbitControllerSettings,
 } from '../modules/controller/orbit/OrbitController.ts';
 import { DIVEToolbox } from '../modules/toolbox/Toolbox.ts';
 import { DIVECommunication } from '../modules/com/Communication.ts';
@@ -16,12 +16,13 @@ import {
 } from '../engine/Engine.ts';
 
 export type DIVESettings = EngineSettings & {
-    orbitControls: Partial<DIVEOrbitControlsSettings>;
+    /** Settings for the orbit controls */
+    orbitController: Partial<DIVEOrbitControllerSettings>;
 };
 
-export const DIVEDefaultSettings: DIVESettings = {
+export const DIVEDefaultSettings: Required<DIVESettings> = {
     ...EngineDefaultSettings,
-    orbitControls: DIVEOrbitControlsDefaultSettings,
+    orbitController: DIVEOrbitControllerDefaultSettings,
 };
 
 /**
@@ -101,12 +102,6 @@ export class DIVE {
                 });
 
                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                if (!(window as any).DIVE.instances) {
-                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                    (window as any).DIVE.instances = [];
-                }
-
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 (window as any).DIVE.instances.push(dive);
 
                 resolve(dive);
@@ -162,18 +157,21 @@ export class DIVE {
         this._engine = new DIVEEngine(settings);
 
         // initialize animation system
-        this.animationSystem = new DIVEAnimationSystem(this._engine.renderer);
+        this.animationSystem = new DIVEAnimationSystem();
+        this._engine.pipeline.addPreRenderStep(() => {
+            this.animationSystem.Update();
+        });
 
         this.orbitControls = new DIVEOrbitController(
-            this._engine.perspectiveCamera,
+            this._engine.camera,
             this._engine.renderer,
+            this._engine.pipeline,
             this.animationSystem,
-            this._settings.orbitControls,
+            this._settings.orbitController,
         );
         this.toolbox = new DIVEToolbox(this._engine.scene, this.orbitControls);
         this._communication = new DIVECommunication(
-            this._engine.renderer,
-            this._engine.scene,
+            this._engine,
             this.orbitControls,
             this.toolbox,
         );
@@ -182,6 +180,7 @@ export class DIVE {
         if (this._settings.displayAxes) {
             this.axisCamera = new DIVEAxisCamera(
                 this._engine.renderer,
+                this._engine.pipeline,
                 this._engine.scene,
                 this.orbitControls,
             );
@@ -191,6 +190,7 @@ export class DIVE {
 
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         (window as any).DIVE = {
+            instances: [],
             PrintScene: () => {
                 return this._engine.scene;
             },
@@ -232,7 +232,12 @@ export class DIVE {
     public Dispose(): void {
         this.orbitControls.Dispose();
         this.axisCamera?.Dispose();
+
+        this._engine.pipeline.removePreRenderStep(() => {
+            this.animationSystem.Update();
+        });
         this.animationSystem.Dispose();
+
         this.toolbox.Dispose();
         this._communication.DestroyInstance();
     }
