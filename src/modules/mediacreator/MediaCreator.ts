@@ -16,9 +16,8 @@ declare global {
  * Provides tools for creating media content from the 3D scene:
  *
  * ```ts
- * import { ModuleRegistry } from '@shopware-ag/dive/modules';
+ * import { MediaCreator } from '@shopware-ag/dive/modules/MediaCreator';
  *
- * const MediaCreator = await ModuleRegistry.get('MediaCreator');
  * const mediaCreator = new MediaCreator(renderer, scene, controller);
  *
  * // Generate a screenshot

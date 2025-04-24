@@ -13,20 +13,17 @@ declare global {
  * Provides information about the system's capabilities and performance:
  *
  * ```ts
- * import { ModuleRegistry } from '@shopware-ag/dive/modules';
- *
- * const SystemInfo = await ModuleRegistry.get('SystemInfo');
- * const systemInfo = new SystemInfo();
+ * import { SystemInfo } from '@shopware-ag/dive/modules/SystemInfo';
  *
  * // Get system information
- * const system = systemInfo.getSystem(); // Returns ESystem enum (IOS, ANDROID, etc.)
+ * const system = SystemInfo.getSystem(); // Returns ESystem enum (IOS, ANDROID, etc.)
  *
  * // Check AR capabilities
- * const supportsAR = systemInfo.getSupportsAR();
+ * const supportsAR = SystemInfo.getSupportsAR();
  *
  * // Check device type
- * const isMobile = systemInfo.isMobile;
- * const isDesktop = systemInfo.isDesktop;
+ * const isMobile = SystemInfo.isMobile;
+ * const isDesktop = SystemInfo.isDesktop;
  * ```
  *
  * Features:

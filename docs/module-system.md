@@ -1,41 +1,45 @@
 # Module System
 
-DIVE uses a modern module system with support for both ESM and CommonJS formats. The package is
-built using Vite and supports the following module formats:
+DIVE uses a modern module system that supports both internal and external module access patterns. The system is built using TypeScript and provides type-safe module registration and access.
 
-- ESM (`.mjs` files)
-- CommonJS (`.cjs` files)
-- ts type definitions (`.d.ts` files)
+## Module Types
 
-The module system provides a type-safe way to register and access modules through a centralized
-export point.
+The module system supports two main types of modules:
+
+1. **Internal Modules** - Used within the DIVE core system
+2. **External Modules** - Exposed to consumers of the DIVE library
 
 ## Module Registration
 
-The module system is configured through a centralized export point in `src/modules/index.ts`. To add
-a new module to the system:
-
-1. Define the module class
-2. Add the module path to the `MODULE_PATHS` object in `src/modules/index.ts`
-3. Declare the module in the global `ModuleClasses` interface
+All modules must be registered in the global `ModuleClasses` interface. This provides type safety and enables the module system to track available modules.
 
 Example:
 
 ```ts
-// 1. Define the module class
+// Write documentation starting with @module "module name"
+/**
+ * @module MyModule
+ *
+ * Does magical things.
+ *
+ * ```ts
+ * import { MyModule } from '@shopware-ag/dive/modules/MyModule';
+ *
+ * const magic = new MyModule().doMagic();
+ * ```
+ *
+ * Features:
+ * - does magic
+ */
+
+// Define the module class
 export class MyModule {
-    constructor(dependency1: Type1, dependency2: Type2) {
+    constructor(param1: Type1, param2: Type2) {
         // ...
     }
 }
 
-// 2. Add to MODULE_PATHS in src/modules/index.ts
-export const MODULE_PATHS = {
-    // ... existing modules ...
-    MyModule: './path/to/MyModule.ts',
-};
-
-// 3. Declare in ModuleClasses
+// Extend global interface by module class
 declare global {
     interface ModuleClasses {
         MyModule: typeof MyModule;
@@ -43,85 +47,65 @@ declare global {
 }
 ```
 
-The module will be automatically registered when the application starts.
+## Internal Module Access
 
-## Module Access
-
-The `ModuleRegistry` is available through the modules subpath export. The `.get` method returns the module class, which you can then instantiate:
+Internal modules are accessed using the `ModuleImporter` class, which handles dynamic importing and caching of module classes.
 
 ```ts
-import { ModuleRegistry } from '@shopware-ag/dive/modules';
+import { ModuleImporter } from '@shopware-ag/dive/modules';
+
+// Create an importer for a specific module
+const importer = new ModuleImporter<'MyModule'>('src/modules/my/module.ts');
 
 // Get the module class
-const ModuleClass = await ModuleRegistry.get('MyModule');
+const ModuleClass = await importer.import();
 
-// Create an instance of the module
-const myModule = new ModuleClass();
+// Or create a singleton instance directly
+const instance = await importer.instantiate(param1, param2);
 ```
 
-You can also access the `ModuleRegistry` through a `DIVE` instance:
+The `ModuleImporter` provides:
+- Dynamic module loading
+- Module class caching
+- Type-safe module instantiation
+- Error handling for failed imports
+
+## External Module Access
+
+External modules are accessed through direct imports from the modules subpath:
 
 ```ts
-import { DIVE } from '@shopware-ag/dive';
+import { MyModule } from '@shopware-ag/dive/modules/MyModule';
 
-const dive = new DIVE();
-const ModuleClass = await dive.modules.get('MyModule');
-const myModule = new ModuleClass();
+// Create an instance
+const instance = new MyModule(param1, param2);
 ```
 
 ## Type Safety
 
-The module system provides full type safety:
-
-- Module class types are inferred from the `ModuleClasses` interface
-- The `get` method returns a properly typed Promise of the module class
-- Module paths are type-checked against the `ModuleClasses` interface
-
-## Module Exports
-
-The module system is exported through the modules subpath in `package.json`:
-
-```json
-{
-    "exports": {
-        "./modules": {
-            "types": "./build/src/modules/index.d.ts",
-            "import": "./build/src/modules/index.mjs",
-            "require": "./build/src/modules/index.cjs"
-        }
-    }
-}
-```
-
-This allows you to import the `ModuleRegistry` and other module-related exports:
-
-```ts
-import { ModuleRegistry } from '@shopware-ag/dive/modules';
-```
+The module system provides full type safety through:
+- TypeScript interfaces for module registration
+- Type-safe module instantiation
+- Type checking for module paths and imports
+- Type inference for module instances
 
 ## Build Process
 
-The build process is handled by Vite and can be triggered using:
+The module system is built using Vite and supports:
+- ESM (`.mjs` files)
+- CommonJS (`.cjs` files)
+- TypeScript type definitions (`.d.ts` files)
 
+Build commands:
 ```bash
 yarn build        # One-time build
 yarn dev          # Watch mode for development
 ```
 
-The build process:
-
-1. Compiles ts code
-2. Generates type definitions
-3. Creates both ESM and CommonJS versions of the code
-4. Places all output in the `build/` directory
-
 ## Development Workflow
 
-For local development, you can use the watch mode to automatically rebuild when files change:
-
-```bash
-yarn dev
-```
-
-This is particularly useful when working with the module system as it ensures your changes are
-immediately reflected in the build output.
+For local development:
+1. Use `yarn dev` for automatic rebuilding
+2. Register new modules in the `ModuleClasses` interface
+3. Implement module classes with proper TypeScript types
+4. Export modules through the modules subpath in `package.json`

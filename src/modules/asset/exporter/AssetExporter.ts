@@ -1,17 +1,3 @@
-/**
- * @module AssetExporter
- *
- * Exports 3D assets to various formats:
- *
- * ```ts
- * import { ModuleRegistry } from '@shopware-ag/dive/modules';
- *
- * const AssetExporter = await ModuleRegistry.get('AssetExporter');
- * const assetExporter = new AssetExporter();
- * const buffer = await assetExporter.export(model, 'glb');
- * ```
- */
-
 import { Object3D } from 'three';
 import {
     GLTFExporter,
@@ -45,6 +31,19 @@ export type FileTypeToExporterOptions = {
     gltf: GLTFExporterOptions;
     usdz: USDZExporterOptions;
 };
+
+/**
+ * @module AssetExporter
+ *
+ * Exports 3D assets to various formats:
+ *
+ * ```ts
+ * import { AssetExporter } from '@shopware-ag/dive/modules/AssetExporter';
+ *
+ * const assetExporter = new AssetExporter();
+ * const buffer = await assetExporter.export(model, 'glb');
+ * ```
+ */
 
 export class AssetExporter {
     private _gltfExporter: GLTFExporter;

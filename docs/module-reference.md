@@ -8,9 +8,8 @@ DIVE provides several specialized modules for different aspects of 3D content ha
 The AR module enables Augmented Reality features across different platforms:
 
 ```ts
-import { ModuleRegistry } from '@shopware-ag/dive/modules';
+import { ARSystem } from '@shopware-ag/dive/modules/ARSystem';
 
-const ARSystem = await ModuleRegistry.get('ARSystem');
 const arSystem = new ARSystem();
 
 // Launch AR with options
@@ -30,9 +29,8 @@ Features:
 Converts between different 3D file formats:
 
 ```ts
-import { ModuleRegistry } from '@shopware-ag/dive/modules';
+import { AssetConverter } from '@shopware-ag/dive/modules/AssetConverter';
 
-const AssetConverter = await ModuleRegistry.get('AssetConverter');
 const assetConverter = new AssetConverter();
 const usdzBuffer = await assetConverter.convert('input.glb').to('usdz');
 ```
@@ -42,9 +40,8 @@ const usdzBuffer = await assetConverter.convert('input.glb').to('usdz');
 Exports 3D assets to various formats:
 
 ```ts
-import { ModuleRegistry } from '@shopware-ag/dive/modules';
+import { AssetExporter } from '@shopware-ag/dive/modules/AssetExporter';
 
-const AssetExporter = await ModuleRegistry.get('AssetExporter');
 const assetExporter = new AssetExporter();
 const buffer = await assetExporter.export(model, 'glb');
 ```
@@ -54,10 +51,8 @@ const buffer = await assetExporter.export(model, 'glb');
 Handles loading of 3D assets in various formats:
 
 ```ts
-// Direct import
-import { ModuleRegistry } from '@shopware-ag/dive/modules';
+import { AssetLoader } from '@shopware-ag/dive/modules/AssetLoader';
 
-const AssetLoader = await ModuleRegistry.get('AssetLoader');
 const assetLoader = new AssetLoader();
 const model = await assetLoader.load('path/to/model.glb');
 ```
@@ -71,9 +66,8 @@ Supported formats:
 Provides tools for creating media content from the 3D scene:
 
 ```ts
-import { ModuleRegistry } from '@shopware-ag/dive/modules';
+import { MediaCreator } from '@shopware-ag/dive/modules/MediaCreator';
 
-const MediaCreator = await ModuleRegistry.get('MediaCreator');
 const mediaCreator = new MediaCreator(renderer, scene, controller);
 
 // Generate a screenshot
@@ -95,20 +89,17 @@ Features:
 Provides information about the system's capabilities and performance:
 
 ```ts
-import { ModuleRegistry } from '@shopware-ag/dive/modules';
-
-const SystemInfo = await ModuleRegistry.get('SystemInfo');
-const systemInfo = new SystemInfo();
+import { SystemInfo } from '@shopware-ag/dive/modules/SystemInfo';
 
 // Get system information
-const system = systemInfo.getSystem(); // Returns ESystem enum (IOS, ANDROID, etc.)
+const system = SystemInfo.getSystem(); // Returns ESystem enum (IOS, ANDROID, etc.)
 
 // Check AR capabilities
-const supportsAR = systemInfo.getSupportsAR();
+const supportsAR = SystemInfo.getSupportsAR();
 
 // Check device type
-const isMobile = systemInfo.isMobile;
-const isDesktop = systemInfo.isDesktop;
+const isMobile = SystemInfo.isMobile;
+const isDesktop = SystemInfo.isDesktop;
 ```
 
 Features:

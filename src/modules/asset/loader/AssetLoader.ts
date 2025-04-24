@@ -17,10 +17,8 @@ declare global {
  * Handles loading of 3D assets in various formats:
  *
  * ```ts
- * // Direct import
- * import { ModuleRegistry } from '@shopware-ag/dive/modules';
+ * import { AssetLoader } from '@shopware-ag/dive/modules/AssetLoader';
  *
- * const AssetLoader = await ModuleRegistry.get('AssetLoader');
  * const assetLoader = new AssetLoader();
  * const model = await assetLoader.load('path/to/model.glb');
  * ```
