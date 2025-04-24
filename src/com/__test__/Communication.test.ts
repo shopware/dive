@@ -38,6 +38,7 @@ import { type ARSystemOptions } from '../../modules/ar/ARSystem';
 import { ModuleImporter } from '../../modules';
 import { MediaCreator } from '../../modules/mediacreator/MediaCreator';
 import { ARSystem } from '../../modules/ar/ARSystem';
+import { AssetExporter } from '../../modules/asset/exporter/AssetExporter';
 
 jest.mock('../../modules', () => {
     return {
@@ -980,22 +981,16 @@ describe('dive/communication/DIVECommunication', () => {
         expect(attachToValidParent).toBe(true);
     });
 
-    it.skip('should perform action EXPORT_SCENE', async () => {
-        const mockIO = {
-            Export: jest.fn().mockResolvedValue('test'),
-        };
-        jest.spyOn(ModuleImporter.prototype, 'import').mockResolvedValue(
-            class {
-                constructor() {
-                    return mockIO;
-                }
-            },
-        );
+    it('should perform action EXPORT_SCENE', async () => {
+        const mockExporter = {
+            export: jest.fn().mockResolvedValue(new ArrayBuffer(0)),
+        } as unknown as AssetExporter;
+        testCom['_assetExporter'] = Promise.resolve(mockExporter);
 
         const result = await testCom.PerformAction('EXPORT_SCENE', {
             type: 'glb',
         });
-        expect(result).toBe('test');
+        expect(result).toBeInstanceOf(ArrayBuffer);
     });
 
     it('should perform action LAUNCH_AR', async () => {
