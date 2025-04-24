@@ -1,8 +1,8 @@
 import { DIVEPointLight } from '../PointLight';
-import { DIVECommunication } from '../../../com/Communication';
+import { DIVECommunication } from '../../../modules/com/Communication';
 import { Color, PointLight } from 'three';
 
-jest.mock('../../../com/Communication.ts', () => {
+jest.mock('../../../modules/com/Communication.ts', () => {
     return {
         DIVECommunication: {
             get: jest.fn(() => {

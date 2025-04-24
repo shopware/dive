@@ -2,7 +2,7 @@ import { XREstimatedLight } from 'three/examples/jsm/webxr/XREstimatedLight';
 import { type DIVERenderer } from '../../../renderer/Renderer';
 import { Object3D } from 'three';
 import { type DIVEScene } from '../../Scene';
-import { PRODUCT_LAYER_MASK } from '../../../../constant/VisibilityLayerMask';
+import { PRODUCT_LAYER_MASK } from '../../../../constants/VisibilityLayerMask';
 import { DIVERoot } from '../../../../components/root/Root';
 
 export class DIVEXRLightRoot extends Object3D {

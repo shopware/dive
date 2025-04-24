@@ -2,7 +2,7 @@ import * as ts from 'typescript';
 import * as fs from 'fs';
 import * as path from 'path';
 
-const ACTIONS_DIR = 'src/com/actions/'; // Adjust path as needed
+const ACTIONS_DIR = 'src/modules/com/actions/'; // Adjust path as needed
 
 // Define the required properties for each interface
 const REQUIRED_PROPERTIES = [

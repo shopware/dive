@@ -232,7 +232,7 @@ function findActionFiles(dir: string): string[] {
 }
 
 function generateReadme(): void {
-    const actionsDir = path.join(process.cwd(), 'src/com/actions');
+    const actionsDir = path.join(process.cwd(), 'src/modules/com/actions');
     const actionsReferencePath = path.join(
         __dirname,
         '../actions-reference.md',

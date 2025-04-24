@@ -26,7 +26,7 @@ export const EngineDefaultSettings: EngineSettings = {
     perspectiveCamera: DIVEPerspectiveCameraDefaultSettings,
 };
 
-export class Engine {
+export class DIVEEngine {
     public get renderer(): DIVERenderer {
         return this._renderer;
     }

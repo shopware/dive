@@ -11,11 +11,14 @@ import {
     SphereGeometry,
     Vector3,
 } from 'three';
-import { PRODUCT_LAYER_MASK } from '../../constant/VisibilityLayerMask.ts';
-import { findSceneRecursive } from '../../helper/findSceneRecursive/findSceneRecursive.ts';
+import { PRODUCT_LAYER_MASK } from '../../constants/VisibilityLayerMask.ts';
+import { findSceneRecursive } from '../../helpers/findSceneRecursive/findSceneRecursive.ts';
 import { DIVENode } from '../node/Node.ts';
-import { type COMGeometry, type COMMaterial } from '../../com/types/index.ts';
-import { DIVECommunication } from '../../com/Communication.ts';
+import {
+    type COMGeometry,
+    type COMMaterial,
+} from '../../modules/com/types/index.ts';
+import { DIVECommunication } from '../../modules/com/Communication.ts';
 
 /**
  * A basic model class.

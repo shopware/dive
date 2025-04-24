@@ -3,7 +3,7 @@ import { DIVERenderer } from '../../../../engine/renderer/Renderer';
 import { DIVEWebXRRaycasterAR } from './ar/WebXRRaycasterAR';
 import { DIVEWebXRRaycasterTHREE } from './three/WebXRRaycasterTHREE';
 import { DIVEScene } from '../../../../engine/scene/Scene';
-import { DIVEEventExecutor } from '../../../../events/EventExecutor';
+import { DIVEEventExecutor } from '../../../../modules/events/EventExecutor';
 
 /**
  * object is undefined when AR world is hit.

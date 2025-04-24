@@ -1,4 +1,4 @@
-import { PRODUCT_LAYER_MASK } from '../../constant/VisibilityLayerMask';
+import { PRODUCT_LAYER_MASK } from '../../constants/VisibilityLayerMask';
 import { Color, DirectionalLight, HemisphereLight, Object3D } from 'three';
 
 /**
@@ -27,6 +27,7 @@ export class DIVESceneLight extends Object3D {
         this.add(this._hemiLight);
 
         this._dirLight = new DirectionalLight(0xffffff, 3);
+
         this._dirLight.layers.mask = PRODUCT_LAYER_MASK;
         this._dirLight.position.set(1, 1.75, 1);
         this._dirLight.position.multiplyScalar(30);

@@ -1,10 +1,10 @@
 import { Euler, Object3D, Vector3 } from 'three';
 import { DIVERotateGizmo } from './rotate/RotateGizmo';
 import { DIVETranslateGizmo } from './translate/TranslateGizmo';
-import DIVEOrbitControls from '../../controls/OrbitControls';
+import { DIVEOrbitController } from '../../modules/controller/orbit/OrbitController';
 import { DIVEScaleGizmo } from './scale/ScaleGizmo';
 import { DIVEGizmoPlane as DIVEGizmoPlane } from './plane/GizmoPlane';
-import { DIVESelectable } from '../../interface/Selectable';
+import { DIVESelectable } from '../../interfaces/Selectable';
 
 export type DIVEGizmoMode = 'translate' | 'rotate' | 'scale';
 
@@ -45,7 +45,7 @@ export class DIVEGizmo extends Object3D {
         return this._object;
     }
 
-    constructor(controller: DIVEOrbitControls) {
+    constructor(controller: DIVEOrbitController) {
         super();
         this.name = 'DIVEGizmo';
 

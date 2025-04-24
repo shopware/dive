@@ -4,7 +4,7 @@ import {
     HELPER_LAYER_MASK,
     PRODUCT_LAYER_MASK,
     UI_LAYER_MASK,
-} from '../../constant/VisibilityLayerMask';
+} from '../../constants/VisibilityLayerMask';
 
 export type DIVEPerspectiveCameraSettings = {
     fov: number;

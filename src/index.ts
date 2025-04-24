@@ -1,8 +1,11 @@
-// Export DIVE as the default export
-export { default } from './dive';
-
 // Named exports
-export * from './dive';
+export * from './core/Dive';
+export * from './modules';
+export * from './helpers';
+export * from './types';
+
+export * from './modules/com/types/index.ts';
+export * from './types/index.ts';
 
 export { ARSystem } from './modules/ar/ARSystem';
 export { AssetConverter } from './modules/asset/converter/AssetConverter';

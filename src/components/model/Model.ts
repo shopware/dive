@@ -5,11 +5,11 @@ import {
     Raycaster,
     Vector3,
 } from 'three';
-import { PRODUCT_LAYER_MASK } from '../../constant/VisibilityLayerMask';
-import { findSceneRecursive } from '../../helper/findSceneRecursive/findSceneRecursive';
-import { type COMMaterial } from '../../com/types';
+import { PRODUCT_LAYER_MASK } from '../../constants/VisibilityLayerMask.ts';
+import { findSceneRecursive } from '../../helpers/findSceneRecursive/findSceneRecursive.ts';
+import { type COMMaterial } from '../../modules/com/types/index.ts';
 import { DIVENode } from '../node/Node';
-import { DIVECommunication } from '../../com/Communication';
+import { DIVECommunication } from '../../modules/com/Communication';
 
 /**
  * A basic model class.

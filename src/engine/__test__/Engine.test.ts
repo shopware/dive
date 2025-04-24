@@ -1,4 +1,4 @@
-import { Engine, EngineSettings } from '../Engine';
+import { DIVEEngine, EngineSettings } from '../Engine';
 
 const mockCanvasElement = {
     parentElement: {
@@ -45,10 +45,10 @@ jest.mock('../camera/PerspectiveCamera', () => ({
 }));
 
 describe('Engine', () => {
-    let engine: Engine;
+    let engine: DIVEEngine;
 
     beforeEach(() => {
-        engine = new Engine();
+        engine = new DIVEEngine();
     });
 
     afterEach(() => {
@@ -70,7 +70,7 @@ describe('Engine', () => {
                 displayAxes: true,
             };
 
-            engine = new Engine(customSettings);
+            engine = new DIVEEngine(customSettings);
             expect(engine).toBeDefined();
         });
     });
@@ -101,7 +101,7 @@ describe('Engine', () => {
                 autoResize: true,
             };
 
-            engine = new Engine(settings);
+            engine = new DIVEEngine(settings);
             expect(
                 mockRendererInstance.AddPreRenderCallback,
             ).toHaveBeenCalled();
@@ -112,7 +112,7 @@ describe('Engine', () => {
                 autoResize: false,
             };
 
-            engine = new Engine(settings);
+            engine = new DIVEEngine(settings);
             expect(
                 mockRendererInstance.AddPreRenderCallback,
             ).not.toHaveBeenCalled();

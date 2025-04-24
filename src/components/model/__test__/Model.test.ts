@@ -1,7 +1,7 @@
 import { RaycasterIntersectObjectMock } from '../../../../__mocks__/three';
 
 import { DIVEModel } from '../Model';
-import { DIVECommunication } from '../../../com/Communication';
+import { DIVECommunication } from '../../../modules/com/Communication';
 import { DIVEScene } from '../../../engine/scene/Scene';
 import {
     Vector3,
@@ -11,9 +11,9 @@ import {
     type Texture,
     Object3D,
 } from 'three';
-import { type COMMaterial } from '../../../com/types';
+import { type COMMaterial } from '../../../modules/com/types';
 
-jest.mock('../../../com/Communication.ts', () => {
+jest.mock('../../../modules/com/Communication.ts', () => {
     return {
         DIVECommunication: {
             get: jest.fn(() => {

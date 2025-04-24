@@ -3,7 +3,7 @@ import { DIVEAmbientLight } from '../light/AmbientLight';
 import { DIVEPointLight } from '../light/PointLight';
 import { DIVESceneLight } from '../light/SceneLight';
 import { DIVEModel } from '../model/Model';
-import { DIVECommunication } from '../../com/Communication';
+import { DIVECommunication } from '../../modules/com/Communication';
 import { DIVEPrimitive } from '../primitive/Primitive';
 
 import { type DIVEScene } from '../../engine/scene/Scene.ts';
@@ -14,7 +14,7 @@ import {
     type COMEntity,
     type COMPrimitive,
     type COMGroup,
-} from '../../com/types/index.ts';
+} from '../../modules/com/types/index.ts';
 import { type DIVESceneObject } from '../../types/index.ts';
 import { DIVEGroup } from '../group/Group.ts';
 import { ModuleImporter } from '../../modules/index.ts';

@@ -8,11 +8,11 @@ import {
     Object3D,
     Vector3,
 } from 'three';
-import { UI_LAYER_MASK } from '../../../constant/VisibilityLayerMask';
-import { DIVEHoverable } from '../../../interface/Hoverable';
+import { UI_LAYER_MASK } from '../../../constants/VisibilityLayerMask';
+import { DIVEHoverable } from '../../../interfaces/Hoverable';
 import { DIVEScaleGizmo } from '../scale/ScaleGizmo';
-import { DIVEDraggable } from '../../../interface/Draggable';
-import { DraggableEvent } from '../../../toolbox/BaseTool';
+import { DIVEDraggable } from '../../../interfaces/Draggable';
+import { DraggableEvent } from '../../../modules/toolbox/BaseTool';
 
 export class DIVEScaleHandle
     extends Object3D

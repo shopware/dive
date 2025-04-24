@@ -32,9 +32,10 @@ export class DIVEWebXRRaycasterTHREE {
     public GetIntersections(): DIVEHitResult[] {
         this._controller.updateMatrixWorld();
         this._raycaster.setFromXRController(this._controller);
-        const intersections = this._raycaster.intersectObjects(
-            this._scene.XRRoot.XRModelRoot.children,
-        );
+        // const intersections = this._raycaster.intersectObjects(
+        //     this._scene.XRRoot.XRModelRoot.children,
+        // );
+        const intersections: Intersection[] = [];
 
         if (intersections.length === 0) return [];
 

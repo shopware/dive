@@ -1,5 +1,5 @@
 import { Mesh, MeshBasicMaterial, Object3D, PlaneGeometry } from 'three';
-import { UI_LAYER_MASK } from '../../../constant/VisibilityLayerMask';
+import { UI_LAYER_MASK } from '../../../constants/VisibilityLayerMask';
 import { DIVEGizmoAxis, DIVEGizmoMode } from '../Gizmo';
 
 export class DIVEGizmoPlane extends Object3D {

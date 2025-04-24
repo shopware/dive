@@ -8,9 +8,9 @@ import {
     type COMGeometry,
     type COMGroup,
     type COMEntityType,
-} from '../../../com/types';
+} from '../../../modules/com/types';
 import { type DIVEScene } from '../../../engine/scene/Scene';
-import { DIVECommunication } from '../../../com/Communication';
+import { DIVECommunication } from '../../../modules/com/Communication';
 import { type DIVESceneObject } from '../../../types';
 import { Object3D } from 'three';
 
@@ -25,7 +25,7 @@ jest.mock('../../../modules/index.ts', () => {
     };
 });
 
-jest.mock('../../../com/Communication.ts', () => {
+jest.mock('../../../modules/com/Communication.ts', () => {
     return {
         DIVECommunication: {
             get: jest.fn(() => {

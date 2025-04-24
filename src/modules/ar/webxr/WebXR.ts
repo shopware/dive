@@ -1,5 +1,5 @@
 import { Vector3 } from 'three';
-import DIVEOrbitControls from '../../../controls/OrbitControls';
+import { DIVEOrbitController } from '../../../modules/controller/orbit/OrbitController';
 import { type DIVERenderer } from '../../../engine/renderer/Renderer';
 import { type DIVEScene } from '../../../engine/scene/Scene';
 import { Overlay } from './overlay/Overlay';
@@ -9,7 +9,7 @@ export class DIVEWebXR {
     // general members
     private static _renderer: DIVERenderer;
     private static _scene: DIVEScene;
-    private static _controller: DIVEOrbitControls;
+    private static _controller: DIVEOrbitController;
 
     // camera reset members
     private static _cameraPosition: Vector3;
@@ -45,7 +45,7 @@ export class DIVEWebXR {
     public static async Launch(
         renderer: DIVERenderer,
         scene: DIVEScene,
-        controller: DIVEOrbitControls,
+        controller: DIVEOrbitController,
     ): Promise<void> {
         this._renderer = renderer;
         this._scene = scene;
@@ -62,7 +62,7 @@ export class DIVEWebXR {
 
         // setup current instance
         this._renderer.xr.enabled = true;
-        this._scene.InitXR(renderer);
+        // this._scene.InitXR(renderer);
 
         // creating overlay
         if (!DIVEWebXR._overlay) {
@@ -168,7 +168,7 @@ export class DIVEWebXR {
         this._cameraTarget.set(0, 0, 0);
 
         // dispose xr scene
-        this._scene.DisposeXR();
+        // this._scene.DisposeXR();
 
         this._session.removeEventListener('end', this._onSessionEnded);
         DIVEWebXR._overlay!.Element.style.display = 'none';

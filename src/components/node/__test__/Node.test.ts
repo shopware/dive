@@ -1,9 +1,9 @@
 import { DIVENode } from '../Node';
-import { DIVECommunication } from '../../../com/Communication';
+import { DIVECommunication } from '../../../modules/com/Communication';
 import { Vector3 } from 'three';
 import { type DIVEGroup } from '../../group/Group';
 
-jest.mock('../../../com/Communication.ts', () => {
+jest.mock('../../../modules/com/Communication.ts', () => {
     return {
         DIVECommunication: {
             get: jest.fn(() => {

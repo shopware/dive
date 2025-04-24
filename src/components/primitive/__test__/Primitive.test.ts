@@ -1,5 +1,5 @@
 import { DIVEPrimitive } from '../Primitive';
-import { DIVECommunication } from '../../../com/Communication';
+import { DIVECommunication } from '../../../modules/com/Communication';
 import {
     Vector3,
     Box3,
@@ -12,10 +12,10 @@ import {
     type COMMaterial,
     type COMGeometry,
     type COMGeometryType,
-} from '../../../com/types/index.ts';
+} from '../../../modules/com/types/index.ts';
 import { RaycasterIntersectObjectMock } from '../../../../__mocks__/three';
 
-jest.mock('../../../com/Communication.ts', () => {
+jest.mock('../../../modules/com/Communication.ts', () => {
     return {
         DIVECommunication: {
             get: jest.fn(() => {

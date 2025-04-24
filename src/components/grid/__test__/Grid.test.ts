@@ -1,5 +1,5 @@
 import { DIVEGrid } from '../Grid.ts';
-import { HELPER_LAYER_MASK } from '../../../constant/VisibilityLayerMask';
+import { HELPER_LAYER_MASK } from '../../../constants/VisibilityLayerMask.ts';
 import { GridHelper } from 'three';
 
 let grid: DIVEGrid;

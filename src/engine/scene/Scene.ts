@@ -1,5 +1,8 @@
 import { Color, Scene, type Box3, type ColorRepresentation } from 'three';
-import { type COMModel, type COMEntity } from '../../com/types';
+import {
+    type COMModel,
+    type COMEntity,
+} from '../../modules/com/types/index.ts';
 import { DIVERoot } from '../../components/root/Root';
 import { DIVEGrid } from '../../components/grid/Grid';
 import { type DIVESceneObject } from '../../types';

@@ -5,9 +5,9 @@ import {
     DIVEPerspectiveCamera,
     DIVEPerspectiveCameraDefaultSettings,
 } from '../../../engine/camera/PerspectiveCamera';
-import { type COMPov } from '../../../com/types';
-import DIVEOrbitControls from '../../../controls/OrbitControls';
-import { DIVEAnimationSystem } from '../../../animation/AnimationSystem';
+import { type COMPov } from '../../../modules/com/types';
+import { DIVEOrbitController } from '../../../modules/controller/orbit/OrbitController';
+import { DIVEAnimationSystem } from '../../../modules/animation/AnimationSystem';
 
 /**
  * @jest-environment jsdom
@@ -55,32 +55,34 @@ jest.mock('../../../engine/camera/PerspectiveCamera', () => {
     };
 });
 
-jest.mock('../../../controls/OrbitControls', () => {
-    return jest.fn(function () {
-        this.object = {
-            position: {
+jest.mock('../../../modules/controller/orbit/OrbitController', () => {
+    return {
+        DIVEOrbitController: jest.fn(function () {
+            this.object = {
+                position: {
+                    clone: jest.fn(),
+                    copy: jest.fn(),
+                },
+                quaternion: {
+                    clone: jest.fn(),
+                    copy: jest.fn(),
+                },
+                layers: {
+                    mask: 0,
+                },
+                OnResize: jest.fn(),
+            };
+
+            this.target = {
                 clone: jest.fn(),
                 copy: jest.fn(),
-            },
-            quaternion: {
-                clone: jest.fn(),
-                copy: jest.fn(),
-            },
-            layers: {
-                mask: 0,
-            },
-            OnResize: jest.fn(),
-        };
+            };
 
-        this.target = {
-            clone: jest.fn(),
-            copy: jest.fn(),
-        };
+            this.update = jest.fn();
 
-        this.update = jest.fn();
-
-        return this;
-    });
+            return this;
+        }),
+    };
 });
 
 jest.mock('../../../engine/renderer/Renderer', () => {
@@ -96,7 +98,7 @@ jest.mock('../../../engine/renderer/Renderer', () => {
     };
 });
 
-jest.mock('../../../animation/AnimationSystem', () => {
+jest.mock('../../../modules/animation/AnimationSystem', () => {
     return {
         DIVEAnimationSystem: jest.fn(function () {
             this.domElement = {
@@ -121,7 +123,7 @@ describe('MediaCreator', () => {
         mediaCreator = new MediaCreator(
             new DIVERenderer(),
             new DIVEScene(),
-            new DIVEOrbitControls(
+            new DIVEOrbitController(
                 new DIVEPerspectiveCamera(DIVEPerspectiveCameraDefaultSettings),
                 new DIVERenderer(),
                 new DIVEAnimationSystem(new DIVERenderer()),

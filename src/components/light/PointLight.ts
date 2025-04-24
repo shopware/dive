@@ -7,13 +7,13 @@ import {
     FrontSide,
     Object3D,
 } from 'three';
-import { DIVECommunication } from '../../com/Communication';
+import { DIVECommunication } from '../../modules/com/Communication';
 import {
     PRODUCT_LAYER_MASK,
     UI_LAYER_MASK,
-} from '../../constant/VisibilityLayerMask';
-import { DIVEMovable } from '../../interface/Movable';
-import { DIVESelectable } from '../../interface/Selectable';
+} from '../../constants/VisibilityLayerMask';
+import { DIVEMovable } from '../../interfaces/Movable';
+import { DIVESelectable } from '../../interfaces/Selectable';
 import type { TransformControls } from 'three/examples/jsm/controls/TransformControls';
 
 /**
