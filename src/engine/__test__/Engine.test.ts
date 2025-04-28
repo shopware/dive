@@ -5,6 +5,16 @@ import { DIVEScene } from '../scene/Scene.ts';
 import { DIVEResizeManager } from '../resize/ResizeManager.ts';
 import { DIVEClock } from '../clock/Clock.ts';
 
+// Add proper typing for Jest mocks
+const MockDIVEScene = DIVEScene as jest.MockedClass<typeof DIVEScene>;
+const MockDIVEPerspectiveCamera = DIVEPerspectiveCamera as jest.MockedClass<
+    typeof DIVEPerspectiveCamera
+>;
+const MockDIVEClock = DIVEClock as jest.MockedClass<typeof DIVEClock>;
+const MockDIVERenderPipeline = DIVERenderPipeline as jest.MockedClass<
+    typeof DIVERenderPipeline
+>;
+
 jest.mock('../camera/PerspectiveCamera.ts', () => {
     return {
         DIVEPerspectiveCamera: jest.fn(),
@@ -88,6 +98,15 @@ describe('DIVEEngine', () => {
 
     it('should provide access to components', () => {
         expect(engine.renderer).toBeDefined();
+        expect(engine.scene).toBeDefined();
+        expect(engine.camera).toBeDefined();
+        expect(engine.clock).toBeDefined();
+
+        // Verify the getters return the correct instances
+        expect(engine.scene).toBe(MockDIVEScene.mock.instances[0]);
+        expect(engine.camera).toBe(MockDIVEPerspectiveCamera.mock.instances[0]);
+        expect(engine.clock).toBe(MockDIVEClock.mock.instances[0]);
+        expect(engine.renderer).toBe(MockDIVERenderPipeline.mock.instances[0]);
     });
 
     it('should start and stop the engine', () => {

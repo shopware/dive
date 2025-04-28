@@ -1,10 +1,9 @@
 import {
-    DIVEOrbitController,
-    DIVEOrbitControllerDefaultSettings,
-    DIVEOrbitControllerSettings,
+    OrbitController,
+    OrbitControllerDefaultSettings,
+    OrbitControllerSettings,
 } from '../modules/controller/orbit/OrbitController.ts';
 import { DIVEToolbox } from '../modules/toolbox/Toolbox.ts';
-import { DIVEAnimationSystem } from '../modules/animation/AnimationSystem.ts';
 import { DIVEAxisCamera } from '../modules/axiscamera/AxisCamera.ts';
 import { MathUtils } from 'three';
 import pkgjson from '../../package.json';
@@ -17,12 +16,12 @@ import { ModuleImporter } from '../modules/index.ts';
 
 export type DIVESettings = EngineSettings & {
     /** Settings for the orbit controls */
-    orbitController: Partial<DIVEOrbitControllerSettings>;
+    orbitController: Partial<OrbitControllerSettings>;
 };
 
 export const DIVEDefaultSettings: Required<DIVESettings> = {
     ...EngineDefaultSettings,
-    orbitController: DIVEOrbitControllerDefaultSettings,
+    orbitController: OrbitControllerDefaultSettings,
 };
 
 /**
@@ -133,11 +132,9 @@ export class DIVE {
 
     private _engine: DIVEEngine;
 
-    private orbitControls: DIVEOrbitController;
+    private orbitControls: OrbitController;
     private toolbox: DIVEToolbox;
 
-    // additional components
-    private animationSystem: DIVEAnimationSystem;
     private axisCamera: DIVEAxisCamera | null;
 
     public get canvas(): HTMLCanvasElement {
@@ -152,14 +149,9 @@ export class DIVE {
 
         this._engine = new DIVEEngine(settings);
 
-        // initialize animation system
-        this.animationSystem = new DIVEAnimationSystem();
-        this._engine.clock.addTicker(this.animationSystem);
-
-        this.orbitControls = new DIVEOrbitController(
+        this.orbitControls = new OrbitController(
             this._engine.camera,
             this._engine.renderer.webglrenderer.domElement,
-            this.animationSystem,
             this._settings.orbitController,
         );
         this._engine.clock.addTicker(this.orbitControls);
@@ -227,9 +219,6 @@ export class DIVE {
                 this._engine.clock.removeTicker(this.axisCamera);
                 this.axisCamera.Dispose();
             }
-
-            this._engine.clock.removeTicker(this.animationSystem);
-            this.animationSystem.Dispose();
 
             this.toolbox.Dispose();
             resolve();

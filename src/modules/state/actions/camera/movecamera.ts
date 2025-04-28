@@ -3,6 +3,7 @@ import { registerAction } from '../../ActionRegistry.ts';
 import { ActionDependencies } from '../../types/index.ts';
 import { isCOMPov } from '../../types';
 import { type Vector3Like } from 'three';
+import { Easing } from '@tweenjs/tween.js';
 
 export const MoveCameraAction = Action.define<
     | {
@@ -16,11 +17,17 @@ export const MoveCameraAction = Action.define<
           locked: boolean;
           duration: number;
       },
-    Pick<ActionDependencies, 'registered' | 'controller'>,
-    void
+    Pick<
+        ActionDependencies,
+        'registered' | 'controller' | 'AnimationSystem' | 'engine'
+    >,
+    Promise<{ stop: () => void }>
 >({
     description: 'Moves the camera to a new position and target.',
-    execute: (payload, { controller, registered }) => {
+    execute: async (
+        payload,
+        { controller, registered, AnimationSystem, engine },
+    ) => {
         let position = { x: 0, y: 0, z: 0 };
         let target = { x: 0, y: 0, z: 0 };
         if ('id' in payload) {
@@ -43,7 +50,50 @@ export const MoveCameraAction = Action.define<
             position = payload.position;
             target = payload.target;
         }
-        controller.MoveTo(position, target, payload.duration, payload.locked);
+        // controller.MoveTo(position, target, payload.duration, payload.locked);
+
+        const animatorArray = await AnimationSystem.instantiate().then(
+            (animationSystem) => {
+                engine.clock.addTicker(animationSystem);
+
+                const animatorPosition = animationSystem
+                    .createAnimator(
+                        controller.object.position,
+                        position,
+                        payload.duration,
+                        {
+                            easing: Easing.Quadratic.Out,
+                        },
+                    )
+                    .play();
+
+                const animatorTarget = animationSystem
+                    .createAnimator(
+                        controller.target,
+                        target,
+                        payload.duration,
+                        {
+                            easing: Easing.Quadratic.Out,
+                            onUpdate: () => {
+                                controller.object.lookAt(controller.target);
+                            },
+                            onComplete: () => {
+                                controller.enabled = !payload.locked;
+                            },
+                        },
+                    )
+                    .play();
+
+                return [
+                    animatorPosition,
+                    animatorTarget,
+                ];
+            },
+        );
+
+        return {
+            stop: () => animatorArray.forEach((animator) => animator.stop()),
+        };
     },
 });
 

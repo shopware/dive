@@ -4,13 +4,13 @@ import {
     AxesColorGreen,
     AxesColorRed,
 } from '../../../constants/AxisHelperColors';
-import { DIVEOrbitController } from '../../../modules/controller/orbit/OrbitController';
+import { OrbitController } from '../../../modules/controller/orbit/OrbitController';
 import { DIVEAxisHandle } from '../handles/AxisHandle';
 import { DIVEGizmo, DIVEGizmoAxis } from '../Gizmo';
 import { DraggableEvent } from '../../../modules/toolbox/BaseTool';
 
 export class DIVETranslateGizmo extends Object3D {
-    private _controller: DIVEOrbitController;
+    private _controller: OrbitController;
 
     public set debug(value: boolean) {
         this.children.forEach((child) => {
@@ -22,7 +22,7 @@ export class DIVETranslateGizmo extends Object3D {
 
     private _startPos: Vector3 | null;
 
-    constructor(controller: DIVEOrbitController) {
+    constructor(controller: OrbitController) {
         super();
 
         this.name = 'DIVETranslateGizmo';

@@ -1,9 +1,7 @@
-import { DIVEOrbitController } from '../OrbitController';
+import { OrbitController } from '../OrbitController';
 import { type DIVEPerspectiveCamera } from '../../../../engine/camera/PerspectiveCamera';
 import { DIVERenderPipeline } from '../../../../engine/renderer/Renderer';
-import { Box3 } from 'three';
-import { DIVEAnimationSystem } from '../../../animation/AnimationSystem';
-import { Tween } from '@tweenjs/tween.js';
+import { Box3, Vector3 } from 'three';
 import { DIVEScene } from '../../../../engine/scene/Scene';
 
 jest.mock('../../../../engine/renderer/Renderer', () => {
@@ -23,22 +21,14 @@ jest.mock('../../../../engine/renderer/Renderer', () => {
 
 jest.mock('../../../animation/AnimationSystem', () => {
     return {
-        DIVEAnimationSystem: jest.fn(function () {
-            this.domElement = {
-                style: {},
-            };
-            this.Animate = <T extends object>(obj: T) => {
-                return new Tween<T>(obj);
-            };
-
+        Animator: jest.fn(function () {
+            this.uuid = 'test-uuid';
+            this.tick = jest.fn();
+            this.dispose = jest.fn();
             return this;
         }),
     };
 });
-
-const moveToPos = { x: 10, y: 0, z: 0 };
-const moveToQuat = { x: 0, y: 0, z: 0 };
-const moveToDuration = 1000;
 
 const mockCamera = {
     position: {
@@ -57,35 +47,30 @@ const mockCamera = {
     },
     lookAt: jest.fn(),
 } as unknown as DIVEPerspectiveCamera;
-const mockRenderer = new DIVERenderPipeline({} as DIVEScene, mockCamera);
-const mockAnimSystem = new DIVEAnimationSystem();
+const mockRenderer = new DIVERenderPipeline(new DIVEScene(), mockCamera);
 
-let controller: DIVEOrbitController;
+let controller: OrbitController;
 
-describe('dive/controls/DIVEOrbitControls', () => {
+describe('modules/controller/orbit/OrbitController', () => {
     afterEach(() => {
         jest.clearAllMocks();
     });
 
     beforeEach(() => {
-        controller = new DIVEOrbitController(
+        controller = new OrbitController(
             mockCamera,
             mockRenderer.webglrenderer.domElement,
-            mockAnimSystem,
         );
     });
 
     it('should instantiate', () => {
         expect(controller).toBeDefined();
-        expect(() => controller['stopMoveTo']()).not.toThrow();
-        expect(() => controller['stopRevertLast']()).not.toThrow();
     });
 
     it('should instantiate with settings', () => {
-        controller = new DIVEOrbitController(
+        controller = new OrbitController(
             mockCamera,
             mockRenderer.webglrenderer.domElement,
-            mockAnimSystem,
         );
         expect(controller).toBeDefined();
     });
@@ -95,9 +80,33 @@ describe('dive/controls/DIVEOrbitControls', () => {
     });
 
     it('should compute encompassing view', () => {
-        expect(() =>
-            controller.ComputeEncompassingView(new Box3()),
-        ).not.toThrow();
+        const box = new Box3(new Vector3(-1, -1, -1), new Vector3(1, 1, 1));
+        const result = controller.ComputeEncompassingView(box);
+        expect(result).toBeDefined();
+        expect(result.position).toBeDefined();
+        expect(result.target).toBeDefined();
+        expect(result.position).toEqual(expect.any(Object));
+        expect(result.target).toEqual(expect.any(Object));
+    });
+
+    it('should compute encompassing view with non-centered box', () => {
+        const box = new Box3(new Vector3(1, 1, 1), new Vector3(3, 3, 3));
+        const result = controller.ComputeEncompassingView(box);
+        expect(result).toBeDefined();
+        expect(result.position).toBeDefined();
+        expect(result.target).toBeDefined();
+        expect(result.position).toEqual(expect.any(Object));
+        expect(result.target).toEqual(expect.any(Object));
+    });
+
+    it('should compute encompassing view with zero-size box', () => {
+        const box = new Box3(new Vector3(0, 0, 0), new Vector3(0, 0, 0));
+        const result = controller.ComputeEncompassingView(box);
+        expect(result).toBeDefined();
+        expect(result.position).toBeDefined();
+        expect(result.target).toBeDefined();
+        expect(result.position).toEqual(expect.any(Object));
+        expect(result.target).toEqual(expect.any(Object));
     });
 
     it('should zoom in with default value', () => {
@@ -116,111 +125,76 @@ describe('dive/controls/DIVEOrbitControls', () => {
         expect(() => controller.ZoomOut(10)).not.toThrow();
     });
 
-    it('should move to', () => {
-        expect(() =>
-            controller.MoveTo(moveToPos, moveToQuat, moveToDuration, false),
-        ).not.toThrow();
+    it('should update on tick', () => {
+        const spyUpdate = jest.spyOn(controller, 'update').mockImplementation();
+        controller.tick();
+        expect(spyUpdate).toHaveBeenCalled();
     });
 
-    it('should revert move to', () => {
-        controller.MoveTo(moveToPos, moveToQuat, moveToDuration, true);
-        expect(() => controller.RevertLast(moveToDuration)).not.toThrow();
-    });
-
-    it('should revert move to without values', () => {
-        expect(() =>
-            controller.MoveTo(undefined, undefined, moveToDuration, true),
-        ).not.toThrow();
-    });
-
-    it('should revert move to with lock', async () => {
-        controller.MoveTo(moveToPos, moveToQuat, moveToDuration, true);
-        expect(() => controller.RevertLast(moveToDuration)).not.toThrow();
-    });
-
-    it('should move after revert with lock', async () => {
-        controller.MoveTo(moveToPos, moveToQuat, moveToDuration, true);
-        controller.RevertLast(moveToDuration);
-        expect(() =>
-            controller.MoveTo(moveToPos, moveToQuat, moveToDuration, true),
-        ).not.toThrow();
-    });
-
-    it('should catch multiple move tos', () => {
-        controller.MoveTo(moveToPos, moveToQuat, moveToDuration, true);
-        controller.RevertLast(moveToDuration);
-        expect(() =>
-            controller.MoveTo(moveToPos, moveToQuat, moveToDuration, true),
-        ).not.toThrow();
-        controller['animating'] = true;
-        expect(() =>
-            controller.MoveTo(moveToPos, moveToQuat, moveToDuration, true),
-        ).not.toThrow();
-        expect(() =>
-            controller.MoveTo(moveToPos, moveToQuat, moveToDuration, true),
-        ).not.toThrow();
-    });
-
-    it('should catch multiple reverts', () => {
-        controller.MoveTo(moveToPos, moveToQuat, moveToDuration, true);
-        expect(() => controller.RevertLast(moveToDuration)).not.toThrow();
-        expect(() => controller.RevertLast(moveToDuration)).not.toThrow();
-        expect(() => controller.RevertLast(moveToDuration)).not.toThrow();
-    });
-
-    it('should execute preRenderCallback', () => {
-        controller.MoveTo(moveToPos, moveToQuat, moveToDuration, true);
-        expect(() => controller.tick()).not.toThrow();
+    it('should not update on tick when locked', () => {
+        controller.update = jest.fn();
         controller['locked'] = true;
-        expect(() => controller.tick()).not.toThrow();
+        controller.tick();
+        expect(controller.update).not.toHaveBeenCalled();
     });
 
-    it('should handle preRenderCallback when not locked', () => {
+    it('should set locked property', () => {
+        controller['locked'] = true;
+        expect(controller['locked']).toBe(true);
+    });
+
+    it('should update on tick when not locked', () => {
+        controller.update = jest.fn();
         controller['locked'] = false;
-        const updateSpy = jest.spyOn(controller, 'update');
         controller.tick();
-        expect(updateSpy).toHaveBeenCalled();
+        expect(controller.update).toHaveBeenCalled();
     });
 
-    it('should handle preRenderCallback when locked', () => {
-        const updateSpy = jest.spyOn(controller, 'update');
-        controller['locked'] = true;
-        updateSpy.mockClear(); // Clear any previous calls
-        controller.tick();
-        expect(updateSpy).not.toHaveBeenCalled();
-        controller['locked'] = false; // Reset for other tests
-    });
-
-    it('should properly set up and remove preRenderCallback', () => {
-        // Create new controller to test setup
-        const newController = new DIVEOrbitController(
+    it('should instantiate with default settings when no settings provided', () => {
+        controller = new OrbitController(
             mockCamera,
             mockRenderer.webglrenderer.domElement,
-            mockAnimSystem,
         );
-
-        // Test removal
-        newController.Dispose();
+        expect(controller.enableDamping).toBe(true);
+        expect(controller.dampingFactor).toBe(0.05);
     });
 
-    it('should handle stopMoveTo and stopRevertLast', () => {
-        // Test initial state
-        expect(controller['stopMoveTo']).toBeDefined();
-        expect(controller['stopRevertLast']).toBeDefined();
-
-        // Call the stop functions
-        controller['stopMoveTo']();
-        controller['stopRevertLast']();
+    it('should instantiate with custom settings', () => {
+        controller = new OrbitController(
+            mockCamera,
+            mockRenderer.webglrenderer.domElement,
+            {
+                enableDamping: false,
+                dampingFactor: 0.1,
+            },
+        );
+        expect(controller.enableDamping).toBe(false);
+        expect(controller.dampingFactor).toBe(0.1);
     });
 
-    it('should handle animation completion callbacks', () => {
-        // Test MoveTo animation completion
-        controller.MoveTo(moveToPos, moveToQuat, 0, false);
-        expect(controller['animating']).toBe(false);
-        expect(controller['enabled']).toBe(true);
+    it('should instantiate with partial settings with enableDamping false', () => {
+        controller = new OrbitController(
+            mockCamera,
+            mockRenderer.webglrenderer.domElement,
+            {
+                enableDamping: false,
+                // dampingFactor not provided, should use default
+            },
+        );
+        expect(controller.enableDamping).toBe(false);
+        expect(controller.dampingFactor).toBe(0.05); // default value
+    });
 
-        // Test MoveTo with lock
-        controller.MoveTo(moveToPos, moveToQuat, 0, true);
-        expect(controller['enabled']).toBe(false);
+    it('should instantiate with partial settings with enableDamping true', () => {
+        controller = new OrbitController(
+            mockCamera,
+            mockRenderer.webglrenderer.domElement,
+            {
+                // enableDamping not provided, should use default
+                dampingFactor: 0.1,
+            },
+        );
+        expect(controller.enableDamping).toBe(true);
+        expect(controller.dampingFactor).toBe(0.1); // default value
     });
 });

@@ -1,17 +1,16 @@
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
 import { DIVEPerspectiveCamera } from '../../../engine/camera/PerspectiveCamera';
 import { type Box3, MathUtils, Vector3, Vector3Like } from 'three';
-import { Easing } from '@tweenjs/tween.js';
-import { type DIVEAnimationSystem } from '../../animation/AnimationSystem';
+import { DIVETicker } from '../../../engine/clock/Clock';
 
-export type DIVEOrbitControllerSettings = {
+export type OrbitControllerSettings = {
     /** Whether to enable damping for smooth camera movement */
     enableDamping: boolean;
     /** Damping factor for camera movement */
     dampingFactor: number;
 };
 
-export const DIVEOrbitControllerDefaultSettings: Required<DIVEOrbitControllerSettings> =
+export const OrbitControllerDefaultSettings: Required<OrbitControllerSettings> =
     {
         enableDamping: true,
         dampingFactor: 0.05,
@@ -23,18 +22,12 @@ export const DIVEOrbitControllerDefaultSettings: Required<DIVEOrbitControllerSet
  * @module
  */
 
-export class DIVEOrbitController extends OrbitControls {
+export class OrbitController extends OrbitControls implements DIVETicker {
+    public uuid: string = MathUtils.generateUUID();
+
     public static readonly DEFAULT_ZOOM_FACTOR = 1;
 
-    private _animationSystem: DIVEAnimationSystem;
-
-    private last: { pos: Vector3Like; target: Vector3Like } | null = null;
-
-    private animating: boolean = false;
     private locked: boolean = false;
-
-    private stopMoveTo: () => void = () => {};
-    private stopRevertLast: () => void = () => {};
 
     public object: DIVEPerspectiveCamera;
     public domElement: HTMLCanvasElement;
@@ -42,22 +35,20 @@ export class DIVEOrbitController extends OrbitControls {
     constructor(
         camera: DIVEPerspectiveCamera,
         domElement: HTMLCanvasElement,
-        animationSystem: DIVEAnimationSystem,
-        settings: Partial<DIVEOrbitControllerSettings> = DIVEOrbitControllerDefaultSettings,
+        settings: Partial<OrbitControllerSettings> = OrbitControllerDefaultSettings,
     ) {
         super(camera, domElement);
 
-        this._animationSystem = animationSystem;
         this.domElement = domElement;
 
         this.object = camera;
 
         this.enableDamping =
-            settings.enableDamping ||
-            DIVEOrbitControllerDefaultSettings.enableDamping;
+            settings.enableDamping ??
+            OrbitControllerDefaultSettings.enableDamping;
         this.dampingFactor =
-            settings.dampingFactor ||
-            DIVEOrbitControllerDefaultSettings.dampingFactor;
+            settings.dampingFactor ??
+            OrbitControllerDefaultSettings.dampingFactor;
 
         // initialize camera transformation
         this.object.position.set(0, 2, 2);
@@ -85,7 +76,7 @@ export class DIVEOrbitController extends OrbitControls {
     }
 
     public ZoomIn(by?: number): void {
-        const zoomBy = by || DIVEOrbitController.DEFAULT_ZOOM_FACTOR;
+        const zoomBy = by || OrbitController.DEFAULT_ZOOM_FACTOR;
         const { minDistance, maxDistance } = this;
         this.minDistance = this.maxDistance = MathUtils.clamp(
             this.getDistance() - zoomBy,
@@ -98,7 +89,7 @@ export class DIVEOrbitController extends OrbitControls {
     }
 
     public ZoomOut(by?: number): void {
-        const zoomBy = by || DIVEOrbitController.DEFAULT_ZOOM_FACTOR;
+        const zoomBy = by || OrbitController.DEFAULT_ZOOM_FACTOR;
         const { minDistance, maxDistance } = this;
         this.minDistance = this.maxDistance = MathUtils.clamp(
             this.getDistance() + zoomBy,
@@ -108,90 +99,6 @@ export class DIVEOrbitController extends OrbitControls {
         this.update();
         this.minDistance = minDistance;
         this.maxDistance = maxDistance;
-    }
-
-    public MoveTo(
-        pos: Vector3Like | undefined,
-        target: Vector3Like | undefined,
-        duration: number,
-        lock: boolean,
-    ): void {
-        if (this.animating) return;
-
-        const toPosition = pos || this.object.position.clone();
-        const toTarget = target || this.target.clone();
-
-        this.stopRevertLast();
-
-        if (!this.locked)
-            this.last = {
-                pos: this.object.position.clone(),
-                target: this.target.clone(),
-            };
-
-        this.animating = duration > 0;
-        this.locked = lock;
-        this.enabled = false;
-
-        const tweenPos = this._animationSystem
-            .Animate(this.object.position)
-            .to(toPosition, duration)
-            .easing(Easing.Quadratic.Out)
-            .start();
-
-        const tweenQuat = this._animationSystem
-            .Animate(this.target)
-            .to(toTarget, duration)
-            .easing(Easing.Quadratic.Out)
-            .onUpdate(() => {
-                this.object.lookAt(this.target);
-            })
-            .onComplete(() => {
-                this.animating = false;
-                this.enabled = !lock;
-            })
-            .start();
-
-        this.stopMoveTo = () => {
-            tweenPos.stop();
-            tweenQuat.stop();
-        };
-    }
-
-    public RevertLast(duration: number): void {
-        if (this.animating || !this.locked) return;
-
-        this.stopMoveTo();
-
-        this.animating = duration > 0;
-        this.enabled = false;
-
-        const { pos, target } = this.last!;
-
-        const tweenPos = this._animationSystem
-            .Animate(this.object.position)
-            .to(pos, duration)
-            .easing(Easing.Quadratic.Out)
-            .start();
-
-        const tweenQuat = this._animationSystem
-            .Animate(this.target)
-            .to(target, duration)
-            .easing(Easing.Quadratic.Out)
-            .onUpdate(() => {
-                this.object.lookAt(this.target);
-            })
-            .onComplete(() => {
-                this.animating = false;
-                this.locked = false;
-                this.enabled = true;
-            })
-            .start();
-
-        this.stopRevertLast = () => {
-            tweenPos.stop();
-            tweenQuat.stop();
-        };
     }
 
     public tick(): void {

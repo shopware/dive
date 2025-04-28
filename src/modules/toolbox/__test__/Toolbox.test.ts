@@ -1,5 +1,5 @@
 import { DIVEToolbox, type ToolType } from '../Toolbox';
-import { DIVEOrbitController } from '../../controller/orbit/OrbitController';
+import { OrbitController } from '../../controller/orbit/OrbitController';
 import { DIVEScene } from '../../../engine/scene/Scene';
 
 /**
@@ -40,7 +40,7 @@ const mockController = {
         offsetTop: 0,
     },
     object: {},
-} as unknown as DIVEOrbitController;
+} as unknown as OrbitController;
 
 describe('dive/toolbox/DIVEToolBox', () => {
     afterEach(() => {

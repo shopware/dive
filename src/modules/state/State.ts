@@ -3,12 +3,11 @@ import { generateUUID } from 'three/src/math/MathUtils';
 // type imports
 import { type COMEntity } from './types/index.ts';
 import { type DIVEToolbox } from '../toolbox/Toolbox.ts';
-import { type DIVEOrbitController } from '../controller/orbit/OrbitController.ts';
+import { type OrbitController } from '../controller/orbit/OrbitController.ts';
 import { ModuleImporter } from '../index.ts';
 import { DIVEEngine } from '../../engine/Engine.ts';
 import {
     ActionDependencies,
-    ActionDeps,
     ActionPayload,
     ActionReturn,
 } from './types/index.ts';
@@ -65,14 +64,14 @@ export class State {
     }
 
     private engine: DIVEEngine;
-    private controller: DIVEOrbitController;
+    private controller: OrbitController;
     private toolbox: DIVEToolbox;
 
     // modules
     private _mediaCreator: ModuleImporter<'MediaCreator'>;
     private _arSystem: ModuleImporter<'ARSystem'>;
     private _assetExporter: ModuleImporter<'AssetExporter'>;
-
+    private _animationSystem: ModuleImporter<'AnimationSystem'>;
     private registered: Map<string, COMEntity> = new Map();
 
     private listeners: Map<
@@ -82,7 +81,7 @@ export class State {
 
     constructor(
         engine: DIVEEngine,
-        controller: DIVEOrbitController,
+        controller: OrbitController,
         toolbox: DIVEToolbox,
     ) {
         this._id = generateUUID();
@@ -96,6 +95,10 @@ export class State {
 
         this._assetExporter = new ModuleImporter<'AssetExporter'>(
             'AssetExporter',
+        );
+
+        this._animationSystem = new ModuleImporter<'AnimationSystem'>(
+            'AnimationSystem',
         );
 
         State.__instances.push(this);
@@ -123,8 +126,7 @@ export class State {
         }
 
         // Get only the dependencies this action needs
-        const requiredDeps =
-            this.getDependencies<ActionDeps<ActionTypes[ActionType]>>();
+        const requiredDeps = this.getDependencies();
 
         // We can safely use the first argument as the payload since it is the only one that is in the args array.
         const payload = args[0] as ActionPayload<ActionTypes[ActionType]>;
@@ -140,10 +142,16 @@ export class State {
             // Handle both sync and async actions
             if (result && typeof result === 'object' && 'then' in result) {
                 // For async actions, dispatch after the promise resolves
-                return result.then((resolvedResult) => {
-                    this.dispatch(action, payload);
-                    return resolvedResult;
-                }) as ActionReturn<ActionTypes[ActionType]>;
+                return result
+                    .then((resolvedResult) => {
+                        this.dispatch(action, payload);
+                        return resolvedResult;
+                    })
+                    .catch((error) => {
+                        throw new Error(`Failed to execute ${action}`, {
+                            cause: error,
+                        });
+                    }) as ActionReturn<ActionTypes[ActionType]>;
             } else {
                 // For sync actions, dispatch immediately
                 this.dispatch(action, payload);
@@ -186,19 +194,17 @@ export class State {
         listenerArray.forEach((listener) => listener(payload));
     }
 
-    private getDependencies<D extends Partial<ActionDependencies>>(): D {
-        const deps: Partial<ActionDependencies> = {};
-
-        // Return all dependencies since we can't determine which ones are needed at runtime
-        deps.registered = this.registered;
-        deps.engine = this.engine;
-        deps.controller = this.controller;
-        deps.toolbox = this.toolbox;
-        deps.MediaCreator = this._mediaCreator;
-        deps.ARSystem = this._arSystem;
-        deps.AssetExporter = this._assetExporter;
-
-        return deps as D;
+    private getDependencies(): ActionDependencies {
+        return {
+            registered: this.registered,
+            engine: this.engine,
+            controller: this.controller,
+            toolbox: this.toolbox,
+            MediaCreator: this._mediaCreator,
+            ARSystem: this._arSystem,
+            AssetExporter: this._assetExporter,
+            AnimationSystem: this._animationSystem,
+        };
     }
 }
 

@@ -3,8 +3,7 @@ import { DIVERenderPipeline } from '../../../engine/renderer/Renderer';
 import { DIVEScene } from '../../../engine/scene/Scene';
 import { DIVEPerspectiveCamera } from '../../../engine/camera/PerspectiveCamera';
 import { type COMPov } from '../../state/types';
-import { DIVEOrbitController } from '../../../modules/controller/orbit/OrbitController';
-import { DIVEAnimationSystem } from '../../../modules/animation/AnimationSystem';
+import { OrbitController } from '../../controller/orbit/OrbitController';
 
 /**
  * @jest-environment jsdom
@@ -63,7 +62,7 @@ jest.mock('../../../engine/camera/PerspectiveCamera', () => {
 
 jest.mock('../../../modules/controller/orbit/OrbitController', () => {
     return {
-        DIVEOrbitController: jest.fn(function () {
+        OrbitController: jest.fn(function () {
             this.object = {
                 position: {
                     clone: jest.fn(),
@@ -126,11 +125,9 @@ jest.mock('../../../modules/animation/AnimationSystem', () => {
 const mockScene = new DIVEScene();
 const mockCamera = new DIVEPerspectiveCamera();
 const mockRenderer = new DIVERenderPipeline(mockScene, mockCamera);
-const mockAnimationSystem = new DIVEAnimationSystem();
-const mockOrbitController = new DIVEOrbitController(
+const mockOrbitController = new OrbitController(
     mockCamera,
     mockRenderer.webglrenderer.domElement,
-    mockAnimationSystem,
 );
 let mediaCreator: MediaCreator;
 

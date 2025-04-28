@@ -38,5 +38,4 @@ export interface ActionDependencies {
     MediaCreator: ModuleImporter<'MediaCreator'>;
     ARSystem: ModuleImporter<'ARSystem'>;
     AssetExporter: ModuleImporter<'AssetExporter'>;
-    AnimationSystem: ModuleImporter<'AnimationSystem'>;
 }
