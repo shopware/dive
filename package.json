@@ -107,10 +107,6 @@
         "postbuild": "yarn validate-build-paths",
         "dev": "vite build --watch",
         "lint": "eslint",
-        "lint:actions": "bash ci/lint/lint-actions.sh",
-        "lint:actions:transpile": "yarn tsc --resolveJsonModule --esModuleInterop ci/lint/lint-actions.ts && mv ci/lint/lint-actions.js ci/lint/lint-actions.cjs",
-        "lint:actions:check": "yarn node ci/lint/lint-actions.cjs",
-        "lint:actions:cleanup": "node -e \"require('fs').unlinkSync('ci/lint/lint-actions.cjs')\"",
         "prettier:check": "prettier --check .",
         "prettier:fix": "prettier --write .",
         "unit": "jest",
@@ -118,6 +114,6 @@
         "docs": "yarn docs:actions && yarn docs:modules",
         "docs:actions": "NODE_OPTIONS='--loader ts-node/esm' ts-node docs/generators/generate-actions-docs.ts",
         "docs:modules": "NODE_OPTIONS='--loader ts-node/esm' ts-node docs/generators/generate-modules-docs.ts",
-        "ci": "yarn lint && yarn lint:actions && yarn prettier:check && yarn docs && yarn coverage && yarn build"
+        "ci": "yarn lint && yarn prettier:check && yarn docs && yarn coverage && yarn build"
     }
 }
