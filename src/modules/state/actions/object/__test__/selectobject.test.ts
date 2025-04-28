@@ -1,13 +1,13 @@
 import { DIVEEngine } from '../../../../../engine';
 import { DIVEScene } from '../../../../../engine/scene/Scene';
-import { DeselectObjectAction } from '../deselectobject';
+import { SelectObjectAction } from '../selectobject';
 import { COMEntity } from '../../../types';
 import { Object3D } from 'three';
-import { type DIVESelectable } from '../../../../../interfaces/Selectable';
-import { type DIVESelectTool } from '../../../../../modules/toolbox/select/SelectTool';
-import { type DIVEToolbox } from '../../../../../modules/toolbox/Toolbox';
+import { DIVESelectable } from '../../../../../interfaces/Selectable';
+import { DIVESelectTool } from '../../../../toolbox/select/SelectTool';
+import { DIVEToolbox } from '../../../../toolbox/Toolbox';
 
-describe('DeselectObjectAction', () => {
+describe('SelectObjectAction', () => {
     // Mock dependencies
     const mockSceneObject = {
         attach: jest.fn(),
@@ -24,7 +24,7 @@ describe('DeselectObjectAction', () => {
 
     const mockSelectTool = {
         isSelectTool: true,
-        DetachGizmo: jest.fn().mockImplementation(() => {}),
+        AttachGizmo: jest.fn().mockImplementation(() => {}),
     } as unknown as DIVESelectTool;
 
     const mockToolbox = {
@@ -38,7 +38,7 @@ describe('DeselectObjectAction', () => {
         jest.clearAllMocks();
     });
 
-    it('should deselect an object', () => {
+    it('should select an object', () => {
         // Arrange
         const testObject: COMEntity = {
             id: 'test-object',
@@ -60,7 +60,7 @@ describe('DeselectObjectAction', () => {
         mockRegistered.set(testObject.id, testObject);
 
         // Act
-        const action = new DeselectObjectAction(
+        const action = new SelectObjectAction(
             { id: 'test-object' },
             {
                 engine: mockEngine,
@@ -71,12 +71,14 @@ describe('DeselectObjectAction', () => {
         action.execute();
 
         // Assert
-        expect(mockSelectTool.DetachGizmo).toHaveBeenCalled();
+        expect(mockSelectTool.AttachGizmo).toHaveBeenCalledWith(
+            mockSceneObject,
+        );
     });
 
     it('should return false if object does not exist', () => {
         // Act
-        const action = new DeselectObjectAction(
+        const action = new SelectObjectAction(
             { id: 'non-existent-object' },
             {
                 engine: mockEngine,
@@ -84,8 +86,6 @@ describe('DeselectObjectAction', () => {
                 registered: mockRegistered,
             },
         );
-
-        // Assert
         expect(() => action.execute()).toThrow('Object not found.');
     });
 
@@ -112,7 +112,7 @@ describe('DeselectObjectAction', () => {
         (mockScene.GetSceneObject as jest.Mock).mockReturnValueOnce(null);
 
         // Act
-        const action = new DeselectObjectAction(
+        const action = new SelectObjectAction(
             { id: 'test-object' },
             {
                 engine: mockEngine,
@@ -120,8 +120,6 @@ describe('DeselectObjectAction', () => {
                 registered: mockRegistered,
             },
         );
-
-        // Assert
         expect(() => action.execute()).toThrow('Object not found in scene.');
     });
 
@@ -150,7 +148,7 @@ describe('DeselectObjectAction', () => {
         );
 
         // Act
-        const action = new DeselectObjectAction(
+        const action = new SelectObjectAction(
             { id: 'test-object' },
             {
                 engine: mockEngine,
@@ -186,7 +184,7 @@ describe('DeselectObjectAction', () => {
         (mockToolbox.GetActiveTool as jest.Mock).mockReturnValueOnce(null);
 
         // Act
-        const action = new DeselectObjectAction(
+        const action = new SelectObjectAction(
             { id: 'test-object' },
             {
                 engine: mockEngine,
@@ -197,6 +195,6 @@ describe('DeselectObjectAction', () => {
         action.execute();
 
         // Assert
-        expect(mockSelectTool.DetachGizmo).not.toHaveBeenCalled();
+        expect(mockSelectTool.AttachGizmo).not.toHaveBeenCalled();
     });
 });

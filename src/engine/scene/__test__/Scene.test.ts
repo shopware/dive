@@ -1,6 +1,6 @@
 import { Scene, Object3D, Color } from 'three';
-import { type COMEntity } from '../../../modules/com/types';
-import { COMEntityType } from '../../../modules/com/types/index';
+import { type COMEntity } from '../../../modules/state/types';
+import { COMEntityType } from '../../../modules/state/types/index';
 import { DIVEScene } from '../Scene';
 
 const mock_AddSceneObject = jest.fn();

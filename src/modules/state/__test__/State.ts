@@ -1,4 +1,4 @@
-import { DIVECommunication } from '../Communication';
+import { State } from '../State';
 import '../types';
 import { type DIVEScene } from '../../../engine/scene/Scene';
 import { type DIVEToolbox } from '../../toolbox/Toolbox';
@@ -182,14 +182,10 @@ const mockToolBox = {
 } as unknown as DIVEToolbox;
 
 describe('DIVECommunication', () => {
-    let testCom: DIVECommunication;
+    let testCom: State;
 
     beforeEach(() => {
-        testCom = new DIVECommunication(
-            mockEngine,
-            mockController,
-            mockToolBox,
-        );
+        testCom = new State(mockEngine, mockController, mockToolBox);
     });
 
     afterEach(() => {
@@ -199,6 +195,6 @@ describe('DIVECommunication', () => {
 
     it('should instantiate', () => {
         expect(testCom).toBeDefined();
-        expect(DIVECommunication['__instances']).toHaveLength(1);
+        expect(State['__instances']).toHaveLength(1);
     });
 });

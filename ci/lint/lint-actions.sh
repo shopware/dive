@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 # Define the path to the folder you want to check
-FOLDER_TO_CHECK="src/com/actions"
+FOLDER_TO_CHECK="src/modules/state/actions"
 
 TRUNK="trunk"
 PR_BRANCH=$(git rev-parse --abbrev-ref HEAD)

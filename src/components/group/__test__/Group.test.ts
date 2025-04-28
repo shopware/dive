@@ -5,13 +5,13 @@ import {
     Line,
     LineDashedMaterial,
 } from 'three';
-import { DIVECommunication } from '../../../modules/com/Communication.ts';
+import { State } from '../../../modules/state/State.ts';
 import { type DIVENode } from '../../node/Node.ts';
 import { DIVEGroup } from '../Group';
 
-jest.mock('../../../modules/com/Communication.ts', () => {
+jest.mock('../../../modules/state/State.ts', () => {
     return {
-        DIVECommunication: {
+        State: {
             get: jest.fn(() => {
                 return {
                     PerformAction: jest.fn(),
@@ -21,9 +21,9 @@ jest.mock('../../../modules/com/Communication.ts', () => {
     };
 });
 
-jest.spyOn(DIVECommunication, 'get').mockReturnValue({
+jest.spyOn(State, 'get').mockReturnValue({
     PerformAction: jest.fn(),
-} as unknown as DIVECommunication);
+} as unknown as State);
 
 let group: DIVEGroup;
 let obj: Object3D;
@@ -114,7 +114,7 @@ describe('dive/group/DIVEGroup', () => {
 
         expect(() => group.onMove()).not.toThrow();
 
-        jest.spyOn(DIVECommunication, 'get').mockReturnValueOnce(undefined);
+        jest.spyOn(State, 'get').mockReturnValueOnce(undefined);
         expect(() => group.onMove()).not.toThrow();
     });
 
@@ -123,7 +123,7 @@ describe('dive/group/DIVEGroup', () => {
 
         expect(() => group.onSelect()).not.toThrow();
 
-        jest.spyOn(DIVECommunication, 'get').mockReturnValueOnce(undefined);
+        jest.spyOn(State, 'get').mockReturnValueOnce(undefined);
         expect(() => group.onSelect()).not.toThrow();
     });
 
@@ -132,7 +132,7 @@ describe('dive/group/DIVEGroup', () => {
 
         expect(() => group.onDeselect()).not.toThrow();
 
-        jest.spyOn(DIVECommunication, 'get').mockReturnValueOnce(undefined);
+        jest.spyOn(State, 'get').mockReturnValueOnce(undefined);
         expect(() => group.onDeselect()).not.toThrow();
     });
 
@@ -141,7 +141,7 @@ describe('dive/group/DIVEGroup', () => {
 
         expect(() => group.onMove()).not.toThrow();
 
-        jest.spyOn(DIVECommunication, 'get').mockReturnValueOnce(undefined);
+        jest.spyOn(State, 'get').mockReturnValueOnce(undefined);
         expect(() => group.onMove()).not.toThrow();
     });
 

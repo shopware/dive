@@ -7,8 +7,8 @@ import {
     type COMEntity,
     type COMGroup,
     type COMEntityType,
-} from '../../../modules/com/types';
-import { DIVECommunication } from '../../../modules/com/Communication';
+} from '../../../modules/state/types';
+import { State } from '../../../modules/state/State';
 import { Object3D, Vector3, Box3 } from 'three';
 import { DIVEGroup } from '../../group/Group';
 import { type DIVEModel } from '../../model/Model';
@@ -26,9 +26,9 @@ jest.mock('../../../modules/index.ts', () => {
     };
 });
 
-jest.mock('../../../modules/com/Communication.ts', () => {
+jest.mock('../../../modules/state/State.ts', () => {
     return {
-        DIVECommunication: {
+        State: {
             get: jest.fn(() => {
                 return {
                     PerformAction: jest.fn(),
@@ -891,9 +891,7 @@ describe('components/root/DIVERoot', () => {
                 PerformAction: mockPerformAction,
             };
 
-            jest.spyOn(DIVECommunication, 'get').mockReturnValue(
-                mockCommunication as any,
-            );
+            jest.spyOn(State, 'get').mockReturnValue(mockCommunication as any);
 
             jest.spyOn(root['_assetLoader'], 'instantiate').mockResolvedValue(
                 mockLoader as unknown as AssetLoader,
@@ -908,7 +906,7 @@ describe('components/root/DIVERoot', () => {
 
             expect(mockLoader.load).toHaveBeenCalledWith('test.glb');
             expect(model?.SetModel).toHaveBeenCalledWith(mockGLTF);
-            expect(DIVECommunication.get).toHaveBeenCalledWith('model-1');
+            expect(State.get).toHaveBeenCalledWith('model-1');
             expect(mockPerformAction).toHaveBeenCalledWith('MODEL_LOADED', {
                 id: 'model-1',
             });

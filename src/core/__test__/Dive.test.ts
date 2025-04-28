@@ -7,6 +7,12 @@ import { DIVERenderPipeline } from '../../engine/renderer/Renderer.ts';
 import { DIVEScene } from '../../engine/scene/Scene.ts';
 import { DIVEPerspectiveCamera } from '../../engine/camera/PerspectiveCamera.ts';
 import { DIVEClock } from '../../engine/clock/Clock.ts';
+import { MathUtils } from 'three';
+import { State } from '../../modules/state/State.ts';
+import { DIVEEngine } from '../../engine/Engine.ts';
+import { DIVEOrbitController } from '../../modules/controller/orbit/OrbitController.ts';
+import { DIVEToolbox } from '../../modules/toolbox/Toolbox.ts';
+import { DIVEAnimationSystem } from '../../modules/animation/AnimationSystem.ts';
 
 // Mock ResizeObserver
 class MockResizeObserver {
@@ -56,26 +62,43 @@ jest.mock('../../engine/Engine.ts', () => {
         }),
     };
 });
+const mockAnimationSystem = new DIVEAnimationSystem();
+const mockEngine = new DIVEEngine();
+const mockOrbitController = new DIVEOrbitController(
+    mockEngine.renderer,
+    mockAnimationSystem,
+);
+const mockToolbox = new DIVEToolbox(
+    mockEngine.renderer.scene,
+    mockOrbitController,
+);
+const mockState = new State(mockEngine, mockOrbitController, mockToolbox);
 
-jest.mock('../../modules/com/Communication.ts', () => {
+jest.mock('../../modules/index.ts', () => {
     return {
-        DIVECommunication: jest.fn(function () {
+        ModuleImporter: jest.fn(function () {
+            this.instantiate = jest.fn().mockResolvedValue(mockState);
+            return this;
+        }),
+    };
+});
+const test_uuid = 'test_uuid';
+jest.spyOn(MathUtils, 'generateUUID').mockReturnValue(test_uuid);
+
+jest.mock('../../modules/state/State.ts', () => {
+    return {
+        State: jest.fn(function () {
             this.PerformAction = jest.fn().mockReturnValue({
-                position: { x: 0, y: 0, z: 0 },
-                target: { x: 0, y: 0, z: 0 },
-            });
-            this.PerformAction_new = jest.fn().mockReturnValue({
                 position: { x: 0, y: 0, z: 0 },
                 target: { x: 0, y: 0, z: 0 },
             });
             this.Subscribe = jest.fn(
                 (action: string, callback: (data: { id: string }) => void) => {
                     callback({ id: 'incorrect id' });
-                    callback({ id: 'test_uuid' });
+                    callback({ id: test_uuid });
                 },
             );
-            this.DestroyInstance = jest.fn();
-
+            this.DestroyInstance = jest.fn().mockReturnValue(true);
             return this;
         }),
     };
@@ -158,12 +181,21 @@ jest.mock('../../modules/animation/AnimationSystem.ts', () => {
     };
 });
 
-console.log = jest.fn();
+describe('DIVE', () => {
+    beforeEach(() => {
+        console.log = jest.fn();
+    });
 
-describe('dive/DIVE', () => {
     it('should QuickView', async () => {
         const dive = await DIVE.QuickView('test_uri');
         expect(dive).toBeDefined();
+    });
+
+    it('should handle QuickView with multiple instances', async () => {
+        const dive1 = await DIVE.QuickView('test_uri');
+        const dive2 = await DIVE.QuickView('test_uri');
+        expect(dive1).toBeDefined();
+        expect(dive2).toBeDefined();
     });
 
     it('should instantiate', () => {
@@ -225,9 +257,9 @@ describe('dive/DIVE', () => {
         expect(dive.canvas).toBeDefined();
     });
 
-    it('should have Communication', () => {
+    it('should have state', () => {
         const dive = new DIVE();
-        expect(dive.communication).toBeDefined();
+        expect(dive.getState()).toBeDefined();
     });
 
     it('should resize', () => {
@@ -235,13 +267,6 @@ describe('dive/DIVE', () => {
         expect(() =>
             dive.engine.renderPipeline.onResize(800, 600),
         ).not.toThrow();
-    });
-
-    it('should handle QuickView with multiple instances', async () => {
-        const dive1 = await DIVE.QuickView('test_uri1');
-
-        expect((window as any).DIVE.instances).toHaveLength(1);
-        expect((window as any).DIVE.instances[0]).toBe(dive1);
     });
 
     it('should initialize with axis camera when displayAxes is true', () => {
@@ -262,20 +287,22 @@ describe('dive/DIVE', () => {
         expect(dive['axisCamera']).toBeNull();
     });
 
-    it('should properly dispose all components', () => {
+    it('should properly dispose all components', async () => {
         const settings = {
             displayAxes: true,
         } as DIVESettings;
 
         const dive = new DIVE(settings);
+        const state = await dive.getState();
+        const destroyInstanceSpy = jest.spyOn(state, 'DestroyInstance');
 
-        dive.Dispose();
+        await dive.Dispose();
 
         expect(dive['orbitControls'].Dispose).toHaveBeenCalled();
         expect(dive['axisCamera']?.Dispose).toHaveBeenCalled();
         expect(dive['animationSystem'].Dispose).toHaveBeenCalled();
         expect(dive['toolbox'].Dispose).toHaveBeenCalled();
-        expect(dive['_communication'].DestroyInstance).toHaveBeenCalled();
+        expect(destroyInstanceSpy).toHaveBeenCalled();
     });
 
     it('should handle dispose when animation system pipeline is not initialized', () => {

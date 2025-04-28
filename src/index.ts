@@ -4,12 +4,13 @@ export * from './helpers/index.ts';
 export * from './error/index.ts';
 export * from './types/index.ts';
 
-export * from './modules/com/Communication';
-export * from './modules/com/actions/index.ts';
+export * from './modules/state/State.ts';
+export * from './modules/state/actions/index.ts';
 
-export * from './modules/com/types/index.ts';
+export * from './modules/state/types/index.ts';
 
 export { ARSystem } from './modules/ar/ARSystem';
+export { State } from './modules/state/State.ts';
 export { AssetConverter } from './modules/asset/converter/AssetConverter';
 export { AssetExporter } from './modules/asset/exporter/AssetExporter';
 export { AssetLoader } from './modules/asset/loader/AssetLoader';

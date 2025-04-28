@@ -84,6 +84,24 @@ Features:
 - Customizable camera position and target
 - Configurable output resolution
 
+#### State
+
+State class for communicating with DIVE.
+
+You can subscribe to actions and perform them from outside and inside DIVE.
+
+```ts
+import { DIVE } from "@shopware-ag/dive";
+
+const dive = new DIVE();
+
+dive.State.Subscribe('GET_ALL_SCENE_DATA', () => {
+ // do something
+});
+
+dive.State.PerformAction('GET_ALL_SCENE_DATA', {});
+```
+
 #### SystemInfo
 
 Provides information about the system's capabilities and performance:

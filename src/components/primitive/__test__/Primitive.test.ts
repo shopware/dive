@@ -1,5 +1,5 @@
 import { DIVEPrimitive } from '../Primitive';
-import { DIVECommunication } from '../../../modules/com/Communication';
+import { State } from '../../../modules/state/State.ts';
 import {
     Vector3,
     Box3,
@@ -12,12 +12,12 @@ import {
     type COMMaterial,
     type COMGeometry,
     type COMGeometryType,
-} from '../../../modules/com/types/index.ts';
+} from '../../../modules/state/types/index.ts';
 import { RaycasterIntersectObjectMock } from '../../../../__mocks__/three';
 
-jest.mock('../../../modules/com/Communication.ts', () => {
+jest.mock('../../../modules/state/State.ts', () => {
     return {
-        DIVECommunication: {
+        State: {
             get: jest.fn(() => {
                 return {
                     PerformAction: jest.fn(),
@@ -27,9 +27,9 @@ jest.mock('../../../modules/com/Communication.ts', () => {
     };
 });
 
-jest.spyOn(DIVECommunication, 'get').mockReturnValue({
+jest.spyOn(State, 'get').mockReturnValue({
     PerformAction: jest.fn(),
-} as unknown as DIVECommunication);
+} as unknown as State);
 
 let primitive: DIVEPrimitive;
 
@@ -65,7 +65,7 @@ describe('dive/primitive/DIVEPrimitive', () => {
     });
 
     it('should place on floor', () => {
-        const com = DIVECommunication.get('id')!;
+        const com = State.get('id')!;
         const spyPerformAction = jest.spyOn(com, 'PerformAction');
 
         jest.spyOn(primitive['_mesh']!, 'localToWorld').mockReturnValueOnce(
@@ -105,8 +105,8 @@ describe('dive/primitive/DIVEPrimitive', () => {
     it('should drop it', () => {
         const comMock = {
             PerformAction: jest.fn(),
-        } as unknown as DIVECommunication;
-        jest.spyOn(DIVECommunication, 'get').mockReturnValue(comMock);
+        } as unknown as State;
+        jest.spyOn(State, 'get').mockReturnValue(comMock);
 
         const spy = jest
             .spyOn(primitive, 'onMove')
@@ -163,7 +163,7 @@ describe('dive/primitive/DIVEPrimitive', () => {
 
         // alter position so onMove will be called again
         primitive.position.y = 2;
-        jest.spyOn(DIVECommunication, 'get').mockReturnValueOnce(undefined);
+        jest.spyOn(State, 'get').mockReturnValueOnce(undefined);
         expect(() => primitive.DropIt()).not.toThrow();
         expect(spy).toHaveBeenCalledTimes(2);
     });
@@ -301,8 +301,8 @@ describe('dive/primitive/DIVEPrimitive', () => {
 
         const comMock = {
             PerformAction: jest.fn(),
-        } as unknown as DIVECommunication;
-        jest.spyOn(DIVECommunication, 'get').mockReturnValue(comMock);
+        } as unknown as State;
+        jest.spyOn(State, 'get').mockReturnValue(comMock);
 
         primitive.PlaceOnFloor();
         expect(comMock.PerformAction).not.toHaveBeenCalled();

@@ -5,7 +5,7 @@ import type {
     COMModel,
     COMPov,
     COMPrimitive,
-} from '../modules/com/types/index.ts';
+} from '../modules/state/types/index.ts';
 
 export type DIVESceneData = {
     name: string;

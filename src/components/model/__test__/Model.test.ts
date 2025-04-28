@@ -1,7 +1,7 @@
 import { RaycasterIntersectObjectMock } from '../../../../__mocks__/three';
 
 import { DIVEModel } from '../Model';
-import { DIVECommunication } from '../../../modules/com/Communication';
+import { State } from '../../../modules/state/State';
 import { DIVEScene } from '../../../engine/scene/Scene';
 import {
     Vector3,
@@ -11,11 +11,11 @@ import {
     type Texture,
     Object3D,
 } from 'three';
-import { type COMMaterial } from '../../../modules/com/types';
+import { type COMMaterial } from '../../../modules/state/types';
 
-jest.mock('../../../modules/com/Communication.ts', () => {
+jest.mock('../../../modules/state/State.ts', () => {
     return {
-        DIVECommunication: {
+        State: {
             get: jest.fn(() => {
                 return {
                     PerformAction: jest.fn(),
@@ -28,9 +28,9 @@ jest.mock('../../../modules/com/Communication.ts', () => {
 const object = new Object3D();
 object.children.push(new Mesh());
 
-jest.spyOn(DIVECommunication, 'get').mockReturnValue({
+jest.spyOn(State, 'get').mockReturnValue({
     PerformAction: jest.fn(),
-} as unknown as DIVECommunication);
+} as unknown as State);
 
 let model: DIVEModel;
 
@@ -56,7 +56,7 @@ describe('dive/model/DIVEModel', () => {
     it('should place on floor', () => {
         model.SetModel(object);
 
-        const com = DIVECommunication.get('id')!;
+        const com = State.get('id')!;
         const spyPerformAction = jest.spyOn(com, 'PerformAction');
 
         model.userData.id = 'something';
@@ -91,8 +91,8 @@ describe('dive/model/DIVEModel', () => {
     it('should drop it', () => {
         const comMock = {
             PerformAction: jest.fn(),
-        } as unknown as DIVECommunication;
-        jest.spyOn(DIVECommunication, 'get').mockReturnValue(comMock);
+        } as unknown as State;
+        jest.spyOn(State, 'get').mockReturnValue(comMock);
 
         const spy = jest.spyOn(model, 'onMove').mockImplementation(() => {});
 
@@ -147,7 +147,7 @@ describe('dive/model/DIVEModel', () => {
 
         // alter position so onMove will be called again
         model.position.y = 2;
-        jest.spyOn(DIVECommunication, 'get').mockReturnValueOnce(undefined);
+        jest.spyOn(State, 'get').mockReturnValueOnce(undefined);
         expect(() => model.DropIt()).not.toThrow();
         expect(spy).toHaveBeenCalledTimes(2);
     });
@@ -231,7 +231,7 @@ describe('dive/model/DIVEModel', () => {
             new Vector3(0, model.position.y, 0),
         );
 
-        const com = DIVECommunication.get('id')!;
+        const com = State.get('id')!;
         const spyPerformAction = jest.spyOn(com, 'PerformAction');
 
         model.PlaceOnFloor();
