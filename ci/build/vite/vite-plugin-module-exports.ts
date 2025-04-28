@@ -7,6 +7,7 @@ const MODULES_PATH = 'src/modules';
 interface ModuleRegistration {
     name: string;
     path: string; // Original src path
+    buildPath: string; // Path in the build output
 }
 
 // Function to update package.json exports
@@ -31,15 +32,12 @@ function updatePackageJsonExports(registrations: ModuleRegistration[]): void {
     };
 
     // Add each module to exports
-    registrations.forEach(({ name, path }) => {
-        // Convert the source path to the build path structure
-        const buildPath = path.replace(/\.ts$/, '');
+    registrations.forEach(({ name, buildPath }) => {
         const modulePath = `./modules/${name}`;
-
         exports[modulePath] = {
-            types: `./build/${buildPath}.d.ts`,
-            import: `./build/${buildPath}.mjs`,
-            require: `./build/${buildPath}.cjs`,
+            types: `./build/src/${buildPath}.d.ts`,
+            import: `./build/src/${buildPath}.mjs`,
+            require: `./build/src/${buildPath}.cjs`,
         };
     });
 
@@ -79,7 +77,7 @@ export default function moduleBuildPlugin(): Plugin {
     console.log(
         `[Dive Build] Discovering module registrations by scanning ${MODULES_PATH}...`,
     );
-    const projectRoot = process.cwd(); // Get project root directory
+    const projectRoot = process.cwd();
     const modulesDirAbs = pathResolve(projectRoot, MODULES_PATH);
     const registrations: ModuleRegistration[] = [];
 
@@ -104,7 +102,6 @@ export default function moduleBuildPlugin(): Plugin {
 
                 if (interfaceMatch) {
                     const interfaceContent = interfaceMatch[1];
-                    // Extract the class name
                     const classRegex =
                         /\s*([A-Za-z0-9_]+)\s*:\s*typeof\s*\1\s*;/;
                     const classMatch = interfaceContent.match(classRegex);
@@ -114,13 +111,17 @@ export default function moduleBuildPlugin(): Plugin {
                         console.log(
                             `   Found module: ${className} in ${relativeFilePath}`,
                         );
+
+                        // Convert source path to build path
+                        const buildPath = relativeFilePath
+                            .replace(/^src\//, '')
+                            .replace(/\.ts$/, '');
+
                         registrations.push({
                             name: className,
-                            path: relativeFilePath, // Store relative path from project root
+                            path: relativeFilePath,
+                            buildPath: buildPath,
                         });
-                    } else {
-                        // Optionally log files that extend the interface but don't match the expected format
-                        // console.log(`   DEBUG: File ${relativeFilePath} extends ModuleClasses but pattern not matched in content: ${interfaceContent}`);
                     }
                 }
             }
@@ -132,135 +133,73 @@ export default function moduleBuildPlugin(): Plugin {
         }
     }
 
-    console.log(`Found ${registrations.length} module registrations.`);
-    if (registrations.length === 0) {
-        console.warn(
-            `No module registrations found in ${MODULES_PATH}/index.ts. Build might be incomplete.`,
-        );
-    } else {
-        console.log('Found modules:');
-        registrations.forEach(({ name, path }) => {
-            console.log(`- ${name}: ${path}`);
-        });
-    }
-
     // Update package.json exports
     updatePackageJsonExports(registrations);
 
-    // --- Prepare Build Path Map (Done outside hooks) ---
-    const moduleBuildPathMap: Record<string, string> = {};
-    registrations.forEach(({ name, path }) => {
-        // Path relative to project root, without .ts extension (e.g., src/modules/ar/ARSystem)
-        const pathWithoutExt = path.replace(/\.ts$/, '');
-
-        if (!pathWithoutExt) {
-            console.error(
-                `Could not determine path without extension for ${name} (${path})`,
-            );
-            return;
-        }
-        // Value for runtime import (relative from build/index.mjs)
-        // Example: ARSystem -> ./src/modules/ar/ARSystem.mjs
-        moduleBuildPathMap[name] = `./${pathWithoutExt}.mjs`;
+    // Generate the module path map for runtime
+    const modulePathMap: Record<string, string> = {};
+    registrations.forEach(({ name, buildPath }) => {
+        // For dynamic imports, we need to go up one directory from chunks
+        modulePathMap[name] = `../src/${buildPath}.mjs`;
     });
 
     return {
         name: 'module-build-config',
-
-        // Use the config hook to modify the config before it's resolved
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        config(
-            userConfig: UserConfig,
-            { command }: { command: 'build' | 'serve' },
-        ) {
-            console.log('[Dive Build] Configuring build...');
-            // --- Prepare Build Config ---
+        config(config: UserConfig): UserConfig {
+            // Prepare build config
             const rollupInput: Record<string, string> = {
                 // Main library entry point
                 index: pathResolve(projectRoot, 'src/index.ts'),
-                // Keep the modules index file itself as an entry point if needed
-                // 'modules/index': pathResolve(
-                //     projectRoot,
-                //     'src/modules/index.ts',
-                // ),
             };
+
+            // Add module entry points
             registrations.forEach(({ name, path }) => {
-                // path is relative to project root (e.g., src/modules/ar/ARSystem.ts)
                 const absoluteSrcPath = pathResolve(projectRoot, path);
-
-                // Key for Rollup output file structure (relative to build dir)
-                // e.g., src/modules/ar/ARSystem
                 const rollupEntryKey = path.replace(/\.ts$/, '');
-
-                if (!rollupEntryKey) {
-                    console.error(
-                        `[Build Error] Could not determine Rollup entry key for module ${name} (${path})`,
-                    );
-                    return; // Skip this invalid registration
-                }
-
                 rollupInput[rollupEntryKey] = absoluteSrcPath;
             });
 
-            // Log the final rollup inputs
-            console.log('[Dive Build] Rollup Inputs:');
-            for (const [
-                key,
-                value,
-            ] of Object.entries(rollupInput)) {
-                console.log(`  ${key}: ${relative(projectRoot, value)}`);
-            }
-
-            // --- Define Build Options ---
-            const buildConfig: UserConfig['build'] = {
-                lib: {
-                    entry: rollupInput,
-                    // name: 'dive', // name is less relevant for multi-entry builds
-                    // formats: ['es', 'cjs'] // Specify formats here
-                },
-                sourcemap: true,
-                minify: true,
-                outDir: 'build',
-                emptyOutDir: true,
-                rollupOptions: {
-                    // input: rollupInput, // Provided by lib.entry
-                    output: [
-                        {
-                            format: 'esm',
-                            // [name] will be the keys from rollupInput (e.g., index, modules/ar/ARSystem)
-                            entryFileNames: '[name].mjs',
-                            chunkFileNames: 'chunks/[name]-[hash].mjs',
-                            exports: 'named',
-                            // preserveModules: true, // Alternative way to structure output
-                            // preserveModulesRoot: 'src',
-                        },
-                        {
-                            format: 'cjs',
-                            entryFileNames: '[name].cjs',
-                            chunkFileNames: 'chunks/[name]-[hash].cjs',
-                            exports: 'named',
-                            // preserveModules: true,
-                            // preserveModulesRoot: 'src',
-                        },
-                    ],
-                    external: [
-                        'three',
-                        '@tweenjs/tween.js',
-                        'three-spritetext',
-                    ],
-                },
-            };
-
-            // --- Define Path Map Injection ---
-            const defineStaticConfig: Record<string, string> = {
-                __MODULE_BUILD_PATHS__: JSON.stringify(moduleBuildPathMap),
-            };
-
-            // Return the modifications to be merged into the user config
             return {
-                build: buildConfig,
-                define: defineStaticConfig,
+                build: {
+                    outDir: 'build',
+                    lib: {
+                        entry: rollupInput,
+                    },
+                    rollupOptions: {
+                        output: [
+                            {
+                                format: 'esm',
+                                entryFileNames: '[name].mjs',
+                                chunkFileNames: 'chunks/[name]-[hash].mjs',
+                                exports: 'named',
+                                banner: `window.__MODULE_PATHS__ = ${JSON.stringify(modulePathMap)};`,
+                            },
+                            {
+                                format: 'cjs',
+                                entryFileNames: '[name].cjs',
+                                chunkFileNames: 'chunks/[name]-[hash].cjs',
+                                exports: 'named',
+                                banner: `if (typeof window !== 'undefined') { window.__MODULE_PATHS__ = ${JSON.stringify(modulePathMap)}; }`,
+                            },
+                        ],
+                        external: [
+                            'three',
+                            '@tweenjs/tween.js',
+                            'three-spritetext',
+                        ],
+                    },
+                },
             };
+        },
+        resolveId(source, importer) {
+            // For direct imports in the entry point, use ./src/modules/...
+            if (
+                importer?.endsWith('index.ts') &&
+                source.startsWith('./src/modules/')
+            ) {
+                return { id: source, external: true };
+            }
+            return null;
         },
     };
 }

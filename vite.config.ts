@@ -1,12 +1,12 @@
 import { defineConfig } from 'vite';
 import dts from 'vite-plugin-dts';
 import moduleBuildPlugin from './ci/build/vite/vite-plugin-module-exports';
-import rewriteModuleImporterPathsPlugin from './ci/build/vite/vite-plugin-rewrite-module-importer-paths';
+// import rewriteModuleImporterPathsPlugin from './ci/build/vite/vite-plugin-rewrite-module-importer-paths';
 
 // --- Main Vite Export ---
 export default defineConfig({
     plugins: [
-        rewriteModuleImporterPathsPlugin(),
+        // rewriteModuleImporterPathsPlugin(),
         moduleBuildPlugin(),
         dts({
             insertTypesEntry: true,

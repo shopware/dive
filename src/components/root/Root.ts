@@ -44,9 +44,7 @@ export class DIVERoot extends Object3D {
         this._floor = new DIVEFloor();
         this.add(this._floor);
 
-        this._assetLoader = new ModuleImporter<'AssetLoader'>(
-            'src/modules/asset/loader/AssetLoader.ts',
-        );
+        this._assetLoader = new ModuleImporter<'AssetLoader'>('AssetLoader');
     }
 
     public ComputeSceneBB(): Box3 {

@@ -98,9 +98,8 @@
     },
     "scripts": {
         "validate-build-paths": "NODE_OPTIONS='--loader ts-node/esm' ts-node ci/build/validate-build-paths.ts",
-        "validate-import-paths": "NODE_OPTIONS='--loader ts-node/esm' ts-node ci/build/validate-import-paths.ts",
         "build": "vite build",
-        "postbuild": "yarn validate-import-paths && yarn validate-build-paths",
+        "postbuild": "yarn validate-build-paths",
         "dev": "vite build --watch",
         "lint": "eslint",
         "lint:actions": "bash ci/lint/lint-actions.sh",
