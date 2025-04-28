@@ -257,11 +257,6 @@ describe('DIVE', () => {
         expect(dive.canvas).toBeDefined();
     });
 
-    it('should have state', () => {
-        const dive = new DIVE();
-        expect(dive.getState()).toBeDefined();
-    });
-
     it('should resize', () => {
         const dive = new DIVE();
         expect(() =>
@@ -293,8 +288,6 @@ describe('DIVE', () => {
         } as DIVESettings;
 
         const dive = new DIVE(settings);
-        const state = await dive.getState();
-        const destroyInstanceSpy = jest.spyOn(state, 'DestroyInstance');
 
         await dive.Dispose();
 
@@ -302,7 +295,6 @@ describe('DIVE', () => {
         expect(dive['axisCamera']?.Dispose).toHaveBeenCalled();
         expect(dive['animationSystem'].Dispose).toHaveBeenCalled();
         expect(dive['toolbox'].Dispose).toHaveBeenCalled();
-        expect(destroyInstanceSpy).toHaveBeenCalled();
     });
 
     it('should handle dispose when animation system pipeline is not initialized', () => {
