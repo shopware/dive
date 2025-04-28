@@ -88,12 +88,11 @@ export class DIVE {
             const modelid = MathUtils.generateUUID();
 
             // add loaded listener
-            dive._communication.Subscribe('MODEL_LOADED', (data) => {
+            dive._communication.Subscribe('MODEL_LOADED', async (data) => {
                 if (data.id !== modelid) return;
 
-                const transform = dive._communication.PerformAction(
+                const transform = dive._communication.PerformAction_new(
                     'COMPUTE_ENCOMPASSING_VIEW',
-                    {},
                 );
 
                 dive._communication.PerformAction('SET_CAMERA_TRANSFORM', {
