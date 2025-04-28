@@ -38,9 +38,9 @@ export class ModuleImporter<Id extends keyof ModuleClasses> {
 
     constructor(private _moduleName: string) {
         this._importFn = async (): Promise<ModuleConstructors[Id]> => {
+            const modulePaths = window.__MODULE_PATHS__;
             try {
                 // Get the build path from the injected map
-                const modulePaths = window.__MODULE_PATHS__;
                 if (!modulePaths || !modulePaths[this._moduleName]) {
                     throw new Error(
                         `Module ${this._moduleName} not found in path map`,
@@ -60,7 +60,7 @@ export class ModuleImporter<Id extends keyof ModuleClasses> {
                 return module[exportedModuleName] as ModuleConstructors[Id];
             } catch (err) {
                 throw new Error(
-                    `Failed to dynamically import module from path ${this._moduleName}: ${err instanceof Error ? err.message : String(err)}`,
+                    `Failed to dynamically import module from path ${modulePaths[this._moduleName]}: ${err instanceof Error ? err.message : String(err)}`,
                 );
             }
         };

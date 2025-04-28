@@ -1,12 +1,5 @@
 import { ModuleImporter } from '../ModuleImporter';
 
-declare global {
-    interface ModuleClasses {
-        TestModule: { new (): { name: string } };
-        EmptyModule: { new (): unknown };
-    }
-}
-
 describe('ModuleImporter', () => {
     beforeEach(() => {
         jest.clearAllMocks();
@@ -21,12 +14,14 @@ describe('ModuleImporter', () => {
             name = 'MockModule';
         }
         const mockPath = '/path/to/mockModule.js';
-        const importer = new ModuleImporter<'TestModule'>(mockPath);
+        window.__MODULE_PATHS__ = { TestModule: mockPath };
+        // @ts-ignore
+        const importer = new ModuleImporter<'TestModule'>('TestModule');
         const dynamicImportSpy = jest
             .spyOn(importer as any, '_dynamicImport')
             .mockResolvedValue({ MockModule });
 
-        const ModuleClass = await importer.import();
+        const ModuleClass = (await importer.import()) as typeof MockModule;
 
         expect(ModuleClass).toBe(MockModule);
         expect(new ModuleClass().name).toBe('MockModule');
@@ -37,7 +32,9 @@ describe('ModuleImporter', () => {
     it('should cache the module class after the first import', async () => {
         class MockModule {}
         const mockPath = '/path/to/cachedModule.js';
-        const importer = new ModuleImporter<'TestModule'>(mockPath);
+        window.__MODULE_PATHS__ = { TestModule: mockPath };
+        // @ts-ignore
+        const importer = new ModuleImporter<'TestModule'>('TestModule');
         const dynamicImportSpy = jest
             .spyOn(importer as any, '_dynamicImport')
             .mockResolvedValue({ MockModule });
@@ -55,7 +52,9 @@ describe('ModuleImporter', () => {
 
     it('should handle dynamic import errors', async () => {
         const mockPath = '/path/to/failingModule.js';
-        const importer = new ModuleImporter<'TestModule'>(mockPath);
+        window.__MODULE_PATHS__ = { TestModule: mockPath };
+        // @ts-ignore
+        const importer = new ModuleImporter<'TestModule'>('TestModule');
         const importError = new Error('File not found');
         const dynamicImportSpy = jest
             .spyOn(importer as any, '_dynamicImport')
@@ -71,7 +70,9 @@ describe('ModuleImporter', () => {
 
     it('should handle errors when the imported module has an unexpected structure', async () => {
         const mockPath = '/path/to/invalidModule.js';
-        const importer = new ModuleImporter<'EmptyModule'>(mockPath);
+        // @ts-ignore
+        const importer = new ModuleImporter<'EmptyModule'>('EmptyModule');
+        window.__MODULE_PATHS__ = { EmptyModule: mockPath };
 
         // Simulate a module import that resolves but doesn't contain the expected export
         const dynamicImportSpy = jest
@@ -80,7 +81,7 @@ describe('ModuleImporter', () => {
 
         // Act & Assert
         await expect(importer.import()).rejects.toThrow(
-            `Module class not found in dynamically imported module: ${mockPath}`,
+            `Failed to dynamically import module from path ${mockPath}: Module class not found in dynamically imported module: EmptyModule`,
         );
         expect(dynamicImportSpy).toHaveBeenCalledTimes(1);
         expect(dynamicImportSpy).toHaveBeenCalledWith(mockPath);
@@ -89,7 +90,9 @@ describe('ModuleImporter', () => {
     it('should handle concurrent import calls correctly, importing only once', async () => {
         class ConcurrentModule {}
         const mockPath = '/path/to/concurrentModule.js';
-        const importer = new ModuleImporter<'TestModule'>(mockPath);
+        // @ts-ignore
+        const importer = new ModuleImporter<'TestModule'>('TestModule');
+        window.__MODULE_PATHS__ = { TestModule: mockPath };
 
         // Spy and mock the internal dynamic import method
         const dynamicImportSpy = jest
