@@ -4,15 +4,11 @@ export * from './helpers/index.ts';
 export * from './error/index.ts';
 export * from './types/index.ts';
 
+// export all modules
+export * from './modules/ar/ARSystem';
 export * from './modules/state/State.ts';
-export * from './modules/state/actions/index.ts';
-
-export * from './modules/state/types/index.ts';
-
-export { ARSystem } from './modules/ar/ARSystem';
-export { State } from './modules/state/State.ts';
-export { AssetConverter } from './modules/asset/converter/AssetConverter';
-export { AssetExporter } from './modules/asset/exporter/AssetExporter';
-export { AssetLoader } from './modules/asset/loader/AssetLoader';
-export { MediaCreator } from './modules/mediacreator/MediaCreator';
-export { SystemInfo } from './modules/systeminfo/SystemInfo';
+export * from './modules/asset/converter/AssetConverter';
+export * from './modules/asset/exporter/AssetExporter';
+export * from './modules/asset/loader/AssetLoader';
+export * from './modules/mediacreator/MediaCreator';
+export * from './modules/systeminfo/SystemInfo';
