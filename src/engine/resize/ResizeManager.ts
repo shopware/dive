@@ -19,9 +19,17 @@ export class DIVEResizeManager {
             }
         });
 
-        const canvasWrapper = renderer.domElement.parentElement;
-        if (canvasWrapper) {
-            this._resizeObserver.observe(canvasWrapper);
+        if (renderer.domElement.parentElement) {
+            this._resizeObserver.observe(renderer.domElement.parentElement);
+        } else {
+            const interval = setInterval(() => {
+                if (renderer.domElement.parentElement) {
+                    this._resizeObserver.observe(
+                        renderer.domElement.parentElement,
+                    );
+                    clearInterval(interval);
+                }
+            }, 16);
         }
     }
 
