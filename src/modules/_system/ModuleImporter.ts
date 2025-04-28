@@ -50,14 +50,13 @@ export class ModuleImporter<Id extends keyof ModuleClasses> {
                 const module = await this._dynamicImport(
                     modulePaths[this._moduleName],
                 );
-                const exportedModuleName = Object.keys(module)[0];
 
-                if (!exportedModuleName || !module[exportedModuleName]) {
+                if (!module[this._moduleName]) {
                     throw new Error(
                         `Module class not found in dynamically imported module: ${this._moduleName}`,
                     );
                 }
-                return module[exportedModuleName] as ModuleConstructors[Id];
+                return module[this._moduleName] as ModuleConstructors[Id];
             } catch (err) {
                 throw new Error(
                     `Failed to dynamically import module from path ${modulePaths[this._moduleName]}: ${err instanceof Error ? err.message : String(err)}`,

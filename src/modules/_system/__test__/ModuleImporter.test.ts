@@ -14,9 +14,9 @@ describe('ModuleImporter', () => {
             name = 'MockModule';
         }
         const mockPath = '/path/to/mockModule.js';
-        window.__MODULE_PATHS__ = { TestModule: mockPath };
+        window.__MODULE_PATHS__ = { MockModule: mockPath };
         // @ts-ignore
-        const importer = new ModuleImporter<'TestModule'>('TestModule');
+        const importer = new ModuleImporter<'MockModule'>('MockModule');
         const dynamicImportSpy = jest
             .spyOn(importer as any, '_dynamicImport')
             .mockResolvedValue({ MockModule });
@@ -32,9 +32,9 @@ describe('ModuleImporter', () => {
     it('should cache the module class after the first import', async () => {
         class MockModule {}
         const mockPath = '/path/to/cachedModule.js';
-        window.__MODULE_PATHS__ = { TestModule: mockPath };
+        window.__MODULE_PATHS__ = { MockModule: mockPath };
         // @ts-ignore
-        const importer = new ModuleImporter<'TestModule'>('TestModule');
+        const importer = new ModuleImporter<'MockModule'>('MockModule');
         const dynamicImportSpy = jest
             .spyOn(importer as any, '_dynamicImport')
             .mockResolvedValue({ MockModule });
@@ -91,8 +91,10 @@ describe('ModuleImporter', () => {
         class ConcurrentModule {}
         const mockPath = '/path/to/concurrentModule.js';
         // @ts-ignore
-        const importer = new ModuleImporter<'TestModule'>('TestModule');
-        window.__MODULE_PATHS__ = { TestModule: mockPath };
+        const importer = new ModuleImporter<'ConcurrentModule'>(
+            'ConcurrentModule',
+        );
+        window.__MODULE_PATHS__ = { ConcurrentModule: mockPath };
 
         // Spy and mock the internal dynamic import method
         const dynamicImportSpy = jest

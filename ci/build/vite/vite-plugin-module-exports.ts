@@ -140,7 +140,7 @@ export default function moduleBuildPlugin(): Plugin {
     const modulePathMap: Record<string, string> = {};
     registrations.forEach(({ name, buildPath }) => {
         // For dynamic imports, we need to go up one directory from chunks
-        modulePathMap[name] = `../src/${buildPath}.mjs`;
+        modulePathMap[name] = `../build/src/${buildPath}.mjs`;
     });
 
     return {
