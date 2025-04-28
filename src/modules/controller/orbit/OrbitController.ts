@@ -87,8 +87,8 @@ export class DIVEOrbitController extends OrbitControls {
         const direction = this.object.position.clone().normalize();
 
         return {
-            position: direction.multiplyScalar(distance),
-            target: center,
+            position: direction.clone().multiplyScalar(distance),
+            target: center.clone(),
         };
     }
 

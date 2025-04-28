@@ -49,10 +49,13 @@ export class DIVERoot extends Object3D {
 
     public ComputeSceneBB(): Box3 {
         const bb = new Box3();
-        this.traverse((object: Object3D) => {
-            if ('isObject3D' in object) {
-                bb.expandByObject(object);
-            }
+        this.children.forEach((object) => {
+            if ('isDIVEFloor' in object) return;
+            object.traverse((child) => {
+                if ('isObject3D' in child) {
+                    bb.expandByObject(child);
+                }
+            });
         });
         return bb;
     }
