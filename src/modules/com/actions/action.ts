@@ -1,4 +1,4 @@
-import { ActionDependencies } from './types';
+import { ActionDependencies } from '.';
 
 /**
  * Abstract base class for implementing actions in the system.
@@ -11,8 +11,8 @@ import { ActionDependencies } from './types';
  */
 export abstract class Action<
     P = void,
-    R = void,
     D extends Partial<ActionDependencies> = Partial<ActionDependencies>,
+    R = void,
 > {
     protected abstract readonly _description: string;
     protected _payload: P;
@@ -33,25 +33,25 @@ export abstract class Action<
      * Factory method to create a new Action class with the specified description and execution logic.
      *
      * @template T - The type of the payload (use void for actions without payload)
-     * @template R - The return type of the action
      * @template D - The type of dependencies
+     * @template R - The return type of the action
      * @param options - Configuration options for the action
      * @param options.description - A description of what the action does
      * @param options.execute - The function that implements the action's logic
      * @returns A new Action class that can be instantiated with payload and dependencies
      */
     public static define<
-        T,
-        R,
+        T = void,
         D extends Partial<ActionDependencies> = Partial<ActionDependencies>,
+        R = void,
     >({
         description,
         execute,
     }: {
         description: string;
         execute: (payload: T, dependencies: D) => R;
-    }): new (payload: T, dependencies: D) => Action<T, R, D> {
-        return class extends Action<T, R, D> {
+    }): new (payload: T, dependencies: D) => Action<T, D, R> {
+        return class extends Action<T, D, R> {
             readonly _description = description;
             readonly _payload: T;
 

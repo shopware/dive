@@ -1,10 +1,26 @@
-import { Vector3Like } from 'three';
+import { Action } from '../action';
+import { ActionDependencies } from '../types';
+import { type Vector3Like } from 'three';
 
-export default interface GET_CAMERA_TRANSFORM {
-    DESCRIPTION: 'Returns the current camera position and target.';
-    PAYLOAD: object;
-    RETURN: {
+export const GetCameraTransformAction = Action.define<
+    void,
+    Pick<ActionDependencies, 'controller'>,
+    {
         position: Vector3Like;
         target: Vector3Like;
-    };
+    }
+>({
+    description: 'Gets the current camera position and target.',
+    execute: (_payload, { controller }) => {
+        return {
+            position: controller.object.position.clone(),
+            target: controller.target.clone(),
+        };
+    },
+});
+
+declare global {
+    interface ActionClasses {
+        GET_CAMERA_TRANSFORM: typeof GetCameraTransformAction;
+    }
 }

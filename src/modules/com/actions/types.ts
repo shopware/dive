@@ -1,8 +1,8 @@
-import { type DIVEScene } from '../../../engine/scene/Scene';
-import { type DIVERenderer } from '../../../engine/renderer/Renderer';
+import { DIVEEngine } from '../../../engine/Engine';
 import { type DIVEOrbitController } from '../../controller/orbit/OrbitController';
 import { type DIVEToolbox } from '../../toolbox/Toolbox';
 import { ModuleImporter } from '../../_system/ModuleImporter';
+import { COMEntity } from '../types';
 
 // Extracted types for PerformAction_new
 export type ActionPayload<T> = T extends new (
@@ -33,10 +33,11 @@ export type ActionDeps<T> = T extends new (
     : never;
 
 export interface ActionDependencies {
-    scene: DIVEScene;
-    renderer: DIVERenderer;
+    registered: Map<string, COMEntity>;
+    engine: DIVEEngine;
     controller: DIVEOrbitController;
     toolbox: DIVEToolbox;
-    mediaCreator: ModuleImporter<'MediaCreator'>;
-    ar: ModuleImporter<'ARSystem'>;
+    MediaCreator: ModuleImporter<'MediaCreator'>;
+    ARSystem: ModuleImporter<'ARSystem'>;
+    AssetExporter: ModuleImporter<'AssetExporter'>;
 }

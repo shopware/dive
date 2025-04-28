@@ -1,3 +1,4 @@
+import { DIVEEngine } from '../../../../../engine';
 import { DIVEScene } from '../../../../../engine/scene/Scene';
 import { DIVEOrbitController } from '../../../../controller/orbit/OrbitController';
 import { ComputeEncompassingViewAction } from '../computeencompassingview';
@@ -20,8 +21,12 @@ describe('ComputeEncompassingViewAction', () => {
             }),
         } as unknown as DIVEOrbitController;
 
-        const action = new ComputeEncompassingViewAction(undefined, {
+        const mockEngine = {
             scene: mockScene,
+        } as unknown as DIVEEngine;
+
+        const action = new ComputeEncompassingViewAction(undefined, {
+            engine: mockEngine,
             controller: mockController,
         });
 

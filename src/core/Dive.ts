@@ -91,7 +91,7 @@ export class DIVE {
             dive._communication.Subscribe('MODEL_LOADED', async (data) => {
                 if (data.id !== modelid) return;
 
-                const transform = dive._communication.PerformAction_new(
+                const transform = dive._communication.PerformAction(
                     'COMPUTE_ENCOMPASSING_VIEW',
                 );
 

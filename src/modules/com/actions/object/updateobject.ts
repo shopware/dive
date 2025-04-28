@@ -1,7 +1,31 @@
-import { COMEntity } from '../../types';
+import { Action } from '../action';
+import { ActionDependencies } from '../types';
+import { type COMEntity } from '../../types';
+import { merge } from 'lodash';
 
-export default interface UPDATE_OBJECT {
-    DESCRIPTION: 'Updates an existing object.';
-    PAYLOAD: Partial<COMEntity> & { id: string };
-    RETURN: boolean;
+export const UpdateObjectAction = Action.define<
+    Partial<COMEntity> & { id: string },
+    Pick<ActionDependencies, 'engine' | 'registered'>,
+    void
+>({
+    description: 'Updates an existing object.',
+    execute: (payload, { engine, registered }) => {
+        const objectToUpdate = registered.get(payload.id);
+        if (!objectToUpdate) throw new Error('Object not found.');
+
+        registered.set(payload.id, merge(objectToUpdate, payload));
+
+        const updatedObject = registered.get(payload.id)!;
+        engine.scene.UpdateSceneObject({
+            ...payload,
+            id: updatedObject.id,
+            entityType: updatedObject.entityType,
+        });
+    },
+});
+
+declare global {
+    interface ActionClasses {
+        UPDATE_OBJECT: typeof UpdateObjectAction;
+    }
 }

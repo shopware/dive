@@ -1,0 +1,23 @@
+import { Action } from '../action';
+import { ActionDependencies } from '../types';
+import { type ARSystemOptions } from '../../../ar/ARSystem';
+
+export const LaunchARAction = Action.define<
+    { uri: string; options?: ARSystemOptions },
+    Pick<ActionDependencies, 'ARSystem'>,
+    Promise<void>
+>({
+    description:
+        'Launches AR mode in native capabilities. (iOS: AR Quick Look, Android: Google Scene Viewer)',
+    execute: async (payload, { ARSystem }) => {
+        return ARSystem.instantiate().then((arSystem) => {
+            arSystem.launch(payload.uri, payload.options);
+        });
+    },
+});
+
+declare global {
+    interface ActionClasses {
+        LAUNCH_AR: typeof LaunchARAction;
+    }
+}
