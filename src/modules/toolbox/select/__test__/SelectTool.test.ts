@@ -8,11 +8,11 @@ import { type DIVEBaseTool } from '../../BaseTool';
 import { DIVEAnimationSystem } from '../../../animation/AnimationSystem';
 import { Tween } from '@tweenjs/tween.js';
 import { type DIVEMovable } from '../../../../interfaces/Movable';
-import { DIVERenderer } from '../../../../engine/renderer/Renderer';
+import { DIVERenderPipeline } from '../../../../engine/renderer/Renderer';
 
 jest.mock('../../../../engine/renderer/Renderer', () => {
     return {
-        DIVERenderer: jest.fn(function () {
+        DIVERenderPipeline: jest.fn(function () {
             this.webglrenderer = {
                 domElement: {
                     clientWidth: 0,
@@ -84,7 +84,7 @@ jest.mock('../../../../engine/scene/Scene', () => {
 
 const mockCamera: DIVEPerspectiveCamera = {} as DIVEPerspectiveCamera;
 const mockScene: DIVEScene = new DIVEScene();
-const mockRenderer = new DIVERenderer(mockScene, mockCamera);
+const mockRenderer = new DIVERenderPipeline(mockScene, mockCamera);
 const mockAnimSystem = new DIVEAnimationSystem();
 const mockController: DIVEOrbitController = new DIVEOrbitController(
     mockCamera,

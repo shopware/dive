@@ -12,9 +12,9 @@ describe('dive/animation/DIVEAnimationSystem', () => {
         expect(tween).toBeDefined();
     });
 
-    it('should update', () => {
+    it('should tick', () => {
         const anim = new DIVEAnimationSystem();
-        expect(() => anim.Update()).not.toThrow();
+        expect(() => anim.tick()).not.toThrow();
     });
 
     it('should dispose', () => {

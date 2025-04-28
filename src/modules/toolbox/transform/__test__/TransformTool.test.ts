@@ -2,14 +2,14 @@ import { DIVETransformTool, isTransformTool } from '../TransformTool';
 import { DIVEScene } from '../../../../engine/scene/Scene';
 import { DIVEOrbitController } from '../../../controller/orbit/OrbitController';
 import { DIVEPerspectiveCamera } from '../../../../engine/camera/PerspectiveCamera';
-import { DIVERenderer } from '../../../../engine/renderer/Renderer';
+import { DIVERenderPipeline } from '../../../../engine/renderer/Renderer';
 import { type DIVEBaseTool } from '../../BaseTool';
 import { Tween } from '@tweenjs/tween.js';
 import { DIVEAnimationSystem } from '../../../animation/AnimationSystem';
 
 jest.mock('../../../../engine/renderer/Renderer', () => {
     return {
-        DIVERenderer: jest.fn(function () {
+        DIVERenderPipeline: jest.fn(function () {
             this.webglrenderer = {
                 domElement: {
                     clientWidth: 0,
@@ -82,7 +82,7 @@ jest.mock('../../../animation/AnimationSystem', () => {
 
 const mockScene: DIVEScene = new DIVEScene();
 const mockCamera = new DIVEPerspectiveCamera();
-const mockRenderer = new DIVERenderer(mockScene, mockCamera);
+const mockRenderer = new DIVERenderPipeline(mockScene, mockCamera);
 const mockAnimSystem = new DIVEAnimationSystem();
 const mockController: DIVEOrbitController = new DIVEOrbitController(
     mockCamera,

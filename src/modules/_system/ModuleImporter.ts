@@ -38,6 +38,11 @@ export class ModuleImporter<Id extends keyof ModuleClasses> {
 
     constructor(private _moduleName: string) {
         this._importFn = async (): Promise<ModuleConstructors[Id]> => {
+            if (!window.__MODULE_PATHS__) {
+                throw new Error(
+                    'Module path map not found, invalid build of @shopware-ag/dive!',
+                );
+            }
             const modulePaths = window.__MODULE_PATHS__;
             try {
                 // Get the build path from the injected map
@@ -59,7 +64,7 @@ export class ModuleImporter<Id extends keyof ModuleClasses> {
                 return module[this._moduleName] as ModuleConstructors[Id];
             } catch (err) {
                 throw new Error(
-                    `Failed to dynamically import module from path ${modulePaths[this._moduleName]}: ${err instanceof Error ? err.message : String(err)}`,
+                    `Failed to dynamically import module from path ${modulePaths[this._moduleName]}: ${(err as Error).message}`,
                 );
             }
         };
@@ -97,7 +102,7 @@ export class ModuleImporter<Id extends keyof ModuleClasses> {
         return this._instance;
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    /* istanbul ignore next */ // eslint-disable-next-line @typescript-eslint/no-explicit-any
     private _dynamicImport(path: string): any {
         return import(/* @vite-ignore */ path);
     }

@@ -1,10 +1,10 @@
 import { Matrix4, Vector3 } from 'three';
-import { type DIVERenderer } from '../../../../../engine/renderer/Renderer';
+import { type DIVERenderPipeline } from '../../../../../engine/renderer/Renderer';
 import { type DIVEHitResult } from '../WebXRRaycaster';
 
 export class DIVEWebXRRaycasterAR {
     private _session: XRSession;
-    private _renderer: DIVERenderer;
+    private _renderer: DIVERenderPipeline;
 
     private _transientHitTestSource: XRTransientInputHitTestSource | undefined;
     private _referenceSpaceBuffer: XRReferenceSpace | null = null;
@@ -14,7 +14,7 @@ export class DIVEWebXRRaycasterAR {
 
     private _hitMatrixBuffer: Matrix4;
 
-    constructor(session: XRSession, renderer: DIVERenderer) {
+    constructor(session: XRSession, renderer: DIVERenderPipeline) {
         this._session = session;
         this._renderer = renderer;
 

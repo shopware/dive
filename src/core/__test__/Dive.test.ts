@@ -3,7 +3,7 @@
  */
 
 import { DIVE, DIVESettings } from '../Dive.ts';
-import { DIVERenderer } from '../../engine/renderer/Renderer.ts';
+import { DIVERenderPipeline } from '../../engine/renderer/Renderer.ts';
 import { DIVEScene } from '../../engine/scene/Scene.ts';
 import { DIVEPerspectiveCamera } from '../../engine/camera/PerspectiveCamera.ts';
 import { DIVEClock } from '../../engine/clock/Clock.ts';
@@ -18,7 +18,7 @@ global.ResizeObserver = MockResizeObserver as any;
 
 jest.mock('../../engine/renderer/Renderer.ts', () => {
     return {
-        DIVERenderer: jest.fn(function () {
+        DIVERenderPipeline: jest.fn(function () {
             this.render = jest.fn();
             this.onResize = jest.fn();
             this.dispose = jest.fn();
@@ -47,7 +47,7 @@ jest.mock('../../engine/clock/Clock.ts', () => {
 jest.mock('../../engine/Engine.ts', () => {
     return {
         DIVEEngine: jest.fn(function () {
-            this.renderer = new DIVERenderer(
+            this.renderer = new DIVERenderPipeline(
                 {} as DIVEScene,
                 {} as DIVEPerspectiveCamera,
             );

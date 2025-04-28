@@ -1,5 +1,5 @@
 import { MediaCreator } from '../MediaCreator';
-import { DIVERenderer } from '../../../engine/renderer/Renderer';
+import { DIVERenderPipeline } from '../../../engine/renderer/Renderer';
 import { DIVEScene } from '../../../engine/scene/Scene';
 import { DIVEPerspectiveCamera } from '../../../engine/camera/PerspectiveCamera';
 import { type COMPov } from '../../../modules/com/types';
@@ -93,7 +93,7 @@ jest.mock('../../../modules/controller/orbit/OrbitController', () => {
 
 jest.mock('../../../engine/renderer/Renderer', () => {
     return {
-        DIVERenderer: jest.fn(function () {
+        DIVERenderPipeline: jest.fn(function () {
             this.webglrenderer = {
                 domElement: {
                     toDataURL: mock_toDataURL,
@@ -125,7 +125,7 @@ jest.mock('../../../modules/animation/AnimationSystem', () => {
 
 const mockScene = new DIVEScene();
 const mockCamera = new DIVEPerspectiveCamera();
-const mockRenderer = new DIVERenderer(mockScene, mockCamera);
+const mockRenderer = new DIVERenderPipeline(mockScene, mockCamera);
 const mockAnimationSystem = new DIVEAnimationSystem();
 const mockOrbitController = new DIVEOrbitController(
     mockCamera,

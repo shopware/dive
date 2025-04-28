@@ -1,4 +1,4 @@
-import { DIVERenderer } from '../renderer/Renderer';
+import { DIVERenderPipeline } from '../renderer/Renderer';
 
 export interface DIVETicker {
     tick(deltaTime: number): void;
@@ -6,7 +6,7 @@ export interface DIVETicker {
 }
 
 export class DIVEClock {
-    private _renderer: DIVERenderer | null = null;
+    private _renderer: DIVERenderPipeline | null = null;
 
     private _lastTime: number = 0;
     private _isRunning: boolean = false;
@@ -23,7 +23,7 @@ export class DIVEClock {
         this._isRunning = false;
     }
 
-    public setRenderer(renderer: DIVERenderer): void {
+    public setRenderer(renderer: DIVERenderPipeline): void {
         this._renderer = renderer;
     }
 

@@ -5,9 +5,9 @@ import {
     DIVEPerspectiveCameraSettings,
 } from './camera/PerspectiveCamera.ts';
 import {
-    DIVERenderer,
-    DIVERendererDefaultSettings,
-    DIVERendererSettings,
+    DIVERenderPipeline,
+    DIVERenderPipelineDefaultSettings,
+    DIVERenderPipelineSettings,
 } from './renderer/Renderer.ts';
 import { DIVEClock } from './clock/Clock.ts';
 import { DIVEResizeManager } from './resize/ResizeManager.ts';
@@ -20,18 +20,18 @@ export type EngineSettings = {
     /** Settings for the perspective camera */
     perspectiveCamera: Partial<DIVEPerspectiveCameraSettings>;
     /** Settings for the render pipeline */
-    renderer: Partial<DIVERendererSettings>;
+    renderer: Partial<DIVERenderPipelineSettings>;
 };
 
 export const EngineDefaultSettings: Required<EngineSettings> = {
     autoStart: true,
     displayAxes: false,
     perspectiveCamera: DIVEPerspectiveCameraDefaultSettings,
-    renderer: DIVERendererDefaultSettings,
+    renderer: DIVERenderPipelineDefaultSettings,
 };
 
 export class DIVEEngine {
-    private _renderer: DIVERenderer;
+    private _renderer: DIVERenderPipeline;
     private _scene: DIVEScene;
     private _camera: DIVEPerspectiveCamera;
     private _resizeManager: DIVEResizeManager;
@@ -49,7 +49,7 @@ export class DIVEEngine {
         this._camera = new DIVEPerspectiveCamera(
             this._settings.perspectiveCamera,
         );
-        this._renderer = new DIVERenderer(this._scene, this._camera);
+        this._renderer = new DIVERenderPipeline(this._scene, this._camera);
 
         this._resizeManager = new DIVEResizeManager(
             this._renderer,
@@ -72,7 +72,7 @@ export class DIVEEngine {
         return this._camera;
     }
 
-    public get renderer(): DIVERenderer {
+    public get renderer(): DIVERenderPipeline {
         return this._renderer;
     }
 

@@ -4,12 +4,12 @@ import {
     Raycaster,
     type XRTargetRaySpace,
 } from 'three';
-import { type DIVERenderer } from '../../../../../engine/renderer/Renderer';
+import { type DIVERenderPipeline } from '../../../../../engine/renderer/Renderer';
 import { type DIVEScene } from '../../../../../engine/scene/Scene';
 import { type DIVEHitResult } from '../WebXRRaycaster';
 
 export class DIVEWebXRRaycasterTHREE {
-    private _renderer: DIVERenderer;
+    private _renderer: DIVERenderPipeline;
     private _scene: DIVEScene;
 
     private _controller: XRTargetRaySpace;
@@ -17,7 +17,7 @@ export class DIVEWebXRRaycasterTHREE {
     // internal raycaster
     private _raycaster: Raycaster = new Raycaster();
 
-    constructor(renderer: DIVERenderer, scene: DIVEScene) {
+    constructor(renderer: DIVERenderPipeline, scene: DIVEScene) {
         this._renderer = renderer;
         this._scene = scene;
 

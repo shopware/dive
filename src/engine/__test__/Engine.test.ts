@@ -1,6 +1,6 @@
 import { DIVEEngine, EngineDefaultSettings } from '../Engine.ts';
 import { DIVEPerspectiveCamera } from '../camera/PerspectiveCamera.ts';
-import { DIVERenderer } from '../renderer/Renderer.ts';
+import { DIVERenderPipeline } from '../renderer/Renderer.ts';
 import { DIVEScene } from '../scene/Scene.ts';
 import { DIVEResizeManager } from '../resize/ResizeManager.ts';
 import { DIVEClock } from '../clock/Clock.ts';
@@ -13,7 +13,7 @@ jest.mock('../camera/PerspectiveCamera.ts', () => {
 
 jest.mock('../renderer/Renderer.ts', () => {
     return {
-        DIVERenderer: jest.fn(function () {
+        DIVERenderPipeline: jest.fn(function () {
             this.dispose = jest.fn();
             return this;
         }),
@@ -63,7 +63,7 @@ describe('DIVEEngine', () => {
         expect(DIVEPerspectiveCamera).toHaveBeenCalledWith(
             EngineDefaultSettings.perspectiveCamera,
         );
-        expect(DIVERenderer).toHaveBeenCalled();
+        expect(DIVERenderPipeline).toHaveBeenCalled();
         expect(DIVEScene).toHaveBeenCalled();
         expect(DIVEResizeManager).toHaveBeenCalled();
         expect(DIVEClock).toHaveBeenCalled();
@@ -102,7 +102,7 @@ describe('DIVEEngine', () => {
         const clock = (DIVEClock as jest.Mock).mock.instances[0];
         const resizeManager = (DIVEResizeManager as jest.Mock).mock
             .instances[0];
-        const renderer = (DIVERenderer as jest.Mock).mock.instances[0];
+        const renderer = (DIVERenderPipeline as jest.Mock).mock.instances[0];
 
         engine.dispose();
 

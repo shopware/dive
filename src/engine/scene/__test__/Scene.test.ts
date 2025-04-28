@@ -30,7 +30,7 @@ jest.mock('../../../components/root/Root', () => {
 
 jest.mock('../../renderer/Renderer.ts', () => {
     return {
-        DIVERenderer: jest.fn(function () {}),
+        DIVERenderPipeline: jest.fn(function () {}),
     };
 });
 

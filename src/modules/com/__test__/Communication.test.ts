@@ -24,7 +24,7 @@ import '../actions/camera/getcameratransform';
 import { type DIVEScene } from '../../../engine/scene/Scene';
 import { type DIVEToolbox } from '../../toolbox/Toolbox';
 import { type DIVEOrbitController } from '../../controller/orbit/OrbitController';
-import { type DIVERenderer } from '../../../engine/renderer/Renderer';
+import { type DIVERenderPipeline } from '../../../engine/renderer/Renderer';
 import {
     type COMGroup,
     type COMEntity,
@@ -125,7 +125,7 @@ const mockRenderer = {
     render: jest.fn(),
     OnResize: jest.fn(),
     StartRenderer: jest.fn(),
-} as unknown as DIVERenderer;
+} as unknown as DIVERenderPipeline;
 
 const mockEngine = {
     scene: mockScene,

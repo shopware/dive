@@ -1,11 +1,11 @@
 import { DIVEResizeManager } from '../ResizeManager.ts';
-import { DIVERenderer } from '../../renderer/Renderer.ts';
+import { DIVERenderPipeline } from '../../renderer/Renderer.ts';
 import { DIVEPerspectiveCamera } from '../../camera/PerspectiveCamera.ts';
 import { DIVEScene } from '../../scene/Scene.ts';
 
 jest.mock('../../renderer/Renderer.ts', () => {
     return {
-        DIVERenderer: jest.fn(function () {
+        DIVERenderPipeline: jest.fn(function () {
             return {
                 webglrenderer: {
                     domElement: document.createElement('canvas'),
@@ -48,7 +48,7 @@ jest.mock('../../camera/PerspectiveCamera.ts', () => {
 
 describe('DIVEResizeManager', () => {
     let resizeManager: DIVEResizeManager;
-    let renderer: DIVERenderer;
+    let renderer: DIVERenderPipeline;
     let camera: DIVEPerspectiveCamera;
     let mockResizeObserver: jest.Mock;
     let mockObserve: jest.Mock;
@@ -56,7 +56,7 @@ describe('DIVEResizeManager', () => {
 
     beforeEach(() => {
         jest.clearAllMocks();
-        renderer = new DIVERenderer(
+        renderer = new DIVERenderPipeline(
             new DIVEScene(),
             new DIVEPerspectiveCamera(),
         );

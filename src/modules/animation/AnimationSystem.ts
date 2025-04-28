@@ -17,10 +17,6 @@ export class DIVEAnimationSystem implements DIVETicker {
         updateTween();
     }
 
-    public Update(): void {
-        updateTween();
-    }
-
     public Animate<T extends object>(object: T): Tween<T> {
         return new Tween<T>(object);
     }

@@ -16,7 +16,7 @@ import {
     AxesColorGreenLetter,
     AxesColorBlueLetter,
 } from '../../constants/AxisHelperColors';
-import { type DIVERenderer } from '../../engine/renderer/Renderer';
+import { type DIVERenderPipeline } from '../../engine/renderer/Renderer';
 import { DIVETicker } from '../../engine/clock/Clock';
 import { DIVEScene } from '../../engine/scene/Scene';
 import { DIVEPerspectiveCamera } from '../../engine/camera/PerspectiveCamera';
@@ -30,14 +30,14 @@ import { DIVEPerspectiveCamera } from '../../engine/camera/PerspectiveCamera';
 export class DIVEAxisCamera extends OrthographicCamera implements DIVETicker {
     private axesHelper: AxesHelper;
 
-    private _renderer: DIVERenderer;
+    private _renderer: DIVERenderPipeline;
     private _scene: DIVEScene;
     private _camera: DIVEPerspectiveCamera;
 
     private _restoreViewport: Vector4 = new Vector4();
 
     constructor(
-        renderer: DIVERenderer,
+        renderer: DIVERenderPipeline,
         scene: DIVEScene,
         camera: DIVEPerspectiveCamera,
     ) {

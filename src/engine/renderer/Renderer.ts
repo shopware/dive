@@ -2,7 +2,7 @@ import { WebGLRenderer } from 'three';
 import { DIVEScene } from '../scene/Scene.ts';
 import { DIVEPerspectiveCamera } from '../camera/PerspectiveCamera.ts';
 
-export type DIVERendererSettings = {
+export type DIVERenderPipelineSettings = {
     /** Whether to enable antialiasing */
     antialias: boolean;
     /** Whether to enable alpha channel */
@@ -19,15 +19,16 @@ export type DIVERendererSettings = {
     logarithmicDepthBuffer: boolean;
 };
 
-export const DIVERendererDefaultSettings: Required<DIVERendererSettings> = {
-    antialias: true,
-    alpha: true,
-    powerPreference: 'high-performance',
-    precision: 'highp',
-    stencil: false,
-    depth: true,
-    logarithmicDepthBuffer: false,
-};
+export const DIVERenderPipelineDefaultSettings: Required<DIVERenderPipelineSettings> =
+    {
+        antialias: true,
+        alpha: true,
+        powerPreference: 'high-performance',
+        precision: 'highp',
+        stencil: false,
+        depth: true,
+        logarithmicDepthBuffer: false,
+    };
 
 /**
  * A changed version of the WebGLRenderer.
@@ -37,17 +38,17 @@ export const DIVERendererDefaultSettings: Required<DIVERendererSettings> = {
  * @module
  */
 
-export class DIVERenderer {
+export class DIVERenderPipeline {
     private _webglrenderer: WebGLRenderer;
-    private _settings: DIVERendererSettings;
+    private _settings: DIVERenderPipelineSettings;
 
     constructor(
         private _scene: DIVEScene,
         private _camera: DIVEPerspectiveCamera,
-        settings?: Partial<DIVERendererSettings>,
+        settings?: Partial<DIVERenderPipelineSettings>,
     ) {
         this._settings = {
-            ...DIVERendererDefaultSettings,
+            ...DIVERenderPipelineDefaultSettings,
             ...(settings ?? {}),
         };
 

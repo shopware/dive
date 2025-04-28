@@ -1,12 +1,12 @@
 import { DIVEPerspectiveCamera } from '../camera/PerspectiveCamera.ts';
-import { DIVERenderer } from '../renderer/Renderer.ts';
+import { DIVERenderPipeline } from '../renderer/Renderer.ts';
 
 export class DIVEResizeManager {
     private _resizeObserver: ResizeObserver;
     private _width: number = 0;
     private _height: number = 0;
 
-    constructor(renderer: DIVERenderer, camera: DIVEPerspectiveCamera) {
+    constructor(renderer: DIVERenderPipeline, camera: DIVEPerspectiveCamera) {
         this._resizeObserver = new ResizeObserver((entries) => {
             for (const entry of entries) {
                 const { width, height } = entry.contentRect;

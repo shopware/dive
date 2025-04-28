@@ -1,6 +1,6 @@
 import { DIVEPerspectiveCamera } from '../../engine/camera/PerspectiveCamera';
 import { type DIVEScene } from '../../engine/scene/Scene';
-import { type DIVERenderer } from '../../engine/renderer/Renderer';
+import { type DIVERenderPipeline } from '../../engine/renderer/Renderer';
 import { type DIVEOrbitController } from '../../modules/controller/orbit/OrbitController';
 import { type Vector3Like } from 'three';
 
@@ -39,12 +39,12 @@ declare global {
  * @internal
  */
 export class MediaCreator {
-    private _renderer: DIVERenderer;
+    private _renderer: DIVERenderPipeline;
     private _scene: DIVEScene;
     private _controller: DIVEOrbitController;
 
     constructor(
-        renderer: DIVERenderer,
+        renderer: DIVERenderPipeline,
         scene: DIVEScene,
         controller: DIVEOrbitController,
     ) {

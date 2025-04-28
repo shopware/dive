@@ -1,6 +1,6 @@
 import { Vector3 } from 'three';
 import { DIVEOrbitController } from '../../../modules/controller/orbit/OrbitController';
-import { type DIVERenderer } from '../../../engine/renderer/Renderer';
+import { type DIVERenderPipeline } from '../../../engine/renderer/Renderer';
 import { type DIVEScene } from '../../../engine/scene/Scene';
 import { Overlay } from './overlay/Overlay';
 import { DIVEWebXRController } from './controller/WebXRController';
@@ -8,7 +8,7 @@ import { DIVEEngine } from '../../../engine';
 
 export class DIVEWebXR {
     // general members
-    private static _renderer: DIVERenderer;
+    private static _renderer: DIVERenderPipeline;
     private static _scene: DIVEScene;
     private static _controller: DIVEOrbitController;
 

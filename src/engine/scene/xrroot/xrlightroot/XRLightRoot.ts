@@ -1,5 +1,5 @@
 import { XREstimatedLight } from 'three/examples/jsm/webxr/XREstimatedLight';
-import { type DIVERenderer } from '../../../renderer/Renderer';
+import { type DIVERenderPipeline } from '../../../renderer/Renderer';
 import { Object3D } from 'three';
 import { type DIVEScene } from '../../Scene';
 import { PRODUCT_LAYER_MASK } from '../../../../constants/VisibilityLayerMask';
@@ -35,7 +35,7 @@ export class DIVEXRLightRoot extends Object3D {
         this.add(this._lightRoot);
     }
 
-    public InitLightEstimation(renderer: DIVERenderer): void {
+    public InitLightEstimation(renderer: DIVERenderPipeline): void {
         if (!this._xrLight) {
             this._xrLight = new XREstimatedLight(renderer.webglrenderer, true);
             this._xrLight.layers.mask = PRODUCT_LAYER_MASK;

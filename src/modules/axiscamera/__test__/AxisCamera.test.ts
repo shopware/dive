@@ -1,6 +1,6 @@
 import { Matrix4, Vector4, Color, AxesHelper, Material } from 'three';
 import { DIVEAxisCamera } from '../AxisCamera';
-import { DIVERenderer } from '../../../engine/renderer/Renderer';
+import { DIVERenderPipeline } from '../../../engine/renderer/Renderer';
 import { DIVEScene } from '../../../engine/scene/Scene';
 import { DIVEOrbitController } from '../../controller/orbit/OrbitController';
 import { COORDINATE_LAYER_MASK } from '../../../constants/VisibilityLayerMask';
@@ -24,7 +24,7 @@ const mockRenderer = {
         render: jest.fn(),
         autoClear: true,
     },
-} as unknown as DIVERenderer;
+} as unknown as DIVERenderPipeline;
 
 describe('DIVEAxisCamera', () => {
     let axisCamera: DIVEAxisCamera;
