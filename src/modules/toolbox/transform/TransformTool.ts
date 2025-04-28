@@ -1,6 +1,6 @@
 import { DIVEBaseTool } from '../BaseTool';
 import { type DIVEScene } from '../../../engine/scene/Scene';
-import { DIVEOrbitController } from '../../controller/orbit/OrbitController';
+import { OrbitController } from '../../controller/orbit/OrbitController';
 import { TransformControls } from 'three/examples/jsm/controls/TransformControls';
 import { type DIVEMovable } from '../../../interfaces/Movable';
 import { implementsInterface } from '../../../helpers/implementsInterface/implementsInterface';
@@ -37,7 +37,7 @@ export class DIVETransformTool extends DIVEBaseTool {
 
     protected _gizmo: TransformControls | DIVEGizmo;
 
-    constructor(scene: DIVEScene, controller: DIVEOrbitController) {
+    constructor(scene: DIVEScene, controller: OrbitController) {
         super(scene, controller);
         this.name = 'DIVETransformTool';
 

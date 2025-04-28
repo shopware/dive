@@ -12,6 +12,11 @@
             "import": "./build/index.mjs",
             "require": "./build/index.cjs"
         },
+        "./modules/AnimationSystem": {
+            "types": "./build/src/modules/animation/AnimationSystem.d.ts",
+            "import": "./build/src/modules/animation/AnimationSystem.mjs",
+            "require": "./build/src/modules/animation/AnimationSystem.cjs"
+        },
         "./modules/ARSystem": {
             "types": "./build/src/modules/ar/ARSystem.d.ts",
             "import": "./build/src/modules/ar/ARSystem.mjs",

@@ -1,6 +1,6 @@
 import { GenerateMediaAction } from '../generatemedia';
 import { COMEntity } from '../../../types';
-import { DIVEOrbitController } from '../../../../controller/orbit/OrbitController';
+import { OrbitController } from '../../../../controller/orbit/OrbitController';
 import { Vector3 } from 'three';
 import { DIVEEngine } from '../../../../../engine';
 import { DIVEScene } from '../../../../../engine/scene/Scene';
@@ -21,7 +21,7 @@ describe('GenerateMediaAction', () => {
 
     const mockRenderer = {} as DIVERenderPipeline;
     const mockScene = {} as DIVEScene;
-    const mockController = {} as DIVEOrbitController;
+    const mockController = {} as OrbitController;
     const mockRegistered = new Map<string, COMEntity>();
 
     const mockEngine = {

@@ -4,14 +4,14 @@ import { type Box3, MathUtils, Vector3, Vector3Like } from 'three';
 import { Easing } from '@tweenjs/tween.js';
 import { Animator } from '../../animation/AnimationSystem';
 
-export type DIVEOrbitControllerSettings = {
+export type OrbitControllerSettings = {
     /** Whether to enable damping for smooth camera movement */
     enableDamping: boolean;
     /** Damping factor for camera movement */
     dampingFactor: number;
 };
 
-export const DIVEOrbitControllerDefaultSettings: Required<DIVEOrbitControllerSettings> =
+export const OrbitControllerDefaultSettings: Required<OrbitControllerSettings> =
     {
         enableDamping: true,
         dampingFactor: 0.05,
@@ -23,7 +23,7 @@ export const DIVEOrbitControllerDefaultSettings: Required<DIVEOrbitControllerSet
  * @module
  */
 
-export class DIVEOrbitController extends OrbitControls {
+export class OrbitController extends OrbitControls {
     public static readonly DEFAULT_ZOOM_FACTOR = 1;
 
     private last: { pos: Vector3Like; target: Vector3Like } | null = null;
@@ -40,7 +40,7 @@ export class DIVEOrbitController extends OrbitControls {
     constructor(
         camera: DIVEPerspectiveCamera,
         domElement: HTMLCanvasElement,
-        settings: Partial<DIVEOrbitControllerSettings> = DIVEOrbitControllerDefaultSettings,
+        settings: Partial<OrbitControllerSettings> = OrbitControllerDefaultSettings,
     ) {
         super(camera, domElement);
 
@@ -50,10 +50,10 @@ export class DIVEOrbitController extends OrbitControls {
 
         this.enableDamping =
             settings.enableDamping ||
-            DIVEOrbitControllerDefaultSettings.enableDamping;
+            OrbitControllerDefaultSettings.enableDamping;
         this.dampingFactor =
             settings.dampingFactor ||
-            DIVEOrbitControllerDefaultSettings.dampingFactor;
+            OrbitControllerDefaultSettings.dampingFactor;
 
         // initialize camera transformation
         this.object.position.set(0, 2, 2);
@@ -81,7 +81,7 @@ export class DIVEOrbitController extends OrbitControls {
     }
 
     public ZoomIn(by?: number): void {
-        const zoomBy = by || DIVEOrbitController.DEFAULT_ZOOM_FACTOR;
+        const zoomBy = by || OrbitController.DEFAULT_ZOOM_FACTOR;
         const { minDistance, maxDistance } = this;
         this.minDistance = this.maxDistance = MathUtils.clamp(
             this.getDistance() - zoomBy,
@@ -94,7 +94,7 @@ export class DIVEOrbitController extends OrbitControls {
     }
 
     public ZoomOut(by?: number): void {
-        const zoomBy = by || DIVEOrbitController.DEFAULT_ZOOM_FACTOR;
+        const zoomBy = by || OrbitController.DEFAULT_ZOOM_FACTOR;
         const { minDistance, maxDistance } = this;
         this.minDistance = this.maxDistance = MathUtils.clamp(
             this.getDistance() + zoomBy,

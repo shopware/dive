@@ -4,7 +4,7 @@ import {
     AxesColorGreen,
     AxesColorRed,
 } from '../../../constants/AxisHelperColors';
-import { DIVEOrbitController } from '../../../modules/controller/orbit/OrbitController';
+import { OrbitController } from '../../../modules/controller/orbit/OrbitController';
 import { DIVERadialHandle } from '../handles/RadialHandle';
 import { DIVEGizmo, DIVEGizmoAxis } from '../Gizmo';
 import { DraggableEvent } from '../../../modules/toolbox/BaseTool';
@@ -13,7 +13,7 @@ import { DIVEMath } from '../../../helpers/math';
 export class DIVERotateGizmo extends Object3D {
     public children: DIVERadialHandle[];
 
-    private _controller: DIVEOrbitController;
+    private _controller: OrbitController;
 
     public set debug(value: boolean) {
         this.children.forEach((child) => {
@@ -23,7 +23,7 @@ export class DIVERotateGizmo extends Object3D {
 
     private _startRot: Euler | null;
 
-    constructor(controller: DIVEOrbitController) {
+    constructor(controller: OrbitController) {
         super();
 
         this.name = 'DIVERotateGizmo';

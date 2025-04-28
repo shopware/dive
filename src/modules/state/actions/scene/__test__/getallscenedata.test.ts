@@ -1,7 +1,7 @@
 import { GetAllSceneDataAction } from '../getallscenedata';
 import { DIVEEngine } from '../../../../../engine';
 import { DIVEScene } from '../../../../../engine/scene/Scene';
-import { DIVEOrbitController } from '../../../../controller/orbit/OrbitController';
+import { OrbitController } from '../../../../controller/orbit/OrbitController';
 import { Color, MeshStandardMaterial, Vector3 } from 'three';
 import {
     COMGroup,
@@ -36,7 +36,7 @@ describe('GetAllSceneDataAction', () => {
                 position: new Vector3(0, 0, 0),
             },
             target: new Vector3(0, 0, 0),
-        } as unknown as DIVEOrbitController;
+        } as unknown as OrbitController;
 
         const mockRegistered = new Map();
 

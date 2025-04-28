@@ -5,7 +5,7 @@ import {
     AxesColorRed,
 } from '../../../constants/AxisHelperColors';
 import { DIVEHoverable } from '../../../interfaces/Hoverable';
-import { DIVEOrbitController } from '../../../modules/controller/orbit/OrbitController';
+import { OrbitController } from '../../../modules/controller/orbit/OrbitController';
 import { DIVEScaleHandle } from '../handles/ScaleHandle';
 import { DraggableEvent } from '../../../modules/toolbox/BaseTool';
 import { DIVEGizmoAxis, DIVEGizmo } from '../Gizmo';
@@ -15,7 +15,7 @@ export class DIVEScaleGizmo extends Object3D implements DIVEHoverable {
 
     public children: DIVEScaleHandle[];
 
-    private _controller: DIVEOrbitController;
+    private _controller: OrbitController;
 
     public set debug(value: boolean) {
         this.children.forEach((child) => {
@@ -25,7 +25,7 @@ export class DIVEScaleGizmo extends Object3D implements DIVEHoverable {
 
     private _startScale: Vector3 | null;
 
-    constructor(controller: DIVEOrbitController) {
+    constructor(controller: OrbitController) {
         super();
 
         this.name = 'DIVEScaleGizmo';

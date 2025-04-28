@@ -1,5 +1,5 @@
 import { SetCameraTransformAction } from '../setcameratransform';
-import { DIVEOrbitController } from '../../../../controller/orbit/OrbitController';
+import { OrbitController } from '../../../../controller/orbit/OrbitController';
 import { Vector3 } from 'three';
 
 describe('SetCameraTransformAction', () => {
@@ -11,7 +11,7 @@ describe('SetCameraTransformAction', () => {
             },
             target: new Vector3(1, 1, 1),
             update: jest.fn(),
-        } as unknown as DIVEOrbitController;
+        } as unknown as OrbitController;
 
         const action = new SetCameraTransformAction(
             {

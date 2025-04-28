@@ -1,16 +1,31 @@
 import { MoveCameraAction } from '../movecamera';
 import { COMEntity } from '../../../types';
-import { DIVEOrbitController } from '../../../../controller/orbit/OrbitController';
+import { OrbitController } from '../../../../controller/orbit/OrbitController';
 import { Vector3 } from 'three';
+import { DIVEEngine } from '../../../../../engine';
+import { ModuleImporter } from '../../../..';
 
 describe('MoveCameraAction', () => {
     it('should move camera to a new position and target', async () => {
         // Mock dependencies
         const mockController = {
             MoveTo: jest.fn(),
-        } as unknown as DIVEOrbitController;
+        } as unknown as OrbitController;
 
         const mockRegistered = new Map<string, COMEntity>();
+
+        const mockAnimationSystem = {
+            instantiate: jest.fn().mockResolvedValue({
+                createAnimator: jest.fn(),
+            }),
+        } as unknown as ModuleImporter<'AnimationSystem'>;
+
+        const mockEngine = {
+            pipeline: {
+                addPreRenderStep: jest.fn(),
+                removePreRenderStep: jest.fn(),
+            },
+        } as unknown as DIVEEngine;
 
         const action = new MoveCameraAction(
             {
@@ -22,6 +37,8 @@ describe('MoveCameraAction', () => {
             {
                 controller: mockController,
                 registered: mockRegistered,
+                AnimationSystem: mockAnimationSystem,
+                engine: mockEngine,
             },
         );
 
@@ -41,9 +58,22 @@ describe('MoveCameraAction', () => {
         // Mock dependencies
         const mockController = {
             MoveTo: jest.fn(),
-        } as unknown as DIVEOrbitController;
+        } as unknown as OrbitController;
 
         const mockRegistered = new Map<string, COMEntity>();
+
+        const mockAnimationSystem = {
+            instantiate: jest.fn().mockResolvedValue({
+                createAnimator: jest.fn(),
+            }),
+        } as unknown as ModuleImporter<'AnimationSystem'>;
+
+        const mockEngine = {
+            pipeline: {
+                addPreRenderStep: jest.fn(),
+                removePreRenderStep: jest.fn(),
+            },
+        } as unknown as DIVEEngine;
 
         const testPOV: COMEntity = {
             id: 'test-pov',
@@ -68,6 +98,8 @@ describe('MoveCameraAction', () => {
             {
                 controller: mockController,
                 registered: mockRegistered,
+                AnimationSystem: mockAnimationSystem,
+                engine: mockEngine,
             },
         );
 
@@ -87,9 +119,22 @@ describe('MoveCameraAction', () => {
         // Mock dependencies
         const mockController = {
             MoveTo: jest.fn(),
-        } as unknown as DIVEOrbitController;
+        } as unknown as OrbitController;
 
         const mockRegistered = new Map<string, COMEntity>();
+
+        const mockAnimationSystem = {
+            instantiate: jest.fn().mockResolvedValue({
+                createAnimator: jest.fn(),
+            }),
+        } as unknown as ModuleImporter<'AnimationSystem'>;
+
+        const mockEngine = {
+            pipeline: {
+                addPreRenderStep: jest.fn(),
+                removePreRenderStep: jest.fn(),
+            },
+        } as unknown as DIVEEngine;
 
         const action = new MoveCameraAction(
             {
@@ -100,6 +145,8 @@ describe('MoveCameraAction', () => {
             {
                 controller: mockController,
                 registered: mockRegistered,
+                AnimationSystem: mockAnimationSystem,
+                engine: mockEngine,
             },
         );
 
@@ -113,9 +160,22 @@ describe('MoveCameraAction', () => {
         // Mock dependencies
         const mockController = {
             MoveTo: jest.fn(),
-        } as unknown as DIVEOrbitController;
+        } as unknown as OrbitController;
 
         const mockRegistered = new Map<string, COMEntity>();
+
+        const mockAnimationSystem = {
+            instantiate: jest.fn().mockResolvedValue({
+                createAnimator: jest.fn(),
+            }),
+        } as unknown as ModuleImporter<'AnimationSystem'>;
+
+        const mockEngine = {
+            pipeline: {
+                addPreRenderStep: jest.fn(),
+                removePreRenderStep: jest.fn(),
+            },
+        } as unknown as DIVEEngine;
 
         const testObject: COMEntity = {
             id: 'test-object',
@@ -138,6 +198,8 @@ describe('MoveCameraAction', () => {
             {
                 controller: mockController,
                 registered: mockRegistered,
+                AnimationSystem: mockAnimationSystem,
+                engine: mockEngine,
             },
         );
 

@@ -1,8 +1,8 @@
-import { DIVEOrbitController } from '../OrbitController';
+import { OrbitController } from '../OrbitController';
 import { type DIVEPerspectiveCamera } from '../../../../engine/camera/PerspectiveCamera';
 import { DIVERenderPipeline } from '../../../../engine/renderer/Renderer';
 import { Box3 } from 'three';
-import { DIVEAnimationSystem } from '../../../animation/AnimationSystem';
+import { AnimationSystem } from '../../../animation/AnimationSystem';
 import { Tween } from '@tweenjs/tween.js';
 import { DIVEScene } from '../../../../engine/scene/Scene';
 
@@ -57,10 +57,31 @@ const mockCamera = {
     },
     lookAt: jest.fn(),
 } as unknown as DIVEPerspectiveCamera;
-const mockRenderer = new DIVERenderPipeline({} as DIVEScene, mockCamera);
-const mockAnimSystem = new DIVEAnimationSystem();
+const mockRenderer = {
+    render: jest.fn(),
+    OnResize: jest.fn(),
+    getViewport: jest.fn(),
+    setViewport: jest.fn(),
+    AddPreRenderCallback: jest.fn((callback) => {
+        callback();
+    }),
+    AddPostRenderCallback: jest.fn((callback) => {
+        callback();
+    }),
+    RemovePreRenderCallback: jest.fn(),
+    RemovePostRenderCallback: jest.fn(),
+} as unknown as DIVERenderPipeline;
 
-let controller: DIVEOrbitController;
+const mockPipeline = {
+    addPreRenderStep: jest.fn(),
+    addPostRenderStep: jest.fn(),
+    removePreRenderStep: jest.fn(),
+    removePostRenderStep: jest.fn(),
+    tick: jest.fn(),
+    dispose: jest.fn(),
+} as unknown as DIVERenderPipeline;
+
+let controller: OrbitController;
 
 describe('dive/controls/DIVEOrbitControls', () => {
     afterEach(() => {
@@ -68,10 +89,9 @@ describe('dive/controls/DIVEOrbitControls', () => {
     });
 
     beforeEach(() => {
-        controller = new DIVEOrbitController(
+        controller = new OrbitController(
             mockCamera,
             mockRenderer.webglrenderer.domElement,
-            mockAnimSystem,
         );
     });
 
@@ -82,10 +102,9 @@ describe('dive/controls/DIVEOrbitControls', () => {
     });
 
     it('should instantiate with settings', () => {
-        controller = new DIVEOrbitController(
+        controller = new OrbitController(
             mockCamera,
             mockRenderer.webglrenderer.domElement,
-            mockAnimSystem,
         );
         expect(controller).toBeDefined();
     });
@@ -193,10 +212,9 @@ describe('dive/controls/DIVEOrbitControls', () => {
 
     it('should properly set up and remove preRenderCallback', () => {
         // Create new controller to test setup
-        const newController = new DIVEOrbitController(
+        const newController = new OrbitController(
             mockCamera,
             mockRenderer.webglrenderer.domElement,
-            mockAnimSystem,
         );
 
         // Test removal

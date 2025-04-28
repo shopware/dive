@@ -2,7 +2,7 @@ import { State } from '../State';
 import '../types';
 import { type DIVEScene } from '../../../engine/scene/Scene';
 import { type DIVEToolbox } from '../../toolbox/Toolbox';
-import { type DIVEOrbitController } from '../../controller/orbit/OrbitController';
+import { type OrbitController } from '../../controller/orbit/OrbitController';
 import { type DIVERenderPipeline } from '../../../engine/renderer/Renderer';
 import { DIVEEngine } from '../../../engine/Engine';
 
@@ -168,7 +168,7 @@ const mockController = {
         position: { x: 1, y: 2, z: 3 },
         target: { x: 4, y: 5, z: 6 },
     }),
-} as unknown as DIVEOrbitController;
+} as unknown as OrbitController;
 
 const mockToolBox = {
     UseTool: jest.fn(),
