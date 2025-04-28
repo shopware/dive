@@ -163,10 +163,7 @@ export class DIVE {
             this._settings.orbitController,
         );
         this._engine.clock.addTicker(this.orbitControls);
-        this.toolbox = new DIVEToolbox(
-            this._engine.renderer.scene,
-            this.orbitControls,
-        );
+        this.toolbox = new DIVEToolbox(this._engine.scene, this.orbitControls);
 
         // initialize axis camera
         if (this._settings.displayAxes) {
@@ -184,7 +181,7 @@ export class DIVE {
         (window as any).DIVE = {
             instances: [],
             PrintScene: () => {
-                return this._engine.renderer.scene;
+                return this._engine.scene;
             },
         };
 

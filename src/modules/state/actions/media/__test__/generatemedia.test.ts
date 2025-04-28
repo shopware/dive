@@ -4,7 +4,7 @@ import { DIVEOrbitController } from '../../../../controller/orbit/OrbitControlle
 import { Vector3 } from 'three';
 import { DIVEEngine } from '../../../../../engine';
 import { DIVEScene } from '../../../../../engine/scene/Scene';
-import { DIVERenderer } from '../../../../../engine/renderer/Renderer';
+import { DIVERenderPipeline } from '../../../../../engine/renderer/Renderer';
 import { ModuleImporter } from '../../../../_system/ModuleImporter';
 
 describe('GenerateMediaAction', () => {
@@ -19,7 +19,7 @@ describe('GenerateMediaAction', () => {
         instantiate: jest.fn().mockResolvedValue(mockMediaCreator),
     } as unknown as ModuleImporter<'MediaCreator'>;
 
-    const mockRenderer = {} as DIVERenderer;
+    const mockRenderer = {} as DIVERenderPipeline;
     const mockScene = {} as DIVEScene;
     const mockController = {} as DIVEOrbitController;
     const mockRegistered = new Map<string, COMEntity>();
@@ -50,8 +50,8 @@ describe('GenerateMediaAction', () => {
 
         // Verify results
         expect(mockMediaCreatorModule.instantiate).toHaveBeenCalledWith(
-            mockRenderer,
-            mockScene,
+            mockEngine.renderer,
+            mockEngine.scene,
             mockController,
         );
         expect(mockMediaCreator.GenerateMedia).toHaveBeenCalledWith(
@@ -97,8 +97,8 @@ describe('GenerateMediaAction', () => {
 
         // Verify results
         expect(mockMediaCreatorModule.instantiate).toHaveBeenCalledWith(
-            mockRenderer,
-            mockScene,
+            mockEngine.renderer,
+            mockEngine.scene,
             mockController,
         );
         expect(mockMediaCreator.GenerateMedia).toHaveBeenCalledWith(
