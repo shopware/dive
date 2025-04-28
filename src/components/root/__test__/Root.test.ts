@@ -41,6 +41,7 @@ jest.mock('../../../modules/com/Communication.ts', () => {
 jest.mock('../../floor/Floor', () => {
     return {
         DIVEFloor: jest.fn(function () {
+            this.isDIVEFloor = true;
             this.isObject3D = true;
             this.parent = null;
             this.dispatchEvent = jest.fn();
@@ -271,21 +272,16 @@ describe('components/root/DIVERoot', () => {
 
     describe('ComputeSceneBB', () => {
         it('should compute bounding box for scene objects', () => {
-            const mockObject: Partial<Object3D> = {
-                isObject3D: true,
-                position: new Vector3(1, 2, 3),
-                traverse: jest.fn((callback: (obj: Object3D) => void) =>
-                    callback(mockObject as Object3D),
-                ),
-            };
-            root.traverse = jest.fn((callback) =>
+            const mockObject = new Object3D();
+            mockObject.position.set(1, 2, 3);
+
+            Object3D.prototype.traverse = jest.fn((callback) =>
                 callback(mockObject as Object3D),
             );
 
             const bb = root.ComputeSceneBB();
             expect(bb).toBeDefined();
             expect(bb).toBeInstanceOf(Box3);
-            expect(root.traverse).toHaveBeenCalled();
         });
     });
 

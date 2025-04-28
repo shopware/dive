@@ -1,4 +1,5 @@
 import { Tween, update as updateTween } from '@tweenjs/tween.js';
+import { DIVETicker } from '../../engine/clock/Clock';
 
 /**
  * Updates all animations.
@@ -7,9 +8,13 @@ import { Tween, update as updateTween } from '@tweenjs/tween.js';
  * @module
  */
 
-export class DIVEAnimationSystem {
+export class DIVEAnimationSystem implements DIVETicker {
     public Dispose(): void {
         // nothing to do here
+    }
+
+    public tick(): void {
+        updateTween();
     }
 
     public Update(): void {

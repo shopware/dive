@@ -4,29 +4,18 @@ import { DIVERenderer } from '../../../../engine/renderer/Renderer';
 import { Box3 } from 'three';
 import { DIVEAnimationSystem } from '../../../animation/AnimationSystem';
 import { Tween } from '@tweenjs/tween.js';
-import { DIVERenderPipeline } from '../../../../engine/pipeline/RenderPipeline';
+import { DIVEScene } from '../../../../engine/scene/Scene';
 
 jest.mock('../../../../engine/renderer/Renderer', () => {
     return {
         DIVERenderer: jest.fn(function () {
-            this.domElement = {
-                style: {},
+            this.webglrenderer = {
+                domElement: {},
             };
-            return this;
-        }),
-    };
-});
-
-jest.mock('../../../../engine/pipeline/RenderPipeline', () => {
-    return {
-        DIVERenderPipeline: jest.fn(function () {
-            this.addPreRenderStep = (callback: () => void) => {
-                callback();
-            };
-            this.removePreRenderStep = (callback: () => void) => {
-                callback();
-            };
-
+            this.render = jest.fn();
+            this.onResize = jest.fn();
+            this.getViewport = jest.fn();
+            this.setViewport = jest.fn();
             return this;
         }),
     };
@@ -68,30 +57,7 @@ const mockCamera = {
     },
     lookAt: jest.fn(),
 } as unknown as DIVEPerspectiveCamera;
-const mockRenderer = {
-    render: jest.fn(),
-    OnResize: jest.fn(),
-    getViewport: jest.fn(),
-    setViewport: jest.fn(),
-    AddPreRenderCallback: jest.fn((callback) => {
-        callback();
-    }),
-    AddPostRenderCallback: jest.fn((callback) => {
-        callback();
-    }),
-    RemovePreRenderCallback: jest.fn(),
-    RemovePostRenderCallback: jest.fn(),
-} as unknown as DIVERenderer;
-
-const mockPipeline = {
-    addPreRenderStep: jest.fn(),
-    addPostRenderStep: jest.fn(),
-    removePreRenderStep: jest.fn(),
-    removePostRenderStep: jest.fn(),
-    tick: jest.fn(),
-    dispose: jest.fn(),
-} as unknown as DIVERenderPipeline;
-
+const mockRenderer = new DIVERenderer({} as DIVEScene, mockCamera);
 const mockAnimSystem = new DIVEAnimationSystem();
 
 let controller: DIVEOrbitController;
@@ -104,8 +70,7 @@ describe('dive/controls/DIVEOrbitControls', () => {
     beforeEach(() => {
         controller = new DIVEOrbitController(
             mockCamera,
-            mockRenderer,
-            mockPipeline,
+            mockRenderer.webglrenderer.domElement,
             mockAnimSystem,
         );
     });
@@ -119,10 +84,8 @@ describe('dive/controls/DIVEOrbitControls', () => {
     it('should instantiate with settings', () => {
         controller = new DIVEOrbitController(
             mockCamera,
-            mockRenderer,
-            mockPipeline,
+            mockRenderer.webglrenderer.domElement,
             mockAnimSystem,
-            {},
         );
         expect(controller).toBeDefined();
     });
@@ -207,15 +170,15 @@ describe('dive/controls/DIVEOrbitControls', () => {
 
     it('should execute preRenderCallback', () => {
         controller.MoveTo(moveToPos, moveToQuat, moveToDuration, true);
-        expect(() => controller['preRenderCallback']()).not.toThrow();
+        expect(() => controller.tick()).not.toThrow();
         controller['locked'] = true;
-        expect(() => controller['preRenderCallback']()).not.toThrow();
+        expect(() => controller.tick()).not.toThrow();
     });
 
     it('should handle preRenderCallback when not locked', () => {
         controller['locked'] = false;
         const updateSpy = jest.spyOn(controller, 'update');
-        controller['preRenderCallback']();
+        controller.tick();
         expect(updateSpy).toHaveBeenCalled();
     });
 
@@ -223,28 +186,21 @@ describe('dive/controls/DIVEOrbitControls', () => {
         const updateSpy = jest.spyOn(controller, 'update');
         controller['locked'] = true;
         updateSpy.mockClear(); // Clear any previous calls
-        controller['preRenderCallback']();
+        controller.tick();
         expect(updateSpy).not.toHaveBeenCalled();
         controller['locked'] = false; // Reset for other tests
     });
 
     it('should properly set up and remove preRenderCallback', () => {
-        const addSpy = jest.spyOn(mockPipeline, 'addPreRenderStep');
-        const removeSpy = jest.spyOn(mockPipeline, 'removePreRenderStep');
-
         // Create new controller to test setup
         const newController = new DIVEOrbitController(
             mockCamera,
-            mockRenderer,
-            mockPipeline,
+            mockRenderer.webglrenderer.domElement,
             mockAnimSystem,
         );
 
-        expect(addSpy).toHaveBeenCalled();
-
         // Test removal
         newController.Dispose();
-        expect(removeSpy).toHaveBeenCalled();
     });
 
     it('should handle stopMoveTo and stopRevertLast', () => {

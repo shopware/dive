@@ -4,6 +4,10 @@
 
 import { DIVE, DIVESettings } from '../Dive.ts';
 import { DIVERenderer } from '../../engine/renderer/Renderer.ts';
+import { DIVEScene } from '../../engine/scene/Scene.ts';
+import { DIVEPerspectiveCamera } from '../../engine/camera/PerspectiveCamera.ts';
+import { DIVEClock } from '../../engine/clock/Clock.ts';
+
 // Mock ResizeObserver
 class MockResizeObserver {
     observe() {}
@@ -12,18 +16,42 @@ class MockResizeObserver {
 }
 global.ResizeObserver = MockResizeObserver as any;
 
+jest.mock('../../engine/renderer/Renderer.ts', () => {
+    return {
+        DIVERenderer: jest.fn(function () {
+            this.render = jest.fn();
+            this.onResize = jest.fn();
+            this.dispose = jest.fn();
+            this.webglrenderer = {
+                domElement: {},
+            };
+            return this;
+        }),
+    };
+});
+
+jest.mock('../../engine/clock/Clock.ts', () => {
+    return {
+        DIVEClock: jest.fn(function () {
+            this.addTicker = jest.fn();
+            this.removeTicker = jest.fn();
+            this.start = jest.fn();
+            this.stop = jest.fn();
+            this.dispose = jest.fn();
+            this.setRenderer = jest.fn();
+            return this;
+        }),
+    };
+});
+
 jest.mock('../../engine/Engine.ts', () => {
     return {
         DIVEEngine: jest.fn(function () {
-            this.renderer = new DIVERenderer();
-            this.pipeline = {
-                addPreRenderStep: jest.fn((callback: () => void) => {
-                    callback();
-                }),
-                removePreRenderStep: jest.fn((callback: () => void) => {
-                    callback();
-                }),
-            };
+            this.renderer = new DIVERenderer(
+                {} as DIVEScene,
+                {} as DIVEPerspectiveCamera,
+            );
+            this.clock = new DIVEClock();
             return this;
         }),
     };

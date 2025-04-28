@@ -3,17 +3,8 @@ import { DIVEAxisCamera } from '../AxisCamera';
 import { DIVERenderer } from '../../../engine/renderer/Renderer';
 import { DIVEScene } from '../../../engine/scene/Scene';
 import { DIVEOrbitController } from '../../controller/orbit/OrbitController';
-import { DIVERenderPipeline } from '../../../engine/pipeline/RenderPipeline';
 import { COORDINATE_LAYER_MASK } from '../../../constants/VisibilityLayerMask';
-
-const mockRenderer = {
-    render: jest.fn(),
-    webglrenderer: {
-        getViewport: jest.fn().mockReturnValue(new Vector4(0, 0, 800, 600)),
-        setViewport: jest.fn(),
-        autoClear: true,
-    },
-} as unknown as DIVERenderer;
+import { DIVEPerspectiveCamera } from '../../../engine/camera/PerspectiveCamera';
 
 const mockScene = {
     add: jest.fn(),
@@ -21,16 +12,19 @@ const mockScene = {
     background: null,
 } as unknown as DIVEScene;
 
-const mockPipeline = {
-    addPostRenderStep: jest.fn(),
-    removePostRenderStep: jest.fn(),
-} as unknown as DIVERenderPipeline;
+const mockCamera = {
+    matrix: new Matrix4(),
+} as unknown as DIVEPerspectiveCamera;
 
-const mockController = {
-    object: {
-        matrix: new Matrix4(),
+const mockRenderer = {
+    render: jest.fn(),
+    webglrenderer: {
+        getViewport: jest.fn().mockReturnValue(new Vector4(0, 0, 800, 600)),
+        setViewport: jest.fn(),
+        render: jest.fn(),
+        autoClear: true,
     },
-} as unknown as DIVEOrbitController;
+} as unknown as DIVERenderer;
 
 describe('DIVEAxisCamera', () => {
     let axisCamera: DIVEAxisCamera;
@@ -38,12 +32,7 @@ describe('DIVEAxisCamera', () => {
     beforeEach(() => {
         jest.clearAllMocks();
         mockRenderer.webglrenderer.autoClear = true;
-        axisCamera = new DIVEAxisCamera(
-            mockRenderer,
-            mockPipeline,
-            mockScene,
-            mockController,
-        );
+        axisCamera = new DIVEAxisCamera(mockRenderer, mockScene, mockCamera);
     });
 
     describe('constructor', () => {
@@ -51,7 +40,6 @@ describe('DIVEAxisCamera', () => {
             expect(axisCamera).toBeInstanceOf(DIVEAxisCamera);
             expect(axisCamera.layers.mask).toBe(COORDINATE_LAYER_MASK);
             expect(mockScene.add).toHaveBeenCalledWith(axisCamera);
-            expect(mockPipeline.addPostRenderStep).toHaveBeenCalled();
         });
 
         it('should create and configure axes helper', () => {
@@ -91,7 +79,6 @@ describe('DIVEAxisCamera', () => {
     describe('Dispose', () => {
         it('should clean up resources', () => {
             axisCamera.Dispose();
-            expect(mockPipeline.removePostRenderStep).toHaveBeenCalled();
             expect(mockScene.remove).toHaveBeenCalledWith(axisCamera);
         });
 
@@ -140,13 +127,13 @@ describe('DIVEAxisCamera', () => {
         });
     });
 
-    describe('_postRenderCallback', () => {
+    describe('tick', () => {
         it('should handle viewport and rendering correctly', () => {
             const originalBackground = new Color(0x000000);
             mockScene.background = originalBackground;
             const viewport = new Vector4();
 
-            axisCamera['_postRenderCallback']();
+            axisCamera.tick();
 
             expect(mockRenderer.webglrenderer.getViewport).toHaveBeenCalledWith(
                 viewport,
@@ -157,7 +144,7 @@ describe('DIVEAxisCamera', () => {
                 150,
                 150,
             );
-            expect(mockRenderer.render).toHaveBeenCalledWith(
+            expect(mockRenderer.webglrenderer.render).toHaveBeenCalledWith(
                 mockScene,
                 axisCamera,
             );
@@ -170,7 +157,7 @@ describe('DIVEAxisCamera', () => {
         it('should handle null background', () => {
             mockScene.background = null;
 
-            axisCamera['_postRenderCallback']();
+            axisCamera.tick();
 
             expect(mockScene.background).toBeNull();
         });

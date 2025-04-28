@@ -152,7 +152,8 @@ export class DIVEWebXR {
         this._renderer.webglrenderer.xr.enabled = false;
 
         // resize renderer
-        const canvasWrapper = this._renderer.domElement.parentElement;
+        const canvasWrapper =
+            this._renderer.webglrenderer.domElement.parentElement;
         if (canvasWrapper) {
             const { clientWidth, clientHeight } = canvasWrapper;
             this._renderer.onResize(clientWidth, clientHeight);

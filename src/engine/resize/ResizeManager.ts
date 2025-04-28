@@ -19,13 +19,15 @@ export class DIVEResizeManager {
             }
         });
 
-        if (renderer.domElement.parentElement) {
-            this._resizeObserver.observe(renderer.domElement.parentElement);
+        if (renderer.webglrenderer.domElement.parentElement) {
+            this._resizeObserver.observe(
+                renderer.webglrenderer.domElement.parentElement,
+            );
         } else {
             const interval = setInterval(() => {
-                if (renderer.domElement.parentElement) {
+                if (renderer.webglrenderer.domElement.parentElement) {
                     this._resizeObserver.observe(
-                        renderer.domElement.parentElement,
+                        renderer.webglrenderer.domElement.parentElement,
                     );
                     clearInterval(interval);
                 }

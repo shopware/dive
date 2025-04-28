@@ -79,23 +79,26 @@ export class MediaCreator {
 
     public DrawCanvas(canvasElement?: HTMLCanvasElement): HTMLCanvasElement {
         // save current canvas
-        const restore = this._renderer.domElement;
+        const restore = this._renderer.webglrenderer.domElement;
         if (canvasElement) {
-            this._renderer.domElement = canvasElement;
+            this._renderer.webglrenderer.domElement = canvasElement;
         }
 
         // draw canvas
         this._controller.object.layers.mask =
             DIVEPerspectiveCamera.LIVE_VIEW_LAYER_MASK;
-        this._renderer.render(this._scene, this._controller.object);
+        this._renderer.webglrenderer.render(
+            this._scene,
+            this._controller.object,
+        );
         this._controller.object.layers.mask =
             DIVEPerspectiveCamera.EDITOR_VIEW_LAYER_MASK;
 
-        const returnCanvas = this._renderer.domElement;
+        const returnCanvas = this._renderer.webglrenderer.domElement;
 
         // restore canvas
         if (canvasElement) {
-            this._renderer.domElement = restore;
+            this._renderer.webglrenderer.domElement = restore;
         }
 
         return returnCanvas;

@@ -1,10 +1,8 @@
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
 import { DIVEPerspectiveCamera } from '../../../engine/camera/PerspectiveCamera';
-import { DIVERenderer } from '../../../engine/renderer/Renderer';
 import { type Box3, MathUtils, Vector3, Vector3Like } from 'three';
 import { Easing } from '@tweenjs/tween.js';
 import { type DIVEAnimationSystem } from '../../animation/AnimationSystem';
-import { DIVERenderPipeline } from '../../../engine/pipeline/RenderPipeline';
 
 export type DIVEOrbitControllerSettings = {
     /** Whether to enable damping for smooth camera movement */
@@ -29,7 +27,6 @@ export class DIVEOrbitController extends OrbitControls {
     public static readonly DEFAULT_ZOOM_FACTOR = 1;
 
     private _animationSystem: DIVEAnimationSystem;
-    private _pipeline: DIVERenderPipeline;
 
     private last: { pos: Vector3Like; target: Vector3Like } | null = null;
 
@@ -44,20 +41,16 @@ export class DIVEOrbitController extends OrbitControls {
 
     constructor(
         camera: DIVEPerspectiveCamera,
-        renderer: DIVERenderer,
-        pipeline: DIVERenderPipeline,
+        domElement: HTMLCanvasElement,
         animationSystem: DIVEAnimationSystem,
         settings: Partial<DIVEOrbitControllerSettings> = DIVEOrbitControllerDefaultSettings,
     ) {
-        super(camera, renderer.domElement);
+        super(camera, domElement);
 
         this._animationSystem = animationSystem;
-        this._pipeline = pipeline;
-        this.domElement = renderer.domElement;
+        this.domElement = domElement;
 
         this.object = camera;
-
-        this._pipeline.addPreRenderStep(this.preRenderCallback);
 
         this.enableDamping =
             settings.enableDamping ||
@@ -73,7 +66,6 @@ export class DIVEOrbitController extends OrbitControls {
     }
 
     public Dispose(): void {
-        this._pipeline.removePreRenderStep(this.preRenderCallback);
         this.dispose();
     }
 
@@ -202,8 +194,8 @@ export class DIVEOrbitController extends OrbitControls {
         };
     }
 
-    private preRenderCallback = (): void => {
+    public tick(): void {
         if (this.locked) return;
         this.update();
-    };
+    }
 }

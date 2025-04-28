@@ -1,5 +1,6 @@
-import { Camera, WebGLRenderer } from 'three';
+import { WebGLRenderer } from 'three';
 import { DIVEScene } from '../scene/Scene.ts';
+import { DIVEPerspectiveCamera } from '../camera/PerspectiveCamera.ts';
 
 export type DIVERendererSettings = {
     /** Whether to enable antialiasing */
@@ -40,7 +41,11 @@ export class DIVERenderer {
     private _webglrenderer: WebGLRenderer;
     private _settings: DIVERendererSettings;
 
-    constructor(settings?: Partial<DIVERendererSettings>) {
+    constructor(
+        private _scene: DIVEScene,
+        private _camera: DIVEPerspectiveCamera,
+        settings?: Partial<DIVERendererSettings>,
+    ) {
         this._settings = {
             ...DIVERendererDefaultSettings,
             ...(settings ?? {}),
@@ -61,16 +66,8 @@ export class DIVERenderer {
         return this._webglrenderer;
     }
 
-    public get domElement(): HTMLCanvasElement {
-        return this._webglrenderer.domElement;
-    }
-
-    public set domElement(element: HTMLCanvasElement) {
-        this._webglrenderer.domElement = element;
-    }
-
-    public render(scene: DIVEScene, camera: Camera): void {
-        this._webglrenderer.render(scene, camera);
+    public render(): void {
+        this._webglrenderer.render(this._scene, this._camera);
     }
 
     public onResize(width: number, height: number): void {

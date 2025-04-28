@@ -145,7 +145,7 @@ export class DIVE {
     }
 
     public get canvas(): HTMLCanvasElement {
-        return this._engine.renderer.domElement;
+        return this._engine.renderer.webglrenderer.domElement;
     }
 
     constructor(settings?: Partial<DIVESettings>) {
@@ -158,17 +158,16 @@ export class DIVE {
 
         // initialize animation system
         this.animationSystem = new DIVEAnimationSystem();
-        this._engine.pipeline.addPreRenderStep(() => {
-            this.animationSystem.Update();
-        });
+        this._engine.clock.addTicker(this.animationSystem);
 
         this.orbitControls = new DIVEOrbitController(
             this._engine.camera,
-            this._engine.renderer,
-            this._engine.pipeline,
+            this._engine.renderer.webglrenderer.domElement,
             this.animationSystem,
             this._settings.orbitController,
         );
+        this._engine.clock.addTicker(this.orbitControls);
+
         this.toolbox = new DIVEToolbox(this._engine.scene, this.orbitControls);
         this._communication = new DIVECommunication(
             this._engine,
@@ -180,10 +179,10 @@ export class DIVE {
         if (this._settings.displayAxes) {
             this.axisCamera = new DIVEAxisCamera(
                 this._engine.renderer,
-                this._engine.pipeline,
                 this._engine.scene,
-                this.orbitControls,
+                this._engine.camera,
             );
+            this._engine.clock.addTicker(this.axisCamera);
         } else {
             this.axisCamera = null;
         }
@@ -230,12 +229,15 @@ export class DIVE {
     }
 
     public Dispose(): void {
+        this._engine.clock.removeTicker(this.orbitControls);
         this.orbitControls.Dispose();
-        this.axisCamera?.Dispose();
 
-        this._engine.pipeline.removePreRenderStep(() => {
-            this.animationSystem.Update();
-        });
+        if (this.axisCamera) {
+            this._engine.clock.removeTicker(this.axisCamera);
+            this.axisCamera.Dispose();
+        }
+
+        this._engine.clock.removeTicker(this.animationSystem);
         this.animationSystem.Dispose();
 
         this.toolbox.Dispose();

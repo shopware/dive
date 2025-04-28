@@ -6,11 +6,16 @@ import { DIVERenderer } from '../../../../engine/renderer/Renderer';
 import { type DIVEBaseTool } from '../../BaseTool';
 import { Tween } from '@tweenjs/tween.js';
 import { DIVEAnimationSystem } from '../../../animation/AnimationSystem';
-import { DIVERenderPipeline } from '../../../../engine/pipeline/RenderPipeline';
 
 jest.mock('../../../../engine/renderer/Renderer', () => {
     return {
         DIVERenderer: jest.fn(function () {
+            this.webglrenderer = {
+                domElement: {
+                    clientWidth: 0,
+                    clientHeight: 0,
+                },
+            };
             return this;
         }),
     };
@@ -75,35 +80,13 @@ jest.mock('../../../animation/AnimationSystem', () => {
     };
 });
 
-const mockCamera: DIVEPerspectiveCamera = {} as DIVEPerspectiveCamera;
-const mockRenderer = {
-    render: jest.fn(),
-    OnResize: jest.fn(),
-    getViewport: jest.fn(),
-    setViewport: jest.fn(),
-    AddPreRenderCallback: jest.fn((callback) => {
-        callback();
-    }),
-    AddPostRenderCallback: jest.fn((callback) => {
-        callback();
-    }),
-    RemovePreRenderCallback: jest.fn(),
-    RemovePostRenderCallback: jest.fn(),
-} as unknown as DIVERenderer;
-const mockPipeline = {
-    addPreRenderStep: jest.fn(),
-    removePreRenderStep: jest.fn(),
-    addPostRenderStep: jest.fn(),
-    removePostRenderStep: jest.fn(),
-    tick: jest.fn(),
-    dispose: jest.fn(),
-} as unknown as DIVERenderPipeline;
 const mockScene: DIVEScene = new DIVEScene();
+const mockCamera = new DIVEPerspectiveCamera();
+const mockRenderer = new DIVERenderer(mockScene, mockCamera);
 const mockAnimSystem = new DIVEAnimationSystem();
 const mockController: DIVEOrbitController = new DIVEOrbitController(
     mockCamera,
-    mockRenderer,
-    mockPipeline,
+    mockRenderer.webglrenderer.domElement,
     mockAnimSystem,
 );
 

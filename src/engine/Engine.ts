@@ -4,12 +4,12 @@ import {
     DIVEPerspectiveCameraDefaultSettings,
     DIVEPerspectiveCameraSettings,
 } from './camera/PerspectiveCamera.ts';
-import { DIVERenderer } from './renderer/Renderer.ts';
-import { DIVEClock } from './clock/Clock.ts';
 import {
-    DIVERenderPipeline,
-    DIVERenderPipelineSettings,
-} from './pipeline/RenderPipeline.ts';
+    DIVERenderer,
+    DIVERendererDefaultSettings,
+    DIVERendererSettings,
+} from './renderer/Renderer.ts';
+import { DIVEClock } from './clock/Clock.ts';
 import { DIVEResizeManager } from './resize/ResizeManager.ts';
 
 export type EngineSettings = {
@@ -20,21 +20,20 @@ export type EngineSettings = {
     /** Settings for the perspective camera */
     perspectiveCamera: Partial<DIVEPerspectiveCameraSettings>;
     /** Settings for the render pipeline */
-    renderPipeline: Partial<DIVERenderPipelineSettings>;
+    renderer: Partial<DIVERendererSettings>;
 };
 
 export const EngineDefaultSettings: Required<EngineSettings> = {
     autoStart: true,
     displayAxes: false,
     perspectiveCamera: DIVEPerspectiveCameraDefaultSettings,
-    renderPipeline: {},
+    renderer: DIVERendererDefaultSettings,
 };
 
 export class DIVEEngine {
     private _renderer: DIVERenderer;
     private _scene: DIVEScene;
     private _camera: DIVEPerspectiveCamera;
-    private _pipeline: DIVERenderPipeline;
     private _resizeManager: DIVEResizeManager;
     private _clock: DIVEClock;
 
@@ -46,24 +45,19 @@ export class DIVEEngine {
             ...(settings ?? {}),
         };
 
-        this._renderer = new DIVERenderer();
         this._scene = new DIVEScene();
         this._camera = new DIVEPerspectiveCamera(
             this._settings.perspectiveCamera,
         );
+        this._renderer = new DIVERenderer(this._scene, this._camera);
 
-        this._pipeline = new DIVERenderPipeline(
-            this._renderer,
-            this._scene,
-            this._camera,
-        );
         this._resizeManager = new DIVEResizeManager(
             this._renderer,
             this._camera,
         );
 
         this._clock = new DIVEClock();
-        this._clock.addTicker(this._pipeline);
+        this._clock.setRenderer(this._renderer);
 
         if (this._settings.autoStart) {
             this.start();
@@ -82,8 +76,8 @@ export class DIVEEngine {
         return this._renderer;
     }
 
-    public get pipeline(): DIVERenderPipeline {
-        return this._pipeline;
+    public get clock(): DIVEClock {
+        return this._clock;
     }
 
     public start(): void {
@@ -97,7 +91,6 @@ export class DIVEEngine {
     public dispose(): void {
         this._clock.dispose();
         this._resizeManager.dispose();
-        this._pipeline.dispose();
         this._renderer.dispose();
     }
 }

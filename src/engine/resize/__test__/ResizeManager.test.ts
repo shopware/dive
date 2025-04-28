@@ -1,17 +1,41 @@
 import { DIVEResizeManager } from '../ResizeManager.ts';
 import { DIVERenderer } from '../../renderer/Renderer.ts';
 import { DIVEPerspectiveCamera } from '../../camera/PerspectiveCamera.ts';
+import { DIVEScene } from '../../scene/Scene.ts';
 
 jest.mock('../../renderer/Renderer.ts', () => {
     return {
         DIVERenderer: jest.fn(function () {
             return {
-                domElement: document.createElement('canvas'),
+                webglrenderer: {
+                    domElement: document.createElement('canvas'),
+                },
                 onResize: jest.fn(),
             };
         }),
     };
 });
+
+jest.mock('../../scene/Scene.ts', () => {
+    return {
+        DIVEScene: jest.fn(function () {
+            return {
+                onResize: jest.fn(),
+            };
+        }),
+    };
+});
+
+jest.mock('../../camera/PerspectiveCamera.ts', () => {
+    return {
+        DIVEPerspectiveCamera: jest.fn(function () {
+            return {
+                onResize: jest.fn(),
+            };
+        }),
+    };
+});
+
 jest.mock('../../camera/PerspectiveCamera.ts', () => {
     return {
         DIVEPerspectiveCamera: jest.fn(function () {
@@ -32,7 +56,10 @@ describe('DIVEResizeManager', () => {
 
     beforeEach(() => {
         jest.clearAllMocks();
-        renderer = new DIVERenderer();
+        renderer = new DIVERenderer(
+            new DIVEScene(),
+            new DIVEPerspectiveCamera(),
+        );
         camera = new DIVEPerspectiveCamera();
 
         // Mock ResizeObserver
@@ -45,10 +72,14 @@ describe('DIVEResizeManager', () => {
         global.ResizeObserver = mockResizeObserver;
 
         // Mock canvas parent element
-        Object.defineProperty(renderer.domElement, 'parentElement', {
-            value: document.createElement('div'),
-            writable: true,
-        });
+        Object.defineProperty(
+            renderer.webglrenderer.domElement,
+            'parentElement',
+            {
+                value: document.createElement('div'),
+                writable: true,
+            },
+        );
 
         resizeManager = new DIVEResizeManager(renderer, camera);
     });
@@ -60,7 +91,7 @@ describe('DIVEResizeManager', () => {
 
     it('should observe canvas parent element', () => {
         expect(mockObserve).toHaveBeenCalledWith(
-            renderer.domElement.parentElement,
+            renderer.webglrenderer.domElement.parentElement,
         );
     });
 

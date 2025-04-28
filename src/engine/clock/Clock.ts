@@ -1,9 +1,13 @@
+import { DIVERenderer } from '../renderer/Renderer';
+
 export interface DIVETicker {
     tick(deltaTime: number): void;
     dispose?(): void;
 }
 
 export class DIVEClock {
+    private _renderer: DIVERenderer | null = null;
+
     private _lastTime: number = 0;
     private _isRunning: boolean = false;
     private _tickers: DIVETicker[] = [];
@@ -17,6 +21,10 @@ export class DIVEClock {
 
     public stop(): void {
         this._isRunning = false;
+    }
+
+    public setRenderer(renderer: DIVERenderer): void {
+        this._renderer = renderer;
     }
 
     public addTicker(ticker: DIVETicker): void {
@@ -45,6 +53,8 @@ export class DIVEClock {
         this._lastTime = currentTime;
 
         this._tickers.forEach((ticker) => ticker.tick(deltaTime));
+
+        this._renderer?.render();
 
         requestAnimationFrame(this._tick.bind(this));
     }

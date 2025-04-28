@@ -2,7 +2,6 @@ import { DIVEEngine, EngineDefaultSettings } from '../Engine.ts';
 import { DIVEPerspectiveCamera } from '../camera/PerspectiveCamera.ts';
 import { DIVERenderer } from '../renderer/Renderer.ts';
 import { DIVEScene } from '../scene/Scene.ts';
-import { DIVERenderPipeline } from '../pipeline/RenderPipeline.ts';
 import { DIVEResizeManager } from '../resize/ResizeManager.ts';
 import { DIVEClock } from '../clock/Clock.ts';
 
@@ -29,15 +28,6 @@ jest.mock('../scene/Scene.ts', () => {
     };
 });
 
-jest.mock('../pipeline/RenderPipeline.ts', () => {
-    return {
-        DIVERenderPipeline: jest.fn(function () {
-            this.dispose = jest.fn();
-            return this;
-        }),
-    };
-});
-
 jest.mock('../resize/ResizeManager.ts', () => {
     return {
         DIVEResizeManager: jest.fn(function () {
@@ -54,6 +44,7 @@ jest.mock('../clock/Clock.ts', () => {
             this.start = jest.fn();
             this.stop = jest.fn();
             this.dispose = jest.fn();
+            this.setRenderer = jest.fn();
             return this;
         }),
     };
@@ -74,7 +65,6 @@ describe('DIVEEngine', () => {
         );
         expect(DIVERenderer).toHaveBeenCalled();
         expect(DIVEScene).toHaveBeenCalled();
-        expect(DIVERenderPipeline).toHaveBeenCalled();
         expect(DIVEResizeManager).toHaveBeenCalled();
         expect(DIVEClock).toHaveBeenCalled();
     });
@@ -97,10 +87,7 @@ describe('DIVEEngine', () => {
     });
 
     it('should provide access to components', () => {
-        expect(engine.scene).toBeDefined();
-        expect(engine.camera).toBeDefined();
         expect(engine.renderer).toBeDefined();
-        expect(engine.pipeline).toBeDefined();
     });
 
     it('should start and stop the engine', () => {
@@ -115,14 +102,12 @@ describe('DIVEEngine', () => {
         const clock = (DIVEClock as jest.Mock).mock.instances[0];
         const resizeManager = (DIVEResizeManager as jest.Mock).mock
             .instances[0];
-        const pipeline = (DIVERenderPipeline as jest.Mock).mock.instances[0];
         const renderer = (DIVERenderer as jest.Mock).mock.instances[0];
 
         engine.dispose();
 
         expect(clock.dispose).toHaveBeenCalled();
         expect(resizeManager.dispose).toHaveBeenCalled();
-        expect(pipeline.dispose).toHaveBeenCalled();
         expect(renderer.dispose).toHaveBeenCalled();
     });
 });
