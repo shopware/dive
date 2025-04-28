@@ -2,7 +2,7 @@ import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
 import { DIVEPerspectiveCamera } from '../../../engine/camera/PerspectiveCamera';
 import { type Box3, MathUtils, Vector3, Vector3Like } from 'three';
 import { Easing } from '@tweenjs/tween.js';
-import { type DIVEAnimationSystem } from '../../animation/AnimationSystem';
+import { Animator } from '../../animation/AnimationSystem';
 
 export type DIVEOrbitControllerSettings = {
     /** Whether to enable damping for smooth camera movement */
@@ -26,8 +26,6 @@ export const DIVEOrbitControllerDefaultSettings: Required<DIVEOrbitControllerSet
 export class DIVEOrbitController extends OrbitControls {
     public static readonly DEFAULT_ZOOM_FACTOR = 1;
 
-    private _animationSystem: DIVEAnimationSystem;
-
     private last: { pos: Vector3Like; target: Vector3Like } | null = null;
 
     private animating: boolean = false;
@@ -42,12 +40,10 @@ export class DIVEOrbitController extends OrbitControls {
     constructor(
         camera: DIVEPerspectiveCamera,
         domElement: HTMLCanvasElement,
-        animationSystem: DIVEAnimationSystem,
         settings: Partial<DIVEOrbitControllerSettings> = DIVEOrbitControllerDefaultSettings,
     ) {
         super(camera, domElement);
 
-        this._animationSystem = animationSystem;
         this.domElement = domElement;
 
         this.object = camera;
@@ -116,6 +112,8 @@ export class DIVEOrbitController extends OrbitControls {
         duration: number,
         lock: boolean,
     ): void {
+        this.enabled = false;
+
         if (this.animating) return;
 
         const toPosition = pos || this.object.position.clone();
@@ -133,28 +131,29 @@ export class DIVEOrbitController extends OrbitControls {
         this.locked = lock;
         this.enabled = false;
 
-        const tweenPos = this._animationSystem
-            .Animate(this.object.position)
-            .to(toPosition, duration)
-            .easing(Easing.Quadratic.Out)
-            .start();
+        const animatorPosition = new Animator(
+            this.object.position,
+            toPosition,
+            duration,
+            {
+                easing: Easing.Quadratic.Out,
+            },
+        ).play();
 
-        const tweenQuat = this._animationSystem
-            .Animate(this.target)
-            .to(toTarget, duration)
-            .easing(Easing.Quadratic.Out)
-            .onUpdate(() => {
+        const animatorTarget = new Animator(this.target, toTarget, duration, {
+            easing: Easing.Quadratic.Out,
+            onUpdate: () => {
                 this.object.lookAt(this.target);
-            })
-            .onComplete(() => {
+            },
+            onComplete: () => {
                 this.animating = false;
                 this.enabled = !lock;
-            })
-            .start();
+            },
+        }).play();
 
         this.stopMoveTo = () => {
-            tweenPos.stop();
-            tweenQuat.stop();
+            animatorPosition.stop();
+            animatorTarget.stop();
         };
     }
 
@@ -168,29 +167,30 @@ export class DIVEOrbitController extends OrbitControls {
 
         const { pos, target } = this.last!;
 
-        const tweenPos = this._animationSystem
-            .Animate(this.object.position)
-            .to(pos, duration)
-            .easing(Easing.Quadratic.Out)
-            .start();
+        const animatorPosition = new Animator(
+            this.object.position,
+            pos,
+            duration,
+            {
+                easing: Easing.Quadratic.Out,
+            },
+        ).play();
 
-        const tweenQuat = this._animationSystem
-            .Animate(this.target)
-            .to(target, duration)
-            .easing(Easing.Quadratic.Out)
-            .onUpdate(() => {
+        const animatorTarget = new Animator(this.target, target, duration, {
+            easing: Easing.Quadratic.Out,
+            onUpdate: () => {
                 this.object.lookAt(this.target);
-            })
-            .onComplete(() => {
+            },
+            onComplete: () => {
                 this.animating = false;
                 this.locked = false;
                 this.enabled = true;
-            })
-            .start();
+            },
+        }).play();
 
         this.stopRevertLast = () => {
-            tweenPos.stop();
-            tweenQuat.stop();
+            animatorPosition.stop();
+            animatorTarget.stop();
         };
     }
 
