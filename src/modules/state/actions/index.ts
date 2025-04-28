@@ -1,14 +1,3 @@
-// define global action classes
-declare global {
-    interface ActionClasses {}
-}
-
-// define global actions object
-export const Actions = {} as ActionClasses;
-
-// export all types
-export * from './types.ts';
-
 // export all actions
 export * from './ar/index.ts';
 export * from './camera/index.ts';

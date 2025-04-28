@@ -1,5 +1,6 @@
-import { Action } from '../action';
-import { ActionDependencies } from '../types';
+import { Action } from '../action.ts';
+import { registerAction } from '../../ActionRegistry.ts';
+import { ActionDependencies } from '../../types/index.ts';
 
 export const SetGizmoScaleLinkedAction = Action.define<
     boolean,
@@ -13,7 +14,9 @@ export const SetGizmoScaleLinkedAction = Action.define<
 });
 
 declare global {
-    interface ActionClasses {
+    interface ActionTypes {
         SET_GIZMO_SCALE_LINKED: typeof SetGizmoScaleLinkedAction;
     }
 }
+
+registerAction('SET_GIZMO_SCALE_LINKED', SetGizmoScaleLinkedAction);

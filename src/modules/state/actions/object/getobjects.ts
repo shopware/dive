@@ -1,5 +1,6 @@
-import { Action } from '../action';
-import { ActionDependencies } from '../types';
+import { Action } from '../action.ts';
+import { registerAction } from '../../ActionRegistry.ts';
+import { ActionDependencies } from '../../types/index.ts';
 import { type COMEntity } from '../../types';
 
 export const GetObjectsAction = Action.define<
@@ -18,7 +19,9 @@ export const GetObjectsAction = Action.define<
 });
 
 declare global {
-    interface ActionClasses {
+    interface ActionTypes {
         GET_OBJECTS: typeof GetObjectsAction;
     }
 }
+
+registerAction('GET_OBJECTS', GetObjectsAction);

@@ -1,5 +1,6 @@
-import { Action } from '../action';
-import { ActionDependencies } from '../types';
+import { Action } from '../action.ts';
+import { registerAction } from '../../ActionRegistry.ts';
+import { ActionDependencies } from '../../types/index.ts';
 import { SetParentAction } from './setparent';
 import { UpdateObjectAction } from './updateobject';
 import { type COMEntity } from '../../types';
@@ -57,7 +58,9 @@ export const DeleteObjectAction = Action.define<
 });
 
 declare global {
-    interface ActionClasses {
+    interface ActionTypes {
         DELETE_OBJECT: typeof DeleteObjectAction;
     }
 }
+
+registerAction('DELETE_OBJECT', DeleteObjectAction);

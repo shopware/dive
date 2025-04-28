@@ -1,4 +1,4 @@
-import { ActionDependencies } from '.';
+import { ActionDependencies } from '../types/index.ts';
 
 /**
  * Abstract base class for implementing actions in the system.

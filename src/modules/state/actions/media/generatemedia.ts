@@ -1,5 +1,6 @@
-import { Action } from '../action';
-import { ActionDependencies } from '../types';
+import { Action } from '../action.ts';
+import { registerAction } from '../../ActionRegistry.ts';
+import { ActionDependencies } from '../../types/index.ts';
 import { type Vector3Like } from 'three';
 import { isCOMPov } from '../../types';
 
@@ -68,7 +69,9 @@ export const GenerateMediaAction = Action.define<
 });
 
 declare global {
-    interface ActionClasses {
+    interface ActionTypes {
         GENERATE_MEDIA: typeof GenerateMediaAction;
     }
 }
+
+registerAction('GENERATE_MEDIA', GenerateMediaAction);

@@ -1,5 +1,6 @@
-import { Action } from '../action';
-import { ActionDependencies } from '../types';
+import { Action } from '../action.ts';
+import { registerAction } from '../../ActionRegistry.ts';
+import { ActionDependencies } from '../../types/index.ts';
 import { UpdateObjectAction } from './updateobject';
 import { type COMEntity } from '../../types';
 
@@ -83,7 +84,9 @@ export const SetParentAction = Action.define<
 });
 
 declare global {
-    interface ActionClasses {
+    interface ActionTypes {
         SET_PARENT: typeof SetParentAction;
     }
 }
+
+registerAction('SET_PARENT', SetParentAction);

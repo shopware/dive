@@ -1,5 +1,6 @@
-import { Action } from '../action';
-import { ActionDependencies } from '../types';
+import { Action } from '../action.ts';
+import { registerAction } from '../../ActionRegistry.ts';
+import { ActionDependencies } from '../../types/index.ts';
 import { type DIVESceneData } from '../../../../types';
 import { Color, MeshStandardMaterial } from 'three';
 import {
@@ -8,7 +9,7 @@ import {
     type COMModel,
     type COMPov,
     type COMPrimitive,
-} from '../../../..';
+} from '../../types/index.ts';
 
 export const GetAllSceneDataAction = Action.define<
     object,
@@ -53,7 +54,9 @@ export const GetAllSceneDataAction = Action.define<
 });
 
 declare global {
-    interface ActionClasses {
+    interface ActionTypes {
         GET_ALL_SCENE_DATA: typeof GetAllSceneDataAction;
     }
 }
+
+registerAction('GET_ALL_SCENE_DATA', GetAllSceneDataAction);

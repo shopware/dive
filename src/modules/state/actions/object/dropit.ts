@@ -1,5 +1,6 @@
-import { Action } from '../action';
-import { ActionDependencies } from '../types';
+import { Action } from '../action.ts';
+import { registerAction } from '../../ActionRegistry.ts';
+import { ActionDependencies } from '../../types/index.ts';
 import { type DIVEModel } from '../../../../components/model/Model';
 
 export const DropItAction = Action.define<
@@ -29,7 +30,9 @@ export const DropItAction = Action.define<
 });
 
 declare global {
-    interface ActionClasses {
+    interface ActionTypes {
         DROP_IT: typeof DropItAction;
     }
 }
+
+registerAction('DROP_IT', DropItAction);

@@ -1,5 +1,6 @@
-import { Action } from '../action';
-import { ActionDependencies } from '../types';
+import { Action } from '../action.ts';
+import { registerAction } from '../../ActionRegistry.ts';
+import { ActionDependencies } from '../../types/index.ts';
 import { type Vector3Like } from 'three';
 
 export const GetCameraTransformAction = Action.define<
@@ -20,7 +21,9 @@ export const GetCameraTransformAction = Action.define<
 });
 
 declare global {
-    interface ActionClasses {
+    interface ActionTypes {
         GET_CAMERA_TRANSFORM: typeof GetCameraTransformAction;
     }
 }
+
+registerAction('GET_CAMERA_TRANSFORM', GetCameraTransformAction);

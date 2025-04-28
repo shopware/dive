@@ -1,6 +1,7 @@
-import { Action } from '../action';
+import { Action } from '../action.ts';
+import { registerAction } from '../../ActionRegistry.ts';
 import { Vector3Like } from 'three';
-import { ActionDependencies } from '../types';
+import { ActionDependencies } from '../../types/index.ts';
 
 export const ComputeEncompassingViewAction = Action.define<
     void,
@@ -19,7 +20,9 @@ export const ComputeEncompassingViewAction = Action.define<
 });
 
 declare global {
-    interface ActionClasses {
+    interface ActionTypes {
         COMPUTE_ENCOMPASSING_VIEW: typeof ComputeEncompassingViewAction;
     }
 }
+
+registerAction('COMPUTE_ENCOMPASSING_VIEW', ComputeEncompassingViewAction);

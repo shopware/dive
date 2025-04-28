@@ -1,6 +1,7 @@
-import { Action } from '../action';
-import { ActionDependencies } from '../types';
+import { Action } from '../action.ts';
+import { ActionDependencies } from '../../types/index.ts';
 import { type DIVESceneFileType } from '../../../../types';
+import { registerAction } from '../../ActionRegistry.ts';
 
 export const ExportSceneAction = Action.define<
     { type: keyof DIVESceneFileType },
@@ -16,7 +17,9 @@ export const ExportSceneAction = Action.define<
 });
 
 declare global {
-    interface ActionClasses {
+    interface ActionTypes {
         EXPORT_SCENE: typeof ExportSceneAction;
     }
 }
+
+registerAction('EXPORT_SCENE', ExportSceneAction);

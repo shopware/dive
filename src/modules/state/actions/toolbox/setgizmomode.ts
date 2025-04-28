@@ -1,5 +1,6 @@
-import { Action } from '../action';
-import { ActionDependencies } from '../types';
+import { Action } from '../action.ts';
+import { registerAction } from '../../ActionRegistry.ts';
+import { ActionDependencies } from '../../types/index.ts';
 
 export const SetGizmoModeAction = Action.define<
     { mode: 'translate' | 'rotate' | 'scale' },
@@ -13,7 +14,9 @@ export const SetGizmoModeAction = Action.define<
 });
 
 declare global {
-    interface ActionClasses {
+    interface ActionTypes {
         SET_GIZMO_MODE: typeof SetGizmoModeAction;
     }
 }
+
+registerAction('SET_GIZMO_MODE', SetGizmoModeAction);

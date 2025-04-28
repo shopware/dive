@@ -1,5 +1,6 @@
-import { Action } from '../action';
-import { ActionDependencies } from '../types';
+import { Action } from '../action.ts';
+import { registerAction } from '../../ActionRegistry.ts';
+import { ActionDependencies } from '../../types/index.ts';
 import { Color, MeshStandardMaterial } from 'three';
 
 export const UpdateSceneAction = Action.define<
@@ -43,7 +44,9 @@ export const UpdateSceneAction = Action.define<
 });
 
 declare global {
-    interface ActionClasses {
+    interface ActionTypes {
         UPDATE_SCENE: typeof UpdateSceneAction;
     }
 }
+
+registerAction('UPDATE_SCENE', UpdateSceneAction);

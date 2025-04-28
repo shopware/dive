@@ -1,5 +1,6 @@
-import { Action } from '../action';
-import { ActionDependencies } from '../types';
+import { Action } from '../action.ts';
+import { registerAction } from '../../ActionRegistry.ts';
+import { ActionDependencies } from '../../types/index.ts';
 import { type COMEntity } from '../../types';
 import { merge } from 'lodash';
 
@@ -25,7 +26,9 @@ export const UpdateObjectAction = Action.define<
 });
 
 declare global {
-    interface ActionClasses {
+    interface ActionTypes {
         UPDATE_OBJECT: typeof UpdateObjectAction;
     }
 }
+
+registerAction('UPDATE_OBJECT', UpdateObjectAction);

@@ -1,5 +1,6 @@
-import { Action } from '../action';
-import { ActionDependencies } from '../types';
+import { Action } from '../action.ts';
+import { registerAction } from '../../ActionRegistry.ts';
+import { ActionDependencies } from '../../types/index.ts';
 
 export const SetCameraLayerAction = Action.define<
     { layer: 'LIVE' | 'EDITOR' },
@@ -13,7 +14,9 @@ export const SetCameraLayerAction = Action.define<
 });
 
 declare global {
-    interface ActionClasses {
+    interface ActionTypes {
         SET_CAMERA_LAYER: typeof SetCameraLayerAction;
     }
 }
+
+registerAction('SET_CAMERA_LAYER', SetCameraLayerAction);

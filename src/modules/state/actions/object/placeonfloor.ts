@@ -1,5 +1,6 @@
-import { Action } from '../action';
-import { ActionDependencies } from '../types';
+import { Action } from '../action.ts';
+import { registerAction } from '../../ActionRegistry.ts';
+import { ActionDependencies } from '../../types/index.ts';
 import { type DIVEModel } from '../../../../components';
 
 export const PlaceOnFloorAction = Action.define<
@@ -28,7 +29,9 @@ export const PlaceOnFloorAction = Action.define<
 });
 
 declare global {
-    interface ActionClasses {
+    interface ActionTypes {
         PLACE_ON_FLOOR: typeof PlaceOnFloorAction;
     }
 }
+
+registerAction('PLACE_ON_FLOOR', PlaceOnFloorAction);
