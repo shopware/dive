@@ -1,6 +1,7 @@
 import { DIVERenderPipeline } from '../renderer/Renderer';
 
 export interface DIVETicker {
+    uuid: string;
     tick(deltaTime: number): void;
     dispose?(): void;
 }
@@ -28,11 +29,12 @@ export class DIVEClock {
     }
 
     public addTicker(ticker: DIVETicker): void {
+        if (this._tickers.find((t) => t.uuid === ticker.uuid)) return;
         this._tickers.push(ticker);
     }
 
     public removeTicker(ticker: DIVETicker): void {
-        const index = this._tickers.indexOf(ticker);
+        const index = this._tickers.findIndex((t) => t.uuid === ticker.uuid);
         if (index !== -1) {
             this._tickers.splice(index, 1);
         }

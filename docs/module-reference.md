@@ -3,6 +3,11 @@
 DIVE provides several specialized modules for different aspects of 3D content handling:
 
 <!-- INSERT_MODULES -->
+#### AnimationSystem
+
+Updates all animations.
+DIVE uses Tween.js to handle animations.
+
 #### ARSystem
 
 The AR module enables Augmented Reality features across different platforms:

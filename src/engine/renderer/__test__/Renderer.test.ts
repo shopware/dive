@@ -6,15 +6,6 @@ import {
 import { DIVEScene } from '../../scene/Scene.ts';
 import { DIVEPerspectiveCamera } from '../../camera/PerspectiveCamera.ts';
 
-// jest.mock('three', () => ({
-//     WebGLRenderer: jest.fn().mockImplementation(() => ({
-//         domElement: document.createElement('canvas'),
-//         render: jest.fn(),
-//         setSize: jest.fn(),
-//         dispose: jest.fn(),
-//     })),
-// }));
-
 describe('DIVERenderPipeline', () => {
     let renderer: DIVERenderPipeline;
     let scene: DIVEScene;
@@ -22,12 +13,9 @@ describe('DIVERenderPipeline', () => {
 
     beforeEach(() => {
         jest.clearAllMocks();
-        renderer = new DIVERenderPipeline(
-            new DIVEScene(),
-            new DIVEPerspectiveCamera(),
-        );
-        scene = {} as DIVEScene;
-        camera = {} as DIVEPerspectiveCamera;
+        scene = new DIVEScene();
+        camera = new DIVEPerspectiveCamera();
+        renderer = new DIVERenderPipeline(scene, camera);
     });
 
     it('should instantiate with default settings', () => {
@@ -75,8 +63,7 @@ describe('DIVERenderPipeline', () => {
     });
 
     it('should render scene and camera', () => {
-        renderer.webglrenderer.render(scene, camera);
-        expect(WebGLRenderer).toHaveBeenCalled();
+        renderer.render();
         const mockInstance = (WebGLRenderer as jest.Mock).mock.results[0].value;
         expect(mockInstance.render).toHaveBeenCalledWith(scene, camera);
     });

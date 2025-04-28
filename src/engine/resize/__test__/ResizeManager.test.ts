@@ -128,4 +128,54 @@ describe('DIVEResizeManager', () => {
         resizeManager.dispose();
         expect(mockDisconnect).toHaveBeenCalled();
     });
+
+    it('should handle case when parent element is not immediately available', () => {
+        // Clear previous instance
+        resizeManager.dispose();
+
+        // Mock parent element as null initially
+        Object.defineProperty(
+            renderer.webglrenderer.domElement,
+            'parentElement',
+            {
+                value: null,
+                writable: true,
+            },
+        );
+
+        // Mock setInterval
+        jest.useFakeTimers();
+        const mockSetInterval = jest.spyOn(global, 'setInterval');
+        const mockClearInterval = jest.spyOn(global, 'clearInterval');
+
+        // Create new instance
+        resizeManager = new DIVEResizeManager(renderer, camera);
+
+        // Verify setInterval was called
+        expect(mockSetInterval).toHaveBeenCalled();
+
+        // Simulate parent element becoming available
+        Object.defineProperty(
+            renderer.webglrenderer.domElement,
+            'parentElement',
+            {
+                value: document.createElement('div'),
+                writable: true,
+            },
+        );
+
+        // Fast-forward timers
+        jest.advanceTimersByTime(16);
+
+        // Verify observe was called with parent element
+        expect(mockObserve).toHaveBeenCalledWith(
+            renderer.webglrenderer.domElement.parentElement,
+        );
+
+        // Verify interval was cleared
+        expect(mockClearInterval).toHaveBeenCalled();
+
+        // Cleanup
+        jest.useRealTimers();
+    });
 });
