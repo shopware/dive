@@ -191,7 +191,7 @@ export class DIVE {
         (window as any).DIVE = {
             instances: [],
             PrintScene: () => {
-                return this._engine.scene;
+                return this._engine.renderer.scene;
             },
         };
 
