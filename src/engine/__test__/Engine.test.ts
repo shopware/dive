@@ -87,7 +87,7 @@ describe('DIVEEngine', () => {
     });
 
     it('should provide access to components', () => {
-        expect(engine.renderer).toBeDefined();
+        expect(engine.renderPipeline).toBeDefined();
     });
 
     it('should start and stop the engine', () => {
