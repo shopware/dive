@@ -2,7 +2,7 @@ import { type Object3D } from 'three';
 import { type DIVEScene } from '../../../engine/scene/Scene';
 import { DIVETransformTool } from '../transform/TransformTool';
 import { findInterface } from '../../../helpers/findInterface/findInterface';
-import { type DIVEOrbitController } from '../../controller/orbit/OrbitController';
+import { type OrbitController } from '../../controller/orbit/OrbitController';
 import { type DIVESelectable } from '../../../interfaces/Selectable';
 import { type DIVEMovable } from '../../../interfaces/Movable';
 import { type DIVEBaseTool } from '../BaseTool';
@@ -26,7 +26,7 @@ export interface DIVEObjectEventMap {
 export class DIVESelectTool extends DIVETransformTool {
     readonly isSelectTool: boolean = true;
 
-    constructor(scene: DIVEScene, controller: DIVEOrbitController) {
+    constructor(scene: DIVEScene, controller: OrbitController) {
         super(scene, controller);
         this.name = 'SelectTool';
     }

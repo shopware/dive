@@ -10,7 +10,7 @@ import {
     UI_LAYER_MASK,
 } from '../../constants/VisibilityLayerMask';
 import { type DIVEScene } from '../../engine/scene/Scene';
-import { type DIVEOrbitController } from '../controller/orbit/OrbitController';
+import { type OrbitController } from '../controller/orbit/OrbitController';
 import { type DIVEDraggable } from '../../interfaces/Draggable';
 import { type DIVEHoverable } from '../../interfaces/Hoverable';
 import { findInterface } from '../../helpers/findInterface/findInterface';
@@ -30,7 +30,7 @@ export abstract class DIVEBaseTool {
 
     protected _canvas: HTMLElement;
     protected _scene: DIVEScene;
-    protected _controller: DIVEOrbitController;
+    protected _controller: OrbitController;
 
     // general pointer members
     protected _pointer: Vector2;
@@ -64,7 +64,7 @@ export abstract class DIVEBaseTool {
     protected _draggable: DIVEDraggable | null;
     protected _dragRaycastOnObjects: Object3D[] | null;
 
-    protected constructor(scene: DIVEScene, controller: DIVEOrbitController) {
+    protected constructor(scene: DIVEScene, controller: OrbitController) {
         this.name = 'BaseTool';
 
         this._canvas = controller.domElement;

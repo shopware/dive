@@ -1,21 +1,26 @@
 import { type DIVEScene } from '../../engine/scene/Scene';
 import { type DIVEBaseTool } from './BaseTool';
 import { DIVESelectTool } from './select/SelectTool';
-import { DIVEOrbitController } from '../controller/orbit/OrbitController';
+import { OrbitController } from '../controller/orbit/OrbitController';
 
 export type ToolType = 'select' | 'none';
 
+declare global {
+    interface ModuleClasses {
+        Toolbox: typeof Toolbox;
+    }
+}
+
 /**
+ * @module Toolbox
  * A Toolbox to activate and deactivate tools to use with the pointer.
- *
- * @module
  */
 
-export class DIVEToolbox {
+export class Toolbox {
     public static readonly DefaultTool = 'select';
 
     private _scene: DIVEScene;
-    private _controller: DIVEOrbitController;
+    private _controller: OrbitController;
 
     private _activeTool: DIVEBaseTool | null;
 
@@ -30,7 +35,7 @@ export class DIVEToolbox {
         return this._selectTool;
     }
 
-    constructor(scene: DIVEScene, controller: DIVEOrbitController) {
+    constructor(scene: DIVEScene, controller: OrbitController) {
         this._scene = scene;
         this._controller = controller;
 

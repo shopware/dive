@@ -1,13 +1,13 @@
 import { DIVEPointLight } from '../PointLight';
-import { DIVECommunication } from '../../../modules/com/Communication';
+import { State } from '../../../modules/state/State';
 import { Color, PointLight } from 'three';
 
-jest.mock('../../../modules/com/Communication.ts', () => {
+jest.mock('../../../modules/state/State.ts', () => {
     return {
-        DIVECommunication: {
+        State: {
             get: jest.fn(() => {
                 return {
-                    PerformAction: jest.fn(),
+                    performAction: jest.fn(),
                 };
             }),
         },
@@ -50,7 +50,7 @@ describe('dive/light/DIVEPointLight', () => {
         testLight.userData.id = 'something';
         expect(() => testLight.onMove()).not.toThrow();
 
-        jest.spyOn(DIVECommunication, 'get').mockReturnValueOnce(undefined);
+        jest.spyOn(State, 'get').mockReturnValueOnce(undefined);
         expect(() => testLight.onMove()).not.toThrow();
     });
 
@@ -59,7 +59,7 @@ describe('dive/light/DIVEPointLight', () => {
         testLight.userData.id = 'something';
         expect(() => testLight.onSelect()).not.toThrow();
 
-        jest.spyOn(DIVECommunication, 'get').mockReturnValueOnce(undefined);
+        jest.spyOn(State, 'get').mockReturnValueOnce(undefined);
         expect(() => testLight.onSelect()).not.toThrow();
     });
 
@@ -68,7 +68,7 @@ describe('dive/light/DIVEPointLight', () => {
         testLight.userData.id = 'something';
         expect(() => testLight.onDeselect()).not.toThrow();
 
-        jest.spyOn(DIVECommunication, 'get').mockReturnValueOnce(undefined);
+        jest.spyOn(State, 'get').mockReturnValueOnce(undefined);
         expect(() => testLight.onDeselect()).not.toThrow();
     });
 });

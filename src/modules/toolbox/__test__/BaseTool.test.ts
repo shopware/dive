@@ -1,5 +1,5 @@
 import { DIVEBaseTool } from '../BaseTool';
-import { DIVEOrbitController } from '../../controller/orbit/OrbitController';
+import { OrbitController } from '../../controller/orbit/OrbitController';
 import { DIVEScene } from '../../../engine/scene/Scene';
 import { Vector3, type Intersection, type Object3D } from 'three';
 import { type DIVEHoverable } from '../../../interfaces/Hoverable';
@@ -26,14 +26,14 @@ const mockController = {
         isPerspectiveCamera: true,
         type: 'cameraP',
     },
-} as unknown as DIVEOrbitController;
+} as unknown as OrbitController;
 
 const mockScene = {
     children: [],
 } as unknown as DIVEScene;
 
 const abstractWrapper = class Wrapper extends DIVEBaseTool {
-    constructor(scene: DIVEScene, controller: DIVEOrbitController) {
+    constructor(scene: DIVEScene, controller: OrbitController) {
         super(scene, controller);
         this.name = 'DIVEBaseTool';
     }

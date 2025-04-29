@@ -7,7 +7,7 @@ import {
     FrontSide,
     Object3D,
 } from 'three';
-import { DIVECommunication } from '../../modules/com/Communication';
+import { State } from '../../modules/state/State';
 import {
     PRODUCT_LAYER_MASK,
     UI_LAYER_MASK,
@@ -93,23 +93,21 @@ export class DIVEPointLight
     }
 
     public onMove(): void {
-        DIVECommunication.get(this.userData.id)?.PerformAction(
-            'UPDATE_OBJECT',
-            { id: this.userData.id, position: this.position },
-        );
+        State.get(this.userData.id)?.performAction('UPDATE_OBJECT', {
+            id: this.userData.id,
+            position: this.position,
+        });
     }
 
     public onSelect(): void {
-        DIVECommunication.get(this.userData.id)?.PerformAction(
-            'SELECT_OBJECT',
-            { id: this.userData.id },
-        );
+        State.get(this.userData.id)?.performAction('SELECT_OBJECT', {
+            id: this.userData.id,
+        });
     }
 
     public onDeselect(): void {
-        DIVECommunication.get(this.userData.id)?.PerformAction(
-            'DESELECT_OBJECT',
-            { id: this.userData.id },
-        );
+        State.get(this.userData.id)?.performAction('DESELECT_OBJECT', {
+            id: this.userData.id,
+        });
     }
 }

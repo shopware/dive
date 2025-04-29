@@ -1,11 +1,8 @@
 import {
-    DIVEOrbitController,
-    DIVEOrbitControllerDefaultSettings,
-    DIVEOrbitControllerSettings,
+    OrbitController,
+    OrbitControllerDefaultSettings,
+    OrbitControllerSettings,
 } from '../modules/controller/orbit/OrbitController.ts';
-import { DIVEToolbox } from '../modules/toolbox/Toolbox.ts';
-import { DIVECommunication } from '../modules/com/Communication.ts';
-import { DIVEAnimationSystem } from '../modules/animation/AnimationSystem.ts';
 import { DIVEAxisCamera } from '../modules/axiscamera/AxisCamera.ts';
 import { MathUtils } from 'three';
 import pkgjson from '../../package.json';
@@ -14,15 +11,16 @@ import {
     EngineDefaultSettings,
     EngineSettings,
 } from '../engine/Engine.ts';
+import { ModuleImporter } from '../modules/index.ts';
 
 export type DIVESettings = EngineSettings & {
     /** Settings for the orbit controls */
-    orbitController: Partial<DIVEOrbitControllerSettings>;
+    orbitController: Partial<OrbitControllerSettings>;
 };
 
 export const DIVEDefaultSettings: Required<DIVESettings> = {
     ...EngineDefaultSettings,
-    orbitController: DIVEOrbitControllerDefaultSettings,
+    orbitController: OrbitControllerDefaultSettings,
 };
 
 /**
@@ -43,7 +41,7 @@ export const DIVEDefaultSettings: Required<DIVESettings> = {
  *  // do something
  * }));
  *
- * dive.Communication.PerformAction('GET_ALL_SCENE_DATA', {});
+ * dive.Communication.performAction('GET_ALL_SCENE_DATA', {});
  * ```
  * @module
  */
@@ -52,73 +50,75 @@ export class DIVE {
     // static members
     public static async QuickView(
         uri: string,
-        settings?: Partial<DIVESettings>,
+        settings?: Partial<DIVESettings & { lightIntensity?: number }>,
     ): Promise<DIVE> {
         return new Promise((resolve) => {
             const dive = new DIVE(settings);
+            new ModuleImporter<'State'>('State')
+                .instantiate(dive._engine, dive.orbitController)
+                .then((state) => {
+                    // set scene properties
+                    state.performAction('UPDATE_SCENE', {
+                        backgroundColor: 0xffffff,
+                        gridEnabled: false,
+                        floorColor: 0xffffff,
+                    });
 
-            // set scene properties
-            dive._communication.PerformAction('UPDATE_SCENE', {
-                backgroundColor: 0xffffff,
-                gridEnabled: false,
-                floorColor: 0xffffff,
-            });
+                    state.performAction('SET_CAMERA_TRANSFORM', {
+                        position: { x: 0, y: 2, z: 2 },
+                        target: { x: 0, y: 0.5, z: 0 },
+                    });
 
-            dive._communication.PerformAction('SET_CAMERA_TRANSFORM', {
-                position: { x: 0, y: 2, z: 2 },
-                target: { x: 0, y: 0.5, z: 0 },
-            });
+                    // generate scene light id
+                    const lightid = MathUtils.generateUUID();
 
-            // generate scene light id
-            const lightid = MathUtils.generateUUID();
+                    // add scene light
+                    state.performAction('ADD_OBJECT', {
+                        entityType: 'light',
+                        type: 'scene',
+                        name: 'light',
+                        id: lightid,
+                        enabled: true,
+                        visible: true,
+                        intensity: settings?.lightIntensity ?? 1,
+                        color: 0xffffff,
+                    });
 
-            // add scene light
-            dive._communication.PerformAction('ADD_OBJECT', {
-                entityType: 'light',
-                type: 'scene',
-                name: 'light',
-                id: lightid,
-                enabled: true,
-                visible: true,
-                intensity: 1,
-                color: 0xffffff,
-            });
+                    // generate model id
+                    const modelid = MathUtils.generateUUID();
 
-            // generate model id
-            const modelid = MathUtils.generateUUID();
+                    // add loaded listener
+                    state.subscribe('MODEL_LOADED', (data) => {
+                        if (data.id !== modelid) return;
 
-            // add loaded listener
-            dive._communication.Subscribe('MODEL_LOADED', (data) => {
-                if (data.id !== modelid) return;
+                        const transform = state.performAction(
+                            'COMPUTE_ENCOMPASSING_VIEW',
+                        );
 
-                const transform = dive._communication.PerformAction(
-                    'COMPUTE_ENCOMPASSING_VIEW',
-                    {},
-                );
+                        state.performAction('SET_CAMERA_TRANSFORM', {
+                            position: transform.position,
+                            target: transform.target,
+                        });
 
-                dive._communication.PerformAction('SET_CAMERA_TRANSFORM', {
-                    position: transform.position,
-                    target: transform.target,
+                        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                        (window as any).DIVE.instances.push(dive);
+
+                        resolve(dive);
+                    });
+
+                    // instantiate model
+                    state.performAction('ADD_OBJECT', {
+                        entityType: 'model',
+                        name: 'object',
+                        id: modelid,
+                        position: { x: 0, y: 0, z: 0 },
+                        rotation: { x: 0, y: 0, z: 0 },
+                        scale: { x: 1, y: 1, z: 1 },
+                        uri: uri,
+                        visible: true,
+                        loaded: false,
+                    });
                 });
-
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                (window as any).DIVE.instances.push(dive);
-
-                resolve(dive);
-            });
-
-            // instantiate model
-            dive._communication.PerformAction('ADD_OBJECT', {
-                entityType: 'model',
-                name: 'object',
-                id: modelid,
-                position: { x: 0, y: 0, z: 0 },
-                rotation: { x: 0, y: 0, z: 0 },
-                scale: { x: 1, y: 1, z: 1 },
-                uri: uri,
-                visible: true,
-                loaded: false,
-            });
         });
     }
 
@@ -131,18 +131,9 @@ export class DIVE {
 
     private _engine: DIVEEngine;
 
-    private orbitControls: DIVEOrbitController;
-    private toolbox: DIVEToolbox;
-    private _communication: DIVECommunication;
+    private orbitController: OrbitController;
 
-    // additional components
-    private animationSystem: DIVEAnimationSystem;
     private axisCamera: DIVEAxisCamera | null;
-
-    // getters
-    public get communication(): DIVECommunication {
-        return this._communication;
-    }
 
     public get canvas(): HTMLCanvasElement {
         return this._engine.renderer.webglrenderer.domElement;
@@ -156,24 +147,12 @@ export class DIVE {
 
         this._engine = new DIVEEngine(settings);
 
-        // initialize animation system
-        this.animationSystem = new DIVEAnimationSystem();
-        this._engine.clock.addTicker(this.animationSystem);
-
-        this.orbitControls = new DIVEOrbitController(
+        this.orbitController = new OrbitController(
             this._engine.camera,
             this._engine.renderer.webglrenderer.domElement,
-            this.animationSystem,
             this._settings.orbitController,
         );
-        this._engine.clock.addTicker(this.orbitControls);
-
-        this.toolbox = new DIVEToolbox(this._engine.scene, this.orbitControls);
-        this._communication = new DIVECommunication(
-            this._engine,
-            this.orbitControls,
-            this.toolbox,
-        );
+        this._engine.clock.addTicker(this.orbitController);
 
         // initialize axis camera
         if (this._settings.displayAxes) {
@@ -228,19 +207,17 @@ export class DIVE {
         `);
     }
 
-    public Dispose(): void {
-        this._engine.clock.removeTicker(this.orbitControls);
-        this.orbitControls.Dispose();
+    public async Dispose(): Promise<void> {
+        return new Promise((resolve) => {
+            this._engine.clock.removeTicker(this.orbitController);
+            this.orbitController.dispose();
 
-        if (this.axisCamera) {
-            this._engine.clock.removeTicker(this.axisCamera);
-            this.axisCamera.Dispose();
-        }
+            if (this.axisCamera) {
+                this._engine.clock.removeTicker(this.axisCamera);
+                this.axisCamera.Dispose();
+            }
 
-        this._engine.clock.removeTicker(this.animationSystem);
-        this.animationSystem.Dispose();
-
-        this.toolbox.Dispose();
-        this._communication.DestroyInstance();
+            resolve();
+        });
     }
 }

@@ -3,6 +3,11 @@
 DIVE provides several specialized modules for different aspects of 3D content handling:
 
 <!-- INSERT_MODULES -->
+#### AnimationSystem
+
+Updates all animations.
+DIVE uses Tween.js to handle animations.
+
 #### ARSystem
 
 The AR module enables Augmented Reality features across different platforms:
@@ -84,6 +89,24 @@ Features:
 - Customizable camera position and target
 - Configurable output resolution
 
+#### State
+
+State class for communicating with DIVE.
+
+You can subscribe to actions and perform them from outside and inside DIVE.
+
+```ts
+import { DIVE } from "@shopware-ag/dive";
+
+const dive = new DIVE();
+
+dive.State.Subscribe('GET_ALL_SCENE_DATA', () => {
+ // do something
+});
+
+dive.State.performAction('GET_ALL_SCENE_DATA', {});
+```
+
 #### SystemInfo
 
 Provides information about the system's capabilities and performance:
@@ -107,7 +130,11 @@ Features:
 - WebXR support detection
 - AR capability checking
 - Device type detection
-- SceneViewer support detection<!-- END_MODULES -->
+- SceneViewer support detection
+
+#### Toolbox
+
+A Toolbox to activate and deactivate tools to use with the pointer.<!-- END_MODULES -->
 
 Each module is designed to be used independently, allowing you to use only the functionality you
 need. This helps keep your bundle size small and your application focused.

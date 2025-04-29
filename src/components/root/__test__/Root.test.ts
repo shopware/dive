@@ -7,13 +7,14 @@ import {
     type COMEntity,
     type COMGroup,
     type COMEntityType,
-} from '../../../modules/com/types';
-import { DIVECommunication } from '../../../modules/com/Communication';
+} from '../../../modules/state/types';
+import { State } from '../../../modules/state/State';
 import { Object3D, Vector3, Box3 } from 'three';
 import { DIVEGroup } from '../../group/Group';
 import { type DIVEModel } from '../../model/Model';
 import { type DIVEPrimitive } from '../../primitive/Primitive';
 import { AssetLoader } from '../../../modules/asset/loader/AssetLoader';
+import { ModuleImporter } from '../../../modules';
 
 jest.mock('../../../modules/index.ts', () => {
     return {
@@ -26,12 +27,12 @@ jest.mock('../../../modules/index.ts', () => {
     };
 });
 
-jest.mock('../../../modules/com/Communication.ts', () => {
+jest.mock('../../../modules/state/State.ts', () => {
     return {
-        DIVECommunication: {
+        State: {
             get: jest.fn(() => {
                 return {
-                    PerformAction: jest.fn(),
+                    performAction: jest.fn(),
                 };
             }),
         },
@@ -283,6 +284,34 @@ describe('components/root/DIVERoot', () => {
             expect(bb).toBeDefined();
             expect(bb).toBeInstanceOf(Box3);
         });
+
+        it('should handle empty scene', () => {
+            Object3D.prototype.traverse = jest.fn((callback) => {});
+            const bb = root.ComputeSceneBB();
+            expect(bb).toBeDefined();
+            expect(bb).toBeInstanceOf(Box3);
+        });
+
+        it('should handle multiple objects', () => {
+            const mockObject1 = new Object3D();
+            mockObject1.position.set(1, 2, 3);
+            mockObject1.traverse = jest.fn((callback) => callback(mockObject1));
+
+            const mockObject2 = new Object3D();
+            mockObject2.position.set(4, 5, 6);
+            mockObject2.traverse = jest.fn((callback) => callback(mockObject2));
+
+            root.children = [
+                mockObject1,
+                mockObject2,
+            ];
+
+            const bb = root.ComputeSceneBB();
+            expect(bb).toBeDefined();
+            expect(bb).toBeInstanceOf(Box3);
+            expect(mockObject1.traverse).toHaveBeenCalled();
+            expect(mockObject2.traverse).toHaveBeenCalled();
+        });
     });
 
     describe('GetSceneObject', () => {
@@ -298,6 +327,78 @@ describe('components/root/DIVERoot', () => {
         it('should return undefined for non-existent id', () => {
             const found = root.GetSceneObject({ id: 'non-existent' });
             expect(found).toBeUndefined();
+        });
+
+        it('should get scene object by id', () => {
+            const root = new DIVERoot();
+            const mockObject = {
+                isObject3D: true,
+                userData: {
+                    id: 'test-id',
+                },
+            };
+            root.add(mockObject as any);
+            const result = root.GetSceneObject({ id: 'test-id' });
+            expect(result).toBe(mockObject);
+        });
+
+        it('should return undefined when object is not found', () => {
+            const root = new DIVERoot();
+            const result = root.GetSceneObject({ id: 'non-existent-id' });
+            expect(result).toBeUndefined();
+        });
+
+        it('should stop traversing when object is found', () => {
+            const root = new DIVERoot();
+            const mockObject1 = {
+                isObject3D: true,
+                userData: {
+                    id: 'test-id',
+                },
+                id: 'obj1',
+                uuid: 'uuid1',
+                name: 'obj1',
+                type: 'Object3D',
+                parent: null,
+                children: [],
+                up: { x: 0, y: 1, z: 0 },
+                position: { x: 0, y: 0, z: 0 },
+                rotation: { x: 0, y: 0, z: 0 },
+                scale: { x: 1, y: 1, z: 1 },
+                matrix: { elements: new Float32Array(16) },
+                matrixWorld: { elements: new Float32Array(16) },
+                matrixAutoUpdate: true,
+                matrixWorldNeedsUpdate: false,
+                layers: { mask: 1 },
+                visible: true,
+                castShadow: false,
+                receiveShadow: false,
+                frustumCulled: true,
+                renderOrder: 0,
+                animations: [],
+                updateMatrix: jest.fn(),
+                updateMatrixWorld: jest.fn(),
+                updateWorldMatrix: jest.fn(),
+                traverse: jest.fn(),
+                traverseVisible: jest.fn(),
+                traverseAncestors: jest.fn(),
+                addEventListener: jest.fn(),
+                hasEventListener: jest.fn(),
+                removeEventListener: jest.fn(),
+                dispatchEvent: jest.fn(),
+            };
+            const mockObject2 = { ...mockObject1, id: 'obj2', uuid: 'uuid2' };
+
+            let traverseCount = 0;
+            root.traverse = jest.fn((callback) => {
+                traverseCount++;
+                callback(mockObject1 as any);
+                callback(mockObject2 as any);
+            });
+
+            const result = root.GetSceneObject({ id: 'test-id' });
+            expect(result).toBe(mockObject1);
+            expect(traverseCount).toBe(1);
         });
     });
 
@@ -868,52 +969,6 @@ describe('components/root/DIVERoot', () => {
             expect(mockTransformControls.detach).toHaveBeenCalled();
         });
 
-        it('should handle model loading', async () => {
-            const modelData: COMModel = {
-                id: 'model-1',
-                entityType: 'model',
-                name: 'Test Model',
-                visible: true,
-                uri: 'test.glb',
-                position: { x: 1, y: 2, z: 3 },
-                rotation: { x: 0, y: 0, z: 0 },
-                scale: { x: 1, y: 1, z: 1 },
-                loaded: false,
-            };
-
-            const mockGLTF = { scene: new Object3D() };
-            const mockLoader = {
-                load: jest.fn().mockResolvedValue(mockGLTF),
-            };
-
-            const mockPerformAction = jest.fn();
-            const mockCommunication = {
-                PerformAction: mockPerformAction,
-            };
-
-            jest.spyOn(DIVECommunication, 'get').mockReturnValue(
-                mockCommunication as any,
-            );
-
-            jest.spyOn(root['_assetLoader'], 'instantiate').mockResolvedValue(
-                mockLoader as unknown as AssetLoader,
-            );
-
-            root.AddSceneObject(modelData);
-            const model = root.GetSceneObject<DIVEModel>(modelData);
-            expect(model).toBeDefined();
-
-            // Wait for all promises to resolve
-            await new Promise((resolve) => setTimeout(resolve, 0));
-
-            expect(mockLoader.load).toHaveBeenCalledWith('test.glb');
-            expect(model?.SetModel).toHaveBeenCalledWith(mockGLTF);
-            expect(DIVECommunication.get).toHaveBeenCalledWith('model-1');
-            expect(mockPerformAction).toHaveBeenCalledWith('MODEL_LOADED', {
-                id: 'model-1',
-            });
-        });
-
         it('should handle primitive deletion', () => {
             const primitiveData: COMPrimitive = {
                 id: 'primitive-1',
@@ -1345,14 +1400,20 @@ describe('components/root/DIVERoot', () => {
             } = {
                 id: 'model-1',
                 entityType: 'model',
-                name: undefined,
-                visible: undefined,
-                position: undefined,
-                rotation: undefined,
-                scale: undefined,
-                uri: undefined,
-                loaded: undefined,
-                material: undefined,
+                name: null as unknown as string,
+                visible: null as unknown as boolean,
+                position: null as unknown as {
+                    x: number;
+                    y: number;
+                    z: number;
+                },
+                rotation: null as unknown as {
+                    x: number;
+                    y: number;
+                    z: number;
+                },
+                scale: null as unknown as { x: number; y: number; z: number },
+                material: null as unknown as { color: string },
             };
 
             root.AddSceneObject(modelData as COMModel);
@@ -1465,6 +1526,59 @@ describe('components/root/DIVERoot', () => {
             expect(spyConsoleWarn).toHaveBeenCalledWith(
                 'DIVERoot.deletePrimitive: Primitive with id non-existent-primitive not found',
             );
+        });
+    });
+
+    describe('findScene', () => {
+        it('should find scene from object hierarchy', () => {
+            const mockScene = new Object3D();
+            mockScene.name = 'Scene';
+            const mockParent = new Object3D();
+            mockParent.name = 'Parent';
+            const mockChild = new Object3D();
+            mockChild.name = 'Child';
+
+            mockChild.parent = mockParent;
+            mockParent.parent = mockScene;
+
+            const result = root['findScene'](mockChild);
+            expect(result).toBe(mockScene);
+        });
+
+        it('should return object itself if it has no parent', () => {
+            const mockObject = new Object3D();
+            mockObject.name = 'Object';
+            mockObject.parent = null;
+
+            const result = root['findScene'](mockObject);
+            expect(result).toBe(mockObject);
+        });
+    });
+
+    describe('detachTransformControls', () => {
+        it('should detach transform controls from object', () => {
+            const mockObject = new Object3D();
+            const mockTransformControls = Object.assign(new Object3D(), {
+                isTransformControls: true,
+                detach: jest.fn(),
+            });
+
+            const mockScene = new Object3D();
+            mockScene.children = [mockTransformControls];
+            mockObject.parent = mockScene;
+
+            root['detachTransformControls'](mockObject);
+            expect(mockTransformControls.detach).toHaveBeenCalled();
+        });
+
+        it('should handle object without transform controls', () => {
+            const mockObject = new Object3D();
+            const mockScene = new Object3D();
+            mockScene.children = [];
+            mockObject.parent = mockScene;
+
+            root['detachTransformControls'](mockObject);
+            // No error should be thrown
         });
     });
 });

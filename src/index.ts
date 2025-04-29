@@ -6,6 +6,7 @@ export * from './types/index.ts';
 
 // export all modules
 export * from './modules/ar/ARSystem';
+export * from './modules/state/State.ts';
 export * from './modules/asset/converter/AssetConverter';
 export * from './modules/asset/exporter/AssetExporter';
 export * from './modules/asset/loader/AssetLoader';

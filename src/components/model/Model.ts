@@ -7,9 +7,9 @@ import {
 } from 'three';
 import { PRODUCT_LAYER_MASK } from '../../constants/VisibilityLayerMask.ts';
 import { findSceneRecursive } from '../../helpers/findSceneRecursive/findSceneRecursive.ts';
-import { type COMMaterial } from '../../modules/com/types/index.ts';
+import { type COMMaterial } from '../../modules/state/types/index.ts';
 import { DIVENode } from '../node/Node';
-import { DIVECommunication } from '../../modules/com/Communication';
+import { State } from '../../modules/state/State.ts';
 
 /**
  * A basic model class.
@@ -132,15 +132,12 @@ export class DIVEModel extends DIVENode {
         // skip any action when the position did not change
         if (worldPos.y === oldWorldPos.y) return;
 
-        DIVECommunication.get(this.userData.id)?.PerformAction(
-            'UPDATE_OBJECT',
-            {
-                id: this.userData.id,
-                position: worldPos,
-                rotation: this.rotation,
-                scale: this.scale,
-            },
-        );
+        State.get(this.userData.id)?.performAction('UPDATE_OBJECT', {
+            id: this.userData.id,
+            position: worldPos,
+            rotation: this.rotation,
+            scale: this.scale,
+        });
     }
 
     public DropIt(): void {

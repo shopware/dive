@@ -41,7 +41,7 @@ function findTypeDefinition(type: string): string | null {
         DIVESceneFileType: 'src/types/SceneType.ts',
         DIVESceneData: 'src/types/SceneData.ts',
         DIVESceneObject: 'src/types/SceneObjects.ts',
-        COMEntity: 'src/com/types.ts',
+        COMEntity: 'src/modules/state/types.ts',
     };
 
     if (type in specialTypes) {
@@ -232,7 +232,7 @@ function findActionFiles(dir: string): string[] {
 }
 
 function generateReadme(): void {
-    const actionsDir = path.join(process.cwd(), 'src/modules/com/actions');
+    const actionsDir = path.join(process.cwd(), 'src/modules/state/actions');
     const actionsReferencePath = path.join(
         __dirname,
         '../actions-reference.md',

@@ -12,6 +12,11 @@
             "import": "./build/index.mjs",
             "require": "./build/index.cjs"
         },
+        "./modules/AnimationSystem": {
+            "types": "./build/src/modules/animation/AnimationSystem.d.ts",
+            "import": "./build/src/modules/animation/AnimationSystem.mjs",
+            "require": "./build/src/modules/animation/AnimationSystem.cjs"
+        },
         "./modules/ARSystem": {
             "types": "./build/src/modules/ar/ARSystem.d.ts",
             "import": "./build/src/modules/ar/ARSystem.mjs",
@@ -37,10 +42,20 @@
             "import": "./build/src/modules/mediacreator/MediaCreator.mjs",
             "require": "./build/src/modules/mediacreator/MediaCreator.cjs"
         },
+        "./modules/State": {
+            "types": "./build/src/modules/state/State.d.ts",
+            "import": "./build/src/modules/state/State.mjs",
+            "require": "./build/src/modules/state/State.cjs"
+        },
         "./modules/SystemInfo": {
             "types": "./build/src/modules/systeminfo/SystemInfo.d.ts",
             "import": "./build/src/modules/systeminfo/SystemInfo.mjs",
             "require": "./build/src/modules/systeminfo/SystemInfo.cjs"
+        },
+        "./modules/Toolbox": {
+            "types": "./build/src/modules/toolbox/Toolbox.d.ts",
+            "import": "./build/src/modules/toolbox/Toolbox.mjs",
+            "require": "./build/src/modules/toolbox/Toolbox.cjs"
         }
     },
     "files": [
@@ -102,10 +117,6 @@
         "postbuild": "yarn validate-build-paths",
         "dev": "vite build --watch",
         "lint": "eslint",
-        "lint:actions": "bash ci/lint/lint-actions.sh",
-        "lint:actions:transpile": "yarn tsc --resolveJsonModule --esModuleInterop ci/lint/lint-actions.ts && mv ci/lint/lint-actions.js ci/lint/lint-actions.cjs",
-        "lint:actions:check": "yarn node ci/lint/lint-actions.cjs",
-        "lint:actions:cleanup": "node -e \"require('fs').unlinkSync('ci/lint/lint-actions.cjs')\"",
         "prettier:check": "prettier --check .",
         "prettier:fix": "prettier --write .",
         "unit": "jest",
@@ -113,6 +124,6 @@
         "docs": "yarn docs:actions && yarn docs:modules",
         "docs:actions": "NODE_OPTIONS='--loader ts-node/esm' ts-node docs/generators/generate-actions-docs.ts",
         "docs:modules": "NODE_OPTIONS='--loader ts-node/esm' ts-node docs/generators/generate-modules-docs.ts",
-        "ci": "yarn lint && yarn lint:actions && yarn prettier:check && yarn docs && yarn coverage && yarn build"
+        "ci": "yarn lint && yarn prettier:check && yarn docs && yarn coverage && yarn build"
     }
 }

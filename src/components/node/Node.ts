@@ -1,6 +1,6 @@
 import { Box3, Object3D, Vector3, type Vector3Like } from 'three';
 import { PRODUCT_LAYER_MASK } from '../../constants/VisibilityLayerMask';
-import { DIVECommunication } from '../../modules/com/Communication';
+import { State } from '../../modules/state/State';
 
 import { DIVEMovable } from '../../interfaces/Movable';
 import { DIVESelectable } from '../../interfaces/Selectable';
@@ -58,43 +58,35 @@ export class DIVENode extends applyMixins(Object3D, [
 
     public SetToWorldOrigin(): void {
         this.position.set(0, 0, 0);
-        DIVECommunication.get(this.userData.id)?.PerformAction(
-            'UPDATE_OBJECT',
-            {
-                id: this.userData.id,
-                position: this.getWorldPosition(this._positionWorldBuffer),
-                rotation: this.rotation,
-                scale: this.scale,
-            },
-        );
+        State.get(this.userData.id)?.performAction('UPDATE_OBJECT', {
+            id: this.userData.id,
+            position: this.getWorldPosition(this._positionWorldBuffer),
+            rotation: this.rotation,
+            scale: this.scale,
+        });
     }
 
     /**
      * Can be called when the object is moved from a foreign object (gizmo, parent, etc.) to update the object's position.
      */
     public onMove(): void {
-        DIVECommunication.get(this.userData.id)?.PerformAction(
-            'UPDATE_OBJECT',
-            {
-                id: this.userData.id,
-                position: this.getWorldPosition(this._positionWorldBuffer),
-                rotation: this.rotation,
-                scale: this.scale,
-            },
-        );
+        State.get(this.userData.id)?.performAction('UPDATE_OBJECT', {
+            id: this.userData.id,
+            position: this.getWorldPosition(this._positionWorldBuffer),
+            rotation: this.rotation,
+            scale: this.scale,
+        });
     }
 
     public onSelect(): void {
-        DIVECommunication.get(this.userData.id)?.PerformAction(
-            'SELECT_OBJECT',
-            { id: this.userData.id },
-        );
+        State.get(this.userData.id)?.performAction('SELECT_OBJECT', {
+            id: this.userData.id,
+        });
     }
 
     public onDeselect(): void {
-        DIVECommunication.get(this.userData.id)?.PerformAction(
-            'DESELECT_OBJECT',
-            { id: this.userData.id },
-        );
+        State.get(this.userData.id)?.performAction('DESELECT_OBJECT', {
+            id: this.userData.id,
+        });
     }
 }

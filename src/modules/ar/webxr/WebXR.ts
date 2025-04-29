@@ -1,5 +1,5 @@
 import { Vector3 } from 'three';
-import { DIVEOrbitController } from '../../../modules/controller/orbit/OrbitController';
+import { OrbitController } from '../../../modules/controller/orbit/OrbitController';
 import { type DIVERenderPipeline } from '../../../engine/renderer/Renderer';
 import { type DIVEScene } from '../../../engine/scene/Scene';
 import { Overlay } from './overlay/Overlay';
@@ -10,7 +10,7 @@ export class DIVEWebXR {
     // general members
     private static _renderer: DIVERenderPipeline;
     private static _scene: DIVEScene;
-    private static _controller: DIVEOrbitController;
+    private static _controller: OrbitController;
 
     // camera reset members
     private static _cameraPosition: Vector3;
@@ -45,7 +45,7 @@ export class DIVEWebXR {
 
     public static async Launch(
         engine: DIVEEngine,
-        controller: DIVEOrbitController,
+        controller: OrbitController,
     ): Promise<void> {
         this._renderer = engine.renderer;
         this._scene = engine.scene;

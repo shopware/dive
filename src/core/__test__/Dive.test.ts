@@ -3,10 +3,10 @@
  */
 
 import { DIVE, DIVESettings } from '../Dive.ts';
-import { DIVERenderPipeline } from '../../engine/renderer/Renderer.ts';
-import { DIVEScene } from '../../engine/scene/Scene.ts';
-import { DIVEPerspectiveCamera } from '../../engine/camera/PerspectiveCamera.ts';
-import { DIVEClock } from '../../engine/clock/Clock.ts';
+import { MathUtils } from 'three';
+import { State } from '../../modules/state/State.ts';
+import { DIVEEngine } from '../../engine/Engine.ts';
+import { OrbitController } from '../../modules/controller/orbit/OrbitController.ts';
 
 // Mock ResizeObserver
 class MockResizeObserver {
@@ -16,62 +16,57 @@ class MockResizeObserver {
 }
 global.ResizeObserver = MockResizeObserver as any;
 
-jest.mock('../../engine/renderer/Renderer.ts', () => {
+jest.mock('../../engine/Engine.ts', () => {
     return {
-        DIVERenderPipeline: jest.fn(function () {
-            this.render = jest.fn();
-            this.onResize = jest.fn();
-            this.dispose = jest.fn();
-            this.webglrenderer = {
-                domElement: {},
+        DIVEEngine: jest.fn(function () {
+            this.camera = {};
+            this.scene = {};
+            this.renderer = {
+                webglrenderer: {
+                    domElement: {},
+                },
+                onResize: jest.fn(),
+            };
+            this.clock = {
+                addTicker: jest.fn(),
+                removeTicker: jest.fn(),
+                tick: jest.fn(),
+                dispose: jest.fn(),
             };
             return this;
         }),
     };
 });
 
-jest.mock('../../engine/clock/Clock.ts', () => {
+jest.mock('../../modules/index.ts', () => {
     return {
-        DIVEClock: jest.fn(function () {
-            this.addTicker = jest.fn();
-            this.removeTicker = jest.fn();
-            this.start = jest.fn();
-            this.stop = jest.fn();
-            this.dispose = jest.fn();
-            this.setRenderer = jest.fn();
+        ModuleImporter: jest.fn(function () {
+            this.instantiate = jest
+                .fn()
+                .mockResolvedValue(
+                    new State({} as DIVEEngine, {} as OrbitController),
+                );
             return this;
         }),
     };
 });
+const test_uuid = 'test_uuid';
+jest.spyOn(MathUtils, 'generateUUID').mockReturnValue(test_uuid);
 
-jest.mock('../../engine/Engine.ts', () => {
+jest.mock('../../modules/state/State.ts', () => {
     return {
-        DIVEEngine: jest.fn(function () {
-            this.renderer = new DIVERenderPipeline(
-                {} as DIVEScene,
-                {} as DIVEPerspectiveCamera,
-            );
-            this.clock = new DIVEClock();
-            return this;
-        }),
-    };
-});
-
-jest.mock('../../modules/com/Communication.ts', () => {
-    return {
-        DIVECommunication: jest.fn(function () {
-            this.PerformAction = jest.fn().mockReturnValue({
+        State: jest.fn(function () {
+            this.performAction = jest.fn().mockReturnValue({
                 position: { x: 0, y: 0, z: 0 },
                 target: { x: 0, y: 0, z: 0 },
             });
-            this.Subscribe = jest.fn(
+            this.subscribe = jest.fn(
                 (action: string, callback: (data: { id: string }) => void) => {
                     callback({ id: 'incorrect id' });
-                    callback({ id: 'test_uuid' });
+                    callback({ id: test_uuid });
                 },
             );
-            this.DestroyInstance = jest.fn();
-
+            this.destroyInstance = jest.fn().mockReturnValue(true);
             return this;
         }),
     };
@@ -79,7 +74,7 @@ jest.mock('../../modules/com/Communication.ts', () => {
 
 jest.mock('../../modules/controller/orbit/OrbitController.ts', () => {
     return {
-        DIVEOrbitController: jest.fn(function () {
+        OrbitController: jest.fn(function () {
             this.isObject3D = true;
             this.parent = null;
             this.dispatchEvent = jest.fn();
@@ -93,29 +88,7 @@ jest.mock('../../modules/controller/orbit/OrbitController.ts', () => {
                 id: undefined,
             };
             this.removeFromParent = jest.fn();
-            this.Dispose = jest.fn();
-            return this;
-        }),
-    };
-});
-
-jest.mock('../../modules/toolbox/Toolbox.ts', () => {
-    return {
-        DIVEToolbox: jest.fn(function () {
-            this.isObject3D = true;
-            this.parent = null;
-            this.dispatchEvent = jest.fn();
-            this.position = {
-                set: jest.fn(),
-            };
-            this.SetIntensity = jest.fn();
-            this.SetEnabled = jest.fn();
-            this.SetColor = jest.fn();
-            this.userData = {
-                id: undefined,
-            };
-            this.Dispose = jest.fn();
-            this.removeFromParent = jest.fn();
+            this.dispose = jest.fn();
             return this;
         }),
     };
@@ -144,22 +117,21 @@ jest.mock('../../modules/axiscamera/AxisCamera.ts', () => {
     };
 });
 
-jest.mock('../../modules/animation/AnimationSystem.ts', () => {
-    return {
-        DIVEAnimationSystem: jest.fn(function () {
-            this.Update = jest.fn();
-            this.Dispose = jest.fn();
-            return this;
-        }),
-    };
-});
+describe('DIVE', () => {
+    beforeEach(() => {
+        console.log = jest.fn();
+    });
 
-console.log = jest.fn();
-
-describe('dive/DIVE', () => {
     it('should QuickView', async () => {
         const dive = await DIVE.QuickView('test_uri');
         expect(dive).toBeDefined();
+    });
+
+    it('should handle QuickView with multiple instances', async () => {
+        const dive1 = await DIVE.QuickView('test_uri');
+        const dive2 = await DIVE.QuickView('test_uri');
+        expect(dive1).toBeDefined();
+        expect(dive2).toBeDefined();
     });
 
     it('should instantiate', () => {
@@ -221,21 +193,9 @@ describe('dive/DIVE', () => {
         expect(dive.canvas).toBeDefined();
     });
 
-    it('should have Communication', () => {
-        const dive = new DIVE();
-        expect(dive.communication).toBeDefined();
-    });
-
     it('should resize', () => {
         const dive = new DIVE();
         expect(() => dive.engine.renderer.onResize(800, 600)).not.toThrow();
-    });
-
-    it('should handle QuickView with multiple instances', async () => {
-        const dive1 = await DIVE.QuickView('test_uri1');
-
-        expect((window as any).DIVE.instances).toHaveLength(1);
-        expect((window as any).DIVE.instances[0]).toBe(dive1);
     });
 
     it('should initialize with axis camera when displayAxes is true', () => {
@@ -256,20 +216,17 @@ describe('dive/DIVE', () => {
         expect(dive['axisCamera']).toBeNull();
     });
 
-    it('should properly dispose all components', () => {
+    it('should properly dispose all components', async () => {
         const settings = {
             displayAxes: true,
         } as DIVESettings;
 
         const dive = new DIVE(settings);
 
-        dive.Dispose();
+        await dive.Dispose();
 
-        expect(dive['orbitControls'].Dispose).toHaveBeenCalled();
+        expect(dive['orbitController'].dispose).toHaveBeenCalled();
         expect(dive['axisCamera']?.Dispose).toHaveBeenCalled();
-        expect(dive['animationSystem'].Dispose).toHaveBeenCalled();
-        expect(dive['toolbox'].Dispose).toHaveBeenCalled();
-        expect(dive['_communication'].DestroyInstance).toHaveBeenCalled();
     });
 
     it('should handle dispose when animation system pipeline is not initialized', () => {

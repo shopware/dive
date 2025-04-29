@@ -17,8 +17,8 @@ import { DIVENode } from '../node/Node.ts';
 import {
     type COMGeometry,
     type COMMaterial,
-} from '../../modules/com/types/index.ts';
-import { DIVECommunication } from '../../modules/com/Communication.ts';
+} from '../../modules/state/types/index.ts';
+import { State } from '../../modules/state/State.ts';
 
 /**
  * A basic model class.
@@ -125,15 +125,12 @@ export class DIVEPrimitive extends DIVENode {
         // skip any action when the position did not change
         if (worldPos.y === oldWorldPos.y) return;
 
-        DIVECommunication.get(this.userData.id)?.PerformAction(
-            'UPDATE_OBJECT',
-            {
-                id: this.userData.id,
-                position: worldPos,
-                rotation: this.rotation,
-                scale: this.scale,
-            },
-        );
+        State.get(this.userData.id)?.performAction('UPDATE_OBJECT', {
+            id: this.userData.id,
+            position: worldPos,
+            rotation: this.rotation,
+            scale: this.scale,
+        });
     }
 
     public DropIt(): void {

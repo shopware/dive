@@ -6,14 +6,19 @@ manipulation, and scene state management.
 
 ## Basic Usage
 
-To perform an action, use the `DIVECommunication` instance:
+To perform an action, use the `State` instance:
 
 ```ts
+import { DIVE, State } from '@shopware-ag/dive';
+// or
+import { State } from '@shopware-ag/dive/modules/State';
+
 const dive = new DIVE();
-const com = dive.Communication;
+const orbitConroller = dive['orbitConroller']; // TODO: currently a debug solution
+const state = new State(dive.engine, orbitConroller);
 
 // Perform an action
-com.PerformAction('SET_CAMERA_TRANSFORM', {
+com.performAction('SET_CAMERA_TRANSFORM', {
     position: { x: 0, y: 2, z: 2 },
     target: { x: 0, y: 0.5, z: 0 },
 });
