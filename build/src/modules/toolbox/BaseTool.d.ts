@@ -1,0 +1,48 @@
+import { Intersection, Object3D, Raycaster, Vector2, Vector3 } from 'three';
+import { DIVEScene } from '../../engine/scene/Scene';
+import { OrbitController } from '../controller/orbit/OrbitController';
+import { DIVEDraggable } from '../../interfaces/Draggable';
+import { DIVEHoverable } from '../../interfaces/Hoverable';
+export type DraggableEvent = {
+    dragStart: Vector3;
+    dragCurrent: Vector3;
+    dragEnd: Vector3;
+    dragDelta: Vector3;
+};
+export declare abstract class DIVEBaseTool {
+    readonly POINTER_DRAG_THRESHOLD: number;
+    name: string;
+    protected _canvas: HTMLElement;
+    protected _scene: DIVEScene;
+    protected _controller: OrbitController;
+    protected _pointer: Vector2;
+    protected get _pointerAnyDown(): boolean;
+    protected _pointerPrimaryDown: boolean;
+    protected _pointerMiddleDown: boolean;
+    protected _pointerSecondaryDown: boolean;
+    protected _lastPointerDown: Vector2;
+    protected _lastPointerUp: Vector2;
+    protected _raycaster: Raycaster;
+    protected _intersects: Intersection[];
+    protected _hovered: (Object3D & DIVEHoverable) | null;
+    protected _dragging: boolean;
+    protected _dragStart: Vector3;
+    protected _dragCurrent: Vector3;
+    protected _dragEnd: Vector3;
+    protected _dragDelta: Vector3;
+    protected _draggable: DIVEDraggable | null;
+    protected _dragRaycastOnObjects: Object3D[] | null;
+    protected constructor(scene: DIVEScene, controller: OrbitController);
+    Activate(): void;
+    Deactivate(): void;
+    onPointerDown(e: PointerEvent): void;
+    onDragStart(e: PointerEvent): void;
+    onPointerMove(e: PointerEvent): void;
+    onDrag(e: PointerEvent): void;
+    onPointerUp(e: PointerEvent): void;
+    onClick(e: PointerEvent): void;
+    onDragEnd(e: PointerEvent): void;
+    onWheel(e: WheelEvent): void;
+    protected raycast(objects?: Object3D[]): Intersection[];
+    private pointerWasDragged;
+}
