@@ -59,3 +59,9 @@ export interface Actions {
     EXPORT_SCENE: EXPORT_SCENE;
     LAUNCH_AR: LAUNCH_AR;
 }
+
+declare global {
+    interface ActionClasses {}
+}
+
+export const Actions = {} as ActionClasses;
