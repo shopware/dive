@@ -22,7 +22,6 @@ import GET_CAMERA_TRANSFORM from './camera/getcameratransform.ts';
 import DROP_IT from './object/model/dropit.ts';
 import SET_GIZMO_VISIBILITY from './toolbox/transform/setgizmovisible.js';
 import SET_GIZMO_SCALE_LINKED from './toolbox/transform/setgizmoscalelinked.ts';
-import COMPUTE_ENCOMPASSING_VIEW from './camera/computeencompassingview.ts';
 import USE_TOOL from './toolbox/usetool.ts';
 import SET_PARENT from './object/setparent.ts';
 import EXPORT_SCENE from './scene/exportscene.ts';
@@ -45,7 +44,6 @@ export interface Actions {
     GET_CAMERA_TRANSFORM: GET_CAMERA_TRANSFORM;
     MOVE_CAMERA: MOVE_CAMERA;
     RESET_CAMERA: RESET_CAMERA;
-    COMPUTE_ENCOMPASSING_VIEW: COMPUTE_ENCOMPASSING_VIEW;
     SET_CAMERA_LAYER: SET_CAMERA_LAYER;
     ZOOM_CAMERA: ZOOM_CAMERA;
     SET_GIZMO_MODE: SET_GIZMO_MODE;

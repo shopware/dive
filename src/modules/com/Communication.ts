@@ -223,12 +223,6 @@ export class DIVECommunication {
                 );
                 break;
             }
-            case 'COMPUTE_ENCOMPASSING_VIEW': {
-                returnValue = this.computeEncompassingView(
-                    payload as Actions['COMPUTE_ENCOMPASSING_VIEW']['PAYLOAD'],
-                );
-                break;
-            }
             case 'SET_CAMERA_LAYER': {
                 returnValue = this.setCameraLayer(
                     payload as Actions['SET_CAMERA_LAYER']['PAYLOAD'],
@@ -629,17 +623,6 @@ export class DIVECommunication {
         return true;
     }
 
-    private computeEncompassingView(
-        payload: Actions['COMPUTE_ENCOMPASSING_VIEW']['PAYLOAD'],
-    ): Actions['COMPUTE_ENCOMPASSING_VIEW']['RETURN'] {
-        const sceneBB = this.engine.renderPipeline.scene.ComputeSceneBB();
-
-        const transform = this.controller.ComputeEncompassingView(sceneBB);
-        Object.assign(payload, transform);
-
-        return transform;
-    }
-
     private zoomCamera(
         payload: Actions['ZOOM_CAMERA']['PAYLOAD'],
     ): Actions['ZOOM_CAMERA']['RETURN'] {
@@ -868,8 +851,10 @@ export class DIVECommunication {
         const deps: Partial<ActionDependencies> = {};
 
         // Only load the dependencies that are actually needed
-        if ('scene' in requiredDeps) deps.scene = this.engine.scene;
-        if ('renderer' in requiredDeps) deps.renderer = this.engine.renderer;
+        if ('scene' in requiredDeps)
+            deps.scene = this.engine.renderPipeline.scene;
+        if ('renderer' in requiredDeps)
+            deps.renderer = this.engine.renderPipeline;
         if ('controller' in requiredDeps) deps.controller = this.controller;
         if ('toolbox' in requiredDeps) deps.toolbox = this.toolbox;
         if ('mediaCreator' in requiredDeps)

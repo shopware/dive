@@ -576,22 +576,6 @@ describe('dive/communication/DIVECommunication', () => {
         expect(successSet).toBe(true);
     });
 
-    it('should perform action COMPUTE_ENCOMPASSING_VIEW', () => {
-        const payload = {};
-        const transform = testCom.PerformAction(
-            'COMPUTE_ENCOMPASSING_VIEW',
-            payload,
-        );
-        expect(transform).toStrictEqual({
-            position: { x: 1, y: 2, z: 3 },
-            target: { x: 4, y: 5, z: 6 },
-        });
-        expect(payload).toStrictEqual({
-            position: { x: 1, y: 2, z: 3 },
-            target: { x: 4, y: 5, z: 6 },
-        });
-    });
-
     it('should perform action GET_ALL_SCENE_DATA', () => {
         testCom.PerformAction('ADD_OBJECT', {
             entityType: 'pov',
