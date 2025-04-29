@@ -1,5 +1,6 @@
-import { Action } from '../action';
-import { ActionDependencies } from '../types';
+import { Action } from '../action.ts';
+import { registerAction } from '../../ActionRegistry.ts';
+import { ActionDependencies } from '../../types/index.ts';
 import { isSelectTool } from '../../../toolbox/select/SelectTool';
 import { type COMEntity } from '../../types';
 import { type DIVESelectable } from '../../../../interfaces/Selectable';
@@ -28,7 +29,9 @@ export const SelectObjectAction = Action.define<
 });
 
 declare global {
-    interface ActionClasses {
+    interface ActionTypes {
         SELECT_OBJECT: typeof SelectObjectAction;
     }
 }
+
+registerAction('SELECT_OBJECT', SelectObjectAction);

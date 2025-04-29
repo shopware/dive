@@ -13,10 +13,8 @@ export type ActionPayload<T> = T extends new (
     : never;
 
 export type ActionReturn<T> = T extends new (
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    payload: any,
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    dependencies: any,
+    payload: infer P,
+    dependencies: infer D,
 ) => infer ClassInstance
     ? ClassInstance extends { execute(): infer E }
         ? E

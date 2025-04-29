@@ -1,5 +1,6 @@
-import { Action } from '../action';
-import { ActionDependencies } from '../types';
+import { Action } from '../action.ts';
+import { registerAction } from '../../ActionRegistry.ts';
+import { ActionDependencies } from '../../types/index.ts';
 import { isCOMModel } from '../../types';
 
 export const ModelLoadedAction = Action.define<
@@ -24,7 +25,9 @@ export const ModelLoadedAction = Action.define<
 });
 
 declare global {
-    interface ActionClasses {
+    interface ActionTypes {
         MODEL_LOADED: typeof ModelLoadedAction;
     }
 }
+
+registerAction('MODEL_LOADED', ModelLoadedAction);

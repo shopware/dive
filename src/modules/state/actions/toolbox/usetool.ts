@@ -1,5 +1,6 @@
-import { Action } from '../action';
-import { ActionDependencies } from '../types';
+import { Action } from '../action.ts';
+import { registerAction } from '../../ActionRegistry.ts';
+import { ActionDependencies } from '../../types/index.ts';
 import { type ToolType } from '../../../toolbox/Toolbox';
 
 export const UseToolAction = Action.define<
@@ -14,7 +15,9 @@ export const UseToolAction = Action.define<
 });
 
 declare global {
-    interface ActionClasses {
+    interface ActionTypes {
         USE_TOOL: typeof UseToolAction;
     }
 }
+
+registerAction('USE_TOOL', UseToolAction);

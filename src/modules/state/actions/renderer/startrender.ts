@@ -1,5 +1,6 @@
-import { Action } from '../action';
-import { ActionDependencies } from '../types';
+import { Action } from '../action.ts';
+import { registerAction } from '../../ActionRegistry.ts';
+import { ActionDependencies } from '../../types/index.ts';
 
 export const StartRenderAction = Action.define<
     void,
@@ -13,7 +14,9 @@ export const StartRenderAction = Action.define<
 });
 
 declare global {
-    interface ActionClasses {
+    interface ActionTypes {
         START_RENDER: typeof StartRenderAction;
     }
 }
+
+registerAction('START_RENDER', StartRenderAction);

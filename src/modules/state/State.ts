@@ -4,7 +4,6 @@ import { generateUUID } from 'three/src/math/MathUtils';
 import { type COMEntity } from './types/index.ts';
 import { type DIVEToolbox } from '../toolbox/Toolbox.ts';
 import { type DIVEOrbitController } from '../controller/orbit/OrbitController.ts';
-import { Actions } from './actions/index.ts';
 import { ModuleImporter } from '../index.ts';
 import { DIVEEngine } from '../../engine/Engine.ts';
 import {
@@ -12,13 +11,14 @@ import {
     ActionDeps,
     ActionPayload,
     ActionReturn,
-} from './actions/types.ts';
+} from './types/index.ts';
+import { getActionClass } from './ActionRegistry.ts';
 
-type ActionSubscriber<ActionType extends keyof ActionClasses> = (
-    payload: ActionPayload<ActionClasses[ActionType]>,
+export type ActionSubscriber<ActionType extends keyof ActionTypes> = (
+    payload: ActionPayload<ActionTypes[ActionType]>,
 ) => void;
 
-type ActionUnsubscribe = () => void;
+export type ActionUnsubscribe = () => void;
 
 declare global {
     interface ModuleClasses {
@@ -76,8 +76,8 @@ export class State {
     private registered: Map<string, COMEntity> = new Map();
 
     private listeners: Map<
-        keyof ActionClasses,
-        ActionSubscriber<keyof ActionClasses>[]
+        keyof ActionTypes,
+        ActionSubscriber<keyof ActionTypes>[]
     > = new Map();
 
     constructor(
@@ -90,16 +90,12 @@ export class State {
         this.controller = controller;
         this.toolbox = toolbox;
 
-        this._mediaCreator = new ModuleImporter<'MediaCreator'>(
-            'src/modules/mediacreator/MediaCreator.ts',
-        );
+        this._mediaCreator = new ModuleImporter<'MediaCreator'>('MediaCreator');
 
-        this._arSystem = new ModuleImporter<'ARSystem'>(
-            'src/modules/ar/ARSystem.ts',
-        );
+        this._arSystem = new ModuleImporter<'ARSystem'>('ARSystem');
 
         this._assetExporter = new ModuleImporter<'AssetExporter'>(
-            'src/modules/asset/exporter/AssetExporter.ts',
+            'AssetExporter',
         );
 
         State.__instances.push(this);
@@ -114,30 +110,31 @@ export class State {
         return true;
     }
 
-    public PerformAction<ActionType extends keyof ActionClasses>(
+    public PerformAction<ActionType extends keyof ActionTypes>(
         action: ActionType,
-        ...args: ActionPayload<ActionClasses[ActionType]> extends void
+        ...args: ActionPayload<ActionTypes[ActionType]> extends void
             ? []
-            : [ActionPayload<ActionClasses[ActionType]>]
-    ): ActionReturn<ActionClasses[ActionType]> {
-        const ActionClass = Actions[action] as unknown as {
-            new (
-                payload: ActionPayload<ActionClasses[ActionType]>,
-                dependencies: ActionDeps<ActionClasses[ActionType]>,
-            ): InstanceType<ActionClasses[ActionType]>;
-        };
+            : [ActionPayload<ActionTypes[ActionType]>]
+    ): ActionReturn<ActionTypes[ActionType]> {
+        // This makes sure that nobody performs a non-existing action (even if it is forbidden by TS).
+        const ActionClass = getActionClass(action);
+        if (!ActionClass) {
+            throw new Error(`Action ${action} is not defined.`);
+        }
 
         // Get only the dependencies this action needs
-        const requiredDeps = this.getDependencies<
-            ActionDeps<ActionClasses[ActionType]>
-        >({} as ActionDeps<ActionClasses[ActionType]>);
+        const requiredDeps =
+            this.getDependencies<ActionDeps<ActionTypes[ActionType]>>();
 
-        const payload = args[0] as ActionPayload<ActionClasses[ActionType]>;
-        const actionInstance = new ActionClass(payload, requiredDeps);
+        // We can safely use the first argument as the payload since it is the only one that is in the args array.
+        const payload = args[0] as ActionPayload<ActionTypes[ActionType]>;
+
+        const actionInstance = new ActionClass(payload as never, requiredDeps);
 
         try {
+            // Execute the action and get the result
             const result = actionInstance.execute() as ActionReturn<
-                ActionClasses[ActionType]
+                ActionTypes[ActionType]
             >;
 
             // Handle both sync and async actions
@@ -146,7 +143,7 @@ export class State {
                 return result.then((resolvedResult) => {
                     this.dispatch(action, payload);
                     return resolvedResult;
-                }) as ActionReturn<ActionClasses[ActionType]>;
+                }) as ActionReturn<ActionTypes[ActionType]>;
             } else {
                 // For sync actions, dispatch immediately
                 this.dispatch(action, payload);
@@ -157,7 +154,7 @@ export class State {
         }
     }
 
-    public Subscribe<ActionType extends keyof ActionClasses>(
+    public Subscribe<ActionType extends keyof ActionTypes>(
         type: ActionType,
         listener: ActionSubscriber<ActionType>,
     ): ActionUnsubscribe {
@@ -179,9 +176,9 @@ export class State {
         };
     }
 
-    private dispatch<ActionType extends keyof ActionClasses>(
+    private dispatch<ActionType extends keyof ActionTypes>(
         type: ActionType,
-        payload: ActionPayload<ActionClasses[ActionType]>,
+        payload: ActionPayload<ActionTypes[ActionType]>,
     ): void {
         const listenerArray = this.listeners.get(type);
         if (!listenerArray) return;
@@ -189,27 +186,23 @@ export class State {
         listenerArray.forEach((listener) => listener(payload));
     }
 
-    private getDependencies<D extends Partial<ActionDependencies>>(
-        requiredDeps: D,
-    ): D {
+    private getDependencies<D extends Partial<ActionDependencies>>(): D {
         const deps: Partial<ActionDependencies> = {};
 
-        // Only load the dependencies that are actually needed
-        if ('registered' in requiredDeps) deps.registered = this.registered;
-        if ('engine' in requiredDeps) deps.engine = this.engine;
-        if ('controller' in requiredDeps) deps.controller = this.controller;
-        if ('toolbox' in requiredDeps) deps.toolbox = this.toolbox;
-        if ('mediaCreator' in requiredDeps)
-            deps.MediaCreator = this._mediaCreator;
-        if ('ar' in requiredDeps) {
-            deps.ARSystem = this._arSystem;
-        }
-        if ('AssetExporter' in requiredDeps) {
-            deps.AssetExporter = this._assetExporter;
-        }
+        // Return all dependencies since we can't determine which ones are needed at runtime
+        deps.registered = this.registered;
+        deps.engine = this.engine;
+        deps.controller = this.controller;
+        deps.toolbox = this.toolbox;
+        deps.MediaCreator = this._mediaCreator;
+        deps.ARSystem = this._arSystem;
+        deps.AssetExporter = this._assetExporter;
 
         return deps as D;
     }
 }
 
-export type { Actions } from './actions/index.ts';
+export * from './ActionRegistry.ts';
+export * from './actions/index.ts';
+export * from './types/index.ts';
+export type { ActionTypes };

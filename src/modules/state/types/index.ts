@@ -8,3 +8,5 @@ export * from './COMMaterial';
 export * from './COMGroup';
 export * from './COMEntityType';
 export * from './COMGeometryType';
+
+export * from './ActionTypes';

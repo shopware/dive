@@ -1,5 +1,6 @@
-import { Action } from '../action';
-import { ActionDependencies } from '../types';
+import { Action } from '../action.ts';
+import { registerAction } from '../../ActionRegistry.ts';
+import { ActionDependencies } from '../../types/index.ts';
 import { isCOMPov } from '../../types';
 import { type Vector3Like } from 'three';
 
@@ -47,7 +48,9 @@ export const MoveCameraAction = Action.define<
 });
 
 declare global {
-    interface ActionClasses {
+    interface ActionTypes {
         MOVE_CAMERA: typeof MoveCameraAction;
     }
 }
+
+registerAction('MOVE_CAMERA', MoveCameraAction);

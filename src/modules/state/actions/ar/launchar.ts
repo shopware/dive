@@ -1,5 +1,6 @@
-import { Action } from '../action';
-import { ActionDependencies } from '../types';
+import { Action } from '../action.ts';
+import { registerAction } from '../../ActionRegistry.ts';
+import { ActionDependencies } from '../../types/index.ts';
 import { type ARSystemOptions } from '../../../ar/ARSystem';
 
 export const LaunchARAction = Action.define<
@@ -17,7 +18,9 @@ export const LaunchARAction = Action.define<
 });
 
 declare global {
-    interface ActionClasses {
+    interface ActionTypes {
         LAUNCH_AR: typeof LaunchARAction;
     }
 }
+
+registerAction('LAUNCH_AR', LaunchARAction);
