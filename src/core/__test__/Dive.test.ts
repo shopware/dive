@@ -90,6 +90,10 @@ jest.mock('../../modules/state/State.ts', () => {
                 position: { x: 0, y: 0, z: 0 },
                 target: { x: 0, y: 0, z: 0 },
             });
+            this.PerformAction_new = jest.fn().mockReturnValue({
+                position: { x: 0, y: 0, z: 0 },
+                target: { x: 0, y: 0, z: 0 },
+            });
             this.Subscribe = jest.fn(
                 (action: string, callback: (data: { id: string }) => void) => {
                     callback({ id: 'incorrect id' });
