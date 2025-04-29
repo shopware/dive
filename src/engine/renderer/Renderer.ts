@@ -3,6 +3,8 @@ import { DIVEScene } from '../scene/Scene.ts';
 import { DIVEPerspectiveCamera } from '../camera/PerspectiveCamera.ts';
 
 export type DIVERenderPipelineSettings = {
+    /** The canvas to render to */
+    canvas: HTMLCanvasElement | undefined;
     /** Whether to enable antialiasing */
     antialias: boolean;
     /** Whether to enable alpha channel */
@@ -21,6 +23,7 @@ export type DIVERenderPipelineSettings = {
 
 export const DIVERenderPipelineDefaultSettings: Required<DIVERenderPipelineSettings> =
     {
+        canvas: undefined,
         antialias: true,
         alpha: true,
         powerPreference: 'high-performance',
@@ -53,6 +56,7 @@ export class DIVERenderPipeline {
         };
 
         this._webglrenderer = new WebGLRenderer({
+            canvas: this._settings.canvas,
             antialias: this._settings.antialias,
             alpha: this._settings.alpha,
             powerPreference: this._settings.powerPreference,

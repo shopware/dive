@@ -50,7 +50,7 @@ export class DIVE {
     // static members
     public static async QuickView(
         uri: string,
-        settings?: Partial<DIVESettings>,
+        settings?: Partial<DIVESettings & { lightIntensity?: number }>,
     ): Promise<DIVE> {
         return new Promise((resolve) => {
             const dive = new DIVE(settings);
@@ -80,7 +80,7 @@ export class DIVE {
                         id: lightid,
                         enabled: true,
                         visible: true,
-                        intensity: 1,
+                        intensity: settings?.lightIntensity ?? 1,
                         color: 0xffffff,
                     });
 
