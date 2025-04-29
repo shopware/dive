@@ -2,7 +2,7 @@ import { MediaCreator } from '../MediaCreator';
 import { DIVERenderPipeline } from '../../../engine/renderer/Renderer';
 import { DIVEScene } from '../../../engine/scene/Scene';
 import { DIVEPerspectiveCamera } from '../../../engine/camera/PerspectiveCamera';
-import { type COMPov } from '../../../modules/com/types';
+import { type COMPov } from '../../state/types';
 import { DIVEOrbitController } from '../../../modules/controller/orbit/OrbitController';
 import { DIVEAnimationSystem } from '../../../modules/animation/AnimationSystem';
 

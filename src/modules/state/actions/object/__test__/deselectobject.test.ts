@@ -1,13 +1,13 @@
 import { DIVEEngine } from '../../../../../engine';
 import { DIVEScene } from '../../../../../engine/scene/Scene';
-import { SelectObjectAction } from '../selectobject';
+import { DeselectObjectAction } from '../deselectobject';
 import { COMEntity } from '../../../types';
 import { Object3D } from 'three';
-import { DIVESelectable } from '../../../../../interfaces/Selectable';
-import { DIVESelectTool } from '../../../../../modules/toolbox/select/SelectTool';
-import { DIVEToolbox } from '../../../../../modules/toolbox/Toolbox';
+import { type DIVESelectable } from '../../../../../interfaces/Selectable';
+import { type DIVESelectTool } from '../../../../toolbox/select/SelectTool';
+import { type DIVEToolbox } from '../../../../toolbox/Toolbox';
 
-describe('SelectObjectAction', () => {
+describe('DeselectObjectAction', () => {
     // Mock dependencies
     const mockSceneObject = {
         attach: jest.fn(),
@@ -24,7 +24,7 @@ describe('SelectObjectAction', () => {
 
     const mockSelectTool = {
         isSelectTool: true,
-        AttachGizmo: jest.fn().mockImplementation(() => {}),
+        DetachGizmo: jest.fn().mockImplementation(() => {}),
     } as unknown as DIVESelectTool;
 
     const mockToolbox = {
@@ -38,7 +38,7 @@ describe('SelectObjectAction', () => {
         jest.clearAllMocks();
     });
 
-    it('should select an object', () => {
+    it('should deselect an object', () => {
         // Arrange
         const testObject: COMEntity = {
             id: 'test-object',
@@ -60,7 +60,7 @@ describe('SelectObjectAction', () => {
         mockRegistered.set(testObject.id, testObject);
 
         // Act
-        const action = new SelectObjectAction(
+        const action = new DeselectObjectAction(
             { id: 'test-object' },
             {
                 engine: mockEngine,
@@ -71,14 +71,12 @@ describe('SelectObjectAction', () => {
         action.execute();
 
         // Assert
-        expect(mockSelectTool.AttachGizmo).toHaveBeenCalledWith(
-            mockSceneObject,
-        );
+        expect(mockSelectTool.DetachGizmo).toHaveBeenCalled();
     });
 
     it('should return false if object does not exist', () => {
         // Act
-        const action = new SelectObjectAction(
+        const action = new DeselectObjectAction(
             { id: 'non-existent-object' },
             {
                 engine: mockEngine,
@@ -86,6 +84,8 @@ describe('SelectObjectAction', () => {
                 registered: mockRegistered,
             },
         );
+
+        // Assert
         expect(() => action.execute()).toThrow('Object not found.');
     });
 
@@ -112,7 +112,7 @@ describe('SelectObjectAction', () => {
         (mockScene.GetSceneObject as jest.Mock).mockReturnValueOnce(null);
 
         // Act
-        const action = new SelectObjectAction(
+        const action = new DeselectObjectAction(
             { id: 'test-object' },
             {
                 engine: mockEngine,
@@ -120,6 +120,8 @@ describe('SelectObjectAction', () => {
                 registered: mockRegistered,
             },
         );
+
+        // Assert
         expect(() => action.execute()).toThrow('Object not found in scene.');
     });
 
@@ -148,7 +150,7 @@ describe('SelectObjectAction', () => {
         );
 
         // Act
-        const action = new SelectObjectAction(
+        const action = new DeselectObjectAction(
             { id: 'test-object' },
             {
                 engine: mockEngine,
@@ -184,7 +186,7 @@ describe('SelectObjectAction', () => {
         (mockToolbox.GetActiveTool as jest.Mock).mockReturnValueOnce(null);
 
         // Act
-        const action = new SelectObjectAction(
+        const action = new DeselectObjectAction(
             { id: 'test-object' },
             {
                 engine: mockEngine,
@@ -195,6 +197,6 @@ describe('SelectObjectAction', () => {
         action.execute();
 
         // Assert
-        expect(mockSelectTool.AttachGizmo).not.toHaveBeenCalled();
+        expect(mockSelectTool.DetachGizmo).not.toHaveBeenCalled();
     });
 });

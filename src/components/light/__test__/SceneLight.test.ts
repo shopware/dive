@@ -1,10 +1,10 @@
-import { DIVECommunication } from '../../../modules/com/Communication';
+import { State } from '../../../modules/state/State';
 import { Color } from 'three';
 import { DIVESceneLight } from '../SceneLight';
 
-jest.mock('../../../modules/com/Communication.ts', () => {
+jest.mock('../../../modules/state/State.ts', () => {
     return {
-        DIVECommunication: {
+        State: {
             get: jest.fn(() => {
                 return {
                     PerformAction: jest.fn(),
@@ -14,9 +14,9 @@ jest.mock('../../../modules/com/Communication.ts', () => {
     };
 });
 
-jest.spyOn(DIVECommunication, 'get').mockReturnValue({
+jest.spyOn(State, 'get').mockReturnValue({
     PerformAction: jest.fn(),
-} as unknown as DIVECommunication);
+} as unknown as State);
 
 describe('dive/light/DIVESceneLight', () => {
     it('should instantiate', () => {

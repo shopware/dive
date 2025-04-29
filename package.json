@@ -37,6 +37,11 @@
             "import": "./build/src/modules/mediacreator/MediaCreator.mjs",
             "require": "./build/src/modules/mediacreator/MediaCreator.cjs"
         },
+        "./modules/State": {
+            "types": "./build/src/modules/state/State.d.ts",
+            "import": "./build/src/modules/state/State.mjs",
+            "require": "./build/src/modules/state/State.cjs"
+        },
         "./modules/SystemInfo": {
             "types": "./build/src/modules/systeminfo/SystemInfo.d.ts",
             "import": "./build/src/modules/systeminfo/SystemInfo.mjs",

@@ -1,11 +1,11 @@
 import { DIVENode } from '../Node';
-import { DIVECommunication } from '../../../modules/com/Communication';
+import { State } from '../../../modules/state/State';
 import { Vector3 } from 'three';
 import { type DIVEGroup } from '../../group/Group';
 
-jest.mock('../../../modules/com/Communication.ts', () => {
+jest.mock('../../../modules/state/State.ts', () => {
     return {
-        DIVECommunication: {
+        State: {
             get: jest.fn(() => {
                 return {
                     PerformAction: jest.fn(),
@@ -15,9 +15,9 @@ jest.mock('../../../modules/com/Communication.ts', () => {
     };
 });
 
-jest.spyOn(DIVECommunication, 'get').mockReturnValue({
+jest.spyOn(State, 'get').mockReturnValue({
     PerformAction: jest.fn(),
-} as unknown as DIVECommunication);
+} as unknown as State);
 
 let node: DIVENode;
 
@@ -83,7 +83,7 @@ describe('dive/node/DIVENode', () => {
         expect(node.position.y).toBe(0);
         expect(node.position.z).toBe(0);
 
-        jest.spyOn(DIVECommunication, 'get').mockReturnValueOnce(undefined);
+        jest.spyOn(State, 'get').mockReturnValueOnce(undefined);
         expect(() => node.SetToWorldOrigin()).not.toThrow();
     });
 
@@ -96,7 +96,7 @@ describe('dive/node/DIVENode', () => {
 
         expect(() => node.onMove()).not.toThrow();
 
-        jest.spyOn(DIVECommunication, 'get').mockReturnValueOnce(undefined);
+        jest.spyOn(State, 'get').mockReturnValueOnce(undefined);
         expect(() => node.onMove()).not.toThrow();
     });
 
@@ -105,7 +105,7 @@ describe('dive/node/DIVENode', () => {
 
         expect(() => node.onSelect()).not.toThrow();
 
-        jest.spyOn(DIVECommunication, 'get').mockReturnValueOnce(undefined);
+        jest.spyOn(State, 'get').mockReturnValueOnce(undefined);
         expect(() => node.onSelect()).not.toThrow();
     });
 
@@ -114,7 +114,7 @@ describe('dive/node/DIVENode', () => {
 
         expect(() => node.onDeselect()).not.toThrow();
 
-        jest.spyOn(DIVECommunication, 'get').mockReturnValueOnce(undefined);
+        jest.spyOn(State, 'get').mockReturnValueOnce(undefined);
         expect(() => node.onDeselect()).not.toThrow();
     });
 });
