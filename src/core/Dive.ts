@@ -4,7 +4,6 @@ import {
     DIVEOrbitControllerSettings,
 } from '../modules/controller/orbit/OrbitController.ts';
 import { DIVEToolbox } from '../modules/toolbox/Toolbox.ts';
-import { State } from '../modules/state/State.ts';
 import { DIVEAnimationSystem } from '../modules/animation/AnimationSystem.ts';
 import { DIVEAxisCamera } from '../modules/axiscamera/AxisCamera.ts';
 import { MathUtils } from 'three';
@@ -57,69 +56,71 @@ export class DIVE {
     ): Promise<DIVE> {
         return new Promise((resolve) => {
             const dive = new DIVE(settings);
-            dive.getState().then((state) => {
-                // set scene properties
-                state.PerformAction('UPDATE_SCENE', {
-                    backgroundColor: 0xffffff,
-                    gridEnabled: false,
-                    floorColor: 0xffffff,
-                });
-
-                state.PerformAction('SET_CAMERA_TRANSFORM', {
-                    position: { x: 0, y: 2, z: 2 },
-                    target: { x: 0, y: 0.5, z: 0 },
-                });
-
-                // generate scene light id
-                const lightid = MathUtils.generateUUID();
-
-                // add scene light
-                state.PerformAction('ADD_OBJECT', {
-                    entityType: 'light',
-                    type: 'scene',
-                    name: 'light',
-                    id: lightid,
-                    enabled: true,
-                    visible: true,
-                    intensity: 1,
-                    color: 0xffffff,
-                });
-
-                // generate model id
-                const modelid = MathUtils.generateUUID();
-
-                // add loaded listener
-                state.Subscribe('MODEL_LOADED', (data) => {
-                    if (data.id !== modelid) return;
-
-                    const transform = state.PerformAction(
-                        'COMPUTE_ENCOMPASSING_VIEW',
-                    );
-
-                    state.PerformAction('SET_CAMERA_TRANSFORM', {
-                        position: transform.position,
-                        target: transform.target,
+            new ModuleImporter<'State'>('State')
+                .instantiate(dive._engine, dive.orbitControls, dive.toolbox)
+                .then((state) => {
+                    // set scene properties
+                    state.PerformAction('UPDATE_SCENE', {
+                        backgroundColor: 0xffffff,
+                        gridEnabled: false,
+                        floorColor: 0xffffff,
                     });
 
-                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                    (window as any).DIVE.instances.push(dive);
+                    state.PerformAction('SET_CAMERA_TRANSFORM', {
+                        position: { x: 0, y: 2, z: 2 },
+                        target: { x: 0, y: 0.5, z: 0 },
+                    });
 
-                    resolve(dive);
-                });
+                    // generate scene light id
+                    const lightid = MathUtils.generateUUID();
 
-                // instantiate model
-                state.PerformAction('ADD_OBJECT', {
-                    entityType: 'model',
-                    name: 'object',
-                    id: modelid,
-                    position: { x: 0, y: 0, z: 0 },
-                    rotation: { x: 0, y: 0, z: 0 },
-                    scale: { x: 1, y: 1, z: 1 },
-                    uri: uri,
-                    visible: true,
-                    loaded: false,
+                    // add scene light
+                    state.PerformAction('ADD_OBJECT', {
+                        entityType: 'light',
+                        type: 'scene',
+                        name: 'light',
+                        id: lightid,
+                        enabled: true,
+                        visible: true,
+                        intensity: 1,
+                        color: 0xffffff,
+                    });
+
+                    // generate model id
+                    const modelid = MathUtils.generateUUID();
+
+                    // add loaded listener
+                    state.Subscribe('MODEL_LOADED', (data) => {
+                        if (data.id !== modelid) return;
+
+                        const transform = state.PerformAction(
+                            'COMPUTE_ENCOMPASSING_VIEW',
+                        );
+
+                        state.PerformAction('SET_CAMERA_TRANSFORM', {
+                            position: transform.position,
+                            target: transform.target,
+                        });
+
+                        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                        (window as any).DIVE.instances.push(dive);
+
+                        resolve(dive);
+                    });
+
+                    // instantiate model
+                    state.PerformAction('ADD_OBJECT', {
+                        entityType: 'model',
+                        name: 'object',
+                        id: modelid,
+                        position: { x: 0, y: 0, z: 0 },
+                        rotation: { x: 0, y: 0, z: 0 },
+                        scale: { x: 1, y: 1, z: 1 },
+                        uri: uri,
+                        visible: true,
+                        loaded: false,
+                    });
                 });
-            });
         });
     }
 
@@ -134,20 +135,10 @@ export class DIVE {
 
     private orbitControls: DIVEOrbitController;
     private toolbox: DIVEToolbox;
-    private _state: ModuleImporter<'State'>;
 
     // additional components
     private animationSystem: DIVEAnimationSystem;
     private axisCamera: DIVEAxisCamera | null;
-
-    // getters
-    public getState(): Promise<State> {
-        return this._state.instantiate(
-            this._engine,
-            this.orbitControls,
-            this.toolbox,
-        );
-    }
 
     public get canvas(): HTMLCanvasElement {
         return this._engine.renderer.webglrenderer.domElement;
@@ -176,7 +167,6 @@ export class DIVE {
             this._engine.renderer.scene,
             this.orbitControls,
         );
-        this._state = new ModuleImporter<'State'>('src/modules/state/State.ts');
 
         // initialize axis camera
         if (this._settings.displayAxes) {
@@ -245,7 +235,6 @@ export class DIVE {
             this.animationSystem.Dispose();
 
             this.toolbox.Dispose();
-            this.getState().then((state) => state.DestroyInstance());
             resolve();
         });
     }
