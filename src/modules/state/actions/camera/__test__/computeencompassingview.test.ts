@@ -4,7 +4,7 @@ import { OrbitController } from '../../../../controller/orbit/OrbitController';
 import { ComputeEncompassingViewAction } from '../computeencompassingview';
 import { Vector3 } from 'three';
 
-describe('ComputeEncompassingViewAction', () => {
+describe('modules/state/actions/camera/computeEncompassingView', () => {
     it('should compute encompassing view for a scene', async () => {
         // Mock dependencies
         const mockScene = {
@@ -15,7 +15,7 @@ describe('ComputeEncompassingViewAction', () => {
         } as unknown as DIVEScene;
 
         const mockController = {
-            ComputeEncompassingView: jest.fn().mockReturnValue({
+            computeEncompassingView: jest.fn().mockReturnValue({
                 position: new Vector3(5, 5, 5),
                 target: new Vector3(5, 5, 0),
             }),
@@ -35,7 +35,7 @@ describe('ComputeEncompassingViewAction', () => {
 
         // Verify results
         expect(mockScene.ComputeSceneBB).toHaveBeenCalled();
-        expect(mockController.ComputeEncompassingView).toHaveBeenCalledWith(
+        expect(mockController.computeEncompassingView).toHaveBeenCalledWith(
             expect.objectContaining({
                 min: expect.objectContaining({ x: 0, y: 0, z: 0 }),
                 max: expect.objectContaining({ x: 10, y: 10, z: 10 }),

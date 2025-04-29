@@ -23,11 +23,9 @@ export const OrbitControllerDefaultSettings: Required<OrbitControllerSettings> =
  */
 
 export class OrbitController extends OrbitControls implements DIVETicker {
-    public uuid: string = MathUtils.generateUUID();
-
     public static readonly DEFAULT_ZOOM_FACTOR = 1;
 
-    private locked: boolean = false;
+    public uuid: string = MathUtils.generateUUID();
 
     public object: DIVEPerspectiveCamera;
     public domElement: HTMLCanvasElement;
@@ -56,11 +54,16 @@ export class OrbitController extends OrbitControls implements DIVETicker {
         this.update();
     }
 
-    public Dispose(): void {
+    public tick(): void {
+        if (!this.enabled) return;
+        this.update();
+    }
+
+    public dispose(): void {
         this.dispose();
     }
 
-    public ComputeEncompassingView(bb: Box3): {
+    public computeEncompassingView(bb: Box3): {
         position: Vector3Like;
         target: Vector3Like;
     } {
@@ -75,7 +78,7 @@ export class OrbitController extends OrbitControls implements DIVETicker {
         };
     }
 
-    public ZoomIn(by?: number): void {
+    public zoomIn(by?: number): void {
         const zoomBy = by || OrbitController.DEFAULT_ZOOM_FACTOR;
         const { minDistance, maxDistance } = this;
         this.minDistance = this.maxDistance = MathUtils.clamp(
@@ -88,7 +91,7 @@ export class OrbitController extends OrbitControls implements DIVETicker {
         this.maxDistance = maxDistance;
     }
 
-    public ZoomOut(by?: number): void {
+    public zoomOut(by?: number): void {
         const zoomBy = by || OrbitController.DEFAULT_ZOOM_FACTOR;
         const { minDistance, maxDistance } = this;
         this.minDistance = this.maxDistance = MathUtils.clamp(
@@ -99,10 +102,5 @@ export class OrbitController extends OrbitControls implements DIVETicker {
         this.update();
         this.minDistance = minDistance;
         this.maxDistance = maxDistance;
-    }
-
-    public tick(): void {
-        if (this.locked) return;
-        this.update();
     }
 }

@@ -56,6 +56,8 @@ export const MoveCameraAction = Action.define<
             (animationSystem) => {
                 engine.clock.addTicker(animationSystem);
 
+                controller.enabled = true;
+
                 const animatorPosition = animationSystem
                     .createAnimator(
                         controller.object.position,

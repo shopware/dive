@@ -4,13 +4,10 @@
 
 import { DIVE, DIVESettings } from '../Dive.ts';
 import { MathUtils } from 'three';
-import { DIVEScene } from '../../engine/scene/Scene.ts';
 import { State } from '../../modules/state/State.ts';
 import { DIVEEngine } from '../../engine/Engine.ts';
 import { OrbitController } from '../../modules/controller/orbit/OrbitController.ts';
 import { DIVEToolbox } from '../../modules/toolbox/Toolbox.ts';
-import { DIVEPerspectiveCamera } from '../../engine/camera/PerspectiveCamera.ts';
-import { DIVERenderPipeline } from '../../engine/renderer/Renderer.ts';
 
 // Mock ResizeObserver
 class MockResizeObserver {
@@ -96,7 +93,7 @@ jest.mock('../../modules/controller/orbit/OrbitController.ts', () => {
                 id: undefined,
             };
             this.removeFromParent = jest.fn();
-            this.Dispose = jest.fn();
+            this.dispose = jest.fn();
             return this;
         }),
     };
@@ -255,7 +252,7 @@ describe('DIVE', () => {
 
         await dive.Dispose();
 
-        expect(dive['orbitControls'].Dispose).toHaveBeenCalled();
+        expect(dive['orbitControls'].dispose).toHaveBeenCalled();
         expect(dive['axisCamera']?.Dispose).toHaveBeenCalled();
         expect(dive['toolbox'].Dispose).toHaveBeenCalled();
     });
