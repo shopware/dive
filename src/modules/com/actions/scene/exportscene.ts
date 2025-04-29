@@ -1,7 +1,22 @@
+import { Action } from '../action';
+import { ActionDependencies } from '../types';
 import { type DIVESceneFileType } from '../../../../types';
 
-export default interface EXPORT_SCENE {
-    DESCRIPTION: 'Exports the current scene to a blob and returns the URL.';
-    PAYLOAD: { type: keyof DIVESceneFileType };
-    RETURN: Promise<ArrayBuffer | null>;
+export const ExportSceneAction = Action.define<
+    { type: keyof DIVESceneFileType },
+    Pick<ActionDependencies, 'engine' | 'AssetExporter'>,
+    Promise<ArrayBuffer | null>
+>({
+    description: 'Exports the current scene to a blob and returns the URL.',
+    execute: async (payload, { engine, AssetExporter }) => {
+        return AssetExporter.instantiate().then((assetExporter) => {
+            return assetExporter.export(engine.scene.Root, payload.type);
+        });
+    },
+});
+
+declare global {
+    interface ActionClasses {
+        EXPORT_SCENE: typeof ExportSceneAction;
+    }
 }
