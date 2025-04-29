@@ -18,7 +18,7 @@ jest.mock('../../../modules/state/State.ts', () => {
         State: {
             get: jest.fn(() => {
                 return {
-                    PerformAction: jest.fn(),
+                    performAction: jest.fn(),
                 };
             }),
         },
@@ -29,7 +29,7 @@ const object = new Object3D();
 object.children.push(new Mesh());
 
 jest.spyOn(State, 'get').mockReturnValue({
-    PerformAction: jest.fn(),
+    performAction: jest.fn(),
 } as unknown as State);
 
 let model: DIVEModel;
@@ -57,7 +57,7 @@ describe('dive/model/DIVEModel', () => {
         model.SetModel(object);
 
         const com = State.get('id')!;
-        const spyPerformAction = jest.spyOn(com, 'PerformAction');
+        const spyperformAction = jest.spyOn(com, 'performAction');
 
         model.userData.id = 'something';
         model.position.set(0, 4, 0);
@@ -78,7 +78,7 @@ describe('dive/model/DIVEModel', () => {
         model.parent = scene.Root;
 
         expect(() => model.PlaceOnFloor()).not.toThrow();
-        expect(spyPerformAction).toHaveBeenCalledWith(
+        expect(spyperformAction).toHaveBeenCalledWith(
             'UPDATE_OBJECT',
             expect.objectContaining({
                 position: expect.objectContaining({
@@ -90,7 +90,7 @@ describe('dive/model/DIVEModel', () => {
 
     it('should drop it', () => {
         const comMock = {
-            PerformAction: jest.fn(),
+            performAction: jest.fn(),
         } as unknown as State;
         jest.spyOn(State, 'get').mockReturnValue(comMock);
 
@@ -232,10 +232,10 @@ describe('dive/model/DIVEModel', () => {
         );
 
         const com = State.get('id')!;
-        const spyPerformAction = jest.spyOn(com, 'PerformAction');
+        const spyperformAction = jest.spyOn(com, 'performAction');
 
         model.PlaceOnFloor();
-        expect(spyPerformAction).not.toHaveBeenCalled();
+        expect(spyperformAction).not.toHaveBeenCalled();
     });
 
     it('should handle SetMaterial with null material and mesh', () => {

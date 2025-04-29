@@ -3,7 +3,6 @@ import {
     OrbitControllerDefaultSettings,
     OrbitControllerSettings,
 } from '../modules/controller/orbit/OrbitController.ts';
-import { DIVEToolbox } from '../modules/toolbox/Toolbox.ts';
 import { DIVEAxisCamera } from '../modules/axiscamera/AxisCamera.ts';
 import { MathUtils } from 'three';
 import pkgjson from '../../package.json';
@@ -42,7 +41,7 @@ export const DIVEDefaultSettings: Required<DIVESettings> = {
  *  // do something
  * }));
  *
- * dive.Communication.PerformAction('GET_ALL_SCENE_DATA', {});
+ * dive.Communication.performAction('GET_ALL_SCENE_DATA', {});
  * ```
  * @module
  */
@@ -56,16 +55,16 @@ export class DIVE {
         return new Promise((resolve) => {
             const dive = new DIVE(settings);
             new ModuleImporter<'State'>('State')
-                .instantiate(dive._engine, dive.orbitControls, dive.toolbox)
+                .instantiate(dive._engine, dive.orbitController)
                 .then((state) => {
                     // set scene properties
-                    state.PerformAction('UPDATE_SCENE', {
+                    state.performAction('UPDATE_SCENE', {
                         backgroundColor: 0xffffff,
                         gridEnabled: false,
                         floorColor: 0xffffff,
                     });
 
-                    state.PerformAction('SET_CAMERA_TRANSFORM', {
+                    state.performAction('SET_CAMERA_TRANSFORM', {
                         position: { x: 0, y: 2, z: 2 },
                         target: { x: 0, y: 0.5, z: 0 },
                     });
@@ -74,7 +73,7 @@ export class DIVE {
                     const lightid = MathUtils.generateUUID();
 
                     // add scene light
-                    state.PerformAction('ADD_OBJECT', {
+                    state.performAction('ADD_OBJECT', {
                         entityType: 'light',
                         type: 'scene',
                         name: 'light',
@@ -89,14 +88,14 @@ export class DIVE {
                     const modelid = MathUtils.generateUUID();
 
                     // add loaded listener
-                    state.Subscribe('MODEL_LOADED', (data) => {
+                    state.subscribe('MODEL_LOADED', (data) => {
                         if (data.id !== modelid) return;
 
-                        const transform = state.PerformAction(
+                        const transform = state.performAction(
                             'COMPUTE_ENCOMPASSING_VIEW',
                         );
 
-                        state.PerformAction('SET_CAMERA_TRANSFORM', {
+                        state.performAction('SET_CAMERA_TRANSFORM', {
                             position: transform.position,
                             target: transform.target,
                         });
@@ -108,7 +107,7 @@ export class DIVE {
                     });
 
                     // instantiate model
-                    state.PerformAction('ADD_OBJECT', {
+                    state.performAction('ADD_OBJECT', {
                         entityType: 'model',
                         name: 'object',
                         id: modelid,
@@ -132,8 +131,7 @@ export class DIVE {
 
     private _engine: DIVEEngine;
 
-    private orbitControls: OrbitController;
-    private toolbox: DIVEToolbox;
+    private orbitController: OrbitController;
 
     private axisCamera: DIVEAxisCamera | null;
 
@@ -149,13 +147,12 @@ export class DIVE {
 
         this._engine = new DIVEEngine(settings);
 
-        this.orbitControls = new OrbitController(
+        this.orbitController = new OrbitController(
             this._engine.camera,
             this._engine.renderer.webglrenderer.domElement,
             this._settings.orbitController,
         );
-        this._engine.clock.addTicker(this.orbitControls);
-        this.toolbox = new DIVEToolbox(this._engine.scene, this.orbitControls);
+        this._engine.clock.addTicker(this.orbitController);
 
         // initialize axis camera
         if (this._settings.displayAxes) {
@@ -212,15 +209,14 @@ export class DIVE {
 
     public async Dispose(): Promise<void> {
         return new Promise((resolve) => {
-            this._engine.clock.removeTicker(this.orbitControls);
-            this.orbitControls.dispose();
+            this._engine.clock.removeTicker(this.orbitController);
+            this.orbitController.dispose();
 
             if (this.axisCamera) {
                 this._engine.clock.removeTicker(this.axisCamera);
                 this.axisCamera.Dispose();
             }
 
-            this.toolbox.Dispose();
             resolve();
         });
     }

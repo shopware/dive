@@ -263,7 +263,7 @@ export class DIVERoot extends Object3D {
                 })
                 .then((gltf) => {
                     (sceneObject as DIVEModel).SetModel(gltf);
-                    State.get(model.id!)?.PerformAction('MODEL_LOADED', {
+                    State.get(model.id!)?.performAction('MODEL_LOADED', {
                         id: model.id!,
                     });
                 });

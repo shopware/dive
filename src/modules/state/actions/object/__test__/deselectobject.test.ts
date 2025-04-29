@@ -5,7 +5,8 @@ import { COMEntity } from '../../../types';
 import { Object3D } from 'three';
 import { type DIVESelectable } from '../../../../../interfaces/Selectable';
 import { type DIVESelectTool } from '../../../../toolbox/select/SelectTool';
-import { type DIVEToolbox } from '../../../../toolbox/Toolbox';
+import { OrbitController } from '../../../../controller/orbit/OrbitController';
+import { ModuleImporter } from '../../../../index.ts';
 
 describe('DeselectObjectAction', () => {
     // Mock dependencies
@@ -28,8 +29,14 @@ describe('DeselectObjectAction', () => {
     } as unknown as DIVESelectTool;
 
     const mockToolbox = {
-        GetActiveTool: jest.fn().mockReturnValue(mockSelectTool),
-    } as unknown as DIVEToolbox;
+        instantiate: jest.fn().mockResolvedValue({
+            GetActiveTool: jest.fn().mockReturnValue(mockSelectTool),
+        }),
+    } as unknown as ModuleImporter<'Toolbox'>;
+
+    const mockController = {
+        detachGizmo: jest.fn().mockImplementation(() => {}),
+    } as unknown as OrbitController;
 
     const mockRegistered = new Map<string, COMEntity>();
 
@@ -38,7 +45,7 @@ describe('DeselectObjectAction', () => {
         jest.clearAllMocks();
     });
 
-    it('should deselect an object', () => {
+    it('should deselect an object', async () => {
         // Arrange
         const testObject: COMEntity = {
             id: 'test-object',
@@ -64,11 +71,12 @@ describe('DeselectObjectAction', () => {
             { id: 'test-object' },
             {
                 engine: mockEngine,
-                toolbox: mockToolbox,
+                controller: mockController,
+                Toolbox: mockToolbox,
                 registered: mockRegistered,
             },
         );
-        action.execute();
+        await action.execute();
 
         // Assert
         expect(mockSelectTool.DetachGizmo).toHaveBeenCalled();
@@ -80,13 +88,14 @@ describe('DeselectObjectAction', () => {
             { id: 'non-existent-object' },
             {
                 engine: mockEngine,
-                toolbox: mockToolbox,
+                controller: mockController,
+                Toolbox: mockToolbox,
                 registered: mockRegistered,
             },
         );
 
         // Assert
-        expect(() => action.execute()).toThrow('Object not found.');
+        expect(action.execute()).rejects.toThrow('Object not found.');
     });
 
     it('should return false if object is not found in scene', () => {
@@ -116,13 +125,14 @@ describe('DeselectObjectAction', () => {
             { id: 'test-object' },
             {
                 engine: mockEngine,
-                toolbox: mockToolbox,
+                controller: mockController,
+                Toolbox: mockToolbox,
                 registered: mockRegistered,
             },
         );
 
         // Assert
-        expect(() => action.execute()).toThrow('Object not found in scene.');
+        expect(action.execute()).rejects.toThrow('Object not found in scene.');
     });
 
     it('should return false if object is not selectable', () => {
@@ -154,13 +164,14 @@ describe('DeselectObjectAction', () => {
             { id: 'test-object' },
             {
                 engine: mockEngine,
-                toolbox: mockToolbox,
+                controller: mockController,
+                Toolbox: mockToolbox,
                 registered: mockRegistered,
             },
         );
 
         // Assert
-        expect(() => action.execute()).toThrow('Object is not selectable.');
+        expect(action.execute()).rejects.toThrow('Object is not selectable.');
     });
 
     it('should not throw if no select tool is active', () => {
@@ -183,14 +194,14 @@ describe('DeselectObjectAction', () => {
         };
 
         mockRegistered.set(testObject.id, testObject);
-        (mockToolbox.GetActiveTool as jest.Mock).mockReturnValueOnce(null);
 
         // Act
         const action = new DeselectObjectAction(
             { id: 'test-object' },
             {
                 engine: mockEngine,
-                toolbox: mockToolbox,
+                controller: mockController,
+                Toolbox: mockToolbox,
                 registered: mockRegistered,
             },
         );

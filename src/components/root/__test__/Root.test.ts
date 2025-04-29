@@ -32,7 +32,7 @@ jest.mock('../../../modules/state/State.ts', () => {
         State: {
             get: jest.fn(() => {
                 return {
-                    PerformAction: jest.fn(),
+                    performAction: jest.fn(),
                 };
             }),
         },

@@ -1,10 +1,9 @@
 import { DIVEEngine } from '../../../engine/Engine';
 import { type OrbitController } from '../../controller/orbit/OrbitController';
-import { type DIVEToolbox } from '../../toolbox/Toolbox';
 import { ModuleImporter } from '../../_system/ModuleImporter';
 import { COMEntity } from '../types';
 
-// Extracted types for PerformAction_new
+// Extracted types for performAction_new
 export type ActionPayload<T> = T extends new (
     payload: infer P,
     dependencies: infer D,
@@ -34,7 +33,7 @@ export interface ActionDependencies {
     registered: Map<string, COMEntity>;
     engine: DIVEEngine;
     controller: OrbitController;
-    toolbox: DIVEToolbox;
+    Toolbox: ModuleImporter<'Toolbox'>;
     MediaCreator: ModuleImporter<'MediaCreator'>;
     ARSystem: ModuleImporter<'ARSystem'>;
     AssetExporter: ModuleImporter<'AssetExporter'>;

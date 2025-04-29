@@ -59,10 +59,6 @@ export class OrbitController extends OrbitControls implements DIVETicker {
         this.update();
     }
 
-    public dispose(): void {
-        this.dispose();
-    }
-
     public computeEncompassingView(bb: Box3): {
         position: Vector3Like;
         target: Vector3Like;

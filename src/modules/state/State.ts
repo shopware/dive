@@ -2,7 +2,6 @@ import { generateUUID } from 'three/src/math/MathUtils';
 
 // type imports
 import { type COMEntity } from './types/index.ts';
-import { type DIVEToolbox } from '../toolbox/Toolbox.ts';
 import { type OrbitController } from '../controller/orbit/OrbitController.ts';
 import { ModuleImporter } from '../index.ts';
 import { DIVEEngine } from '../../engine/Engine.ts';
@@ -39,7 +38,7 @@ declare global {
  *  // do something
  * });
  *
- * dive.State.PerformAction('GET_ALL_SCENE_DATA', {});
+ * dive.State.performAction('GET_ALL_SCENE_DATA', {});
  * ```
  */
 
@@ -65,13 +64,15 @@ export class State {
 
     private engine: DIVEEngine;
     private controller: OrbitController;
-    private toolbox: DIVEToolbox;
 
     // modules
     private _mediaCreator: ModuleImporter<'MediaCreator'>;
     private _arSystem: ModuleImporter<'ARSystem'>;
     private _assetExporter: ModuleImporter<'AssetExporter'>;
     private _animationSystem: ModuleImporter<'AnimationSystem'>;
+    private _toolbox: ModuleImporter<'Toolbox'>;
+
+    // registered entities
     private registered: Map<string, COMEntity> = new Map();
 
     private listeners: Map<
@@ -79,15 +80,10 @@ export class State {
         ActionSubscriber<keyof ActionTypes>[]
     > = new Map();
 
-    constructor(
-        engine: DIVEEngine,
-        controller: OrbitController,
-        toolbox: DIVEToolbox,
-    ) {
+    constructor(engine: DIVEEngine, controller: OrbitController) {
         this._id = generateUUID();
         this.engine = engine;
         this.controller = controller;
-        this.toolbox = toolbox;
 
         this._mediaCreator = new ModuleImporter<'MediaCreator'>('MediaCreator');
 
@@ -101,10 +97,12 @@ export class State {
             'AnimationSystem',
         );
 
+        this._toolbox = new ModuleImporter<'Toolbox'>('Toolbox');
+
         State.__instances.push(this);
     }
 
-    public DestroyInstance(): boolean {
+    public destroyInstance(): boolean {
         const existingIndex = State.__instances.findIndex(
             (entry) => entry.id === this.id,
         );
@@ -113,7 +111,7 @@ export class State {
         return true;
     }
 
-    public PerformAction<ActionType extends keyof ActionTypes>(
+    public performAction<ActionType extends keyof ActionTypes>(
         action: ActionType,
         ...args: ActionPayload<ActionTypes[ActionType]> extends void
             ? []
@@ -162,7 +160,7 @@ export class State {
         }
     }
 
-    public Subscribe<ActionType extends keyof ActionTypes>(
+    public subscribe<ActionType extends keyof ActionTypes>(
         type: ActionType,
         listener: ActionSubscriber<ActionType>,
     ): ActionUnsubscribe {
@@ -199,7 +197,7 @@ export class State {
             registered: this.registered,
             engine: this.engine,
             controller: this.controller,
-            toolbox: this.toolbox,
+            Toolbox: this._toolbox,
             MediaCreator: this._mediaCreator,
             ARSystem: this._arSystem,
             AssetExporter: this._assetExporter,

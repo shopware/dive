@@ -7,11 +7,14 @@ import { type DIVESelectable } from '../../../../interfaces/Selectable';
 
 export const SelectObjectAction = Action.define<
     Partial<COMEntity> & { id: string },
-    Pick<ActionDependencies, 'engine' | 'toolbox' | 'registered'>,
-    void
+    Pick<
+        ActionDependencies,
+        'engine' | 'controller' | 'Toolbox' | 'registered'
+    >,
+    Promise<void>
 >({
     description: 'Selects an existing object.',
-    execute: (payload, { engine, toolbox, registered }) => {
+    execute: async (payload, { engine, controller, Toolbox, registered }) => {
         const object = registered.get(payload.id);
         if (!object) throw new Error('Object not found.');
 
@@ -21,7 +24,8 @@ export const SelectObjectAction = Action.define<
         if (!('isSelectable' in sceneObject))
             throw new Error('Object is not selectable.');
 
-        const activeTool = toolbox.GetActiveTool();
+        const instance = await Toolbox.instantiate(engine.scene, controller);
+        const activeTool = instance.GetActiveTool();
         if (activeTool && isSelectTool(activeTool)) {
             activeTool.AttachGizmo(sceneObject as DIVESelectable);
         }

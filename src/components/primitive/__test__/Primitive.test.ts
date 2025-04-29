@@ -20,7 +20,7 @@ jest.mock('../../../modules/state/State.ts', () => {
         State: {
             get: jest.fn(() => {
                 return {
-                    PerformAction: jest.fn(),
+                    performAction: jest.fn(),
                 };
             }),
         },
@@ -28,7 +28,7 @@ jest.mock('../../../modules/state/State.ts', () => {
 });
 
 jest.spyOn(State, 'get').mockReturnValue({
-    PerformAction: jest.fn(),
+    performAction: jest.fn(),
 } as unknown as State);
 
 let primitive: DIVEPrimitive;
@@ -66,7 +66,7 @@ describe('dive/primitive/DIVEPrimitive', () => {
 
     it('should place on floor', () => {
         const com = State.get('id')!;
-        const spyPerformAction = jest.spyOn(com, 'PerformAction');
+        const spyperformAction = jest.spyOn(com, 'performAction');
 
         jest.spyOn(primitive['_mesh']!, 'localToWorld').mockReturnValueOnce(
             new Vector3(0, 2, 0),
@@ -92,7 +92,7 @@ describe('dive/primitive/DIVEPrimitive', () => {
         primitive.parent = scene.Root;
 
         expect(() => primitive.PlaceOnFloor()).not.toThrow();
-        expect(spyPerformAction).toHaveBeenCalledWith(
+        expect(spyperformAction).toHaveBeenCalledWith(
             'UPDATE_OBJECT',
             expect.objectContaining({
                 position: expect.objectContaining({
@@ -104,7 +104,7 @@ describe('dive/primitive/DIVEPrimitive', () => {
 
     it('should drop it', () => {
         const comMock = {
-            PerformAction: jest.fn(),
+            performAction: jest.fn(),
         } as unknown as State;
         jest.spyOn(State, 'get').mockReturnValue(comMock);
 
@@ -300,12 +300,12 @@ describe('dive/primitive/DIVEPrimitive', () => {
         );
 
         const comMock = {
-            PerformAction: jest.fn(),
+            performAction: jest.fn(),
         } as unknown as State;
         jest.spyOn(State, 'get').mockReturnValue(comMock);
 
         primitive.PlaceOnFloor();
-        expect(comMock.PerformAction).not.toHaveBeenCalled();
+        expect(comMock.performAction).not.toHaveBeenCalled();
     });
 
     it('should set material with all properties', () => {

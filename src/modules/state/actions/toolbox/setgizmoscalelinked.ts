@@ -4,12 +4,13 @@ import { ActionDependencies } from '../../types/index.ts';
 
 export const SetGizmoScaleLinkedAction = Action.define<
     boolean,
-    Pick<ActionDependencies, 'toolbox'>,
-    void
+    Pick<ActionDependencies, 'engine' | 'controller' | 'Toolbox'>,
+    Promise<void>
 >({
     description: "Sets the gizmo's unified scale mode.",
-    execute: (payload, { toolbox }) => {
-        toolbox.SetGizmoScaleLinked(payload);
+    execute: async (payload, { engine, controller, Toolbox }) => {
+        const instance = await Toolbox.instantiate(engine.scene, controller);
+        instance.SetGizmoScaleLinked(payload);
     },
 });
 

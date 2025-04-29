@@ -154,7 +154,7 @@ export class DIVEGroup extends DIVENode {
     //         child.position.copy(this.worldToLocal(childrensWorldPositions[i]));
     //     });
 
-    //     DIVECommunication.get(this.userData.id)?.PerformAction('UPDATE_OBJECT', { id: this.userData.id, position: this.position });
+    //     DIVECommunication.get(this.userData.id)?.performAction('UPDATE_OBJECT', { id: this.userData.id, position: this.position });
     // }
 
     // /**

@@ -51,6 +51,11 @@
             "types": "./build/src/modules/systeminfo/SystemInfo.d.ts",
             "import": "./build/src/modules/systeminfo/SystemInfo.mjs",
             "require": "./build/src/modules/systeminfo/SystemInfo.cjs"
+        },
+        "./modules/Toolbox": {
+            "types": "./build/src/modules/toolbox/Toolbox.d.ts",
+            "import": "./build/src/modules/toolbox/Toolbox.mjs",
+            "require": "./build/src/modules/toolbox/Toolbox.cjs"
         }
     },
     "files": [

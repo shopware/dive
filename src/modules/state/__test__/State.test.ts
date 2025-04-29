@@ -1,7 +1,7 @@
 import { State } from '../State';
 import { DIVEEngine, type EngineSettings } from '../../../engine/Engine';
 import { OrbitController } from '../../controller/orbit/OrbitController';
-import { DIVEToolbox } from '../../toolbox/Toolbox';
+import { Toolbox } from '../../toolbox/Toolbox';
 import { getActionClass } from '../ActionRegistry';
 import { DIVEPerspectiveCamera } from '../../../engine/camera/PerspectiveCamera';
 import { DIVEScene } from '../../../engine/scene/Scene';
@@ -63,7 +63,7 @@ describe('modules/state/State', () => {
     let state: State;
     let mockEngine: jest.Mocked<DIVEEngine>;
     let mockController: jest.Mocked<OrbitController>;
-    let mockToolbox: jest.Mocked<DIVEToolbox>;
+    let mockToolbox: jest.Mocked<Toolbox>;
     let mockCamera: jest.Mocked<DIVEPerspectiveCamera>;
     let mockScene: jest.Mocked<DIVEScene>;
 
@@ -94,12 +94,8 @@ describe('modules/state/State', () => {
             mockCamera,
             mockCanvas,
         ) as jest.Mocked<OrbitController>;
-        mockToolbox = new DIVEToolbox(
-            mockScene,
-            mockController,
-        ) as jest.Mocked<DIVEToolbox>;
 
-        state = new State(mockEngine, mockController, mockToolbox);
+        state = new State(mockEngine, mockController);
     });
 
     afterEach(() => {
@@ -118,14 +114,14 @@ describe('modules/state/State', () => {
         });
 
         it('should destroy instance correctly', () => {
-            const result = state.DestroyInstance();
+            const result = state.destroyInstance();
             expect(result).toBe(true);
             expect(State.get(state.id)).toBeUndefined();
         });
 
         it('should return false when destroying non-existent instance', () => {
-            state.DestroyInstance();
-            const result = state.DestroyInstance();
+            state.destroyInstance();
+            const result = state.destroyInstance();
             expect(result).toBe(false);
         });
     });
@@ -140,7 +136,7 @@ describe('modules/state/State', () => {
 
             (getActionClass as jest.Mock).mockReturnValue(MockActionClass);
 
-            const result = state.PerformAction(mockAction);
+            const result = state.performAction(mockAction);
             expect(result).toEqual(mockResult);
         });
 
@@ -165,7 +161,7 @@ describe('modules/state/State', () => {
 
             (getActionClass as jest.Mock).mockReturnValue(AsyncMockActionClass);
 
-            const result = await state.PerformAction(mockAction);
+            const result = await state.performAction(mockAction);
             expect(result).toEqual(mockResult);
         });
 
@@ -173,7 +169,7 @@ describe('modules/state/State', () => {
             (getActionClass as jest.Mock).mockReturnValue(undefined);
 
             expect(() => {
-                state.PerformAction('GET_CAMERA_TRANSFORM');
+                state.performAction('GET_CAMERA_TRANSFORM');
             }).toThrow('Action GET_CAMERA_TRANSFORM is not defined');
         });
 
@@ -195,7 +191,7 @@ describe('modules/state/State', () => {
             (getActionClass as jest.Mock).mockReturnValue(ErrorMockActionClass);
 
             expect(() => {
-                state.PerformAction(mockAction);
+                state.performAction(mockAction);
             }).toThrow('Failed to execute GET_CAMERA_TRANSFORM');
         });
 
@@ -219,7 +215,7 @@ describe('modules/state/State', () => {
             (getActionClass as jest.Mock).mockReturnValue(ErrorMockActionClass);
 
             try {
-                state.PerformAction(mockAction);
+                state.performAction(mockAction);
                 fail('Should have thrown an error');
             } catch (err) {
                 const error = err as Error & { cause: Error };
@@ -255,7 +251,7 @@ describe('modules/state/State', () => {
             );
 
             try {
-                await state.PerformAction(mockAction);
+                await state.performAction(mockAction);
                 fail('Should have thrown an error');
             } catch (err) {
                 const error = err as Error & { cause: Error };
@@ -277,7 +273,7 @@ describe('modules/state/State', () => {
             const mockAction = 'GET_CAMERA_TRANSFORM';
             const mockListener = jest.fn();
 
-            const unsubscribe = state.Subscribe(mockAction, mockListener);
+            const unsubscribe = state.subscribe(mockAction, mockListener);
             expect(unsubscribe).toBeDefined();
             expect(typeof unsubscribe).toBe('function');
         });
@@ -286,11 +282,11 @@ describe('modules/state/State', () => {
             const mockAction = 'GET_CAMERA_TRANSFORM';
             const mockListener = jest.fn();
 
-            state.Subscribe(mockAction, mockListener);
+            state.subscribe(mockAction, mockListener);
 
             (getActionClass as jest.Mock).mockReturnValue(MockActionClass);
 
-            state.PerformAction(mockAction);
+            state.performAction(mockAction);
             expect(mockListener).toHaveBeenCalledWith(undefined);
         });
 
@@ -298,12 +294,12 @@ describe('modules/state/State', () => {
             const mockAction = 'GET_CAMERA_TRANSFORM';
             const mockListener = jest.fn();
 
-            const unsubscribe = state.Subscribe(mockAction, mockListener);
+            const unsubscribe = state.subscribe(mockAction, mockListener);
             unsubscribe();
 
             (getActionClass as jest.Mock).mockReturnValue(MockActionClass);
 
-            state.PerformAction(mockAction);
+            state.performAction(mockAction);
             expect(mockListener).not.toHaveBeenCalled();
         });
     });
@@ -317,21 +313,21 @@ describe('modules/state/State', () => {
         });
 
         it('should subscribe and unsubscribe successfully', () => {
-            const unsubscribe = state.Subscribe(mockAction, mockListener);
+            const unsubscribe = state.subscribe(mockAction, mockListener);
 
             // Perform action to trigger listener
             (getActionClass as jest.Mock).mockReturnValue(MockActionClass);
-            state.PerformAction(mockAction);
+            state.performAction(mockAction);
             expect(mockListener).toHaveBeenCalled();
 
             // Unsubscribe and verify listener is not called
             unsubscribe();
-            state.PerformAction(mockAction);
+            state.performAction(mockAction);
             expect(mockListener).toHaveBeenCalledTimes(1);
         });
 
         it('should handle unsubscribe when action type has no listeners', () => {
-            const unsubscribe = state.Subscribe(mockAction, mockListener);
+            const unsubscribe = state.subscribe(mockAction, mockListener);
 
             // Clear all listeners for this action type
             state['listeners'].delete(mockAction);
@@ -341,7 +337,7 @@ describe('modules/state/State', () => {
         });
 
         it('should handle unsubscribe when listener is not found', () => {
-            const unsubscribe = state.Subscribe(mockAction, mockListener);
+            const unsubscribe = state.subscribe(mockAction, mockListener);
 
             // Remove the specific listener
             const listeners = state['listeners'].get(mockAction)!;
@@ -354,12 +350,12 @@ describe('modules/state/State', () => {
         it('should handle multiple subscriptions to same action', () => {
             const mockListener2 = jest.fn();
 
-            state.Subscribe(mockAction, mockListener);
-            state.Subscribe(mockAction, mockListener2);
+            state.subscribe(mockAction, mockListener);
+            state.subscribe(mockAction, mockListener2);
 
             // Perform action to trigger both listeners
             (getActionClass as jest.Mock).mockReturnValue(MockActionClass);
-            state.PerformAction(mockAction);
+            state.performAction(mockAction);
 
             expect(mockListener).toHaveBeenCalled();
             expect(mockListener2).toHaveBeenCalled();

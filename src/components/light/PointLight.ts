@@ -93,20 +93,20 @@ export class DIVEPointLight
     }
 
     public onMove(): void {
-        State.get(this.userData.id)?.PerformAction('UPDATE_OBJECT', {
+        State.get(this.userData.id)?.performAction('UPDATE_OBJECT', {
             id: this.userData.id,
             position: this.position,
         });
     }
 
     public onSelect(): void {
-        State.get(this.userData.id)?.PerformAction('SELECT_OBJECT', {
+        State.get(this.userData.id)?.performAction('SELECT_OBJECT', {
             id: this.userData.id,
         });
     }
 
     public onDeselect(): void {
-        State.get(this.userData.id)?.PerformAction('DESELECT_OBJECT', {
+        State.get(this.userData.id)?.performAction('DESELECT_OBJECT', {
             id: this.userData.id,
         });
     }

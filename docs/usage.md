@@ -85,7 +85,7 @@ const dive = new DIVE();
 const com = dive.Communication;
 
 // Perform an action
-com.PerformAction('SET_CAMERA_TRANSFORM', {
+com.performAction('SET_CAMERA_TRANSFORM', {
     position: { x: 0, y: 2, z: 2 },
     target: { x: 0, y: 0.5, z: 0 },
 });

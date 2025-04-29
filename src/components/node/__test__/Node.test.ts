@@ -8,7 +8,7 @@ jest.mock('../../../modules/state/State.ts', () => {
         State: {
             get: jest.fn(() => {
                 return {
-                    PerformAction: jest.fn(),
+                    performAction: jest.fn(),
                 };
             }),
         },
@@ -16,7 +16,7 @@ jest.mock('../../../modules/state/State.ts', () => {
 });
 
 jest.spyOn(State, 'get').mockReturnValue({
-    PerformAction: jest.fn(),
+    performAction: jest.fn(),
 } as unknown as State);
 
 let node: DIVENode;

@@ -5,12 +5,13 @@ import { type ToolType } from '../../../toolbox/Toolbox';
 
 export const UseToolAction = Action.define<
     { tool: ToolType },
-    Pick<ActionDependencies, 'toolbox'>,
-    void
+    Pick<ActionDependencies, 'engine' | 'controller' | 'Toolbox'>,
+    Promise<void>
 >({
     description: 'Activates a specific tool from the toolbox.',
-    execute: (payload, { toolbox }) => {
-        toolbox.UseTool(payload.tool);
+    execute: async (payload, { engine, controller, Toolbox }) => {
+        const instance = await Toolbox.instantiate(engine.scene, controller);
+        instance.UseTool(payload.tool);
     },
 });
 
