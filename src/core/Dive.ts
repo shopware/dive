@@ -213,7 +213,7 @@ export class DIVE {
     public async Dispose(): Promise<void> {
         return new Promise((resolve) => {
             this._engine.clock.removeTicker(this.orbitControls);
-            this.orbitControls.Dispose();
+            this.orbitControls.dispose();
 
             if (this.axisCamera) {
                 this._engine.clock.removeTicker(this.axisCamera);

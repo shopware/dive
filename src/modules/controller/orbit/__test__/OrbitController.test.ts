@@ -76,12 +76,12 @@ describe('modules/controller/orbit/OrbitController', () => {
     });
 
     it('should dispose', () => {
-        expect(() => controller.Dispose()).not.toThrow();
+        expect(() => controller.dispose()).not.toThrow();
     });
 
     it('should compute encompassing view', () => {
         const box = new Box3(new Vector3(-1, -1, -1), new Vector3(1, 1, 1));
-        const result = controller.ComputeEncompassingView(box);
+        const result = controller.computeEncompassingView(box);
         expect(result).toBeDefined();
         expect(result.position).toBeDefined();
         expect(result.target).toBeDefined();
@@ -91,7 +91,7 @@ describe('modules/controller/orbit/OrbitController', () => {
 
     it('should compute encompassing view with non-centered box', () => {
         const box = new Box3(new Vector3(1, 1, 1), new Vector3(3, 3, 3));
-        const result = controller.ComputeEncompassingView(box);
+        const result = controller.computeEncompassingView(box);
         expect(result).toBeDefined();
         expect(result.position).toBeDefined();
         expect(result.target).toBeDefined();
@@ -101,7 +101,7 @@ describe('modules/controller/orbit/OrbitController', () => {
 
     it('should compute encompassing view with zero-size box', () => {
         const box = new Box3(new Vector3(0, 0, 0), new Vector3(0, 0, 0));
-        const result = controller.ComputeEncompassingView(box);
+        const result = controller.computeEncompassingView(box);
         expect(result).toBeDefined();
         expect(result.position).toBeDefined();
         expect(result.target).toBeDefined();
@@ -110,19 +110,19 @@ describe('modules/controller/orbit/OrbitController', () => {
     });
 
     it('should zoom in with default value', () => {
-        expect(() => controller.ZoomIn()).not.toThrow();
+        expect(() => controller.zoomIn()).not.toThrow();
     });
 
     it('should zoom in with custom value', () => {
-        expect(() => controller.ZoomIn(10)).not.toThrow();
+        expect(() => controller.zoomIn(10)).not.toThrow();
     });
 
     it('should zoom out with default value', () => {
-        expect(() => controller.ZoomOut()).not.toThrow();
+        expect(() => controller.zoomOut()).not.toThrow();
     });
 
     it('should zoom out with custom value', () => {
-        expect(() => controller.ZoomOut(10)).not.toThrow();
+        expect(() => controller.zoomOut(10)).not.toThrow();
     });
 
     it('should update on tick', () => {
@@ -133,19 +133,19 @@ describe('modules/controller/orbit/OrbitController', () => {
 
     it('should not update on tick when locked', () => {
         controller.update = jest.fn();
-        controller['locked'] = true;
+        controller.enabled = false;
         controller.tick();
         expect(controller.update).not.toHaveBeenCalled();
     });
 
     it('should set locked property', () => {
-        controller['locked'] = true;
-        expect(controller['locked']).toBe(true);
+        controller.enabled = false;
+        expect(controller.enabled).toBe(false);
     });
 
     it('should update on tick when not locked', () => {
         controller.update = jest.fn();
-        controller['locked'] = false;
+        controller.enabled = true;
         controller.tick();
         expect(controller.update).toHaveBeenCalled();
     });

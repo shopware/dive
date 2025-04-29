@@ -9,8 +9,8 @@ export const ZoomCameraAction = Action.define<
 >({
     description: 'Zooms the camera in or out by a certain amount.',
     execute: (payload, { controller }) => {
-        if (payload.direction === 'IN') controller.ZoomIn(payload.by);
-        if (payload.direction === 'OUT') controller.ZoomOut(payload.by);
+        if (payload.direction === 'IN') controller.zoomIn(payload.by);
+        if (payload.direction === 'OUT') controller.zoomOut(payload.by);
     },
 });
 
