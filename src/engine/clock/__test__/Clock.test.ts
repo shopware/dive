@@ -10,6 +10,7 @@ describe('DIVEClock', () => {
         jest.clearAllMocks();
         clock = new DIVEClock();
         mockTicker = {
+            uuid: 'test-uuid',
             tick: jest.fn(),
         };
     });
@@ -87,6 +88,7 @@ describe('DIVEClock', () => {
 
     it('should handle removing non-existent ticker', () => {
         const nonExistentTicker: DIVETicker = {
+            uuid: 'non-existent-uuid',
             tick: jest.fn(),
         };
         expect(() => clock.removeTicker(nonExistentTicker)).not.toThrow();
@@ -94,10 +96,12 @@ describe('DIVEClock', () => {
 
     it('should call dispose on tickers that have it', () => {
         const tickerWithDispose: DIVETicker = {
+            uuid: 'ticker-with-dispose',
             tick: jest.fn(),
             dispose: jest.fn(),
         };
         const tickerWithoutDispose: DIVETicker = {
+            uuid: 'ticker-without-dispose',
             tick: jest.fn(),
         };
 
@@ -108,5 +112,35 @@ describe('DIVEClock', () => {
 
         expect(tickerWithDispose.dispose).toHaveBeenCalled();
         expect(clock['_tickers']).toHaveLength(0);
+    });
+
+    it('should not add ticker with duplicate UUID', () => {
+        const ticker1: DIVETicker = {
+            uuid: 'same-uuid',
+            tick: jest.fn(),
+        };
+        const ticker2: DIVETicker = {
+            uuid: 'same-uuid',
+            tick: jest.fn(),
+        };
+
+        clock.addTicker(ticker1);
+        clock.addTicker(ticker2);
+
+        expect(clock['_tickers']).toHaveLength(1);
+        expect(clock['_tickers'][0]).toBe(ticker1);
+    });
+
+    it('should set renderer and call render on tick', () => {
+        const mockRenderer = {
+            render: jest.fn(),
+        };
+
+        clock.setRenderer(mockRenderer as any);
+        clock.start();
+
+        jest.advanceTimersByTime(16);
+
+        expect(mockRenderer.render).toHaveBeenCalled();
     });
 });

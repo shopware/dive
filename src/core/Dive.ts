@@ -13,7 +13,6 @@ import {
     EngineSettings,
 } from '../engine/Engine.ts';
 import { ModuleImporter } from '../modules/index.ts';
-import { AnimationSystem } from '../modules/animation/AnimationSystem.ts';
 
 export type DIVESettings = EngineSettings & {
     /** Settings for the orbit controls */
@@ -138,8 +137,6 @@ export class DIVE {
 
     private axisCamera: DIVEAxisCamera | null;
 
-    private animationSystem: AnimationSystem;
-
     public get canvas(): HTMLCanvasElement {
         return this._engine.renderer.webglrenderer.domElement;
     }
@@ -151,10 +148,6 @@ export class DIVE {
         };
 
         this._engine = new DIVEEngine(settings);
-
-        // initialize animation system
-        this.animationSystem = new AnimationSystem();
-        this._engine.clock.addTicker(this.animationSystem);
 
         this.orbitControls = new OrbitController(
             this._engine.camera,
@@ -226,9 +219,6 @@ export class DIVE {
                 this._engine.clock.removeTicker(this.axisCamera);
                 this.axisCamera.Dispose();
             }
-
-            this._engine.clock.removeTicker(this.animationSystem);
-            this.animationSystem.Dispose();
 
             this.toolbox.Dispose();
             resolve();

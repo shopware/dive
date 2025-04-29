@@ -4,8 +4,9 @@ import { Animator } from './animator/Animator';
 import { UUID } from '../../types/index.ts';
 import { DIVETicker } from '../../engine/clock/Clock.ts';
 import { TAnimatorParameters } from './types/AnimatorParameters.ts';
+import { MathUtils } from 'three';
 
-export * from './animator/Animator.ts';
+export type * from './animator/Animator.ts';
 
 type CallbackTuple<T> = {
     onUpdate: (object: T, elapsed: number) => void;
@@ -26,18 +27,9 @@ declare global {
  */
 
 export class AnimationSystem implements DIVETicker {
-    private static _instance: AnimationSystem | null = null;
-    public static get instance(): AnimationSystem {
-        if (!this._instance) {
-            this._instance = new AnimationSystem();
-        }
-        return this._instance;
-    }
+    public uuid: string = MathUtils.generateUUID();
 
-    // private _worker: Worker = new Worker(new URL('./AnimationWorker.ts', import.meta.url));
     private _callbackMap: Map<UUID, CallbackTuple<any>> = new Map();
-
-    // will be moved to worker thread in the future
     private _tweens: Map<UUID, Tween<any>> = new Map();
 
     /**
@@ -74,12 +66,9 @@ export class AnimationSystem implements DIVETicker {
         this._tweens.delete(uuid);
     }
 
-    // private _handleWorkerMessage(event: any): void {
-
-    // }
-
     public Dispose(): void {
-        // nothing to do here
+        this._callbackMap.clear();
+        this._tweens.clear();
     }
 
     public tick(): void {
@@ -91,7 +80,6 @@ export class AnimationSystem implements DIVETicker {
     }
 
     private _setupTween<T extends object>(animator: Animator<T>): void {
-        // following code will be moved to worker thread in the future
         const tween = new Tween<T>(animator.object)
             .to(animator.to, animator.duration)
             .easing(animator.options?.easing ?? Easing.Quadratic.Out)
@@ -102,7 +90,6 @@ export class AnimationSystem implements DIVETicker {
                 this._callbackMap.get(animator.uuid)?.onComplete(object);
             });
 
-        // add event listeners to the animator
         animator.addEventListener('play', () => {
             tween.start();
         });

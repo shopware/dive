@@ -483,3 +483,15 @@ export const Line = jest.fn(function () {
     this.computeLineDistances = jest.fn();
     return this;
 });
+
+export const EventDispatcher = jest.fn(function () {
+    this.dispatchEvent = jest.fn();
+    return this;
+});
+
+export const Vector3Like = jest.fn(function () {
+    this.x = 0;
+    this.y = 0;
+    this.z = 0;
+    return this;
+});

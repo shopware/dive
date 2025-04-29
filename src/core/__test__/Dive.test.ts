@@ -4,10 +4,13 @@
 
 import { DIVE, DIVESettings } from '../Dive.ts';
 import { MathUtils } from 'three';
+import { DIVEScene } from '../../engine/scene/Scene.ts';
 import { State } from '../../modules/state/State.ts';
 import { DIVEEngine } from '../../engine/Engine.ts';
 import { OrbitController } from '../../modules/controller/orbit/OrbitController.ts';
 import { DIVEToolbox } from '../../modules/toolbox/Toolbox.ts';
+import { DIVEPerspectiveCamera } from '../../engine/camera/PerspectiveCamera.ts';
+import { DIVERenderPipeline } from '../../engine/renderer/Renderer.ts';
 
 // Mock ResizeObserver
 class MockResizeObserver {
@@ -17,31 +20,40 @@ class MockResizeObserver {
 }
 global.ResizeObserver = MockResizeObserver as any;
 
-jest.mock('../../engine/renderer/Renderer.ts', () => {
+jest.mock('../../engine/Engine.ts', () => {
     return {
-        DIVERenderPipeline: jest.fn(function () {
-            this.render = jest.fn();
-            this.onResize = jest.fn();
-            this.dispose = jest.fn();
-            this.webglrenderer = {
-                domElement: {},
+        DIVEEngine: jest.fn(function () {
+            this.camera = {};
+            this.scene = {};
+            this.renderer = {
+                webglrenderer: {
+                    domElement: {},
+                },
+                onResize: jest.fn(),
+            };
+            this.clock = {
+                addTicker: jest.fn(),
+                removeTicker: jest.fn(),
+                tick: jest.fn(),
+                dispose: jest.fn(),
             };
             return this;
         }),
     };
 });
-const mockEngine = new DIVEEngine();
-const mockOrbitController = new OrbitController(
-    mockEngine.camera,
-    mockEngine.renderer.webglrenderer.domElement,
-);
-const mockToolbox = new DIVEToolbox(mockEngine.scene, mockOrbitController);
-const mockState = new State(mockEngine, mockOrbitController, mockToolbox);
 
 jest.mock('../../modules/index.ts', () => {
     return {
         ModuleImporter: jest.fn(function () {
-            this.instantiate = jest.fn().mockResolvedValue(mockState);
+            this.instantiate = jest
+                .fn()
+                .mockResolvedValue(
+                    new State(
+                        {} as DIVEEngine,
+                        {} as OrbitController,
+                        {} as DIVEToolbox,
+                    ),
+                );
             return this;
         }),
     };
@@ -129,16 +141,6 @@ jest.mock('../../modules/axiscamera/AxisCamera.ts', () => {
             };
             this.removeFromParent = jest.fn();
             this.SetFromCameraMatrix = jest.fn();
-            this.Dispose = jest.fn();
-            return this;
-        }),
-    };
-});
-
-jest.mock('../../modules/animation/AnimationSystem.ts', () => {
-    return {
-        DIVEAnimationSystem: jest.fn(function () {
-            this.Update = jest.fn();
             this.Dispose = jest.fn();
             return this;
         }),

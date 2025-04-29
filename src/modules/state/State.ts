@@ -142,10 +142,16 @@ export class State {
             // Handle both sync and async actions
             if (result && typeof result === 'object' && 'then' in result) {
                 // For async actions, dispatch after the promise resolves
-                return result.then((resolvedResult) => {
-                    this.dispatch(action, payload);
-                    return resolvedResult;
-                }) as ActionReturn<ActionTypes[ActionType]>;
+                return result
+                    .then((resolvedResult) => {
+                        this.dispatch(action, payload);
+                        return resolvedResult;
+                    })
+                    .catch((error) => {
+                        throw new Error(`Failed to execute ${action}`, {
+                            cause: error,
+                        });
+                    }) as ActionReturn<ActionTypes[ActionType]>;
             } else {
                 // For sync actions, dispatch immediately
                 this.dispatch(action, payload);
