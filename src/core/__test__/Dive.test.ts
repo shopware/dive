@@ -3,10 +3,6 @@
  */
 
 import { DIVE, DIVESettings } from '../Dive.ts';
-import { DIVERenderPipeline } from '../../engine/renderer/Renderer.ts';
-import { DIVEScene } from '../../engine/scene/Scene.ts';
-import { DIVEPerspectiveCamera } from '../../engine/camera/PerspectiveCamera.ts';
-import { DIVEClock } from '../../engine/clock/Clock.ts';
 import { MathUtils } from 'three';
 import { State } from '../../modules/state/State.ts';
 import { DIVEEngine } from '../../engine/Engine.ts';
@@ -31,33 +27,6 @@ jest.mock('../../engine/renderer/Renderer.ts', () => {
             this.webglrenderer = {
                 domElement: {},
             };
-            return this;
-        }),
-    };
-});
-
-jest.mock('../../engine/clock/Clock.ts', () => {
-    return {
-        DIVEClock: jest.fn(function () {
-            this.addTicker = jest.fn();
-            this.removeTicker = jest.fn();
-            this.start = jest.fn();
-            this.stop = jest.fn();
-            this.dispose = jest.fn();
-            this.setRenderer = jest.fn();
-            return this;
-        }),
-    };
-});
-
-jest.mock('../../engine/Engine.ts', () => {
-    return {
-        DIVEEngine: jest.fn(function () {
-            this.renderer = new DIVERenderPipeline(
-                {} as DIVEScene,
-                {} as DIVEPerspectiveCamera,
-            );
-            this.clock = new DIVEClock();
             return this;
         }),
     };
@@ -87,10 +56,6 @@ jest.mock('../../modules/state/State.ts', () => {
     return {
         State: jest.fn(function () {
             this.PerformAction = jest.fn().mockReturnValue({
-                position: { x: 0, y: 0, z: 0 },
-                target: { x: 0, y: 0, z: 0 },
-            });
-            this.PerformAction_new = jest.fn().mockReturnValue({
                 position: { x: 0, y: 0, z: 0 },
                 target: { x: 0, y: 0, z: 0 },
             });
