@@ -63,6 +63,14 @@ export class DIVERenderPipeline {
         });
     }
 
+    public get scene(): DIVEScene {
+        return this._scene;
+    }
+
+    public get camera(): DIVEPerspectiveCamera {
+        return this._camera;
+    }
+
     public get webglrenderer(): WebGLRenderer {
         return this._webglrenderer;
     }
