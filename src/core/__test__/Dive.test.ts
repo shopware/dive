@@ -65,13 +65,11 @@ jest.mock('../../engine/Engine.ts', () => {
 const mockAnimationSystem = new DIVEAnimationSystem();
 const mockEngine = new DIVEEngine();
 const mockOrbitController = new DIVEOrbitController(
-    mockEngine.renderer,
+    mockEngine.camera,
+    mockEngine.renderer.webglrenderer.domElement,
     mockAnimationSystem,
 );
-const mockToolbox = new DIVEToolbox(
-    mockEngine.renderer.scene,
-    mockOrbitController,
-);
+const mockToolbox = new DIVEToolbox(mockEngine.scene, mockOrbitController);
 const mockState = new State(mockEngine, mockOrbitController, mockToolbox);
 
 jest.mock('../../modules/index.ts', () => {
@@ -259,9 +257,7 @@ describe('DIVE', () => {
 
     it('should resize', () => {
         const dive = new DIVE();
-        expect(() =>
-            dive.engine.renderPipeline.onResize(800, 600),
-        ).not.toThrow();
+        expect(() => dive.engine.renderer.onResize(800, 600)).not.toThrow();
     });
 
     it('should initialize with axis camera when displayAxes is true', () => {

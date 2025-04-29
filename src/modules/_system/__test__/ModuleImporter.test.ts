@@ -10,8 +10,8 @@ describe('ModuleImporter', () => {
     });
 
     it('should dynamically import and return the module class', async () => {
-        class TestModule {
-            name = 'TestModule';
+        class MockModule {
+            name = 'MockModule';
         }
         const mockPath = '/path/to/mockModule.js';
         window.__MODULE_PATHS__ = { MockModule: mockPath };
@@ -19,32 +19,32 @@ describe('ModuleImporter', () => {
         const importer = new ModuleImporter<'MockModule'>('MockModule');
         const dynamicImportSpy = jest
             .spyOn(importer as any, '_dynamicImport')
-            .mockResolvedValue({ TestModule });
+            .mockResolvedValue({ MockModule });
 
-        const ModuleClass = (await importer.import()) as typeof TestModule;
+        const ModuleClass = (await importer.import()) as typeof MockModule;
 
-        expect(ModuleClass).toBe(TestModule);
-        expect(new ModuleClass().name).toBe('TestModule');
+        expect(ModuleClass).toBe(MockModule);
+        expect(new ModuleClass().name).toBe('MockModule');
         expect(dynamicImportSpy).toHaveBeenCalledTimes(1);
         expect(dynamicImportSpy).toHaveBeenCalledWith(mockPath);
     });
 
     it('should cache the module class after the first import', async () => {
-        class TestModule {}
+        class MockModule {}
         const mockPath = '/path/to/cachedModule.js';
         window.__MODULE_PATHS__ = { MockModule: mockPath };
         // @ts-ignore
         const importer = new ModuleImporter<'MockModule'>('MockModule');
         const dynamicImportSpy = jest
             .spyOn(importer as any, '_dynamicImport')
-            .mockResolvedValue({ TestModule });
+            .mockResolvedValue({ MockModule });
 
         // Act
         const ModuleClass1 = await importer.import();
         const ModuleClass2 = await importer.import();
 
-        expect(ModuleClass1).toBe(TestModule);
-        expect(ModuleClass2).toBe(TestModule);
+        expect(ModuleClass1).toBe(MockModule);
+        expect(ModuleClass2).toBe(MockModule);
 
         // Crucially, the dynamic import should only have been called once
         expect(dynamicImportSpy).toHaveBeenCalledTimes(1);
