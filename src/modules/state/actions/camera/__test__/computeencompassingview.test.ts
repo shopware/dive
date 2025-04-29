@@ -1,6 +1,6 @@
 import { DIVEEngine } from '../../../../../engine';
 import { DIVEScene } from '../../../../../engine/scene/Scene';
-import { DIVEOrbitController } from '../../../../controller/orbit/OrbitController';
+import { OrbitController } from '../../../../controller/orbit/OrbitController';
 import { ComputeEncompassingViewAction } from '../computeencompassingview';
 import { Vector3 } from 'three';
 
@@ -19,7 +19,7 @@ describe('ComputeEncompassingViewAction', () => {
                 position: new Vector3(5, 5, 5),
                 target: new Vector3(5, 5, 0),
             }),
-        } as unknown as DIVEOrbitController;
+        } as unknown as OrbitController;
 
         const mockEngine = {
             scene: mockScene,

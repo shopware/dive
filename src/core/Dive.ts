@@ -1,10 +1,9 @@
 import {
-    DIVEOrbitController,
-    DIVEOrbitControllerDefaultSettings,
-    DIVEOrbitControllerSettings,
+    OrbitController,
+    OrbitControllerDefaultSettings,
+    OrbitControllerSettings,
 } from '../modules/controller/orbit/OrbitController.ts';
 import { DIVEToolbox } from '../modules/toolbox/Toolbox.ts';
-import { DIVEAnimationSystem } from '../modules/animation/AnimationSystem.ts';
 import { DIVEAxisCamera } from '../modules/axiscamera/AxisCamera.ts';
 import { MathUtils } from 'three';
 import pkgjson from '../../package.json';
@@ -14,15 +13,16 @@ import {
     EngineSettings,
 } from '../engine/Engine.ts';
 import { ModuleImporter } from '../modules/index.ts';
+import { AnimationSystem } from '../modules/animation/AnimationSystem.ts';
 
 export type DIVESettings = EngineSettings & {
     /** Settings for the orbit controls */
-    orbitController: Partial<DIVEOrbitControllerSettings>;
+    orbitController: Partial<OrbitControllerSettings>;
 };
 
 export const DIVEDefaultSettings: Required<DIVESettings> = {
     ...EngineDefaultSettings,
-    orbitController: DIVEOrbitControllerDefaultSettings,
+    orbitController: OrbitControllerDefaultSettings,
 };
 
 /**
@@ -133,12 +133,12 @@ export class DIVE {
 
     private _engine: DIVEEngine;
 
-    private orbitControls: DIVEOrbitController;
+    private orbitControls: OrbitController;
     private toolbox: DIVEToolbox;
 
-    // additional components
-    private animationSystem: DIVEAnimationSystem;
     private axisCamera: DIVEAxisCamera | null;
+
+    private animationSystem: AnimationSystem;
 
     public get canvas(): HTMLCanvasElement {
         return this._engine.renderer.webglrenderer.domElement;
@@ -153,13 +153,12 @@ export class DIVE {
         this._engine = new DIVEEngine(settings);
 
         // initialize animation system
-        this.animationSystem = new DIVEAnimationSystem();
+        this.animationSystem = new AnimationSystem();
         this._engine.clock.addTicker(this.animationSystem);
 
-        this.orbitControls = new DIVEOrbitController(
+        this.orbitControls = new OrbitController(
             this._engine.camera,
             this._engine.renderer.webglrenderer.domElement,
-            this.animationSystem,
             this._settings.orbitController,
         );
         this._engine.clock.addTicker(this.orbitControls);

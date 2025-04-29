@@ -1,11 +1,11 @@
 import { DIVESelectTool, isSelectTool } from '../SelectTool';
 import { DIVEScene } from '../../../../engine/scene/Scene';
-import { DIVEOrbitController } from '../../../controller/orbit/OrbitController';
+import { OrbitController } from '../../../controller/orbit/OrbitController';
 import { DIVESelectable } from '../../../../interfaces/Selectable';
 import { type DIVEPerspectiveCamera } from '../../../../engine/camera/PerspectiveCamera';
 import { type Object3D } from 'three';
 import { type DIVEBaseTool } from '../../BaseTool';
-import { DIVEAnimationSystem } from '../../../animation/AnimationSystem';
+import { AnimationSystem } from '../../../animation/AnimationSystem';
 import { Tween } from '@tweenjs/tween.js';
 import { type DIVEMovable } from '../../../../interfaces/Movable';
 import { DIVERenderPipeline } from '../../../../engine/renderer/Renderer';
@@ -38,7 +38,7 @@ jest.mock('../../../../engine/camera/PerspectiveCamera', () => {
 
 jest.mock('../../../controller/orbit/OrbitController', () => {
     return {
-        DIVEOrbitController: jest.fn(function () {
+        OrbitController: jest.fn(function () {
             this.enabled = true;
             this.domElement = {
                 clientWIdth: 0,
@@ -84,12 +84,9 @@ jest.mock('../../../../engine/scene/Scene', () => {
 
 const mockCamera: DIVEPerspectiveCamera = {} as DIVEPerspectiveCamera;
 const mockScene: DIVEScene = new DIVEScene();
-const mockRenderer = new DIVERenderPipeline(mockScene, mockCamera);
-const mockAnimSystem = new DIVEAnimationSystem();
-const mockController: DIVEOrbitController = new DIVEOrbitController(
+const mockController: OrbitController = new OrbitController(
     mockCamera,
-    mockRenderer.webglrenderer.domElement,
-    mockAnimSystem,
+    new DIVERenderPipeline(mockScene, mockCamera).webglrenderer.domElement,
 );
 
 let selectTool: DIVESelectTool;

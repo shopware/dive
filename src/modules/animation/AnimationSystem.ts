@@ -3,6 +3,7 @@ import { Easing, Tween, update as updateTween } from '@tweenjs/tween.js';
 import { Animator } from './animator/Animator';
 import { UUID } from '../../types/index.ts';
 import { DIVETicker } from '../../engine/clock/Clock.ts';
+import { TAnimatorParameters } from './types/AnimatorParameters.ts';
 
 export * from './animator/Animator.ts';
 
@@ -11,18 +12,24 @@ type CallbackTuple<T> = {
     onComplete: (object: T) => void;
 };
 
+declare global {
+    interface ModuleClasses {
+        AnimationSystem: typeof AnimationSystem;
+    }
+}
+
 /**
+ * @module AnimationSystem
+ *
  * Updates all animations.
  * DIVE uses Tween.js to handle animations.
- *
- * @module
  */
 
-export class DIVEAnimationSystem implements DIVETicker {
-    private static _instance: DIVEAnimationSystem | null = null;
-    public static get instance(): DIVEAnimationSystem {
+export class AnimationSystem implements DIVETicker {
+    private static _instance: AnimationSystem | null = null;
+    public static get instance(): AnimationSystem {
         if (!this._instance) {
-            this._instance = new DIVEAnimationSystem();
+            this._instance = new AnimationSystem();
         }
         return this._instance;
     }
@@ -33,16 +40,36 @@ export class DIVEAnimationSystem implements DIVETicker {
     // will be moved to worker thread in the future
     private _tweens: Map<UUID, Tween<any>> = new Map();
 
-    public register<T extends object>(animator: Animator<T>): void {
+    /**
+     * Creates a new animator and registers it.
+     * @param object - The object to animate.
+     * @param to - The target object.
+     * @param duration - The duration of the animation.
+     * @param options - The options for the animation.
+     * @returns The animator.
+     */
+    public createAnimator<T extends object>(
+        object: T,
+        to: T,
+        duration: number,
+        options?: TAnimatorParameters<T>,
+    ): Animator<T> {
+        const animator = new Animator(object, to, duration, options);
         this._callbackMap.set(animator.uuid, {
             onUpdate: animator.options?.onUpdate ?? (() => {}),
             onComplete: animator.options?.onComplete ?? (() => {}),
         });
 
         this._setupTween(animator);
+        return animator;
     }
 
     public unregister(uuid: UUID): void {
+        if (!this._callbackMap.has(uuid)) {
+            console.warn(`Animator with uuid ${uuid} not registered`);
+            return;
+        }
+
         this._callbackMap.delete(uuid);
         this._tweens.delete(uuid);
     }

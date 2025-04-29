@@ -1,7 +1,6 @@
 import { EventDispatcher, MathUtils, Event } from 'three';
 import { UUID } from '../../../types/index.ts';
 import { TAnimatorParameters } from '../types/AnimatorParameters';
-import { DIVEAnimationSystem } from '../AnimationSystem';
 
 type TAnimatorEventMap = {
     play: Event;
@@ -25,7 +24,6 @@ export class Animator<
         readonly options?: TAnimatorParameters<T>,
     ) {
         super();
-        DIVEAnimationSystem.instance.register(this);
     }
 
     public get uuid(): UUID {

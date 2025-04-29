@@ -6,9 +6,8 @@ import { DIVE, DIVESettings } from '../Dive.ts';
 import { MathUtils } from 'three';
 import { State } from '../../modules/state/State.ts';
 import { DIVEEngine } from '../../engine/Engine.ts';
-import { DIVEOrbitController } from '../../modules/controller/orbit/OrbitController.ts';
+import { OrbitController } from '../../modules/controller/orbit/OrbitController.ts';
 import { DIVEToolbox } from '../../modules/toolbox/Toolbox.ts';
-import { DIVEAnimationSystem } from '../../modules/animation/AnimationSystem.ts';
 
 // Mock ResizeObserver
 class MockResizeObserver {
@@ -31,12 +30,10 @@ jest.mock('../../engine/renderer/Renderer.ts', () => {
         }),
     };
 });
-const mockAnimationSystem = new DIVEAnimationSystem();
 const mockEngine = new DIVEEngine();
-const mockOrbitController = new DIVEOrbitController(
+const mockOrbitController = new OrbitController(
     mockEngine.camera,
     mockEngine.renderer.webglrenderer.domElement,
-    mockAnimationSystem,
 );
 const mockToolbox = new DIVEToolbox(mockEngine.scene, mockOrbitController);
 const mockState = new State(mockEngine, mockOrbitController, mockToolbox);
@@ -73,7 +70,7 @@ jest.mock('../../modules/state/State.ts', () => {
 
 jest.mock('../../modules/controller/orbit/OrbitController.ts', () => {
     return {
-        DIVEOrbitController: jest.fn(function () {
+        OrbitController: jest.fn(function () {
             this.isObject3D = true;
             this.parent = null;
             this.dispatchEvent = jest.fn();
@@ -258,7 +255,6 @@ describe('DIVE', () => {
 
         expect(dive['orbitControls'].Dispose).toHaveBeenCalled();
         expect(dive['axisCamera']?.Dispose).toHaveBeenCalled();
-        expect(dive['animationSystem'].Dispose).toHaveBeenCalled();
         expect(dive['toolbox'].Dispose).toHaveBeenCalled();
     });
 

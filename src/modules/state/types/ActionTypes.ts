@@ -1,5 +1,5 @@
 import { DIVEEngine } from '../../../engine/Engine';
-import { type DIVEOrbitController } from '../../controller/orbit/OrbitController';
+import { type OrbitController } from '../../controller/orbit/OrbitController';
 import { type DIVEToolbox } from '../../toolbox/Toolbox';
 import { ModuleImporter } from '../../_system/ModuleImporter';
 import { COMEntity } from '../types';
@@ -33,9 +33,10 @@ export type ActionDeps<T> = T extends new (
 export interface ActionDependencies {
     registered: Map<string, COMEntity>;
     engine: DIVEEngine;
-    controller: DIVEOrbitController;
+    controller: OrbitController;
     toolbox: DIVEToolbox;
     MediaCreator: ModuleImporter<'MediaCreator'>;
     ARSystem: ModuleImporter<'ARSystem'>;
     AssetExporter: ModuleImporter<'AssetExporter'>;
+    AnimationSystem: ModuleImporter<'AnimationSystem'>;
 }

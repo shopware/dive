@@ -1,5 +1,5 @@
 import { GetCameraTransformAction } from '../getcameratransform';
-import { type DIVEOrbitController } from '../../../../controller/orbit/OrbitController';
+import { type OrbitController } from '../../../../controller/orbit/OrbitController';
 import { Vector3 } from 'three';
 
 describe('GetCameraTransformAction', () => {
@@ -10,7 +10,7 @@ describe('GetCameraTransformAction', () => {
                 position: new Vector3(1, 1, 1),
             },
             target: new Vector3(0, 0, 0),
-        } as unknown as DIVEOrbitController;
+        } as unknown as OrbitController;
 
         const action = new GetCameraTransformAction(undefined, {
             controller: mockController,

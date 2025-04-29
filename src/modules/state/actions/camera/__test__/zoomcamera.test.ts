@@ -1,5 +1,5 @@
 import { ZoomCameraAction } from '../zoomcamera';
-import { DIVEOrbitController } from '../../../../controller/orbit/OrbitController';
+import { OrbitController } from '../../../../controller/orbit/OrbitController';
 
 describe('ZoomCameraAction', () => {
     it('should zoom the camera', async () => {
@@ -7,7 +7,7 @@ describe('ZoomCameraAction', () => {
         const mockController = {
             ZoomIn: jest.fn(),
             ZoomOut: jest.fn(),
-        } as unknown as DIVEOrbitController;
+        } as unknown as OrbitController;
 
         const action = new ZoomCameraAction(
             { direction: 'IN', by: 1 },
@@ -28,7 +28,7 @@ describe('ZoomCameraAction', () => {
         const mockController = {
             ZoomIn: jest.fn(),
             ZoomOut: jest.fn(),
-        } as unknown as DIVEOrbitController;
+        } as unknown as OrbitController;
 
         const action = new ZoomCameraAction(
             { direction: 'OUT', by: 1 },

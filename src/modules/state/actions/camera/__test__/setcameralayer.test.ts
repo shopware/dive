@@ -1,5 +1,5 @@
 import { SetCameraLayerAction } from '../setcameralayer';
-import { DIVEOrbitController } from '../../../../controller/orbit/OrbitController';
+import { OrbitController } from '../../../../controller/orbit/OrbitController';
 
 describe('SetCameraLayerAction', () => {
     it('should set camera layer', async () => {
@@ -8,7 +8,7 @@ describe('SetCameraLayerAction', () => {
             object: {
                 setCameraLayer: jest.fn(),
             },
-        } as unknown as DIVEOrbitController;
+        } as unknown as OrbitController;
 
         const action = new SetCameraLayerAction(
             { layer: 'LIVE' },
