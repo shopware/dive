@@ -4,12 +4,12 @@ import {
     Raycaster,
     type XRTargetRaySpace,
 } from 'three';
-import { type DIVERenderer } from '../../../../../renderer/Renderer';
-import { type DIVEScene } from '../../../../../scene/Scene';
+import { type DIVERenderPipeline } from '../../../../../engine/renderer/Renderer';
+import { type DIVEScene } from '../../../../../engine/scene/Scene';
 import { type DIVEHitResult } from '../WebXRRaycaster';
 
 export class DIVEWebXRRaycasterTHREE {
-    private _renderer: DIVERenderer;
+    private _renderer: DIVERenderPipeline;
     private _scene: DIVEScene;
 
     private _controller: XRTargetRaySpace;
@@ -17,11 +17,11 @@ export class DIVEWebXRRaycasterTHREE {
     // internal raycaster
     private _raycaster: Raycaster = new Raycaster();
 
-    constructor(renderer: DIVERenderer, scene: DIVEScene) {
+    constructor(renderer: DIVERenderPipeline, scene: DIVEScene) {
         this._renderer = renderer;
         this._scene = scene;
 
-        this._controller = this._renderer.xr.getController(0);
+        this._controller = this._renderer.webglrenderer.xr.getController(0);
     }
 
     public async Init(): Promise<this> {
@@ -32,9 +32,10 @@ export class DIVEWebXRRaycasterTHREE {
     public GetIntersections(): DIVEHitResult[] {
         this._controller.updateMatrixWorld();
         this._raycaster.setFromXRController(this._controller);
-        const intersections = this._raycaster.intersectObjects(
-            this._scene.XRRoot.XRModelRoot.children,
-        );
+        // const intersections = this._raycaster.intersectObjects(
+        //     this._scene.XRRoot.XRModelRoot.children,
+        // );
+        const intersections: Intersection[] = [];
 
         if (intersections.length === 0) return [];
 

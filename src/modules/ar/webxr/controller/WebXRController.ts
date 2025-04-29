@@ -6,8 +6,8 @@ import {
     Vector3,
     WebXRArrayCamera,
 } from 'three';
-import { DIVERenderer } from '../../../../renderer/Renderer';
-import { DIVEScene } from '../../../../scene/Scene';
+import { DIVERenderPipeline } from '../../../../engine/renderer/Renderer';
+import { DIVEScene } from '../../../../engine/scene/Scene';
 import { DIVEWebXRCrosshair } from '../crosshair/WebXRCrosshair';
 import { DIVEWebXRRaycaster } from '../raycaster/WebXRRaycaster';
 import { DIVEWebXROrigin } from '../origin/WebXROrigin';
@@ -15,12 +15,12 @@ import {
     DIVETouchscreenEvents,
     DIVEWebXRTouchscreenControls,
 } from '../touchscreencontrols/WebXRTouchscreenControls';
-import { type DIVEMovable } from '../../../../interface/Movable';
-import { findInterface } from '../../../../helper/findInterface/findInterface';
+import { type DIVEMovable } from '../../../../interfaces/Movable';
+import { findInterface } from '../../../../helpers/findInterface/findInterface';
 
 export class DIVEWebXRController extends Object3D {
     // general members
-    private _renderer: DIVERenderer;
+    private _renderer: DIVERenderPipeline;
     private _scene: DIVEScene;
     private _session: XRSession;
 
@@ -57,7 +57,11 @@ export class DIVEWebXRController extends Object3D {
     private _touchScale: number = 1;
     private _scaleThreshold: number = 0.1;
 
-    constructor(session: XRSession, renderer: DIVERenderer, scene: DIVEScene) {
+    constructor(
+        session: XRSession,
+        renderer: DIVERenderPipeline,
+        scene: DIVEScene,
+    ) {
         super();
 
         this._renderer = renderer;
@@ -72,11 +76,11 @@ export class DIVEWebXRController extends Object3D {
         this._crosshair = new DIVEWebXRCrosshair();
         this._crosshair.visible = false;
 
-        this._xrCamera = this._renderer.xr.getCamera();
+        this._xrCamera = this._renderer.webglrenderer.xr.getCamera();
 
-        this._scene.XRRoot.XRHandNode.position.set(0, -0.05, -0.25);
-        this._handNodeInitialPosition =
-            this._scene.XRRoot.XRHandNode.position.clone();
+        // this._scene.XRRoot.XRHandNode.position.set(0, -0.05, -0.25);
+        // this._handNodeInitialPosition =
+        //     this._scene.XRRoot.XRHandNode.position.clone();
 
         this._touchscreenControls = new DIVEWebXRTouchscreenControls(
             this._session,
@@ -143,14 +147,14 @@ export class DIVEWebXRController extends Object3D {
 
     private updateHandNode(): void {
         this._xrCamera.updateMatrixWorld();
-        this._scene.XRRoot.XRHandNode.position.copy(
-            this._handNodeInitialPosition
-                .clone()
-                .applyMatrix4(this._xrCamera.matrixWorld),
-        );
-        this._scene.XRRoot.XRHandNode.quaternion.setFromRotationMatrix(
-            this._xrCamera.matrixWorld,
-        );
+        // this._scene.XRRoot.XRHandNode.position.copy(
+        //     this._handNodeInitialPosition
+        //         .clone()
+        //         .applyMatrix4(this._xrCamera.matrixWorld),
+        // );
+        // this._scene.XRRoot.XRHandNode.quaternion.setFromRotationMatrix(
+        //     this._xrCamera.matrixWorld,
+        // );
     }
 
     // placement
@@ -164,13 +168,14 @@ export class DIVEWebXRController extends Object3D {
         });
     }
 
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     private placeObjects(matrix: Matrix4): void {
-        this._scene.XRRoot.XRModelRoot.matrix.copy(matrix);
+        // this._scene.XRRoot.XRModelRoot.matrix.copy(matrix);
 
         // we are copying children to a new array to keep the original array intact
-        [...this._scene.XRRoot.XRHandNode.children].forEach((child) => {
-            this._scene.XRRoot.XRModelRoot.add(child);
-        });
+        // [...this._scene.XRRoot.XRHandNode.children].forEach((child) => {
+        //     this._scene.XRRoot.XRModelRoot.add(child);
+        // });
         this._placed = true;
     }
 
@@ -291,7 +296,7 @@ export class DIVEWebXRController extends Object3D {
 
     // prepare & cleanup scene
     private prepareScene(): void {
-        this._scene.XRRoot.XRModelRoot.matrixAutoUpdate = false;
+        // this._scene.XRRoot.XRModelRoot.matrixAutoUpdate = false;
 
         // initialize crosshair
         this._scene.add(this._crosshair);
@@ -310,17 +315,17 @@ export class DIVEWebXRController extends Object3D {
             clone.position.set(0, 0, 0);
             children.push(clone);
         });
-        this._scene.XRRoot.XRHandNode.add(...children);
+        // this._scene.XRRoot.XRHandNode.add(...children);
     }
 
     private restoreScene(): void {
         this._scene.remove(this._crosshair);
 
-        // clear hand node and remove attached models
-        this._scene.XRRoot.XRHandNode.clear();
-        this._scene.XRRoot.XRModelRoot.clear();
+        // // clear hand node and remove attached models
+        // this._scene.XRRoot.XRHandNode.clear();
+        // this._scene.XRRoot.XRModelRoot.clear();
 
-        this._scene.XRRoot.XRModelRoot.matrixAutoUpdate = true;
+        // this._scene.XRRoot.XRModelRoot.matrixAutoUpdate = true;
     }
 
     // raycast

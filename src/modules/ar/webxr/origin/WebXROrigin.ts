@@ -1,8 +1,8 @@
 import { Matrix4, Quaternion, Vector3 } from 'three';
-import { DIVERenderer } from '../../../../renderer/Renderer';
+import { DIVERenderPipeline } from '../../../../engine/renderer/Renderer';
 
 export class DIVEWebXROrigin {
-    private _renderer: DIVERenderer;
+    private _renderer: DIVERenderPipeline;
     private _session: XRSession;
 
     private _requesting: boolean;
@@ -48,7 +48,7 @@ export class DIVEWebXROrigin {
 
     constructor(
         session: XRSession,
-        renderer: DIVERenderer,
+        renderer: DIVERenderPipeline,
         entityTypes?: XRHitTestTrackableType[],
     ) {
         this._renderer = renderer;
@@ -153,7 +153,8 @@ export class DIVEWebXROrigin {
         );
         if (this._hitTestResultBuffer.length > 0) {
             // hit found
-            this._referenceSpaceBuffer = this._renderer.xr.getReferenceSpace();
+            this._referenceSpaceBuffer =
+                this._renderer.webglrenderer.xr.getReferenceSpace();
 
             // if there is no reference space, hit will be counted as lost for this frame
             if (!this._referenceSpaceBuffer) {

@@ -3,7 +3,7 @@ import { USDZLoader } from 'three/examples/jsm/loaders/USDZLoader';
 import { Object3D } from 'three';
 import { type FileType, SUPPORTED_FILE_TYPES } from '../../../types/file';
 import { FileTypeError, NetworkError, ParseError } from '../../../error';
-import { getFileTypeFromUri, isFileTypeSupported } from '../../../helper';
+import { getFileTypeFromUri, isFileTypeSupported } from '../../../helpers';
 
 declare global {
     interface ModuleClasses {

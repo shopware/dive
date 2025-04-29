@@ -1,9 +1,9 @@
-import { DIVEGroup } from '../group/Group';
-import DIVEAmbientLight from '../light/AmbientLight';
-import DIVEPointLight from '../light/PointLight';
-import DIVESceneLight from '../light/SceneLight';
-import { DIVEModel } from '../model/Model';
-import { DIVEPrimitive } from '../primitive/Primitive';
+import { DIVEGroup } from '../components/group/Group';
+import { DIVEAmbientLight } from '../components/light/AmbientLight';
+import { DIVEPointLight } from '../components/light/PointLight';
+import { DIVESceneLight } from '../components/light/SceneLight';
+import { DIVEModel } from '../components/model/Model';
+import { DIVEPrimitive } from '../components/primitive/Primitive';
 
 export type DIVESceneObject =
     | DIVEModel

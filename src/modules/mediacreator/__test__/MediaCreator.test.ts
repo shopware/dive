@@ -1,21 +1,27 @@
 import { MediaCreator } from '../MediaCreator';
-import { DIVERenderer } from '../../../renderer/Renderer';
-import { DIVEScene } from '../../../scene/Scene';
-import DIVEPerspectiveCamera, {
-    DIVEPerspectiveCameraDefaultSettings,
-} from '../../../camera/PerspectiveCamera';
-import { type COMPov } from '../../../com/types';
-import DIVEOrbitControls from '../../../controls/OrbitControls';
-import { DIVEAnimationSystem } from '../../../animation/AnimationSystem';
+import { DIVERenderPipeline } from '../../../engine/renderer/Renderer';
+import { DIVEScene } from '../../../engine/scene/Scene';
+import { DIVEPerspectiveCamera } from '../../../engine/camera/PerspectiveCamera';
+import { type COMPov } from '../../../modules/com/types';
+import { DIVEOrbitController } from '../../../modules/controller/orbit/OrbitController';
+import { DIVEAnimationSystem } from '../../../modules/animation/AnimationSystem';
 
 /**
  * @jest-environment jsdom
  */
 
+// Mock ResizeObserver
+class MockResizeObserver {
+    observe() {}
+    unobserve() {}
+    disconnect() {}
+}
+global.ResizeObserver = MockResizeObserver as any;
+
 const mock_render = jest.fn();
 const mock_toDataURL = jest.fn();
 
-jest.mock('../../../scene/Scene', () => {
+jest.mock('../../../engine/scene/Scene', () => {
     return {
         DIVEScene: jest.fn(function () {
             this.add = jest.fn();
@@ -28,72 +34,79 @@ jest.mock('../../../scene/Scene', () => {
     };
 });
 
-jest.mock('../../../camera/PerspectiveCamera', () => {
-    return jest.fn(function () {
-        this.position = {
-            clone: jest.fn(),
-            copy: jest.fn(),
-        };
-        this.quaternion = {
-            clone: jest.fn(),
-            copy: jest.fn(),
-        };
-        this.orbitControls = {
-            target: {
-                clone: jest.fn(),
-                copy: jest.fn(),
-            },
-            update: jest.fn(),
-        };
-        this.layers = {
-            mask: 0,
-        };
-        return this;
-    });
-});
-
-jest.mock('../../../controls/OrbitControls', () => {
-    return jest.fn(function () {
-        this.object = {
-            position: {
-                clone: jest.fn(),
-                copy: jest.fn(),
-            },
-            quaternion: {
-                clone: jest.fn(),
-                copy: jest.fn(),
-            },
-            layers: {
-                mask: 0,
-            },
-            OnResize: jest.fn(),
-        };
-
-        this.target = {
-            clone: jest.fn(),
-            copy: jest.fn(),
-        };
-
-        this.update = jest.fn();
-
-        return this;
-    });
-});
-
-jest.mock('../../../renderer/Renderer', () => {
+jest.mock('../../../engine/camera/PerspectiveCamera', () => {
     return {
-        DIVERenderer: jest.fn(function () {
-            this.domElement = {
-                toDataURL: mock_toDataURL,
+        DIVEPerspectiveCamera: jest.fn(function () {
+            this.position = {
+                clone: jest.fn(),
+                copy: jest.fn(),
             };
-            this.render = mock_render;
-            this.OnResize = jest.fn();
+            this.quaternion = {
+                clone: jest.fn(),
+                copy: jest.fn(),
+            };
+            this.orbitControls = {
+                target: {
+                    clone: jest.fn(),
+                    copy: jest.fn(),
+                },
+                update: jest.fn(),
+            };
+            this.layers = {
+                mask: 0,
+            };
+            this.onResize = jest.fn();
             return this;
         }),
     };
 });
 
-jest.mock('../../../animation/AnimationSystem', () => {
+jest.mock('../../../modules/controller/orbit/OrbitController', () => {
+    return {
+        DIVEOrbitController: jest.fn(function () {
+            this.object = {
+                position: {
+                    clone: jest.fn(),
+                    copy: jest.fn(),
+                },
+                quaternion: {
+                    clone: jest.fn(),
+                    copy: jest.fn(),
+                },
+                layers: {
+                    mask: 0,
+                },
+                onResize: jest.fn(),
+            };
+
+            this.target = {
+                clone: jest.fn(),
+                copy: jest.fn(),
+            };
+
+            this.update = jest.fn();
+
+            return this;
+        }),
+    };
+});
+
+jest.mock('../../../engine/renderer/Renderer', () => {
+    return {
+        DIVERenderPipeline: jest.fn(function () {
+            this.webglrenderer = {
+                domElement: {
+                    toDataURL: mock_toDataURL,
+                },
+                render: mock_render,
+            };
+            this.onResize = jest.fn();
+            return this;
+        }),
+    };
+});
+
+jest.mock('../../../modules/animation/AnimationSystem', () => {
     return {
         DIVEAnimationSystem: jest.fn(function () {
             this.domElement = {
@@ -110,19 +123,24 @@ jest.mock('../../../animation/AnimationSystem', () => {
     };
 });
 
+const mockScene = new DIVEScene();
+const mockCamera = new DIVEPerspectiveCamera();
+const mockRenderer = new DIVERenderPipeline(mockScene, mockCamera);
+const mockAnimationSystem = new DIVEAnimationSystem();
+const mockOrbitController = new DIVEOrbitController(
+    mockCamera,
+    mockRenderer.webglrenderer.domElement,
+    mockAnimationSystem,
+);
 let mediaCreator: MediaCreator;
 
 describe('MediaCreator', () => {
     beforeEach(() => {
         jest.clearAllMocks();
         mediaCreator = new MediaCreator(
-            new DIVERenderer(),
-            new DIVEScene(),
-            new DIVEOrbitControls(
-                new DIVEPerspectiveCamera(DIVEPerspectiveCameraDefaultSettings),
-                new DIVERenderer(),
-                new DIVEAnimationSystem(new DIVERenderer()),
-            ),
+            mockRenderer,
+            mockScene,
+            mockOrbitController,
         );
     });
 

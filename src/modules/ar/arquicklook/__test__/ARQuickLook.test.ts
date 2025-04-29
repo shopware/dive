@@ -3,7 +3,7 @@ import { ARSystemOptions } from '../../ARSystem';
 import { ARQuickLook } from '../ARQuickLook';
 import { AssetConverter } from '../../../asset/converter/AssetConverter';
 
-jest.mock('../../../../scene/Scene', () => {
+jest.mock('../../../../engine/scene/Scene', () => {
     return {
         DIVEScene: jest.fn(function () {
             this.add = jest.fn();

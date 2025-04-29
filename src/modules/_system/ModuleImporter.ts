@@ -2,6 +2,9 @@
 
 declare global {
     interface ModuleClasses {}
+    interface Window {
+        __MODULE_PATHS__: Record<string, string>;
+    }
 }
 
 /** @internal */
@@ -33,22 +36,35 @@ export class ModuleImporter<Id extends keyof ModuleClasses> {
     private _instance: ModuleInstance<Id> | null = null;
     private _importFn: () => Promise<ModuleConstructors[Id]>;
 
-    constructor(private _path: string) {
+    constructor(private _moduleName: string) {
         this._importFn = async (): Promise<ModuleConstructors[Id]> => {
+            if (!window.__MODULE_PATHS__) {
+                throw new Error(
+                    'Module path map not found, invalid build of @shopware-ag/dive!',
+                );
+            }
+            const modulePaths = window.__MODULE_PATHS__;
             try {
-                // Perform the dynamic import using the path
-                const module = await this._dynamicImport(this._path);
-                const moduleName = Object.keys(module)[0];
-
-                if (!moduleName || !module[moduleName]) {
+                // Get the build path from the injected map
+                if (!modulePaths || !modulePaths[this._moduleName]) {
                     throw new Error(
-                        `Module class not found in dynamically imported module: ${this._path}`,
+                        `Module ${this._moduleName} not found in path map`,
                     );
                 }
-                return module[moduleName] as ModuleConstructors[Id];
+
+                const module = await this._dynamicImport(
+                    modulePaths[this._moduleName],
+                );
+
+                if (!module[this._moduleName]) {
+                    throw new Error(
+                        `Module class not found in dynamically imported module: ${this._moduleName}`,
+                    );
+                }
+                return module[this._moduleName] as ModuleConstructors[Id];
             } catch (err) {
                 throw new Error(
-                    `Failed to dynamically import module from path ${this._path}: ${err instanceof Error ? err.message : String(err)}`,
+                    `Failed to dynamically import module from path ${modulePaths[this._moduleName]}: ${(err as Error).message}`,
                 );
             }
         };
@@ -86,7 +102,7 @@ export class ModuleImporter<Id extends keyof ModuleClasses> {
         return this._instance;
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    /* istanbul ignore next */ // eslint-disable-next-line @typescript-eslint/no-explicit-any
     private _dynamicImport(path: string): any {
         return import(/* @vite-ignore */ path);
     }

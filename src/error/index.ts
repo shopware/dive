@@ -1,4 +1,4 @@
-export { ParseError } from './parse/parse-error';
-export { FileTypeError } from './file-type/file-type-error';
-export { NetworkError } from './network/network-error';
-export { ARCompatibilityError } from './ar-compatibility/ar-compatibility-error';
+export * from './parse/parse-error.ts';
+export * from './file-type/file-type-error.ts';
+export * from './network/network-error.ts';
+export * from './ar-compatibility/ar-compatibility-error.ts';
