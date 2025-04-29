@@ -228,7 +228,9 @@ describe('dive/DIVE', () => {
 
     it('should resize', () => {
         const dive = new DIVE();
-        expect(() => dive.engine.renderer.onResize(800, 600)).not.toThrow();
+        expect(() =>
+            dive.engine.renderPipeline.onResize(800, 600),
+        ).not.toThrow();
     });
 
     it('should handle QuickView with multiple instances', async () => {

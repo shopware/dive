@@ -47,8 +47,8 @@ export class DIVEWebXR {
         engine: DIVEEngine,
         controller: DIVEOrbitController,
     ): Promise<void> {
-        this._renderer = engine.renderer;
-        this._scene = engine.renderer.scene;
+        this._renderer = engine.renderPipeline;
+        this._scene = engine.renderPipeline.scene;
         this._controller = controller;
 
         // setting camera reset values

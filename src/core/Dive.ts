@@ -145,7 +145,7 @@ export class DIVE {
     }
 
     public get canvas(): HTMLCanvasElement {
-        return this._engine.renderer.webglrenderer.domElement;
+        return this._engine.renderPipeline.webglrenderer.domElement;
     }
 
     constructor(settings?: Partial<DIVESettings>) {
@@ -191,7 +191,7 @@ export class DIVE {
         (window as any).DIVE = {
             instances: [],
             PrintScene: () => {
-                return this._engine.renderer.scene;
+                return this._engine.renderPipeline.scene;
             },
         };
 
