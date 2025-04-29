@@ -19,44 +19,18 @@ import { type DIVESelectable } from '../../interfaces/Selectable.ts';
 import { Actions } from './actions/index.ts';
 import { ModuleImporter } from '../index.ts';
 import { DIVEEngine } from '../../engine/Engine.ts';
+import {
+    ActionDependencies,
+    ActionDeps,
+    ActionPayload,
+    ActionReturn,
+} from './actions/types.ts';
 
 type EventListener<Action extends keyof Actions> = (
     payload: Actions[Action]['PAYLOAD'],
 ) => void;
 
 type Unsubscribe = () => boolean;
-
-// Extracted types for PerformAction_new
-type ActionPayload<T> = T extends new (
-    payload: infer P,
-    dependencies: infer D,
-) => unknown
-    ? P
-    : never;
-type ActionReturn<T> = T extends new (
-    payload: unknown,
-    dependencies: infer D,
-) => infer R
-    ? R extends { execute(): infer E }
-        ? E
-        : never
-    : never;
-type ActionDeps<T> = T extends new (
-    payload: unknown,
-    dependencies: infer D,
-) => unknown
-    ? D extends Partial<ActionDependencies>
-        ? D
-        : never
-    : never;
-export interface ActionDependencies {
-    scene: DIVEScene;
-    renderer: DIVERenderer;
-    controls: DIVEOrbitControls;
-    toolbox: DIVEToolbox;
-    mediaCreator: import('../modules/mediacreator/MediaCreator.ts').MediaCreator;
-    ar: import('../modules/ar/ARSystem.ts').ARSystem;
-}
 
 /**
  * Main class for communicating with DIVE.
@@ -858,10 +832,12 @@ export class DIVECommunication {
         });
     }
 
-    public async PerformAction_new<ActionType extends keyof ActionClasses>(
+    public PerformAction_new<ActionType extends keyof ActionClasses>(
         action: ActionType,
-        payload: ActionPayload<ActionClasses[ActionType]>,
-    ): Promise<ActionReturn<ActionClasses[ActionType]>> {
+        ...args: ActionPayload<ActionClasses[ActionType]> extends void
+            ? []
+            : [ActionPayload<ActionClasses[ActionType]>]
+    ): ActionReturn<ActionClasses[ActionType]> {
         const ActionClass = Actions[action] as unknown as {
             new (
                 payload: ActionPayload<ActionClasses[ActionType]>,
@@ -870,29 +846,36 @@ export class DIVECommunication {
         };
 
         // Get only the dependencies this action needs
-        const requiredDeps = await this.getDependencies<
+        const requiredDeps = this.getDependencies<
             ActionDeps<ActionClasses[ActionType]>
         >({} as ActionDeps<ActionClasses[ActionType]>);
 
+        const payload = args[0] as ActionPayload<ActionClasses[ActionType]>;
         const actionInstance = new ActionClass(payload, requiredDeps);
-        const result = await actionInstance.execute();
-        return result as ActionReturn<ActionClasses[ActionType]>;
+
+        try {
+            return actionInstance.execute() as ActionReturn<
+                ActionClasses[ActionType]
+            >;
+        } catch (error) {
+            throw new Error(`Failed to execute ${action}`, { cause: error });
+        }
     }
 
-    private async getDependencies<D extends Partial<ActionDependencies>>(
+    private getDependencies<D extends Partial<ActionDependencies>>(
         requiredDeps: D,
-    ): Promise<D> {
+    ): D {
         const deps: Partial<ActionDependencies> = {};
 
         // Only load the dependencies that are actually needed
-        if ('scene' in requiredDeps) deps.scene = this.scene;
-        if ('renderer' in requiredDeps) deps.renderer = this.renderer;
-        if ('controls' in requiredDeps) deps.controls = this.controller;
+        if ('scene' in requiredDeps) deps.scene = this.engine.scene;
+        if ('renderer' in requiredDeps) deps.renderer = this.engine.renderer;
+        if ('controller' in requiredDeps) deps.controller = this.controller;
         if ('toolbox' in requiredDeps) deps.toolbox = this.toolbox;
         if ('mediaCreator' in requiredDeps)
-            deps.mediaCreator = await Modules.get('MediaCreator');
+            deps.mediaCreator = this._mediaCreator;
         if ('ar' in requiredDeps) {
-            deps.ar = await Modules.get('ARSystem');
+            deps.ar = this._arSystem;
         }
 
         return deps as D;
