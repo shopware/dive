@@ -58,7 +58,7 @@ export class DIVENode extends applyMixins(Object3D, [
 
     public SetToWorldOrigin(): void {
         this.position.set(0, 0, 0);
-        State.get(this.userData.id)?.PerformAction('UPDATE_OBJECT', {
+        State.get(this.userData.id)?.performAction('UPDATE_OBJECT', {
             id: this.userData.id,
             position: this.getWorldPosition(this._positionWorldBuffer),
             rotation: this.rotation,
@@ -70,7 +70,7 @@ export class DIVENode extends applyMixins(Object3D, [
      * Can be called when the object is moved from a foreign object (gizmo, parent, etc.) to update the object's position.
      */
     public onMove(): void {
-        State.get(this.userData.id)?.PerformAction('UPDATE_OBJECT', {
+        State.get(this.userData.id)?.performAction('UPDATE_OBJECT', {
             id: this.userData.id,
             position: this.getWorldPosition(this._positionWorldBuffer),
             rotation: this.rotation,
@@ -79,13 +79,13 @@ export class DIVENode extends applyMixins(Object3D, [
     }
 
     public onSelect(): void {
-        State.get(this.userData.id)?.PerformAction('SELECT_OBJECT', {
+        State.get(this.userData.id)?.performAction('SELECT_OBJECT', {
             id: this.userData.id,
         });
     }
 
     public onDeselect(): void {
-        State.get(this.userData.id)?.PerformAction('DESELECT_OBJECT', {
+        State.get(this.userData.id)?.performAction('DESELECT_OBJECT', {
             id: this.userData.id,
         });
     }

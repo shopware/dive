@@ -5,13 +5,18 @@ import { OrbitController } from '../controller/orbit/OrbitController';
 
 export type ToolType = 'select' | 'none';
 
+declare global {
+    interface ModuleClasses {
+        Toolbox: typeof Toolbox;
+    }
+}
+
 /**
+ * @module Toolbox
  * A Toolbox to activate and deactivate tools to use with the pointer.
- *
- * @module
  */
 
-export class DIVEToolbox {
+export class Toolbox {
     public static readonly DefaultTool = 'select';
 
     private _scene: DIVEScene;

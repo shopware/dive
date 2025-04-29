@@ -44,13 +44,6 @@ jest.mock('../../../engine/camera/PerspectiveCamera', () => {
                 clone: jest.fn(),
                 copy: jest.fn(),
             };
-            this.orbitControls = {
-                target: {
-                    clone: jest.fn(),
-                    copy: jest.fn(),
-                },
-                update: jest.fn(),
-            };
             this.layers = {
                 mask: 0,
             };

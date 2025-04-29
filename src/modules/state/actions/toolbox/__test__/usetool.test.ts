@@ -1,17 +1,31 @@
 import { UseToolAction } from '../usetool';
-import { DIVEToolbox } from '../../../../toolbox/Toolbox';
+import { DIVEEngine } from '../../../../../engine/Engine';
+import { OrbitController } from '../../../../controller/orbit/OrbitController';
+import { ModuleImporter } from '../../../../_system/ModuleImporter';
+
+const mockEngine = {
+    scene: {
+        getSceneObject: jest.fn(),
+    },
+} as unknown as DIVEEngine;
+
+const mockController = {} as unknown as OrbitController;
+
+const mockUseTool = jest.fn();
+const mockToolbox = {
+    instantiate: jest.fn().mockResolvedValue({
+        UseTool: mockUseTool,
+    }),
+} as unknown as ModuleImporter<'Toolbox'>;
 
 describe('UseToolAction', () => {
     it('should use a tool', async () => {
-        // Mock dependencies
-        const mockToolbox = {
-            UseTool: jest.fn(),
-        } as unknown as DIVEToolbox;
-
         const action = new UseToolAction(
             { tool: 'select' },
             {
-                toolbox: mockToolbox,
+                engine: mockEngine,
+                controller: mockController,
+                Toolbox: mockToolbox,
             },
         );
 
@@ -19,6 +33,6 @@ describe('UseToolAction', () => {
         await action.execute();
 
         // Verify results
-        expect(mockToolbox.UseTool).toHaveBeenCalledWith('select');
+        expect(mockUseTool).toHaveBeenCalledWith('select');
     });
 });

@@ -104,7 +104,7 @@ dive.State.Subscribe('GET_ALL_SCENE_DATA', () => {
  // do something
 });
 
-dive.State.PerformAction('GET_ALL_SCENE_DATA', {});
+dive.State.performAction('GET_ALL_SCENE_DATA', {});
 ```
 
 #### SystemInfo
@@ -130,7 +130,11 @@ Features:
 - WebXR support detection
 - AR capability checking
 - Device type detection
-- SceneViewer support detection<!-- END_MODULES -->
+- SceneViewer support detection
+
+#### Toolbox
+
+A Toolbox to activate and deactivate tools to use with the pointer.<!-- END_MODULES -->
 
 Each module is designed to be used independently, allowing you to use only the functionality you
 need. This helps keep your bundle size small and your application focused.

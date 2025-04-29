@@ -7,7 +7,6 @@ import { MathUtils } from 'three';
 import { State } from '../../modules/state/State.ts';
 import { DIVEEngine } from '../../engine/Engine.ts';
 import { OrbitController } from '../../modules/controller/orbit/OrbitController.ts';
-import { DIVEToolbox } from '../../modules/toolbox/Toolbox.ts';
 
 // Mock ResizeObserver
 class MockResizeObserver {
@@ -45,11 +44,7 @@ jest.mock('../../modules/index.ts', () => {
             this.instantiate = jest
                 .fn()
                 .mockResolvedValue(
-                    new State(
-                        {} as DIVEEngine,
-                        {} as OrbitController,
-                        {} as DIVEToolbox,
-                    ),
+                    new State({} as DIVEEngine, {} as OrbitController),
                 );
             return this;
         }),
@@ -61,17 +56,17 @@ jest.spyOn(MathUtils, 'generateUUID').mockReturnValue(test_uuid);
 jest.mock('../../modules/state/State.ts', () => {
     return {
         State: jest.fn(function () {
-            this.PerformAction = jest.fn().mockReturnValue({
+            this.performAction = jest.fn().mockReturnValue({
                 position: { x: 0, y: 0, z: 0 },
                 target: { x: 0, y: 0, z: 0 },
             });
-            this.Subscribe = jest.fn(
+            this.subscribe = jest.fn(
                 (action: string, callback: (data: { id: string }) => void) => {
                     callback({ id: 'incorrect id' });
                     callback({ id: test_uuid });
                 },
             );
-            this.DestroyInstance = jest.fn().mockReturnValue(true);
+            this.destroyInstance = jest.fn().mockReturnValue(true);
             return this;
         }),
     };
@@ -94,28 +89,6 @@ jest.mock('../../modules/controller/orbit/OrbitController.ts', () => {
             };
             this.removeFromParent = jest.fn();
             this.dispose = jest.fn();
-            return this;
-        }),
-    };
-});
-
-jest.mock('../../modules/toolbox/Toolbox.ts', () => {
-    return {
-        DIVEToolbox: jest.fn(function () {
-            this.isObject3D = true;
-            this.parent = null;
-            this.dispatchEvent = jest.fn();
-            this.position = {
-                set: jest.fn(),
-            };
-            this.SetIntensity = jest.fn();
-            this.SetEnabled = jest.fn();
-            this.SetColor = jest.fn();
-            this.userData = {
-                id: undefined,
-            };
-            this.Dispose = jest.fn();
-            this.removeFromParent = jest.fn();
             return this;
         }),
     };
@@ -252,9 +225,8 @@ describe('DIVE', () => {
 
         await dive.Dispose();
 
-        expect(dive['orbitControls'].dispose).toHaveBeenCalled();
+        expect(dive['orbitController'].dispose).toHaveBeenCalled();
         expect(dive['axisCamera']?.Dispose).toHaveBeenCalled();
-        expect(dive['toolbox'].Dispose).toHaveBeenCalled();
     });
 
     it('should handle dispose when animation system pipeline is not initialized', () => {

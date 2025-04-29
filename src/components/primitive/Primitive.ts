@@ -125,7 +125,7 @@ export class DIVEPrimitive extends DIVENode {
         // skip any action when the position did not change
         if (worldPos.y === oldWorldPos.y) return;
 
-        State.get(this.userData.id)?.PerformAction('UPDATE_OBJECT', {
+        State.get(this.userData.id)?.performAction('UPDATE_OBJECT', {
             id: this.userData.id,
             position: worldPos,
             rotation: this.rotation,

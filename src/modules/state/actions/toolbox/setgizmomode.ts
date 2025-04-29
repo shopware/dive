@@ -4,12 +4,13 @@ import { ActionDependencies } from '../../types/index.ts';
 
 export const SetGizmoModeAction = Action.define<
     { mode: 'translate' | 'rotate' | 'scale' },
-    Pick<ActionDependencies, 'toolbox'>,
-    void
+    Pick<ActionDependencies, 'engine' | 'controller' | 'Toolbox'>,
+    Promise<void>
 >({
     description: "Sets the gizmo's mode.",
-    execute: (payload, { toolbox }) => {
-        toolbox.SetGizmoMode(payload.mode);
+    execute: async (payload, { engine, controller, Toolbox }) => {
+        const instance = await Toolbox.instantiate(engine.scene, controller);
+        instance.SetGizmoMode(payload.mode);
     },
 });
 
