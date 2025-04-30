@@ -136,13 +136,6 @@ export default function moduleBuildPlugin(): Plugin {
     // Update package.json exports
     updatePackageJsonExports(registrations);
 
-    // Generate the module path map for runtime
-    const modulePathMap: Record<string, string> = {};
-    registrations.forEach(({ name, buildPath }) => {
-        // For dynamic imports, we need to go up one directory from chunks
-        modulePathMap[name] = `../src/${buildPath}.mjs`;
-    });
-
     return {
         name: 'module-build-config',
         config(config: UserConfig): UserConfig {
@@ -172,14 +165,12 @@ export default function moduleBuildPlugin(): Plugin {
                                 entryFileNames: '[name].mjs',
                                 chunkFileNames: 'chunks/[name]-[hash].mjs',
                                 exports: 'named',
-                                banner: `window.__MODULE_PATHS__ = ${JSON.stringify(modulePathMap)};`,
                             },
                             {
                                 format: 'cjs',
                                 entryFileNames: '[name].cjs',
                                 chunkFileNames: 'chunks/[name]-[hash].cjs',
                                 exports: 'named',
-                                banner: `if (typeof window !== 'undefined') { window.__MODULE_PATHS__ = ${JSON.stringify(modulePathMap)}; }`,
                             },
                         ],
                         external: [

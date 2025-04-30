@@ -1,19 +1,16 @@
 import { Action } from '../action.ts';
 import { registerAction } from '../../ActionRegistry.ts';
-import { ActionDependencies } from '../../types/index.ts';
-import { isSelectTool } from '../../../toolbox/select/SelectTool';
-import { type COMEntity } from '../../types';
+import { type ActionDependencies } from '../../types/index.ts';
+import { isSelectTool } from '../../../toolbox/select/SelectTool.ts';
+import { type COMEntity } from '../../types/index.ts';
 
 export const DeselectObjectAction = Action.define<
     Partial<COMEntity> & { id: string },
-    Pick<
-        ActionDependencies,
-        'engine' | 'controller' | 'Toolbox' | 'registered'
-    >,
+    Pick<ActionDependencies, 'engine' | 'getToolbox' | 'registered'>,
     Promise<void>
 >({
     description: 'Deselects an existing object.',
-    execute: async (payload, { engine, controller, Toolbox, registered }) => {
+    execute: async (payload, { engine, getToolbox, registered }) => {
         const object = registered.get(payload.id);
         if (!object) throw new Error('Object not found.');
 
@@ -22,7 +19,7 @@ export const DeselectObjectAction = Action.define<
 
         if (!('isSelectable' in sceneObject))
             throw new Error('Object is not selectable.');
-        const instance = await Toolbox.instantiate(engine.scene, controller);
+        const instance = await getToolbox();
         const activeTool = instance.GetActiveTool();
         if (activeTool && isSelectTool(activeTool)) {
             activeTool.DetachGizmo();

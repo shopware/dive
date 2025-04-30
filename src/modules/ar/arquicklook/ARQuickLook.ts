@@ -1,7 +1,7 @@
-import { type ARSystemOptions } from '../ARSystem';
-import { AssetConverter } from '../../asset/converter/AssetConverter';
-import { AssetLoader } from '../../asset/loader/AssetLoader';
-import { AssetExporter } from '../../asset/exporter/AssetExporter';
+import { type ARSystemOptions } from '../ARSystem.ts';
+import { AssetConverter } from '../../asset/converter/AssetConverter.ts';
+import { AssetLoader } from '../../asset/loader/AssetLoader.ts';
+import { AssetExporter } from '../../asset/exporter/AssetExporter.ts';
 
 export class ARQuickLook {
     private converter = new AssetConverter(

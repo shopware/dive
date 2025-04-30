@@ -19,23 +19,28 @@ export class DIVEResizeManager {
             }
         });
 
-        if (renderer.webglrenderer.domElement.parentElement) {
-            this._resizeObserver.observe(
-                renderer.webglrenderer.domElement.parentElement,
-            );
-        } else {
-            const interval = setInterval(() => {
-                if (renderer.webglrenderer.domElement.parentElement) {
-                    this._resizeObserver.observe(
-                        renderer.webglrenderer.domElement.parentElement,
-                    );
-                    clearInterval(interval);
-                }
-            }, 16);
-        }
+        this._observeCanvas(renderer.webglrenderer.domElement);
+    }
+
+    public setCanvas(canvas: HTMLCanvasElement): void {
+        this._resizeObserver.disconnect();
+        this._observeCanvas(canvas);
     }
 
     public dispose(): void {
         this._resizeObserver.disconnect();
+    }
+
+    private _observeCanvas(canvas: HTMLCanvasElement): void {
+        if (canvas.parentElement) {
+            this._resizeObserver.observe(canvas.parentElement);
+        } else {
+            const interval = setInterval(() => {
+                if (canvas.parentElement) {
+                    this._resizeObserver.observe(canvas.parentElement);
+                    clearInterval(interval);
+                }
+            }, 16);
+        }
     }
 }

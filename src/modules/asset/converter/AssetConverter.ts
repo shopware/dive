@@ -1,9 +1,9 @@
-import { AssetLoader } from '../loader/AssetLoader';
+import { AssetLoader } from '../loader/AssetLoader.ts';
 import {
     AssetExporter,
     type FileTypeToExporterOptions,
-} from '../exporter/AssetExporter';
-import { type FileType } from '../../../types/file';
+} from '../exporter/AssetExporter.ts';
+import { type FileType } from '../../../types/file/index.ts';
 
 declare global {
     interface ModuleClasses {

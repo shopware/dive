@@ -8,7 +8,7 @@ import {
 import { PRODUCT_LAYER_MASK } from '../../constants/VisibilityLayerMask.ts';
 import { findSceneRecursive } from '../../helpers/findSceneRecursive/findSceneRecursive.ts';
 import { type COMMaterial } from '../../modules/state/types/index.ts';
-import { DIVENode } from '../node/Node';
+import { DIVENode } from '../node/Node.ts';
 import { State } from '../../modules/state/State.ts';
 
 /**

@@ -7,11 +7,11 @@ import {
     TorusGeometry,
     Vector3,
 } from 'three';
-import { UI_LAYER_MASK } from '../../../constants/VisibilityLayerMask';
-import { DIVEHoverable } from '../../../interfaces/Hoverable';
-import { DraggableEvent } from '../../../modules/toolbox/BaseTool';
-import { DIVERotateGizmo } from '../rotate/RotateGizmo';
-import { DIVEDraggable } from '../../../interfaces/Draggable';
+import { UI_LAYER_MASK } from '../../../constants/VisibilityLayerMask.ts';
+import { DIVEHoverable } from '../../../interfaces/Hoverable.ts';
+import { DraggableEvent } from '../../../modules/toolbox/BaseTool.ts';
+import { DIVERotateGizmo } from '../rotate/RotateGizmo.ts';
+import { DIVEDraggable } from '../../../interfaces/Draggable.ts';
 
 export class DIVERadialHandle
     extends Object3D

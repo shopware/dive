@@ -1,6 +1,6 @@
 import { Action } from '../action.ts';
 import { registerAction } from '../../ActionRegistry.ts';
-import { ActionDependencies } from '../../types/index.ts';
+import { type ActionDependencies } from '../../types/index.ts';
 
 export const ZoomCameraAction = Action.define<
     { direction: 'IN' | 'OUT'; by: number },

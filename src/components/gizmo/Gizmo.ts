@@ -1,10 +1,10 @@
 import { Euler, Object3D, Vector3 } from 'three';
-import { DIVERotateGizmo } from './rotate/RotateGizmo';
-import { DIVETranslateGizmo } from './translate/TranslateGizmo';
-import { OrbitController } from '../../modules/controller/orbit/OrbitController';
-import { DIVEScaleGizmo } from './scale/ScaleGizmo';
-import { DIVEGizmoPlane as DIVEGizmoPlane } from './plane/GizmoPlane';
-import { DIVESelectable } from '../../interfaces/Selectable';
+import { DIVERotateGizmo } from './rotate/RotateGizmo.ts';
+import { DIVETranslateGizmo } from './translate/TranslateGizmo.ts';
+import { OrbitController } from '../../modules/controller/orbit/OrbitController.ts';
+import { DIVEScaleGizmo } from './scale/ScaleGizmo.ts';
+import { DIVEGizmoPlane as DIVEGizmoPlane } from './plane/GizmoPlane.ts';
+import { DIVESelectable } from '../../interfaces/Selectable.ts';
 
 export type DIVEGizmoMode = 'translate' | 'rotate' | 'scale';
 

@@ -1,6 +1,6 @@
 import { Matrix4, Vector3 } from 'three';
-import { type DIVERenderPipeline } from '../../../../../engine/renderer/Renderer';
-import { type DIVEHitResult } from '../WebXRRaycaster';
+import { type DIVERenderPipeline } from '../../../../../engine/renderer/Renderer.ts';
+import { type DIVEHitResult } from '../WebXRRaycaster.ts';
 
 export class DIVEWebXRRaycasterAR {
     private _session: XRSession;

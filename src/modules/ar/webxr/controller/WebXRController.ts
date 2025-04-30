@@ -6,17 +6,17 @@ import {
     Vector3,
     WebXRArrayCamera,
 } from 'three';
-import { DIVERenderPipeline } from '../../../../engine/renderer/Renderer';
-import { DIVEScene } from '../../../../engine/scene/Scene';
-import { DIVEWebXRCrosshair } from '../crosshair/WebXRCrosshair';
-import { DIVEWebXRRaycaster } from '../raycaster/WebXRRaycaster';
-import { DIVEWebXROrigin } from '../origin/WebXROrigin';
+import { DIVERenderPipeline } from '../../../../engine/renderer/Renderer.ts';
+import { DIVEScene } from '../../../../engine/scene/Scene.ts';
+import { DIVEWebXRCrosshair } from '../crosshair/WebXRCrosshair.ts';
+import { DIVEWebXRRaycaster } from '../raycaster/WebXRRaycaster.ts';
+import { DIVEWebXROrigin } from '../origin/WebXROrigin.ts';
 import {
     DIVETouchscreenEvents,
     DIVEWebXRTouchscreenControls,
-} from '../touchscreencontrols/WebXRTouchscreenControls';
-import { type DIVEMovable } from '../../../../interfaces/Movable';
-import { findInterface } from '../../../../helpers/findInterface/findInterface';
+} from '../touchscreencontrols/WebXRTouchscreenControls.ts';
+import { type DIVEMovable } from '../../../../interfaces/Movable.ts';
+import { findInterface } from '../../../../helpers/findInterface/findInterface.ts';
 
 export class DIVEWebXRController extends Object3D {
     // general members

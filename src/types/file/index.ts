@@ -1,1 +1,1 @@
-export * from './FileTypes';
+export * from './FileTypes.ts';

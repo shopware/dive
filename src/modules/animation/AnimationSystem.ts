@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { Easing, Tween, update as updateTween } from '@tweenjs/tween.js';
-import { Animator } from './animator/Animator';
+import { Animator } from './animator/Animator.ts';
 import { UUID } from '../../types/index.ts';
 import { DIVETicker } from '../../engine/clock/Clock.ts';
 import { TAnimatorParameters } from './types/AnimatorParameters.ts';

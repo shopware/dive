@@ -1,4 +1,4 @@
-import { PRODUCT_LAYER_MASK } from '../../constants/VisibilityLayerMask';
+import { PRODUCT_LAYER_MASK } from '../../constants/VisibilityLayerMask.ts';
 import { Color, DirectionalLight, HemisphereLight, Object3D } from 'three';
 
 /**

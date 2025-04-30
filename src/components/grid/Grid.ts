@@ -1,8 +1,8 @@
 import {
     GRID_SIDE_LINE_COLOR,
     GRID_CENTER_LINE_COLOR,
-} from '../../constants/GridColors';
-import { HELPER_LAYER_MASK } from '../../constants/VisibilityLayerMask';
+} from '../../constants/GridColors.ts';
+import { HELPER_LAYER_MASK } from '../../constants/VisibilityLayerMask.ts';
 import { GridHelper, Object3D } from 'three';
 
 /**

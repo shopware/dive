@@ -1,8 +1,8 @@
 import { Action } from '../action.ts';
 import { registerAction } from '../../ActionRegistry.ts';
-import { ActionDependencies } from '../../types/index.ts';
-import { UpdateObjectAction } from './updateobject';
-import { type COMEntity } from '../../types';
+import { type ActionDependencies } from '../../types/index.ts';
+import { UpdateObjectAction } from './updateobject.ts';
+import { type COMEntity } from '../../types/index.ts';
 
 export const SetParentAction = Action.define<
     {

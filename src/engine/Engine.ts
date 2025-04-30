@@ -49,7 +49,11 @@ export class DIVEEngine {
         this._camera = new DIVEPerspectiveCamera(
             this._settings.perspectiveCamera,
         );
-        this._renderer = new DIVERenderPipeline(this._scene, this._camera);
+        this._renderer = new DIVERenderPipeline(
+            this._scene,
+            this._camera,
+            this._settings.renderer,
+        );
 
         this._resizeManager = new DIVEResizeManager(
             this._renderer,
@@ -74,6 +78,11 @@ export class DIVEEngine {
 
     public get renderer(): DIVERenderPipeline {
         return this._renderer;
+    }
+
+    public setCanvas(canvas: HTMLCanvasElement): void {
+        this._renderer.setCanvas(canvas);
+        this._resizeManager.setCanvas(canvas);
     }
 
     public get clock(): DIVEClock {

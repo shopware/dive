@@ -1,14 +1,10 @@
 import { Object3D } from 'three';
-import {
-    GLTFExporter,
-    type GLTFExporterOptions as THREEGLTFExporterOptions,
-} from 'three/examples/jsm/exporters/GLTFExporter';
-import {
-    USDZExporter,
-    type USDZExporterOptions as THREEUSDZExporterOptions,
-} from 'three/examples/jsm/exporters/USDZExporter';
-import { type FileType } from '../../../types/file';
-import { FileTypeError, ParseError } from '../../../error';
+import { GLTFExporter } from 'three/examples/jsm/exporters/GLTFExporter.js';
+import type { GLTFExporterOptions as THREEGLTFExporterOptions } from 'three/examples/jsm/exporters/GLTFExporter.js';
+import { USDZExporter } from 'three/examples/jsm/exporters/USDZExporter.js';
+import type { USDZExporterOptions as THREEUSDZExporterOptions } from 'three/examples/jsm/exporters/USDZExporter.js';
+import { type FileType } from '../../../types/file/FileTypes.ts';
+import { FileTypeError, ParseError } from '../../../error/index.ts';
 
 declare global {
     interface ModuleClasses {

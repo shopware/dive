@@ -1,5 +1,5 @@
 import { Matrix4, Quaternion, Vector3 } from 'three';
-import { DIVERenderPipeline } from '../../../../engine/renderer/Renderer';
+import { DIVERenderPipeline } from '../../../../engine/renderer/Renderer.ts';
 
 export class DIVEWebXROrigin {
     private _renderer: DIVERenderPipeline;

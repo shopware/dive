@@ -1,7 +1,7 @@
-import { type DIVEScene } from '../../engine/scene/Scene';
-import { type DIVEBaseTool } from './BaseTool';
-import { DIVESelectTool } from './select/SelectTool';
-import { OrbitController } from '../controller/orbit/OrbitController';
+import { type DIVEScene } from '../../engine/scene/Scene.ts';
+import { type DIVEBaseTool } from './BaseTool.ts';
+import { DIVESelectTool } from './select/SelectTool.ts';
+import { OrbitController } from '../controller/orbit/OrbitController.ts';
 
 export type ToolType = 'select' | 'none';
 

@@ -1,7 +1,7 @@
 import { Action } from '../action.ts';
 import { registerAction } from '../../ActionRegistry.ts';
-import { ActionDependencies } from '../../types/index.ts';
-import { type COMEntity } from '../../types';
+import { type ActionDependencies } from '../../types/index.ts';
+import { type COMEntity } from '../../types/index.ts';
 
 export const GetObjectsAction = Action.define<
     { ids: string[] },

@@ -1,16 +1,16 @@
 // Scene types
-export * from './SceneData';
-export * from './SceneObjects';
-export * from './SceneType';
+export * from './SceneData.ts';
+export * from './SceneObjects.ts';
+export * from './SceneType.ts';
 
 // UUID type
-export * from './UUID';
+export * from './UUID.ts';
 
 // File types
-export * from './file';
+export * from './file/index.ts';
 
 // Error types
-export * from '../error';
+export * from '../error/index.ts';
 
 // Info types
-export * from './info';
+export * from './info/index.ts';

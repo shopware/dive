@@ -1,11 +1,11 @@
 import { type Object3D } from 'three';
-import { type DIVEScene } from '../../../engine/scene/Scene';
-import { DIVETransformTool } from '../transform/TransformTool';
-import { findInterface } from '../../../helpers/findInterface/findInterface';
-import { type OrbitController } from '../../controller/orbit/OrbitController';
-import { type DIVESelectable } from '../../../interfaces/Selectable';
-import { type DIVEMovable } from '../../../interfaces/Movable';
-import { type DIVEBaseTool } from '../BaseTool';
+import { type DIVEScene } from '../../../engine/scene/Scene.ts';
+import { DIVETransformTool } from '../transform/TransformTool.ts';
+import { findInterface } from '../../../helpers/findInterface/findInterface.ts';
+import { type OrbitController } from '../../controller/orbit/OrbitController.ts';
+import { type DIVESelectable } from '../../../interfaces/Selectable.ts';
+import { type DIVEMovable } from '../../../interfaces/Movable.ts';
+import { type DIVEBaseTool } from '../BaseTool.ts';
 
 export const isSelectTool = (tool: DIVEBaseTool): tool is DIVESelectTool => {
     return (tool as DIVESelectTool).isSelectTool !== undefined;

@@ -1,7 +1,7 @@
 import { type Vector3Like } from 'three';
-import { type COMMaterial } from './COMMaterial';
-import { type COMBaseEntity } from './COMBaseEntity';
-import { type COMEntity } from './COMEntity';
+import { type COMMaterial } from './COMMaterial.ts';
+import { type COMBaseEntity } from './COMBaseEntity.ts';
+import { type COMEntity } from './COMEntity.ts';
 
 export function isCOMModel(entity: COMEntity): entity is COMModel {
     return entity.entityType === 'model';

@@ -1,8 +1,8 @@
 import { type Vector3Like } from 'three';
-import { type COMBaseEntity } from './COMBaseEntity';
-import { type COMGeometry } from './COMGeometry';
-import { type COMMaterial } from './COMMaterial';
-import { type COMEntity } from './COMEntity';
+import { type COMBaseEntity } from './COMBaseEntity.ts';
+import { type COMGeometry } from './COMGeometry.ts';
+import { type COMMaterial } from './COMMaterial.ts';
+import { type COMEntity } from './COMEntity.ts';
 export function isCOMPrimitive(entity: COMEntity): entity is COMPrimitive {
     return entity.entityType === 'primitive';
 }

@@ -1,7 +1,7 @@
-import { DIVEPerspectiveCamera } from '../../engine/camera/PerspectiveCamera';
-import { type DIVEScene } from '../../engine/scene/Scene';
-import { type DIVERenderPipeline } from '../../engine/renderer/Renderer';
-import { type OrbitController } from '../../modules/controller/orbit/OrbitController';
+import { DIVEPerspectiveCamera } from '../../engine/camera/PerspectiveCamera.ts';
+import { type DIVEScene } from '../../engine/scene/Scene.ts';
+import { type DIVERenderPipeline } from '../../engine/renderer/Renderer.ts';
+import { type OrbitController } from '../../modules/controller/orbit/OrbitController.ts';
 import { type Vector3Like } from 'three';
 
 declare global {

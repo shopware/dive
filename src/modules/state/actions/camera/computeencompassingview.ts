@@ -1,7 +1,7 @@
 import { Action } from '../action.ts';
 import { registerAction } from '../../ActionRegistry.ts';
-import { Vector3Like } from 'three';
-import { ActionDependencies } from '../../types/index.ts';
+import { type Vector3Like } from 'three';
+import { type ActionDependencies } from '../../types/index.ts';
 
 export const ComputeEncompassingViewAction = Action.define<
     void,

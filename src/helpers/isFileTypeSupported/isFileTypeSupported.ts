@@ -1,4 +1,4 @@
-import { FileType } from '../../types/file/FileTypes';
+import { FileType } from '../../types/file/index.ts';
 
 /**
  * Checks if a file extension is supported

@@ -1,4 +1,4 @@
-import { DIVERenderPipeline } from '../renderer/Renderer';
+import { DIVERenderPipeline } from '../renderer/Renderer.ts';
 
 export interface DIVETicker {
     uuid: string;

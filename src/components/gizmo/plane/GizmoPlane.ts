@@ -1,6 +1,6 @@
 import { Mesh, MeshBasicMaterial, Object3D, PlaneGeometry } from 'three';
-import { UI_LAYER_MASK } from '../../../constants/VisibilityLayerMask';
-import { DIVEGizmoAxis, DIVEGizmoMode } from '../Gizmo';
+import { UI_LAYER_MASK } from '../../../constants/VisibilityLayerMask.ts';
+import { DIVEGizmoAxis, DIVEGizmoMode } from '../Gizmo.ts';
 
 export class DIVEGizmoPlane extends Object3D {
     private _meshX: Mesh;

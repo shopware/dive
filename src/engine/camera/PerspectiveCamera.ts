@@ -4,7 +4,7 @@ import {
     HELPER_LAYER_MASK,
     PRODUCT_LAYER_MASK,
     UI_LAYER_MASK,
-} from '../../constants/VisibilityLayerMask';
+} from '../../constants/VisibilityLayerMask.ts';
 
 export type DIVEPerspectiveCameraSettings = {
     /** Field of view in degrees */

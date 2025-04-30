@@ -3,9 +3,9 @@ import {
     type COMModel,
     type COMEntity,
 } from '../../modules/state/types/index.ts';
-import { DIVERoot } from '../../components/root/Root';
-import { DIVEGrid } from '../../components/grid/Grid';
-import { type DIVESceneObject } from '../../types';
+import { DIVERoot } from '../../components/root/Root.ts';
+import { DIVEGrid } from '../../components/grid/Grid.ts';
+import { type DIVESceneObject } from '../../types/index.ts';
 
 /**
  * A basic scene class.

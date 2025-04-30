@@ -1,4 +1,4 @@
-import { type GLTF } from 'three/examples/jsm/loaders/GLTFLoader';
+import { type GLTF } from 'three/examples/jsm/loaders/GLTFLoader.ts';
 
 export type DIVESceneFileType = {
     glb: GLTF;

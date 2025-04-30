@@ -1,16 +1,16 @@
 import { Action } from '../action.ts';
 import { registerAction } from '../../ActionRegistry.ts';
-import { ActionDependencies } from '../../types/index.ts';
-import { type ToolType } from '../../../toolbox/Toolbox';
+import { type ActionDependencies } from '../../types/index.ts';
+import { type ToolType } from '../../../toolbox/Toolbox.ts';
 
 export const UseToolAction = Action.define<
     { tool: ToolType },
-    Pick<ActionDependencies, 'engine' | 'controller' | 'Toolbox'>,
+    Pick<ActionDependencies, 'getToolbox'>,
     Promise<void>
 >({
     description: 'Activates a specific tool from the toolbox.',
-    execute: async (payload, { engine, controller, Toolbox }) => {
-        const instance = await Toolbox.instantiate(engine.scene, controller);
+    execute: async (payload, { getToolbox }) => {
+        const instance = await getToolbox();
         instance.UseTool(payload.tool);
     },
 });

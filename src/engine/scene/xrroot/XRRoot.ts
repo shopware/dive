@@ -1,8 +1,8 @@
 import { Mesh, Object3D, PlaneGeometry, ShadowMaterial } from 'three';
-import { DIVERoot } from '../../../components/root/Root';
-import { type DIVERenderPipeline } from '../../renderer/Renderer';
-import { DIVEXRLightRoot } from './xrlightroot/XRLightRoot';
-import { type DIVEScene } from '../Scene';
+import { DIVERoot } from '../../../components/root/Root.ts';
+import { type DIVERenderPipeline } from '../../renderer/Renderer.ts';
+import { DIVEXRLightRoot } from './xrlightroot/XRLightRoot.ts';
+import { type DIVEScene } from '../Scene.ts';
 
 export class DIVEXRRoot extends Object3D {
     private _xrLightRoot: DIVEXRLightRoot;

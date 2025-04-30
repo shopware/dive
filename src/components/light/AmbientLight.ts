@@ -1,5 +1,5 @@
 import { AmbientLight, Color, Object3D } from 'three';
-import { PRODUCT_LAYER_MASK } from '../../constants/VisibilityLayerMask';
+import { PRODUCT_LAYER_MASK } from '../../constants/VisibilityLayerMask.ts';
 
 /**
  * A basic ambient light.

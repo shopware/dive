@@ -5,13 +5,12 @@ import {
 } from '../modules/controller/orbit/OrbitController.ts';
 import { DIVEAxisCamera } from '../modules/axiscamera/AxisCamera.ts';
 import { MathUtils } from 'three';
-import pkgjson from '../../package.json';
 import {
     DIVEEngine,
     EngineDefaultSettings,
     EngineSettings,
 } from '../engine/Engine.ts';
-import { ModuleImporter } from '../modules/index.ts';
+import { getModule } from '../modules/index.ts';
 
 export type DIVESettings = EngineSettings & {
     /** Settings for the orbit controls */
@@ -21,6 +20,28 @@ export type DIVESettings = EngineSettings & {
 export const DIVEDefaultSettings: Required<DIVESettings> = {
     ...EngineDefaultSettings,
     orbitController: OrbitControllerDefaultSettings,
+};
+
+declare global {
+    interface Window {
+        DIVE: {
+            /**
+             * All instances of DIVE
+             */
+            instances: DIVE[];
+            /**
+             * Get the first instance of DIVE
+             */
+            get instance(): DIVE | undefined;
+        };
+    }
+}
+
+window.DIVE = {
+    instances: [],
+    get instance() {
+        return window.DIVE.instances[0];
+    },
 };
 
 /**
@@ -52,73 +73,73 @@ export class DIVE {
         uri: string,
         settings?: Partial<DIVESettings & { lightIntensity?: number }>,
     ): Promise<DIVE> {
+        const dive = new DIVE(settings);
+        window.DIVE.instances.push(dive);
+
+        const state = new (await getModule('State'))(
+            dive._engine,
+            dive.orbitController,
+        );
+
+        // set scene properties
+        state.performAction('UPDATE_SCENE', {
+            backgroundColor: 0xffffff,
+            gridEnabled: false,
+            floorColor: 0xffffff,
+        });
+
+        state.performAction('SET_CAMERA_TRANSFORM', {
+            position: { x: 0, y: 2, z: 2 },
+            target: { x: 0, y: 0.5, z: 0 },
+        });
+
+        // generate scene light id
+        const lightid = MathUtils.generateUUID();
+
+        // add scene light
+        state.performAction('ADD_OBJECT', {
+            entityType: 'light',
+            type: 'scene',
+            name: 'light',
+            id: lightid,
+            enabled: true,
+            visible: true,
+            intensity: settings?.lightIntensity ?? 1,
+            color: 0xffffff,
+        });
+
+        // generate model id
+        const modelid = MathUtils.generateUUID();
+
         return new Promise((resolve) => {
-            const dive = new DIVE(settings);
-            new ModuleImporter<'State'>('State')
-                .instantiate(dive._engine, dive.orbitController)
-                .then((state) => {
-                    // set scene properties
-                    state.performAction('UPDATE_SCENE', {
-                        backgroundColor: 0xffffff,
-                        gridEnabled: false,
-                        floorColor: 0xffffff,
-                    });
+            // add loaded listener
+            state.subscribe('MODEL_LOADED', (data) => {
+                if (data.id !== modelid) return;
 
-                    state.performAction('SET_CAMERA_TRANSFORM', {
-                        position: { x: 0, y: 2, z: 2 },
-                        target: { x: 0, y: 0.5, z: 0 },
-                    });
+                const transform = state.performAction(
+                    'COMPUTE_ENCOMPASSING_VIEW',
+                );
 
-                    // generate scene light id
-                    const lightid = MathUtils.generateUUID();
-
-                    // add scene light
-                    state.performAction('ADD_OBJECT', {
-                        entityType: 'light',
-                        type: 'scene',
-                        name: 'light',
-                        id: lightid,
-                        enabled: true,
-                        visible: true,
-                        intensity: settings?.lightIntensity ?? 1,
-                        color: 0xffffff,
-                    });
-
-                    // generate model id
-                    const modelid = MathUtils.generateUUID();
-
-                    // add loaded listener
-                    state.subscribe('MODEL_LOADED', (data) => {
-                        if (data.id !== modelid) return;
-
-                        const transform = state.performAction(
-                            'COMPUTE_ENCOMPASSING_VIEW',
-                        );
-
-                        state.performAction('SET_CAMERA_TRANSFORM', {
-                            position: transform.position,
-                            target: transform.target,
-                        });
-
-                        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                        (window as any).DIVE.instances.push(dive);
-
-                        resolve(dive);
-                    });
-
-                    // instantiate model
-                    state.performAction('ADD_OBJECT', {
-                        entityType: 'model',
-                        name: 'object',
-                        id: modelid,
-                        position: { x: 0, y: 0, z: 0 },
-                        rotation: { x: 0, y: 0, z: 0 },
-                        scale: { x: 1, y: 1, z: 1 },
-                        uri: uri,
-                        visible: true,
-                        loaded: false,
-                    });
+                state.performAction('SET_CAMERA_TRANSFORM', {
+                    position: transform.position,
+                    target: transform.target,
                 });
+
+                resolve(dive);
+            });
+
+            // instantiate model
+            state.performAction('ADD_OBJECT', {
+                entityType: 'model',
+                name: 'object',
+                id: modelid,
+                position: { x: 0, y: 0, z: 0 },
+                rotation: { x: 0, y: 0, z: 0 },
+                scale: { x: 1, y: 1, z: 1 },
+                uri: uri,
+                visible: true,
+                loaded: false,
+            });
         });
     }
 
@@ -137,6 +158,22 @@ export class DIVE {
 
     public get canvas(): HTMLCanvasElement {
         return this._engine.renderer.webglrenderer.domElement;
+    }
+
+    public setCanvas(canvas: HTMLCanvasElement): void {
+        this._engine.setCanvas(canvas);
+
+        // remove old orbit controller
+        this._engine.clock.removeTicker(this.orbitController);
+        this.orbitController.dispose();
+
+        // create new orbit controller
+        this.orbitController = new OrbitController(
+            this._engine.camera,
+            canvas,
+            this._settings.orbitController,
+        );
+        this._engine.clock.addTicker(this.orbitController);
     }
 
     constructor(settings?: Partial<DIVESettings>) {
@@ -166,16 +203,13 @@ export class DIVE {
             this.axisCamera = null;
         }
 
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        (window as any).DIVE = {
-            instances: [],
-            PrintScene: () => {
-                return this._engine.scene;
-            },
-        };
-
-        console.log(`DIVE ${pkgjson.version} initialized successfully!`);
-        console.log(`
+        // Load version info
+        import('../../package.json', { assert: { type: 'json' } }).then(
+            (pkgjson) => {
+                console.log(
+                    `DIVE ${pkgjson.default.version} initialized successfully!`,
+                );
+                console.log(`
                     @@@@@@@@@@@@@@@@@@@@@@@              @@@@@@@@@@@@@@@@@@@@@@@
                @@@@+-:::::::---------------------==------------------------------=#@@@@
             @@%=::::.......::---------------------------------------------------------+@@
@@ -205,6 +239,8 @@ export class DIVE {
                            @@@@@@@                                @@@@@@
 
         `);
+            },
+        );
     }
 
     public async Dispose(): Promise<void> {

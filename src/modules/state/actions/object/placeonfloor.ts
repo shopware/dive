@@ -1,7 +1,7 @@
 import { Action } from '../action.ts';
 import { registerAction } from '../../ActionRegistry.ts';
-import { ActionDependencies } from '../../types/index.ts';
-import { type DIVEModel } from '../../../../components';
+import { type ActionDependencies } from '../../types/index.ts';
+import { type DIVEModel } from '../../../../components/index.ts';
 
 export const PlaceOnFloorAction = Action.define<
     { id: string },

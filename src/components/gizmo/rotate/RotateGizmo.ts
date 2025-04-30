@@ -3,12 +3,12 @@ import {
     AxesColorBlue,
     AxesColorGreen,
     AxesColorRed,
-} from '../../../constants/AxisHelperColors';
-import { OrbitController } from '../../../modules/controller/orbit/OrbitController';
-import { DIVERadialHandle } from '../handles/RadialHandle';
-import { DIVEGizmo, DIVEGizmoAxis } from '../Gizmo';
-import { DraggableEvent } from '../../../modules/toolbox/BaseTool';
-import { DIVEMath } from '../../../helpers/math';
+} from '../../../constants/AxisHelperColors.ts';
+import { OrbitController } from '../../../modules/controller/orbit/OrbitController.ts';
+import { DIVERadialHandle } from '../handles/RadialHandle.ts';
+import { DIVEGizmo, DIVEGizmoAxis } from '../Gizmo.ts';
+import { DraggableEvent } from '../../../modules/toolbox/BaseTool.ts';
+import { DIVEMath } from '../../../helpers/math/index.ts';
 
 export class DIVERotateGizmo extends Object3D {
     public children: DIVERadialHandle[];

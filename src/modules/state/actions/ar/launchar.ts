@@ -1,17 +1,17 @@
 import { Action } from '../action.ts';
 import { registerAction } from '../../ActionRegistry.ts';
-import { ActionDependencies } from '../../types/index.ts';
-import { type ARSystemOptions } from '../../../ar/ARSystem';
+import { type ActionDependencies } from '../../types/index.ts';
+import { type ARSystemOptions } from '../../../ar/ARSystem.ts';
 
 export const LaunchARAction = Action.define<
     { uri: string; options?: ARSystemOptions },
-    Pick<ActionDependencies, 'ARSystem'>,
+    Pick<ActionDependencies, 'getARSystem'>,
     Promise<void>
 >({
     description:
         'Launches AR mode in native capabilities. (iOS: AR Quick Look, Android: Google Scene Viewer)',
-    execute: async (payload, { ARSystem }) => {
-        return ARSystem.instantiate().then((arSystem) => {
+    execute: async (payload, { getARSystem }) => {
+        return getARSystem().then((arSystem) => {
             arSystem.launch(payload.uri, payload.options);
         });
     },

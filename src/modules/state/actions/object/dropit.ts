@@ -1,7 +1,7 @@
 import { Action } from '../action.ts';
 import { registerAction } from '../../ActionRegistry.ts';
-import { ActionDependencies } from '../../types/index.ts';
-import { type DIVEModel } from '../../../../components/model/Model';
+import { type ActionDependencies } from '../../types/index.ts';
+import { type DIVEModel } from '../../../../components/index.ts';
 
 export const DropItAction = Action.define<
     { id: string },

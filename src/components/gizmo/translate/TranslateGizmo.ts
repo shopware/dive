@@ -3,11 +3,11 @@ import {
     AxesColorBlue,
     AxesColorGreen,
     AxesColorRed,
-} from '../../../constants/AxisHelperColors';
-import { OrbitController } from '../../../modules/controller/orbit/OrbitController';
-import { DIVEAxisHandle } from '../handles/AxisHandle';
-import { DIVEGizmo, DIVEGizmoAxis } from '../Gizmo';
-import { DraggableEvent } from '../../../modules/toolbox/BaseTool';
+} from '../../../constants/AxisHelperColors.ts';
+import { OrbitController } from '../../../modules/controller/orbit/OrbitController.ts';
+import { DIVEAxisHandle } from '../handles/AxisHandle.ts';
+import { DIVEGizmo, DIVEGizmoAxis } from '../Gizmo.ts';
+import { DraggableEvent } from '../../../modules/toolbox/BaseTool.ts';
 
 export class DIVETranslateGizmo extends Object3D {
     private _controller: OrbitController;

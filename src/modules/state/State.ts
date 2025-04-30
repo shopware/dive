@@ -1,9 +1,9 @@
-import { generateUUID } from 'three/src/math/MathUtils';
+import { generateUUID } from 'three/src/math/MathUtils.js';
 
 // type imports
 import { type COMEntity } from './types/index.ts';
 import { type OrbitController } from '../controller/orbit/OrbitController.ts';
-import { ModuleImporter } from '../index.ts';
+import { getModule } from '../index.ts';
 import { DIVEEngine } from '../../engine/Engine.ts';
 import {
     ActionDependencies,
@@ -66,11 +66,71 @@ export class State {
     private controller: OrbitController;
 
     // modules
-    private _mediaCreator: ModuleImporter<'MediaCreator'>;
-    private _arSystem: ModuleImporter<'ARSystem'>;
-    private _assetExporter: ModuleImporter<'AssetExporter'>;
-    private _animationSystem: ModuleImporter<'AnimationSystem'>;
-    private _toolbox: ModuleImporter<'Toolbox'>;
+    private _mediaCreator:
+        | import('../mediacreator/MediaCreator.ts').MediaCreator
+        | null = null;
+
+    private async getMediaCreator(): Promise<
+        import('../mediacreator/MediaCreator.ts').MediaCreator
+    > {
+        if (!this._mediaCreator) {
+            this._mediaCreator = new (await getModule('MediaCreator'))(
+                this.engine.renderer,
+                this.engine.scene,
+                this.controller,
+            );
+        }
+        return this._mediaCreator;
+    }
+
+    private _arSystem: import('../ar/ARSystem.ts').ARSystem | null = null;
+
+    private async getARSystem(): Promise<import('../ar/ARSystem.ts').ARSystem> {
+        if (!this._arSystem) {
+            this._arSystem = new (await getModule('ARSystem'))();
+        }
+        return this._arSystem;
+    }
+
+    private _assetExplorer:
+        | import('../asset/exporter/AssetExporter.ts').AssetExporter
+        | null = null;
+
+    private async getAssetExporter(): Promise<
+        import('../asset/exporter/AssetExporter.ts').AssetExporter
+    > {
+        if (!this._assetExplorer) {
+            this._assetExplorer = new (await getModule('AssetExporter'))();
+        }
+        return this._assetExplorer;
+    }
+
+    private _animationSystem:
+        | import('../animation/AnimationSystem.ts').AnimationSystem
+        | null = null;
+
+    private async getAnimationSystem(): Promise<
+        import('../animation/AnimationSystem.ts').AnimationSystem
+    > {
+        if (!this._animationSystem) {
+            this._animationSystem = new (await getModule('AnimationSystem'))();
+        }
+        return this._animationSystem;
+    }
+
+    private _toolbox: import('../toolbox/Toolbox.ts').Toolbox | null = null;
+
+    private async getToolbox(): Promise<
+        import('../toolbox/Toolbox.ts').Toolbox
+    > {
+        if (!this._toolbox) {
+            this._toolbox = new (await getModule('Toolbox'))(
+                this.engine.scene,
+                this.controller,
+            );
+        }
+        return this._toolbox;
+    }
 
     // registered entities
     private registered: Map<string, COMEntity> = new Map();
@@ -84,20 +144,6 @@ export class State {
         this._id = generateUUID();
         this.engine = engine;
         this.controller = controller;
-
-        this._mediaCreator = new ModuleImporter<'MediaCreator'>('MediaCreator');
-
-        this._arSystem = new ModuleImporter<'ARSystem'>('ARSystem');
-
-        this._assetExporter = new ModuleImporter<'AssetExporter'>(
-            'AssetExporter',
-        );
-
-        this._animationSystem = new ModuleImporter<'AnimationSystem'>(
-            'AnimationSystem',
-        );
-
-        this._toolbox = new ModuleImporter<'Toolbox'>('Toolbox');
 
         State.__instances.push(this);
     }
@@ -197,11 +243,11 @@ export class State {
             registered: this.registered,
             engine: this.engine,
             controller: this.controller,
-            Toolbox: this._toolbox,
-            MediaCreator: this._mediaCreator,
-            ARSystem: this._arSystem,
-            AssetExporter: this._assetExporter,
-            AnimationSystem: this._animationSystem,
+            getARSystem: () => this.getARSystem(),
+            getAssetExporter: () => this.getAssetExporter(),
+            getAnimationSystem: () => this.getAnimationSystem(),
+            getMediaCreator: () => this.getMediaCreator(),
+            getToolbox: () => this.getToolbox(),
         };
     }
 }

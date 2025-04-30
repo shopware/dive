@@ -1,7 +1,7 @@
 import { Action } from '../action.ts';
 import { registerAction } from '../../ActionRegistry.ts';
-import { ActionDependencies } from '../../types/index.ts';
-import { isCOMPov } from '../../types';
+import { type ActionDependencies } from '../../types/index.ts';
+import { isCOMPov } from '../../types/index.ts';
 import { type Vector3Like } from 'three';
 import { Easing } from '@tweenjs/tween.js';
 
@@ -19,14 +19,14 @@ export const MoveCameraAction = Action.define<
       },
     Pick<
         ActionDependencies,
-        'registered' | 'controller' | 'AnimationSystem' | 'engine'
+        'registered' | 'controller' | 'getAnimationSystem' | 'engine'
     >,
     Promise<{ stop: () => void }>
 >({
     description: 'Moves the camera to a new position and target.',
     execute: async (
         payload,
-        { controller, registered, AnimationSystem, engine },
+        { controller, registered, getAnimationSystem, engine },
     ) => {
         let position = { x: 0, y: 0, z: 0 };
         let target = { x: 0, y: 0, z: 0 };
@@ -52,7 +52,7 @@ export const MoveCameraAction = Action.define<
         }
         // controller.MoveTo(position, target, payload.duration, payload.locked);
 
-        const animatorArray = await AnimationSystem.instantiate().then(
+        const animatorArray = await getAnimationSystem().then(
             (animationSystem) => {
                 engine.clock.addTicker(animationSystem);
 

@@ -1,5 +1,5 @@
-import { ESystem, EWebXRUnsupportedReason } from '../../types/info';
-import { ARCompatibilityError } from '../../error';
+import { ESystem, EWebXRUnsupportedReason } from '../../types/info/index.ts';
+import { ARCompatibilityError } from '../../error/index.ts';
 
 declare global {
     interface ModuleClasses {

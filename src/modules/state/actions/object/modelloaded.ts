@@ -1,7 +1,7 @@
 import { Action } from '../action.ts';
 import { registerAction } from '../../ActionRegistry.ts';
-import { ActionDependencies } from '../../types/index.ts';
-import { isCOMModel } from '../../types';
+import { type ActionDependencies } from '../../types/index.ts';
+import { isCOMModel } from '../../types/index.ts';
 
 export const ModelLoadedAction = Action.define<
     { id: string },

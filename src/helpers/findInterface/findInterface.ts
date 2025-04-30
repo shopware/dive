@@ -1,4 +1,4 @@
-import { implementsInterface } from '../implementsInterface/implementsInterface';
+import { implementsInterface } from '../implementsInterface/implementsInterface.ts';
 import { type Object3D } from 'three';
 
 export function findInterface<T>(

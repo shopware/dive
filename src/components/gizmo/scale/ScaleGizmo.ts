@@ -3,12 +3,12 @@ import {
     AxesColorBlue,
     AxesColorGreen,
     AxesColorRed,
-} from '../../../constants/AxisHelperColors';
-import { DIVEHoverable } from '../../../interfaces/Hoverable';
-import { OrbitController } from '../../../modules/controller/orbit/OrbitController';
-import { DIVEScaleHandle } from '../handles/ScaleHandle';
-import { DraggableEvent } from '../../../modules/toolbox/BaseTool';
-import { DIVEGizmoAxis, DIVEGizmo } from '../Gizmo';
+} from '../../../constants/AxisHelperColors.ts';
+import { DIVEHoverable } from '../../../interfaces/Hoverable.ts';
+import { OrbitController } from '../../../modules/controller/orbit/OrbitController.ts';
+import { DIVEScaleHandle } from '../handles/ScaleHandle.ts';
+import { DraggableEvent } from '../../../modules/toolbox/BaseTool.ts';
+import { DIVEGizmoAxis, DIVEGizmo } from '../Gizmo.ts';
 
 export class DIVEScaleGizmo extends Object3D implements DIVEHoverable {
     readonly isHoverable: true = true;

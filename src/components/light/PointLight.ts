@@ -7,14 +7,14 @@ import {
     FrontSide,
     Object3D,
 } from 'three';
-import { State } from '../../modules/state/State';
+import { State } from '../../modules/state/State.ts';
 import {
     PRODUCT_LAYER_MASK,
     UI_LAYER_MASK,
-} from '../../constants/VisibilityLayerMask';
-import { DIVEMovable } from '../../interfaces/Movable';
-import { DIVESelectable } from '../../interfaces/Selectable';
-import type { TransformControls } from 'three/examples/jsm/controls/TransformControls';
+} from '../../constants/VisibilityLayerMask.ts';
+import { DIVEMovable } from '../../interfaces/Movable.ts';
+import { DIVESelectable } from '../../interfaces/Selectable.ts';
+import type { TransformControls } from 'three/examples/jsm/controls/TransformControls.ts';
 
 /**
  * A basic point light.

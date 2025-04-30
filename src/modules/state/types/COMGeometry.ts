@@ -1,4 +1,4 @@
-import { COMGeometryType } from './COMGeometryType';
+import { COMGeometryType } from './COMGeometryType.ts';
 
 export type COMGeometry = {
     name: COMGeometryType;

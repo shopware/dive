@@ -1,4 +1,4 @@
-import { COMEntityType } from './COMEntityType';
+import { COMEntityType } from './COMEntityType.ts';
 
 export type COMBaseEntity = {
     id: string;

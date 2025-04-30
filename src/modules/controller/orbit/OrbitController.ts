@@ -1,7 +1,7 @@
-import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
-import { DIVEPerspectiveCamera } from '../../../engine/camera/PerspectiveCamera';
+import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
+import { DIVEPerspectiveCamera } from '../../../engine/camera/PerspectiveCamera.ts';
 import { type Box3, MathUtils, Vector3, Vector3Like } from 'three';
-import { DIVETicker } from '../../../engine/clock/Clock';
+import { DIVETicker } from '../../../engine/clock/Clock.ts';
 
 export type OrbitControllerSettings = {
     /** Whether to enable damping for smooth camera movement */
@@ -28,11 +28,10 @@ export class OrbitController extends OrbitControls implements DIVETicker {
     public uuid: string = MathUtils.generateUUID();
 
     public object: DIVEPerspectiveCamera;
-    public domElement: HTMLCanvasElement;
 
     constructor(
         camera: DIVEPerspectiveCamera,
-        domElement: HTMLCanvasElement,
+        public domElement: HTMLCanvasElement,
         settings: Partial<OrbitControllerSettings> = OrbitControllerDefaultSettings,
     ) {
         super(camera, domElement);

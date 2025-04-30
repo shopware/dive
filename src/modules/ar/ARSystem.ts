@@ -1,8 +1,8 @@
-import { SystemInfo } from '../systeminfo/SystemInfo';
-import { ARCompatibilityError } from '../../error';
-import { ESystem } from '../../types/info';
-import { ARQuickLook } from './arquicklook/ARQuickLook';
-import { SceneViewer } from './sceneviewer/SceneViewer';
+import { SystemInfo } from '../systeminfo/SystemInfo.ts';
+import { ARCompatibilityError } from '../../error/index.ts';
+import { ESystem } from '../../types/info/index.ts';
+import { ARQuickLook } from './arquicklook/ARQuickLook.ts';
+import { SceneViewer } from './sceneviewer/SceneViewer.ts';
 
 declare global {
     interface ModuleClasses {

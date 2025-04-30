@@ -7,7 +7,7 @@ import {
     Vector4,
 } from 'three';
 import SpriteText from 'three-spritetext';
-import { COORDINATE_LAYER_MASK } from '../../constants/VisibilityLayerMask';
+import { COORDINATE_LAYER_MASK } from '../../constants/VisibilityLayerMask.ts';
 import {
     AxesColorRed,
     AxesColorGreen,
@@ -15,11 +15,11 @@ import {
     AxesColorRedLetter,
     AxesColorGreenLetter,
     AxesColorBlueLetter,
-} from '../../constants/AxisHelperColors';
-import { type DIVERenderPipeline } from '../../engine/renderer/Renderer';
-import { DIVETicker } from '../../engine/clock/Clock';
-import { DIVEScene } from '../../engine/scene/Scene';
-import { DIVEPerspectiveCamera } from '../../engine/camera/PerspectiveCamera';
+} from '../../constants/AxisHelperColors.ts';
+import { type DIVERenderPipeline } from '../../engine/renderer/Renderer.ts';
+import { DIVETicker } from '../../engine/clock/Clock.ts';
+import { DIVEScene } from '../../engine/scene/Scene.ts';
+import { DIVEPerspectiveCamera } from '../../engine/camera/PerspectiveCamera.ts';
 
 /**
  * Shows the scene axes in the bottom left corner of the screen.

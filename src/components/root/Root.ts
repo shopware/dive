@@ -1,13 +1,13 @@
 import { Box3, Color, Object3D } from 'three';
-import { DIVEAmbientLight } from '../light/AmbientLight';
-import { DIVEPointLight } from '../light/PointLight';
-import { DIVESceneLight } from '../light/SceneLight';
-import { DIVEModel } from '../model/Model';
+import { DIVEAmbientLight } from '../light/AmbientLight.ts';
+import { DIVEPointLight } from '../light/PointLight.ts';
+import { DIVESceneLight } from '../light/SceneLight.ts';
+import { DIVEModel } from '../model/Model.ts';
 import { State } from '../../modules/state/State.ts';
-import { DIVEPrimitive } from '../primitive/Primitive';
+import { DIVEPrimitive } from '../primitive/Primitive.ts';
 
 import { type DIVEScene } from '../../engine/scene/Scene.ts';
-import { type TransformControls } from 'three/examples/jsm/controls/TransformControls';
+import { type TransformControls } from 'three/examples/jsm/controls/TransformControls.ts';
 import {
     type COMLight,
     type COMModel,
@@ -17,7 +17,7 @@ import {
 } from '../../modules/state/types/index.ts';
 import { type DIVESceneObject } from '../../types/index.ts';
 import { DIVEGroup } from '../group/Group.ts';
-import { ModuleImporter } from '../../modules/index.ts';
+import { getModule } from '../../modules/index.ts';
 import { DIVEFloor } from '../floor/Floor.ts';
 
 /**
@@ -35,7 +35,18 @@ export class DIVERoot extends Object3D {
 
     private _floor: DIVEFloor;
 
-    private _assetLoader: ModuleImporter<'AssetLoader'>;
+    private _assetLoader:
+        | import('../../modules/asset/loader/AssetLoader.ts').AssetLoader
+        | null = null;
+
+    private async getAssetLoader(): Promise<
+        import('../../modules/asset/loader/AssetLoader.ts').AssetLoader
+    > {
+        if (!this._assetLoader) {
+            this._assetLoader = new (await getModule('AssetLoader'))();
+        }
+        return this._assetLoader;
+    }
 
     constructor() {
         super();
@@ -43,8 +54,6 @@ export class DIVERoot extends Object3D {
 
         this._floor = new DIVEFloor();
         this.add(this._floor);
-
-        this._assetLoader = new ModuleImporter<'AssetLoader'>('AssetLoader');
     }
 
     public ComputeSceneBB(): Box3 {
@@ -256,8 +265,7 @@ export class DIVERoot extends Object3D {
         }
 
         if (model.uri !== undefined) {
-            this._assetLoader
-                .instantiate()
+            this.getAssetLoader()
                 .then((loader) => {
                     return loader.load(model.uri!);
                 })

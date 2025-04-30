@@ -1,12 +1,12 @@
 import { Box3, Object3D, Vector3, type Vector3Like } from 'three';
-import { PRODUCT_LAYER_MASK } from '../../constants/VisibilityLayerMask';
-import { State } from '../../modules/state/State';
+import { PRODUCT_LAYER_MASK } from '../../constants/VisibilityLayerMask.ts';
+import { State } from '../../modules/state/State.ts';
 
-import { DIVEMovable } from '../../interfaces/Movable';
-import { DIVESelectable } from '../../interfaces/Selectable';
-import { type TransformControls } from 'three/examples/jsm/controls/TransformControls';
-import { type DIVEGroup } from '../group/Group';
-import { applyMixins } from '../../helpers/applyMixins/applyMixins';
+import { DIVEMovable } from '../../interfaces/Movable.ts';
+import { DIVESelectable } from '../../interfaces/Selectable.ts';
+import { type TransformControls } from 'three/examples/jsm/controls/TransformControls.ts';
+import { type DIVEGroup } from '../group/Group.ts';
+import { applyMixins } from '../../helpers/applyMixins/applyMixins.ts';
 
 export class DIVENode extends applyMixins(Object3D, [
     DIVESelectable,

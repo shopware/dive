@@ -1,9 +1,9 @@
 import { Action } from '../action.ts';
 import { registerAction } from '../../ActionRegistry.ts';
-import { ActionDependencies } from '../../types/index.ts';
-import { SetParentAction } from './setparent';
-import { UpdateObjectAction } from './updateobject';
-import { type COMEntity } from '../../types';
+import { type ActionDependencies } from '../../types/index.ts';
+import { SetParentAction } from './setparent.ts';
+import { UpdateObjectAction } from './updateobject.ts';
+import { type COMEntity } from '../../types/index.ts';
 
 export const DeleteObjectAction = Action.define<
     Partial<COMEntity> & { id: string },

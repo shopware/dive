@@ -1,7 +1,6 @@
-import { DIVEEngine } from '../../../engine/Engine';
-import { type OrbitController } from '../../controller/orbit/OrbitController';
-import { ModuleImporter } from '../../_system/ModuleImporter';
-import { COMEntity } from '../types';
+import { DIVEEngine } from '../../../engine/Engine.ts';
+import { type OrbitController } from '../../controller/orbit/OrbitController.ts';
+import { type COMEntity } from '../types/index.ts';
 
 // Extracted types for performAction_new
 export type ActionPayload<T> = T extends new (
@@ -33,9 +32,15 @@ export interface ActionDependencies {
     registered: Map<string, COMEntity>;
     engine: DIVEEngine;
     controller: OrbitController;
-    Toolbox: ModuleImporter<'Toolbox'>;
-    MediaCreator: ModuleImporter<'MediaCreator'>;
-    ARSystem: ModuleImporter<'ARSystem'>;
-    AssetExporter: ModuleImporter<'AssetExporter'>;
-    AnimationSystem: ModuleImporter<'AnimationSystem'>;
+    getAnimationSystem: () => Promise<
+        import('../../animation/AnimationSystem.ts').AnimationSystem
+    >;
+    getARSystem: () => Promise<import('../../ar/ARSystem.ts').ARSystem>;
+    getAssetExporter: () => Promise<
+        import('../../asset/exporter/AssetExporter.ts').AssetExporter
+    >;
+    getMediaCreator: () => Promise<
+        import('../../mediacreator/MediaCreator.ts').MediaCreator
+    >;
+    getToolbox: () => Promise<import('../../toolbox/Toolbox.ts').Toolbox>;
 }

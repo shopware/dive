@@ -1,8 +1,8 @@
 import { Action } from '../action.ts';
 import { registerAction } from '../../ActionRegistry.ts';
-import { ActionDependencies } from '../../types/index.ts';
+import { type ActionDependencies } from '../../types/index.ts';
 import { type Vector3Like } from 'three';
-import { isCOMPov } from '../../types';
+import { isCOMPov } from '../../types/index.ts';
 
 export const GenerateMediaAction = Action.define<
     (
@@ -17,18 +17,12 @@ export const GenerateMediaAction = Action.define<
         width: number;
         height: number;
     },
-    Pick<
-        ActionDependencies,
-        'engine' | 'registered' | 'controller' | 'MediaCreator'
-    >,
+    Pick<ActionDependencies, 'registered' | 'getMediaCreator'>,
     Promise<string>
 >({
     description:
         'Generates a screenshot, stores it in a Blob and returns a Promise of a valid URI.',
-    execute: async (
-        payload,
-        { engine, registered, controller, MediaCreator },
-    ) => {
+    execute: async (payload, { registered, getMediaCreator }) => {
         let position = { x: 0, y: 0, z: 0 };
         let target = { x: 0, y: 0, z: 0 };
 
@@ -53,11 +47,7 @@ export const GenerateMediaAction = Action.define<
             target = payload.target;
         }
 
-        return MediaCreator.instantiate(
-            engine.renderer,
-            engine.scene,
-            controller,
-        ).then((mediaCreator) => {
+        return getMediaCreator().then((mediaCreator) => {
             return mediaCreator.GenerateMedia(
                 position,
                 target,

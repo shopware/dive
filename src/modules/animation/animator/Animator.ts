@@ -1,6 +1,6 @@
 import { EventDispatcher, MathUtils, Event } from 'three';
 import { UUID } from '../../../types/index.ts';
-import { TAnimatorParameters } from '../types/AnimatorParameters';
+import { TAnimatorParameters } from '../types/AnimatorParameters.ts';
 
 type TAnimatorEventMap = {
     play: Event;

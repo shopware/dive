@@ -5,7 +5,7 @@ import {
     MeshStandardMaterial,
     PlaneGeometry,
 } from 'three';
-import { PRODUCT_LAYER_MASK } from '../../constants/VisibilityLayerMask';
+import { PRODUCT_LAYER_MASK } from '../../constants/VisibilityLayerMask.ts';
 
 /**
  * A basic floor geometry.

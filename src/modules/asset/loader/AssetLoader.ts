@@ -1,9 +1,19 @@
-import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader';
-import { USDZLoader } from 'three/examples/jsm/loaders/USDZLoader';
+import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
+import { USDZLoader } from 'three/examples/jsm/loaders/USDZLoader.js';
 import { Object3D } from 'three';
-import { type FileType, SUPPORTED_FILE_TYPES } from '../../../types/file';
-import { FileTypeError, NetworkError, ParseError } from '../../../error';
-import { getFileTypeFromUri, isFileTypeSupported } from '../../../helpers';
+import {
+    type FileType,
+    SUPPORTED_FILE_TYPES,
+} from '../../../types/file/index.ts';
+import {
+    FileTypeError,
+    NetworkError,
+    ParseError,
+} from '../../../error/index.ts';
+import {
+    getFileTypeFromUri,
+    isFileTypeSupported,
+} from '../../../helpers/index.ts';
 
 declare global {
     interface ModuleClasses {

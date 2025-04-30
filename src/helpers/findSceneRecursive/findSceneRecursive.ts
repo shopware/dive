@@ -1,5 +1,5 @@
 import { type Object3D } from 'three';
-import { type DIVEScene } from '../../engine/scene/Scene';
+import { type DIVEScene } from '../../engine/scene/Scene.ts';
 
 /**
  * Find the scene object of an object.

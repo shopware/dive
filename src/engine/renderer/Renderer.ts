@@ -71,6 +71,15 @@ export class DIVERenderPipeline {
         return this._webglrenderer;
     }
 
+    public setCanvas(canvas: HTMLCanvasElement): void {
+        // dispose old renderer
+        this._webglrenderer.dispose();
+
+        // create new renderer with canvas
+        this._settings.canvas = canvas;
+        this._webglrenderer = new WebGLRenderer(this._settings);
+    }
+
     public render(): void {
         this._webglrenderer.render(this._scene, this._camera);
     }

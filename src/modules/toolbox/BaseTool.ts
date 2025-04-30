@@ -8,12 +8,12 @@ import {
 import {
     PRODUCT_LAYER_MASK,
     UI_LAYER_MASK,
-} from '../../constants/VisibilityLayerMask';
-import { type DIVEScene } from '../../engine/scene/Scene';
-import { type OrbitController } from '../controller/orbit/OrbitController';
-import { type DIVEDraggable } from '../../interfaces/Draggable';
-import { type DIVEHoverable } from '../../interfaces/Hoverable';
-import { findInterface } from '../../helpers/findInterface/findInterface';
+} from '../../constants/VisibilityLayerMask.ts';
+import { type DIVEScene } from '../../engine/scene/Scene.ts';
+import { type OrbitController } from '../controller/orbit/OrbitController.ts';
+import { type DIVEDraggable } from '../../interfaces/Draggable.ts';
+import { type DIVEHoverable } from '../../interfaces/Hoverable.ts';
+import { findInterface } from '../../helpers/findInterface/findInterface.ts';
 
 export type DraggableEvent = {
     dragStart: Vector3;

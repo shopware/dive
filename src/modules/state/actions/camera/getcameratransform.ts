@@ -1,6 +1,6 @@
 import { Action } from '../action.ts';
 import { registerAction } from '../../ActionRegistry.ts';
-import { ActionDependencies } from '../../types/index.ts';
+import { type ActionDependencies } from '../../types/index.ts';
 import { type Vector3Like } from 'three';
 
 export const GetCameraTransformAction = Action.define<
