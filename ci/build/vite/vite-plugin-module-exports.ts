@@ -142,7 +142,7 @@ export default function moduleBuildPlugin(): Plugin {
             // Prepare build config
             const rollupInput: Record<string, string> = {
                 // Main library entry point
-                index: pathResolve(projectRoot, 'src/index.ts'),
+                dive: pathResolve(projectRoot, 'src/index.ts'),
             };
 
             // Add module entry points

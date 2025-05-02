@@ -114,7 +114,6 @@
     "scripts": {
         "validate-build-paths": "NODE_OPTIONS='--loader ts-node/esm' ts-node ci/build/validate-build-paths.ts",
         "build": "vite build",
-        "postbuild": "NODE_OPTIONS='--loader ts-node/esm' ts-node ci/build/rename-entry-files.ts",
         "dev": "vite build --watch",
         "lint": "eslint",
         "prettier:check": "prettier --check .",
