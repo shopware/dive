@@ -1,4 +1,4 @@
-import { DIVEPrimitive } from '../Primitive';
+import { DIVEPrimitive } from '../Primitive.ts';
 import { State } from '../../../modules/state/State.ts';
 import {
     Vector3,
@@ -7,15 +7,15 @@ import {
     type Texture,
     type MeshStandardMaterial,
 } from 'three';
-import type { DIVEScene } from '../../../engine/scene/Scene';
+import { type DIVEScene } from '../../../engine/scene/Scene.ts';
 import {
     type COMMaterial,
     type COMGeometry,
     type COMGeometryType,
 } from '../../../modules/state/types/index.ts';
-import { RaycasterIntersectObjectMock } from '../../../../__mocks__/three';
+import { RaycasterIntersectObjectMock } from '../../../../__mocks__/three.ts';
 
-jest.mock('../../../modules/state/State.ts', () => {
+jest.mock('../../../modules/state/State', () => {
     return {
         State: {
             get: jest.fn(() => {

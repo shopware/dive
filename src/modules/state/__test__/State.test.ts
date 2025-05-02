@@ -1,12 +1,12 @@
-import { State } from '../State';
-import { DIVEEngine, type EngineSettings } from '../../../engine/Engine';
-import { OrbitController } from '../../controller/orbit/OrbitController';
-import { Toolbox } from '../../toolbox/Toolbox';
-import { getActionClass } from '../ActionRegistry';
-import { DIVEPerspectiveCamera } from '../../../engine/camera/PerspectiveCamera';
-import { DIVEScene } from '../../../engine/scene/Scene';
-import { Action } from '../actions/action';
-import { type ActionDependencies } from '../types';
+import { State } from '../State.ts';
+import { DIVEEngine, type EngineSettings } from '../../../engine/Engine.ts';
+import { OrbitController } from '../../controller/orbit/OrbitController.ts';
+import { Toolbox } from '../../toolbox/Toolbox.ts';
+import { getActionClass } from '../ActionRegistry.ts';
+import { DIVEPerspectiveCamera } from '../../../engine/camera/PerspectiveCamera.ts';
+import { DIVEScene } from '../../../engine/scene/Scene.ts';
+import { Action } from '../actions/action.ts';
+import { type ActionDependencies } from '../types/index.ts';
 import { type Vector3Like } from 'three';
 
 // Extend the global ActionTypes interface for our tests

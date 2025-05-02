@@ -15,13 +15,13 @@ const MockDIVERenderPipeline = DIVERenderPipeline as jest.MockedClass<
     typeof DIVERenderPipeline
 >;
 
-jest.mock('../camera/PerspectiveCamera.ts', () => {
+jest.mock('../camera/PerspectiveCamera', () => {
     return {
         DIVEPerspectiveCamera: jest.fn(),
     };
 });
 
-jest.mock('../renderer/Renderer.ts', () => {
+jest.mock('../renderer/Renderer', () => {
     return {
         DIVERenderPipeline: jest.fn(function () {
             this.dispose = jest.fn();
@@ -30,7 +30,7 @@ jest.mock('../renderer/Renderer.ts', () => {
     };
 });
 
-jest.mock('../scene/Scene.ts', () => {
+jest.mock('../scene/Scene', () => {
     return {
         DIVEScene: jest.fn(function () {
             return this;
@@ -38,7 +38,7 @@ jest.mock('../scene/Scene.ts', () => {
     };
 });
 
-jest.mock('../resize/ResizeManager.ts', () => {
+jest.mock('../resize/ResizeManager', () => {
     return {
         DIVEResizeManager: jest.fn(function () {
             this.dispose = jest.fn();
@@ -47,7 +47,7 @@ jest.mock('../resize/ResizeManager.ts', () => {
     };
 });
 
-jest.mock('../clock/Clock.ts', () => {
+jest.mock('../clock/Clock', () => {
     return {
         DIVEClock: jest.fn(function () {
             this.addTicker = jest.fn();

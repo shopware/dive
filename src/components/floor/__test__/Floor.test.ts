@@ -1,4 +1,4 @@
-import { DIVEFloor } from '../Floor';
+import { DIVEFloor } from '../Floor.ts';
 
 describe('dive/primitive/floor/DIVEFloor', () => {
     it('should instantiate', () => {

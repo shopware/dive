@@ -1,6 +1,6 @@
-import { Toolbox, type ToolType } from '../Toolbox';
-import { OrbitController } from '../../controller/orbit/OrbitController';
-import { DIVEScene } from '../../../engine/scene/Scene';
+import { Toolbox, type ToolType } from '../Toolbox.ts';
+import { OrbitController } from '../../controller/orbit/OrbitController.ts';
+import { DIVEScene } from '../../../engine/scene/Scene.ts';
 
 /**
  * @jest-environment jsdom

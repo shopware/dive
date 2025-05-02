@@ -1,15 +1,9 @@
-import {
-    Object3D,
-    type Vector3Like,
-    BufferGeometry,
-    Line,
-    LineDashedMaterial,
-} from 'three';
+import { Object3D, type Vector3Like } from 'three';
 import { State } from '../../../modules/state/State.ts';
 import { type DIVENode } from '../../node/Node.ts';
-import { DIVEGroup } from '../Group';
+import { DIVEGroup } from '../Group.ts';
 
-jest.mock('../../../modules/state/State.ts', () => {
+jest.mock('../../../modules/state/State', () => {
     return {
         State: {
             get: jest.fn(() => {

@@ -1,9 +1,9 @@
-import { DIVENode } from '../Node';
-import { State } from '../../../modules/state/State';
+import { DIVENode } from '../Node.ts';
+import { State } from '../../../modules/state/State.ts';
 import { Vector3 } from 'three';
-import { type DIVEGroup } from '../../group/Group';
+import { type DIVEGroup } from '../../group/Group.ts';
 
-jest.mock('../../../modules/state/State.ts', () => {
+jest.mock('../../../modules/state/State', () => {
     return {
         State: {
             get: jest.fn(() => {

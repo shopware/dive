@@ -20,7 +20,7 @@ describe('GetAllSceneDataAction', () => {
             Root: {
                 floor: {
                     visible: true,
-                    material: new MeshStandardMaterial({ color: 0x000000 }),
+                    material: new MeshStandardMaterial({ color: 0xffffff }),
                 },
             },
             objects: [],

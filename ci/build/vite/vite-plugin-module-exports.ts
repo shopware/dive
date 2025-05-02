@@ -25,9 +25,9 @@ function updatePackageJsonExports(registrations: ModuleRegistration[]): void {
         }
     > = {
         '.': {
-            types: './build/index.d.ts',
-            import: './build/index.mjs',
-            require: './build/index.cjs',
+            types: './build/dive.d.ts',
+            import: './build/dive.mjs',
+            require: './build/dive.cjs',
         },
     };
 

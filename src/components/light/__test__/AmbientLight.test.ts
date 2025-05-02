@@ -1,5 +1,5 @@
-import { AmbientLight, Color } from 'three';
-import { DIVEAmbientLight } from '../AmbientLight';
+import { type AmbientLight, type Color } from 'three';
+import { DIVEAmbientLight } from '../AmbientLight.ts';
 
 describe('dive/light/DIVEAmbientLight', () => {
     it('should instantiate', () => {

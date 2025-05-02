@@ -1,8 +1,8 @@
-import { RaycasterIntersectObjectMock } from '../../../../__mocks__/three';
+import { RaycasterIntersectObjectMock } from '../../../../__mocks__/three.ts';
 
-import { DIVEModel } from '../Model';
-import { State } from '../../../modules/state/State';
-import { DIVEScene } from '../../../engine/scene/Scene';
+import { DIVEModel } from '../Model.ts';
+import { State } from '../../../modules/state/State.ts';
+import { DIVEScene } from '../../../engine/scene/Scene.ts';
 import {
     Vector3,
     Box3,
@@ -11,9 +11,9 @@ import {
     type Texture,
     Object3D,
 } from 'three';
-import { type COMMaterial } from '../../../modules/state/types';
+import { type COMMaterial } from '../../../modules/state/types/index.ts';
 
-jest.mock('../../../modules/state/State.ts', () => {
+jest.mock('../../../modules/state/State', () => {
     return {
         State: {
             get: jest.fn(() => {

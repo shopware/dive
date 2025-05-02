@@ -1,5 +1,5 @@
 // Named exports
-export * from './core/Dive.ts';
+export * from './core/index.ts';
 export * from './helpers/index.ts';
 export * from './error/index.ts';
 export * from './types/index.ts';

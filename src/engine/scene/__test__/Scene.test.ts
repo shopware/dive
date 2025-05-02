@@ -28,13 +28,13 @@ jest.mock('../../../components/root/Root', () => {
     };
 });
 
-jest.mock('../../renderer/Renderer.ts', () => {
+jest.mock('../../renderer/Renderer', () => {
     return {
         DIVERenderPipeline: jest.fn(function () {}),
     };
 });
 
-jest.mock('../../../components/grid/Grid.ts', () => {
+jest.mock('../../../components/grid/Grid', () => {
     return {
         DIVEGrid: jest.fn(function () {
             this.isObject3D = true;

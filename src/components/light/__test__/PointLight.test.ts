@@ -1,8 +1,8 @@
-import { DIVEPointLight } from '../PointLight';
-import { State } from '../../../modules/state/State';
-import { Color, PointLight } from 'three';
+import { DIVEPointLight } from '../PointLight.ts';
+import { State } from '../../../modules/state/State.ts';
+import { type Color, type PointLight } from 'three';
 
-jest.mock('../../../modules/state/State.ts', () => {
+jest.mock('../../../modules/state/State', () => {
     return {
         State: {
             get: jest.fn(() => {

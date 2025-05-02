@@ -2,12 +2,9 @@
  * @jest-environment jsdom
  */
 
+import { vi } from 'vitest';
 import { DIVE, DIVESettings } from '../Dive.ts';
 import { MathUtils } from 'three';
-import { State } from '../../modules/state/State.ts';
-import { DIVEEngine } from '../../engine/Engine.ts';
-import { OrbitController } from '../../modules/controller/orbit/OrbitController.ts';
-
 // Mock ResizeObserver
 class MockResizeObserver {
     observe() {}
@@ -16,102 +13,106 @@ class MockResizeObserver {
 }
 global.ResizeObserver = MockResizeObserver as any;
 
-jest.mock('../../engine/Engine.ts', () => {
+vi.mock('../../engine/Engine', async (importOriginal) => {
+    const actual =
+        await importOriginal<typeof import('../../engine/Engine.ts')>();
     return {
-        DIVEEngine: jest.fn(function () {
+        ...actual,
+        DIVEEngine: vi.fn(function (this: any) {
             this.camera = {};
             this.scene = {};
             this.renderer = {
                 webglrenderer: {
                     domElement: {},
                 },
-                onResize: jest.fn(),
+                onResize: vi.fn(),
             };
             this.clock = {
-                addTicker: jest.fn(),
-                removeTicker: jest.fn(),
-                tick: jest.fn(),
-                dispose: jest.fn(),
+                addTicker: vi.fn(),
+                removeTicker: vi.fn(),
+                tick: vi.fn(),
+                dispose: vi.fn(),
             };
             return this;
         }),
     };
 });
 
-jest.mock('../../modules/index.ts', () => {
-    return {
-        ModuleImporter: jest.fn(function () {
-            this.instantiate = jest
-                .fn()
-                .mockResolvedValue(
-                    new State({} as DIVEEngine, {} as OrbitController),
-                );
-            return this;
-        }),
-    };
-});
 const test_uuid = 'test_uuid';
-jest.spyOn(MathUtils, 'generateUUID').mockReturnValue(test_uuid);
+vi.spyOn(MathUtils, 'generateUUID').mockReturnValue(test_uuid);
 
-jest.mock('../../modules/state/State.ts', () => {
+vi.mock('../../modules/index', () => {
     return {
-        State: jest.fn(function () {
-            this.performAction = jest.fn().mockReturnValue({
-                position: { x: 0, y: 0, z: 0 },
-                target: { x: 0, y: 0, z: 0 },
-            });
-            this.subscribe = jest.fn(
-                (action: string, callback: (data: { id: string }) => void) => {
-                    callback({ id: 'incorrect id' });
-                    callback({ id: test_uuid });
-                },
-            );
-            this.destroyInstance = jest.fn().mockReturnValue(true);
-            return this;
-        }),
+        getModule: vi.fn().mockReturnValue(
+            vi.fn(function (this: any) {
+                this.performAction = vi.fn().mockReturnValue({
+                    position: { x: 0, y: 0, z: 0 },
+                    target: { x: 0, y: 0, z: 0 },
+                });
+                this.subscribe = vi.fn(
+                    (
+                        action: string,
+                        callback: (data: { id: string }) => void,
+                    ) => {
+                        callback({ id: 'incorrect id' });
+                        callback({ id: test_uuid });
+                    },
+                );
+                this.destroyInstance = vi.fn().mockReturnValue(true);
+                return this;
+            }),
+        ),
     };
 });
 
-jest.mock('../../modules/controller/orbit/OrbitController.ts', () => {
-    return {
-        OrbitController: jest.fn(function () {
-            this.isObject3D = true;
-            this.parent = null;
-            this.dispatchEvent = jest.fn();
-            this.position = {
-                set: jest.fn(),
-            };
-            this.SetIntensity = jest.fn();
-            this.SetEnabled = jest.fn();
-            this.SetColor = jest.fn();
-            this.userData = {
-                id: undefined,
-            };
-            this.removeFromParent = jest.fn();
-            this.dispose = jest.fn();
-            return this;
-        }),
-    };
-});
+vi.mock(
+    '../../modules/controller/orbit/OrbitController',
+    async (importOriginal) => {
+        const actual =
+            await importOriginal<
+                typeof import('../../modules/controller/orbit/OrbitController.ts')
+            >();
+        return {
+            ...actual,
+            OrbitController: vi.fn(function (this: any) {
+                this.isObject3D = true;
+                this.parent = null;
+                this.dispatchEvent = vi.fn();
+                this.position = {
+                    set: vi.fn(),
+                };
+                this.SetIntensity = vi.fn();
+                this.SetEnabled = vi.fn();
+                this.SetColor = vi.fn();
+                this.userData = {
+                    id: undefined,
+                };
+                this.removeFromParent = vi.fn();
+                this.dispose = vi.fn();
+                return this;
+            }),
+        };
+    },
+);
 
-jest.mock('../../modules/axiscamera/AxisCamera.ts', () => {
+vi.mock('../../modules/axiscamera/AxisCamera', () => {
     return {
-        DIVEAxisCamera: jest.fn(function () {
+        DIVEAxisCamera: vi.fn(function (this: any) {
             this.isObject3D = true;
             this.parent = null;
-            this.dispatchEvent = jest.fn();
+            this.dispatchEvent = vi.fn();
             this.position = {
-                set: jest.fn(),
+                set: vi.fn(),
             };
-            this.SetIntensity = jest.fn();
-            this.SetEnabled = jest.fn();
-            this.SetColor = jest.fn();
+            this.SetIntensity = vi.fn();
+            this.SetEnabled = vi.fn();
+            this.SetColor = vi.fn();
             this.userData = {
                 id: undefined,
             };
-            this.removeFromParent = jest.fn();
-            this.SetFromCameraMatrix = jest.fn();
-            this.Dispose = jest.fn();
+            this.removeFromParent = vi.fn();
+            this.SetFromCameraMatrix = vi.fn();
+            this.Dispose = vi.fn();
             return this;
         }),
     };
@@ -119,7 +120,7 @@ jest.mock('../../modules/axiscamera/AxisCamera.ts', () => {
 
 describe('DIVE', () => {
     beforeEach(() => {
-        console.log = jest.fn();
+        console.log = vi.fn();
     });
 
     it('should QuickView', async () => {
@@ -137,16 +138,12 @@ describe('DIVE', () => {
     it('should instantiate', () => {
         const dive = new DIVE();
         expect(dive).toBeDefined();
-        expect((window as any).DIVE.PrintScene).toBeDefined();
-        expect(() => (window as any).DIVE.PrintScene()).not.toThrow();
     });
 
     it('should instantiate in development DIVE_NODE_ENV', () => {
         process.env.DIVE_NODE_ENV = 'development';
         const dive = new DIVE();
         expect(dive).toBeDefined();
-        expect((window as any).DIVE.PrintScene).toBeDefined();
-        expect(() => (window as any).DIVE.PrintScene()).not.toThrow();
     });
 
     it('should dispose', () => {

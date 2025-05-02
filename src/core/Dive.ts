@@ -12,16 +12,6 @@ import {
 } from '../engine/Engine.ts';
 import { getModule } from '../modules/index.ts';
 
-export type DIVESettings = EngineSettings & {
-    /** Settings for the orbit controls */
-    orbitController: Partial<OrbitControllerSettings>;
-};
-
-export const DIVEDefaultSettings: Required<DIVESettings> = {
-    ...EngineDefaultSettings,
-    orbitController: OrbitControllerDefaultSettings,
-};
-
 declare global {
     interface Window {
         DIVE: {
@@ -42,6 +32,16 @@ window.DIVE = {
     get instance() {
         return window.DIVE.instances[0];
     },
+};
+
+export type DIVESettings = EngineSettings & {
+    /** Settings for the orbit controls */
+    orbitController: Partial<OrbitControllerSettings>;
+};
+
+export const DIVEDefaultSettings: Required<DIVESettings> = {
+    ...EngineDefaultSettings,
+    orbitController: OrbitControllerDefaultSettings,
 };
 
 /**
@@ -85,6 +85,7 @@ export class DIVE {
         state.performAction('UPDATE_SCENE', {
             backgroundColor: 0xffffff,
             gridEnabled: false,
+            floorEnabled: true,
             floorColor: 0xffffff,
         });
 
@@ -204,12 +205,11 @@ export class DIVE {
         }
 
         // Load version info
-        import('../../package.json', { assert: { type: 'json' } }).then(
-            (pkgjson) => {
-                console.log(
-                    `DIVE ${pkgjson.default.version} initialized successfully!`,
-                );
-                console.log(`
+        import('../../package.json').then((pkgjson) => {
+            console.log(
+                `DIVE ${pkgjson.default.version} initialized successfully!`,
+            );
+            console.log(`
                     @@@@@@@@@@@@@@@@@@@@@@@              @@@@@@@@@@@@@@@@@@@@@@@
                @@@@+-:::::::---------------------==------------------------------=#@@@@
             @@%=::::.......::---------------------------------------------------------+@@
@@ -239,8 +239,7 @@ export class DIVE {
                            @@@@@@@                                @@@@@@
 
         `);
-            },
-        );
+        });
     }
 
     public async Dispose(): Promise<void> {

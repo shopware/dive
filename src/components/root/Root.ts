@@ -39,7 +39,7 @@ export class DIVERoot extends Object3D {
         | import('../../modules/asset/loader/AssetLoader.ts').AssetLoader
         | null = null;
 
-    private async getAssetLoader(): Promise<
+    private async _getAssetLoader(): Promise<
         import('../../modules/asset/loader/AssetLoader.ts').AssetLoader
     > {
         if (!this._assetLoader) {
@@ -265,7 +265,7 @@ export class DIVERoot extends Object3D {
         }
 
         if (model.uri !== undefined) {
-            this.getAssetLoader()
+            this._getAssetLoader()
                 .then((loader) => {
                     return loader.load(model.uri!);
                 })

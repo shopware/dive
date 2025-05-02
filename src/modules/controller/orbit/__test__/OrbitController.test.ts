@@ -1,8 +1,8 @@
-import { OrbitController } from '../OrbitController';
-import { type DIVEPerspectiveCamera } from '../../../../engine/camera/PerspectiveCamera';
-import { DIVERenderPipeline } from '../../../../engine/renderer/Renderer';
+import { OrbitController } from '../OrbitController.ts';
+import { type DIVEPerspectiveCamera } from '../../../../engine/camera/PerspectiveCamera.ts';
+import { DIVERenderPipeline } from '../../../../engine/renderer/Renderer.ts';
 import { Box3, Vector3 } from 'three';
-import { DIVEScene } from '../../../../engine/scene/Scene';
+import { DIVEScene } from '../../../../engine/scene/Scene.ts';
 
 jest.mock('../../../../engine/renderer/Renderer', () => {
     return {

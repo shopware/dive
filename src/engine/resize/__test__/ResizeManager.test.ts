@@ -3,7 +3,7 @@ import { DIVERenderPipeline } from '../../renderer/Renderer.ts';
 import { DIVEPerspectiveCamera } from '../../camera/PerspectiveCamera.ts';
 import { DIVEScene } from '../../scene/Scene.ts';
 
-jest.mock('../../renderer/Renderer.ts', () => {
+jest.mock('../../renderer/Renderer', () => {
     return {
         DIVERenderPipeline: jest.fn(function () {
             return {
@@ -16,7 +16,7 @@ jest.mock('../../renderer/Renderer.ts', () => {
     };
 });
 
-jest.mock('../../scene/Scene.ts', () => {
+jest.mock('../../scene/Scene', () => {
     return {
         DIVEScene: jest.fn(function () {
             return {
@@ -26,7 +26,7 @@ jest.mock('../../scene/Scene.ts', () => {
     };
 });
 
-jest.mock('../../camera/PerspectiveCamera.ts', () => {
+jest.mock('../../camera/PerspectiveCamera', () => {
     return {
         DIVEPerspectiveCamera: jest.fn(function () {
             return {
@@ -36,7 +36,7 @@ jest.mock('../../camera/PerspectiveCamera.ts', () => {
     };
 });
 
-jest.mock('../../camera/PerspectiveCamera.ts', () => {
+jest.mock('../../camera/PerspectiveCamera', () => {
     return {
         DIVEPerspectiveCamera: jest.fn(function () {
             return {
