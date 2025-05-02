@@ -22,6 +22,7 @@ export default tseslint.config(
             '**/*.skip.*',
             '**/*.js',
             '**/*.cjs',
+            'vitest.setup.ts',
         ],
     },
     {

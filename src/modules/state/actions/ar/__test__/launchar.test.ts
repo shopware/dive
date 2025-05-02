@@ -1,23 +1,19 @@
-import { LaunchARAction } from '../launchar';
-import { type ARSystemOptions } from '../../../../ar/ARSystem';
-import { type ModuleImporter } from '../../../../_system/ModuleImporter';
+import { LaunchARAction } from '../launchar.ts';
+import { type ARSystemOptions } from '../../../../ar/ARSystem.ts';
+
+const mockARSystem = {
+    launch: vi.fn(),
+};
+const mockGetARSystem = vi.fn().mockResolvedValue(mockARSystem);
 
 describe('LaunchARAction', () => {
-    const mockARSystem = {
-        launch: jest.fn(),
-    };
-
-    const mockARSystemModule = {
-        instantiate: jest.fn().mockResolvedValue(mockARSystem),
-    } as unknown as ModuleImporter<'ARSystem'>;
-
     it('should launch AR mode with default options', async () => {
         const action = new LaunchARAction(
             {
                 uri: 'https://example.com/model.glb',
             },
             {
-                ARSystem: mockARSystemModule,
+                getARSystem: mockGetARSystem,
             },
         );
 
@@ -25,7 +21,7 @@ describe('LaunchARAction', () => {
         await action.execute();
 
         // Verify results
-        expect(mockARSystemModule.instantiate).toHaveBeenCalled();
+        expect(mockGetARSystem).toHaveBeenCalled();
         expect(mockARSystem.launch).toHaveBeenCalledWith(
             'https://example.com/model.glb',
             undefined,
@@ -44,7 +40,7 @@ describe('LaunchARAction', () => {
                 options,
             },
             {
-                ARSystem: mockARSystemModule,
+                getARSystem: mockGetARSystem,
             },
         );
 
@@ -52,7 +48,7 @@ describe('LaunchARAction', () => {
         await action.execute();
 
         // Verify results
-        expect(mockARSystemModule.instantiate).toHaveBeenCalled();
+        expect(mockGetARSystem).toHaveBeenCalled();
         expect(mockARSystem.launch).toHaveBeenCalledWith(
             'https://example.com/model.glb',
             options,

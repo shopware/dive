@@ -15,20 +15,20 @@ import {
 } from '../../../modules/state/types/index.ts';
 import { RaycasterIntersectObjectMock } from '../../../../__mocks__/three.ts';
 
-jest.mock('../../../modules/state/State', () => {
+vi.mock('../../../modules/state/State', () => {
     return {
         State: {
-            get: jest.fn(() => {
+            get: vi.fn(() => {
                 return {
-                    performAction: jest.fn(),
+                    performAction: vi.fn(),
                 };
             }),
         },
     };
 });
 
-jest.spyOn(State, 'get').mockReturnValue({
-    performAction: jest.fn(),
+vi.spyOn(State, 'get').mockReturnValue({
+    performAction: vi.fn(),
 } as unknown as State);
 
 let primitive: DIVEPrimitive;
@@ -39,7 +39,7 @@ describe('dive/primitive/DIVEPrimitive', () => {
     });
 
     afterEach(() => {
-        jest.clearAllMocks();
+        vi.clearAllMocks();
     });
 
     it('should instantiate', () => {
@@ -47,7 +47,7 @@ describe('dive/primitive/DIVEPrimitive', () => {
     });
 
     it('should set geometry', () => {
-        jest.spyOn(console, 'warn');
+        vi.spyOn(console, 'warn');
         const geometry = {
             name: 'cube' as COMGeometryType,
         } as COMGeometry;
@@ -56,7 +56,7 @@ describe('dive/primitive/DIVEPrimitive', () => {
     });
 
     it('should warn when geometry is invalid', () => {
-        jest.spyOn(console, 'warn').mockImplementation(() => {});
+        vi.spyOn(console, 'warn').mockImplementation(() => {});
         const geometry = {
             name: 'INVALID' as COMGeometryType,
         } as COMGeometry;
@@ -66,9 +66,9 @@ describe('dive/primitive/DIVEPrimitive', () => {
 
     it('should place on floor', () => {
         const com = State.get('id')!;
-        const spyperformAction = jest.spyOn(com, 'performAction');
+        const spyperformAction = vi.spyOn(com, 'performAction');
 
-        jest.spyOn(primitive['_mesh']!, 'localToWorld').mockReturnValueOnce(
+        vi.spyOn(primitive['_mesh']!, 'localToWorld').mockReturnValueOnce(
             new Vector3(0, 2, 0),
         );
 
@@ -76,7 +76,7 @@ describe('dive/primitive/DIVEPrimitive', () => {
         primitive.position.set(0, 2, 0);
         primitive['_boundingBox'] = {
             min: new Vector3(0, -2, 0),
-            setFromObject: jest.fn(),
+            setFromObject: vi.fn(),
         } as unknown as Box3;
 
         const scene = {
@@ -104,13 +104,11 @@ describe('dive/primitive/DIVEPrimitive', () => {
 
     it('should drop it', () => {
         const comMock = {
-            performAction: jest.fn(),
+            performAction: vi.fn(),
         } as unknown as State;
-        jest.spyOn(State, 'get').mockReturnValue(comMock);
+        vi.spyOn(State, 'get').mockReturnValue(comMock);
 
-        const spy = jest
-            .spyOn(primitive, 'onMove')
-            .mockImplementation(() => {});
+        const spy = vi.spyOn(primitive, 'onMove').mockImplementation(() => {});
 
         const size = {
             x: 1,
@@ -123,7 +121,7 @@ describe('dive/primitive/DIVEPrimitive', () => {
         primitive['_boundingBox'] = {
             min: new Vector3(-size.x / 2, -size.y / 2, -size.z / 2),
             max: new Vector3(size.x / 2, size.y / 2, size.z / 2),
-            getCenter: jest.fn(() => {
+            getCenter: vi.fn(() => {
                 return new Vector3(0, 0, 0);
             }),
         } as unknown as Box3;
@@ -148,7 +146,7 @@ describe('dive/primitive/DIVEPrimitive', () => {
         scene.Root.parent = scene;
 
         // test when parent is not set
-        console.warn = jest.fn();
+        console.warn = vi.fn();
         expect(() => primitive.DropIt()).not.toThrow();
         expect(console.warn).toHaveBeenCalledTimes(1);
 
@@ -163,7 +161,7 @@ describe('dive/primitive/DIVEPrimitive', () => {
 
         // alter position so onMove will be called again
         primitive.position.y = 2;
-        jest.spyOn(State, 'get').mockReturnValueOnce(undefined);
+        vi.spyOn(State, 'get').mockReturnValueOnce(undefined);
         expect(() => primitive.DropIt()).not.toThrow();
         expect(spy).toHaveBeenCalledTimes(2);
     });
@@ -295,14 +293,14 @@ describe('dive/primitive/DIVEPrimitive', () => {
         primitive.userData.id = 'something';
 
         // Mock localToWorld to return same Y value as current position
-        jest.spyOn(primitive['_mesh']!, 'localToWorld').mockReturnValueOnce(
+        vi.spyOn(primitive['_mesh']!, 'localToWorld').mockReturnValueOnce(
             new Vector3(0, primitive.position.y, 0),
         );
 
         const comMock = {
-            performAction: jest.fn(),
+            performAction: vi.fn(),
         } as unknown as State;
-        jest.spyOn(State, 'get').mockReturnValue(comMock);
+        vi.spyOn(State, 'get').mockReturnValue(comMock);
 
         primitive.PlaceOnFloor();
         expect(comMock.performAction).not.toHaveBeenCalled();

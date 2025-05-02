@@ -1,10 +1,30 @@
-import { WebGLRenderer } from 'three';
+/**
+ * @jest-environment jsdom
+ */
+
 import {
     DIVERenderPipeline,
     DIVERenderPipelineDefaultSettings,
 } from '../Renderer.ts';
 import { DIVEScene } from '../../scene/Scene.ts';
 import { DIVEPerspectiveCamera } from '../../camera/PerspectiveCamera.ts';
+import { vi } from 'vitest';
+import { WebGLRenderer as WebGLRendererOriginal } from 'three';
+// cast to any so we can call .mock on the mocked WebGLRenderer
+const WebGLRenderer = WebGLRendererOriginal as any;
+
+// vi.mock('three', async (importOriginal) => {
+//     const actual = await importOriginal<typeof import('three')>();
+//     return {
+//         ...actual,
+//         WebGLRenderer: vi.fn().mockImplementation(() => ({
+//             setSize: vi.fn(),
+//             render: vi.fn(),
+//             domElement: document.createElement('canvas'),
+//             dispose: vi.fn(),
+//         })),
+//     };
+// });
 
 describe('DIVERenderPipeline', () => {
     let renderer: DIVERenderPipeline;
@@ -12,7 +32,7 @@ describe('DIVERenderPipeline', () => {
     let camera: DIVEPerspectiveCamera;
 
     beforeEach(() => {
-        jest.clearAllMocks();
+        vi.clearAllMocks();
         scene = new DIVEScene();
         camera = new DIVEPerspectiveCamera();
         renderer = new DIVERenderPipeline(scene, camera);
@@ -53,18 +73,18 @@ describe('DIVERenderPipeline', () => {
     it('should set domElement', () => {
         const newCanvas = document.createElement('canvas');
         renderer.webglrenderer.domElement = newCanvas;
-        const mockInstance = (WebGLRenderer as jest.Mock).mock.results[0].value;
+        const mockInstance = WebGLRenderer.mock.results[0].value;
         expect(mockInstance.domElement).toBe(newCanvas);
     });
 
     it('should provide access to webglrenderer', () => {
-        const mockInstance = (WebGLRenderer as jest.Mock).mock.results[0].value;
+        const mockInstance = WebGLRenderer.mock.results[0].value;
         expect(renderer.webglrenderer).toBe(mockInstance);
     });
 
     it('should render scene and camera', () => {
         renderer.render();
-        const mockInstance = (WebGLRenderer as jest.Mock).mock.results[0].value;
+        const mockInstance = WebGLRenderer.mock.results[0].value;
         expect(mockInstance.render).toHaveBeenCalledWith(scene, camera);
     });
 
@@ -72,13 +92,13 @@ describe('DIVERenderPipeline', () => {
         const width = 800;
         const height = 600;
         renderer.onResize(width, height);
-        const mockInstance = (WebGLRenderer as jest.Mock).mock.results[0].value;
+        const mockInstance = WebGLRenderer.mock.results[0].value;
         expect(mockInstance.setSize).toHaveBeenCalledWith(width, height, false);
     });
 
     it('should dispose WebGLRenderer', () => {
         renderer.dispose();
-        const mockInstance = (WebGLRenderer as jest.Mock).mock.results[0].value;
+        const mockInstance = WebGLRenderer.mock.results[0].value;
         expect(mockInstance.dispose).toHaveBeenCalled();
     });
 });

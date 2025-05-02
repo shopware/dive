@@ -1,18 +1,18 @@
-import { DIVESelectTool, isSelectTool } from '../SelectTool';
-import { DIVEScene } from '../../../../engine/scene/Scene';
-import { OrbitController } from '../../../controller/orbit/OrbitController';
-import { DIVESelectable } from '../../../../interfaces/Selectable';
-import { type DIVEPerspectiveCamera } from '../../../../engine/camera/PerspectiveCamera';
+import { DIVESelectTool, isSelectTool } from '../SelectTool.ts';
+import { DIVEScene } from '../../../../engine/scene/Scene.ts';
+import { OrbitController } from '../../../controller/orbit/OrbitController.ts';
+import { DIVESelectable } from '../../../../interfaces/Selectable.ts';
+import { type DIVEPerspectiveCamera } from '../../../../engine/camera/PerspectiveCamera.ts';
 import { type Object3D } from 'three';
-import { type DIVEBaseTool } from '../../BaseTool';
-import { AnimationSystem } from '../../../animation/AnimationSystem';
+import { type DIVEBaseTool } from '../../BaseTool.ts';
+import { AnimationSystem } from '../../../animation/AnimationSystem.ts';
 import { Tween } from '@tweenjs/tween.js';
-import { type DIVEMovable } from '../../../../interfaces/Movable';
-import { DIVERenderPipeline } from '../../../../engine/renderer/Renderer';
+import { type DIVEMovable } from '../../../../interfaces/Movable.ts';
+import { DIVERenderPipeline } from '../../../../engine/renderer/Renderer.ts';
 
-jest.mock('../../../../engine/renderer/Renderer', () => {
+vi.mock('../../../../engine/renderer/Renderer', () => {
     return {
-        DIVERenderPipeline: jest.fn(function () {
+        DIVERenderPipeline: vi.fn(function (this: any) {
             this.webglrenderer = {
                 domElement: {
                     clientWidth: 0,
@@ -24,9 +24,9 @@ jest.mock('../../../../engine/renderer/Renderer', () => {
     };
 });
 
-jest.mock('../../../../engine/camera/PerspectiveCamera', () => {
+vi.mock('../../../../engine/camera/PerspectiveCamera', () => {
     return {
-        DIVEPerspectiveCamera: jest.fn(function () {
+        DIVEPerspectiveCamera: vi.fn(function (this: any) {
             this.isPerspectiveCamera = true;
             this.layers = {
                 mask: 0,
@@ -36,9 +36,9 @@ jest.mock('../../../../engine/camera/PerspectiveCamera', () => {
     };
 });
 
-jest.mock('../../../controller/orbit/OrbitController', () => {
+vi.mock('../../../controller/orbit/OrbitController', () => {
     return {
-        OrbitController: jest.fn(function () {
+        OrbitController: vi.fn(function (this: any) {
             this.enabled = true;
             this.domElement = {
                 clientWIdth: 0,
@@ -54,9 +54,9 @@ jest.mock('../../../controller/orbit/OrbitController', () => {
     };
 });
 
-jest.mock('../../../animation/AnimationSystem', () => {
+vi.mock('../../../animation/AnimationSystem', () => {
     return {
-        DIVEAnimationSystem: jest.fn(function () {
+        DIVEAnimationSystem: vi.fn(function (this: any) {
             this.domElement = {
                 style: {},
             };
@@ -69,10 +69,10 @@ jest.mock('../../../animation/AnimationSystem', () => {
     };
 });
 
-jest.mock('../../../../engine/scene/Scene', () => {
+vi.mock('../../../../engine/scene/Scene', () => {
     return {
-        DIVEScene: jest.fn(function () {
-            this.add = jest.fn();
+        DIVEScene: vi.fn(function (this: any) {
+            this.add = vi.fn();
             this.children = [];
             this.Root = {
                 children: [],
@@ -90,12 +90,12 @@ const mockController: OrbitController = new OrbitController(
 );
 
 let selectTool: DIVESelectTool;
-let intersectObjectsSpy: jest.SpyInstance;
+let intersectObjectsSpy: any;
 
 describe('dive/toolbox/select/DIVESelectTool', () => {
     beforeEach(() => {
         selectTool = new DIVESelectTool(mockScene, mockController);
-        intersectObjectsSpy = jest
+        intersectObjectsSpy = vi
             .spyOn(selectTool['_raycaster'], 'intersectObjects')
             .mockReturnValue([]);
     });
@@ -140,7 +140,7 @@ describe('dive/toolbox/select/DIVESelectTool', () => {
     });
 
     it('should execute onClick with same ISelectable hit', () => {
-        const mock_onSelect = jest.fn();
+        const mock_onSelect = vi.fn();
 
         intersectObjectsSpy.mockReturnValueOnce([
             {
@@ -167,7 +167,7 @@ describe('dive/toolbox/select/DIVESelectTool', () => {
     });
 
     it('should execute onClick with ISelectable hit', () => {
-        const mock_onSelect = jest.fn();
+        const mock_onSelect = vi.fn();
 
         intersectObjectsSpy.mockReturnValueOnce([
             {
@@ -193,7 +193,7 @@ describe('dive/toolbox/select/DIVESelectTool', () => {
     });
 
     it('should execute onClick with IMovable hit', () => {
-        const mock_onSelect = jest.fn();
+        const mock_onSelect = vi.fn();
 
         intersectObjectsSpy.mockReturnValueOnce([
             {
@@ -215,7 +215,7 @@ describe('dive/toolbox/select/DIVESelectTool', () => {
     });
 
     it('should Select', () => {
-        const mock_onSelect = jest.fn();
+        const mock_onSelect = vi.fn();
         expect(() => selectTool.Select({ isSelectable: true })).not.toThrow();
         expect(() =>
             selectTool.Select({
@@ -227,7 +227,7 @@ describe('dive/toolbox/select/DIVESelectTool', () => {
     });
 
     it('should Deselect', () => {
-        const mock_onDeselect = jest.fn();
+        const mock_onDeselect = vi.fn();
         expect(() => selectTool.Deselect({ isSelectable: true })).not.toThrow();
         expect(() =>
             selectTool.Deselect({
@@ -255,7 +255,7 @@ describe('dive/toolbox/select/DIVESelectTool', () => {
     it('should select object with onSelect callback', () => {
         const selectTool = new DIVESelectTool(mockScene, mockController);
         const mockSelectable = {
-            onSelect: jest.fn(),
+            onSelect: vi.fn(),
         } as unknown as DIVESelectable;
 
         selectTool.Select(mockSelectable);
@@ -272,7 +272,7 @@ describe('dive/toolbox/select/DIVESelectTool', () => {
     it('should deselect object with onDeselect callback', () => {
         const selectTool = new DIVESelectTool(mockScene, mockController);
         const mockSelectable = {
-            onDeselect: jest.fn(),
+            onDeselect: vi.fn(),
         } as unknown as DIVESelectable;
 
         selectTool.Deselect(mockSelectable);
@@ -294,7 +294,7 @@ describe('dive/toolbox/select/DIVESelectTool', () => {
         } as unknown as Object3D & DIVESelectable & DIVEMovable;
 
         selectTool['_gizmo'] = {
-            attach: jest.fn(),
+            attach: vi.fn(),
         } as any;
 
         selectTool.AttachGizmo(mockMovable);
@@ -304,7 +304,7 @@ describe('dive/toolbox/select/DIVESelectTool', () => {
     it('should detach gizmo', () => {
         const selectTool = new DIVESelectTool(mockScene, mockController);
         selectTool['_gizmo'] = {
-            detach: jest.fn(),
+            detach: vi.fn(),
         } as any;
 
         selectTool.DetachGizmo();
@@ -315,19 +315,18 @@ describe('dive/toolbox/select/DIVESelectTool', () => {
         const selectTool = new DIVESelectTool(mockScene, mockController);
         const mockSelectable = {
             uuid: 'test',
-            onDeselect: jest.fn(),
+            onDeselect: vi.fn(),
             isSelectable: true,
         } as unknown as Object3D & DIVESelectable;
 
         selectTool['_gizmo'] = {
             object: mockSelectable,
-            detach: jest.fn(),
+            detach: vi.fn(),
         } as any;
 
-        jest.spyOn(
-            selectTool['_raycaster'],
-            'intersectObjects',
-        ).mockReturnValue([]);
+        vi.spyOn(selectTool['_raycaster'], 'intersectObjects').mockReturnValue(
+            [],
+        );
 
         selectTool.onClick({} as PointerEvent);
         expect(mockSelectable.onDeselect).toHaveBeenCalled();
@@ -345,10 +344,7 @@ describe('dive/toolbox/select/DIVESelectTool', () => {
             object: mockSelectable,
         } as any;
 
-        jest.spyOn(
-            selectTool['_raycaster'],
-            'intersectObjects',
-        ).mockReturnValue([
+        vi.spyOn(selectTool['_raycaster'], 'intersectObjects').mockReturnValue([
             {
                 object: mockSelectable,
             } as any,
@@ -365,25 +361,22 @@ describe('dive/toolbox/select/DIVESelectTool', () => {
             uuid: 'old',
             isSelectable: true,
             visible: true,
-            onDeselect: jest.fn(),
+            onDeselect: vi.fn(),
         } as unknown as Object3D & DIVESelectable;
 
         const newSelectable = {
             uuid: 'new',
             isSelectable: true,
             visible: true,
-            onSelect: jest.fn(),
+            onSelect: vi.fn(),
         } as unknown as Object3D & DIVESelectable;
 
         selectTool['_gizmo'] = {
             object: oldSelectable,
-            detach: jest.fn(),
+            detach: vi.fn(),
         } as any;
 
-        jest.spyOn(
-            selectTool['_raycaster'],
-            'intersectObjects',
-        ).mockReturnValue([
+        vi.spyOn(selectTool['_raycaster'], 'intersectObjects').mockReturnValue([
             {
                 object: newSelectable,
             } as any,

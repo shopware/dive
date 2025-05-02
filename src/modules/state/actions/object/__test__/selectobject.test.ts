@@ -1,23 +1,24 @@
-import { DIVEEngine } from '../../../../../engine';
-import { DIVEScene } from '../../../../../engine/scene/Scene';
-import { SelectObjectAction } from '../selectobject';
-import { COMEntity } from '../../../types';
+import { DIVEEngine } from '../../../../../engine/Engine.ts';
+import { DIVEScene } from '../../../../../engine/scene/Scene.ts';
+import { SelectObjectAction } from '../selectobject.ts';
+import { COMEntity } from '../../../types/index.ts';
 import { Object3D } from 'three';
-import { DIVESelectable } from '../../../../../interfaces/Selectable';
-import { DIVESelectTool } from '../../../../toolbox/select/SelectTool';
-import { ModuleImporter } from '../../../../_system/ModuleImporter';
-import { OrbitController } from '../../../../controller/orbit/OrbitController';
+import { DIVESelectable } from '../../../../../interfaces/Selectable.ts';
+import { DIVESelectTool } from '../../../../toolbox/select/SelectTool.ts';
+import { ModuleImporter } from '../../../../_system/ModuleImporter.ts';
+import { OrbitController } from '../../../../controller/orbit/OrbitController.ts';
+import { Toolbox } from '../../../../toolbox/Toolbox.ts';
 
 const mockController = {} as unknown as OrbitController;
 
 const mockSceneObject = {
-    attach: jest.fn(),
+    attach: vi.fn(),
     isSelectable: true,
 } as unknown as Object3D & DIVESelectable;
 
 const mockScene = {
-    GetSceneObject: jest.fn().mockReturnValue(mockSceneObject),
-} as unknown as DIVEScene;
+    GetSceneObject: vi.fn().mockReturnValue(mockSceneObject),
+};
 
 const mockEngine = {
     scene: mockScene,
@@ -25,22 +26,22 @@ const mockEngine = {
 
 const mockSelectTool = {
     isSelectTool: true,
-    AttachGizmo: jest.fn().mockImplementation(() => {}),
+    AttachGizmo: vi.fn().mockImplementation(() => {}),
 } as unknown as DIVESelectTool;
 
-const mockGetActiveTool = jest.fn().mockReturnValue(mockSelectTool);
-const mockToolbox = {
-    instantiate: jest.fn().mockResolvedValue({
+const mockGetActiveTool = vi.fn().mockReturnValue(mockSelectTool);
+const mockGetToolbox = () => {
+    return Promise.resolve({
         GetActiveTool: mockGetActiveTool,
-    }),
-} as unknown as ModuleImporter<'Toolbox'>;
+    } as unknown as Toolbox);
+};
 
 const mockRegistered = new Map<string, COMEntity>();
 
 describe('SelectObjectAction', () => {
     beforeEach(() => {
         mockRegistered.clear();
-        jest.clearAllMocks();
+        vi.clearAllMocks();
     });
 
     it('should select an object', async () => {
@@ -69,8 +70,7 @@ describe('SelectObjectAction', () => {
             { id: 'test-object' },
             {
                 engine: mockEngine,
-                controller: mockController,
-                Toolbox: mockToolbox,
+                getToolbox: mockGetToolbox,
                 registered: mockRegistered,
             },
         );
@@ -82,21 +82,20 @@ describe('SelectObjectAction', () => {
         );
     });
 
-    it('should return false if object does not exist', () => {
+    it('should return false if object does not exist', async () => {
         // Act
         const action = new SelectObjectAction(
             { id: 'non-existent-object' },
             {
                 engine: mockEngine,
-                controller: mockController,
-                Toolbox: mockToolbox,
+                getToolbox: mockGetToolbox,
                 registered: mockRegistered,
             },
         );
-        expect(action.execute()).rejects.toThrow('Object not found.');
+        await expect(action.execute()).rejects.toThrow('Object not found.');
     });
 
-    it('should return false if object is not found in scene', () => {
+    it('should return false if object is not found in scene', async () => {
         // Arrange
         const testObject: COMEntity = {
             id: 'test-object',
@@ -116,22 +115,23 @@ describe('SelectObjectAction', () => {
         };
 
         mockRegistered.set(testObject.id, testObject);
-        (mockScene.GetSceneObject as jest.Mock).mockReturnValueOnce(null);
+        mockScene.GetSceneObject.mockReturnValueOnce(undefined);
 
         // Act
         const action = new SelectObjectAction(
             { id: 'test-object' },
             {
                 engine: mockEngine,
-                controller: mockController,
-                Toolbox: mockToolbox,
+                getToolbox: mockGetToolbox,
                 registered: mockRegistered,
             },
         );
-        expect(action.execute()).rejects.toThrow('Object not found in scene.');
+        await expect(action.execute()).rejects.toThrow(
+            'Object not found in scene.',
+        );
     });
 
-    it('should return false if object is not selectable', () => {
+    it('should return false if object is not selectable', async () => {
         // Arrange
         const testObject: COMEntity = {
             id: 'test-object',
@@ -151,23 +151,22 @@ describe('SelectObjectAction', () => {
         };
 
         mockRegistered.set(testObject.id, testObject);
-        (mockScene.GetSceneObject as jest.Mock).mockReturnValueOnce(
-            {} as Object3D,
-        );
+        mockScene.GetSceneObject.mockReturnValueOnce({} as Object3D);
 
         // Act
         const action = new SelectObjectAction(
             { id: 'test-object' },
             {
                 engine: mockEngine,
-                controller: mockController,
-                Toolbox: mockToolbox,
+                getToolbox: mockGetToolbox,
                 registered: mockRegistered,
             },
         );
 
         // Assert
-        expect(action.execute()).rejects.toThrow('Object is not selectable.');
+        await expect(action.execute()).rejects.toThrow(
+            'Object is not selectable.',
+        );
     });
 
     it('should not throw if no select tool is active', () => {
@@ -190,15 +189,14 @@ describe('SelectObjectAction', () => {
         };
 
         mockRegistered.set(testObject.id, testObject);
-        (mockGetActiveTool as jest.Mock).mockReturnValueOnce(null);
+        mockGetActiveTool.mockReturnValueOnce(null);
 
         // Act
         const action = new SelectObjectAction(
             { id: 'test-object' },
             {
                 engine: mockEngine,
-                controller: mockController,
-                Toolbox: mockToolbox,
+                getToolbox: mockGetToolbox,
                 registered: mockRegistered,
             },
         );

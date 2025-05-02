@@ -3,15 +3,15 @@ import { ARSystemOptions } from '../../ARSystem';
 import { ARQuickLook } from '../ARQuickLook';
 import { AssetConverter } from '../../../asset/converter/AssetConverter';
 
-jest.mock('../../../../engine/scene/Scene', () => {
+vi.mock('../../../../engine/scene/Scene', () => {
     return {
-        DIVEScene: jest.fn(function () {
-            this.add = jest.fn();
+        DIVEScene: vi.fn(function (this: any) {
+            this.add = vi.fn();
             this.children = [];
             this.Root = {
                 children: [],
             };
-            this.traverse = jest.fn((callback) => {
+            this.traverse = vi.fn((callback) => {
                 this.Root.children.forEach((child: Object3D) => {
                     callback(child);
                 });
@@ -22,26 +22,26 @@ jest.mock('../../../../engine/scene/Scene', () => {
 });
 
 // Mock the dependencies
-const mockConvert = jest.fn().mockReturnThis();
-const mockTo = jest.fn().mockResolvedValue(new ArrayBuffer(0));
+const mockConvert = vi.fn().mockReturnThis();
+const mockTo = vi.fn().mockResolvedValue(new ArrayBuffer(0));
 
-jest.mock('../../../asset/converter/AssetConverter', () => ({
-    AssetConverter: jest.fn().mockImplementation(() => ({
+vi.mock('../../../asset/converter/AssetConverter', () => ({
+    AssetConverter: vi.fn().mockImplementation(() => ({
         convert: mockConvert,
         to: mockTo,
     })),
 }));
 
 // Mock URL.createObjectURL
-URL.createObjectURL = jest.fn(() => 'blob:http://localhost:8080/');
+URL.createObjectURL = vi.fn(() => 'blob:http://localhost:8080/');
 
 // Mock document.createElement
-document.createElement = jest.fn().mockReturnValue({
+document.createElement = vi.fn().mockReturnValue({
     innerHTML: '',
     rel: '',
     href: '',
     download: '',
-    click: jest.fn(),
+    click: vi.fn(),
 });
 
 describe('ARQuickLook', () => {
@@ -63,7 +63,7 @@ describe('ARQuickLook', () => {
             arPlacement: 'horizontal',
             arScale: 'auto',
         };
-        jest.clearAllMocks();
+        vi.clearAllMocks();
         quickLook = new ARQuickLook();
     });
 

@@ -7,17 +7,28 @@ import moduleBuildPlugin from './ci/build/vite/vite-plugin-module-exports.ts';
 export default defineConfig({
     test: {
         globals: true,
-        environment: 'jsdom', // or 'node' if no DOM required
-        include: ['src/**/*.test.ts'], // adjust as needed
+        setupFiles: ['./vitest.setup.ts'],
+        environment: 'jsdom',
+        include: ['src/**/*.test.ts'],
         coverage: {
+            provider: 'v8',
+            include: ['src/**/*.{ts,js}'],
             reporter: [
                 'text',
                 'html',
             ],
-            statements: 98,
-            branches: 98,
-            functions: 98,
-            lines: 98,
+            exclude: [
+                '**/build/**',
+                '**/__mocks__/**',
+                'src/modules/ar/webxr/**', // webxr currently not supported in dive
+                'src/engine/scene/xrroot/**', // webxr currently not supported in dive
+            ],
+            thresholds: {
+                lines: 98,
+                branches: 98,
+                functions: 98,
+                statements: 98,
+            },
         },
     },
     plugins: [

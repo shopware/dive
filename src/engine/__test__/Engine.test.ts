@@ -1,61 +1,72 @@
 import { DIVEEngine, EngineDefaultSettings } from '../Engine.ts';
-import { DIVEPerspectiveCamera } from '../camera/PerspectiveCamera.ts';
+import {
+    DIVEPerspectiveCamera,
+    DIVEPerspectiveCameraDefaultSettings,
+} from '../camera/PerspectiveCamera.ts';
 import { DIVERenderPipeline } from '../renderer/Renderer.ts';
 import { DIVEScene } from '../scene/Scene.ts';
 import { DIVEResizeManager } from '../resize/ResizeManager.ts';
 import { DIVEClock } from '../clock/Clock.ts';
 
 // Add proper typing for Jest mocks
-const MockDIVEScene = DIVEScene as jest.MockedClass<typeof DIVEScene>;
-const MockDIVEPerspectiveCamera = DIVEPerspectiveCamera as jest.MockedClass<
-    typeof DIVEPerspectiveCamera
->;
-const MockDIVEClock = DIVEClock as jest.MockedClass<typeof DIVEClock>;
-const MockDIVERenderPipeline = DIVERenderPipeline as jest.MockedClass<
-    typeof DIVERenderPipeline
->;
+const mockScene = {} as unknown as DIVEScene;
+const mockPerspectiveCamera = {} as unknown as DIVEPerspectiveCamera;
+const mockClock = {
+    start: vi.fn(),
+    stop: vi.fn(),
+    dispose: vi.fn(),
+    setRenderer: vi.fn(),
+    addTicker: vi.fn(),
+} as unknown as DIVEClock;
+const mockRenderPipeline = {
+    dispose: vi.fn(),
+} as unknown as DIVERenderPipeline;
+const mockResizeManager = {
+    dispose: vi.fn(),
+} as unknown as DIVEResizeManager;
 
-jest.mock('../camera/PerspectiveCamera', () => {
+vi.mock('../camera/PerspectiveCamera', async (importOriginal) => {
+    const actual =
+        await importOriginal<typeof import('../camera/PerspectiveCamera.ts')>();
     return {
-        DIVEPerspectiveCamera: jest.fn(),
-    };
-});
-
-jest.mock('../renderer/Renderer', () => {
-    return {
-        DIVERenderPipeline: jest.fn(function () {
-            this.dispose = jest.fn();
-            return this;
+        ...actual,
+        DIVEPerspectiveCamera: vi.fn(function (this: any) {
+            return mockPerspectiveCamera;
         }),
     };
 });
 
-jest.mock('../scene/Scene', () => {
+vi.mock('../renderer/Renderer', async (importOriginal) => {
+    const actual =
+        await importOriginal<typeof import('../renderer/Renderer.ts')>();
     return {
-        DIVEScene: jest.fn(function () {
-            return this;
+        ...actual,
+        DIVERenderPipeline: vi.fn(function (this: any) {
+            return mockRenderPipeline;
         }),
     };
 });
 
-jest.mock('../resize/ResizeManager', () => {
+vi.mock('../scene/Scene', () => {
     return {
-        DIVEResizeManager: jest.fn(function () {
-            this.dispose = jest.fn();
-            return this;
+        DIVEScene: vi.fn(function (this: any) {
+            return mockScene;
         }),
     };
 });
 
-jest.mock('../clock/Clock', () => {
+vi.mock('../resize/ResizeManager', () => {
     return {
-        DIVEClock: jest.fn(function () {
-            this.addTicker = jest.fn();
-            this.start = jest.fn();
-            this.stop = jest.fn();
-            this.dispose = jest.fn();
-            this.setRenderer = jest.fn();
-            return this;
+        DIVEResizeManager: vi.fn(function (this: any) {
+            return mockResizeManager;
+        }),
+    };
+});
+
+vi.mock('../clock/Clock', () => {
+    return {
+        DIVEClock: vi.fn(function (this: any) {
+            return mockClock;
         }),
     };
 });
@@ -64,7 +75,7 @@ describe('DIVEEngine', () => {
     let engine: DIVEEngine;
 
     beforeEach(() => {
-        jest.clearAllMocks();
+        vi.clearAllMocks();
         engine = new DIVEEngine();
     });
 
@@ -103,30 +114,24 @@ describe('DIVEEngine', () => {
         expect(engine.clock).toBeDefined();
 
         // Verify the getters return the correct instances
-        expect(engine.scene).toBe(MockDIVEScene.mock.instances[0]);
-        expect(engine.camera).toBe(MockDIVEPerspectiveCamera.mock.instances[0]);
-        expect(engine.clock).toBe(MockDIVEClock.mock.instances[0]);
-        expect(engine.renderer).toBe(MockDIVERenderPipeline.mock.instances[0]);
+        expect(engine.scene).toBe(mockScene);
+        expect(engine.camera).toBe(mockPerspectiveCamera);
+        expect(engine.clock).toBe(mockClock);
+        expect(engine.renderer).toBe(mockRenderPipeline);
     });
 
     it('should start and stop the engine', () => {
-        const clock = (DIVEClock as jest.Mock).mock.instances[0];
         engine.start();
-        expect(clock.start).toHaveBeenCalled();
+        expect(mockClock.start).toHaveBeenCalled();
         engine.stop();
-        expect(clock.stop).toHaveBeenCalled();
+        expect(mockClock.stop).toHaveBeenCalled();
     });
 
     it('should dispose all components', () => {
-        const clock = (DIVEClock as jest.Mock).mock.instances[0];
-        const resizeManager = (DIVEResizeManager as jest.Mock).mock
-            .instances[0];
-        const renderer = (DIVERenderPipeline as jest.Mock).mock.instances[0];
-
         engine.dispose();
 
-        expect(clock.dispose).toHaveBeenCalled();
-        expect(resizeManager.dispose).toHaveBeenCalled();
-        expect(renderer.dispose).toHaveBeenCalled();
+        expect(mockClock.dispose).toHaveBeenCalled();
+        expect(mockResizeManager.dispose).toHaveBeenCalled();
+        expect(mockRenderPipeline.dispose).toHaveBeenCalled();
     });
 });

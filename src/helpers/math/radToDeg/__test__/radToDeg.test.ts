@@ -2,7 +2,7 @@ import radToDeg from '../radToDeg';
 import { MathUtils } from 'three';
 
 // Type assertion for the mocked MathUtils.radToDeg
-const mockedRadToDeg = MathUtils.radToDeg as jest.Mock;
+const mockedRadToDeg = MathUtils.radToDeg as vi.Mock;
 
 /**
  * Test Suite for radToDeg Function

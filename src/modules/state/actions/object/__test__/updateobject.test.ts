@@ -7,7 +7,7 @@ describe('UpdateObjectAction', () => {
     it('should update an existing object', async () => {
         // Mock dependencies
         const mockScene = {
-            UpdateSceneObject: jest.fn(),
+            UpdateSceneObject: vi.fn(),
         } as unknown as DIVEScene;
 
         const mockEngine = {
@@ -56,7 +56,7 @@ describe('UpdateObjectAction', () => {
     it('should return false if object does not exist', async () => {
         // Mock dependencies
         const mockScene = {
-            UpdateSceneObject: jest.fn(),
+            UpdateSceneObject: vi.fn(),
         } as unknown as DIVEScene;
 
         const mockEngine = {

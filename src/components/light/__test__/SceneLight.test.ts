@@ -2,20 +2,20 @@ import { State } from '../../../modules/state/State.ts';
 import { type Color } from 'three';
 import { DIVESceneLight } from '../SceneLight.ts';
 
-jest.mock('../../../modules/state/State', () => {
+vi.mock('../../../modules/state/State', () => {
     return {
         State: {
-            get: jest.fn(() => {
+            get: vi.fn(() => {
                 return {
-                    performAction: jest.fn(),
+                    performAction: vi.fn(),
                 };
             }),
         },
     };
 });
 
-jest.spyOn(State, 'get').mockReturnValue({
-    performAction: jest.fn(),
+vi.spyOn(State, 'get').mockReturnValue({
+    performAction: vi.fn(),
 } as unknown as State);
 
 describe('dive/light/DIVESceneLight', () => {

@@ -10,7 +10,7 @@ describe('SetCameraTransformAction', () => {
                 position: new Vector3(0, 0, 0),
             },
             target: new Vector3(1, 1, 1),
-            update: jest.fn(),
+            update: vi.fn(),
         } as unknown as OrbitController;
 
         const action = new SetCameraTransformAction(

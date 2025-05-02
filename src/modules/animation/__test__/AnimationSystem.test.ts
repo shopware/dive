@@ -1,25 +1,24 @@
-import { AnimationSystem } from '../AnimationSystem';
-import { Animator } from '../animator/Animator';
-import { Tween, Easing } from '@tweenjs/tween.js';
-import { TAnimatorParameters } from '../types/AnimatorParameters';
+import { AnimationSystem } from '../AnimationSystem.ts';
+import { Tween, Easing, update } from '@tweenjs/tween.js';
+import { TAnimatorParameters } from '../types/AnimatorParameters.ts';
+import type { Mock } from 'vitest';
 
-jest.mock('@tweenjs/tween.js');
-jest.mock('../animator/Animator', () => ({
-    Animator: jest.fn().mockImplementation((object, to, duration, options) => ({
+vi.mock('../animator/Animator', () => ({
+    Animator: vi.fn().mockImplementation((object, to, duration, options) => ({
         uuid: 'mock-animator-uuid',
         object,
         to,
         duration,
         options,
-        addEventListener: jest.fn(),
-        play: jest.fn(),
-        stop: jest.fn(),
+        addEventListener: vi.fn(),
+        play: vi.fn(),
+        stop: vi.fn(),
     })),
 }));
 
 describe('dive/animation/DIVEAnimationSystem', () => {
     let animationSystem: AnimationSystem;
-    let mockTween: jest.Mocked<Tween<any>> & {
+    let mockTween: Tween<any> & {
         updateCallback: (object: any, elapsed: number) => void;
         completeCallback: (object: any) => void;
     };
@@ -27,9 +26,9 @@ describe('dive/animation/DIVEAnimationSystem', () => {
     beforeEach(() => {
         animationSystem = new AnimationSystem();
         mockTween = {
-            to: jest.fn().mockReturnThis(),
-            easing: jest.fn().mockReturnThis(),
-            onUpdate: jest
+            to: vi.fn().mockReturnThis(),
+            easing: vi.fn().mockReturnThis(),
+            onUpdate: vi
                 .fn()
                 .mockImplementation(
                     (cb: (object: any, elapsed: number) => void) => {
@@ -37,22 +36,22 @@ describe('dive/animation/DIVEAnimationSystem', () => {
                         return mockTween;
                     },
                 ),
-            onComplete: jest
+            onComplete: vi
                 .fn()
                 .mockImplementation((cb: (object: any) => void) => {
                     mockTween.completeCallback = cb;
                     return mockTween;
                 }),
-            start: jest.fn(),
-            stop: jest.fn(),
-            updateCallback: jest.fn(),
-            completeCallback: jest.fn(),
-        } as unknown as jest.Mocked<Tween<any>> & {
+            start: vi.fn(),
+            stop: vi.fn(),
+            updateCallback: vi.fn(),
+            completeCallback: vi.fn(),
+        } as unknown as Tween<any> & {
             updateCallback: (object: any, elapsed: number) => void;
             completeCallback: (object: any) => void;
         };
-        (Tween as jest.Mock).mockReturnValue(mockTween);
-        jest.clearAllMocks();
+        vi.mocked(Tween).mockReturnValue(mockTween);
+        vi.clearAllMocks();
     });
 
     afterEach(() => {
@@ -79,8 +78,8 @@ describe('dive/animation/DIVEAnimationSystem', () => {
             const duration = 1000;
             const options: TAnimatorParameters<typeof object> = {
                 easing: Easing.Quadratic.Out,
-                onUpdate: jest.fn(),
-                onComplete: jest.fn(),
+                onUpdate: vi.fn(),
+                onComplete: vi.fn(),
             };
 
             const animator = animationSystem.createAnimator(
@@ -161,9 +160,7 @@ describe('dive/animation/DIVEAnimationSystem', () => {
             animationSystem.tick();
 
             // updateTween from @tweenjs/tween.js should be called
-            expect(
-                jest.requireMock('@tweenjs/tween.js').update,
-            ).toHaveBeenCalled();
+            expect(update).toHaveBeenCalled();
         });
     });
 
@@ -185,7 +182,9 @@ describe('dive/animation/DIVEAnimationSystem', () => {
         });
 
         it('should warn when unregistering non-existent animator', () => {
-            const consoleSpy = jest.spyOn(console, 'warn').mockImplementation();
+            const consoleSpy = vi
+                .spyOn(console, 'warn')
+                .mockImplementation((message: string) => {});
             const nonExistentUuid = 'non-existent-uuid';
 
             animationSystem.unregister(nonExistentUuid);
@@ -232,8 +231,8 @@ describe('dive/animation/DIVEAnimationSystem', () => {
 
             // Get the play event listener callback
             const playCallback = (
-                animator.addEventListener as jest.Mock
-            ).mock.calls.find((call) => call[0] === 'play')[1];
+                animator.addEventListener as Mock
+            ).mock.calls.find((call: any[]) => call[0] === 'play')![1];
 
             // Trigger the play event
             playCallback();
@@ -253,8 +252,8 @@ describe('dive/animation/DIVEAnimationSystem', () => {
 
             // Get the stop event listener callback
             const stopCallback = (
-                animator.addEventListener as jest.Mock
-            ).mock.calls.find((call) => call[0] === 'stop')[1];
+                animator.addEventListener as Mock
+            ).mock.calls.find((call: any[]) => call[0] === 'stop')![1];
 
             // Trigger the stop event
             stopCallback();
@@ -266,8 +265,8 @@ describe('dive/animation/DIVEAnimationSystem', () => {
             const object = { x: 0 };
             const to = { x: 100 };
             const duration = 1000;
-            const onUpdate = jest.fn();
-            const onComplete = jest.fn();
+            const onUpdate = vi.fn();
+            const onComplete = vi.fn();
             const options: TAnimatorParameters<typeof object> = {
                 onUpdate,
                 onComplete,
@@ -287,16 +286,16 @@ describe('dive/animation/DIVEAnimationSystem', () => {
             expect(callbackTuple).toBeDefined();
 
             // Get the update and complete callbacks from the mock tween
-            const updateCallback = (mockTween.onUpdate as jest.Mock).mock
+            const updateCallback = vi.mocked(mockTween.onUpdate).mock
                 .calls[0][0];
-            const completeCallback = (mockTween.onComplete as jest.Mock).mock
+            const completeCallback = vi.mocked(mockTween.onComplete).mock
                 .calls[0][0];
 
             // Trigger the callbacks
-            updateCallback(object, 0.5);
+            updateCallback!(object, 0.5);
             expect(onUpdate).toHaveBeenCalledWith(object, 0.5);
 
-            completeCallback(object);
+            completeCallback!(object);
             expect(onComplete).toHaveBeenCalledWith(object);
         });
 
@@ -311,17 +310,17 @@ describe('dive/animation/DIVEAnimationSystem', () => {
             );
 
             // Get the update and complete callbacks from the mock tween
-            const updateCallback = (mockTween.onUpdate as jest.Mock).mock
+            const updateCallback = vi.mocked(mockTween.onUpdate).mock
                 .calls[0][0];
-            const completeCallback = (mockTween.onComplete as jest.Mock).mock
+            const completeCallback = vi.mocked(mockTween.onComplete).mock
                 .calls[0][0];
 
             // Remove the animator from the callback map to test edge case
             animationSystem['_callbackMap'].delete(animator.uuid);
 
             // Should not throw when callbacks are missing
-            expect(() => updateCallback(object, 0.5)).not.toThrow();
-            expect(() => completeCallback(object)).not.toThrow();
+            expect(() => updateCallback!(object, 0.5)).not.toThrow();
+            expect(() => completeCallback!(object)).not.toThrow();
         });
 
         it('should create default empty callbacks when none provided', () => {
@@ -341,14 +340,14 @@ describe('dive/animation/DIVEAnimationSystem', () => {
             expect(callbackTuple).toBeDefined();
 
             // Get the update and complete callbacks from the mock tween
-            const updateCallback = (mockTween.onUpdate as jest.Mock).mock
+            const updateCallback = vi.mocked(mockTween.onUpdate).mock
                 .calls[0][0];
-            const completeCallback = (mockTween.onComplete as jest.Mock).mock
+            const completeCallback = vi.mocked(mockTween.onComplete).mock
                 .calls[0][0];
 
             // Should not throw when calling the default callbacks
-            expect(() => updateCallback(object, 0.5)).not.toThrow();
-            expect(() => completeCallback(object)).not.toThrow();
+            expect(() => updateCallback!(object, 0.5)).not.toThrow();
+            expect(() => completeCallback!(object)).not.toThrow();
 
             // The default callbacks should be empty functions
             expect(typeof callbackTuple?.onUpdate).toBe('function');

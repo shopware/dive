@@ -5,28 +5,28 @@ import { Group } from 'three';
 import { FileTypeError, NetworkError, ParseError } from '../../../../error';
 
 // Mock fetch
-global.fetch = jest.fn().mockImplementation(async (uri) => ({
+global.fetch = vi.fn().mockImplementation(async (uri) => ({
     ok: true,
     arrayBuffer: async () => new ArrayBuffer(0),
 }));
 
 // Mock the Three.js loaders
-jest.mock('three/examples/jsm/loaders/GLTFLoader', () => {
-    const mockLoadAsync = jest.fn();
-    const mockParseAsync = jest.fn();
+vi.mock('three/examples/jsm/loaders/GLTFLoader', () => {
+    const mockLoadAsync = vi.fn();
+    const mockParseAsync = vi.fn();
     return {
-        GLTFLoader: jest.fn().mockImplementation(() => ({
+        GLTFLoader: vi.fn().mockImplementation(() => ({
             loadAsync: mockLoadAsync,
             parseAsync: mockParseAsync,
         })),
     };
 });
 
-jest.mock('three/examples/jsm/loaders/USDZLoader', () => {
-    const mockLoadAsync = jest.fn();
-    const mockParse = jest.fn();
+vi.mock('three/examples/jsm/loaders/USDZLoader', () => {
+    const mockLoadAsync = vi.fn();
+    const mockParse = vi.fn();
     return {
-        USDZLoader: jest.fn().mockImplementation(() => ({
+        USDZLoader: vi.fn().mockImplementation(() => ({
             loadAsync: mockLoadAsync,
             parse: mockParse,
         })),
@@ -35,15 +35,15 @@ jest.mock('three/examples/jsm/loaders/USDZLoader', () => {
 
 describe('AssetLoader', () => {
     let loader: AssetLoader;
-    let mockGLTFLoader: jest.Mocked<GLTFLoader>;
-    let mockUSDZLoader: jest.Mocked<USDZLoader>;
+    let mockGLTFLoader: vi.Mocked<GLTFLoader>;
+    let mockUSDZLoader: vi.Mocked<USDZLoader>;
 
     beforeEach(() => {
-        jest.clearAllMocks();
+        vi.clearAllMocks();
         loader = new AssetLoader();
-        mockGLTFLoader = new GLTFLoader() as jest.Mocked<GLTFLoader>;
-        mockUSDZLoader = new USDZLoader() as jest.Mocked<USDZLoader>;
-        (global.fetch as jest.Mock).mockClear();
+        mockGLTFLoader = new GLTFLoader() as vi.Mocked<GLTFLoader>;
+        mockUSDZLoader = new USDZLoader() as vi.Mocked<USDZLoader>;
+        (global.fetch as vi.Mock).mockClear();
     });
 
     it('should load a glTF file successfully', async () => {
@@ -77,7 +77,7 @@ describe('AssetLoader', () => {
     });
 
     it('should throw NetworkError when fetch fails', async () => {
-        (global.fetch as jest.Mock).mockImplementationOnce(async () => ({
+        (global.fetch as vi.Mock).mockImplementationOnce(async () => ({
             ok: false,
         }));
 
@@ -85,7 +85,7 @@ describe('AssetLoader', () => {
     });
 
     it('should throw NetworkError when arrayBuffer extraction fails', async () => {
-        (global.fetch as jest.Mock).mockImplementationOnce(async () => ({
+        (global.fetch as vi.Mock).mockImplementationOnce(async () => ({
             ok: true,
             arrayBuffer: async () => {
                 throw new Error('Failed to extract arrayBuffer');

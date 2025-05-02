@@ -1,12 +1,14 @@
+import { vi } from 'vitest';
+
 export const Easing = {
     Quadratic: {
-        In: jest.fn(),
-        Out: jest.fn(),
-        InOut: jest.fn(),
+        In: vi.fn(),
+        Out: vi.fn(),
+        InOut: vi.fn(),
     },
 };
 
-export const Tween = jest.fn(() => {
+export const Tween = vi.fn(() => {
     const instance: object = {
         easing: () => {
             return instance;
@@ -32,4 +34,4 @@ export const Tween = jest.fn(() => {
     return instance;
 });
 
-export const update = jest.fn();
+export const update = vi.fn();

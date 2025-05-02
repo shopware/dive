@@ -5,7 +5,7 @@ describe('StartRenderAction', () => {
     it('should start the renderer', async () => {
         // Mock dependencies
         const mockEngine = {
-            start: jest.fn(),
+            start: vi.fn(),
         } as unknown as DIVEEngine;
 
         const action = new StartRenderAction(undefined, {

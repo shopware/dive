@@ -2,18 +2,18 @@ import { ARSystemOptions } from '../../ARSystem';
 import { SceneViewer } from '../SceneViewer';
 
 // Mock DIVEInfo
-jest.mock('../../../systeminfo/SystemInfo', () => ({
+vi.mock('../../../systeminfo/SystemInfo', () => ({
     DIVEInfo: {
-        GetSystem: jest.fn().mockReturnValue('Android'),
-        GetSupportsARQuickLook: jest.fn().mockReturnValue(false),
+        GetSystem: vi.fn().mockReturnValue('Android'),
+        GetSupportsARQuickLook: vi.fn().mockReturnValue(false),
     },
 }));
 
 // Mock URL and document APIs
 const mockLocation = new URL('https://example.com');
-const mockCreateElement = jest.fn();
-const mockSetAttribute = jest.fn();
-const mockClick = jest.fn();
+const mockCreateElement = vi.fn();
+const mockSetAttribute = vi.fn();
+const mockClick = vi.fn();
 
 Object.defineProperty(window, 'location', {
     value: mockLocation,
@@ -34,7 +34,7 @@ describe('DIVESceneViewer', () => {
             arPlacement: 'horizontal',
             arScale: 'auto',
         };
-        jest.clearAllMocks();
+        vi.clearAllMocks();
     });
 
     describe('constructor', () => {

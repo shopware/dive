@@ -1,4 +1,4 @@
-import { getFileTypeFromUri } from '../getFileTypeFromUri';
+import { getFileTypeFromUri } from '../getFileTypeFromUri.ts';
 
 describe('getFileTypeFromUri', () => {
     it('should extract file extension from URI', () => {
@@ -31,7 +31,7 @@ describe('getFileTypeFromUri', () => {
 
     it('should handle mocked pop returning undefined', () => {
         const originalPop = Array.prototype.pop;
-        Array.prototype.pop = jest
+        Array.prototype.pop = vi
             .fn()
             .mockReturnValueOnce('model.test') // First pop() call
             .mockReturnValueOnce(undefined); // Second pop() call

@@ -1,22 +1,22 @@
-import { DIVEEngine } from '../../../../../engine';
-import { DIVEScene } from '../../../../../engine/scene/Scene';
-import { SetParentAction } from '../setparent';
-import { COMEntity } from '../../../types';
+import { DIVEEngine } from '../../../../../engine/Engine.ts';
+import { DIVEScene } from '../../../../../engine/scene/Scene.ts';
+import { SetParentAction } from '../setparent.ts';
+import { COMEntity } from '../../../types/index.ts';
 import { Object3D } from 'three';
-import { type DIVESceneObject } from '../../../../../types/SceneObjects';
+import { DIVESceneObject } from '../../../../../types/SceneObjects.ts';
 
 describe('SetParentAction', () => {
     // Mock dependencies
     const mockSceneObject = {
-        attach: jest.fn(),
-    } as unknown as Object3D;
+        attach: vi.fn(),
+    } as unknown as DIVESceneObject;
 
     const mockParentObject = {
-        attach: jest.fn(),
+        attach: vi.fn(),
     } as unknown as Object3D;
 
     const mockScene = {
-        GetSceneObject: jest
+        GetSceneObject: vi
             .fn()
             .mockImplementation((obj: Partial<COMEntity> & { id: string }) => {
                 if (obj.id === 'test-object') return mockSceneObject;
@@ -24,7 +24,7 @@ describe('SetParentAction', () => {
                 return null;
             }),
         Root: {
-            attach: jest.fn(),
+            attach: vi.fn(),
         },
     } as unknown as DIVEScene;
 
@@ -36,7 +36,7 @@ describe('SetParentAction', () => {
 
     beforeEach(() => {
         mockRegistered.clear();
-        jest.clearAllMocks();
+        vi.clearAllMocks();
     });
 
     it('should set a parent for an object', () => {
@@ -162,7 +162,7 @@ describe('SetParentAction', () => {
         };
 
         mockRegistered.set(testObject.id, testObject);
-        (mockScene.GetSceneObject as jest.Mock).mockReturnValueOnce(null);
+        vi.mocked(mockScene.GetSceneObject).mockReturnValueOnce(undefined);
 
         // Act & Assert
         const action = new SetParentAction(
@@ -247,11 +247,11 @@ describe('SetParentAction', () => {
 
         mockRegistered.set(testObject.id, testObject);
         mockRegistered.set(parentObject.id, parentObject);
-        (mockScene.GetSceneObject as jest.Mock).mockImplementation(
+        vi.mocked(mockScene.GetSceneObject).mockImplementation(
             (obj: Partial<COMEntity> & { id: string }) => {
                 if (obj.id === 'test-object') return mockSceneObject;
-                if (obj.id === 'parent-object') return null;
-                return null;
+                if (obj.id === 'parent-object') return undefined;
+                return undefined;
             },
         );
 

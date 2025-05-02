@@ -1,30 +1,14 @@
-import { SetGizmoVisibilityAction } from '../setgizmovisible';
-import { Toolbox } from '../../../../toolbox/Toolbox';
-import { OrbitController } from '../../../../controller/orbit/OrbitController';
-import { ModuleImporter } from '../../../../_system/ModuleImporter';
-import { DIVEEngine } from '../../../../../engine/Engine';
+import { SetGizmoVisibilityAction } from '../setgizmovisible.ts';
 
-const mockEngine = {
-    scene: {
-        getSceneObject: jest.fn(),
-    },
-} as unknown as DIVEEngine;
-
-const mockController = {} as unknown as OrbitController;
-
-const mockSetGizmoVisibility = jest.fn();
-const mockToolbox = {
-    instantiate: jest.fn().mockResolvedValue({
-        SetGizmoVisibility: mockSetGizmoVisibility,
-    }),
-} as unknown as ModuleImporter<'Toolbox'>;
+const mockSetGizmoVisibility = vi.fn();
+const mockGetToolbox = vi.fn().mockResolvedValue({
+    SetGizmoVisibility: mockSetGizmoVisibility,
+});
 
 describe('SetGizmoVisibilityAction', () => {
     it('should set gizmo visibility', async () => {
         const action = new SetGizmoVisibilityAction(true, {
-            engine: mockEngine,
-            controller: mockController,
-            Toolbox: mockToolbox,
+            getToolbox: mockGetToolbox,
         });
 
         // Execute action

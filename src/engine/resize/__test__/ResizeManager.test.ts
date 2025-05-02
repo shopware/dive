@@ -3,44 +3,44 @@ import { DIVERenderPipeline } from '../../renderer/Renderer.ts';
 import { DIVEPerspectiveCamera } from '../../camera/PerspectiveCamera.ts';
 import { DIVEScene } from '../../scene/Scene.ts';
 
-jest.mock('../../renderer/Renderer', () => {
+vi.mock('../../renderer/Renderer', () => {
     return {
-        DIVERenderPipeline: jest.fn(function () {
+        DIVERenderPipeline: vi.fn(function (this: any) {
             return {
                 webglrenderer: {
                     domElement: document.createElement('canvas'),
                 },
-                onResize: jest.fn(),
+                onResize: vi.fn(),
             };
         }),
     };
 });
 
-jest.mock('../../scene/Scene', () => {
+vi.mock('../../scene/Scene', () => {
     return {
-        DIVEScene: jest.fn(function () {
+        DIVEScene: vi.fn(function (this: any) {
             return {
-                onResize: jest.fn(),
+                onResize: vi.fn(),
             };
         }),
     };
 });
 
-jest.mock('../../camera/PerspectiveCamera', () => {
+vi.mock('../../camera/PerspectiveCamera', () => {
     return {
-        DIVEPerspectiveCamera: jest.fn(function () {
+        DIVEPerspectiveCamera: vi.fn(function (this: any) {
             return {
-                onResize: jest.fn(),
+                onResize: vi.fn(),
             };
         }),
     };
 });
 
-jest.mock('../../camera/PerspectiveCamera', () => {
+vi.mock('../../camera/PerspectiveCamera', () => {
     return {
-        DIVEPerspectiveCamera: jest.fn(function () {
+        DIVEPerspectiveCamera: vi.fn(function (this: any) {
             return {
-                onResize: jest.fn(),
+                onResize: vi.fn(),
             };
         }),
     };
@@ -50,12 +50,12 @@ describe('DIVEResizeManager', () => {
     let resizeManager: DIVEResizeManager;
     let renderer: DIVERenderPipeline;
     let camera: DIVEPerspectiveCamera;
-    let mockResizeObserver: jest.Mock;
-    let mockObserve: jest.Mock;
-    let mockDisconnect: jest.Mock;
+    let mockResizeObserver: vi.Mock;
+    let mockObserve: vi.Mock;
+    let mockDisconnect: vi.Mock;
 
     beforeEach(() => {
-        jest.clearAllMocks();
+        vi.clearAllMocks();
         renderer = new DIVERenderPipeline(
             new DIVEScene(),
             new DIVEPerspectiveCamera(),
@@ -63,9 +63,9 @@ describe('DIVEResizeManager', () => {
         camera = new DIVEPerspectiveCamera();
 
         // Mock ResizeObserver
-        mockObserve = jest.fn();
-        mockDisconnect = jest.fn();
-        mockResizeObserver = jest.fn().mockImplementation(() => ({
+        mockObserve = vi.fn();
+        mockDisconnect = vi.fn();
+        mockResizeObserver = vi.fn().mockImplementation(() => ({
             observe: mockObserve,
             disconnect: mockDisconnect,
         }));
@@ -144,9 +144,9 @@ describe('DIVEResizeManager', () => {
         );
 
         // Mock setInterval
-        jest.useFakeTimers();
-        const mockSetInterval = jest.spyOn(global, 'setInterval');
-        const mockClearInterval = jest.spyOn(global, 'clearInterval');
+        vi.useFakeTimers();
+        const mockSetInterval = vi.spyOn(global, 'setInterval');
+        const mockClearInterval = vi.spyOn(global, 'clearInterval');
 
         // Create new instance
         resizeManager = new DIVEResizeManager(renderer, camera);
@@ -165,7 +165,7 @@ describe('DIVEResizeManager', () => {
         );
 
         // Fast-forward timers
-        jest.advanceTimersByTime(16);
+        vi.advanceTimersByTime(16);
 
         // Verify observe was called with parent element
         expect(mockObserve).toHaveBeenCalledWith(
@@ -176,6 +176,6 @@ describe('DIVEResizeManager', () => {
         expect(mockClearInterval).toHaveBeenCalled();
 
         // Cleanup
-        jest.useRealTimers();
+        vi.useRealTimers();
     });
 });

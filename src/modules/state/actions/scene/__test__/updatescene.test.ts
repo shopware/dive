@@ -7,13 +7,13 @@ describe('UpdateSceneAction', () => {
     it('should update scene properties', async () => {
         // Mock dependencies
         const mockGrid = {
-            SetVisibility: jest.fn(),
+            SetVisibility: vi.fn(),
             visible: true,
         };
 
         const mockFloor = {
-            SetVisibility: jest.fn(),
-            SetColor: jest.fn(),
+            SetVisibility: vi.fn(),
+            SetColor: vi.fn(),
             visible: true,
             material: new MeshStandardMaterial({ color: new Color('#ffffff') }),
         };
@@ -21,7 +21,7 @@ describe('UpdateSceneAction', () => {
         const mockScene = {
             name: 'Test Scene',
             background: new Color('#000000'),
-            SetBackground: jest.fn(),
+            SetBackground: vi.fn(),
             Grid: mockGrid,
             Root: {
                 floor: mockFloor,
@@ -59,13 +59,13 @@ describe('UpdateSceneAction', () => {
     it('should update only specified properties', async () => {
         // Mock dependencies
         const mockGrid = {
-            SetVisibility: jest.fn(),
+            SetVisibility: vi.fn(),
             visible: true,
         };
 
         const mockFloor = {
-            SetVisibility: jest.fn(),
-            SetColor: jest.fn(),
+            SetVisibility: vi.fn(),
+            SetColor: vi.fn(),
             visible: true,
             material: new MeshStandardMaterial({ color: new Color('#ffffff') }),
         };
@@ -73,7 +73,7 @@ describe('UpdateSceneAction', () => {
         const mockScene = {
             name: 'Test Scene',
             background: new Color('#000000'),
-            SetBackground: jest.fn(),
+            SetBackground: vi.fn(),
             Grid: mockGrid,
             Root: {
                 floor: mockFloor,

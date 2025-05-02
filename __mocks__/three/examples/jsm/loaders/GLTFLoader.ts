@@ -1,4 +1,6 @@
-export const GLTFLoader = jest.fn(function () {
+import { vi } from 'vitest';
+
+export const GLTFLoader = vi.fn(function () {
     this.loadAsync = (
         uri: string,
         progEvent: (p: ProgressEvent<EventTarget>) => void,
@@ -11,6 +13,6 @@ export const GLTFLoader = jest.fn(function () {
 
             resolve();
         });
-    this.setDRACOLoader = jest.fn();
+    this.setDRACOLoader = vi.fn();
     return this;
 });

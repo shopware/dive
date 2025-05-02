@@ -1,14 +1,13 @@
-import { Matrix4, Vector4, Color, AxesHelper, Material } from 'three';
-import { DIVEAxisCamera } from '../AxisCamera';
-import { DIVERenderPipeline } from '../../../engine/renderer/Renderer';
-import { DIVEScene } from '../../../engine/scene/Scene';
-import { OrbitController } from '../../controller/orbit/OrbitController';
-import { COORDINATE_LAYER_MASK } from '../../../constants/VisibilityLayerMask';
-import { DIVEPerspectiveCamera } from '../../../engine/camera/PerspectiveCamera';
+import { Matrix4, Vector4, Color, Material } from 'three';
+import { DIVEAxisCamera } from '../AxisCamera.ts';
+import { DIVERenderPipeline } from '../../../engine/renderer/Renderer.ts';
+import { DIVEScene } from '../../../engine/scene/Scene.ts';
+import { COORDINATE_LAYER_MASK } from '../../../constants/VisibilityLayerMask.ts';
+import { DIVEPerspectiveCamera } from '../../../engine/camera/PerspectiveCamera.ts';
 
 const mockScene = {
-    add: jest.fn(),
-    remove: jest.fn(),
+    add: vi.fn(),
+    remove: vi.fn(),
     background: null,
 } as unknown as DIVEScene;
 
@@ -17,11 +16,11 @@ const mockCamera = {
 } as unknown as DIVEPerspectiveCamera;
 
 const mockRenderer = {
-    render: jest.fn(),
+    render: vi.fn(),
     webglrenderer: {
-        getViewport: jest.fn().mockReturnValue(new Vector4(0, 0, 800, 600)),
-        setViewport: jest.fn(),
-        render: jest.fn(),
+        getViewport: vi.fn().mockReturnValue(new Vector4(0, 0, 800, 600)),
+        setViewport: vi.fn(),
+        render: vi.fn(),
         autoClear: true,
     },
 } as unknown as DIVERenderPipeline;
@@ -30,7 +29,7 @@ describe('DIVEAxisCamera', () => {
     let axisCamera: DIVEAxisCamera;
 
     beforeEach(() => {
-        jest.clearAllMocks();
+        vi.clearAllMocks();
         mockRenderer.webglrenderer.autoClear = true;
         axisCamera = new DIVEAxisCamera(mockRenderer, mockScene, mockCamera);
     });

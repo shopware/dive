@@ -2,12 +2,12 @@ import { DIVEPointLight } from '../PointLight.ts';
 import { State } from '../../../modules/state/State.ts';
 import { type Color, type PointLight } from 'three';
 
-jest.mock('../../../modules/state/State', () => {
+vi.mock('../../../modules/state/State', () => {
     return {
         State: {
-            get: jest.fn(() => {
+            get: vi.fn(() => {
                 return {
-                    performAction: jest.fn(),
+                    performAction: vi.fn(),
                 };
             }),
         },
@@ -50,7 +50,7 @@ describe('dive/light/DIVEPointLight', () => {
         testLight.userData.id = 'something';
         expect(() => testLight.onMove()).not.toThrow();
 
-        jest.spyOn(State, 'get').mockReturnValueOnce(undefined);
+        vi.spyOn(State, 'get').mockReturnValueOnce(undefined);
         expect(() => testLight.onMove()).not.toThrow();
     });
 
@@ -59,7 +59,7 @@ describe('dive/light/DIVEPointLight', () => {
         testLight.userData.id = 'something';
         expect(() => testLight.onSelect()).not.toThrow();
 
-        jest.spyOn(State, 'get').mockReturnValueOnce(undefined);
+        vi.spyOn(State, 'get').mockReturnValueOnce(undefined);
         expect(() => testLight.onSelect()).not.toThrow();
     });
 
@@ -68,7 +68,7 @@ describe('dive/light/DIVEPointLight', () => {
         testLight.userData.id = 'something';
         expect(() => testLight.onDeselect()).not.toThrow();
 
-        jest.spyOn(State, 'get').mockReturnValueOnce(undefined);
+        vi.spyOn(State, 'get').mockReturnValueOnce(undefined);
         expect(() => testLight.onDeselect()).not.toThrow();
     });
 });

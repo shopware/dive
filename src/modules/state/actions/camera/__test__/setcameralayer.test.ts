@@ -6,7 +6,7 @@ describe('SetCameraLayerAction', () => {
         // Mock dependencies
         const mockController = {
             object: {
-                setCameraLayer: jest.fn(),
+                setCameraLayer: vi.fn(),
             },
         } as unknown as OrbitController;
 

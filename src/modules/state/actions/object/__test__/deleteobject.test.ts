@@ -5,13 +5,13 @@ import { COMEntity } from '../../../types';
 import { SetParentAction } from '../setparent';
 import { UpdateObjectAction } from '../updateobject';
 
-jest.mock('../setparent');
-jest.mock('../updateobject');
+vi.mock('../setparent');
+vi.mock('../updateobject');
 
 describe('DeleteObjectAction', () => {
     // Mock dependencies
     const mockScene = {
-        DeleteSceneObject: jest.fn(),
+        DeleteSceneObject: vi.fn(),
     } as unknown as DIVEScene;
 
     const mockEngine = {
@@ -22,9 +22,9 @@ describe('DeleteObjectAction', () => {
 
     beforeEach(() => {
         mockRegistered.clear();
-        jest.clearAllMocks();
-        (SetParentAction as jest.Mock).mockClear();
-        (UpdateObjectAction as jest.Mock).mockClear();
+        vi.clearAllMocks();
+        (SetParentAction as vi.Mock).mockClear();
+        (UpdateObjectAction as vi.Mock).mockClear();
     });
 
     it('should delete a standalone object', () => {

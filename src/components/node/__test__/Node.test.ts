@@ -3,20 +3,20 @@ import { State } from '../../../modules/state/State.ts';
 import { Vector3 } from 'three';
 import { type DIVEGroup } from '../../group/Group.ts';
 
-jest.mock('../../../modules/state/State', () => {
+vi.mock('../../../modules/state/State', () => {
     return {
         State: {
-            get: jest.fn(() => {
+            get: vi.fn(() => {
                 return {
-                    performAction: jest.fn(),
+                    performAction: vi.fn(),
                 };
             }),
         },
     };
 });
 
-jest.spyOn(State, 'get').mockReturnValue({
-    performAction: jest.fn(),
+vi.spyOn(State, 'get').mockReturnValue({
+    performAction: vi.fn(),
 } as unknown as State);
 
 let node: DIVENode;
@@ -27,7 +27,7 @@ describe('dive/node/DIVENode', () => {
     });
 
     afterEach(() => {
-        jest.clearAllMocks();
+        vi.clearAllMocks();
     });
 
     it('should instantiate', () => {
@@ -35,8 +35,8 @@ describe('dive/node/DIVENode', () => {
     });
 
     it('should set position', () => {
-        const spySet = jest.spyOn(node.position, 'set');
-        const spyCopy = jest.spyOn(node.position, 'copy');
+        const spySet = vi.spyOn(node.position, 'set');
+        const spyCopy = vi.spyOn(node.position, 'copy');
 
         // without a parent, the node should only set it's local position
         node.parent = null;
@@ -48,11 +48,11 @@ describe('dive/node/DIVENode', () => {
         spySet.mockClear();
         spyCopy.mockClear();
         node.parent = {
-            worldToLocal: jest.fn(() => new Vector3(4, 5, 6)),
+            worldToLocal: vi.fn(() => new Vector3(4, 5, 6)),
             isDIVEGroup: true,
-            UpdateLineTo: jest.fn(),
+            UpdateLineTo: vi.fn(),
         } as unknown as DIVENode;
-        const spyUpdateLineTo = jest.spyOn(
+        const spyUpdateLineTo = vi.spyOn(
             node.parent as DIVEGroup,
             'UpdateLineTo',
         );
@@ -83,7 +83,7 @@ describe('dive/node/DIVENode', () => {
         expect(node.position.y).toBe(0);
         expect(node.position.z).toBe(0);
 
-        jest.spyOn(State, 'get').mockReturnValueOnce(undefined);
+        vi.spyOn(State, 'get').mockReturnValueOnce(undefined);
         expect(() => node.SetToWorldOrigin()).not.toThrow();
     });
 
@@ -91,12 +91,12 @@ describe('dive/node/DIVENode', () => {
         node.userData.id = 'something';
         node.parent = {
             isDIVEGroup: true,
-            UpdateLineTo: jest.fn(),
+            UpdateLineTo: vi.fn(),
         } as unknown as DIVENode;
 
         expect(() => node.onMove()).not.toThrow();
 
-        jest.spyOn(State, 'get').mockReturnValueOnce(undefined);
+        vi.spyOn(State, 'get').mockReturnValueOnce(undefined);
         expect(() => node.onMove()).not.toThrow();
     });
 
@@ -105,7 +105,7 @@ describe('dive/node/DIVENode', () => {
 
         expect(() => node.onSelect()).not.toThrow();
 
-        jest.spyOn(State, 'get').mockReturnValueOnce(undefined);
+        vi.spyOn(State, 'get').mockReturnValueOnce(undefined);
         expect(() => node.onSelect()).not.toThrow();
     });
 
@@ -114,7 +114,7 @@ describe('dive/node/DIVENode', () => {
 
         expect(() => node.onDeselect()).not.toThrow();
 
-        jest.spyOn(State, 'get').mockReturnValueOnce(undefined);
+        vi.spyOn(State, 'get').mockReturnValueOnce(undefined);
         expect(() => node.onDeselect()).not.toThrow();
     });
 });

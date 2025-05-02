@@ -1,33 +1,16 @@
-import { GenerateMediaAction } from '../generatemedia';
-import { COMEntity } from '../../../types';
-import { OrbitController } from '../../../../controller/orbit/OrbitController';
+import { GenerateMediaAction } from '../generatemedia.ts';
+import { COMEntity } from '../../../types/index.ts';
 import { Vector3 } from 'three';
-import { DIVEEngine } from '../../../../../engine';
-import { DIVEScene } from '../../../../../engine/scene/Scene';
-import { DIVERenderPipeline } from '../../../../../engine/renderer/Renderer';
-import { ModuleImporter } from '../../../../_system/ModuleImporter';
+
+const mockGenerateMedia = vi
+    .fn()
+    .mockResolvedValue('data:image/png;base64,test');
+const mockGetMediaCreator = vi.fn().mockResolvedValue({
+    GenerateMedia: mockGenerateMedia,
+});
 
 describe('GenerateMediaAction', () => {
-    // Mock dependencies
-    const mockMediaCreator = {
-        GenerateMedia: jest
-            .fn()
-            .mockResolvedValue('data:image/png;base64,test'),
-    };
-
-    const mockMediaCreatorModule = {
-        instantiate: jest.fn().mockResolvedValue(mockMediaCreator),
-    } as unknown as ModuleImporter<'MediaCreator'>;
-
-    const mockRenderer = {} as DIVERenderPipeline;
-    const mockScene = {} as DIVEScene;
-    const mockController = {} as OrbitController;
     const mockRegistered = new Map<string, COMEntity>();
-
-    const mockEngine = {
-        renderer: mockRenderer,
-        scene: mockScene,
-    } as unknown as DIVEEngine;
 
     it('should generate media from position and target', async () => {
         const action = new GenerateMediaAction(
@@ -38,9 +21,7 @@ describe('GenerateMediaAction', () => {
                 height: 600,
             },
             {
-                engine: mockEngine,
-                controller: mockController,
-                MediaCreator: mockMediaCreatorModule,
+                getMediaCreator: mockGetMediaCreator,
                 registered: mockRegistered,
             },
         );
@@ -49,12 +30,8 @@ describe('GenerateMediaAction', () => {
         const result = await action.execute();
 
         // Verify results
-        expect(mockMediaCreatorModule.instantiate).toHaveBeenCalledWith(
-            mockEngine.renderer,
-            mockEngine.scene,
-            mockController,
-        );
-        expect(mockMediaCreator.GenerateMedia).toHaveBeenCalledWith(
+        expect(mockGetMediaCreator).toHaveBeenCalled();
+        expect(mockGenerateMedia).toHaveBeenCalledWith(
             expect.objectContaining({ x: 1, y: 1, z: 1 }),
             expect.objectContaining({ x: 0, y: 0, z: 0 }),
             800,
@@ -85,9 +62,7 @@ describe('GenerateMediaAction', () => {
                 height: 600,
             },
             {
-                engine: mockEngine,
-                controller: mockController,
-                MediaCreator: mockMediaCreatorModule,
+                getMediaCreator: mockGetMediaCreator,
                 registered: mockRegistered,
             },
         );
@@ -96,12 +71,8 @@ describe('GenerateMediaAction', () => {
         const result = await action.execute();
 
         // Verify results
-        expect(mockMediaCreatorModule.instantiate).toHaveBeenCalledWith(
-            mockEngine.renderer,
-            mockEngine.scene,
-            mockController,
-        );
-        expect(mockMediaCreator.GenerateMedia).toHaveBeenCalledWith(
+        expect(mockGetMediaCreator).toHaveBeenCalled();
+        expect(mockGenerateMedia).toHaveBeenCalledWith(
             expect.objectContaining({ x: 1, y: 1, z: 1 }),
             expect.objectContaining({ x: 0, y: 0, z: 0 }),
             800,
@@ -118,9 +89,7 @@ describe('GenerateMediaAction', () => {
                 height: 600,
             },
             {
-                engine: mockEngine,
-                controller: mockController,
-                MediaCreator: mockMediaCreatorModule,
+                getMediaCreator: mockGetMediaCreator,
                 registered: mockRegistered,
             },
         );
@@ -153,9 +122,7 @@ describe('GenerateMediaAction', () => {
                 height: 600,
             },
             {
-                engine: mockEngine,
-                controller: mockController,
-                MediaCreator: mockMediaCreatorModule,
+                getMediaCreator: mockGetMediaCreator,
                 registered: mockRegistered,
             },
         );

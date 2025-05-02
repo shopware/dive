@@ -15,9 +15,9 @@ describe('DIVEMovable', () => {
 
     it('should allow setting move event handlers', () => {
         const movable = new DIVEMovable();
-        const onMoveStart = jest.fn();
-        const onMove = jest.fn();
-        const onMoveEnd = jest.fn();
+        const onMoveStart = vi.fn();
+        const onMove = vi.fn();
+        const onMoveEnd = vi.fn();
 
         movable.onMoveStart = onMoveStart;
         movable.onMove = onMove;

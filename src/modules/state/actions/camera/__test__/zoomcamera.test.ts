@@ -5,8 +5,8 @@ describe('ZoomCameraAction', () => {
     it('should zoom the camera', async () => {
         // Mock dependencies
         const mockController = {
-            zoomIn: jest.fn(),
-            zoomOut: jest.fn(),
+            zoomIn: vi.fn(),
+            zoomOut: vi.fn(),
         } as unknown as OrbitController;
 
         const action = new ZoomCameraAction(
@@ -26,8 +26,8 @@ describe('ZoomCameraAction', () => {
     it('should zoom out the camera', async () => {
         // Mock dependencies
         const mockController = {
-            zoomIn: jest.fn(),
-            zoomOut: jest.fn(),
+            zoomIn: vi.fn(),
+            zoomOut: vi.fn(),
         } as unknown as OrbitController;
 
         const action = new ZoomCameraAction(

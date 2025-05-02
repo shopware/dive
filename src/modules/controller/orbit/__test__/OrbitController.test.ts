@@ -4,27 +4,30 @@ import { DIVERenderPipeline } from '../../../../engine/renderer/Renderer.ts';
 import { Box3, Vector3 } from 'three';
 import { DIVEScene } from '../../../../engine/scene/Scene.ts';
 
-jest.mock('../../../../engine/renderer/Renderer', () => {
+// Add a real canvas for the controls domElement
+const canvas = document.createElement('canvas');
+
+vi.mock('../../../../engine/renderer/Renderer', () => {
     return {
-        DIVERenderPipeline: jest.fn(function () {
+        DIVERenderPipeline: vi.fn(function (this: any) {
             this.webglrenderer = {
-                domElement: {},
+                domElement: canvas,
             };
-            this.render = jest.fn();
-            this.onResize = jest.fn();
-            this.getViewport = jest.fn();
-            this.setViewport = jest.fn();
+            this.render = vi.fn();
+            this.onResize = vi.fn();
+            this.getViewport = vi.fn();
+            this.setViewport = vi.fn();
             return this;
         }),
     };
 });
 
-jest.mock('../../../animation/AnimationSystem', () => {
+vi.mock('../../../animation/AnimationSystem', () => {
     return {
-        Animator: jest.fn(function () {
+        Animator: vi.fn(function (this: any) {
             this.uuid = 'test-uuid';
-            this.tick = jest.fn();
-            this.dispose = jest.fn();
+            this.tick = vi.fn();
+            this.dispose = vi.fn();
             return this;
         }),
     };
@@ -32,20 +35,20 @@ jest.mock('../../../animation/AnimationSystem', () => {
 
 const mockCamera = {
     position: {
-        clone: jest.fn(() => {
+        clone: vi.fn(() => {
             return mockCamera.position;
         }),
-        normalize: jest.fn(() => {
+        normalize: vi.fn(() => {
             return mockCamera.position;
         }),
-        multiplyScalar: jest.fn(() => {
+        multiplyScalar: vi.fn(() => {
             return mockCamera.position;
         }),
-        set: jest.fn(() => {
+        set: vi.fn(() => {
             return mockCamera.position;
         }),
     },
-    lookAt: jest.fn(),
+    lookAt: vi.fn(),
 } as unknown as DIVEPerspectiveCamera;
 const mockRenderer = new DIVERenderPipeline(new DIVEScene(), mockCamera);
 
@@ -53,7 +56,7 @@ let controller: OrbitController;
 
 describe('modules/controller/orbit/OrbitController', () => {
     afterEach(() => {
-        jest.clearAllMocks();
+        vi.clearAllMocks();
     });
 
     beforeEach(() => {
@@ -126,13 +129,18 @@ describe('modules/controller/orbit/OrbitController', () => {
     });
 
     it('should update on tick', () => {
-        const spyUpdate = jest.spyOn(controller, 'update').mockImplementation();
+        controller.enabled = true;
+        const spyUpdate = vi
+            .spyOn(controller, 'update')
+            .mockImplementation(() => {
+                return true;
+            });
         controller.tick();
         expect(spyUpdate).toHaveBeenCalled();
     });
 
     it('should not update on tick when locked', () => {
-        controller.update = jest.fn();
+        controller.update = vi.fn();
         controller.enabled = false;
         controller.tick();
         expect(controller.update).not.toHaveBeenCalled();
@@ -144,7 +152,7 @@ describe('modules/controller/orbit/OrbitController', () => {
     });
 
     it('should update on tick when not locked', () => {
-        controller.update = jest.fn();
+        controller.update = vi.fn();
         controller.enabled = true;
         controller.tick();
         expect(controller.update).toHaveBeenCalled();

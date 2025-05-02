@@ -3,43 +3,43 @@ import { type COMEntity } from '../../../modules/state/types';
 import { COMEntityType } from '../../../modules/state/types/index';
 import { DIVEScene } from '../Scene';
 
-const mock_AddSceneObject = jest.fn();
-const mock_UpdateSceneObject = jest.fn();
-const mock_DeleteSceneObject = jest.fn();
-const mock_PlaceOnFloor = jest.fn();
-const mock_GetSceneObject = jest.fn();
-const mock_ComputeSceneBB = jest.fn();
+const mock_AddSceneObject = vi.fn();
+const mock_UpdateSceneObject = vi.fn();
+const mock_DeleteSceneObject = vi.fn();
+const mock_PlaceOnFloor = vi.fn();
+const mock_GetSceneObject = vi.fn();
+const mock_ComputeSceneBB = vi.fn();
 
-jest.mock('../../../components/root/Root', () => {
+vi.mock('../../../components/root/Root', () => {
     return {
-        DIVERoot: jest.fn(function () {
+        DIVERoot: vi.fn(function (this: any) {
             this.isObject3D = true;
             this.parent = null;
-            this.dispatchEvent = jest.fn();
+            this.dispatchEvent = vi.fn();
             this.AddSceneObject = mock_AddSceneObject;
             this.UpdateSceneObject = mock_UpdateSceneObject;
             this.DeleteSceneObject = mock_DeleteSceneObject;
             this.PlaceOnFloor = mock_PlaceOnFloor;
             this.GetSceneObject = mock_GetSceneObject;
             this.ComputeSceneBB = mock_ComputeSceneBB;
-            this.removeFromParent = jest.fn();
+            this.removeFromParent = vi.fn();
             return this;
         }),
     };
 });
 
-jest.mock('../../renderer/Renderer', () => {
+vi.mock('../../renderer/Renderer', () => {
     return {
-        DIVERenderPipeline: jest.fn(function () {}),
+        DIVERenderPipeline: vi.fn(function (this: any) {}),
     };
 });
 
-jest.mock('../../../components/grid/Grid', () => {
+vi.mock('../../../components/grid/Grid', () => {
     return {
-        DIVEGrid: jest.fn(function () {
+        DIVEGrid: vi.fn(function (this: any) {
             this.isObject3D = true;
             this.parent = null;
-            this.dispatchEvent = jest.fn();
+            this.dispatchEvent = vi.fn();
             return this;
         }),
     };
@@ -49,7 +49,7 @@ let scene: DIVEScene;
 
 describe('DIVEScene', () => {
     beforeEach(() => {
-        jest.clearAllMocks();
+        vi.clearAllMocks();
         scene = new DIVEScene();
     });
 

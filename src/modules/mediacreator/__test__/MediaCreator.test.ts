@@ -17,13 +17,13 @@ class MockResizeObserver {
 }
 global.ResizeObserver = MockResizeObserver as any;
 
-const mock_render = jest.fn();
-const mock_toDataURL = jest.fn();
+const mock_render = vi.fn();
+const mock_toDataURL = vi.fn();
 
-jest.mock('../../../engine/scene/Scene', () => {
+vi.mock('../../../engine/scene/Scene', () => {
     return {
-        DIVEScene: jest.fn(function () {
-            this.add = jest.fn();
+        DIVEScene: vi.fn(function (this: any) {
+            this.add = vi.fn();
             this.children = [];
             this.Root = {
                 children: [],
@@ -33,80 +33,80 @@ jest.mock('../../../engine/scene/Scene', () => {
     };
 });
 
-jest.mock('../../../engine/camera/PerspectiveCamera', () => {
+vi.mock('../../../engine/camera/PerspectiveCamera', () => {
     return {
-        DIVEPerspectiveCamera: jest.fn(function () {
+        DIVEPerspectiveCamera: vi.fn(function (this: any) {
             this.position = {
-                clone: jest.fn(),
-                copy: jest.fn(),
+                clone: vi.fn(),
+                copy: vi.fn(),
             };
             this.quaternion = {
-                clone: jest.fn(),
-                copy: jest.fn(),
+                clone: vi.fn(),
+                copy: vi.fn(),
             };
             this.layers = {
                 mask: 0,
             };
-            this.onResize = jest.fn();
+            this.onResize = vi.fn();
             return this;
         }),
     };
 });
 
-jest.mock('../../../modules/controller/orbit/OrbitController', () => {
+vi.mock('../../../modules/controller/orbit/OrbitController', () => {
     return {
-        OrbitController: jest.fn(function () {
+        OrbitController: vi.fn(function (this: any) {
             this.object = {
                 position: {
-                    clone: jest.fn(),
-                    copy: jest.fn(),
+                    clone: vi.fn(),
+                    copy: vi.fn(),
                 },
                 quaternion: {
-                    clone: jest.fn(),
-                    copy: jest.fn(),
+                    clone: vi.fn(),
+                    copy: vi.fn(),
                 },
                 layers: {
                     mask: 0,
                 },
-                onResize: jest.fn(),
+                onResize: vi.fn(),
             };
 
             this.target = {
-                clone: jest.fn(),
-                copy: jest.fn(),
+                clone: vi.fn(),
+                copy: vi.fn(),
             };
 
-            this.update = jest.fn();
+            this.update = vi.fn();
 
             return this;
         }),
     };
 });
 
-jest.mock('../../../engine/renderer/Renderer', () => {
+vi.mock('../../../engine/renderer/Renderer', () => {
     return {
-        DIVERenderPipeline: jest.fn(function () {
+        DIVERenderPipeline: vi.fn(function (this: any) {
             this.webglrenderer = {
                 domElement: {
                     toDataURL: mock_toDataURL,
                 },
                 render: mock_render,
             };
-            this.onResize = jest.fn();
+            this.onResize = vi.fn();
             return this;
         }),
     };
 });
 
-jest.mock('../../../modules/animation/AnimationSystem', () => {
+vi.mock('../../../modules/animation/AnimationSystem', () => {
     return {
-        DIVEAnimationSystem: jest.fn(function () {
+        DIVEAnimationSystem: vi.fn(function (this: any) {
             this.domElement = {
                 toDataURL: mock_toDataURL,
             };
             this.render = mock_render;
-            this.OnResize = jest.fn();
-            this.AddPreRenderCallback = jest.fn((callback) => {
+            this.OnResize = vi.fn();
+            this.AddPreRenderCallback = vi.fn((callback) => {
                 callback();
                 return 'id';
             });
@@ -126,7 +126,7 @@ let mediaCreator: MediaCreator;
 
 describe('MediaCreator', () => {
     beforeEach(() => {
-        jest.clearAllMocks();
+        vi.clearAllMocks();
         mediaCreator = new MediaCreator(
             mockRenderer,
             mockScene,

@@ -3,11 +3,6 @@
  * This is the only place where ModuleRegistry should be imported from.
  */
 
-import { ModuleImporter } from './_system/ModuleImporter.ts';
-
-// Re-export the ModuleImporter as the only public access point
-export { ModuleImporter };
-
 const moduleRegistry = {
     AnimationSystem: async () =>
         (await import('./animation/AnimationSystem.ts')).AnimationSystem,

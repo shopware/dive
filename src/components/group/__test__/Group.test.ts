@@ -3,27 +3,27 @@ import { State } from '../../../modules/state/State.ts';
 import { type DIVENode } from '../../node/Node.ts';
 import { DIVEGroup } from '../Group.ts';
 
-jest.mock('../../../modules/state/State', () => {
+vi.mock('../../../modules/state/State', () => {
     return {
         State: {
-            get: jest.fn(() => {
+            get: vi.fn(() => {
                 return {
-                    performAction: jest.fn(),
+                    performAction: vi.fn(),
                 };
             }),
         },
     };
 });
 
-jest.spyOn(State, 'get').mockReturnValue({
-    performAction: jest.fn(),
+vi.spyOn(State, 'get').mockReturnValue({
+    performAction: vi.fn(),
 } as unknown as State);
 
 let group: DIVEGroup;
 let obj: Object3D;
 
-Object3D.prototype.attach = jest.fn();
-Object3D.prototype.remove = jest.fn();
+Object3D.prototype.attach = vi.fn();
+Object3D.prototype.remove = vi.fn();
 
 // Ensure remove method is not mocked
 const originalAttach = DIVEGroup.prototype.attach;
@@ -39,7 +39,7 @@ beforeEach(() => {
 
 describe('dive/group/DIVEGroup', () => {
     afterEach(() => {
-        jest.clearAllMocks();
+        vi.clearAllMocks();
     });
 
     it('should instantiate', () => {
@@ -108,7 +108,7 @@ describe('dive/group/DIVEGroup', () => {
 
         expect(() => group.onMove()).not.toThrow();
 
-        jest.spyOn(State, 'get').mockReturnValueOnce(undefined);
+        vi.spyOn(State, 'get').mockReturnValueOnce(undefined);
         expect(() => group.onMove()).not.toThrow();
     });
 
@@ -117,7 +117,7 @@ describe('dive/group/DIVEGroup', () => {
 
         expect(() => group.onSelect()).not.toThrow();
 
-        jest.spyOn(State, 'get').mockReturnValueOnce(undefined);
+        vi.spyOn(State, 'get').mockReturnValueOnce(undefined);
         expect(() => group.onSelect()).not.toThrow();
     });
 
@@ -126,7 +126,7 @@ describe('dive/group/DIVEGroup', () => {
 
         expect(() => group.onDeselect()).not.toThrow();
 
-        jest.spyOn(State, 'get').mockReturnValueOnce(undefined);
+        vi.spyOn(State, 'get').mockReturnValueOnce(undefined);
         expect(() => group.onDeselect()).not.toThrow();
     });
 
@@ -135,7 +135,7 @@ describe('dive/group/DIVEGroup', () => {
 
         expect(() => group.onMove()).not.toThrow();
 
-        jest.spyOn(State, 'get').mockReturnValueOnce(undefined);
+        vi.spyOn(State, 'get').mockReturnValueOnce(undefined);
         expect(() => group.onMove()).not.toThrow();
     });
 
@@ -143,12 +143,12 @@ describe('dive/group/DIVEGroup', () => {
         // Create mock members
         const diveNode1: DIVENode = {
             isDIVENode: true,
-            onMove: jest.fn(),
+            onMove: vi.fn(),
         } as unknown as DIVENode;
 
         const diveNode2: DIVENode = {
             isDIVENode: true,
-            onMove: jest.fn(),
+            onMove: vi.fn(),
         } as unknown as DIVENode;
 
         const member1: DIVENode = {
@@ -215,7 +215,7 @@ describe('dive/group/DIVEGroup', () => {
         // Create mixed members
         const diveNode: DIVENode = {
             isDIVENode: true,
-            onMove: jest.fn(),
+            onMove: vi.fn(),
         } as unknown as DIVENode;
 
         const member: DIVENode = {

@@ -1,32 +1,30 @@
-import { MoveCameraAction } from '../movecamera';
-import { COMEntity } from '../../../types';
-import { OrbitController } from '../../../../controller/orbit/OrbitController';
+import { MoveCameraAction } from '../movecamera.ts';
+import { COMEntity } from '../../../types/index.ts';
+import { OrbitController } from '../../../../controller/orbit/OrbitController.ts';
 import { Vector3 } from 'three';
-import { DIVEEngine } from '../../../../../engine';
-import { ModuleImporter } from '../../../..';
+import { DIVEEngine } from '../../../../../engine/Engine.ts';
+import { getModule } from '../../../../index.ts';
 
-const mockStop = jest.fn();
-const mockCreateAnimator = jest.fn().mockReturnValue({
-    play: jest.fn(),
+const mockStop = vi.fn();
+const mockCreateAnimator = vi.fn().mockReturnValue({
+    play: vi.fn(),
     stop: mockStop,
 });
 
-const mockAnimationSystem = {
-    instantiate: jest.fn().mockResolvedValue({
-        createAnimator: mockCreateAnimator,
-    }),
-} as unknown as ModuleImporter<'AnimationSystem'>;
+const mockGetAnimationSystem = vi.fn().mockResolvedValue({
+    createAnimator: mockCreateAnimator,
+});
 
 const mockEngine = {
     clock: {
-        addTicker: jest.fn(),
+        addTicker: vi.fn(),
     },
 } as unknown as DIVEEngine;
 
 const mockController = {
     object: {
         position: new Vector3(1, 1, 1),
-        lookAt: jest.fn(),
+        lookAt: vi.fn(),
     },
     target: new Vector3(0, 0, 0),
     enabled: true,
@@ -34,7 +32,7 @@ const mockController = {
 
 describe('MoveCameraAction', () => {
     beforeEach(() => {
-        jest.clearAllMocks();
+        vi.clearAllMocks();
     });
 
     describe('Direct Position Movement', () => {
@@ -51,7 +49,7 @@ describe('MoveCameraAction', () => {
                 {
                     controller: mockController,
                     registered: mockRegistered,
-                    AnimationSystem: mockAnimationSystem,
+                    getAnimationSystem: mockGetAnimationSystem,
                     engine: mockEngine,
                 },
             );
@@ -59,7 +57,7 @@ describe('MoveCameraAction', () => {
             const result = await action.execute();
 
             // Verify animation system initialization
-            expect(mockAnimationSystem.instantiate).toHaveBeenCalled();
+            expect(mockGetAnimationSystem).toHaveBeenCalled();
             expect(mockEngine.clock.addTicker).toHaveBeenCalled();
 
             // Verify animator creation for position
@@ -102,7 +100,7 @@ describe('MoveCameraAction', () => {
                 {
                     controller: mockController,
                     registered: mockRegistered,
-                    AnimationSystem: mockAnimationSystem,
+                    getAnimationSystem: mockGetAnimationSystem,
                     engine: mockEngine,
                 },
             );
@@ -145,7 +143,7 @@ describe('MoveCameraAction', () => {
                 {
                     controller: mockController,
                     registered: mockRegistered,
-                    AnimationSystem: mockAnimationSystem,
+                    getAnimationSystem: mockGetAnimationSystem,
                     engine: mockEngine,
                 },
             );
@@ -190,7 +188,7 @@ describe('MoveCameraAction', () => {
                 {
                     controller: mockController,
                     registered: mockRegistered,
-                    AnimationSystem: mockAnimationSystem,
+                    getAnimationSystem: mockGetAnimationSystem,
                     engine: mockEngine,
                 },
             );
@@ -223,7 +221,7 @@ describe('MoveCameraAction', () => {
                 {
                     controller: mockController,
                     registered: mockRegistered,
-                    AnimationSystem: mockAnimationSystem,
+                    getAnimationSystem: mockGetAnimationSystem,
                     engine: mockEngine,
                 },
             );
@@ -248,7 +246,7 @@ describe('MoveCameraAction', () => {
                 {
                     controller: mockController,
                     registered: mockRegistered,
-                    AnimationSystem: mockAnimationSystem,
+                    getAnimationSystem: mockGetAnimationSystem,
                     engine: mockEngine,
                 },
             );
@@ -269,17 +267,15 @@ describe('MoveCameraAction', () => {
         it('should handle animation stop', async () => {
             const mockRegistered = new Map<string, COMEntity>();
             const mockAnimators = [
-                { play: jest.fn().mockReturnThis(), stop: mockStop },
-                { play: jest.fn().mockReturnThis(), stop: mockStop },
+                { play: vi.fn().mockReturnThis(), stop: mockStop },
+                { play: vi.fn().mockReturnThis(), stop: mockStop },
             ];
             mockCreateAnimator
                 .mockReturnValueOnce(mockAnimators[0])
                 .mockReturnValueOnce(mockAnimators[1]);
-            (
-                mockAnimationSystem.instantiate as jest.Mock
-            ).mockResolvedValueOnce({
+            mockGetAnimationSystem.mockResolvedValueOnce({
                 createAnimator: mockCreateAnimator,
-                addTicker: jest.fn(),
+                addTicker: vi.fn(),
             });
 
             const action = new MoveCameraAction(
@@ -292,7 +288,7 @@ describe('MoveCameraAction', () => {
                 {
                     controller: mockController,
                     registered: mockRegistered,
-                    AnimationSystem: mockAnimationSystem,
+                    getAnimationSystem: mockGetAnimationSystem,
                     engine: mockEngine,
                 },
             );

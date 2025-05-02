@@ -1,62 +1,37 @@
-import { AssetConverter } from '../AssetConverter';
-import { AssetLoader } from '../../loader/AssetLoader';
-import { AssetExporter } from '../../exporter/AssetExporter';
+import { AssetConverter } from '../AssetConverter.ts';
+import { AssetLoader } from '../../loader/AssetLoader.ts';
+import { AssetExporter } from '../../exporter/AssetExporter.ts';
 import { Object3D } from 'three';
-import { FileType } from '../../../../types/file';
+import { FileType } from '../../../../types/file/index.ts';
 
-// Mock the Loader class
-jest.mock('../../loader/AssetLoader', () => {
-    const mockLoad = jest.fn();
+const mockLoaderLoad = vi.fn();
+vi.mock('../../loader/AssetLoader', () => {
     return {
-        AssetLoader: jest.fn().mockImplementation(() => ({
-            load: mockLoad,
+        AssetLoader: vi.fn().mockImplementation(() => ({
+            load: mockLoaderLoad,
         })),
     };
 });
 
 // Mock the Exporter class
-jest.mock('../../exporter/AssetExporter', () => {
-    const mockExport = jest.fn();
+const mockExporterExport = vi.fn();
+vi.mock('../../exporter/AssetExporter', () => {
     return {
-        AssetExporter: jest.fn().mockImplementation(() => ({
-            export: mockExport,
+        AssetExporter: vi.fn().mockImplementation(() => ({
+            export: mockExporterExport,
         })),
     };
 });
 
+const mockLoader = new AssetLoader();
+const mockExporter = new AssetExporter();
+
 describe('AssetConverter', () => {
-    let mockLoaderLoad: jest.Mock<Promise<Object3D>, [string]>;
-    let mockExporterExport: jest.Mock<
-        Promise<ArrayBuffer>,
-        [Object3D, FileType, any?]
-    >;
-    let mockLoader: AssetLoader;
-    let mockExporter: AssetExporter;
     const testUri = 'https://example.com/model.glb';
     const mockObject3D = new Object3D();
     const mockArrayBuffer = new ArrayBuffer(8);
 
-    beforeEach(() => {
-        // Get the mocked function and reset them before each test
-        const loaderModule = require('../../loader/AssetLoader');
-        const exporterModule = require('../../exporter/AssetExporter');
-
-        mockLoader = new loaderModule.AssetLoader();
-        mockExporter = new exporterModule.AssetExporter();
-
-        mockLoaderLoad = mockLoader.load as jest.Mock<
-            Promise<Object3D>,
-            [string]
-        >;
-        mockExporterExport = mockExporter.export as jest.Mock<
-            Promise<ArrayBuffer>,
-            [Object3D, FileType, any?]
-        >;
-
-        // Reset mocks
-        jest.clearAllMocks();
-
-        // Setup default mock implementations
+    beforeEach(async () => {
         mockLoaderLoad.mockResolvedValue(mockObject3D);
         mockExporterExport.mockResolvedValue(mockArrayBuffer);
     });

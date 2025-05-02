@@ -1,7 +1,8 @@
-import { ARSystem, type ARSystemOptions } from '../ARSystem';
-import { SystemInfo } from '../../systeminfo/SystemInfo';
-import { ARQuickLook } from '../arquicklook/ARQuickLook';
-import { SceneViewer } from '../sceneviewer/SceneViewer';
+import { ARSystem, type ARSystemOptions } from '../ARSystem.ts';
+import { SystemInfo } from '../../systeminfo/SystemInfo.ts';
+import { ARQuickLook } from '../arquicklook/ARQuickLook.ts';
+import { SceneViewer } from '../sceneviewer/SceneViewer.ts';
+import { ESystem } from '../../../types/index.ts';
 
 // Helper for test failures
 const fail = (message: string): never => {
@@ -9,25 +10,25 @@ const fail = (message: string): never => {
 };
 
 // Mock Info
-jest.mock('../../systeminfo/SystemInfo', () => ({
+vi.mock('../../systeminfo/SystemInfo', () => ({
     SystemInfo: {
-        getSystem: jest.fn(),
-        getSupportsARQuickLook: jest.fn(),
+        getSystem: vi.fn(),
+        getSupportsARQuickLook: vi.fn(),
     },
 }));
 
 // Mock ARQuickLook
-const mockLaunchARQuickLook = jest.fn().mockResolvedValue(undefined);
-jest.mock('../arquicklook/ARQuickLook', () => ({
-    ARQuickLook: jest.fn().mockImplementation(() => ({
+const mockLaunchARQuickLook = vi.fn().mockResolvedValue(undefined);
+vi.mock('../arquicklook/ARQuickLook', () => ({
+    ARQuickLook: vi.fn().mockImplementation(() => ({
         launch: mockLaunchARQuickLook,
     })),
 }));
 
 // Mock SceneViewer
-const mockSceneViewerLaunch = jest.fn().mockResolvedValue(undefined);
-jest.mock('../sceneviewer/SceneViewer', () => ({
-    SceneViewer: jest.fn().mockImplementation(() => ({
+const mockSceneViewerLaunch = vi.fn().mockResolvedValue(undefined);
+vi.mock('../sceneviewer/SceneViewer', () => ({
+    SceneViewer: vi.fn().mockImplementation(() => ({
         launch: mockSceneViewerLaunch,
     })),
 }));
@@ -38,20 +39,20 @@ describe('ARSystem', () => {
 
     beforeEach(() => {
         diveAR = new ARSystem();
-        jest.clearAllMocks();
+        vi.clearAllMocks();
     });
 
     describe('launch', () => {
         describe('AR Quick Look', () => {
             it('should launch ARQuickLook on iOS', async () => {
-                (SystemInfo.getSystem as jest.Mock).mockReturnValue('iOS');
-                (
-                    SystemInfo.getSupportsARQuickLook as jest.Mock
-                ).mockReturnValue(true);
+                vi.mocked(SystemInfo.getSystem).mockReturnValue(ESystem.IOS);
+                vi.mocked(SystemInfo.getSupportsARQuickLook).mockReturnValue(
+                    true,
+                );
 
-                const consoleLogSpy = jest
+                const consoleLogSpy = vi
                     .spyOn(console, 'log')
-                    .mockImplementation();
+                    .mockImplementation(() => {});
 
                 await diveAR.launch(mockUri);
 
@@ -63,19 +64,19 @@ describe('ARSystem', () => {
             });
 
             it('should launch ARQuickLook on iOS with options', async () => {
-                (SystemInfo.getSystem as jest.Mock).mockReturnValue('iOS');
-                (
-                    SystemInfo.getSupportsARQuickLook as jest.Mock
-                ).mockReturnValue(true);
+                vi.mocked(SystemInfo.getSystem).mockReturnValue(ESystem.IOS);
+                vi.mocked(SystemInfo.getSupportsARQuickLook).mockReturnValue(
+                    true,
+                );
 
                 const options: ARSystemOptions = {
                     arPlacement: 'vertical',
                     arScale: 'fixed',
                 };
 
-                const consoleLogSpy = jest
+                const consoleLogSpy = vi
                     .spyOn(console, 'log')
-                    .mockImplementation();
+                    .mockImplementation(() => {});
 
                 await diveAR.launch(mockUri, options);
 
@@ -87,15 +88,15 @@ describe('ARSystem', () => {
             });
 
             it('should not launch ARQuickLook on iOS if not supported', async () => {
-                (SystemInfo.getSystem as jest.Mock).mockReturnValue('iOS');
+                vi.mocked(SystemInfo.getSystem).mockReturnValue(ESystem.IOS);
 
                 // Mock GetSupportsARQuickLook to throw an error
                 const mockError = new Error('ARQuickLook not supported');
-                (
-                    SystemInfo.getSupportsARQuickLook as jest.Mock
-                ).mockImplementation(() => {
-                    throw mockError;
-                });
+                vi.mocked(SystemInfo.getSupportsARQuickLook).mockImplementation(
+                    () => {
+                        throw mockError;
+                    },
+                );
 
                 try {
                     await diveAR.launch(mockUri);
@@ -106,19 +107,26 @@ describe('ARSystem', () => {
             });
 
             it('should handle ARQuickLook launch errors', async () => {
-                (SystemInfo.getSystem as jest.Mock).mockReturnValue('iOS');
-                (
-                    SystemInfo.getSupportsARQuickLook as jest.Mock
-                ).mockReturnValue(true);
+                vi.mocked(SystemInfo.getSystem).mockReturnValue(ESystem.IOS);
+                vi.mocked(SystemInfo.getSupportsARQuickLook).mockReturnValue(
+                    true,
+                );
 
                 const mockError = new Error('Launch failed');
                 const mockInstance = {
-                    launch: jest.fn().mockImplementation(() => {
+                    launch: vi.fn().mockImplementation(() => {
                         throw mockError;
                     }),
                 };
-                (ARQuickLook as jest.Mock).mockImplementation(
-                    () => mockInstance,
+                vi.mocked(ARQuickLook).mockImplementation(
+                    () =>
+                        ({
+                            launch: vi.fn().mockImplementation(() => {
+                                throw mockError;
+                            }),
+                            convertToUSDZ: vi.fn(),
+                            launchARQuickLook: vi.fn(),
+                        }) as unknown as ARQuickLook,
                 );
 
                 try {
@@ -136,7 +144,9 @@ describe('ARSystem', () => {
 
         describe('Scene Viewer', () => {
             it('should launch SceneViewer on Android', async () => {
-                (SystemInfo.getSystem as jest.Mock).mockReturnValue('Android');
+                vi.mocked(SystemInfo.getSystem).mockReturnValue(
+                    ESystem.ANDROID,
+                );
 
                 await diveAR.launch(mockUri);
 
@@ -147,7 +157,9 @@ describe('ARSystem', () => {
             });
 
             it('should launch SceneViewer on Android with options', async () => {
-                (SystemInfo.getSystem as jest.Mock).mockReturnValue('Android');
+                vi.mocked(SystemInfo.getSystem).mockReturnValue(
+                    ESystem.ANDROID,
+                );
 
                 const options: ARSystemOptions = {
                     arPlacement: 'vertical',
@@ -163,17 +175,17 @@ describe('ARSystem', () => {
             });
 
             it('should handle SceneViewer launch errors', async () => {
-                (SystemInfo.getSystem as jest.Mock).mockReturnValue('Android');
+                vi.mocked(SystemInfo.getSystem).mockReturnValue(
+                    ESystem.ANDROID,
+                );
 
                 const mockError = new Error('Launch failed');
                 const mockInstance = {
-                    launch: jest.fn().mockImplementation(() => {
+                    launch: vi.fn().mockImplementation(() => {
                         throw mockError;
                     }),
-                };
-                (SceneViewer as jest.Mock).mockImplementation(
-                    () => mockInstance,
-                );
+                } as unknown as SceneViewer;
+                vi.mocked(SceneViewer).mockImplementation(() => mockInstance);
 
                 try {
                     await diveAR.launch(mockUri);
@@ -189,7 +201,7 @@ describe('ARSystem', () => {
         });
 
         it('should reject on non-mobile systems', async () => {
-            (SystemInfo.getSystem as jest.Mock).mockReturnValue('Windows');
+            vi.mocked(SystemInfo.getSystem).mockReturnValue(ESystem.WINDOWS);
 
             // Mock navigator properties for the ARCompatibilityError constructor
             const originalNavigator = window.navigator;

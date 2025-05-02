@@ -2,7 +2,7 @@ import degToRad from '../degToRad';
 import { MathUtils } from 'three';
 
 // Type assertion for the mocked MathUtils.degToRad
-const mockedDegToRad = MathUtils.degToRad as jest.Mock;
+const mockedDegToRad = MathUtils.degToRad as vi.Mock;
 
 /**
  * Test Suite for degToRad Function

@@ -13,12 +13,12 @@ import {
 } from 'three';
 import { type COMMaterial } from '../../../modules/state/types/index.ts';
 
-jest.mock('../../../modules/state/State', () => {
+vi.mock('../../../modules/state/State', () => {
     return {
         State: {
-            get: jest.fn(() => {
+            get: vi.fn(() => {
                 return {
-                    performAction: jest.fn(),
+                    performAction: vi.fn(),
                 };
             }),
         },
@@ -28,21 +28,21 @@ jest.mock('../../../modules/state/State', () => {
 const object = new Object3D();
 object.children.push(new Mesh());
 
-jest.spyOn(State, 'get').mockReturnValue({
-    performAction: jest.fn(),
+vi.spyOn(State, 'get').mockReturnValue({
+    performAction: vi.fn(),
 } as unknown as State);
 
 let model: DIVEModel;
 
 describe('dive/model/DIVEModel', () => {
     beforeEach(() => {
-        jest.clearAllMocks();
+        vi.clearAllMocks();
         RaycasterIntersectObjectMock.mockClear();
         model = new DIVEModel();
     });
 
     afterEach(() => {
-        jest.clearAllMocks();
+        vi.clearAllMocks();
     });
 
     it('should instantiate', () => {
@@ -57,12 +57,12 @@ describe('dive/model/DIVEModel', () => {
         model.SetModel(object);
 
         const com = State.get('id')!;
-        const spyperformAction = jest.spyOn(com, 'performAction');
+        const spyperformAction = vi.spyOn(com, 'performAction');
 
         model.userData.id = 'something';
         model.position.set(0, 4, 0);
 
-        jest.spyOn(model['_mesh']!, 'localToWorld').mockReturnValueOnce(
+        vi.spyOn(model['_mesh']!, 'localToWorld').mockReturnValueOnce(
             new Vector3(0, 2, 0),
         );
 
@@ -90,11 +90,11 @@ describe('dive/model/DIVEModel', () => {
 
     it('should drop it', () => {
         const comMock = {
-            performAction: jest.fn(),
+            performAction: vi.fn(),
         } as unknown as State;
-        jest.spyOn(State, 'get').mockReturnValue(comMock);
+        vi.spyOn(State, 'get').mockReturnValue(comMock);
 
-        const spy = jest.spyOn(model, 'onMove').mockImplementation(() => {});
+        const spy = vi.spyOn(model, 'onMove').mockImplementation(() => {});
 
         const size = {
             x: 1,
@@ -107,7 +107,7 @@ describe('dive/model/DIVEModel', () => {
         model['_boundingBox'] = {
             min: new Vector3(-size.x / 2, -size.y / 2, -size.z / 2),
             max: new Vector3(size.x / 2, size.y / 2, size.z / 2),
-            getCenter: jest.fn(() => {
+            getCenter: vi.fn(() => {
                 return new Vector3(0, 0, 0);
             }),
         } as unknown as Box3;
@@ -132,7 +132,7 @@ describe('dive/model/DIVEModel', () => {
         scene.Root.parent = scene;
 
         // test when parent is not set
-        console.warn = jest.fn();
+        console.warn = vi.fn();
         expect(() => model.DropIt()).not.toThrow();
         expect(console.warn).toHaveBeenCalledTimes(1);
 
@@ -147,7 +147,7 @@ describe('dive/model/DIVEModel', () => {
 
         // alter position so onMove will be called again
         model.position.y = 2;
-        jest.spyOn(State, 'get').mockReturnValueOnce(undefined);
+        vi.spyOn(State, 'get').mockReturnValueOnce(undefined);
         expect(() => model.DropIt()).not.toThrow();
         expect(spy).toHaveBeenCalledTimes(2);
     });
@@ -227,12 +227,12 @@ describe('dive/model/DIVEModel', () => {
         model.userData.id = 'something';
 
         // Mock localToWorld to return same Y value as current position
-        jest.spyOn(model['_mesh']!, 'localToWorld').mockReturnValueOnce(
+        vi.spyOn(model['_mesh']!, 'localToWorld').mockReturnValueOnce(
             new Vector3(0, model.position.y, 0),
         );
 
         const com = State.get('id')!;
-        const spyperformAction = jest.spyOn(com, 'performAction');
+        const spyperformAction = vi.spyOn(com, 'performAction');
 
         model.PlaceOnFloor();
         expect(spyperformAction).not.toHaveBeenCalled();

@@ -14,8 +14,8 @@ describe('DIVESelectable', () => {
 
     it('should allow setting select event handlers', () => {
         const selectable = new DIVESelectable();
-        const onSelect = jest.fn();
-        const onDeselect = jest.fn();
+        const onSelect = vi.fn();
+        const onDeselect = vi.fn();
 
         selectable.onSelect = onSelect;
         selectable.onDeselect = onDeselect;

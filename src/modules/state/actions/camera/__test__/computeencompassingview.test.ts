@@ -8,14 +8,14 @@ describe('modules/state/actions/camera/computeEncompassingView', () => {
     it('should compute encompassing view for a scene', async () => {
         // Mock dependencies
         const mockScene = {
-            ComputeSceneBB: jest.fn().mockReturnValue({
+            ComputeSceneBB: vi.fn().mockReturnValue({
                 min: new Vector3(0, 0, 0),
                 max: new Vector3(10, 10, 10),
             }),
         } as unknown as DIVEScene;
 
         const mockController = {
-            computeEncompassingView: jest.fn().mockReturnValue({
+            computeEncompassingView: vi.fn().mockReturnValue({
                 position: new Vector3(5, 5, 5),
                 target: new Vector3(5, 5, 0),
             }),

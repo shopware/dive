@@ -1,10 +1,16 @@
-import { DIVEBaseTool } from '../BaseTool';
-import { OrbitController } from '../../controller/orbit/OrbitController';
-import { DIVEScene } from '../../../engine/scene/Scene';
-import { Vector3, type Intersection, type Object3D } from 'three';
-import { type DIVEHoverable } from '../../../interfaces/Hoverable';
-import { type DIVEDraggable } from '../../../interfaces/Draggable';
-import { RaycasterIntersectObjectMock } from '../../../../__mocks__/three';
+import { DIVEBaseTool } from '../BaseTool.ts';
+import { OrbitController } from '../../controller/orbit/OrbitController.ts';
+import { DIVEScene } from '../../../engine/scene/Scene.ts';
+import {
+    Camera,
+    Vector2,
+    Vector3,
+    type Intersection,
+    type Object3D,
+} from 'three';
+import { type DIVEHoverable } from '../../../interfaces/Hoverable.ts';
+import { type DIVEDraggable } from '../../../interfaces/Draggable.ts';
+import { RaycasterIntersectObjectMock } from '../../../../__mocks__/three.ts';
 
 /**
  * @jest-environment jsdom
@@ -13,7 +19,7 @@ import { RaycasterIntersectObjectMock } from '../../../../__mocks__/three';
 const mock_Canvas = {
     width: 0,
     height: 0,
-    getContext: jest.fn(),
+    getContext: vi.fn(),
     clientWidth: 1000,
     clientHeight: 1000,
     offsetLeft: 0,
@@ -41,7 +47,7 @@ const abstractWrapper = class Wrapper extends DIVEBaseTool {
 
 describe('dive/toolbox/DIVEBaseTool', () => {
     afterEach(() => {
-        jest.clearAllMocks();
+        vi.clearAllMocks();
     });
 
     it('should instantiate', () => {
@@ -76,7 +82,7 @@ describe('dive/toolbox/DIVEBaseTool', () => {
 
     it('should raycast with selection of objects', () => {
         const toolBox = new abstractWrapper(mockScene, mockController);
-        const spy = jest
+        const spy = vi
             .spyOn(toolBox['_raycaster'], 'intersectObjects')
             .mockImplementationOnce(() => {
                 return [
@@ -132,7 +138,9 @@ describe('dive/toolbox/DIVEBaseTool', () => {
             toolBox.onPointerDown({ button: 2 } as PointerEvent),
         ).not.toThrow();
 
-        const spy = jest.spyOn(console, 'warn').mockImplementation();
+        const spy = vi
+            .spyOn(console, 'warn')
+            .mockImplementation((message: string) => {});
         expect(() =>
             toolBox.onPointerDown({ button: 666 } as PointerEvent),
         ).not.toThrow();
@@ -176,9 +184,11 @@ describe('dive/toolbox/DIVEBaseTool', () => {
 
     it('should execute onPointerMove correctly', () => {
         const toolBox = new abstractWrapper(mockScene, mockController);
-        jest.spyOn(toolBox['_raycaster'], 'setFromCamera').mockImplementation();
+        vi.spyOn(toolBox['_raycaster'], 'setFromCamera').mockImplementation(
+            (coords: Vector2, camera: Camera) => toolBox['_raycaster'],
+        );
 
-        const spy = jest.spyOn(toolBox['_raycaster'], 'intersectObjects');
+        const spy = vi.spyOn(toolBox['_raycaster'], 'intersectObjects');
 
         // test with no hit with hovered object before
         spy.mockReturnValue([]);
@@ -511,45 +521,42 @@ describe('dive/toolbox/DIVEBaseTool', () => {
         expect(() => toolBox.onDragStart({} as PointerEvent)).not.toThrow();
 
         toolBox['_dragRaycastOnObjects'] = [];
-        jest.spyOn(
-            toolBox['_raycaster'],
-            'intersectObjects',
-        ).mockReturnValueOnce([]);
+        vi.spyOn(toolBox['_raycaster'], 'intersectObjects').mockReturnValueOnce(
+            [],
+        );
         expect(() => toolBox.onDragStart({} as PointerEvent)).not.toThrow();
 
-        jest.spyOn(
-            toolBox['_raycaster'],
-            'intersectObjects',
-        ).mockReturnValueOnce([]);
+        vi.spyOn(toolBox['_raycaster'], 'intersectObjects').mockReturnValueOnce(
+            [],
+        );
         expect(() => toolBox.onDragStart({} as PointerEvent)).not.toThrow();
 
-        jest.spyOn(
-            toolBox['_raycaster'],
-            'intersectObjects',
-        ).mockReturnValueOnce([
-            {
-                distance: 1,
-                point: {
-                    clone() {
-                        return {
-                            x: 1,
-                            y: 1,
-                            z: 1,
-                        } as unknown as Vector3;
-                    },
-                    x: 1,
-                    y: 1,
-                    z: 1,
-                } as unknown as Vector3,
-                object: {
-                    uuid: 'uuid2',
-                    isHoverable: true,
-                    onPointerEnter() {
-                        return;
-                    },
-                } as unknown as Object3D & DIVEHoverable,
-            },
-        ]);
+        vi.spyOn(toolBox['_raycaster'], 'intersectObjects').mockReturnValueOnce(
+            [
+                {
+                    distance: 1,
+                    point: {
+                        clone() {
+                            return {
+                                x: 1,
+                                y: 1,
+                                z: 1,
+                            } as unknown as Vector3;
+                        },
+                        x: 1,
+                        y: 1,
+                        z: 1,
+                    } as unknown as Vector3,
+                    object: {
+                        uuid: 'uuid2',
+                        isHoverable: true,
+                        onPointerEnter() {
+                            return;
+                        },
+                    } as unknown as Object3D & DIVEHoverable,
+                },
+            ],
+        );
         expect(() => toolBox.onDragStart({} as PointerEvent)).not.toThrow();
 
         toolBox['_draggable'] = {
@@ -557,10 +564,9 @@ describe('dive/toolbox/DIVEBaseTool', () => {
                 return;
             },
         } as unknown as Object3D & DIVEDraggable;
-        jest.spyOn(
-            toolBox['_raycaster'],
-            'intersectObjects',
-        ).mockReturnValueOnce([]);
+        vi.spyOn(toolBox['_raycaster'], 'intersectObjects').mockReturnValueOnce(
+            [],
+        );
         expect(() => toolBox.onDragStart({} as PointerEvent)).not.toThrow();
     });
 
@@ -569,10 +575,9 @@ describe('dive/toolbox/DIVEBaseTool', () => {
         expect(() => toolBox.onDrag({} as PointerEvent)).not.toThrow();
 
         toolBox['_dragRaycastOnObjects'] = [];
-        jest.spyOn(
-            toolBox['_raycaster'],
-            'intersectObjects',
-        ).mockReturnValueOnce([]);
+        vi.spyOn(toolBox['_raycaster'], 'intersectObjects').mockReturnValueOnce(
+            [],
+        );
         expect(() => toolBox.onDrag({} as PointerEvent)).not.toThrow();
 
         toolBox['_draggable'] = {
@@ -580,33 +585,32 @@ describe('dive/toolbox/DIVEBaseTool', () => {
                 return;
             },
         } as unknown as Object3D & DIVEDraggable;
-        jest.spyOn(
-            toolBox['_raycaster'],
-            'intersectObjects',
-        ).mockReturnValueOnce([
-            {
-                distance: 1,
-                point: {
-                    clone() {
-                        return {
-                            x: 1,
-                            y: 1,
-                            z: 1,
-                        } as unknown as Vector3;
-                    },
-                    x: 1,
-                    y: 1,
-                    z: 1,
-                } as unknown as Vector3,
-                object: {
-                    uuid: 'uuid2',
-                    isHoverable: true,
-                    onPointerEnter() {
-                        return;
-                    },
-                } as unknown as Object3D & DIVEHoverable,
-            },
-        ]);
+        vi.spyOn(toolBox['_raycaster'], 'intersectObjects').mockReturnValueOnce(
+            [
+                {
+                    distance: 1,
+                    point: {
+                        clone() {
+                            return {
+                                x: 1,
+                                y: 1,
+                                z: 1,
+                            } as unknown as Vector3;
+                        },
+                        x: 1,
+                        y: 1,
+                        z: 1,
+                    } as unknown as Vector3,
+                    object: {
+                        uuid: 'uuid2',
+                        isHoverable: true,
+                        onPointerEnter() {
+                            return;
+                        },
+                    } as unknown as Object3D & DIVEHoverable,
+                },
+            ],
+        );
         expect(() => toolBox.onDrag({} as PointerEvent)).not.toThrow();
     });
 
@@ -627,10 +631,12 @@ describe('dive/toolbox/DIVEBaseTool', () => {
 
     it('should handle onPointerMove with no intersects', () => {
         const toolBox = new abstractWrapper(mockScene, mockController);
-        jest.spyOn(toolBox['_raycaster'], 'setFromCamera').mockImplementation();
-        jest.spyOn(toolBox['_raycaster'], 'intersectObjects').mockReturnValue(
-            [],
+        vi.spyOn(toolBox['_raycaster'], 'setFromCamera').mockImplementation(
+            (coords: Vector2, camera: Camera) => {
+                return toolBox['_raycaster'];
+            },
         );
+        vi.spyOn(toolBox['_raycaster'], 'intersectObjects').mockReturnValue([]);
 
         expect(() =>
             toolBox.onPointerMove({
@@ -643,8 +649,12 @@ describe('dive/toolbox/DIVEBaseTool', () => {
 
     it('should handle onPointerMove with non-hoverable object', () => {
         const toolBox = new abstractWrapper(mockScene, mockController);
-        jest.spyOn(toolBox['_raycaster'], 'setFromCamera').mockImplementation();
-        jest.spyOn(toolBox['_raycaster'], 'intersectObjects').mockReturnValue([
+        vi.spyOn(toolBox['_raycaster'], 'setFromCamera').mockImplementation(
+            (coords: Vector2, camera: Camera) => {
+                return toolBox['_raycaster'];
+            },
+        );
+        vi.spyOn(toolBox['_raycaster'], 'intersectObjects').mockReturnValue([
             {
                 distance: 1,
                 point: {
@@ -675,9 +685,7 @@ describe('dive/toolbox/DIVEBaseTool', () => {
                 return;
             },
         } as unknown as Object3D & DIVEDraggable;
-        jest.spyOn(toolBox['_raycaster'], 'intersectObjects').mockReturnValue(
-            [],
-        );
+        vi.spyOn(toolBox['_raycaster'], 'intersectObjects').mockReturnValue([]);
 
         expect(() => toolBox.onDrag({} as PointerEvent)).not.toThrow();
     });
@@ -689,9 +697,7 @@ describe('dive/toolbox/DIVEBaseTool', () => {
                 return;
             },
         } as unknown as Object3D & DIVEDraggable;
-        jest.spyOn(toolBox['_raycaster'], 'intersectObjects').mockReturnValue(
-            [],
-        );
+        vi.spyOn(toolBox['_raycaster'], 'intersectObjects').mockReturnValue([]);
 
         expect(() => toolBox.onDragEnd({} as PointerEvent)).not.toThrow();
     });
@@ -732,25 +738,27 @@ describe('dive/toolbox/DIVEBaseTool', () => {
             },
         } as unknown as Object3D & DIVEDraggable;
         toolBox['_dragRaycastOnObjects'] = [];
-        jest.spyOn(toolBox['_raycaster'], 'intersectObjects').mockReturnValue(
-            [],
-        );
+        vi.spyOn(toolBox['_raycaster'], 'intersectObjects').mockReturnValue([]);
 
         expect(() => toolBox.onDragStart({} as PointerEvent)).not.toThrow();
     });
 
     it('should handle onPointerMove with hoverable object and onPointerEnter', () => {
         const toolBox = new abstractWrapper(mockScene, mockController);
-        jest.spyOn(toolBox['_raycaster'], 'setFromCamera').mockImplementation();
+        vi.spyOn(toolBox['_raycaster'], 'setFromCamera').mockImplementation(
+            (coords: Vector2, camera: Camera) => {
+                return toolBox['_raycaster'];
+            },
+        );
 
         const mockHoverable = {
             uuid: 'uuid',
             isHoverable: true,
             visible: true,
-            onPointerEnter: jest.fn(),
+            onPointerEnter: vi.fn(),
         } as unknown as Object3D & DIVEHoverable;
 
-        jest.spyOn(toolBox['_raycaster'], 'intersectObjects').mockReturnValue([
+        vi.spyOn(toolBox['_raycaster'], 'intersectObjects').mockReturnValue([
             {
                 distance: 1,
                 point: {

@@ -10,11 +10,9 @@ describe('dive/helper/findInterface', () => {
         expect(findInterface(obj, 'isInterface')).toBe(undefined);
 
         // add traverse function
-        obj.traverseAncestors = jest.fn(
-            (callback: (object: Object3D) => any) => {
-                callback(obj);
-            },
-        );
+        obj.traverseAncestors = vi.fn((callback: (object: Object3D) => any) => {
+            callback(obj);
+        });
 
         expect(findInterface(obj, 'isInterface')).toBe(undefined);
     });
@@ -22,11 +20,9 @@ describe('dive/helper/findInterface', () => {
     it('should find interface in object', () => {
         const obj = {
             isInterface: true,
-            traverseAncestors: jest.fn(
-                (callback: (object: Object3D) => any) => {
-                    callback(obj);
-                },
-            ),
+            traverseAncestors: vi.fn((callback: (object: Object3D) => any) => {
+                callback(obj);
+            }),
         } as unknown as Object3D;
 
         expect(findInterface(obj, 'isInterface')).toBe(obj);
@@ -34,22 +30,20 @@ describe('dive/helper/findInterface', () => {
 
     it('should find interface in parent', () => {
         const obj = {
-            traverseAncestors: jest.fn(
-                (callback: (object: Object3D) => any) => {
-                    callback(obj);
-                },
-            ),
+            traverseAncestors: vi.fn((callback: (object: Object3D) => any) => {
+                callback(obj);
+            }),
             parent: {
                 isInterface: true,
 
-                traverseAncestors: jest.fn(
+                traverseAncestors: vi.fn(
                     (callback: (object: Object3D) => any) => {
                         callback(obj.parent!);
                     },
                 ),
 
                 parent: {
-                    traverseAncestors: jest.fn(
+                    traverseAncestors: vi.fn(
                         (callback: (object: Object3D) => any) => {
                             callback(obj.parent!);
                         },

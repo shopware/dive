@@ -1,15 +1,15 @@
-import { DIVETransformTool, isTransformTool } from '../TransformTool';
-import { DIVEScene } from '../../../../engine/scene/Scene';
-import { OrbitController } from '../../../controller/orbit/OrbitController';
-import { DIVERenderPipeline } from '../../../../engine/renderer/Renderer';
-import { type DIVEBaseTool } from '../../BaseTool';
+import { DIVETransformTool, isTransformTool } from '../TransformTool.ts';
+import { DIVEScene } from '../../../../engine/scene/Scene.ts';
+import { OrbitController } from '../../../controller/orbit/OrbitController.ts';
+import { DIVERenderPipeline } from '../../../../engine/renderer/Renderer.ts';
+import { type DIVEBaseTool } from '../../BaseTool.ts';
 import { Tween } from '@tweenjs/tween.js';
-import { AnimationSystem } from '../../../animation/AnimationSystem';
-import { DIVEPerspectiveCamera } from '../../../../engine/camera/PerspectiveCamera';
+import { AnimationSystem } from '../../../animation/AnimationSystem.ts';
+import { DIVEPerspectiveCamera } from '../../../../engine/camera/PerspectiveCamera.ts';
 
-jest.mock('../../../../engine/renderer/Renderer', () => {
+vi.mock('../../../../engine/renderer/Renderer', () => {
     return {
-        DIVERenderPipeline: jest.fn(function () {
+        DIVERenderPipeline: vi.fn(function (this: any) {
             this.webglrenderer = {
                 domElement: {
                     clientWidth: 0,
@@ -21,9 +21,9 @@ jest.mock('../../../../engine/renderer/Renderer', () => {
     };
 });
 
-jest.mock('../../../../engine/camera/PerspectiveCamera', () => {
+vi.mock('../../../../engine/camera/PerspectiveCamera', () => {
     return {
-        DIVEPerspectiveCamera: jest.fn(function () {
+        DIVEPerspectiveCamera: vi.fn(function (this: any) {
             this.isPerspectiveCamera = true;
             this.layers = {
                 mask: 0,
@@ -33,9 +33,9 @@ jest.mock('../../../../engine/camera/PerspectiveCamera', () => {
     };
 });
 
-jest.mock('../../../controller/orbit/OrbitController', () => {
+vi.mock('../../../controller/orbit/OrbitController', () => {
     return {
-        OrbitController: jest.fn(function () {
+        OrbitController: vi.fn(function (this: any) {
             this.enabled = true;
             this.domElement = {
                 clientWIdth: 0,
@@ -51,11 +51,11 @@ jest.mock('../../../controller/orbit/OrbitController', () => {
     };
 });
 
-jest.mock('../../../../engine/scene/Scene', () => {
+vi.mock('../../../../engine/scene/Scene', () => {
     return {
-        DIVEScene: jest.fn(function () {
-            this.add = jest.fn();
-            this.remove = jest.fn();
+        DIVEScene: vi.fn(function (this: any) {
+            this.add = vi.fn();
+            this.remove = vi.fn();
             this.Root = {
                 children: [],
             };
@@ -65,9 +65,9 @@ jest.mock('../../../../engine/scene/Scene', () => {
     };
 });
 
-jest.mock('../../../animation/AnimationSystem', () => {
+vi.mock('../../../animation/AnimationSystem', () => {
     return {
-        DIVEAnimationSystem: jest.fn(function () {
+        DIVEAnimationSystem: vi.fn(function (this: any) {
             this.domElement = {
                 style: {},
             };
@@ -89,12 +89,12 @@ const mockController: OrbitController = new OrbitController(
 );
 
 let transformTool: DIVETransformTool;
-let intersectObjectsSpy: jest.SpyInstance;
+let intersectObjectsSpy;
 
 describe('dive/toolbox/select/DIVETransformTool', () => {
     beforeEach(() => {
         transformTool = new DIVETransformTool(mockScene, mockController);
-        intersectObjectsSpy = jest
+        intersectObjectsSpy = vi
             .spyOn(transformTool['_raycaster'], 'intersectObjects')
             .mockReturnValue([]);
     });
@@ -122,7 +122,7 @@ describe('dive/toolbox/select/DIVETransformTool', () => {
         expect(() => transformTool.SetGizmoVisibility(true)).not.toThrow();
 
         // mock that gizmo is in scene
-        jest.spyOn(mockScene.children, 'includes').mockReturnValueOnce(true);
+        vi.spyOn(mockScene.children, 'includes').mockReturnValueOnce(true);
 
         expect(() => transformTool.SetGizmoVisibility(false)).not.toThrow();
     });
@@ -131,7 +131,7 @@ describe('dive/toolbox/select/DIVETransformTool', () => {
         expect(() => transformTool.SetGizmoScaleLinked(true)).not.toThrow();
 
         // mock that gizmo is in scene
-        jest.spyOn(mockScene.children, 'includes').mockReturnValueOnce(true);
+        vi.spyOn(mockScene.children, 'includes').mockReturnValueOnce(true);
 
         expect(() => transformTool.SetGizmoVisibility(false)).not.toThrow();
     });

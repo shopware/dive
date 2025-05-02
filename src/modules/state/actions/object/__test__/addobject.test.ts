@@ -6,7 +6,7 @@ import { COMEntity } from '../../../types';
 describe('AddObjectAction', () => {
     // Mock dependencies
     const mockScene = {
-        AddSceneObject: jest.fn(),
+        AddSceneObject: vi.fn(),
     } as unknown as DIVEScene;
 
     const mockEngine = {
@@ -17,7 +17,7 @@ describe('AddObjectAction', () => {
 
     beforeEach(() => {
         mockRegistered.clear();
-        jest.clearAllMocks();
+        vi.clearAllMocks();
     });
 
     it('should add an object to the scene', async () => {

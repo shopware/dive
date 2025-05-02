@@ -33,39 +33,39 @@ const MockActionClass = Action.define<
 });
 
 // Mock dependencies
-jest.mock('../../../engine/Engine', () => ({
-    DIVEEngine: jest.fn().mockImplementation(() => ({
+vi.mock('../../../engine/Engine', () => ({
+    DIVEEngine: vi.fn().mockImplementation(() => ({
         uuid: 'mock-engine-uuid',
     })),
 }));
-jest.mock('../../controller/orbit/OrbitController', () => ({
-    OrbitController: jest.fn().mockImplementation(() => ({
+vi.mock('../../controller/orbit/OrbitController', () => ({
+    OrbitController: vi.fn().mockImplementation(() => ({
         uuid: 'mock-orbit-controller-uuid',
     })),
 }));
-jest.mock('../../toolbox/Toolbox', () => ({
-    DIVEToolbox: jest.fn().mockImplementation(() => ({
+vi.mock('../../toolbox/Toolbox', () => ({
+    DIVEToolbox: vi.fn().mockImplementation(() => ({
         uuid: 'mock-toolbox-uuid',
     })),
 }));
-jest.mock('../ActionRegistry');
-jest.mock('../../../engine/camera/PerspectiveCamera', () => ({
-    DIVEPerspectiveCamera: jest.fn().mockImplementation(() => ({
+vi.mock('../ActionRegistry');
+vi.mock('../../../engine/camera/PerspectiveCamera', () => ({
+    DIVEPerspectiveCamera: vi.fn().mockImplementation(() => ({
         uuid: 'mock-perspective-camera-uuid',
     })),
 }));
-jest.mock('../../../engine/scene/Scene', () => ({
-    DIVEScene: jest.fn().mockImplementation(() => ({
+vi.mock('../../../engine/scene/Scene', () => ({
+    DIVEScene: vi.fn().mockImplementation(() => ({
         uuid: 'mock-scene-uuid',
     })),
 }));
 describe('modules/state/State', () => {
     let state: State;
-    let mockEngine: jest.Mocked<DIVEEngine>;
-    let mockController: jest.Mocked<OrbitController>;
-    let mockToolbox: jest.Mocked<Toolbox>;
-    let mockCamera: jest.Mocked<DIVEPerspectiveCamera>;
-    let mockScene: jest.Mocked<DIVEScene>;
+    let mockEngine: vi.Mocked<DIVEEngine>;
+    let mockController: vi.Mocked<OrbitController>;
+    let mockToolbox: vi.Mocked<Toolbox>;
+    let mockCamera: vi.Mocked<DIVEPerspectiveCamera>;
+    let mockScene: vi.Mocked<DIVEScene>;
 
     beforeEach(() => {
         // Clear all instances before each test
@@ -77,9 +77,9 @@ describe('modules/state/State', () => {
         };
 
         mockCamera =
-            new DIVEPerspectiveCamera() as jest.Mocked<DIVEPerspectiveCamera>;
-        mockScene = new DIVEScene() as jest.Mocked<DIVEScene>;
-        mockEngine = new DIVEEngine(engineSettings) as jest.Mocked<DIVEEngine>;
+            new DIVEPerspectiveCamera() as vi.Mocked<DIVEPerspectiveCamera>;
+        mockScene = new DIVEScene() as vi.Mocked<DIVEScene>;
+        mockEngine = new DIVEEngine(engineSettings) as vi.Mocked<DIVEEngine>;
 
         // Mock the getters
         Object.defineProperty(mockEngine, 'camera', {
@@ -93,13 +93,13 @@ describe('modules/state/State', () => {
         mockController = new OrbitController(
             mockCamera,
             mockCanvas,
-        ) as jest.Mocked<OrbitController>;
+        ) as vi.Mocked<OrbitController>;
 
         state = new State(mockEngine, mockController);
     });
 
     afterEach(() => {
-        jest.clearAllMocks();
+        vi.clearAllMocks();
     });
 
     describe('Instance Management', () => {
@@ -134,7 +134,7 @@ describe('modules/state/State', () => {
                 target: { x: 0, y: 0, z: 0 },
             };
 
-            (getActionClass as jest.Mock).mockReturnValue(MockActionClass);
+            (getActionClass as vi.Mock).mockReturnValue(MockActionClass);
 
             const result = state.performAction(mockAction);
             expect(result).toEqual(mockResult);
@@ -159,14 +159,14 @@ describe('modules/state/State', () => {
                 execute: async () => mockResult,
             });
 
-            (getActionClass as jest.Mock).mockReturnValue(AsyncMockActionClass);
+            (getActionClass as vi.Mock).mockReturnValue(AsyncMockActionClass);
 
             const result = await state.performAction(mockAction);
             expect(result).toEqual(mockResult);
         });
 
         it('should throw error for non-existent action', () => {
-            (getActionClass as jest.Mock).mockReturnValue(undefined);
+            (getActionClass as vi.Mock).mockReturnValue(undefined);
 
             expect(() => {
                 state.performAction('GET_CAMERA_TRANSFORM');
@@ -188,7 +188,7 @@ describe('modules/state/State', () => {
                 },
             });
 
-            (getActionClass as jest.Mock).mockReturnValue(ErrorMockActionClass);
+            (getActionClass as vi.Mock).mockReturnValue(ErrorMockActionClass);
 
             expect(() => {
                 state.performAction(mockAction);
@@ -212,7 +212,7 @@ describe('modules/state/State', () => {
                 },
             });
 
-            (getActionClass as jest.Mock).mockReturnValue(ErrorMockActionClass);
+            (getActionClass as vi.Mock).mockReturnValue(ErrorMockActionClass);
 
             try {
                 state.performAction(mockAction);
@@ -246,7 +246,7 @@ describe('modules/state/State', () => {
                 },
             });
 
-            (getActionClass as jest.Mock).mockReturnValue(
+            (getActionClass as vi.Mock).mockReturnValue(
                 AsyncErrorMockActionClass,
             );
 
@@ -271,7 +271,7 @@ describe('modules/state/State', () => {
     describe('Subscription Handling', () => {
         it('should subscribe to action', () => {
             const mockAction = 'GET_CAMERA_TRANSFORM';
-            const mockListener = jest.fn();
+            const mockListener = vi.fn();
 
             const unsubscribe = state.subscribe(mockAction, mockListener);
             expect(unsubscribe).toBeDefined();
@@ -280,11 +280,11 @@ describe('modules/state/State', () => {
 
         it('should call subscribed listeners when action is performed', () => {
             const mockAction = 'GET_CAMERA_TRANSFORM';
-            const mockListener = jest.fn();
+            const mockListener = vi.fn();
 
             state.subscribe(mockAction, mockListener);
 
-            (getActionClass as jest.Mock).mockReturnValue(MockActionClass);
+            (getActionClass as vi.Mock).mockReturnValue(MockActionClass);
 
             state.performAction(mockAction);
             expect(mockListener).toHaveBeenCalledWith(undefined);
@@ -292,12 +292,12 @@ describe('modules/state/State', () => {
 
         it('should unsubscribe listener correctly', () => {
             const mockAction = 'GET_CAMERA_TRANSFORM';
-            const mockListener = jest.fn();
+            const mockListener = vi.fn();
 
             const unsubscribe = state.subscribe(mockAction, mockListener);
             unsubscribe();
 
-            (getActionClass as jest.Mock).mockReturnValue(MockActionClass);
+            (getActionClass as vi.Mock).mockReturnValue(MockActionClass);
 
             state.performAction(mockAction);
             expect(mockListener).not.toHaveBeenCalled();
@@ -306,7 +306,7 @@ describe('modules/state/State', () => {
 
     describe('Subscription Management', () => {
         const mockAction = 'GET_CAMERA_TRANSFORM';
-        const mockListener = jest.fn();
+        const mockListener = vi.fn();
 
         beforeEach(() => {
             mockListener.mockClear();
@@ -316,7 +316,7 @@ describe('modules/state/State', () => {
             const unsubscribe = state.subscribe(mockAction, mockListener);
 
             // Perform action to trigger listener
-            (getActionClass as jest.Mock).mockReturnValue(MockActionClass);
+            (getActionClass as vi.Mock).mockReturnValue(MockActionClass);
             state.performAction(mockAction);
             expect(mockListener).toHaveBeenCalled();
 
@@ -348,13 +348,13 @@ describe('modules/state/State', () => {
         });
 
         it('should handle multiple subscriptions to same action', () => {
-            const mockListener2 = jest.fn();
+            const mockListener2 = vi.fn();
 
             state.subscribe(mockAction, mockListener);
             state.subscribe(mockAction, mockListener2);
 
             // Perform action to trigger both listeners
-            (getActionClass as jest.Mock).mockReturnValue(MockActionClass);
+            (getActionClass as vi.Mock).mockReturnValue(MockActionClass);
             state.performAction(mockAction);
 
             expect(mockListener).toHaveBeenCalled();

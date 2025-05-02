@@ -12,39 +12,35 @@ import { Object3D, Vector3, Box3 } from 'three';
 import { DIVEGroup } from '../../group/Group.ts';
 import { type DIVEModel } from '../../model/Model.ts';
 import { type DIVEPrimitive } from '../../primitive/Primitive.ts';
-import { AssetLoader } from '../../../modules/asset/loader/AssetLoader.ts';
 
-jest.mock('../../../modules/index', () => {
-    return {
-        ModuleImporter: jest.fn(function () {
-            this.instantiate = jest.fn().mockResolvedValue({
-                load: jest.fn().mockResolvedValue({}),
-            });
-            return this;
-        }),
-    };
-});
+vi.mock('../../../modules/index.js', () => ({
+    getModule: vi.fn().mockResolvedValue(
+        class {
+            load = vi.fn().mockResolvedValue({});
+        },
+    ),
+}));
 
-jest.mock('../../../modules/state/State', () => {
+vi.mock('../../../modules/state/State', () => {
     return {
         State: {
-            get: jest.fn(() => {
+            get: vi.fn(() => {
                 return {
-                    performAction: jest.fn(),
+                    performAction: vi.fn(),
                 };
             }),
         },
     };
 });
 
-jest.mock('../../floor/Floor', () => {
+vi.mock('../../floor/Floor', () => {
     return {
-        DIVEFloor: jest.fn(function () {
+        DIVEFloor: vi.fn(function (this: any) {
             this.isDIVEFloor = true;
             this.isObject3D = true;
             this.parent = null;
-            this.dispatchEvent = jest.fn();
-            this.removeFromParent = jest.fn();
+            this.dispatchEvent = vi.fn();
+            this.removeFromParent = vi.fn();
             this.userData = {
                 id: undefined,
             };
@@ -53,165 +49,165 @@ jest.mock('../../floor/Floor', () => {
     };
 });
 
-jest.mock('../../grid/Grid', () => {
+vi.mock('../../grid/Grid', () => {
     return {
-        DIVEGrid: jest.fn(function () {
+        DIVEGrid: vi.fn(function (this: any) {
             this.isObject3D = true;
             this.parent = null;
-            this.dispatchEvent = jest.fn();
-            this.removeFromParent = jest.fn();
-            this.updateMatrixWorld = jest.fn();
+            this.dispatchEvent = vi.fn();
+            this.removeFromParent = vi.fn();
+            this.updateMatrixWorld = vi.fn();
             return this;
         }),
     };
 });
 
-jest.mock('../../light/AmbientLight', () => {
+vi.mock('../../light/AmbientLight', () => {
     return {
-        DIVEAmbientLight: jest.fn(function () {
+        DIVEAmbientLight: vi.fn(function (this: any) {
             this.isObject3D = true;
             this.parent = null;
-            this.dispatchEvent = jest.fn();
+            this.dispatchEvent = vi.fn();
             this.position = new Vector3();
-            this.attach = jest.fn();
-            this.applyMatrix4 = jest.fn();
-            this.updateWorldMatrix = jest.fn();
+            this.attach = vi.fn();
+            this.applyMatrix4 = vi.fn();
+            this.updateWorldMatrix = vi.fn();
             this.children = [];
-            this.SetIntensity = jest.fn();
-            this.SetEnabled = jest.fn();
-            this.SetColor = jest.fn();
+            this.SetIntensity = vi.fn();
+            this.SetEnabled = vi.fn();
+            this.SetColor = vi.fn();
             this.userData = {
                 id: undefined,
             };
-            this.removeFromParent = jest.fn();
+            this.removeFromParent = vi.fn();
             return this;
         }),
     };
 });
 
-jest.mock('../../light/PointLight', () => {
+vi.mock('../../light/PointLight', () => {
     return {
-        DIVEPointLight: jest.fn(function () {
+        DIVEPointLight: vi.fn(function (this: any) {
             this.isObject3D = true;
             this.parent = null;
-            this.dispatchEvent = jest.fn();
+            this.dispatchEvent = vi.fn();
             this.position = new Vector3();
-            this.attach = jest.fn();
-            this.applyMatrix4 = jest.fn();
-            this.updateWorldMatrix = jest.fn();
+            this.attach = vi.fn();
+            this.applyMatrix4 = vi.fn();
+            this.updateWorldMatrix = vi.fn();
             this.children = [];
-            this.SetIntensity = jest.fn();
-            this.SetEnabled = jest.fn();
-            this.SetColor = jest.fn();
+            this.SetIntensity = vi.fn();
+            this.SetEnabled = vi.fn();
+            this.SetColor = vi.fn();
             this.userData = {
                 id: undefined,
             };
-            this.removeFromParent = jest.fn();
+            this.removeFromParent = vi.fn();
             return this;
         }),
     };
 });
 
-jest.mock('../../light/SceneLight', () => {
+vi.mock('../../light/SceneLight', () => {
     return {
-        DIVESceneLight: jest.fn(function () {
+        DIVESceneLight: vi.fn(function (this: any) {
             this.isObject3D = true;
             this.parent = null;
-            this.dispatchEvent = jest.fn();
+            this.dispatchEvent = vi.fn();
             this.position = new Vector3();
-            this.attach = jest.fn();
-            this.applyMatrix4 = jest.fn();
-            this.updateWorldMatrix = jest.fn();
+            this.attach = vi.fn();
+            this.applyMatrix4 = vi.fn();
+            this.updateWorldMatrix = vi.fn();
             this.children = [];
-            this.SetIntensity = jest.fn();
-            this.SetEnabled = jest.fn();
-            this.SetColor = jest.fn();
+            this.SetIntensity = vi.fn();
+            this.SetEnabled = vi.fn();
+            this.SetColor = vi.fn();
             this.userData = {
                 id: undefined,
             };
-            this.removeFromParent = jest.fn();
+            this.removeFromParent = vi.fn();
             return this;
         }),
     };
 });
 
-jest.mock('../../model/Model', () => {
+vi.mock('../../model/Model', () => {
     return {
-        DIVEModel: jest.fn(function () {
+        DIVEModel: vi.fn(function (this: any) {
             this.isObject3D = true;
             this.parent = null;
-            this.dispatchEvent = jest.fn();
+            this.dispatchEvent = vi.fn();
             this.userData = {
                 id: undefined,
             };
-            this.attach = jest.fn();
-            this.applyMatrix4 = jest.fn();
-            this.updateWorldMatrix = jest.fn();
+            this.attach = vi.fn();
+            this.applyMatrix4 = vi.fn();
+            this.updateWorldMatrix = vi.fn();
             this.children = [];
-            this.SetModel = jest.fn();
-            this.SetPosition = jest.fn();
-            this.SetRotation = jest.fn();
-            this.SetScale = jest.fn();
-            this.SetVisibility = jest.fn();
-            this.SetMaterial = jest.fn();
-            this.PlaceOnFloor = jest.fn();
-            this.removeFromParent = jest.fn();
-            this.position = new Vector3();
-            return this;
-        }),
-    };
-});
-
-jest.mock('../../primitive/Primitive', () => {
-    return {
-        DIVEPrimitive: jest.fn(function () {
-            this.isObject3D = true;
-            this.parent = null;
-            this.dispatchEvent = jest.fn();
-            this.userData = {
-                id: undefined,
-            };
-            this.attach = jest.fn();
-            this.applyMatrix4 = jest.fn();
-            this.updateWorldMatrix = jest.fn();
-            this.children = [];
-            this.SetGeometry = jest.fn();
-            this.SetMaterial = jest.fn();
-            this.SetPosition = jest.fn();
-            this.SetRotation = jest.fn();
-            this.SetScale = jest.fn();
-            this.SetVisibility = jest.fn();
-            this.PlaceOnFloor = jest.fn();
-            this.removeFromParent = jest.fn();
+            this.SetModel = vi.fn();
+            this.SetPosition = vi.fn();
+            this.SetRotation = vi.fn();
+            this.SetScale = vi.fn();
+            this.SetVisibility = vi.fn();
+            this.SetMaterial = vi.fn();
+            this.PlaceOnFloor = vi.fn();
+            this.removeFromParent = vi.fn();
             this.position = new Vector3();
             return this;
         }),
     };
 });
 
-jest.mock('../../group/Group', () => {
+vi.mock('../../primitive/Primitive', () => {
     return {
-        DIVEGroup: jest.fn(function () {
+        DIVEPrimitive: vi.fn(function (this: any) {
+            this.isObject3D = true;
+            this.parent = null;
+            this.dispatchEvent = vi.fn();
+            this.userData = {
+                id: undefined,
+            };
+            this.attach = vi.fn();
+            this.applyMatrix4 = vi.fn();
+            this.updateWorldMatrix = vi.fn();
+            this.children = [];
+            this.SetGeometry = vi.fn();
+            this.SetMaterial = vi.fn();
+            this.SetPosition = vi.fn();
+            this.SetRotation = vi.fn();
+            this.SetScale = vi.fn();
+            this.SetVisibility = vi.fn();
+            this.PlaceOnFloor = vi.fn();
+            this.removeFromParent = vi.fn();
+            this.position = new Vector3();
+            return this;
+        }),
+    };
+});
+
+vi.mock('../../group/Group', () => {
+    return {
+        DIVEGroup: vi.fn(function (this: any) {
             this.isDIVEGroup = true;
             this.isObject3D = true;
             this.parent = null;
-            this.dispatchEvent = jest.fn();
+            this.dispatchEvent = vi.fn();
             this.userData = {
                 id: undefined,
             };
-            this.attach = jest.fn();
-            this.applyMatrix4 = jest.fn();
-            this.updateWorldMatrix = jest.fn();
+            this.attach = vi.fn();
+            this.applyMatrix4 = vi.fn();
+            this.updateWorldMatrix = vi.fn();
             this.children = [];
-            this.SetGeometry = jest.fn();
-            this.SetMaterial = jest.fn();
-            this.SetPosition = jest.fn();
-            this.SetRotation = jest.fn();
-            this.SetScale = jest.fn();
-            this.SetVisibility = jest.fn();
-            this.SetLinesVisibility = jest.fn();
-            this.PlaceOnFloor = jest.fn();
-            this.removeFromParent = jest.fn();
+            this.SetGeometry = vi.fn();
+            this.SetMaterial = vi.fn();
+            this.SetPosition = vi.fn();
+            this.SetRotation = vi.fn();
+            this.SetScale = vi.fn();
+            this.SetVisibility = vi.fn();
+            this.SetLinesVisibility = vi.fn();
+            this.PlaceOnFloor = vi.fn();
+            this.removeFromParent = vi.fn();
             this.position = new Vector3();
             this.members = [];
             return this;
@@ -220,16 +216,16 @@ jest.mock('../../group/Group', () => {
 });
 
 let root: DIVERoot;
-let spyConsoleWarn = jest.spyOn(console, 'warn').mockImplementation(() => {});
+let spyConsoleWarn = vi.spyOn(console, 'warn').mockImplementation(() => {});
 
 describe('components/root/DIVERoot', () => {
     beforeEach(() => {
         root = new DIVERoot();
-        jest.clearAllMocks();
+        vi.clearAllMocks();
     });
 
     afterEach(() => {
-        jest.clearAllMocks();
+        vi.clearAllMocks();
     });
 
     afterAll(() => {
@@ -243,29 +239,10 @@ describe('components/root/DIVERoot', () => {
             expect(root.floor).toBeDefined();
         });
 
-        it('should initialize asset loader', async () => {
-            const mockLoader = {
-                load: jest.fn().mockResolvedValue({}),
-            };
-
-            jest.spyOn(root['_assetLoader'], 'instantiate').mockResolvedValue(
-                mockLoader as unknown as AssetLoader,
-            );
-
-            const newRoot = new DIVERoot();
-            await newRoot['_assetLoader'];
-        });
-
-        it('should handle asset loader initialization error', async () => {
-            // Mock ModuleImporter to reject for this specific test
-            const mockError = new Error('Failed to load');
-            jest.spyOn(root['_assetLoader'], 'instantiate').mockRejectedValue(
-                mockError,
-            );
-
-            await expect(root['_assetLoader'].instantiate()).rejects.toThrow(
-                'Failed to load',
-            );
+        it('should initialize asset loader via _getAssetLoader()', async () => {
+            const loader = await (root as any)._getAssetLoader();
+            // loader is instance of our fake class and has a load method
+            expect(loader.load).toBeDefined();
         });
     });
 
@@ -274,7 +251,7 @@ describe('components/root/DIVERoot', () => {
             const mockObject = new Object3D();
             mockObject.position.set(1, 2, 3);
 
-            Object3D.prototype.traverse = jest.fn((callback) =>
+            Object3D.prototype.traverse = vi.fn((callback) =>
                 callback(mockObject as Object3D),
             );
 
@@ -284,7 +261,7 @@ describe('components/root/DIVERoot', () => {
         });
 
         it('should handle empty scene', () => {
-            Object3D.prototype.traverse = jest.fn((callback) => {});
+            Object3D.prototype.traverse = vi.fn((callback) => {});
             const bb = root.ComputeSceneBB();
             expect(bb).toBeDefined();
             expect(bb).toBeInstanceOf(Box3);
@@ -293,11 +270,11 @@ describe('components/root/DIVERoot', () => {
         it('should handle multiple objects', () => {
             const mockObject1 = new Object3D();
             mockObject1.position.set(1, 2, 3);
-            mockObject1.traverse = jest.fn((callback) => callback(mockObject1));
+            mockObject1.traverse = vi.fn((callback) => callback(mockObject1));
 
             const mockObject2 = new Object3D();
             mockObject2.position.set(4, 5, 6);
-            mockObject2.traverse = jest.fn((callback) => callback(mockObject2));
+            mockObject2.traverse = vi.fn((callback) => callback(mockObject2));
 
             root.children = [
                 mockObject1,
@@ -374,21 +351,21 @@ describe('components/root/DIVERoot', () => {
                 frustumCulled: true,
                 renderOrder: 0,
                 animations: [],
-                updateMatrix: jest.fn(),
-                updateMatrixWorld: jest.fn(),
-                updateWorldMatrix: jest.fn(),
-                traverse: jest.fn(),
-                traverseVisible: jest.fn(),
-                traverseAncestors: jest.fn(),
-                addEventListener: jest.fn(),
-                hasEventListener: jest.fn(),
-                removeEventListener: jest.fn(),
-                dispatchEvent: jest.fn(),
+                updateMatrix: vi.fn(),
+                updateMatrixWorld: vi.fn(),
+                updateWorldMatrix: vi.fn(),
+                traverse: vi.fn(),
+                traverseVisible: vi.fn(),
+                traverseAncestors: vi.fn(),
+                addEventListener: vi.fn(),
+                hasEventListener: vi.fn(),
+                removeEventListener: vi.fn(),
+                dispatchEvent: vi.fn(),
             };
             const mockObject2 = { ...mockObject1, id: 'obj2', uuid: 'uuid2' };
 
             let traverseCount = 0;
-            root.traverse = jest.fn((callback) => {
+            root.traverse = vi.fn((callback) => {
                 traverseCount++;
                 callback(mockObject1 as any);
                 callback(mockObject2 as any);
@@ -948,7 +925,7 @@ describe('components/root/DIVERoot', () => {
 
             const mockTransformControls = Object.assign(new Object3D(), {
                 isTransformControls: true,
-                detach: jest.fn(),
+                detach: vi.fn(),
             });
 
             const mockScene = new Object3D();
@@ -981,7 +958,7 @@ describe('components/root/DIVERoot', () => {
 
             const mockTransformControls = Object.assign(new Object3D(), {
                 isTransformControls: true,
-                detach: jest.fn(),
+                detach: vi.fn(),
             });
 
             const mockScene = new Object3D();
@@ -1013,7 +990,7 @@ describe('components/root/DIVERoot', () => {
 
             const mockTransformControls = Object.assign(new Object3D(), {
                 isTransformControls: true,
-                detach: jest.fn(),
+                detach: vi.fn(),
             });
 
             const mockScene = new Object3D();
@@ -1256,7 +1233,7 @@ describe('components/root/DIVERoot', () => {
 
             const mockTransformControls = Object.assign(new Object3D(), {
                 isTransformControls: true,
-                detach: jest.fn(),
+                detach: vi.fn(),
             });
 
             const mockScene = new Object3D();
@@ -1309,7 +1286,7 @@ describe('components/root/DIVERoot', () => {
 
             const mockTransformControls = Object.assign(new Object3D(), {
                 isTransformControls: true,
-                detach: jest.fn(),
+                detach: vi.fn(),
             });
 
             const mockScene = new Object3D();
@@ -1558,7 +1535,7 @@ describe('components/root/DIVERoot', () => {
             const mockObject = new Object3D();
             const mockTransformControls = Object.assign(new Object3D(), {
                 isTransformControls: true,
-                detach: jest.fn(),
+                detach: vi.fn(),
             });
 
             const mockScene = new Object3D();
@@ -1577,6 +1554,20 @@ describe('components/root/DIVERoot', () => {
 
             root['detachTransformControls'](mockObject);
             // No error should be thrown
+        });
+    });
+
+    describe('bubble errors from getModule in _getAssetLoader()', () => {
+        it('should bubble errors from getModule in _getAssetLoader()', async () => {
+            const error = new Error('Failed to load');
+            // make getModule reject on next call
+            const moduleIndexTsFile = await import('../../../modules/index.ts');
+            vi.spyOn(moduleIndexTsFile, 'getModule').mockRejectedValueOnce(
+                error,
+            );
+            await expect((root as any)._getAssetLoader()).rejects.toThrow(
+                'Failed to load',
+            );
         });
     });
 });

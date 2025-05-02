@@ -1,6 +1,6 @@
-import { AssetExporter } from '../AssetExporter';
+import { AssetExporter } from '../AssetExporter.ts';
 import { Object3D } from 'three';
-import { FileTypeError, ParseError } from '../../../../error';
+import { FileTypeError, ParseError } from '../../../../error/index.ts';
 
 // Mock TextEncoder
 class MockTextEncoder {
@@ -15,20 +15,20 @@ class MockTextEncoder {
 global.TextEncoder = MockTextEncoder as any;
 
 // Mock the Three.js exporters
-const mockGltfParseAsync = jest.fn();
-const mockUsdzParse = jest.fn();
+const mockGltfParseAsync = vi.fn();
+const mockUsdzParse = vi.fn();
 
-jest.mock('three/examples/jsm/exporters/GLTFExporter', () => {
+vi.mock('three/examples/jsm/exporters/GLTFExporter', () => {
     return {
-        GLTFExporter: jest.fn().mockImplementation(() => ({
+        GLTFExporter: vi.fn().mockImplementation(() => ({
             parseAsync: mockGltfParseAsync,
         })),
     };
 });
 
-jest.mock('three/examples/jsm/exporters/USDZExporter', () => {
+vi.mock('three/examples/jsm/exporters/USDZExporter', () => {
     return {
-        USDZExporter: jest.fn().mockImplementation(() => ({
+        USDZExporter: vi.fn().mockImplementation(() => ({
             parse: mockUsdzParse,
         })),
     };
@@ -53,15 +53,10 @@ describe('AssetExporter', () => {
         it('should throw FileTypeError for unsupported file type', async () => {
             // Mock the export method to simulate the switch default case
             const originalExport = exporter.export;
-            exporter.export = jest
-                .fn()
-                .mockImplementation(async (obj, type) => {
-                    // Simulate the switch-case default behavior
-                    throw new FileTypeError(
-                        `Unsupported file type: ${type}`,
-                        type,
-                    );
-                }) as any;
+            exporter.export = vi.fn().mockImplementation(async (obj, type) => {
+                // Simulate the switch-case default behavior
+                throw new FileTypeError(`Unsupported file type: ${type}`, type);
+            }) as any;
 
             // Use a valid string but it will be caught by our mock
             await expect(

@@ -6,18 +6,18 @@ import { DIVEScene } from '../../../engine/scene/Scene.ts';
  * @jest-environment jsdom
  */
 
-jest.mock('../select/SelectTool.ts', () => {
+vi.mock('../select/SelectTool.ts', () => {
     return {
-        DIVESelectTool: jest.fn(function () {
-            this.Activate = jest.fn();
-            this.Deactivate = jest.fn();
-            this.onPointerDown = jest.fn();
-            this.onPointerMove = jest.fn();
-            this.onPointerUp = jest.fn();
-            this.onWheel = jest.fn();
-            this.SetGizmoMode = jest.fn();
-            this.SetGizmoVisibility = jest.fn();
-            this.SetGizmoScaleLinked = jest.fn();
+        DIVESelectTool: vi.fn(function (this: any) {
+            this.Activate = vi.fn();
+            this.Deactivate = vi.fn();
+            this.onPointerDown = vi.fn();
+            this.onPointerMove = vi.fn();
+            this.onPointerUp = vi.fn();
+            this.onWheel = vi.fn();
+            this.SetGizmoMode = vi.fn();
+            this.SetGizmoVisibility = vi.fn();
+            this.SetGizmoScaleLinked = vi.fn();
             return this;
         }),
     };
@@ -27,11 +27,11 @@ const mockController = {
     domElement: {
         width: 0,
         height: 0,
-        addEventListener: jest.fn((type, callback) => {
+        addEventListener: vi.fn((type, callback) => {
             callback();
         }),
-        getContext: jest.fn(),
-        removeEventListener: jest.fn((type, callback) => {
+        getContext: vi.fn(),
+        removeEventListener: vi.fn((type, callback) => {
             callback();
         }),
         clientWidth: 0,
@@ -44,7 +44,7 @@ const mockController = {
 
 describe('dive/toolbox/DIVEToolBox', () => {
     afterEach(() => {
-        jest.clearAllMocks();
+        vi.clearAllMocks();
     });
 
     it('should instantiate', () => {
@@ -58,7 +58,7 @@ describe('dive/toolbox/DIVEToolBox', () => {
     });
 
     it('should throw with incorrect tool', () => {
-        const spy = jest.spyOn(console, 'warn').mockImplementation();
+        const spy = vi.spyOn(console, 'warn').mockImplementation(() => {});
         const toolBox = new Toolbox({} as DIVEScene, mockController);
         expect(() =>
             toolBox.UseTool('not a real tool' as unknown as ToolType),

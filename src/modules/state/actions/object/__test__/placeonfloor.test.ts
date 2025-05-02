@@ -8,11 +8,11 @@ describe('PlaceOnFloorAction', () => {
     it('should place an object on the floor', async () => {
         // Mock dependencies
         const mockModel = {
-            PlaceOnFloor: jest.fn(),
+            PlaceOnFloor: vi.fn(),
         } as unknown as DIVEModel;
 
         const mockScene = {
-            GetSceneObject: jest.fn().mockReturnValue(mockModel),
+            GetSceneObject: vi.fn().mockReturnValue(mockModel),
         } as unknown as DIVEScene;
 
         const mockEngine = {
@@ -53,7 +53,7 @@ describe('PlaceOnFloorAction', () => {
     it('should throw error if object is not registered', async () => {
         // Mock dependencies
         const mockScene = {
-            GetSceneObject: jest.fn(),
+            GetSceneObject: vi.fn(),
         } as unknown as DIVEScene;
 
         const mockEngine = {
@@ -79,7 +79,7 @@ describe('PlaceOnFloorAction', () => {
     it('should throw error if object is not found in scene', async () => {
         // Mock dependencies
         const mockScene = {
-            GetSceneObject: jest.fn().mockReturnValue(null),
+            GetSceneObject: vi.fn().mockReturnValue(null),
         } as unknown as DIVEScene;
 
         const mockEngine = {

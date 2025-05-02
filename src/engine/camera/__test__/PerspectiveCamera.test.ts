@@ -56,7 +56,7 @@ describe('dive/engine/camera/DIVEPerspectiveCamera', () => {
 
     it('should set camera layer to LIVE', () => {
         const camera = new DIVEPerspectiveCamera();
-        const onSetCameraLayer = jest.fn();
+        const onSetCameraLayer = vi.fn();
         camera.onSetCameraLayer = onSetCameraLayer;
         camera.setCameraLayer('LIVE');
         expect(camera.layers.mask).toBe(
@@ -69,7 +69,7 @@ describe('dive/engine/camera/DIVEPerspectiveCamera', () => {
 
     it('should set camera layer to EDITOR', () => {
         const camera = new DIVEPerspectiveCamera();
-        const onSetCameraLayer = jest.fn();
+        const onSetCameraLayer = vi.fn();
         camera.onSetCameraLayer = onSetCameraLayer;
         camera.setCameraLayer('EDITOR');
         expect(camera.layers.mask).toBe(
@@ -99,7 +99,7 @@ describe('dive/engine/camera/DIVEPerspectiveCamera', () => {
 
     it('should update projection matrix when resizing', () => {
         const camera = new DIVEPerspectiveCamera();
-        const updateProjectionMatrixSpy = jest.spyOn(
+        const updateProjectionMatrixSpy = vi.spyOn(
             camera,
             'updateProjectionMatrix',
         );

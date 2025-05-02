@@ -1,31 +1,30 @@
-import { ExportSceneAction } from '../exportscene';
-import { DIVEEngine } from '../../../../../engine';
-import { DIVEScene } from '../../../../../engine/scene/Scene';
-import { ModuleImporter } from '../../../../_system/ModuleImporter';
-import { AssetExporter } from '../../../../asset/exporter/AssetExporter';
+import { ExportSceneAction } from '../exportscene.ts';
+import { DIVEEngine } from '../../../../../engine/Engine.ts';
+
+const mockExport = vi.fn().mockResolvedValue('exported-scene-data');
+const mockGetAssetExporter = vi.fn().mockResolvedValue({
+    export: mockExport,
+});
+
+const mockEngine = {
+    scene: {
+        Root: {},
+    },
+} as unknown as DIVEEngine;
 
 describe('ExportSceneAction', () => {
     it('should export scene', async () => {
-        // Mock dependencies
-        const mockAssetExporter = {
-            export: jest.fn().mockResolvedValue('exported-scene-data'),
-        } as unknown as AssetExporter;
-
         const mockEngine = {
             scene: {
                 Root: {},
             },
         } as unknown as DIVEEngine;
 
-        const mockAssetExporterModule = {
-            instantiate: jest.fn().mockResolvedValue(mockAssetExporter),
-        } as unknown as ModuleImporter<'AssetExporter'>;
-
         const action = new ExportSceneAction(
             { type: 'glb' },
             {
                 engine: mockEngine,
-                AssetExporter: mockAssetExporterModule,
+                getAssetExporter: mockGetAssetExporter,
             },
         );
 
@@ -33,8 +32,8 @@ describe('ExportSceneAction', () => {
         const result = await action.execute();
 
         // Verify results
-        expect(mockAssetExporterModule.instantiate).toHaveBeenCalled();
-        expect(mockAssetExporter.export).toHaveBeenCalled();
+        expect(mockGetAssetExporter).toHaveBeenCalled();
+        expect(mockExport).toHaveBeenCalledWith(mockEngine.scene.Root, 'glb');
         expect(result).toBe('exported-scene-data');
     });
 });

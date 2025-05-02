@@ -6,7 +6,7 @@ describe('SetBackgroundAction', () => {
     it('should set scene background', async () => {
         // Mock dependencies
         const mockScene = {
-            SetBackground: jest.fn(),
+            SetBackground: vi.fn(),
         } as unknown as DIVEScene;
 
         const mockEngine = {

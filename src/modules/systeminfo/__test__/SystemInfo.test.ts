@@ -17,7 +17,7 @@ const mockNavigator = (navigator: any) => {
 describe('dive/info/DIVEInfo', () => {
     beforeEach(() => {
         SystemInfo['_supportsWebXR'] = false;
-        jest.clearAllMocks();
+        vi.clearAllMocks();
     });
 
     it('should get system: Windows', () => {
@@ -77,7 +77,7 @@ describe('dive/info/DIVEInfo', () => {
     it('should support webXR', async () => {
         mockNavigator({
             xr: {
-                isSessionSupported: jest.fn().mockResolvedValue(true),
+                isSessionSupported: vi.fn().mockResolvedValue(true),
             },
         });
         const restoreSecureContext = window.isSecureContext;
@@ -120,14 +120,14 @@ describe('dive/info/DIVEInfo', () => {
     it('should get empty reason (not checked)', async () => {
         mockNavigator({
             xr: {
-                isSessionSupported: jest.fn().mockResolvedValue(true),
+                isSessionSupported: vi.fn().mockResolvedValue(true),
             },
         });
         const restoreSecureContext = window.isSecureContext;
         window.isSecureContext = true;
 
         await SystemInfo.getSupportsWebXR();
-        console.log = jest.fn();
+        console.log = vi.fn();
         const reason = SystemInfo.getWebXRUnsupportedReason();
         expect(reason).toBe(null);
 
@@ -137,7 +137,7 @@ describe('dive/info/DIVEInfo', () => {
     it('should get empty reason (webXR supported)', async () => {
         mockNavigator({
             xr: {
-                isSessionSupported: jest.fn().mockResolvedValue(true),
+                isSessionSupported: vi.fn().mockResolvedValue(true),
             },
         });
         const restoreSecureContext = window.isSecureContext;
@@ -153,7 +153,7 @@ describe('dive/info/DIVEInfo', () => {
     it('should not support webXR', async () => {
         mockNavigator({
             xr: {
-                isSessionSupported: jest.fn().mockResolvedValue(false),
+                isSessionSupported: vi.fn().mockResolvedValue(false),
             },
         });
         const restoreSecureContext = window.isSecureContext;
@@ -173,7 +173,7 @@ describe('dive/info/DIVEInfo', () => {
     it('should not support webXR on error', async () => {
         mockNavigator({
             xr: {
-                isSessionSupported: jest.fn().mockRejectedValue('error'),
+                isSessionSupported: vi.fn().mockRejectedValue('error'),
             },
         });
         const restoreSecureContext = window.isSecureContext;
@@ -192,7 +192,7 @@ describe('dive/info/DIVEInfo', () => {
         SystemInfo['_supportsWebXR'] = true;
         mockNavigator({
             xr: {
-                isSessionSupported: jest.fn().mockRejectedValue('error'),
+                isSessionSupported: vi.fn().mockRejectedValue('error'),
             },
         });
         const supports = await SystemInfo.getSupportsWebXR();
@@ -203,7 +203,7 @@ describe('dive/info/DIVEInfo', () => {
         SystemInfo['_supportsWebXR'] = false;
         mockNavigator({
             xr: {
-                isSessionSupported: jest.fn().mockRejectedValue('error'),
+                isSessionSupported: vi.fn().mockRejectedValue('error'),
             },
         });
         const supports = await SystemInfo.getSupportsWebXR();
@@ -211,7 +211,7 @@ describe('dive/info/DIVEInfo', () => {
     });
 
     it('should support ARQuickLook when relList supports AR', () => {
-        jest.spyOn(document, 'createElement').mockReturnValue({
+        vi.spyOn(document, 'createElement').mockReturnValue({
             relList: { supports: () => true },
         } as unknown as HTMLAnchorElement);
         const supports = SystemInfo.getSupportsARQuickLook();
@@ -230,7 +230,7 @@ describe('dive/info/DIVEInfo', () => {
             vendor,
         });
 
-        jest.spyOn(document, 'createElement').mockReturnValue({
+        vi.spyOn(document, 'createElement').mockReturnValue({
             relList: { supports: () => false },
         } as unknown as HTMLAnchorElement);
 
@@ -249,56 +249,56 @@ describe('dive/info/DIVEInfo', () => {
     });
 
     it('should be mobile (iOS)', () => {
-        jest.spyOn(SystemInfo, 'getSystem').mockReturnValue(ESystem.IOS);
+        vi.spyOn(SystemInfo, 'getSystem').mockReturnValue(ESystem.IOS);
         expect(SystemInfo.isMobile).toBe(true);
         expect(SystemInfo.isDesktop).toBe(false);
     });
 
     it('should be mobile (Android)', () => {
-        jest.spyOn(SystemInfo, 'getSystem').mockReturnValue(ESystem.ANDROID);
+        vi.spyOn(SystemInfo, 'getSystem').mockReturnValue(ESystem.ANDROID);
         expect(SystemInfo.isMobile).toBe(true);
         expect(SystemInfo.isDesktop).toBe(false);
     });
 
     it('should be desktop (Windows)', () => {
-        jest.spyOn(SystemInfo, 'getSystem').mockReturnValue(ESystem.WINDOWS);
+        vi.spyOn(SystemInfo, 'getSystem').mockReturnValue(ESystem.WINDOWS);
         expect(SystemInfo.isMobile).toBe(false);
         expect(SystemInfo.isDesktop).toBe(true);
     });
 
     it('should be desktop (MacOS)', () => {
-        jest.spyOn(SystemInfo, 'getSystem').mockReturnValue(ESystem.MACOS);
+        vi.spyOn(SystemInfo, 'getSystem').mockReturnValue(ESystem.MACOS);
         expect(SystemInfo.isMobile).toBe(false);
         expect(SystemInfo.isDesktop).toBe(true);
     });
 
     it('should be desktop (Linux)', () => {
-        jest.spyOn(SystemInfo, 'getSystem').mockReturnValue(ESystem.LINUX);
+        vi.spyOn(SystemInfo, 'getSystem').mockReturnValue(ESystem.LINUX);
         expect(SystemInfo.isMobile).toBe(false);
         expect(SystemInfo.isDesktop).toBe(true);
     });
 
     it('should be desktop (Unknown)', () => {
-        jest.spyOn(SystemInfo, 'getSystem').mockReturnValue(ESystem.UNKNOWN);
+        vi.spyOn(SystemInfo, 'getSystem').mockReturnValue(ESystem.UNKNOWN);
         expect(SystemInfo.isMobile).toBe(false);
         expect(SystemInfo.isDesktop).toBe(true);
     });
 
     it('should be capable of AR (ARQuickLook)', async () => {
-        jest.spyOn(SystemInfo, 'getSupportsARQuickLook').mockReturnValue(true);
-        jest.spyOn(SystemInfo, 'getSupportsWebXR').mockResolvedValue(false);
+        vi.spyOn(SystemInfo, 'getSupportsARQuickLook').mockReturnValue(true);
+        vi.spyOn(SystemInfo, 'getSupportsWebXR').mockResolvedValue(false);
         expect(await SystemInfo.getSupportsAR()).toBe(true);
     });
 
     it.skip('should be capable of AR (WebXR)', async () => {
-        jest.spyOn(SystemInfo, 'getSupportsARQuickLook').mockReturnValue(false);
-        jest.spyOn(SystemInfo, 'getSupportsWebXR').mockResolvedValue(true);
+        vi.spyOn(SystemInfo, 'getSupportsARQuickLook').mockReturnValue(false);
+        vi.spyOn(SystemInfo, 'getSupportsWebXR').mockResolvedValue(true);
         expect(await SystemInfo.getSupportsAR()).toBe(true);
     });
 
     it('should not be capable of AR', async () => {
-        jest.spyOn(SystemInfo, 'getSupportsARQuickLook').mockReturnValue(false);
-        jest.spyOn(SystemInfo, 'getSupportsWebXR').mockResolvedValue(false);
+        vi.spyOn(SystemInfo, 'getSupportsARQuickLook').mockReturnValue(false);
+        vi.spyOn(SystemInfo, 'getSupportsWebXR').mockResolvedValue(false);
         expect(await SystemInfo.getSupportsAR()).toBe(false);
     });
 
