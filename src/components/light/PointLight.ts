@@ -7,7 +7,7 @@ import {
     FrontSide,
     Object3D,
 } from 'three';
-import { State } from '../../modules/state/State.ts';
+import { getModule } from '../../modules/ModuleRegistry.ts';
 import {
     PRODUCT_LAYER_MASK,
     UI_LAYER_MASK,
@@ -93,21 +93,27 @@ export class DIVEPointLight
     }
 
     public onMove(): void {
-        State.get(this.userData.id)?.performAction('UPDATE_OBJECT', {
-            id: this.userData.id,
-            position: this.position,
+        getModule('State').then((State) => {
+            State.get(this.userData.id)?.performAction('UPDATE_OBJECT', {
+                id: this.userData.id,
+                position: this.position,
+            });
         });
     }
 
     public onSelect(): void {
-        State.get(this.userData.id)?.performAction('SELECT_OBJECT', {
-            id: this.userData.id,
+        getModule('State').then((State) => {
+            State.get(this.userData.id)?.performAction('SELECT_OBJECT', {
+                id: this.userData.id,
+            });
         });
     }
 
     public onDeselect(): void {
-        State.get(this.userData.id)?.performAction('DESELECT_OBJECT', {
-            id: this.userData.id,
+        getModule('State').then((State) => {
+            State.get(this.userData.id)?.performAction('DESELECT_OBJECT', {
+                id: this.userData.id,
+            });
         });
     }
 }

@@ -1,6 +1,6 @@
-import { SystemInfo } from '../SystemInfo';
-import { ESystem, EWebXRUnsupportedReason } from '../../../types/info';
-import { ARCompatibilityError } from '../../../error';
+import { SystemInfo } from '../SystemInfo.ts';
+import { ESystem, EWebXRUnsupportedReason } from '../../../types/info/index.ts';
+import { ARCompatibilityError } from '../../../error/ar-compatibility/ar-compatibility-error.ts';
 
 // Helper for test failures
 const fail = (message: string): never => {

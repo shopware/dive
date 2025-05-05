@@ -41,7 +41,7 @@ vi.mock('../../engine/Engine', async (importOriginal) => {
 const test_uuid = 'test_uuid';
 vi.spyOn(MathUtils, 'generateUUID').mockReturnValue(test_uuid);
 
-vi.mock('../../modules/index', () => {
+vi.mock('../../modules/ModuleRegistry', () => {
     return {
         getModule: vi.fn().mockReturnValue(
             vi.fn(function (this: any) {

@@ -3,7 +3,7 @@ import { generateUUID } from 'three/src/math/MathUtils.js';
 // type imports
 import { type COMEntity } from './types/index.ts';
 import { type OrbitController } from '../controller/orbit/OrbitController.ts';
-import { getModule } from '../index.ts';
+import { getModule } from '../ModuleRegistry.ts';
 import { DIVEEngine } from '../../engine/Engine.ts';
 import {
     ActionDependencies,

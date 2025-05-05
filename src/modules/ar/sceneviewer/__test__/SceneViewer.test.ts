@@ -1,5 +1,5 @@
-import { ARSystemOptions } from '../../ARSystem';
-import { SceneViewer } from '../SceneViewer';
+import { ARSystemOptions } from '../../ARSystem.ts';
+import { SceneViewer } from '../SceneViewer.ts';
 
 // Mock DIVEInfo
 vi.mock('../../../systeminfo/SystemInfo', () => ({

@@ -1,6 +1,6 @@
 import { Box3, Object3D, Vector3, type Vector3Like } from 'three';
 import { PRODUCT_LAYER_MASK } from '../../constants/VisibilityLayerMask.ts';
-import { State } from '../../modules/state/State.ts';
+import { getModule } from '../../modules/ModuleRegistry.ts';
 
 import { DIVEMovable } from '../../interfaces/Movable.ts';
 import { DIVESelectable } from '../../interfaces/Selectable.ts';
@@ -58,11 +58,13 @@ export class DIVENode extends applyMixins(Object3D, [
 
     public SetToWorldOrigin(): void {
         this.position.set(0, 0, 0);
-        State.get(this.userData.id)?.performAction('UPDATE_OBJECT', {
-            id: this.userData.id,
-            position: this.getWorldPosition(this._positionWorldBuffer),
-            rotation: this.rotation,
-            scale: this.scale,
+        getModule('State').then((State) => {
+            State.get(this.userData.id)?.performAction('UPDATE_OBJECT', {
+                id: this.userData.id,
+                position: this.getWorldPosition(this._positionWorldBuffer),
+                rotation: this.rotation,
+                scale: this.scale,
+            });
         });
     }
 
@@ -70,23 +72,29 @@ export class DIVENode extends applyMixins(Object3D, [
      * Can be called when the object is moved from a foreign object (gizmo, parent, etc.) to update the object's position.
      */
     public onMove(): void {
-        State.get(this.userData.id)?.performAction('UPDATE_OBJECT', {
-            id: this.userData.id,
-            position: this.getWorldPosition(this._positionWorldBuffer),
-            rotation: this.rotation,
-            scale: this.scale,
+        getModule('State').then((State) => {
+            State.get(this.userData.id)?.performAction('UPDATE_OBJECT', {
+                id: this.userData.id,
+                position: this.getWorldPosition(this._positionWorldBuffer),
+                rotation: this.rotation,
+                scale: this.scale,
+            });
         });
     }
 
     public onSelect(): void {
-        State.get(this.userData.id)?.performAction('SELECT_OBJECT', {
-            id: this.userData.id,
+        getModule('State').then((State) => {
+            State.get(this.userData.id)?.performAction('SELECT_OBJECT', {
+                id: this.userData.id,
+            });
         });
     }
 
     public onDeselect(): void {
-        State.get(this.userData.id)?.performAction('DESELECT_OBJECT', {
-            id: this.userData.id,
+        getModule('State').then((State) => {
+            State.get(this.userData.id)?.performAction('DESELECT_OBJECT', {
+                id: this.userData.id,
+            });
         });
     }
 }

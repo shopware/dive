@@ -3,7 +3,6 @@ import { DIVEAmbientLight } from '../light/AmbientLight.ts';
 import { DIVEPointLight } from '../light/PointLight.ts';
 import { DIVESceneLight } from '../light/SceneLight.ts';
 import { DIVEModel } from '../model/Model.ts';
-import { State } from '../../modules/state/State.ts';
 import { DIVEPrimitive } from '../primitive/Primitive.ts';
 
 import { type DIVEScene } from '../../engine/scene/Scene.ts';
@@ -17,7 +16,7 @@ import {
 } from '../../modules/state/types/index.ts';
 import { type DIVESceneObject } from '../../types/index.ts';
 import { DIVEGroup } from '../group/Group.ts';
-import { getModule } from '../../modules/index.ts';
+import { getModule } from '../../modules/ModuleRegistry.ts';
 import { DIVEFloor } from '../floor/Floor.ts';
 
 /**
@@ -271,8 +270,10 @@ export class DIVERoot extends Object3D {
                 })
                 .then((gltf) => {
                     (sceneObject as DIVEModel).SetModel(gltf);
-                    State.get(model.id!)?.performAction('MODEL_LOADED', {
-                        id: model.id!,
+                    getModule('State').then((State) => {
+                        State.get(model.id!)?.performAction('MODEL_LOADED', {
+                            id: model.id!,
+                        });
                     });
                 });
         }

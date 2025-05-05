@@ -3,7 +3,7 @@
  * This is the only place where ModuleRegistry should be imported from.
  */
 
-const moduleRegistry = {
+const ModuleRegistry = {
     AnimationSystem: async () =>
         (await import('./animation/AnimationSystem.ts')).AnimationSystem,
     ARSystem: async () => (await import('./ar/ARSystem.ts')).ARSystem,
@@ -19,7 +19,7 @@ const moduleRegistry = {
     Toolbox: async () => (await import('./toolbox/Toolbox.ts')).Toolbox,
 } as const;
 
-type ModuleRegistry = typeof moduleRegistry;
+type ModuleRegistry = typeof ModuleRegistry;
 type ModuleName = keyof ModuleRegistry;
 type ModuleType<T extends keyof ModuleRegistry> =
     ReturnType<ModuleRegistry[T]> extends Promise<infer U> ? U : never;
@@ -27,5 +27,5 @@ type ModuleType<T extends keyof ModuleRegistry> =
 export const getModule = async <T extends ModuleName>(
     moduleName: T,
 ): Promise<ModuleType<T>> => {
-    return (await moduleRegistry[moduleName]()) as ModuleType<T>;
+    return (await ModuleRegistry[moduleName]()) as ModuleType<T>;
 };

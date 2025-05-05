@@ -1,5 +1,5 @@
 import { SystemInfo } from '../systeminfo/SystemInfo.ts';
-import { ARCompatibilityError } from '../../error/index.ts';
+import { ARCompatibilityError } from '../../error/ar-compatibility/ar-compatibility-error.ts';
 import { ESystem } from '../../types/info/index.ts';
 import { ARQuickLook } from './arquicklook/ARQuickLook.ts';
 import { SceneViewer } from './sceneviewer/SceneViewer.ts';

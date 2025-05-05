@@ -5,11 +5,9 @@ import {
     type FileType,
     SUPPORTED_FILE_TYPES,
 } from '../../../types/file/index.ts';
-import {
-    FileTypeError,
-    NetworkError,
-    ParseError,
-} from '../../../error/index.ts';
+import { FileTypeError } from '../../../error/file-type/file-type-error.ts';
+import { NetworkError } from '../../../error/network/network-error.ts';
+import { ParseError } from '../../../error/parse/parse-error.ts';
 import {
     getFileTypeFromUri,
     isFileTypeSupported,

@@ -3,7 +3,7 @@ import { COMEntity } from '../../../types/index.ts';
 import { OrbitController } from '../../../../controller/orbit/OrbitController.ts';
 import { Vector3 } from 'three';
 import { DIVEEngine } from '../../../../../engine/Engine.ts';
-import { getModule } from '../../../../index.ts';
+import { getModule } from '../../../../ModuleRegistry.ts';
 
 const mockStop = vi.fn();
 const mockCreateAnimator = vi.fn().mockReturnValue({

@@ -1,7 +1,7 @@
 import { RaycasterIntersectObjectMock } from '../../../../__mocks__/three.ts';
 
 import { DIVEModel } from '../Model.ts';
-import { State } from '../../../modules/state/State.ts';
+import { type State } from '../../../modules/state/State.ts';
 import { DIVEScene } from '../../../engine/scene/Scene.ts';
 import {
     Vector3,
@@ -12,25 +12,18 @@ import {
     Object3D,
 } from 'three';
 import { type COMMaterial } from '../../../modules/state/types/index.ts';
+import { getModule } from '../../../modules/ModuleRegistry.ts';
 
-vi.mock('../../../modules/state/State', () => {
-    return {
-        State: {
-            get: vi.fn(() => {
-                return {
-                    performAction: vi.fn(),
-                };
-            }),
-        },
-    };
-});
+vi.mock('../../../modules/ModuleRegistry.ts', () => ({
+    getModule: vi.fn().mockResolvedValue({
+        get: vi.fn().mockReturnValue({
+            performAction: vi.fn(),
+        }),
+    }),
+}));
 
 const object = new Object3D();
 object.children.push(new Mesh());
-
-vi.spyOn(State, 'get').mockReturnValue({
-    performAction: vi.fn(),
-} as unknown as State);
 
 let model: DIVEModel;
 
@@ -53,7 +46,9 @@ describe('dive/model/DIVEModel', () => {
         expect(() => model.SetModel(object)).not.toThrow();
     });
 
-    it('should place on floor', () => {
+    it('should place on floor', async () => {
+        const State = await getModule('State');
+
         model.SetModel(object);
 
         const com = State.get('id')!;
@@ -77,7 +72,8 @@ describe('dive/model/DIVEModel', () => {
         scene.Root.parent = scene;
         model.parent = scene.Root;
 
-        expect(() => model.PlaceOnFloor()).not.toThrow();
+        model.PlaceOnFloor();
+        await new Promise(setImmediate);
         expect(spyperformAction).toHaveBeenCalledWith(
             'UPDATE_OBJECT',
             expect.objectContaining({
@@ -88,11 +84,8 @@ describe('dive/model/DIVEModel', () => {
         );
     });
 
-    it('should drop it', () => {
-        const comMock = {
-            performAction: vi.fn(),
-        } as unknown as State;
-        vi.spyOn(State, 'get').mockReturnValue(comMock);
+    it('should drop it', async () => {
+        const State = await getModule('State');
 
         const spy = vi.spyOn(model, 'onMove').mockImplementation(() => {});
 
@@ -222,7 +215,9 @@ describe('dive/model/DIVEModel', () => {
         expect(() => model.PlaceOnFloor()).not.toThrow();
     });
 
-    it('should handle PlaceOnFloor when position does not change', () => {
+    it('should handle PlaceOnFloor when position does not change', async () => {
+        const State = await getModule('State');
+
         model.SetModel(object);
         model.userData.id = 'something';
 

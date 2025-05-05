@@ -13,12 +13,21 @@ import { DIVEGroup } from '../../group/Group.ts';
 import { type DIVEModel } from '../../model/Model.ts';
 import { type DIVEPrimitive } from '../../primitive/Primitive.ts';
 
-vi.mock('../../../modules/index.js', () => ({
-    getModule: vi.fn().mockResolvedValue(
-        class {
-            load = vi.fn().mockResolvedValue({});
-        },
-    ),
+vi.mock('../../../modules/ModuleRegistry', () => ({
+    getModule: vi.fn((moduleName: string) => {
+        if (moduleName === 'State') {
+            return Promise.resolve({
+                get: vi.fn().mockReturnValue({
+                    performAction: vi.fn(),
+                }),
+            });
+        }
+        return Promise.resolve(
+            class {
+                load = vi.fn().mockResolvedValue({});
+            },
+        );
+    }),
 }));
 
 vi.mock('../../../modules/state/State', () => {
@@ -1561,7 +1570,9 @@ describe('components/root/DIVERoot', () => {
         it('should bubble errors from getModule in _getAssetLoader()', async () => {
             const error = new Error('Failed to load');
             // make getModule reject on next call
-            const moduleIndexTsFile = await import('../../../modules/index.ts');
+            const moduleIndexTsFile = await import(
+                '../../../modules/ModuleRegistry.ts'
+            );
             vi.spyOn(moduleIndexTsFile, 'getModule').mockRejectedValueOnce(
                 error,
             );

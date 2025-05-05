@@ -11,6 +11,7 @@ import {
     SphereGeometry,
     Vector3,
 } from 'three';
+import { getModule } from '../../modules/ModuleRegistry.ts';
 import { PRODUCT_LAYER_MASK } from '../../constants/VisibilityLayerMask.ts';
 import { findSceneRecursive } from '../../helpers/findSceneRecursive/findSceneRecursive.ts';
 import { DIVENode } from '../node/Node.ts';
@@ -18,7 +19,6 @@ import {
     type COMGeometry,
     type COMMaterial,
 } from '../../modules/state/types/index.ts';
-import { State } from '../../modules/state/State.ts';
 
 /**
  * A basic model class.
@@ -124,12 +124,13 @@ export class DIVEPrimitive extends DIVENode {
 
         // skip any action when the position did not change
         if (worldPos.y === oldWorldPos.y) return;
-
-        State.get(this.userData.id)?.performAction('UPDATE_OBJECT', {
-            id: this.userData.id,
-            position: worldPos,
-            rotation: this.rotation,
-            scale: this.scale,
+        getModule('State').then((State) => {
+            State.get(this.userData.id)?.performAction('UPDATE_OBJECT', {
+                id: this.userData.id,
+                position: worldPos,
+                rotation: this.rotation,
+                scale: this.scale,
+            });
         });
     }
 

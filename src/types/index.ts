@@ -9,8 +9,5 @@ export * from './UUID.ts';
 // File types
 export * from './file/index.ts';
 
-// Error types
-export * from '../error/index.ts';
-
 // Info types
 export * from './info/index.ts';

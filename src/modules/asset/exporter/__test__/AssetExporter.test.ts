@@ -1,6 +1,7 @@
 import { AssetExporter } from '../AssetExporter.ts';
 import { Object3D } from 'three';
-import { FileTypeError, ParseError } from '../../../../error/index.ts';
+import { FileTypeError } from '../../../../error/file-type/file-type-error.ts';
+import { ParseError } from '../../../../error/parse/parse-error.ts';
 
 // Mock TextEncoder
 class MockTextEncoder {

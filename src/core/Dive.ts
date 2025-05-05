@@ -10,7 +10,7 @@ import {
     EngineDefaultSettings,
     EngineSettings,
 } from '../engine/Engine.ts';
-import { getModule } from '../modules/index.ts';
+import { getModule } from '../modules/ModuleRegistry.ts';
 
 declare global {
     interface Window {

@@ -1,14 +1,15 @@
 // Named exports
 export * from './core/index.ts';
 export * from './helpers/index.ts';
-export * from './error/index.ts';
+
+// errors
+export type { ARCompatibilityError } from './error/ar-compatibility/ar-compatibility-error.ts';
+export type { FileTypeError } from './error/file-type/file-type-error.ts';
+export type { NetworkError } from './error/network/network-error.ts';
+export type { ParseError } from './error/parse/parse-error.ts';
+
+// types
 export * from './types/index.ts';
 
 // export all modules
-export * from './modules/ar/ARSystem.ts';
-export * from './modules/state/State.ts';
-export * from './modules/asset/converter/AssetConverter.ts';
-export * from './modules/asset/exporter/AssetExporter.ts';
-export * from './modules/asset/loader/AssetLoader.ts';
-export * from './modules/mediacreator/MediaCreator.ts';
-export * from './modules/systeminfo/SystemInfo.ts';
+export * from './modules/ModuleRegistry.ts';

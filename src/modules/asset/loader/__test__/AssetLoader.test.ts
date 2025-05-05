@@ -1,8 +1,10 @@
-import { AssetLoader } from '../AssetLoader';
-import { GLTF, GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader';
-import { USDZLoader } from 'three/examples/jsm/loaders/USDZLoader';
+import { AssetLoader } from '../AssetLoader.ts';
+import { GLTF, GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
+import { USDZLoader } from 'three/examples/jsm/loaders/USDZLoader.js';
 import { Group } from 'three';
-import { FileTypeError, NetworkError, ParseError } from '../../../../error';
+import { FileTypeError } from '../../../../error/file-type/file-type-error.ts';
+import { NetworkError } from '../../../../error/network/network-error.ts';
+import { ParseError } from '../../../../error/parse/parse-error.ts';
 
 // Mock fetch
 global.fetch = vi.fn().mockImplementation(async (uri) => ({
@@ -11,44 +13,44 @@ global.fetch = vi.fn().mockImplementation(async (uri) => ({
 }));
 
 // Mock the Three.js loaders
+const mockLoadAsyncGLTF = vi.fn();
+const mockParseAsyncGLTF = vi.fn();
 vi.mock('three/examples/jsm/loaders/GLTFLoader', () => {
-    const mockLoadAsync = vi.fn();
-    const mockParseAsync = vi.fn();
     return {
         GLTFLoader: vi.fn().mockImplementation(() => ({
-            loadAsync: mockLoadAsync,
-            parseAsync: mockParseAsync,
+            loadAsync: mockLoadAsyncGLTF,
+            parseAsync: mockParseAsyncGLTF,
         })),
     };
 });
 
+const mockLoadAsyncUSDZ = vi.fn();
+const mockParseUSDZ = vi.fn();
 vi.mock('three/examples/jsm/loaders/USDZLoader', () => {
-    const mockLoadAsync = vi.fn();
-    const mockParse = vi.fn();
     return {
         USDZLoader: vi.fn().mockImplementation(() => ({
-            loadAsync: mockLoadAsync,
-            parse: mockParse,
+            loadAsync: mockLoadAsyncUSDZ,
+            parse: mockParseUSDZ,
         })),
     };
 });
 
 describe('AssetLoader', () => {
     let loader: AssetLoader;
-    let mockGLTFLoader: vi.Mocked<GLTFLoader>;
-    let mockUSDZLoader: vi.Mocked<USDZLoader>;
+    let mockGLTFLoader: GLTFLoader;
+    let mockUSDZLoader: USDZLoader;
 
     beforeEach(() => {
         vi.clearAllMocks();
         loader = new AssetLoader();
-        mockGLTFLoader = new GLTFLoader() as vi.Mocked<GLTFLoader>;
-        mockUSDZLoader = new USDZLoader() as vi.Mocked<USDZLoader>;
-        (global.fetch as vi.Mock).mockClear();
+        mockGLTFLoader = new GLTFLoader();
+        mockUSDZLoader = new USDZLoader();
+        vi.mocked(global.fetch).mockClear();
     });
 
     it('should load a glTF file successfully', async () => {
         const mockScene = { type: 'Group' };
-        mockGLTFLoader.parseAsync.mockResolvedValue({
+        mockParseAsyncGLTF.mockResolvedValue({
             scene: mockScene,
         } as unknown as GLTF);
 
@@ -60,7 +62,7 @@ describe('AssetLoader', () => {
 
     it('should load a USDZ file successfully', async () => {
         const mockObject = new Group();
-        mockUSDZLoader.parse.mockReturnValue(mockObject);
+        mockParseUSDZ.mockReturnValue(mockObject);
 
         const result = await loader.load('model.usdz');
 
@@ -77,32 +79,38 @@ describe('AssetLoader', () => {
     });
 
     it('should throw NetworkError when fetch fails', async () => {
-        (global.fetch as vi.Mock).mockImplementationOnce(async () => ({
-            ok: false,
-        }));
+        vi.mocked(global.fetch).mockImplementationOnce(
+            async () =>
+                ({
+                    ok: false,
+                }) as unknown as Response,
+        );
 
         await expect(loader.load('model.glb')).rejects.toThrow(NetworkError);
     });
 
     it('should throw NetworkError when arrayBuffer extraction fails', async () => {
-        (global.fetch as vi.Mock).mockImplementationOnce(async () => ({
-            ok: true,
-            arrayBuffer: async () => {
-                throw new Error('Failed to extract arrayBuffer');
-            },
-        }));
+        vi.mocked(global.fetch).mockImplementationOnce(
+            async () =>
+                ({
+                    ok: true,
+                    arrayBuffer: async () => {
+                        throw new Error('Failed to extract arrayBuffer');
+                    },
+                }) as unknown as Response,
+        );
 
         await expect(loader.load('model.glb')).rejects.toThrow(NetworkError);
     });
 
     it('should throw ParseError when glTF parsing fails', async () => {
-        mockGLTFLoader.parseAsync.mockRejectedValue(new Error('Parse error'));
+        mockParseAsyncGLTF.mockRejectedValue(new Error('Parse error'));
 
         await expect(loader.load('model.glb')).rejects.toThrow(ParseError);
     });
 
     it('should throw ParseError when USDZ parsing fails', async () => {
-        mockUSDZLoader.parse.mockImplementation(() => {
+        mockParseUSDZ.mockImplementation(() => {
             throw new Error('Parse error');
         });
 
@@ -110,7 +118,7 @@ describe('AssetLoader', () => {
     });
 
     it('should throw ParseError when non-Error object is thrown', async () => {
-        mockGLTFLoader.parseAsync.mockImplementation(() => {
+        mockParseAsyncGLTF.mockImplementation(() => {
             throw 'String error'; // Throwing a non-Error object
         });
 
@@ -119,7 +127,7 @@ describe('AssetLoader', () => {
 
     it('should load a gltf file successfully', async () => {
         const mockScene = { type: 'Group' };
-        mockGLTFLoader.parseAsync.mockResolvedValue({
+        mockParseAsyncGLTF.mockResolvedValue({
             scene: mockScene,
         } as unknown as GLTF);
 
@@ -130,7 +138,7 @@ describe('AssetLoader', () => {
     });
 
     it('should attempt to load the file from the provided URI', async () => {
-        mockGLTFLoader.parseAsync.mockResolvedValue({
+        mockParseAsyncGLTF.mockResolvedValue({
             scene: { type: 'Group' },
         } as unknown as GLTF);
 
@@ -141,7 +149,7 @@ describe('AssetLoader', () => {
     });
 
     it('should recognize glb as a supported file type', async () => {
-        mockGLTFLoader.parseAsync.mockResolvedValue({
+        mockParseAsyncGLTF.mockResolvedValue({
             scene: { type: 'Group' },
         } as unknown as GLTF);
 
@@ -151,7 +159,7 @@ describe('AssetLoader', () => {
     });
 
     it('should recognize gltf as a supported file type', async () => {
-        mockGLTFLoader.parseAsync.mockResolvedValue({
+        mockParseAsyncGLTF.mockResolvedValue({
             scene: { type: 'Group' },
         } as unknown as GLTF);
 
@@ -161,7 +169,7 @@ describe('AssetLoader', () => {
     });
 
     it('should recognize usdz as a supported file type', async () => {
-        mockUSDZLoader.parse.mockReturnValue(new Group());
+        mockParseUSDZ.mockReturnValue(new Group());
 
         await loader.load('model.usdz');
 
@@ -169,7 +177,7 @@ describe('AssetLoader', () => {
     });
 
     it('should correctly get file extension from URI with mixed case', async () => {
-        mockGLTFLoader.parseAsync.mockResolvedValue({
+        mockParseAsyncGLTF.mockResolvedValue({
             scene: { type: 'Group' },
         } as unknown as GLTF);
 
