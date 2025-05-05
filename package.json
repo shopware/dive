@@ -105,6 +105,7 @@
         "ts-morph": "^25.0.1",
         "ts-node": "^10.9.2",
         "tsc": "^2.0.4",
+        "tsx": "^4.19.4",
         "typescript": "^5.8.2",
         "typescript-eslint": "^7.7.1",
         "vite": "^6.2.1",
@@ -121,8 +122,8 @@
         "unit": "vitest --run",
         "coverage": "vitest --coverage --run",
         "docs": "yarn docs:actions && yarn docs:modules",
-        "docs:actions": "NODE_OPTIONS='--loader ts-node/esm' ts-node docs/generators/generate-actions-docs.ts",
-        "docs:modules": "NODE_OPTIONS='--loader ts-node/esm' ts-node docs/generators/generate-modules-docs.ts",
+        "docs:actions": "tsx docs/generators/generate-actions-docs.ts",
+        "docs:modules": "tsx docs/generators/generate-modules-docs.ts",
         "ci": "yarn lint && yarn prettier:check && yarn docs && yarn coverage && yarn build"
     }
 }
