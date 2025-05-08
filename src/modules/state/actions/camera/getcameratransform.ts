@@ -26,4 +26,7 @@ declare global {
     }
 }
 
-registerAction('GET_CAMERA_TRANSFORM', GetCameraTransformAction);
+registerAction<'GET_CAMERA_TRANSFORM'>(
+    'GET_CAMERA_TRANSFORM',
+    GetCameraTransformAction,
+);

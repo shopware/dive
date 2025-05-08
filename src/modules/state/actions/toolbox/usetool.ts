@@ -21,4 +21,4 @@ declare global {
     }
 }
 
-registerAction('USE_TOOL', UseToolAction);
+registerAction<'USE_TOOL'>('USE_TOOL', UseToolAction);

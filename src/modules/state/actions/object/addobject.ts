@@ -26,4 +26,4 @@ declare global {
     }
 }
 
-registerAction('ADD_OBJECT', AddObjectAction);
+registerAction<'ADD_OBJECT'>('ADD_OBJECT', AddObjectAction);

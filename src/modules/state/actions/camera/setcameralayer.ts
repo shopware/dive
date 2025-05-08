@@ -19,4 +19,4 @@ declare global {
     }
 }
 
-registerAction('SET_CAMERA_LAYER', SetCameraLayerAction);
+registerAction<'SET_CAMERA_LAYER'>('SET_CAMERA_LAYER', SetCameraLayerAction);

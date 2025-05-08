@@ -19,4 +19,4 @@ declare global {
     }
 }
 
-registerAction('SET_CAMERA_LOCKED', SetCameraLockedAction);
+registerAction<'SET_CAMERA_LOCKED'>('SET_CAMERA_LOCKED', SetCameraLockedAction);

@@ -20,4 +20,7 @@ declare global {
     }
 }
 
-registerAction('SET_GIZMO_SCALE_LINKED', SetGizmoScaleLinkedAction);
+registerAction<'SET_GIZMO_SCALE_LINKED'>(
+    'SET_GIZMO_SCALE_LINKED',
+    SetGizmoScaleLinkedAction,
+);

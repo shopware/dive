@@ -31,4 +31,4 @@ declare global {
     }
 }
 
-registerAction('UPDATE_OBJECT', UpdateObjectAction);
+registerAction<'UPDATE_OBJECT'>('UPDATE_OBJECT', UpdateObjectAction);

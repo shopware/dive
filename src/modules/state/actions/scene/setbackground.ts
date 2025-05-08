@@ -19,4 +19,4 @@ declare global {
     }
 }
 
-registerAction('SET_BACKGROUND', SetBackgroundAction);
+registerAction<'SET_BACKGROUND'>('SET_BACKGROUND', SetBackgroundAction);

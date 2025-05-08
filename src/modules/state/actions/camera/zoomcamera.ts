@@ -20,4 +20,4 @@ declare global {
     }
 }
 
-registerAction('ZOOM_CAMERA', ZoomCameraAction);
+registerAction<'ZOOM_CAMERA'>('ZOOM_CAMERA', ZoomCameraAction);

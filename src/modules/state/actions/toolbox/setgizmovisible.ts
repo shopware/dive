@@ -20,4 +20,7 @@ declare global {
     }
 }
 
-registerAction('SET_GIZMO_VISIBILITY', SetGizmoVisibilityAction);
+registerAction<'SET_GIZMO_VISIBILITY'>(
+    'SET_GIZMO_VISIBILITY',
+    SetGizmoVisibilityAction,
+);

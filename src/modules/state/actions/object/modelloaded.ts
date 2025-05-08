@@ -30,4 +30,4 @@ declare global {
     }
 }
 
-registerAction('MODEL_LOADED', ModelLoadedAction);
+registerAction<'MODEL_LOADED'>('MODEL_LOADED', ModelLoadedAction);

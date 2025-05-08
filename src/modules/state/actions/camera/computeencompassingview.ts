@@ -25,4 +25,7 @@ declare global {
     }
 }
 
-registerAction('COMPUTE_ENCOMPASSING_VIEW', ComputeEncompassingViewAction);
+registerAction<'COMPUTE_ENCOMPASSING_VIEW'>(
+    'COMPUTE_ENCOMPASSING_VIEW',
+    ComputeEncompassingViewAction,
+);

@@ -26,7 +26,7 @@ export const DropItAction = Action.define<
 
         if (!('isDIVEModel' in model)) {
             throw new Error(
-                `Object with id ${payload.id} is not a DIVEModel. Model: ${model}`,
+                `Object with id ${payload.id} is not a DIVEModel. Object: ${model}`,
             );
         }
 
@@ -40,4 +40,4 @@ declare global {
     }
 }
 
-registerAction('DROP_IT', DropItAction);
+registerAction<'DROP_IT'>('DROP_IT', DropItAction);

@@ -105,4 +105,4 @@ declare global {
     }
 }
 
-registerAction('MOVE_CAMERA', MoveCameraAction);
+registerAction<'MOVE_CAMERA'>('MOVE_CAMERA', MoveCameraAction);

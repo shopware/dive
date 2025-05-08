@@ -22,4 +22,4 @@ declare global {
     }
 }
 
-registerAction('EXPORT_SCENE', ExportSceneAction);
+registerAction<'EXPORT_SCENE'>('EXPORT_SCENE', ExportSceneAction);

@@ -24,4 +24,4 @@ declare global {
     }
 }
 
-registerAction('GET_OBJECTS', GetObjectsAction);
+registerAction<'GET_OBJECTS'>('GET_OBJECTS', GetObjectsAction);

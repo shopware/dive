@@ -25,7 +25,7 @@ export const PlaceOnFloorAction = Action.define<
 
         if (!('isDIVEModel' in model)) {
             throw new Error(
-                `Object with id ${payload.id} is not a DIVEModel. Model: ${model}`,
+                `Object with id ${payload.id} is not a DIVEModel. Object: ${model}`,
             );
         }
 
@@ -39,4 +39,4 @@ declare global {
     }
 }
 
-registerAction('PLACE_ON_FLOOR', PlaceOnFloorAction);
+registerAction<'PLACE_ON_FLOOR'>('PLACE_ON_FLOOR', PlaceOnFloorAction);

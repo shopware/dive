@@ -64,4 +64,4 @@ declare global {
     }
 }
 
-registerAction('GENERATE_MEDIA', GenerateMediaAction);
+registerAction<'GENERATE_MEDIA'>('GENERATE_MEDIA', GenerateMediaAction);

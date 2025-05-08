@@ -33,4 +33,4 @@ declare global {
     }
 }
 
-registerAction('DESELECT_OBJECT', DeselectObjectAction);
+registerAction<'DESELECT_OBJECT'>('DESELECT_OBJECT', DeselectObjectAction);

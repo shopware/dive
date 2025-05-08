@@ -20,4 +20,4 @@ declare global {
     }
 }
 
-registerAction('GET_ALL_OBJECTS', GetAllObjectsAction);
+registerAction<'GET_ALL_OBJECTS'>('GET_ALL_OBJECTS', GetAllObjectsAction);

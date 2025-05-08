@@ -89,4 +89,4 @@ declare global {
     }
 }
 
-registerAction('SET_PARENT', SetParentAction);
+registerAction<'SET_PARENT'>('SET_PARENT', SetParentAction);

@@ -63,4 +63,4 @@ declare global {
     }
 }
 
-registerAction('DELETE_OBJECT', DeleteObjectAction);
+registerAction<'DELETE_OBJECT'>('DELETE_OBJECT', DeleteObjectAction);

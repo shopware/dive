@@ -49,4 +49,4 @@ declare global {
     }
 }
 
-registerAction('UPDATE_SCENE', UpdateSceneAction);
+registerAction<'UPDATE_SCENE'>('UPDATE_SCENE', UpdateSceneAction);

@@ -23,4 +23,4 @@ declare global {
     }
 }
 
-registerAction('LAUNCH_AR', LaunchARAction);
+registerAction<'LAUNCH_AR'>('LAUNCH_AR', LaunchARAction);

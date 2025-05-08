@@ -59,4 +59,7 @@ declare global {
     }
 }
 
-registerAction('GET_ALL_SCENE_DATA', GetAllSceneDataAction);
+registerAction<'GET_ALL_SCENE_DATA'>(
+    'GET_ALL_SCENE_DATA',
+    GetAllSceneDataAction,
+);

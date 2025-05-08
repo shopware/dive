@@ -35,4 +35,4 @@ declare global {
     }
 }
 
-registerAction('SELECT_OBJECT', SelectObjectAction);
+registerAction<'SELECT_OBJECT'>('SELECT_OBJECT', SelectObjectAction);
