@@ -1,7 +1,6 @@
 import { Action } from '../action.ts';
 import { registerAction } from '../../ActionRegistry.ts';
 import { type ActionDependencies } from '../../types/index.ts';
-import { type DIVEModel } from '../../../../components/index.ts';
 
 export const PlaceOnFloorAction = Action.define<
     { id: string },
@@ -17,10 +16,16 @@ export const PlaceOnFloorAction = Action.define<
             );
         }
 
-        const model = engine.scene.root.getSceneObject<DIVEModel>(object);
+        const model = engine.scene.root.getSceneObject(object);
         if (!model) {
             throw new Error(
                 `Object with id ${payload.id} is not found in the scene. Scene: ${engine.scene}`,
+            );
+        }
+
+        if (!('isDIVEModel' in model)) {
+            throw new Error(
+                `Object with id ${payload.id} is not a DIVEModel. Model: ${model}`,
             );
         }
 

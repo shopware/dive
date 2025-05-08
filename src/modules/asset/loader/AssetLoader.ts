@@ -1,5 +1,6 @@
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { USDZLoader } from 'three/examples/jsm/loaders/USDZLoader.js';
+import { DRACOLoader } from 'three/examples/jsm/loaders/DRACOLoader.js';
 import { Object3D } from 'three';
 import {
     type FileType,
@@ -12,7 +13,6 @@ import {
     getFileTypeFromUri,
     isFileTypeSupported,
 } from '../../../helpers/index.ts';
-import { DRACOLoader } from 'three/examples/jsm/loaders/DRACOLoader.js';
 
 declare global {
     interface ModuleClasses {

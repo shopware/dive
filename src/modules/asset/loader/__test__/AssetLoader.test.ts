@@ -5,6 +5,7 @@ import { Group } from 'three';
 import { FileTypeError } from '../../../../error/file-type/file-type-error.ts';
 import { NetworkError } from '../../../../error/network/network-error.ts';
 import { ParseError } from '../../../../error/parse/parse-error.ts';
+import { DRACOLoader } from 'three/examples/jsm/Addons.js';
 
 // Mock fetch
 global.fetch = vi.fn().mockImplementation(async (uri) => ({
@@ -20,6 +21,7 @@ vi.mock('three/examples/jsm/loaders/GLTFLoader', () => {
         GLTFLoader: vi.fn().mockImplementation(() => ({
             loadAsync: mockLoadAsyncGLTF,
             parseAsync: mockParseAsyncGLTF,
+            setDRACOLoader: vi.fn(),
         })),
     };
 });
@@ -31,6 +33,14 @@ vi.mock('three/examples/jsm/loaders/USDZLoader', () => {
         USDZLoader: vi.fn().mockImplementation(() => ({
             loadAsync: mockLoadAsyncUSDZ,
             parse: mockParseUSDZ,
+        })),
+    };
+});
+
+vi.mock('three/examples/jsm/loaders/DRACOLoader.js', () => {
+    return {
+        DRACOLoader: vi.fn().mockImplementation(() => ({
+            setDecoderPath: vi.fn(),
         })),
     };
 });

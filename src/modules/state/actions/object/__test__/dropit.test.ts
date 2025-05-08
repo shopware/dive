@@ -5,6 +5,7 @@ import { COMEntity } from '../../../types/index.ts';
 import { DIVEModel } from '../../../../../components/model/Model.ts';
 
 const mockModel = {
+    isDIVEModel: true,
     dropIt: vi.fn(),
 } as unknown as DIVEModel;
 
@@ -33,6 +34,8 @@ describe('DropItAction', () => {
             scale: { x: 1, y: 1, z: 1 },
             name: 'Test Object',
             visible: true,
+            uri: 'test-uri',
+            loaded: true,
         };
 
         // Add the object first
@@ -100,6 +103,44 @@ describe('DropItAction', () => {
         // Execute action and expect error
         expect(() => action.execute()).toThrow(
             'Object with id test-object is not found in the scene',
+        );
+    });
+
+    it('should throw error if object is not a DIVEModel', async () => {
+        const testObject: COMEntity = {
+            id: 'test-object',
+            entityType: 'model',
+            position: { x: 0, y: 0, z: 0 },
+            rotation: { x: 0, y: 0, z: 0 },
+            scale: { x: 1, y: 1, z: 1 },
+            name: 'Test Object',
+            visible: true,
+            uri: 'test-uri',
+            loaded: true,
+        };
+
+        // Add the object first
+        mockRegistered.set(testObject.id, testObject);
+
+        const mockDIVEModel = {
+            // isDIVEModel: true <= specifically not set
+            dropIt: vi.fn(),
+        } as unknown as DIVEModel;
+        vi.mocked(mockEngine.scene.root.getSceneObject).mockReturnValue(
+            mockDIVEModel,
+        );
+
+        const action = new DropItAction(
+            { id: 'test-object' },
+            {
+                engine: mockEngine,
+                registered: mockRegistered,
+            },
+        );
+
+        // Execute action and expect error
+        expect(() => action.execute()).toThrow(
+            `Object with id test-object is not a DIVEModel. Object: ${mockDIVEModel}`,
         );
     });
 });

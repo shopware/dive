@@ -14,14 +14,14 @@ export const UpdateObjectAction = Action.define<
         const objectToUpdate = registered.get(payload.id);
         if (!objectToUpdate) throw new Error('Object not found.');
 
-        registered.set(payload.id, merge(objectToUpdate, payload));
+        const updatedObject = merge(objectToUpdate, payload);
+        registered.set(payload.id, updatedObject);
 
-        const updatedObject = registered.get(payload.id)!;
         engine.scene.root.updateSceneObject({
             ...payload,
             id: updatedObject.id,
             entityType: updatedObject.entityType,
-        });
+        } as COMEntity);
     },
 });
 

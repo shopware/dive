@@ -22,9 +22,11 @@ vi.mock('../../engine/Engine', async (importOriginal) => {
             this.camera = {
                 position: {
                     set: vi.fn(),
+                    copy: vi.fn(),
                 },
             };
             this.scene = {
+                computeSceneBB: vi.fn(),
                 background: {
                     set: vi.fn(),
                 },
@@ -32,6 +34,7 @@ vi.mock('../../engine/Engine', async (importOriginal) => {
                     setVisibility: vi.fn(),
                 },
                 root: {
+                    add: vi.fn(),
                     floor: {
                         setVisibility: vi.fn(),
                         setColor: vi.fn(),
@@ -101,6 +104,7 @@ vi.mock(
                 };
                 this.target = {
                     set: vi.fn(),
+                    copy: vi.fn(),
                 };
                 this.setIntensity = vi.fn();
                 this.setEnabled = vi.fn();
@@ -110,6 +114,10 @@ vi.mock(
                 };
                 this.removeFromParent = vi.fn();
                 this.dispose = vi.fn();
+                this.computeEncompassingView = vi.fn().mockReturnValue({
+                    position: { x: 0, y: 0, z: 0 },
+                    target: { x: 0, y: 0, z: 0 },
+                });
                 return this;
             }),
         };
@@ -134,6 +142,31 @@ vi.mock('../../modules/axiscamera/AxisCamera', () => {
             this.removeFromParent = vi.fn();
             this.SetFromCameraMatrix = vi.fn();
             this.Dispose = vi.fn();
+            return this;
+        }),
+    };
+});
+
+vi.mock('../../components/model/Model', () => {
+    return {
+        DIVEModel: vi.fn(function (this: any) {
+            this.userData = {
+                id: undefined,
+                uri: undefined,
+            };
+            this.setFromURL = vi.fn();
+            this.visible = true;
+            this.name = 'test_model';
+            this.position = {
+                set: vi.fn(),
+            };
+            this.rotation = {
+                set: vi.fn(),
+            };
+            this.scale = {
+                set: vi.fn(),
+            };
+            this.dispose = vi.fn();
             return this;
         }),
     };

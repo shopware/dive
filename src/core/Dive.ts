@@ -10,6 +10,7 @@ import {
     EngineDefaultSettings,
     EngineSettings,
 } from '../engine/Engine.ts';
+import { DIVEModel, DIVESceneLight } from '../components/index.ts';
 
 declare global {
     interface Window {
@@ -84,54 +85,33 @@ export class DIVE {
         dive.engine.camera.position.set(0, 2, 2);
         dive.orbitController.target.set(0, 0.5, 0);
 
-        // generate scene light id
-        const lightid = MathUtils.generateUUID();
-
         // add scene light
-        dive.engine.scene.root.addSceneObject({
-            entityType: 'light',
-            type: 'scene',
-            name: 'light',
-            id: lightid,
-            enabled: true,
-            visible: true,
-            intensity: settings?.lightIntensity ?? 1,
-            color: 0xffffff,
-        });
+        const light = new DIVESceneLight();
+        light.name = 'SceneLight';
+        light.userData.id = MathUtils.generateUUID();
+        light.setEnabled(true);
+        light.visible = true;
+        light.setIntensity(settings?.lightIntensity ?? 1);
+        light.setColor(new Color(0xffffff));
+        dive.engine.scene.root.add(light);
 
-        // generate model id
-        const modelid = MathUtils.generateUUID();
+        // instantiate model
+        const model = new DIVEModel();
+        model.name = 'object';
+        model.userData.id = MathUtils.generateUUID();
+        model.userData.uri = uri;
+        model.visible = true;
+        dive.engine.scene.root.add(model);
 
-        return new Promise((resolve) => {
-            // add loaded listener
-            state.subscribe('MODEL_LOADED', (data) => {
-                if (data.id !== modelid) return;
+        await model.setFromURL(uri);
 
-                const transform = state.performAction(
-                    'COMPUTE_ENCOMPASSING_VIEW',
-                );
+        // set camera to encompass the loaded model
+        const sceneBB = dive.engine.scene.computeSceneBB();
+        const transform = dive.orbitController.computeEncompassingView(sceneBB);
+        dive.engine.camera.position.copy(transform.position);
+        dive.orbitController.target.copy(transform.target);
 
-                state.performAction('SET_CAMERA_TRANSFORM', {
-                    position: transform.position,
-                    target: transform.target,
-                });
-
-                resolve(dive);
-            });
-
-            // instantiate model
-            dive.engine.scene.root.addSceneObject({
-                entityType: 'model',
-                name: 'object',
-                id: modelid,
-                position: { x: 0, y: 0, z: 0 },
-                rotation: { x: 0, y: 0, z: 0 },
-                scale: { x: 1, y: 1, z: 1 },
-                uri: uri,
-                visible: true,
-                loaded: false,
-            });
-        });
+        return dive;
     }
 
     // descriptive members

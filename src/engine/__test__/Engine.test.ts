@@ -82,7 +82,10 @@ describe('DIVEEngine', () => {
     it('should instantiate with default settings', () => {
         expect(engine).toBeDefined();
         expect(DIVEPerspectiveCamera).toHaveBeenCalledWith(
-            EngineDefaultSettings.perspectiveCamera,
+            expect.objectContaining({
+                ...EngineDefaultSettings,
+                ...DIVEPerspectiveCameraDefaultSettings,
+            }),
         );
         expect(DIVERenderPipeline).toHaveBeenCalled();
         expect(DIVEScene).toHaveBeenCalled();
@@ -103,7 +106,7 @@ describe('DIVEEngine', () => {
         engine = new DIVEEngine(customSettings);
         expect(engine).toBeDefined();
         expect(DIVEPerspectiveCamera).toHaveBeenCalledWith(
-            customSettings.perspectiveCamera,
+            expect.objectContaining(customSettings),
         );
     });
 

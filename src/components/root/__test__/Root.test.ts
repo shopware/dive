@@ -7,11 +7,9 @@ import {
     type COMEntity,
     type COMGroup,
     type COMEntityType,
+    type COMGeometryType,
 } from '../../../modules/state/types/index.ts';
 import { Object3D, Vector3, Box3 } from 'three';
-import { DIVEGroup } from '../../group/Group.ts';
-import { type DIVEModel } from '../../model/Model.ts';
-import { type DIVEPrimitive } from '../../primitive/Primitive.ts';
 
 vi.mock('../../../modules/ModuleRegistry', () => ({
     getModule: vi.fn((moduleName: string) => {
@@ -75,6 +73,7 @@ vi.mock('../../light/AmbientLight', () => {
     return {
         DIVEAmbientLight: vi.fn(function (this: any) {
             this.isObject3D = true;
+            this.name = '';
             this.parent = null;
             this.dispatchEvent = vi.fn();
             this.position = new Vector3();
@@ -98,6 +97,7 @@ vi.mock('../../light/PointLight', () => {
     return {
         DIVEPointLight: vi.fn(function (this: any) {
             this.isObject3D = true;
+            this.name = '';
             this.parent = null;
             this.dispatchEvent = vi.fn();
             this.position = new Vector3();
@@ -121,6 +121,7 @@ vi.mock('../../light/SceneLight', () => {
     return {
         DIVESceneLight: vi.fn(function (this: any) {
             this.isObject3D = true;
+            this.name = '';
             this.parent = null;
             this.dispatchEvent = vi.fn();
             this.position = new Vector3();
@@ -162,6 +163,7 @@ vi.mock('../../model/Model', () => {
             this.placeOnFloor = vi.fn();
             this.removeFromParent = vi.fn();
             this.position = new Vector3();
+            this.setFromURL = vi.fn().mockResolvedValue(void 0);
             return this;
         }),
     };
@@ -224,16 +226,10 @@ vi.mock('../../group/Group', () => {
     };
 });
 
-let root: DIVERoot;
-let spyConsoleWarn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+const spyConsoleWarn = vi.spyOn(console, 'warn').mockImplementation(() => {});
 
 describe('components/root/DIVERoot', () => {
     beforeEach(() => {
-        root = new DIVERoot();
-        vi.clearAllMocks();
-    });
-
-    afterEach(() => {
         vi.clearAllMocks();
     });
 
@@ -243,12 +239,14 @@ describe('components/root/DIVERoot', () => {
 
     describe('constructor', () => {
         it('should initialize with correct properties', () => {
+            const root = new DIVERoot();
             expect(root.isDIVERoot).toBe(true);
             expect(root.name).toBe('Root');
             expect(root.floor).toBeDefined();
         });
 
         it('should initialize asset loader via _getAssetLoader()', async () => {
+            const root = new DIVERoot();
             const loader = await (root as any)._getAssetLoader();
             // loader is instance of our fake class and has a load method
             expect(loader.load).toBeDefined();
@@ -264,6 +262,7 @@ describe('components/root/DIVERoot', () => {
                 callback(mockObject as Object3D),
             );
 
+            const root = new DIVERoot();
             const bb = root.computeSceneBB();
             expect(bb).toBeDefined();
             expect(bb).toBeInstanceOf(Box3);
@@ -271,6 +270,8 @@ describe('components/root/DIVERoot', () => {
 
         it('should handle empty scene', () => {
             Object3D.prototype.traverse = vi.fn((callback) => {});
+
+            const root = new DIVERoot();
             const bb = root.computeSceneBB();
             expect(bb).toBeDefined();
             expect(bb).toBeInstanceOf(Box3);
@@ -285,6 +286,7 @@ describe('components/root/DIVERoot', () => {
             mockObject2.position.set(4, 5, 6);
             mockObject2.traverse = vi.fn((callback) => callback(mockObject2));
 
+            const root = new DIVERoot();
             root.children = [
                 mockObject1,
                 mockObject2,
@@ -302,14 +304,23 @@ describe('components/root/DIVERoot', () => {
         it('should find object by id', () => {
             const mockObject = new Object3D();
             mockObject.userData = { id: 'test-id' };
+
+            const root = new DIVERoot();
             root.add(mockObject);
 
-            const found = root.getSceneObject({ id: 'test-id' });
+            const found = root.getSceneObject({
+                id: 'test-id',
+                entityType: 'model',
+            });
             expect(found).toBeDefined();
         });
 
         it('should return undefined for non-existent id', () => {
-            const found = root.getSceneObject({ id: 'non-existent' });
+            const root = new DIVERoot();
+            const found = root.getSceneObject({
+                id: 'non-existent',
+                entityType: 'model',
+            });
             expect(found).toBeUndefined();
         });
 
@@ -322,13 +333,19 @@ describe('components/root/DIVERoot', () => {
                 },
             };
             root.add(mockObject as any);
-            const result = root.getSceneObject({ id: 'test-id' });
+            const result = root.getSceneObject({
+                id: 'test-id',
+                entityType: 'model',
+            });
             expect(result).toBe(mockObject);
         });
 
         it('should return undefined when object is not found', () => {
             const root = new DIVERoot();
-            const result = root.getSceneObject({ id: 'non-existent-id' });
+            const result = root.getSceneObject({
+                id: 'non-existent-id',
+                entityType: 'model',
+            });
             expect(result).toBeUndefined();
         });
 
@@ -380,7 +397,10 @@ describe('components/root/DIVERoot', () => {
                 callback(mockObject2 as any);
             });
 
-            const result = root.getSceneObject({ id: 'test-id' });
+            const result = root.getSceneObject({
+                id: 'test-id',
+                entityType: 'model',
+            });
             expect(result).toBe(mockObject1);
             expect(traverseCount).toBe(1);
         });
@@ -436,10 +456,13 @@ describe('components/root/DIVERoot', () => {
                 color: '#ffffff',
             } as any;
 
+            const root = new DIVERoot();
             root.addSceneObject(sceneLightData);
             root.addSceneObject(ambientLightData);
             root.addSceneObject(pointLightData);
-            root.addSceneObject(unknownLightData);
+            expect(() => root.addSceneObject(unknownLightData)).toThrow(
+                'DIVERoot.addSceneObject: Unknown light type: unknown',
+            );
 
             const sceneLight = root.getSceneObject(sceneLightData);
             const ambientLight = root.getSceneObject(ambientLightData);
@@ -450,9 +473,6 @@ describe('components/root/DIVERoot', () => {
             expect(ambientLight).toBeDefined();
             expect(pointLight).toBeDefined();
             expect(unknownLight).toBeUndefined();
-            expect(spyConsoleWarn).toHaveBeenCalledWith(
-                'DIVERoot.updateLight: Unknown light type: unknown',
-            );
         });
 
         it('should update all light properties', () => {
@@ -469,7 +489,10 @@ describe('components/root/DIVERoot', () => {
                 parentId: null,
             };
 
+            const root = new DIVERoot();
             root.addSceneObject(lightData);
+            expect(spyConsoleWarn).not.toHaveBeenCalled();
+
             const light = root.getSceneObject(lightData);
             expect(light).toBeDefined();
             expect(light?.name).toBe('Test Light');
@@ -497,8 +520,9 @@ describe('components/root/DIVERoot', () => {
                 parentId: null,
             };
 
+            const root = new DIVERoot();
             root.addSceneObject(modelData);
-            const model = root.getSceneObject<DIVEModel>(modelData);
+            const model = root.getSceneObject(modelData);
             expect(model).toBeDefined();
             expect(model?.name).toBe('Test Model');
             expect(model?.SetPosition).toHaveBeenCalledWith(modelData.position);
@@ -524,8 +548,9 @@ describe('components/root/DIVERoot', () => {
                 parentId: null,
             };
 
+            const root = new DIVERoot();
             root.addSceneObject(primitiveData);
-            const primitive = root.getSceneObject<DIVEPrimitive>(primitiveData);
+            const primitive = root.getSceneObject(primitiveData);
             expect(primitive).toBeDefined();
             expect(primitive?.name).toBe('Test Primitive');
             expect(primitive?.SetGeometry).toHaveBeenCalledWith(
@@ -561,8 +586,9 @@ describe('components/root/DIVERoot', () => {
                 parentId: null,
             };
 
+            const root = new DIVERoot();
             root.addSceneObject(groupData);
-            const group = root.getSceneObject<DIVEGroup>(groupData);
+            const group = root.getSceneObject(groupData);
             expect(group).toBeDefined();
             expect(group?.name).toBe('Test Group');
             expect(group?.SetPosition).toHaveBeenCalledWith(groupData.position);
@@ -589,6 +615,7 @@ describe('components/root/DIVERoot', () => {
                 loaded: false,
             };
 
+            const root = new DIVERoot();
             root.addSceneObject(modelData);
             const model = root.getSceneObject(modelData);
             expect(model).toBeDefined();
@@ -608,6 +635,7 @@ describe('components/root/DIVERoot', () => {
                 scale: { x: 1, y: 1, z: 1 },
             };
 
+            const root = new DIVERoot();
             root.addSceneObject(primitiveData);
             const primitive = root.getSceneObject(primitiveData);
             expect(primitive).toBeDefined();
@@ -625,6 +653,7 @@ describe('components/root/DIVERoot', () => {
                 scale: { x: 1, y: 1, z: 1 },
             };
 
+            const root = new DIVERoot();
             root.addSceneObject(groupData);
             const group = root.getSceneObject(groupData);
             expect(group).toBeDefined();
@@ -641,6 +670,7 @@ describe('components/root/DIVERoot', () => {
                 target: { x: 0, y: 0, z: 0 },
             };
 
+            const root = new DIVERoot();
             root.addSceneObject(povData);
             // POV objects are not added to the scene
             const pov = root.getSceneObject(povData);
@@ -658,8 +688,8 @@ describe('components/root/DIVERoot', () => {
                 scale: { x: 1, y: 1, z: 1 },
             } as unknown as COMEntity;
 
-            root.addSceneObject(unknownData);
-            expect(spyConsoleWarn).toHaveBeenCalledWith(
+            const root = new DIVERoot();
+            expect(() => root.addSceneObject(unknownData)).toThrow(
                 'DIVERoot.addSceneObject: Unknown entity type: unknown',
             );
         });
@@ -679,8 +709,9 @@ describe('components/root/DIVERoot', () => {
                 loaded: false,
             };
 
+            const root = new DIVERoot();
             root.addSceneObject(modelData);
-            const model = root.getSceneObject<DIVEModel>(modelData);
+            const model = root.getSceneObject(modelData);
             expect(model).toBeDefined();
 
             const updatedData = {
@@ -707,6 +738,7 @@ describe('components/root/DIVERoot', () => {
                 color: '#ffffff',
             };
 
+            const root = new DIVERoot();
             root.addSceneObject(lightData);
             const light = root.getSceneObject(lightData);
             expect(light).toBeDefined();
@@ -734,13 +766,19 @@ describe('components/root/DIVERoot', () => {
                 scale: { x: 1, y: 1, z: 1 },
             };
 
+            const root = new DIVERoot();
             root.addSceneObject(primitiveData);
             const primitive = root.getSceneObject(primitiveData);
             expect(primitive).toBeDefined();
 
             const updatedData = {
                 ...primitiveData,
-                geometry: { name: 'box', width: 2, height: 2, depth: 2 },
+                geometry: {
+                    name: 'box' as COMGeometryType,
+                    width: 2,
+                    height: 2,
+                    depth: 2,
+                },
             };
 
             root.updateSceneObject(updatedData);
@@ -760,6 +798,7 @@ describe('components/root/DIVERoot', () => {
                 scale: { x: 1, y: 1, z: 1 },
             };
 
+            const root = new DIVERoot();
             root.addSceneObject(groupData);
             const group = root.getSceneObject(groupData);
             expect(group).toBeDefined();
@@ -784,8 +823,12 @@ describe('components/root/DIVERoot', () => {
                 name: 'Non Existent',
                 visible: true,
             };
+
+            const root = new DIVERoot();
             root.updateSceneObject(nonExistentData);
-            expect(spyConsoleWarn).not.toHaveBeenCalled();
+            expect(spyConsoleWarn).toHaveBeenCalledWith(
+                'DIVERoot.updateSceneObject: Scene object with id non-existent does not exist',
+            );
         });
 
         it('should handle POV update', () => {
@@ -795,8 +838,12 @@ describe('components/root/DIVERoot', () => {
                 name: 'Test POV',
                 visible: true,
             };
+
+            const root = new DIVERoot();
             root.updateSceneObject(povData);
-            expect(spyConsoleWarn).not.toHaveBeenCalled();
+            expect(spyConsoleWarn).toHaveBeenCalledWith(
+                'DIVERoot.updateSceneObject: Scene object with id pov-1 does not exist',
+            );
         });
 
         it('should warn for unknown entity type in update', () => {
@@ -805,9 +852,12 @@ describe('components/root/DIVERoot', () => {
                 entityType: 'unknown' as COMEntityType,
                 name: 'Unknown',
             };
+
+            const root = new DIVERoot();
             root.updateSceneObject(unknownData);
+            expect(spyConsoleWarn).toHaveBeenCalled();
             expect(spyConsoleWarn).toHaveBeenCalledWith(
-                'DIVERoot.updateSceneObject: Unknown entity type: unknown',
+                'DIVERoot.updateSceneObject: Scene object with id unknown does not exist',
             );
         });
     });
@@ -826,6 +876,7 @@ describe('components/root/DIVERoot', () => {
                 loaded: false,
             };
 
+            const root = new DIVERoot();
             root.addSceneObject(modelData);
             const model = root.getSceneObject(modelData);
             expect(model).toBeDefined();
@@ -847,8 +898,12 @@ describe('components/root/DIVERoot', () => {
                 name: 'Non Existent',
                 visible: true,
             };
+
+            const root = new DIVERoot();
             root.deleteSceneObject(nonExistentData);
-            expect(spyConsoleWarn).toHaveBeenCalled();
+            expect(spyConsoleWarn).toHaveBeenCalledWith(
+                'DIVERoot.deleteSceneObject: Object with id non-existent not found',
+            );
         });
 
         it('should handle POV deletion', () => {
@@ -861,8 +916,11 @@ describe('components/root/DIVERoot', () => {
                 target: { x: 0, y: 0, z: 0 },
             };
 
+            const root = new DIVERoot();
             root.deleteSceneObject(povData);
-            expect(spyConsoleWarn).not.toHaveBeenCalled();
+            expect(spyConsoleWarn).toHaveBeenCalledWith(
+                'DIVERoot.deleteSceneObject: Object with id pov-1 not found',
+            );
         });
 
         it('should warn for unknown entity type in deletion', () => {
@@ -871,8 +929,16 @@ describe('components/root/DIVERoot', () => {
                 entityType: 'unknown' as COMEntityType,
                 name: 'Unknown',
             };
-            root.deleteSceneObject(unknownData as any);
-            expect(spyConsoleWarn).toHaveBeenCalledWith(
+
+            const root = new DIVERoot();
+            root.children = [
+                {
+                    userData: {
+                        id: 'unknown',
+                    },
+                } as any,
+            ];
+            expect(() => root.deleteSceneObject(unknownData as any)).toThrow(
                 'DIVERoot.deleteSceneObject: Unknown entity type: unknown',
             );
         });
@@ -901,10 +967,11 @@ describe('components/root/DIVERoot', () => {
                 parentId: 'group-1',
             };
 
+            const root = new DIVERoot();
             root.addSceneObject(groupData);
             root.addSceneObject(memberData);
 
-            const group = root.getSceneObject<DIVEGroup>(groupData);
+            const group = root.getSceneObject(groupData);
             const member = root.getSceneObject(memberData);
 
             expect(group).toBeDefined();
@@ -940,6 +1007,7 @@ describe('components/root/DIVERoot', () => {
             const mockScene = new Object3D();
             mockScene.children = [mockTransformControls];
 
+            const root = new DIVERoot();
             root.addSceneObject(modelData);
             const model = root.getSceneObject(modelData);
             expect(model).toBeDefined();
@@ -973,6 +1041,7 @@ describe('components/root/DIVERoot', () => {
             const mockScene = new Object3D();
             mockScene.children = [mockTransformControls];
 
+            const root = new DIVERoot();
             root.addSceneObject(primitiveData);
             const primitive = root.getSceneObject(primitiveData);
             expect(primitive).toBeDefined();
@@ -1005,8 +1074,9 @@ describe('components/root/DIVERoot', () => {
             const mockScene = new Object3D();
             mockScene.children = [mockTransformControls];
 
+            const root = new DIVERoot();
             root.addSceneObject(groupData);
-            const group = root.getSceneObject<DIVEGroup>(groupData);
+            const group = root.getSceneObject(groupData);
             expect(group).toBeDefined();
 
             if (group) {
@@ -1021,7 +1091,7 @@ describe('components/root/DIVERoot', () => {
         });
     });
 
-    describe('setParent', () => {
+    describe('_setParent', () => {
         it('should set parent-child relationship', () => {
             const parentData: COMGroup = {
                 id: 'parent-1',
@@ -1046,6 +1116,7 @@ describe('components/root/DIVERoot', () => {
                 parentId: 'parent-1',
             };
 
+            const root = new DIVERoot();
             root.addSceneObject(parentData);
             root.addSceneObject(childData);
 
@@ -1071,6 +1142,7 @@ describe('components/root/DIVERoot', () => {
                 parentId: null,
             };
 
+            const root = new DIVERoot();
             root.addSceneObject(childData);
             const child = root.getSceneObject(childData);
             expect(child).toBeDefined();
@@ -1091,6 +1163,7 @@ describe('components/root/DIVERoot', () => {
                 parentId: 'non-existent',
             };
 
+            const root = new DIVERoot();
             root.addSceneObject(childData);
             const child = root.getSceneObject(childData);
             expect(child).toBeDefined();
@@ -1112,13 +1185,14 @@ describe('components/root/DIVERoot', () => {
                 parentId: 'parent-1',
             };
 
+            const root = new DIVERoot();
             // Don't add the object to the scene
             root.updateSceneObject(modelData);
             expect(root.attach).not.toHaveBeenCalled();
         });
     });
 
-    describe('updateLight', () => {
+    describe('_updateLight', () => {
         it('should handle light with undefined properties', () => {
             const lightData: Partial<COMLight> & {
                 id: string;
@@ -1136,6 +1210,7 @@ describe('components/root/DIVERoot', () => {
                 color: undefined,
             };
 
+            const root = new DIVERoot();
             root.addSceneObject(lightData as COMLight);
             const light = root.getSceneObject(lightData);
             expect(light).toBeDefined();
@@ -1162,13 +1237,14 @@ describe('components/root/DIVERoot', () => {
                 color: null as unknown as string,
             };
 
+            const root = new DIVERoot();
             root.addSceneObject(lightData as COMLight);
             const light = root.getSceneObject(lightData);
             expect(light).toBeDefined();
         });
     });
 
-    describe('deleteLight', () => {
+    describe('_deleteLight', () => {
         it('should handle light with transform controls', () => {
             const lightData: COMLight = {
                 id: 'light-1',
@@ -1190,6 +1266,7 @@ describe('components/root/DIVERoot', () => {
             const mockScene = new Object3D();
             mockScene.children = [mockTransformControls];
 
+            const root = new DIVERoot();
             root.addSceneObject(lightData);
             const light = root.getSceneObject(lightData);
             expect(light).toBeDefined();
@@ -1216,14 +1293,15 @@ describe('components/root/DIVERoot', () => {
                 color: '#ffffff',
             };
 
+            const root = new DIVERoot();
             root.deleteSceneObject(lightData);
             expect(spyConsoleWarn).toHaveBeenCalledWith(
-                'DIVERoot.deleteLight: Light with id non-existent-light not found',
+                'DIVERoot.deleteSceneObject: Object with id non-existent-light not found',
             );
         });
     });
 
-    describe('deleteGroup', () => {
+    describe('_deleteGroup', () => {
         it('should handle group with transform controls and members', () => {
             const groupData: COMGroup = {
                 id: 'group-1',
@@ -1243,8 +1321,9 @@ describe('components/root/DIVERoot', () => {
             const mockScene = new Object3D();
             mockScene.children = [mockTransformControls];
 
+            const root = new DIVERoot();
             root.addSceneObject(groupData);
-            const group = root.getSceneObject<DIVEGroup>(groupData);
+            const group = root.getSceneObject(groupData);
             expect(group).toBeDefined();
 
             if (group) {
@@ -1269,14 +1348,15 @@ describe('components/root/DIVERoot', () => {
                 scale: { x: 1, y: 1, z: 1 },
             };
 
+            const root = new DIVERoot();
             root.deleteSceneObject(groupData);
             expect(spyConsoleWarn).toHaveBeenCalledWith(
-                'DIVERoot.deleteGroup: Group with id non-existent-group not found',
+                'DIVERoot.deleteSceneObject: Object with id non-existent-group not found',
             );
         });
     });
 
-    describe('setParent', () => {
+    describe('_setParent', () => {
         it('should handle object with null parentId', () => {
             const modelData: COMModel = {
                 id: 'model-1',
@@ -1291,6 +1371,7 @@ describe('components/root/DIVERoot', () => {
                 parentId: null,
             };
 
+            const root = new DIVERoot();
             root.addSceneObject(modelData);
             const model = root.getSceneObject(modelData);
             expect(model).toBeDefined();
@@ -1311,6 +1392,7 @@ describe('components/root/DIVERoot', () => {
                 parentId: 'non-existent',
             };
 
+            const root = new DIVERoot();
             root.addSceneObject(modelData);
             const model = root.getSceneObject(modelData);
             expect(model).toBeDefined();
@@ -1318,7 +1400,7 @@ describe('components/root/DIVERoot', () => {
         });
     });
 
-    describe('updateModel', () => {
+    describe('_updateModel', () => {
         it('should handle model with undefined properties', () => {
             const modelData: Partial<COMModel> & {
                 id: string;
@@ -1342,6 +1424,7 @@ describe('components/root/DIVERoot', () => {
                 material: null as unknown as { color: string },
             };
 
+            const root = new DIVERoot();
             root.addSceneObject(modelData as COMModel);
             const model = root.getSceneObject(modelData);
             expect(model).toBeDefined();
@@ -1372,13 +1455,14 @@ describe('components/root/DIVERoot', () => {
                 material: null as unknown as { color: string },
             };
 
+            const root = new DIVERoot();
             root.addSceneObject(modelData as COMModel);
             const model = root.getSceneObject(modelData);
             expect(model).toBeDefined();
         });
     });
 
-    describe('updatePrimitive', () => {
+    describe('_updatePrimitive', () => {
         it('should handle primitive with undefined properties', () => {
             const primitiveData: Partial<COMPrimitive> & {
                 id: string;
@@ -1395,6 +1479,7 @@ describe('components/root/DIVERoot', () => {
                 material: undefined,
             };
 
+            const root = new DIVERoot();
             root.addSceneObject(primitiveData as COMPrimitive);
             const primitive = root.getSceneObject(primitiveData);
             expect(primitive).toBeDefined();
@@ -1429,13 +1514,14 @@ describe('components/root/DIVERoot', () => {
                 material: null as unknown as { color: string },
             };
 
+            const root = new DIVERoot();
             root.addSceneObject(primitiveData as COMPrimitive);
             const primitive = root.getSceneObject(primitiveData);
             expect(primitive).toBeDefined();
         });
     });
 
-    describe('deletePrimitive', () => {
+    describe('_deletePrimitive', () => {
         it('should handle non-existent primitive', () => {
             const primitiveData: COMPrimitive = {
                 id: 'non-existent-primitive',
@@ -1448,14 +1534,16 @@ describe('components/root/DIVERoot', () => {
                 scale: { x: 1, y: 1, z: 1 },
             };
 
+            const root = new DIVERoot();
             root.deleteSceneObject(primitiveData);
+            expect(spyConsoleWarn).toHaveBeenCalled();
             expect(spyConsoleWarn).toHaveBeenCalledWith(
-                'DIVERoot.deletePrimitive: Primitive with id non-existent-primitive not found',
+                'DIVERoot.deleteSceneObject: Object with id non-existent-primitive not found',
             );
         });
     });
 
-    describe('findScene', () => {
+    describe('_findScene', () => {
         it('should find scene from object hierarchy', () => {
             const mockScene = new Object3D();
             mockScene.name = 'Scene';
@@ -1467,7 +1555,8 @@ describe('components/root/DIVERoot', () => {
             mockChild.parent = mockParent;
             mockParent.parent = mockScene;
 
-            const result = root['findScene'](mockChild);
+            const root = new DIVERoot();
+            const result = root['_findScene'](mockChild);
             expect(result).toBe(mockScene);
         });
 
@@ -1476,12 +1565,13 @@ describe('components/root/DIVERoot', () => {
             mockObject.name = 'Object';
             mockObject.parent = null;
 
-            const result = root['findScene'](mockObject);
+            const root = new DIVERoot();
+            const result = root['_findScene'](mockObject);
             expect(result).toBe(mockObject);
         });
     });
 
-    describe('detachTransformControls', () => {
+    describe('_detachTransformControls', () => {
         it('should detach transform controls from object', () => {
             const mockObject = new Object3D();
             const mockTransformControls = Object.assign(new Object3D(), {
@@ -1493,7 +1583,8 @@ describe('components/root/DIVERoot', () => {
             mockScene.children = [mockTransformControls];
             mockObject.parent = mockScene;
 
-            root['detachTransformControls'](mockObject);
+            const root = new DIVERoot();
+            root['_detachTransformControls'](mockObject);
             expect(mockTransformControls.detach).toHaveBeenCalled();
         });
 
@@ -1503,7 +1594,8 @@ describe('components/root/DIVERoot', () => {
             mockScene.children = [];
             mockObject.parent = mockScene;
 
-            root['detachTransformControls'](mockObject);
+            const root = new DIVERoot();
+            root['_detachTransformControls'](mockObject);
             // No error should be thrown
         });
     });
@@ -1518,7 +1610,9 @@ describe('components/root/DIVERoot', () => {
             vi.spyOn(moduleIndexTsFile, 'getModule').mockRejectedValueOnce(
                 error,
             );
-            await expect((root as any)._getAssetLoader()).rejects.toThrow(
+
+            const root = new DIVERoot();
+            await expect(root['_getAssetLoader']()).rejects.toThrow(
                 'Failed to load',
             );
         });
