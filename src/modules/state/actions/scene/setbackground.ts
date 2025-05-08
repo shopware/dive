@@ -9,7 +9,7 @@ export const SetBackgroundAction = Action.define<
 >({
     description: 'Set the background color of the scene.',
     execute: (payload, { engine }) => {
-        engine.scene.SetBackground(payload.color);
+        engine.scene.setBackground(payload.color);
     },
 });
 

@@ -8,7 +8,7 @@ describe('modules/state/actions/camera/computeEncompassingView', () => {
     it('should compute encompassing view for a scene', async () => {
         // Mock dependencies
         const mockScene = {
-            ComputeSceneBB: vi.fn().mockReturnValue({
+            computeSceneBB: vi.fn().mockReturnValue({
                 min: new Vector3(0, 0, 0),
                 max: new Vector3(10, 10, 10),
             }),
@@ -34,7 +34,7 @@ describe('modules/state/actions/camera/computeEncompassingView', () => {
         const result = await action.execute();
 
         // Verify results
-        expect(mockScene.ComputeSceneBB).toHaveBeenCalled();
+        expect(mockScene.computeSceneBB).toHaveBeenCalled();
         expect(mockController.computeEncompassingView).toHaveBeenCalledWith(
             expect.objectContaining({
                 min: expect.objectContaining({ x: 0, y: 0, z: 0 }),

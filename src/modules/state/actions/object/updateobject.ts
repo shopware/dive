@@ -17,7 +17,7 @@ export const UpdateObjectAction = Action.define<
         registered.set(payload.id, merge(objectToUpdate, payload));
 
         const updatedObject = registered.get(payload.id)!;
-        engine.scene.UpdateSceneObject({
+        engine.scene.root.updateSceneObject({
             ...payload,
             id: updatedObject.id,
             entityType: updatedObject.entityType,

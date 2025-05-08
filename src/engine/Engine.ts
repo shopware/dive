@@ -17,17 +17,14 @@ export type EngineSettings = {
     autoStart: boolean;
     /** Whether to display coordinate axes in the scene */
     displayAxes: boolean;
-    /** Settings for the perspective camera */
-    perspectiveCamera: Partial<DIVEPerspectiveCameraSettings>;
-    /** Settings for the render pipeline */
-    renderer: Partial<DIVERenderPipelineSettings>;
-};
+} & Partial<DIVEPerspectiveCameraSettings> &
+    Partial<DIVERenderPipelineSettings>;
 
-export const EngineDefaultSettings: Required<EngineSettings> = {
+export const EngineDefaultSettings: EngineSettings = {
     autoStart: true,
     displayAxes: false,
-    perspectiveCamera: DIVEPerspectiveCameraDefaultSettings,
-    renderer: DIVERenderPipelineDefaultSettings,
+    ...DIVEPerspectiveCameraDefaultSettings,
+    ...DIVERenderPipelineDefaultSettings,
 };
 
 export class DIVEEngine {
@@ -46,13 +43,11 @@ export class DIVEEngine {
         };
 
         this._scene = new DIVEScene();
-        this._camera = new DIVEPerspectiveCamera(
-            this._settings.perspectiveCamera,
-        );
+        this._camera = new DIVEPerspectiveCamera(this._settings);
         this._renderer = new DIVERenderPipeline(
             this._scene,
             this._camera,
-            this._settings.renderer,
+            this._settings,
         );
 
         this._resizeManager = new DIVEResizeManager(

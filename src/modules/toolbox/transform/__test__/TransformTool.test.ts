@@ -56,7 +56,7 @@ vi.mock('../../../../engine/scene/Scene', () => {
         DIVEScene: vi.fn(function (this: any) {
             this.add = vi.fn();
             this.remove = vi.fn();
-            this.Root = {
+            this.root = {
                 children: [],
             };
             this.children = [];

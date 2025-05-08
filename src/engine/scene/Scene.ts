@@ -1,11 +1,6 @@
 import { Color, Scene, type Box3, type ColorRepresentation } from 'three';
-import {
-    type COMModel,
-    type COMEntity,
-} from '../../modules/state/types/index.ts';
 import { DIVERoot } from '../../components/root/Root.ts';
 import { DIVEGrid } from '../../components/grid/Grid.ts';
-import { type DIVESceneObject } from '../../types/index.ts';
 
 /**
  * A basic scene class.
@@ -16,11 +11,11 @@ import { type DIVESceneObject } from '../../types/index.ts';
  */
 
 export class DIVEScene extends Scene {
-    public get Root(): DIVERoot {
+    public get root(): DIVERoot {
         return this._root;
     }
 
-    public get Grid(): DIVEGrid {
+    public get grid(): DIVEGrid {
         return this._grid;
     }
 
@@ -39,39 +34,11 @@ export class DIVEScene extends Scene {
         this.add(this._grid);
     }
 
-    public SetBackground(color: ColorRepresentation): void {
+    public setBackground(color: ColorRepresentation): void {
         this.background = new Color(color);
     }
 
-    public ComputeSceneBB(): Box3 {
-        return this.Root.ComputeSceneBB();
-    }
-
-    public GetSceneObject<T extends DIVESceneObject>(
-        object: Partial<COMEntity> & { id: string },
-    ): T | undefined {
-        return this.Root.GetSceneObject<T>(object);
-    }
-
-    public AddSceneObject(object: COMEntity): void {
-        this.Root.AddSceneObject(object);
-    }
-
-    public UpdateSceneObject(
-        object: Partial<COMEntity> & { id: string; entityType: string },
-    ): void {
-        this.Root.UpdateSceneObject(object);
-    }
-
-    public DeleteSceneObject(
-        object: Partial<COMEntity> & { id: string; entityType: string },
-    ): void {
-        this.Root.DeleteSceneObject(object);
-    }
-
-    public PlaceOnFloor(
-        object: Partial<COMModel> & { id: string; entityType: string },
-    ): void {
-        this.Root.PlaceOnFloor(object);
+    public computeSceneBB(): Box3 {
+        return this.root.computeSceneBB();
     }
 }

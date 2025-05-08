@@ -16,14 +16,16 @@ describe('SetParentAction', () => {
     } as unknown as Object3D;
 
     const mockScene = {
-        GetSceneObject: vi
-            .fn()
-            .mockImplementation((obj: Partial<COMEntity> & { id: string }) => {
-                if (obj.id === 'test-object') return mockSceneObject;
-                if (obj.id === 'parent-object') return mockParentObject;
-                return null;
-            }),
-        Root: {
+        root: {
+            getSceneObject: vi
+                .fn()
+                .mockImplementation(
+                    (obj: Partial<COMEntity> & { id: string }) => {
+                        if (obj.id === 'test-object') return mockSceneObject;
+                        if (obj.id === 'parent-object') return mockParentObject;
+                        return null;
+                    },
+                ),
             attach: vi.fn(),
         },
     } as unknown as DIVEScene;
@@ -162,7 +164,7 @@ describe('SetParentAction', () => {
         };
 
         mockRegistered.set(testObject.id, testObject);
-        vi.mocked(mockScene.GetSceneObject).mockReturnValueOnce(undefined);
+        vi.mocked(mockScene.root.getSceneObject).mockReturnValueOnce(undefined);
 
         // Act & Assert
         const action = new SetParentAction(
@@ -247,7 +249,7 @@ describe('SetParentAction', () => {
 
         mockRegistered.set(testObject.id, testObject);
         mockRegistered.set(parentObject.id, parentObject);
-        vi.mocked(mockScene.GetSceneObject).mockImplementation(
+        vi.mocked(mockScene.root.getSceneObject).mockImplementation(
             (obj: Partial<COMEntity> & { id: string }) => {
                 if (obj.id === 'test-object') return mockSceneObject;
                 if (obj.id === 'parent-object') return undefined;

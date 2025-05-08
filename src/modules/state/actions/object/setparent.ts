@@ -17,12 +17,12 @@ export const SetParentAction = Action.define<
         const object = registered.get(payload.object.id);
         if (!object) throw new Error('Object not found.');
 
-        const sceneObject = engine.scene.GetSceneObject(object);
+        const sceneObject = engine.scene.root.getSceneObject(object);
         if (!sceneObject) throw new Error('Object not found in scene.');
 
         if (payload.parent === null) {
             // detach from current parent
-            engine.scene.Root.attach(sceneObject);
+            engine.scene.root.attach(sceneObject);
             // Update registration to reflect no parent
             new UpdateObjectAction(
                 {
@@ -42,7 +42,7 @@ export const SetParentAction = Action.define<
         const parent = registered.get(payload.parent.id);
         if (!parent) {
             // detach from current parent
-            engine.scene.Root.attach(sceneObject);
+            engine.scene.root.attach(sceneObject);
             // Update registration to reflect no parent
             new UpdateObjectAction(
                 {
@@ -55,10 +55,10 @@ export const SetParentAction = Action.define<
         }
 
         // attach to new parent
-        const parentObject = engine.scene.GetSceneObject(parent);
+        const parentObject = engine.scene.root.getSceneObject(parent);
         if (!parentObject) {
             // detach from current parent
-            engine.scene.Root.attach(sceneObject);
+            engine.scene.root.attach(sceneObject);
             // Update registration to reflect no parent
             new UpdateObjectAction(
                 {

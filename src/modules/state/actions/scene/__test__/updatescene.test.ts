@@ -1,19 +1,19 @@
-import { UpdateSceneAction } from '../updatescene';
-import { DIVEEngine } from '../../../../../engine';
-import { DIVEScene } from '../../../../../engine/scene/Scene';
+import { UpdateSceneAction } from '../updatescene.ts';
+import { DIVEEngine } from '../../../../../engine/Engine.ts';
+import { DIVEScene } from '../../../../../engine/scene/Scene.ts';
 import { Color, MeshStandardMaterial } from 'three';
 
 describe('UpdateSceneAction', () => {
     it('should update scene properties', async () => {
         // Mock dependencies
         const mockGrid = {
-            SetVisibility: vi.fn(),
+            setVisibility: vi.fn(),
             visible: true,
         };
 
         const mockFloor = {
-            SetVisibility: vi.fn(),
-            SetColor: vi.fn(),
+            setVisibility: vi.fn(),
+            setColor: vi.fn(),
             visible: true,
             material: new MeshStandardMaterial({ color: new Color('#ffffff') }),
         };
@@ -21,9 +21,9 @@ describe('UpdateSceneAction', () => {
         const mockScene = {
             name: 'Test Scene',
             background: new Color('#000000'),
-            SetBackground: vi.fn(),
-            Grid: mockGrid,
-            Root: {
+            setBackground: vi.fn(),
+            grid: mockGrid,
+            root: {
                 floor: mockFloor,
             },
         } as unknown as DIVEScene;
@@ -50,22 +50,22 @@ describe('UpdateSceneAction', () => {
 
         // Verify results
         expect(mockScene.name).toBe('Updated Scene');
-        expect(mockScene.SetBackground).toHaveBeenCalledWith('#ff0000');
-        expect(mockGrid.SetVisibility).toHaveBeenCalledWith(false);
-        expect(mockFloor.SetVisibility).toHaveBeenCalledWith(false);
-        expect(mockFloor.SetColor).toHaveBeenCalledWith('#00ff00');
+        expect(mockScene.setBackground).toHaveBeenCalledWith('#ff0000');
+        expect(mockGrid.setVisibility).toHaveBeenCalledWith(false);
+        expect(mockFloor.setVisibility).toHaveBeenCalledWith(false);
+        expect(mockFloor.setColor).toHaveBeenCalledWith('#00ff00');
     });
 
     it('should update only specified properties', async () => {
         // Mock dependencies
         const mockGrid = {
-            SetVisibility: vi.fn(),
+            setVisibility: vi.fn(),
             visible: true,
         };
 
         const mockFloor = {
-            SetVisibility: vi.fn(),
-            SetColor: vi.fn(),
+            setVisibility: vi.fn(),
+            setColor: vi.fn(),
             visible: true,
             material: new MeshStandardMaterial({ color: new Color('#ffffff') }),
         };
@@ -73,9 +73,9 @@ describe('UpdateSceneAction', () => {
         const mockScene = {
             name: 'Test Scene',
             background: new Color('#000000'),
-            SetBackground: vi.fn(),
-            Grid: mockGrid,
-            Root: {
+            setBackground: vi.fn(),
+            grid: mockGrid,
+            root: {
                 floor: mockFloor,
             },
         } as unknown as DIVEScene;
@@ -98,9 +98,9 @@ describe('UpdateSceneAction', () => {
 
         // Verify results
         expect(mockScene.name).toBe('Updated Scene');
-        expect(mockScene.SetBackground).not.toHaveBeenCalled();
-        expect(mockGrid.SetVisibility).not.toHaveBeenCalled();
-        expect(mockFloor.SetVisibility).not.toHaveBeenCalled();
-        expect(mockFloor.SetColor).not.toHaveBeenCalled();
+        expect(mockScene.setBackground).not.toHaveBeenCalled();
+        expect(mockGrid.setVisibility).not.toHaveBeenCalled();
+        expect(mockFloor.setVisibility).not.toHaveBeenCalled();
+        expect(mockFloor.setColor).not.toHaveBeenCalled();
     });
 });

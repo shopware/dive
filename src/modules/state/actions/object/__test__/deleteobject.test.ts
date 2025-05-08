@@ -1,9 +1,9 @@
-import { DIVEEngine } from '../../../../../engine';
-import { DIVEScene } from '../../../../../engine/scene/Scene';
-import { DeleteObjectAction } from '../deleteobject';
-import { COMEntity } from '../../../types';
-import { SetParentAction } from '../setparent';
-import { UpdateObjectAction } from '../updateobject';
+import { DIVEEngine } from '../../../../../engine/Engine.ts';
+import { DIVEScene } from '../../../../../engine/scene/Scene.ts';
+import { DeleteObjectAction } from '../deleteobject.ts';
+import { COMEntity } from '../../../types/index.ts';
+import { SetParentAction } from '../setparent.ts';
+import { UpdateObjectAction } from '../updateobject.ts';
 
 vi.mock('../setparent');
 vi.mock('../updateobject');
@@ -11,7 +11,9 @@ vi.mock('../updateobject');
 describe('DeleteObjectAction', () => {
     // Mock dependencies
     const mockScene = {
-        DeleteSceneObject: vi.fn(),
+        root: {
+            deleteSceneObject: vi.fn(),
+        },
     } as unknown as DIVEScene;
 
     const mockEngine = {
@@ -23,8 +25,8 @@ describe('DeleteObjectAction', () => {
     beforeEach(() => {
         mockRegistered.clear();
         vi.clearAllMocks();
-        (SetParentAction as vi.Mock).mockClear();
-        (UpdateObjectAction as vi.Mock).mockClear();
+        vi.mocked(SetParentAction).mockClear();
+        vi.mocked(UpdateObjectAction).mockClear();
     });
 
     it('should delete a standalone object', () => {
@@ -55,7 +57,9 @@ describe('DeleteObjectAction', () => {
         action.execute();
 
         // Assert
-        expect(mockScene.DeleteSceneObject).toHaveBeenCalledWith(object);
+        expect(mockEngine.scene.root.deleteSceneObject).toHaveBeenCalledWith(
+            object,
+        );
         expect(mockRegistered.has(object.id)).toBe(false);
     });
 
@@ -97,7 +101,9 @@ describe('DeleteObjectAction', () => {
                 registered: mockRegistered,
             },
         );
-        expect(mockScene.DeleteSceneObject).toHaveBeenCalledWith(object);
+        expect(mockEngine.scene.root.deleteSceneObject).toHaveBeenCalledWith(
+            object,
+        );
         expect(mockRegistered.has(object.id)).toBe(false);
     });
 
@@ -179,7 +185,9 @@ describe('DeleteObjectAction', () => {
                 registered: mockRegistered,
             },
         );
-        expect(mockScene.DeleteSceneObject).toHaveBeenCalledWith(group);
+        expect(mockEngine.scene.root.deleteSceneObject).toHaveBeenCalledWith(
+            group,
+        );
         expect(mockRegistered.has(group.id)).toBe(false);
     });
 
@@ -193,6 +201,6 @@ describe('DeleteObjectAction', () => {
 
         // Assert
         expect(result).toBe(false);
-        expect(mockScene.DeleteSceneObject).not.toHaveBeenCalled();
+        expect(mockEngine.scene.root.deleteSceneObject).not.toHaveBeenCalled();
     });
 });

@@ -19,8 +19,26 @@ vi.mock('../../engine/Engine', async (importOriginal) => {
     return {
         ...actual,
         DIVEEngine: vi.fn(function (this: any) {
-            this.camera = {};
-            this.scene = {};
+            this.camera = {
+                position: {
+                    set: vi.fn(),
+                },
+            };
+            this.scene = {
+                background: {
+                    set: vi.fn(),
+                },
+                grid: {
+                    setVisibility: vi.fn(),
+                },
+                root: {
+                    floor: {
+                        setVisibility: vi.fn(),
+                        setColor: vi.fn(),
+                    },
+                    addSceneObject: vi.fn(),
+                },
+            };
             this.renderer = {
                 webglrenderer: {
                     domElement: {},
@@ -81,9 +99,12 @@ vi.mock(
                 this.position = {
                     set: vi.fn(),
                 };
-                this.SetIntensity = vi.fn();
-                this.SetEnabled = vi.fn();
-                this.SetColor = vi.fn();
+                this.target = {
+                    set: vi.fn(),
+                };
+                this.setIntensity = vi.fn();
+                this.setEnabled = vi.fn();
+                this.setColor = vi.fn();
                 this.userData = {
                     id: undefined,
                 };
@@ -104,9 +125,9 @@ vi.mock('../../modules/axiscamera/AxisCamera', () => {
             this.position = {
                 set: vi.fn(),
             };
-            this.SetIntensity = vi.fn();
-            this.SetEnabled = vi.fn();
-            this.SetColor = vi.fn();
+            this.setIntensity = vi.fn();
+            this.setEnabled = vi.fn();
+            this.setColor = vi.fn();
             this.userData = {
                 id: undefined,
             };

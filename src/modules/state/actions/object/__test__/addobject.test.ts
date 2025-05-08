@@ -1,20 +1,19 @@
-import { DIVEEngine } from '../../../../../engine';
-import { DIVEScene } from '../../../../../engine/scene/Scene';
-import { AddObjectAction } from '../addobject';
-import { COMEntity } from '../../../types';
+import { DIVEEngine } from '../../../../../engine/Engine.ts';
+import { DIVEScene } from '../../../../../engine/scene/Scene.ts';
+import { AddObjectAction } from '../addobject.ts';
+import { COMEntity } from '../../../types/index.ts';
+
+const mockEngine = {
+    scene: {
+        root: {
+            addSceneObject: vi.fn(),
+        },
+    } as unknown as DIVEScene,
+} as unknown as DIVEEngine;
+
+const mockRegistered = new Map<string, COMEntity>();
 
 describe('AddObjectAction', () => {
-    // Mock dependencies
-    const mockScene = {
-        AddSceneObject: vi.fn(),
-    } as unknown as DIVEScene;
-
-    const mockEngine = {
-        scene: mockScene,
-    } as unknown as DIVEEngine;
-
-    const mockRegistered = new Map<string, COMEntity>();
-
     beforeEach(() => {
         mockRegistered.clear();
         vi.clearAllMocks();
@@ -40,7 +39,9 @@ describe('AddObjectAction', () => {
         action.execute();
 
         // Verify results
-        expect(mockScene.AddSceneObject).toHaveBeenCalledWith(testObject);
+        expect(mockEngine.scene.root.addSceneObject).toHaveBeenCalledWith(
+            testObject,
+        );
         expect(mockRegistered.get(testObject.id)).toEqual(testObject);
     });
 
@@ -67,6 +68,6 @@ describe('AddObjectAction', () => {
         action.execute();
 
         // Verify results
-        expect(mockScene.AddSceneObject).not.toHaveBeenCalled();
+        expect(mockEngine.scene.root.addSceneObject).not.toHaveBeenCalled();
     });
 });

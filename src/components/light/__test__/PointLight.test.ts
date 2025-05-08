@@ -25,15 +25,15 @@ describe('dive/light/DIVEPointLight', () => {
 
     it('should set intensity', () => {
         const testLight = new DIVEPointLight();
-        testLight.SetIntensity(1.0);
+        testLight.setIntensity(1.0);
         expect((testLight.children[0] as PointLight).intensity).toBe(1.0);
-        testLight.SetIntensity(0.6);
+        testLight.setIntensity(0.6);
         expect((testLight.children[0] as PointLight).intensity).toBe(0.6);
     });
 
     it('should set color', () => {
         const testLight = new DIVEPointLight();
-        testLight.SetColor({ test: true } as unknown as Color);
+        testLight.setColor({ test: true } as unknown as Color);
         expect((testLight.children[0] as PointLight).color).toEqual({
             test: true,
         });
@@ -41,7 +41,7 @@ describe('dive/light/DIVEPointLight', () => {
 
     it('should set enabled', () => {
         const testLight = new DIVEPointLight();
-        testLight.SetEnabled(false);
+        testLight.setEnabled(false);
         expect(testLight.children[0].visible).toBe(false);
     });
 

@@ -1,27 +1,23 @@
 import { DIVEEngine } from '../../../../../engine/Engine.ts';
-import { DIVEScene } from '../../../../../engine/scene/Scene.ts';
 import { SelectObjectAction } from '../selectobject.ts';
 import { COMEntity } from '../../../types/index.ts';
 import { Object3D } from 'three';
 import { DIVESelectable } from '../../../../../interfaces/Selectable.ts';
 import { DIVESelectTool } from '../../../../toolbox/select/SelectTool.ts';
-import { ModuleImporter } from '../../../../_system/ModuleImporter.ts';
-import { OrbitController } from '../../../../controller/orbit/OrbitController.ts';
 import { Toolbox } from '../../../../toolbox/Toolbox.ts';
-
-const mockController = {} as unknown as OrbitController;
+import { DIVESceneObject } from '../../../../../types/index.ts';
 
 const mockSceneObject = {
     attach: vi.fn(),
     isSelectable: true,
 } as unknown as Object3D & DIVESelectable;
 
-const mockScene = {
-    GetSceneObject: vi.fn().mockReturnValue(mockSceneObject),
-};
-
 const mockEngine = {
-    scene: mockScene,
+    scene: {
+        root: {
+            getSceneObject: vi.fn().mockReturnValue(mockSceneObject),
+        },
+    },
 } as unknown as DIVEEngine;
 
 const mockSelectTool = {
@@ -115,7 +111,9 @@ describe('SelectObjectAction', () => {
         };
 
         mockRegistered.set(testObject.id, testObject);
-        mockScene.GetSceneObject.mockReturnValueOnce(undefined);
+        vi.mocked(mockEngine.scene.root.getSceneObject).mockReturnValueOnce(
+            undefined,
+        );
 
         // Act
         const action = new SelectObjectAction(
@@ -151,7 +149,9 @@ describe('SelectObjectAction', () => {
         };
 
         mockRegistered.set(testObject.id, testObject);
-        mockScene.GetSceneObject.mockReturnValueOnce({} as Object3D);
+        vi.mocked(mockEngine.scene.root.getSceneObject).mockReturnValueOnce(
+            {} as DIVESceneObject,
+        );
 
         // Act
         const action = new SelectObjectAction(

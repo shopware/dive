@@ -4,13 +4,12 @@ import {
     OrbitControllerSettings,
 } from '../modules/controller/orbit/OrbitController.ts';
 import { DIVEAxisCamera } from '../modules/axiscamera/AxisCamera.ts';
-import { MathUtils } from 'three';
+import { Color, MathUtils } from 'three';
 import {
     DIVEEngine,
     EngineDefaultSettings,
     EngineSettings,
 } from '../engine/Engine.ts';
-import { getModule } from '../modules/ModuleRegistry.ts';
 
 declare global {
     interface Window {
@@ -35,13 +34,13 @@ window.DIVE = {
 };
 
 export type DIVESettings = EngineSettings & {
-    /** Settings for the orbit controls */
-    orbitController: Partial<OrbitControllerSettings>;
-};
+    /** Settings for modules */
+    useLocalDRACOLoader?: boolean;
+} & Partial<OrbitControllerSettings>;
 
-export const DIVEDefaultSettings: Required<DIVESettings> = {
+export const DIVEDefaultSettings: DIVESettings = {
     ...EngineDefaultSettings,
-    orbitController: OrbitControllerDefaultSettings,
+    ...OrbitControllerDefaultSettings,
 };
 
 /**
@@ -76,29 +75,20 @@ export class DIVE {
         const dive = new DIVE(settings);
         window.DIVE.instances.push(dive);
 
-        const state = new (await getModule('State'))(
-            dive._engine,
-            dive.orbitController,
-        );
-
         // set scene properties
-        state.performAction('UPDATE_SCENE', {
-            backgroundColor: 0xffffff,
-            gridEnabled: false,
-            floorEnabled: true,
-            floorColor: 0xffffff,
-        });
+        dive.engine.scene.background = new Color(0xffffff);
+        dive.engine.scene.grid.setVisibility(false);
+        dive.engine.scene.root.floor.setVisibility(false);
+        dive.engine.scene.root.floor.setColor(0xffffff);
 
-        state.performAction('SET_CAMERA_TRANSFORM', {
-            position: { x: 0, y: 2, z: 2 },
-            target: { x: 0, y: 0.5, z: 0 },
-        });
+        dive.engine.camera.position.set(0, 2, 2);
+        dive.orbitController.target.set(0, 0.5, 0);
 
         // generate scene light id
         const lightid = MathUtils.generateUUID();
 
         // add scene light
-        state.performAction('ADD_OBJECT', {
+        dive.engine.scene.root.addSceneObject({
             entityType: 'light',
             type: 'scene',
             name: 'light',
@@ -130,7 +120,7 @@ export class DIVE {
             });
 
             // instantiate model
-            state.performAction('ADD_OBJECT', {
+            dive.engine.scene.root.addSceneObject({
                 entityType: 'model',
                 name: 'object',
                 id: modelid,
@@ -172,7 +162,7 @@ export class DIVE {
         this.orbitController = new OrbitController(
             this._engine.camera,
             canvas,
-            this._settings.orbitController,
+            this._settings,
         );
         this._engine.clock.addTicker(this.orbitController);
     }
@@ -188,7 +178,7 @@ export class DIVE {
         this.orbitController = new OrbitController(
             this._engine.camera,
             this._engine.renderer.webglrenderer.domElement,
-            this._settings.orbitController,
+            this._settings,
         );
         this._engine.clock.addTicker(this.orbitController);
 

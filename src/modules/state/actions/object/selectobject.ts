@@ -15,7 +15,7 @@ export const SelectObjectAction = Action.define<
         const object = registered.get(payload.id);
         if (!object) throw new Error('Object not found.');
 
-        const sceneObject = engine.scene.GetSceneObject(object);
+        const sceneObject = engine.scene.root.getSceneObject(object);
         if (!sceneObject) throw new Error('Object not found in scene.');
 
         if (!('isSelectable' in sceneObject))

@@ -1,21 +1,26 @@
-import { DIVEEngine } from '../../../../../engine';
-import { DIVEScene } from '../../../../../engine/scene/Scene';
-import { UpdateObjectAction } from '../updateobject';
-import { COMEntity } from '../../../types';
+import { DIVEEngine } from '../../../../../engine/Engine.ts';
+import { DIVEScene } from '../../../../../engine/scene/Scene.ts';
+import { UpdateObjectAction } from '../updateobject.ts';
+import { COMEntity } from '../../../types/index.ts';
+
+// Mock dependencies
+const mockEngine = {
+    scene: {
+        root: {
+            updateSceneObject: vi.fn(),
+        },
+    } as unknown as DIVEScene,
+} as unknown as DIVEEngine;
+
+const mockRegistered = new Map<string, COMEntity>();
 
 describe('UpdateObjectAction', () => {
+    beforeEach(() => {
+        vi.clearAllMocks();
+        mockRegistered.clear();
+    });
+
     it('should update an existing object', async () => {
-        // Mock dependencies
-        const mockScene = {
-            UpdateSceneObject: vi.fn(),
-        } as unknown as DIVEScene;
-
-        const mockEngine = {
-            scene: mockScene,
-        } as unknown as DIVEEngine;
-
-        const mockRegistered = new Map<string, COMEntity>();
-
         const originalObject: COMEntity = {
             id: 'test-object',
             entityType: 'model',
@@ -43,7 +48,7 @@ describe('UpdateObjectAction', () => {
         action.execute();
 
         // Verify results
-        expect(mockScene.UpdateSceneObject).toHaveBeenCalledWith({
+        expect(mockEngine.scene.root.updateSceneObject).toHaveBeenCalledWith({
             ...updatePayload,
             entityType: 'model',
         });
@@ -54,17 +59,6 @@ describe('UpdateObjectAction', () => {
     });
 
     it('should return false if object does not exist', async () => {
-        // Mock dependencies
-        const mockScene = {
-            UpdateSceneObject: vi.fn(),
-        } as unknown as DIVEScene;
-
-        const mockEngine = {
-            scene: mockScene,
-        } as unknown as DIVEEngine;
-
-        const mockRegistered = new Map<string, COMEntity>();
-
         const updatePayload = {
             id: 'non-existent-object',
             position: { x: 1, y: 1, z: 1 },
@@ -79,6 +73,6 @@ describe('UpdateObjectAction', () => {
         expect(() => action.execute()).toThrow('Object not found.');
 
         // Verify results
-        expect(mockScene.UpdateSceneObject).not.toHaveBeenCalled();
+        expect(mockEngine.scene.root.updateSceneObject).not.toHaveBeenCalled();
     });
 });

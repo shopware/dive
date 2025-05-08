@@ -43,13 +43,13 @@ describe('dive/model/DIVEModel', () => {
     });
 
     it('should set model', () => {
-        expect(() => model.SetModel(object)).not.toThrow();
+        expect(() => model.setFromGLTF(object)).not.toThrow();
     });
 
     it('should place on floor', async () => {
         const State = await getModule('State');
 
-        model.SetModel(object);
+        model.setFromGLTF(object);
 
         const com = State.get('id')!;
         const spyperformAction = vi.spyOn(com, 'performAction');
@@ -63,16 +63,16 @@ describe('dive/model/DIVEModel', () => {
 
         const scene = {
             parent: null,
-            Root: {
+            root: {
                 children: [
                     model,
                 ],
             },
         } as unknown as DIVEScene;
-        scene.Root.parent = scene;
-        model.parent = scene.Root;
+        scene.root.parent = scene;
+        model.parent = scene.root;
 
-        model.PlaceOnFloor();
+        model.placeOnFloor();
         await new Promise(setImmediate);
         expect(spyperformAction).toHaveBeenCalledWith(
             'UPDATE_OBJECT',
@@ -116,42 +116,42 @@ describe('dive/model/DIVEModel', () => {
 
         const scene = {
             parent: null,
-            Root: {
+            root: {
                 children: [
                     model,
                 ],
             },
         } as unknown as DIVEScene;
-        scene.Root.parent = scene;
+        scene.root.parent = scene;
 
         // test when parent is not set
         console.warn = vi.fn();
-        expect(() => model.DropIt()).not.toThrow();
+        expect(() => model.dropIt()).not.toThrow();
         expect(console.warn).toHaveBeenCalledTimes(1);
 
-        model.parent = scene.Root;
+        model.parent = scene.root;
 
-        expect(() => model.DropIt()).not.toThrow();
+        expect(() => model.dropIt()).not.toThrow();
         expect(model.position.y).toBe(2.5);
         expect(spy).toHaveBeenCalledTimes(1);
 
-        expect(() => model.DropIt()).not.toThrow();
+        expect(() => model.dropIt()).not.toThrow();
         expect(spy).toHaveBeenCalledTimes(1);
 
         // alter position so onMove will be called again
         model.position.y = 2;
         vi.spyOn(State, 'get').mockReturnValueOnce(undefined);
-        expect(() => model.DropIt()).not.toThrow();
+        expect(() => model.dropIt()).not.toThrow();
         expect(spy).toHaveBeenCalledTimes(2);
     });
 
     it('should set material', () => {
         // apply invalid material should not crash
-        expect(() => model.SetMaterial({} as COMMaterial)).not.toThrow();
+        expect(() => model.setMaterial({} as COMMaterial)).not.toThrow();
         expect(model['_material']).not.toBeNull();
 
         expect(() =>
-            model.SetMaterial({
+            model.setMaterial({
                 color: 0xffffff,
                 roughness: 0,
                 metalness: 1,
@@ -167,7 +167,7 @@ describe('dive/model/DIVEModel', () => {
         ).toBeUndefined();
 
         expect(() =>
-            model.SetMaterial({
+            model.setMaterial({
                 color: 0xff00ff,
                 vertexColors: true,
                 map: 'This_Is_A_Texture' as unknown as Texture,
@@ -189,36 +189,36 @@ describe('dive/model/DIVEModel', () => {
     });
 
     it('should set model material when material already set before', () => {
-        model.SetMaterial({ roughness: 0.5 } as COMMaterial);
-        expect(() => model.SetModel(object)).not.toThrow();
+        model.setMaterial({ roughness: 0.5 } as COMMaterial);
+        expect(() => model.setFromGLTF(object)).not.toThrow();
         expect(
             (model['_mesh']?.material as MeshStandardMaterial).roughness,
         ).toBe(0.5);
     });
 
     it('should set material to model when model already set before', () => {
-        model.SetModel(object);
+        model.setFromGLTF(object);
         expect(() =>
-            model.SetMaterial({ roughness: 0.5 } as COMMaterial),
+            model.setMaterial({ roughness: 0.5 } as COMMaterial),
         ).not.toThrow();
         expect(
             (model['_mesh']?.material as MeshStandardMaterial).roughness,
         ).toBe(0.5);
     });
 
-    it('should handle PlaceOnFloor with no mesh or geometry', () => {
+    it('should handle placeOnFloor with no mesh or geometry', () => {
         model.userData.id = 'something';
-        expect(() => model.PlaceOnFloor()).not.toThrow();
+        expect(() => model.placeOnFloor()).not.toThrow();
 
         // Set mesh but no geometry
         model['_mesh'] = new Mesh();
-        expect(() => model.PlaceOnFloor()).not.toThrow();
+        expect(() => model.placeOnFloor()).not.toThrow();
     });
 
-    it('should handle PlaceOnFloor when position does not change', async () => {
+    it('should handle placeOnFloor when position does not change', async () => {
         const State = await getModule('State');
 
-        model.SetModel(object);
+        model.setFromGLTF(object);
         model.userData.id = 'something';
 
         // Mock localToWorld to return same Y value as current position
@@ -229,15 +229,15 @@ describe('dive/model/DIVEModel', () => {
         const com = State.get('id')!;
         const spyperformAction = vi.spyOn(com, 'performAction');
 
-        model.PlaceOnFloor();
+        model.placeOnFloor();
         expect(spyperformAction).not.toHaveBeenCalled();
     });
 
-    it('should handle SetMaterial with null material and mesh', () => {
+    it('should handle setMaterial with null material and mesh', () => {
         // Test with null material and mesh
         (model['_material'] as unknown) = null;
         (model['_mesh'] as unknown) = null;
-        expect(() => model.SetMaterial({ roughness: 0.5 })).not.toThrow();
+        expect(() => model.setMaterial({ roughness: 0.5 })).not.toThrow();
 
         // Verify new material was created
         expect(model['_material']).toBeInstanceOf(MeshStandardMaterial);

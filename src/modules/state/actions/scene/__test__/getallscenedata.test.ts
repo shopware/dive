@@ -17,7 +17,7 @@ describe('GetAllSceneDataAction', () => {
         const mockScene = {
             name: 'Test Scene',
             background: new Color(0x000000),
-            Root: {
+            root: {
                 floor: {
                     visible: true,
                     material: new MeshStandardMaterial({ color: 0xffffff }),

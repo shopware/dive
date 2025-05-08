@@ -52,7 +52,7 @@ export class DIVENode extends applyMixins(Object3D, [
         this.scale.set(scale.x, scale.y, scale.z);
     }
 
-    public SetVisibility(visible: boolean): void {
+    public setVisibility(visible: boolean): void {
         this.visible = visible;
     }
 

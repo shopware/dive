@@ -47,17 +47,17 @@ export class DIVESceneLight extends Object3D {
         this.add(this._dirLight);
     }
 
-    public SetColor(color: Color): void {
+    public setColor(color: Color): void {
         this._hemiLight.color = color;
         this._dirLight.color = color;
     }
 
-    public SetIntensity(intensity: number): void {
+    public setIntensity(intensity: number): void {
         this._hemiLight.intensity = intensity * 2;
         this._dirLight.intensity = intensity * 3;
     }
 
-    public SetEnabled(enabled: boolean): void {
+    public setEnabled(enabled: boolean): void {
         this._hemiLight.visible = enabled;
         this._dirLight.visible = enabled;
     }

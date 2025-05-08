@@ -53,7 +53,7 @@ export const DeleteObjectAction = Action.define<
 
         registered.delete(payload.id);
 
-        engine.scene.DeleteSceneObject(deletedObject);
+        engine.scene.root.deleteSceneObject(deletedObject);
     },
 });
 

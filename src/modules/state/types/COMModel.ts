@@ -8,6 +8,7 @@ export function isCOMModel(entity: COMEntity): entity is COMModel {
 }
 
 export type COMModel = COMBaseEntity & {
+    entityType: 'model';
     uri: string;
     position: Vector3Like;
     rotation: Vector3Like;

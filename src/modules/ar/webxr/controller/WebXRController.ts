@@ -303,7 +303,7 @@ export class DIVEWebXRController extends Object3D {
 
         // hang current scene children to hand node
         const children: Object3D[] = [];
-        this._scene.Root.children.forEach((child) => {
+        this._scene.root.children.forEach((child) => {
             const clone = child.clone();
             clone.layers.enableAll();
             clone.traverse((obj) => {

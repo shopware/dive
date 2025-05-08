@@ -13,8 +13,11 @@ import {
     type COMEntity,
     type COMPrimitive,
     type COMGroup,
+    type COMEntityType,
+    COMMinimal,
+    COMPartial,
 } from '../../modules/state/types/index.ts';
-import { type DIVESceneObject } from '../../types/index.ts';
+import { DIVELight, type DIVESceneObject } from '../../types/index.ts';
 import { DIVEGroup } from '../group/Group.ts';
 import { getModule } from '../../modules/ModuleRegistry.ts';
 import { DIVEFloor } from '../floor/Floor.ts';
@@ -55,7 +58,7 @@ export class DIVERoot extends Object3D {
         this.add(this._floor);
     }
 
-    public ComputeSceneBB(): Box3 {
+    public computeSceneBB(): Box3 {
         const bb = new Box3();
         this.children.forEach((object) => {
             if ('isDIVEFloor' in object) return;
@@ -68,20 +71,20 @@ export class DIVERoot extends Object3D {
         return bb;
     }
 
-    public GetSceneObject<T extends DIVESceneObject>(
-        object: Partial<COMEntity> & { id: string },
-    ): T | undefined {
-        let foundObject: T | undefined;
+    public getSceneObject<E extends COMEntityType>(
+        object: Partial<COMEntity> & { id: string; entityType: E },
+    ): DIVESceneObject<E> | undefined {
+        let foundObject: DIVESceneObject<E> | undefined;
         this.traverse((object3D) => {
             if (foundObject) return;
             if (object3D.userData.id === object.id) {
-                foundObject = object3D as T;
+                foundObject = object3D as DIVESceneObject<E>;
             }
         });
         return foundObject;
     }
 
-    public AddSceneObject(object: COMEntity): void {
+    public addSceneObject(object: COMEntity): void {
         switch (object.entityType) {
             case 'pov': {
                 break;
@@ -103,22 +106,20 @@ export class DIVERoot extends Object3D {
                 break;
             }
             default: {
-                console.warn(
-                    `DIVERoot.AddSceneObject: Unknown entity type: ${object.entityType}`,
+                throw new Error(
+                    `DIVERoot.addSceneObject: Unknown entity type: ${(object as unknown as COMEntity).entityType}`,
                 );
             }
         }
     }
 
-    public UpdateSceneObject(
-        object: Partial<COMEntity> & { id: string; entityType: string },
-    ): void {
+    public updateSceneObject(object: COMPartial): void {
         switch (object.entityType) {
             case 'pov': {
                 break;
             }
             case 'light': {
-                this.updateLight(object as COMLight);
+                this.updateLight(object);
                 break;
             }
             case 'model': {
@@ -134,16 +135,14 @@ export class DIVERoot extends Object3D {
                 break;
             }
             default: {
-                console.warn(
-                    `DIVERoot.UpdateSceneObject: Unknown entity type: ${object.entityType}`,
+                throw new Error(
+                    `DIVERoot.updateSceneObject: Unknown entity type: ${(object as unknown as COMEntity).entityType}`,
                 );
             }
         }
     }
 
-    public DeleteSceneObject(
-        object: Partial<COMEntity> & { id: string; entityType: string },
-    ): void {
+    public deleteSceneObject(object: COMMinimal<COMEntity>): void {
         switch (object.entityType) {
             case 'pov': {
                 break;
@@ -165,42 +164,50 @@ export class DIVERoot extends Object3D {
                 break;
             }
             default: {
-                console.warn(
-                    `DIVERoot.DeleteSceneObject: Unknown entity type: ${object.entityType}`,
+                throw new Error(
+                    `DIVERoot.deleteSceneObject: Unknown entity type: ${(object as unknown as COMEntity).entityType}`,
                 );
             }
         }
     }
 
-    public PlaceOnFloor(
-        object: Partial<COMEntity> & { id: string; entityType: string },
-    ): void {
-        switch (object.entityType) {
-            case 'pov':
-            case 'light': {
+    public addLight(light: COMPartial<COMLight>): DIVELight {
+        let sceneObject = this.getSceneObject(light);
+        if (sceneObject) {
+            console.warn(
+                `DIVERoot.addModel: Model with id ${light.id} already exists`,
+            );
+            return sceneObject;
+        }
+
+        switch (light.type) {
+            case 'scene': {
+                light.type;
+                sceneObject = new DIVESceneLight();
                 break;
             }
-            case 'model':
-            case 'primitive': {
-                this.placeOnFloor(object);
+            case 'ambient': {
+                sceneObject = new DIVEAmbientLight();
+                break;
+            }
+            case 'point': {
+                sceneObject = new DIVEPointLight();
                 break;
             }
             default: {
-                console.warn(
-                    `DIVERoot.PlaceOnFloor: Unknown entity type: ${object.entityType}`,
+                throw new Error(
+                    `DIVERoot.addLight: Unknown light type: ${(light as unknown as COMLight).type}`,
                 );
             }
         }
+        sceneObject.userData.id = light.id;
+        this.add(sceneObject);
+
+        return sceneObject;
     }
 
-    private updateLight(
-        light: Partial<COMLight> & {
-            id: string;
-            entityType: string;
-            type: string;
-        },
-    ): void {
-        let sceneObject = this.GetSceneObject(light);
+    private updateLight(light: COMPartial<COMLight>): void {
+        let sceneObject = this.getSceneObject(light);
         if (!sceneObject) {
             switch (light.type) {
                 case 'scene': {
@@ -216,10 +223,9 @@ export class DIVERoot extends Object3D {
                     break;
                 }
                 default: {
-                    console.warn(
-                        `DIVERoot.updateLight: Unknown light type: ${light.type}`,
+                    throw new Error(
+                        `DIVERoot.updateLight: Unknown light type: ${(light as unknown as COMLight).type}`,
                     );
-                    return;
                 }
             }
             sceneObject.userData.id = light.id;
@@ -235,68 +241,59 @@ export class DIVERoot extends Object3D {
                 light.position.z,
             );
         if (light.intensity !== undefined && light.intensity !== null)
-            (sceneObject as DIVEAmbientLight | DIVEPointLight).SetIntensity(
-                light.intensity,
-            );
+            sceneObject.setIntensity(light.intensity);
         if (light.enabled !== undefined && light.enabled !== null)
-            (sceneObject as DIVEAmbientLight | DIVEPointLight).SetEnabled(
-                light.enabled,
-            );
+            sceneObject.setEnabled(light.enabled);
         if (light.color !== undefined && light.color !== null)
-            (sceneObject as DIVEAmbientLight | DIVEPointLight).SetColor(
-                new Color(light.color),
-            );
+            sceneObject.setColor(new Color(light.color));
         if (light.visible !== undefined && light.visible !== null)
-            (sceneObject as DIVEAmbientLight | DIVEPointLight).visible =
-                light.visible;
+            sceneObject.visible = light.visible;
         if (light.parentId !== undefined)
             this.setParent({ ...light, parentId: light.parentId });
     }
 
-    private updateModel(model: Partial<COMModel> & { id: string }): void {
-        let sceneObject = this.GetSceneObject<DIVESceneObject>(model);
+    public addModel(
+        model: Partial<COMModel> & { id: string; entityType: 'model' },
+    ): DIVEModel {
+        let sceneObject = this.getSceneObject(model);
+        if (sceneObject) {
+            console.warn(
+                `DIVERoot.addModel: Model with id ${model.id} already exists`,
+            );
+            return sceneObject;
+        }
+        const created = new DIVEModel();
+        sceneObject = created;
+        sceneObject.userData.id = model.id;
+        sceneObject.userData.uri = model.uri;
+        this.add(sceneObject);
+
+        return sceneObject;
+    }
+
+    private updateModel(model: COMPartial<COMModel>): void {
+        const sceneObject = this.getSceneObject(model);
         if (!sceneObject) {
-            const created = new DIVEModel();
-            sceneObject = created;
-            sceneObject.userData.id = model.id;
-            sceneObject.userData.uri = model.uri;
-            this.add(sceneObject);
+            return;
         }
 
-        if (model.uri !== undefined) {
-            this._getAssetLoader()
-                .then((loader) => {
-                    return loader.load(model.uri!);
-                })
-                .then((gltf) => {
-                    (sceneObject as DIVEModel).SetModel(gltf);
-                    getModule('State').then((State) => {
-                        State.get(model.id!)?.performAction('MODEL_LOADED', {
-                            id: model.id!,
-                        });
-                    });
-                });
-        }
-
+        if (model.uri !== undefined) sceneObject.setFromURL(model.uri);
         if (model.name !== undefined) sceneObject.name = model.name;
         if (model.position !== undefined)
-            (sceneObject as DIVEModel).SetPosition(model.position);
+            sceneObject.SetPosition(model.position);
         if (model.rotation !== undefined)
-            (sceneObject as DIVEModel).SetRotation(model.rotation);
-        if (model.scale !== undefined)
-            (sceneObject as DIVEModel).SetScale(model.scale);
+            sceneObject.SetRotation(model.rotation);
+        if (model.scale !== undefined) sceneObject.SetScale(model.scale);
         if (model.visible !== undefined)
-            (sceneObject as DIVEModel).SetVisibility(model.visible);
+            sceneObject.setVisibility(model.visible);
         if (model.material !== undefined)
-            (sceneObject as DIVEModel).SetMaterial(model.material);
+            sceneObject.setMaterial(model.material);
         if (model.parentId !== undefined)
             this.setParent({ ...model, parentId: model.parentId });
     }
 
-    private updatePrimitive(
-        primitive: Partial<COMPrimitive> & { id: string },
-    ): void {
-        let sceneObject = this.GetSceneObject<DIVESceneObject>(primitive);
+    private updatePrimitive(primitive: COMPartial<COMPrimitive>): void {
+        let sceneObject = this.getSceneObject(primitive);
         if (!sceneObject) {
             const created = new DIVEPrimitive();
             sceneObject = created;
@@ -314,15 +311,15 @@ export class DIVERoot extends Object3D {
         if (primitive.scale !== undefined)
             (sceneObject as DIVEPrimitive).SetScale(primitive.scale);
         if (primitive.visible !== undefined)
-            (sceneObject as DIVEPrimitive).SetVisibility(primitive.visible);
+            (sceneObject as DIVEPrimitive).setVisibility(primitive.visible);
         if (primitive.material !== undefined)
-            (sceneObject as DIVEPrimitive).SetMaterial(primitive.material);
+            (sceneObject as DIVEPrimitive).setMaterial(primitive.material);
         if (primitive.parentId !== undefined)
             this.setParent({ ...primitive, parentId: primitive.parentId });
     }
 
-    private updateGroup(group: Partial<COMGroup> & { id: string }): void {
-        let sceneObject = this.GetSceneObject<DIVESceneObject>(group);
+    private updateGroup(group: COMPartial<COMGroup>): void {
+        let sceneObject = this.getSceneObject(group);
         if (!sceneObject) {
             const created = new DIVEGroup();
             sceneObject = created;
@@ -338,15 +335,15 @@ export class DIVERoot extends Object3D {
         if (group.scale !== undefined)
             (sceneObject as DIVEGroup).SetScale(group.scale);
         if (group.visible !== undefined)
-            (sceneObject as DIVEGroup).SetVisibility(group.visible);
+            (sceneObject as DIVEGroup).setVisibility(group.visible);
         if (group.bbVisible !== undefined)
             (sceneObject as DIVEGroup).SetLinesVisibility(group.bbVisible);
         if (group.parentId !== undefined)
             this.setParent({ ...group, parentId: group.parentId });
     }
 
-    private deleteLight(light: Partial<COMLight> & { id: string }): void {
-        const sceneObject = this.GetSceneObject(light);
+    private deleteLight(light: COMMinimal<COMLight>): void {
+        const sceneObject = this.getSceneObject(light);
         if (!sceneObject) {
             console.warn(
                 `DIVERoot.deleteLight: Light with id ${light.id} not found`,
@@ -359,8 +356,8 @@ export class DIVERoot extends Object3D {
         sceneObject.parent!.remove(sceneObject);
     }
 
-    private deleteModel(model: Partial<COMModel> & { id: string }): void {
-        const sceneObject = this.GetSceneObject(model);
+    private deleteModel(model: COMMinimal<COMModel>): void {
+        const sceneObject = this.getSceneObject(model);
         if (!sceneObject) {
             console.warn(
                 `DIVERoot.deleteModel: Model with id ${model.id} not found`,
@@ -373,10 +370,8 @@ export class DIVERoot extends Object3D {
         sceneObject.parent!.remove(sceneObject);
     }
 
-    private deletePrimitive(
-        primitive: Partial<COMPrimitive> & { id: string },
-    ): void {
-        const sceneObject = this.GetSceneObject(primitive);
+    private deletePrimitive(primitive: COMMinimal<COMPrimitive>): void {
+        const sceneObject = this.getSceneObject(primitive);
         if (!sceneObject) {
             console.warn(
                 `DIVERoot.deletePrimitive: Primitive with id ${primitive.id} not found`,
@@ -389,8 +384,8 @@ export class DIVERoot extends Object3D {
         sceneObject.parent!.remove(sceneObject);
     }
 
-    private deleteGroup(group: Partial<COMGroup> & { id: string }): void {
-        const sceneObject = this.GetSceneObject<DIVEGroup>(group);
+    private deleteGroup(group: COMMinimal<COMGroup>): void {
+        const sceneObject = this.getSceneObject(group);
         if (!sceneObject) {
             console.warn(
                 `DIVERoot.deleteGroup: Group with id ${group.id} not found`,
@@ -407,21 +402,17 @@ export class DIVERoot extends Object3D {
         sceneObject.parent!.remove(sceneObject);
     }
 
-    private placeOnFloor(object: Partial<COMEntity> & { id: string }): void {
-        const sceneObject = this.GetSceneObject(object);
-        if (!sceneObject) return;
-
-        (sceneObject as DIVEModel | DIVEPrimitive).PlaceOnFloor();
-    }
-
     private setParent(
-        object: Partial<COMEntity> & { id: string; parentId: string | null },
+        object: COMMinimal<COMEntity> & {
+            parentId: string | null;
+        },
     ): void {
-        const sceneObject = this.GetSceneObject<DIVESceneObject>(object)!;
+        const sceneObject = this.getSceneObject(object)!;
 
         if (object.parentId !== null) {
-            const parent = this.GetSceneObject<DIVESceneObject>({
+            const parent = this.getSceneObject({
                 id: object.parentId,
+                entityType: object.entityType,
             });
             if (!parent) return;
 

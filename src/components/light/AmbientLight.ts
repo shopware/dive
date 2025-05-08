@@ -25,15 +25,15 @@ export class DIVEAmbientLight extends Object3D {
         this.add(this._light);
     }
 
-    public SetColor(color: Color): void {
+    public setColor(color: Color): void {
         this._light.color = color;
     }
 
-    public SetIntensity(intensity: number): void {
+    public setIntensity(intensity: number): void {
         this._light.intensity = intensity;
     }
 
-    public SetEnabled(enabled: boolean): void {
+    public setEnabled(enabled: boolean): void {
         this._light.visible = enabled;
     }
 }

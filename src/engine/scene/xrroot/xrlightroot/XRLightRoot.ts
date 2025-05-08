@@ -22,7 +22,7 @@ export class DIVEXRLightRoot extends Object3D {
 
         // add scene
         this._lightRoot = new DIVERoot();
-        this._lightRoot.UpdateSceneObject({
+        this._lightRoot.updateSceneObject({
             id: 'XRSceneLight',
             entityType: 'light',
             name: 'XRSceneLight',

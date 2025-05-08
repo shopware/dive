@@ -23,11 +23,11 @@ export const GetAllSceneDataAction = Action.define<
             mediaItem: null,
             backgroundColor:
                 '#' + (engine.scene.background as Color).getHexString(),
-            floorEnabled: engine.scene.Root.floor.visible,
+            floorEnabled: engine.scene.root.floor.visible,
             floorColor:
                 '#' +
                 (
-                    engine.scene.Root.floor.material as MeshStandardMaterial
+                    engine.scene.root.floor.material as MeshStandardMaterial
                 ).color.getHexString(),
             userCamera: {
                 position: controller.object.position.clone(),

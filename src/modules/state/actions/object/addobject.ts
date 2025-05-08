@@ -16,7 +16,7 @@ export const AddObjectAction = Action.define<
 
         registered.set(payload.id, payload);
 
-        engine.scene.AddSceneObject(payload);
+        engine.scene.root.addSceneObject(payload);
     },
 });
 

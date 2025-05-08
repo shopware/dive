@@ -253,7 +253,7 @@
     </testcase>
     <testcase classname="src/scene/__test__/Scene.test.ts" name="dive/scene/DIVEScene should set background color" time="0.001">
     </testcase>
-    <testcase classname="src/scene/__test__/Scene.test.ts" name="dive/scene/DIVEScene should ComputeSceneBB" time="0.001">
+    <testcase classname="src/scene/__test__/Scene.test.ts" name="dive/scene/DIVEScene should computeSceneBB" time="0.001">
     </testcase>
     <testcase classname="src/scene/__test__/Scene.test.ts" name="dive/scene/DIVEScene should add object" time="0.001">
     </testcase>
@@ -313,7 +313,7 @@
   <testsuite name="DIVE/scene/root/DIVERoot" errors="0" failures="0" skipped="0" timestamp="2025-01-03T08:13:50" time="0.117" tests="11">
     <testcase classname="src/scene/root/__test__/Root.test.ts" name="DIVE/scene/root/DIVERoot should instantiate" time="0.001">
     </testcase>
-    <testcase classname="src/scene/root/__test__/Root.test.ts" name="DIVE/scene/root/DIVERoot should ComputeSceneBB" time="0.001">
+    <testcase classname="src/scene/root/__test__/Root.test.ts" name="DIVE/scene/root/DIVERoot should computeSceneBB" time="0.001">
     </testcase>
     <testcase classname="src/scene/root/__test__/Root.test.ts" name="DIVE/scene/root/DIVERoot should get scene object" time="0">
     </testcase>

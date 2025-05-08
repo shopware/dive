@@ -9,7 +9,7 @@ describe('dive/primitive/floor/DIVEFloor', () => {
     it('should set visibility', () => {
         const floor = new DIVEFloor();
         expect(() => {
-            floor.SetVisibility(false);
+            floor.setVisibility(false);
         }).not.toThrow();
         expect(floor.visible).toBe(false);
     });
@@ -17,7 +17,7 @@ describe('dive/primitive/floor/DIVEFloor', () => {
     it('should set color', () => {
         const floor = new DIVEFloor();
         expect(() => {
-            floor.SetColor('#ff00ff');
+            floor.setColor('#ff00ff');
         }).not.toThrow();
     });
 });

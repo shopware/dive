@@ -53,7 +53,7 @@ export class DIVEPrimitive extends DIVENode {
         this._boundingBox.setFromObject(this._mesh);
     }
 
-    public SetMaterial(material: Partial<COMMaterial>): void {
+    public setMaterial(material: Partial<COMMaterial>): void {
         const primitiveMaterial = this._mesh.material as MeshStandardMaterial;
 
         if (material.vertexColors !== undefined) {
@@ -109,7 +109,7 @@ export class DIVEPrimitive extends DIVENode {
         if (this._mesh) this._mesh.material = primitiveMaterial;
     }
 
-    public PlaceOnFloor(): void {
+    public placeOnFloor(): void {
         // calculate and temporary save world position
         const worldPos = this.getWorldPosition(this._positionWorldBuffer);
         const oldWorldPos = worldPos.clone();
@@ -134,10 +134,10 @@ export class DIVEPrimitive extends DIVENode {
         });
     }
 
-    public DropIt(): void {
+    public dropIt(): void {
         if (!this.parent) {
             console.warn(
-                'DIVEPrimitive: DropIt() called on a model that is not in the scene.',
+                'DIVEPrimitive: dropIt() called on a model that is not in the scene.',
                 this,
             );
             return;
@@ -154,7 +154,7 @@ export class DIVEPrimitive extends DIVENode {
         const raycaster = new Raycaster(bbBottomCenter, new Vector3(0, -1, 0));
         raycaster.layers.mask = PRODUCT_LAYER_MASK;
         const intersections = raycaster.intersectObjects(
-            findSceneRecursive(this).Root.children,
+            findSceneRecursive(this).root.children,
             true,
         );
 

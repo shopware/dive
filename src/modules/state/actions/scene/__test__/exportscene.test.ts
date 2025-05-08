@@ -8,7 +8,7 @@ const mockGetAssetExporter = vi.fn().mockResolvedValue({
 
 const mockEngine = {
     scene: {
-        Root: {},
+        root: {},
     },
 } as unknown as DIVEEngine;
 
@@ -16,7 +16,7 @@ describe('ExportSceneAction', () => {
     it('should export scene', async () => {
         const mockEngine = {
             scene: {
-                Root: {},
+                root: {},
             },
         } as unknown as DIVEEngine;
 
@@ -33,7 +33,7 @@ describe('ExportSceneAction', () => {
 
         // Verify results
         expect(mockGetAssetExporter).toHaveBeenCalled();
-        expect(mockExport).toHaveBeenCalledWith(mockEngine.scene.Root, 'glb');
+        expect(mockExport).toHaveBeenCalledWith(mockEngine.scene.root, 'glb');
         expect(result).toBe('exported-scene-data');
     });
 });

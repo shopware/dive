@@ -75,20 +75,20 @@ export class DIVEPointLight
         this.add(this.mesh);
     }
 
-    public SetColor(color: Color): void {
+    public setColor(color: Color): void {
         this.light.color = color;
 
         (this.mesh.material as MeshBasicMaterial).color = color;
     }
 
-    public SetIntensity(intensity: number): void {
+    public setIntensity(intensity: number): void {
         this.light.intensity = intensity;
 
         (this.mesh.material as MeshBasicMaterial).opacity =
             intensity > 0.8 ? 0.8 : intensity * 0.8;
     }
 
-    public SetEnabled(enabled: boolean): void {
+    public setEnabled(enabled: boolean): void {
         this.light.visible = enabled;
     }
 

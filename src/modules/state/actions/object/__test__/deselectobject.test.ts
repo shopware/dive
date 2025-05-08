@@ -1,23 +1,22 @@
 import { DIVEEngine } from '../../../../../engine/Engine.ts';
-import { DIVEScene } from '../../../../../engine/scene/Scene.ts';
 import { DeselectObjectAction } from '../deselectobject.ts';
 import { type COMEntity } from '../../../types/index.ts';
 import { Object3D } from 'three';
 import { type DIVESelectable } from '../../../../../interfaces/Selectable.ts';
 import { type DIVESelectTool } from '../../../../toolbox/select/SelectTool.ts';
+import { DIVESceneObject } from '../../../../../types/index.ts';
 
 const mockSceneObject = {
     attach: vi.fn(),
     isSelectable: true,
 } as unknown as Object3D & DIVESelectable;
 
-const mockGetSceneObject = vi.fn().mockReturnValue(mockSceneObject);
-const mockScene = {
-    GetSceneObject: mockGetSceneObject,
-} as unknown as DIVEScene;
-
 const mockEngine = {
-    scene: mockScene,
+    scene: {
+        root: {
+            getSceneObject: vi.fn().mockReturnValue(mockSceneObject),
+        },
+    },
 } as unknown as DIVEEngine;
 
 const mockDetachGizmo = vi.fn();
@@ -109,7 +108,9 @@ describe('DeselectObjectAction', () => {
         };
 
         mockRegistered.set(testObject.id, testObject);
-        mockGetSceneObject.mockReturnValueOnce(null);
+        vi.mocked(mockEngine.scene.root.getSceneObject).mockReturnValueOnce(
+            undefined,
+        );
 
         // Act
         const action = new DeselectObjectAction(
@@ -147,7 +148,9 @@ describe('DeselectObjectAction', () => {
         };
 
         mockRegistered.set(testObject.id, testObject);
-        mockGetSceneObject.mockReturnValueOnce({} as Object3D);
+        vi.mocked(mockEngine.scene.root.getSceneObject).mockReturnValueOnce(
+            {} as DIVESceneObject,
+        );
 
         // Act
         const action = new DeselectObjectAction(

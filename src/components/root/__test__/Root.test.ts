@@ -82,9 +82,9 @@ vi.mock('../../light/AmbientLight', () => {
             this.applyMatrix4 = vi.fn();
             this.updateWorldMatrix = vi.fn();
             this.children = [];
-            this.SetIntensity = vi.fn();
-            this.SetEnabled = vi.fn();
-            this.SetColor = vi.fn();
+            this.setIntensity = vi.fn();
+            this.setEnabled = vi.fn();
+            this.setColor = vi.fn();
             this.userData = {
                 id: undefined,
             };
@@ -105,9 +105,9 @@ vi.mock('../../light/PointLight', () => {
             this.applyMatrix4 = vi.fn();
             this.updateWorldMatrix = vi.fn();
             this.children = [];
-            this.SetIntensity = vi.fn();
-            this.SetEnabled = vi.fn();
-            this.SetColor = vi.fn();
+            this.setIntensity = vi.fn();
+            this.setEnabled = vi.fn();
+            this.setColor = vi.fn();
             this.userData = {
                 id: undefined,
             };
@@ -128,9 +128,9 @@ vi.mock('../../light/SceneLight', () => {
             this.applyMatrix4 = vi.fn();
             this.updateWorldMatrix = vi.fn();
             this.children = [];
-            this.SetIntensity = vi.fn();
-            this.SetEnabled = vi.fn();
-            this.SetColor = vi.fn();
+            this.setIntensity = vi.fn();
+            this.setEnabled = vi.fn();
+            this.setColor = vi.fn();
             this.userData = {
                 id: undefined,
             };
@@ -153,13 +153,13 @@ vi.mock('../../model/Model', () => {
             this.applyMatrix4 = vi.fn();
             this.updateWorldMatrix = vi.fn();
             this.children = [];
-            this.SetModel = vi.fn();
+            this.setFromGLTF = vi.fn();
             this.SetPosition = vi.fn();
             this.SetRotation = vi.fn();
             this.SetScale = vi.fn();
-            this.SetVisibility = vi.fn();
-            this.SetMaterial = vi.fn();
-            this.PlaceOnFloor = vi.fn();
+            this.setVisibility = vi.fn();
+            this.setMaterial = vi.fn();
+            this.placeOnFloor = vi.fn();
             this.removeFromParent = vi.fn();
             this.position = new Vector3();
             return this;
@@ -181,12 +181,12 @@ vi.mock('../../primitive/Primitive', () => {
             this.updateWorldMatrix = vi.fn();
             this.children = [];
             this.SetGeometry = vi.fn();
-            this.SetMaterial = vi.fn();
+            this.setMaterial = vi.fn();
             this.SetPosition = vi.fn();
             this.SetRotation = vi.fn();
             this.SetScale = vi.fn();
-            this.SetVisibility = vi.fn();
-            this.PlaceOnFloor = vi.fn();
+            this.setVisibility = vi.fn();
+            this.placeOnFloor = vi.fn();
             this.removeFromParent = vi.fn();
             this.position = new Vector3();
             return this;
@@ -209,13 +209,13 @@ vi.mock('../../group/Group', () => {
             this.updateWorldMatrix = vi.fn();
             this.children = [];
             this.SetGeometry = vi.fn();
-            this.SetMaterial = vi.fn();
+            this.setMaterial = vi.fn();
             this.SetPosition = vi.fn();
             this.SetRotation = vi.fn();
             this.SetScale = vi.fn();
-            this.SetVisibility = vi.fn();
+            this.setVisibility = vi.fn();
             this.SetLinesVisibility = vi.fn();
-            this.PlaceOnFloor = vi.fn();
+            this.placeOnFloor = vi.fn();
             this.removeFromParent = vi.fn();
             this.position = new Vector3();
             this.members = [];
@@ -255,7 +255,7 @@ describe('components/root/DIVERoot', () => {
         });
     });
 
-    describe('ComputeSceneBB', () => {
+    describe('computeSceneBB', () => {
         it('should compute bounding box for scene objects', () => {
             const mockObject = new Object3D();
             mockObject.position.set(1, 2, 3);
@@ -264,14 +264,14 @@ describe('components/root/DIVERoot', () => {
                 callback(mockObject as Object3D),
             );
 
-            const bb = root.ComputeSceneBB();
+            const bb = root.computeSceneBB();
             expect(bb).toBeDefined();
             expect(bb).toBeInstanceOf(Box3);
         });
 
         it('should handle empty scene', () => {
             Object3D.prototype.traverse = vi.fn((callback) => {});
-            const bb = root.ComputeSceneBB();
+            const bb = root.computeSceneBB();
             expect(bb).toBeDefined();
             expect(bb).toBeInstanceOf(Box3);
         });
@@ -290,7 +290,7 @@ describe('components/root/DIVERoot', () => {
                 mockObject2,
             ];
 
-            const bb = root.ComputeSceneBB();
+            const bb = root.computeSceneBB();
             expect(bb).toBeDefined();
             expect(bb).toBeInstanceOf(Box3);
             expect(mockObject1.traverse).toHaveBeenCalled();
@@ -298,18 +298,18 @@ describe('components/root/DIVERoot', () => {
         });
     });
 
-    describe('GetSceneObject', () => {
+    describe('getSceneObject', () => {
         it('should find object by id', () => {
             const mockObject = new Object3D();
             mockObject.userData = { id: 'test-id' };
             root.add(mockObject);
 
-            const found = root.GetSceneObject({ id: 'test-id' });
+            const found = root.getSceneObject({ id: 'test-id' });
             expect(found).toBeDefined();
         });
 
         it('should return undefined for non-existent id', () => {
-            const found = root.GetSceneObject({ id: 'non-existent' });
+            const found = root.getSceneObject({ id: 'non-existent' });
             expect(found).toBeUndefined();
         });
 
@@ -322,13 +322,13 @@ describe('components/root/DIVERoot', () => {
                 },
             };
             root.add(mockObject as any);
-            const result = root.GetSceneObject({ id: 'test-id' });
+            const result = root.getSceneObject({ id: 'test-id' });
             expect(result).toBe(mockObject);
         });
 
         it('should return undefined when object is not found', () => {
             const root = new DIVERoot();
-            const result = root.GetSceneObject({ id: 'non-existent-id' });
+            const result = root.getSceneObject({ id: 'non-existent-id' });
             expect(result).toBeUndefined();
         });
 
@@ -380,13 +380,13 @@ describe('components/root/DIVERoot', () => {
                 callback(mockObject2 as any);
             });
 
-            const result = root.GetSceneObject({ id: 'test-id' });
+            const result = root.getSceneObject({ id: 'test-id' });
             expect(result).toBe(mockObject1);
             expect(traverseCount).toBe(1);
         });
     });
 
-    describe('AddSceneObject', () => {
+    describe('addSceneObject', () => {
         it('should add different types of lights', () => {
             const sceneLightData: COMLight = {
                 id: 'scene-light-1',
@@ -436,15 +436,15 @@ describe('components/root/DIVERoot', () => {
                 color: '#ffffff',
             } as any;
 
-            root.AddSceneObject(sceneLightData);
-            root.AddSceneObject(ambientLightData);
-            root.AddSceneObject(pointLightData);
-            root.AddSceneObject(unknownLightData);
+            root.addSceneObject(sceneLightData);
+            root.addSceneObject(ambientLightData);
+            root.addSceneObject(pointLightData);
+            root.addSceneObject(unknownLightData);
 
-            const sceneLight = root.GetSceneObject(sceneLightData);
-            const ambientLight = root.GetSceneObject(ambientLightData);
-            const pointLight = root.GetSceneObject(pointLightData);
-            const unknownLight = root.GetSceneObject(unknownLightData);
+            const sceneLight = root.getSceneObject(sceneLightData);
+            const ambientLight = root.getSceneObject(ambientLightData);
+            const pointLight = root.getSceneObject(pointLightData);
+            const unknownLight = root.getSceneObject(unknownLightData);
 
             expect(sceneLight).toBeDefined();
             expect(ambientLight).toBeDefined();
@@ -469,16 +469,16 @@ describe('components/root/DIVERoot', () => {
                 parentId: null,
             };
 
-            root.AddSceneObject(lightData);
-            const light = root.GetSceneObject(lightData);
+            root.addSceneObject(lightData);
+            const light = root.getSceneObject(lightData);
             expect(light).toBeDefined();
             expect(light?.name).toBe('Test Light');
             expect(light?.position.x).toBe(1);
             expect(light?.position.y).toBe(2);
             expect(light?.position.z).toBe(3);
-            expect((light as any).SetIntensity).toHaveBeenCalledWith(1.0);
-            expect((light as any).SetEnabled).toHaveBeenCalledWith(true);
-            expect((light as any).SetColor).toHaveBeenCalled();
+            expect((light as any).setIntensity).toHaveBeenCalledWith(1.0);
+            expect((light as any).setEnabled).toHaveBeenCalledWith(true);
+            expect((light as any).setColor).toHaveBeenCalled();
             expect(light?.visible).toBe(true);
         });
 
@@ -497,17 +497,17 @@ describe('components/root/DIVERoot', () => {
                 parentId: null,
             };
 
-            root.AddSceneObject(modelData);
-            const model = root.GetSceneObject<DIVEModel>(modelData);
+            root.addSceneObject(modelData);
+            const model = root.getSceneObject<DIVEModel>(modelData);
             expect(model).toBeDefined();
             expect(model?.name).toBe('Test Model');
             expect(model?.SetPosition).toHaveBeenCalledWith(modelData.position);
             expect(model?.SetRotation).toHaveBeenCalledWith(modelData.rotation);
             expect(model?.SetScale).toHaveBeenCalledWith(modelData.scale);
-            expect(model?.SetVisibility).toHaveBeenCalledWith(
+            expect(model?.setVisibility).toHaveBeenCalledWith(
                 modelData.visible,
             );
-            expect(model?.SetMaterial).toHaveBeenCalledWith(modelData.material);
+            expect(model?.setMaterial).toHaveBeenCalledWith(modelData.material);
         });
 
         it('should update all primitive properties', () => {
@@ -524,8 +524,8 @@ describe('components/root/DIVERoot', () => {
                 parentId: null,
             };
 
-            root.AddSceneObject(primitiveData);
-            const primitive = root.GetSceneObject<DIVEPrimitive>(primitiveData);
+            root.addSceneObject(primitiveData);
+            const primitive = root.getSceneObject<DIVEPrimitive>(primitiveData);
             expect(primitive).toBeDefined();
             expect(primitive?.name).toBe('Test Primitive');
             expect(primitive?.SetGeometry).toHaveBeenCalledWith(
@@ -540,10 +540,10 @@ describe('components/root/DIVERoot', () => {
             expect(primitive?.SetScale).toHaveBeenCalledWith(
                 primitiveData.scale,
             );
-            expect(primitive?.SetVisibility).toHaveBeenCalledWith(
+            expect(primitive?.setVisibility).toHaveBeenCalledWith(
                 primitiveData.visible,
             );
-            expect(primitive?.SetMaterial).toHaveBeenCalledWith(
+            expect(primitive?.setMaterial).toHaveBeenCalledWith(
                 primitiveData.material,
             );
         });
@@ -561,14 +561,14 @@ describe('components/root/DIVERoot', () => {
                 parentId: null,
             };
 
-            root.AddSceneObject(groupData);
-            const group = root.GetSceneObject<DIVEGroup>(groupData);
+            root.addSceneObject(groupData);
+            const group = root.getSceneObject<DIVEGroup>(groupData);
             expect(group).toBeDefined();
             expect(group?.name).toBe('Test Group');
             expect(group?.SetPosition).toHaveBeenCalledWith(groupData.position);
             expect(group?.SetRotation).toHaveBeenCalledWith(groupData.rotation);
             expect(group?.SetScale).toHaveBeenCalledWith(groupData.scale);
-            expect(group?.SetVisibility).toHaveBeenCalledWith(
+            expect(group?.setVisibility).toHaveBeenCalledWith(
                 groupData.visible,
             );
             expect(group?.SetLinesVisibility).toHaveBeenCalledWith(
@@ -589,8 +589,8 @@ describe('components/root/DIVERoot', () => {
                 loaded: false,
             };
 
-            root.AddSceneObject(modelData);
-            const model = root.GetSceneObject(modelData);
+            root.addSceneObject(modelData);
+            const model = root.getSceneObject(modelData);
             expect(model).toBeDefined();
             expect(model?.userData.uri).toBe('test.glb');
             expect(model?.userData.id).toBe('model-1');
@@ -608,8 +608,8 @@ describe('components/root/DIVERoot', () => {
                 scale: { x: 1, y: 1, z: 1 },
             };
 
-            root.AddSceneObject(primitiveData);
-            const primitive = root.GetSceneObject(primitiveData);
+            root.addSceneObject(primitiveData);
+            const primitive = root.getSceneObject(primitiveData);
             expect(primitive).toBeDefined();
             expect(primitive?.userData.id).toBe('primitive-1');
         });
@@ -625,8 +625,8 @@ describe('components/root/DIVERoot', () => {
                 scale: { x: 1, y: 1, z: 1 },
             };
 
-            root.AddSceneObject(groupData);
-            const group = root.GetSceneObject(groupData);
+            root.addSceneObject(groupData);
+            const group = root.getSceneObject(groupData);
             expect(group).toBeDefined();
             expect(group?.userData.id).toBe('group-1');
         });
@@ -641,9 +641,9 @@ describe('components/root/DIVERoot', () => {
                 target: { x: 0, y: 0, z: 0 },
             };
 
-            root.AddSceneObject(povData);
+            root.addSceneObject(povData);
             // POV objects are not added to the scene
-            const pov = root.GetSceneObject(povData);
+            const pov = root.getSceneObject(povData);
             expect(pov).toBeUndefined();
         });
 
@@ -658,14 +658,14 @@ describe('components/root/DIVERoot', () => {
                 scale: { x: 1, y: 1, z: 1 },
             } as unknown as COMEntity;
 
-            root.AddSceneObject(unknownData);
+            root.addSceneObject(unknownData);
             expect(spyConsoleWarn).toHaveBeenCalledWith(
-                'DIVERoot.AddSceneObject: Unknown entity type: unknown',
+                'DIVERoot.addSceneObject: Unknown entity type: unknown',
             );
         });
     });
 
-    describe('UpdateSceneObject', () => {
+    describe('updateSceneObject', () => {
         it('should update existing object properties', () => {
             const modelData: COMModel = {
                 id: 'model-1',
@@ -679,8 +679,8 @@ describe('components/root/DIVERoot', () => {
                 loaded: false,
             };
 
-            root.AddSceneObject(modelData);
-            const model = root.GetSceneObject<DIVEModel>(modelData);
+            root.addSceneObject(modelData);
+            const model = root.getSceneObject<DIVEModel>(modelData);
             expect(model).toBeDefined();
 
             const updatedData = {
@@ -688,7 +688,7 @@ describe('components/root/DIVERoot', () => {
                 position: { x: 2, y: 3, z: 4 },
             };
 
-            root.UpdateSceneObject(updatedData);
+            root.updateSceneObject(updatedData);
             expect(model?.SetPosition).toHaveBeenCalledWith(
                 updatedData.position,
             );
@@ -707,8 +707,8 @@ describe('components/root/DIVERoot', () => {
                 color: '#ffffff',
             };
 
-            root.AddSceneObject(lightData);
-            const light = root.GetSceneObject(lightData);
+            root.addSceneObject(lightData);
+            const light = root.getSceneObject(lightData);
             expect(light).toBeDefined();
 
             const updatedData = {
@@ -717,9 +717,9 @@ describe('components/root/DIVERoot', () => {
                 color: '#ff0000',
             };
 
-            root.UpdateSceneObject(updatedData);
-            expect((light as any).SetIntensity).toHaveBeenCalledWith(2.0);
-            expect((light as any).SetColor).toHaveBeenCalled();
+            root.updateSceneObject(updatedData);
+            expect((light as any).setIntensity).toHaveBeenCalledWith(2.0);
+            expect((light as any).setColor).toHaveBeenCalled();
         });
 
         it('should update existing primitive properties', () => {
@@ -734,8 +734,8 @@ describe('components/root/DIVERoot', () => {
                 scale: { x: 1, y: 1, z: 1 },
             };
 
-            root.AddSceneObject(primitiveData);
-            const primitive = root.GetSceneObject(primitiveData);
+            root.addSceneObject(primitiveData);
+            const primitive = root.getSceneObject(primitiveData);
             expect(primitive).toBeDefined();
 
             const updatedData = {
@@ -743,7 +743,7 @@ describe('components/root/DIVERoot', () => {
                 geometry: { name: 'box', width: 2, height: 2, depth: 2 },
             };
 
-            root.UpdateSceneObject(updatedData);
+            root.updateSceneObject(updatedData);
             expect((primitive as any).SetGeometry).toHaveBeenCalledWith(
                 updatedData.geometry,
             );
@@ -760,8 +760,8 @@ describe('components/root/DIVERoot', () => {
                 scale: { x: 1, y: 1, z: 1 },
             };
 
-            root.AddSceneObject(groupData);
-            const group = root.GetSceneObject(groupData);
+            root.addSceneObject(groupData);
+            const group = root.getSceneObject(groupData);
             expect(group).toBeDefined();
 
             const updatedData = {
@@ -770,8 +770,8 @@ describe('components/root/DIVERoot', () => {
                 bbVisible: true,
             };
 
-            root.UpdateSceneObject(updatedData);
-            expect((group as any).SetVisibility).toHaveBeenCalledWith(false);
+            root.updateSceneObject(updatedData);
+            expect((group as any).setVisibility).toHaveBeenCalledWith(false);
             expect((group as any).SetLinesVisibility).toHaveBeenCalledWith(
                 true,
             );
@@ -784,7 +784,7 @@ describe('components/root/DIVERoot', () => {
                 name: 'Non Existent',
                 visible: true,
             };
-            root.UpdateSceneObject(nonExistentData);
+            root.updateSceneObject(nonExistentData);
             expect(spyConsoleWarn).not.toHaveBeenCalled();
         });
 
@@ -795,7 +795,7 @@ describe('components/root/DIVERoot', () => {
                 name: 'Test POV',
                 visible: true,
             };
-            root.UpdateSceneObject(povData);
+            root.updateSceneObject(povData);
             expect(spyConsoleWarn).not.toHaveBeenCalled();
         });
 
@@ -805,14 +805,14 @@ describe('components/root/DIVERoot', () => {
                 entityType: 'unknown' as COMEntityType,
                 name: 'Unknown',
             };
-            root.UpdateSceneObject(unknownData);
+            root.updateSceneObject(unknownData);
             expect(spyConsoleWarn).toHaveBeenCalledWith(
-                'DIVERoot.UpdateSceneObject: Unknown entity type: unknown',
+                'DIVERoot.updateSceneObject: Unknown entity type: unknown',
             );
         });
     });
 
-    describe('DeleteSceneObject', () => {
+    describe('deleteSceneObject', () => {
         it('should remove object from scene', () => {
             const modelData: COMModel = {
                 id: 'model-1',
@@ -826,8 +826,8 @@ describe('components/root/DIVERoot', () => {
                 loaded: false,
             };
 
-            root.AddSceneObject(modelData);
-            const model = root.GetSceneObject(modelData);
+            root.addSceneObject(modelData);
+            const model = root.getSceneObject(modelData);
             expect(model).toBeDefined();
 
             if (model) {
@@ -835,8 +835,8 @@ describe('components/root/DIVERoot', () => {
                 root.children = [model];
             }
 
-            root.DeleteSceneObject(modelData);
-            const deletedModel = root.GetSceneObject(modelData);
+            root.deleteSceneObject(modelData);
+            const deletedModel = root.getSceneObject(modelData);
             expect(deletedModel).toBeUndefined();
         });
 
@@ -847,7 +847,7 @@ describe('components/root/DIVERoot', () => {
                 name: 'Non Existent',
                 visible: true,
             };
-            root.DeleteSceneObject(nonExistentData);
+            root.deleteSceneObject(nonExistentData);
             expect(spyConsoleWarn).toHaveBeenCalled();
         });
 
@@ -861,7 +861,7 @@ describe('components/root/DIVERoot', () => {
                 target: { x: 0, y: 0, z: 0 },
             };
 
-            root.DeleteSceneObject(povData);
+            root.deleteSceneObject(povData);
             expect(spyConsoleWarn).not.toHaveBeenCalled();
         });
 
@@ -871,9 +871,9 @@ describe('components/root/DIVERoot', () => {
                 entityType: 'unknown' as COMEntityType,
                 name: 'Unknown',
             };
-            root.DeleteSceneObject(unknownData as any);
+            root.deleteSceneObject(unknownData as any);
             expect(spyConsoleWarn).toHaveBeenCalledWith(
-                'DIVERoot.DeleteSceneObject: Unknown entity type: unknown',
+                'DIVERoot.deleteSceneObject: Unknown entity type: unknown',
             );
         });
 
@@ -901,11 +901,11 @@ describe('components/root/DIVERoot', () => {
                 parentId: 'group-1',
             };
 
-            root.AddSceneObject(groupData);
-            root.AddSceneObject(memberData);
+            root.addSceneObject(groupData);
+            root.addSceneObject(memberData);
 
-            const group = root.GetSceneObject<DIVEGroup>(groupData);
-            const member = root.GetSceneObject(memberData);
+            const group = root.getSceneObject<DIVEGroup>(groupData);
+            const member = root.getSceneObject(memberData);
 
             expect(group).toBeDefined();
             expect(member).toBeDefined();
@@ -915,7 +915,7 @@ describe('components/root/DIVERoot', () => {
                 group.parent = root;
             }
 
-            root.DeleteSceneObject(groupData);
+            root.deleteSceneObject(groupData);
             expect(root.attach).toHaveBeenCalledWith(member);
         });
 
@@ -940,8 +940,8 @@ describe('components/root/DIVERoot', () => {
             const mockScene = new Object3D();
             mockScene.children = [mockTransformControls];
 
-            root.AddSceneObject(modelData);
-            const model = root.GetSceneObject(modelData);
+            root.addSceneObject(modelData);
+            const model = root.getSceneObject(modelData);
             expect(model).toBeDefined();
 
             if (model) {
@@ -949,7 +949,7 @@ describe('components/root/DIVERoot', () => {
                 root.parent = mockScene;
             }
 
-            root.DeleteSceneObject(modelData);
+            root.deleteSceneObject(modelData);
             expect(mockTransformControls.detach).toHaveBeenCalled();
         });
 
@@ -973,8 +973,8 @@ describe('components/root/DIVERoot', () => {
             const mockScene = new Object3D();
             mockScene.children = [mockTransformControls];
 
-            root.AddSceneObject(primitiveData);
-            const primitive = root.GetSceneObject(primitiveData);
+            root.addSceneObject(primitiveData);
+            const primitive = root.getSceneObject(primitiveData);
             expect(primitive).toBeDefined();
 
             if (primitive) {
@@ -982,7 +982,7 @@ describe('components/root/DIVERoot', () => {
                 root.parent = mockScene;
             }
 
-            root.DeleteSceneObject(primitiveData);
+            root.deleteSceneObject(primitiveData);
             expect(mockTransformControls.detach).toHaveBeenCalled();
         });
 
@@ -1005,8 +1005,8 @@ describe('components/root/DIVERoot', () => {
             const mockScene = new Object3D();
             mockScene.children = [mockTransformControls];
 
-            root.AddSceneObject(groupData);
-            const group = root.GetSceneObject<DIVEGroup>(groupData);
+            root.addSceneObject(groupData);
+            const group = root.getSceneObject<DIVEGroup>(groupData);
             expect(group).toBeDefined();
 
             if (group) {
@@ -1015,67 +1015,9 @@ describe('components/root/DIVERoot', () => {
                 (group as any).members = [new Object3D()];
             }
 
-            root.DeleteSceneObject(groupData);
+            root.deleteSceneObject(groupData);
             expect(mockTransformControls.detach).toHaveBeenCalled();
             expect(root.attach).toHaveBeenCalled();
-        });
-    });
-
-    describe('PlaceOnFloor', () => {
-        it('should place model on floor', () => {
-            const modelData: COMModel = {
-                id: 'model-1',
-                entityType: 'model',
-                name: 'Test Model',
-                visible: true,
-                uri: 'test.glb',
-                position: { x: 1, y: 2, z: 3 },
-                rotation: { x: 0, y: 0, z: 0 },
-                scale: { x: 1, y: 1, z: 1 },
-                loaded: false,
-            };
-
-            root.AddSceneObject(modelData);
-            const model = root.GetSceneObject<DIVEModel>(modelData);
-            expect(model).toBeDefined();
-
-            root.PlaceOnFloor(modelData);
-            expect(model?.PlaceOnFloor).toHaveBeenCalled();
-        });
-
-        it('should handle placing non-existent object on floor', () => {
-            const nonExistentData = {
-                id: 'non-existent',
-                entityType: 'model' as COMEntityType,
-            };
-            root.PlaceOnFloor(nonExistentData);
-            expect(spyConsoleWarn).not.toHaveBeenCalled();
-        });
-
-        it('should handle POV placement', () => {
-            const povData: COMPov = {
-                id: 'pov-1',
-                entityType: 'pov',
-                name: 'Test POV',
-                visible: true,
-                position: { x: 1, y: 2, z: 3 },
-                target: { x: 0, y: 0, z: 0 },
-            };
-
-            root.PlaceOnFloor(povData);
-            expect(spyConsoleWarn).not.toHaveBeenCalled();
-        });
-
-        it('should warn for unknown entity type in placement', () => {
-            const unknownData = {
-                id: 'unknown',
-                entityType: 'unknown' as COMEntityType,
-                name: 'Unknown',
-            };
-            root.PlaceOnFloor(unknownData as any);
-            expect(spyConsoleWarn).toHaveBeenCalledWith(
-                'DIVERoot.PlaceOnFloor: Unknown entity type: unknown',
-            );
         });
     });
 
@@ -1104,11 +1046,11 @@ describe('components/root/DIVERoot', () => {
                 parentId: 'parent-1',
             };
 
-            root.AddSceneObject(parentData);
-            root.AddSceneObject(childData);
+            root.addSceneObject(parentData);
+            root.addSceneObject(childData);
 
-            const parent = root.GetSceneObject(parentData);
-            const child = root.GetSceneObject(childData);
+            const parent = root.getSceneObject(parentData);
+            const child = root.getSceneObject(childData);
 
             expect(parent).toBeDefined();
             expect(child).toBeDefined();
@@ -1129,8 +1071,8 @@ describe('components/root/DIVERoot', () => {
                 parentId: null,
             };
 
-            root.AddSceneObject(childData);
-            const child = root.GetSceneObject(childData);
+            root.addSceneObject(childData);
+            const child = root.getSceneObject(childData);
             expect(child).toBeDefined();
             expect(root.attach).toHaveBeenCalled();
         });
@@ -1149,8 +1091,8 @@ describe('components/root/DIVERoot', () => {
                 parentId: 'non-existent',
             };
 
-            root.AddSceneObject(childData);
-            const child = root.GetSceneObject(childData);
+            root.addSceneObject(childData);
+            const child = root.getSceneObject(childData);
             expect(child).toBeDefined();
             // When parent doesn't exist, the object should remain where it is
             expect(root.attach).not.toHaveBeenCalled();
@@ -1171,7 +1113,7 @@ describe('components/root/DIVERoot', () => {
             };
 
             // Don't add the object to the scene
-            root.UpdateSceneObject(modelData);
+            root.updateSceneObject(modelData);
             expect(root.attach).not.toHaveBeenCalled();
         });
     });
@@ -1194,8 +1136,8 @@ describe('components/root/DIVERoot', () => {
                 color: undefined,
             };
 
-            root.AddSceneObject(lightData as COMLight);
-            const light = root.GetSceneObject(lightData);
+            root.addSceneObject(lightData as COMLight);
+            const light = root.getSceneObject(lightData);
             expect(light).toBeDefined();
         });
 
@@ -1220,8 +1162,8 @@ describe('components/root/DIVERoot', () => {
                 color: null as unknown as string,
             };
 
-            root.AddSceneObject(lightData as COMLight);
-            const light = root.GetSceneObject(lightData);
+            root.addSceneObject(lightData as COMLight);
+            const light = root.getSceneObject(lightData);
             expect(light).toBeDefined();
         });
     });
@@ -1248,8 +1190,8 @@ describe('components/root/DIVERoot', () => {
             const mockScene = new Object3D();
             mockScene.children = [mockTransformControls];
 
-            root.AddSceneObject(lightData);
-            const light = root.GetSceneObject(lightData);
+            root.addSceneObject(lightData);
+            const light = root.getSceneObject(lightData);
             expect(light).toBeDefined();
 
             if (light) {
@@ -1257,7 +1199,7 @@ describe('components/root/DIVERoot', () => {
                 root.parent = mockScene;
             }
 
-            root.DeleteSceneObject(lightData);
+            root.deleteSceneObject(lightData);
             expect(mockTransformControls.detach).toHaveBeenCalled();
         });
 
@@ -1274,7 +1216,7 @@ describe('components/root/DIVERoot', () => {
                 color: '#ffffff',
             };
 
-            root.DeleteSceneObject(lightData);
+            root.deleteSceneObject(lightData);
             expect(spyConsoleWarn).toHaveBeenCalledWith(
                 'DIVERoot.deleteLight: Light with id non-existent-light not found',
             );
@@ -1301,8 +1243,8 @@ describe('components/root/DIVERoot', () => {
             const mockScene = new Object3D();
             mockScene.children = [mockTransformControls];
 
-            root.AddSceneObject(groupData);
-            const group = root.GetSceneObject<DIVEGroup>(groupData);
+            root.addSceneObject(groupData);
+            const group = root.getSceneObject<DIVEGroup>(groupData);
             expect(group).toBeDefined();
 
             if (group) {
@@ -1311,7 +1253,7 @@ describe('components/root/DIVERoot', () => {
                 (group as any).members = [new Object3D()];
             }
 
-            root.DeleteSceneObject(groupData);
+            root.deleteSceneObject(groupData);
             expect(mockTransformControls.detach).toHaveBeenCalled();
             expect(root.attach).toHaveBeenCalled();
         });
@@ -1327,7 +1269,7 @@ describe('components/root/DIVERoot', () => {
                 scale: { x: 1, y: 1, z: 1 },
             };
 
-            root.DeleteSceneObject(groupData);
+            root.deleteSceneObject(groupData);
             expect(spyConsoleWarn).toHaveBeenCalledWith(
                 'DIVERoot.deleteGroup: Group with id non-existent-group not found',
             );
@@ -1349,8 +1291,8 @@ describe('components/root/DIVERoot', () => {
                 parentId: null,
             };
 
-            root.AddSceneObject(modelData);
-            const model = root.GetSceneObject(modelData);
+            root.addSceneObject(modelData);
+            const model = root.getSceneObject(modelData);
             expect(model).toBeDefined();
             expect(root.attach).toHaveBeenCalled();
         });
@@ -1369,8 +1311,8 @@ describe('components/root/DIVERoot', () => {
                 parentId: 'non-existent',
             };
 
-            root.AddSceneObject(modelData);
-            const model = root.GetSceneObject(modelData);
+            root.addSceneObject(modelData);
+            const model = root.getSceneObject(modelData);
             expect(model).toBeDefined();
             expect(root.attach).not.toHaveBeenCalled();
         });
@@ -1400,8 +1342,8 @@ describe('components/root/DIVERoot', () => {
                 material: null as unknown as { color: string },
             };
 
-            root.AddSceneObject(modelData as COMModel);
-            const model = root.GetSceneObject(modelData);
+            root.addSceneObject(modelData as COMModel);
+            const model = root.getSceneObject(modelData);
             expect(model).toBeDefined();
         });
 
@@ -1430,8 +1372,8 @@ describe('components/root/DIVERoot', () => {
                 material: null as unknown as { color: string },
             };
 
-            root.AddSceneObject(modelData as COMModel);
-            const model = root.GetSceneObject(modelData);
+            root.addSceneObject(modelData as COMModel);
+            const model = root.getSceneObject(modelData);
             expect(model).toBeDefined();
         });
     });
@@ -1453,8 +1395,8 @@ describe('components/root/DIVERoot', () => {
                 material: undefined,
             };
 
-            root.AddSceneObject(primitiveData as COMPrimitive);
-            const primitive = root.GetSceneObject(primitiveData);
+            root.addSceneObject(primitiveData as COMPrimitive);
+            const primitive = root.getSceneObject(primitiveData);
             expect(primitive).toBeDefined();
         });
 
@@ -1487,8 +1429,8 @@ describe('components/root/DIVERoot', () => {
                 material: null as unknown as { color: string },
             };
 
-            root.AddSceneObject(primitiveData as COMPrimitive);
-            const primitive = root.GetSceneObject(primitiveData);
+            root.addSceneObject(primitiveData as COMPrimitive);
+            const primitive = root.getSceneObject(primitiveData);
             expect(primitive).toBeDefined();
         });
     });
@@ -1506,7 +1448,7 @@ describe('components/root/DIVERoot', () => {
                 scale: { x: 1, y: 1, z: 1 },
             };
 
-            root.DeleteSceneObject(primitiveData);
+            root.deleteSceneObject(primitiveData);
             expect(spyConsoleWarn).toHaveBeenCalledWith(
                 'DIVERoot.deletePrimitive: Primitive with id non-existent-primitive not found',
             );

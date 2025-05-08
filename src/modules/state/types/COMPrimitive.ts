@@ -8,6 +8,7 @@ export function isCOMPrimitive(entity: COMEntity): entity is COMPrimitive {
 }
 
 export type COMPrimitive = COMBaseEntity & {
+    entityType: 'primitive';
     position: Vector3Like;
     rotation: Vector3Like;
     scale: Vector3Like;

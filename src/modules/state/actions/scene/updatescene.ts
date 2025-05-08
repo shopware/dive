@@ -18,27 +18,27 @@ export const UpdateSceneAction = Action.define<
     execute: (payload, { engine }) => {
         if (payload.name !== undefined) engine.scene.name = payload.name;
         if (payload.backgroundColor !== undefined)
-            engine.scene.SetBackground(payload.backgroundColor);
+            engine.scene.setBackground(payload.backgroundColor);
 
         if (payload.gridEnabled !== undefined)
-            engine.scene.Grid.SetVisibility(payload.gridEnabled);
+            engine.scene.grid.setVisibility(payload.gridEnabled);
 
         if (payload.floorEnabled !== undefined)
-            engine.scene.Root.floor.SetVisibility(payload.floorEnabled);
+            engine.scene.root.floor.setVisibility(payload.floorEnabled);
         if (payload.floorColor !== undefined)
-            engine.scene.Root.floor.SetColor(payload.floorColor);
+            engine.scene.root.floor.setColor(payload.floorColor);
 
         // fill payload with current values
         // TODO optmize this
         payload.name = engine.scene.name;
         payload.backgroundColor =
             '#' + (engine.scene.background as Color).getHexString();
-        payload.gridEnabled = engine.scene.Grid.visible;
-        payload.floorEnabled = engine.scene.Root.floor.visible;
+        payload.gridEnabled = engine.scene.grid.visible;
+        payload.floorEnabled = engine.scene.root.floor.visible;
         payload.floorColor =
             '#' +
             (
-                engine.scene.Root.floor.material as MeshStandardMaterial
+                engine.scene.root.floor.material as MeshStandardMaterial
             ).color.getHexString();
     },
 });

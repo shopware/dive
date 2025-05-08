@@ -1,26 +1,30 @@
-import { DIVEEngine } from '../../../../../engine';
-import { DIVEScene } from '../../../../../engine/scene/Scene';
-import { PlaceOnFloorAction } from '../placeonfloor';
-import { COMEntity } from '../../../types';
-import { DIVEModel } from '../../../../../components/model/Model';
+import { DIVEEngine } from '../../../../../engine/Engine.ts';
+import { DIVEScene } from '../../../../../engine/scene/Scene.ts';
+import { PlaceOnFloorAction } from '../placeonfloor.ts';
+import { COMEntity } from '../../../types/index.ts';
+import { DIVEModel } from '../../../../../components/model/Model.ts';
+
+const mockModel = {
+    placeOnFloor: vi.fn(),
+} as unknown as DIVEModel;
+
+const mockEngine = {
+    scene: {
+        root: {
+            getSceneObject: vi.fn().mockReturnValue(mockModel),
+        },
+    },
+} as unknown as DIVEEngine;
+
+const mockRegistered = new Map<string, COMEntity>();
 
 describe('PlaceOnFloorAction', () => {
+    beforeEach(() => {
+        vi.clearAllMocks();
+        mockRegistered.clear();
+    });
+
     it('should place an object on the floor', async () => {
-        // Mock dependencies
-        const mockModel = {
-            PlaceOnFloor: vi.fn(),
-        } as unknown as DIVEModel;
-
-        const mockScene = {
-            GetSceneObject: vi.fn().mockReturnValue(mockModel),
-        } as unknown as DIVEScene;
-
-        const mockEngine = {
-            scene: mockScene,
-        } as unknown as DIVEEngine;
-
-        const mockRegistered = new Map<string, COMEntity>();
-
         const testObject: COMEntity = {
             id: 'test-object',
             entityType: 'model',
@@ -46,22 +50,13 @@ describe('PlaceOnFloorAction', () => {
         action.execute();
 
         // Verify results
-        expect(mockScene.GetSceneObject).toHaveBeenCalledWith(testObject);
-        expect(mockModel.PlaceOnFloor).toHaveBeenCalled();
+        expect(mockEngine.scene.root.getSceneObject).toHaveBeenCalledWith(
+            testObject,
+        );
+        expect(mockModel.placeOnFloor).toHaveBeenCalled();
     });
 
     it('should throw error if object is not registered', async () => {
-        // Mock dependencies
-        const mockScene = {
-            GetSceneObject: vi.fn(),
-        } as unknown as DIVEScene;
-
-        const mockEngine = {
-            scene: mockScene,
-        } as unknown as DIVEEngine;
-
-        const mockRegistered = new Map<string, COMEntity>();
-
         const action = new PlaceOnFloorAction(
             { id: 'non-existent-object' },
             {
@@ -77,16 +72,9 @@ describe('PlaceOnFloorAction', () => {
     });
 
     it('should throw error if object is not found in scene', async () => {
-        // Mock dependencies
-        const mockScene = {
-            GetSceneObject: vi.fn().mockReturnValue(null),
-        } as unknown as DIVEScene;
-
-        const mockEngine = {
-            scene: mockScene,
-        } as unknown as DIVEEngine;
-
-        const mockRegistered = new Map<string, COMEntity>();
+        vi.mocked(mockEngine.scene.root.getSceneObject).mockReturnValue(
+            undefined,
+        );
 
         const testObject: COMEntity = {
             id: 'test-object',

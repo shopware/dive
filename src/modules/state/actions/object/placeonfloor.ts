@@ -17,14 +17,14 @@ export const PlaceOnFloorAction = Action.define<
             );
         }
 
-        const model = engine.scene.GetSceneObject<DIVEModel>(object);
+        const model = engine.scene.root.getSceneObject<DIVEModel>(object);
         if (!model) {
             throw new Error(
                 `Object with id ${payload.id} is not found in the scene. Scene: ${engine.scene}`,
             );
         }
 
-        model.PlaceOnFloor();
+        model.placeOnFloor();
     },
 });
 

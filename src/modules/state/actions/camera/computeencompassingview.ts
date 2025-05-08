@@ -14,7 +14,7 @@ export const ComputeEncompassingViewAction = Action.define<
     description:
         'Calculates the camera position and target to view the whole scene. (experimental).',
     execute: (_payload, { engine, controller }) => {
-        const sceneBB = engine.scene.ComputeSceneBB();
+        const sceneBB = engine.scene.computeSceneBB();
         return controller.computeEncompassingView(sceneBB);
     },
 });

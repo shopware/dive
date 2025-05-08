@@ -8,11 +8,11 @@ vi.mock('../../../../engine/scene/Scene', () => {
         DIVEScene: vi.fn(function (this: any) {
             this.add = vi.fn();
             this.children = [];
-            this.Root = {
+            this.root = {
                 children: [],
             };
             this.traverse = vi.fn((callback) => {
-                this.Root.children.forEach((child: Object3D) => {
+                this.root.children.forEach((child: Object3D) => {
                     callback(child);
                 });
             });

@@ -7,6 +7,7 @@ export function isCOMPov(entity: COMEntity): entity is COMPov {
 }
 
 export type COMPov = COMBaseEntity & {
+    entityType: 'pov';
     position: Vector3Like;
     target: Vector3Like;
     locked?: boolean;

@@ -27,7 +27,31 @@ export class DIVEModel extends DIVENode {
     private _mesh: Mesh | null = null;
     private _material: MeshStandardMaterial | null = null;
 
-    public SetModel(gltf: Object3D): void {
+    private _assetLoader:
+        | import('../../modules/asset/loader/AssetLoader.ts').AssetLoader
+        | null = null;
+
+    private async _getAssetLoader(): Promise<
+        import('../../modules/asset/loader/AssetLoader.ts').AssetLoader
+    > {
+        if (!this._assetLoader) {
+            this._assetLoader = new (await getModule('AssetLoader'))();
+        }
+        return this._assetLoader;
+    }
+
+    public async setFromURL(url: string): Promise<void> {
+        const assetLoader = await this._getAssetLoader();
+        const gltf = await assetLoader.load(url);
+        this.setFromGLTF(gltf);
+        getModule('State').then((State) => {
+            State.get(this.userData.id!)?.performAction('MODEL_LOADED', {
+                id: this.userData.id!,
+            });
+        });
+    }
+
+    public setFromGLTF(gltf: Object3D): void {
         this.clear();
         this._boundingBox.makeEmpty();
 
@@ -55,7 +79,7 @@ export class DIVEModel extends DIVENode {
         this.add(gltf);
     }
 
-    public SetMaterial(material: Partial<COMMaterial>): void {
+    public setMaterial(material: Partial<COMMaterial>): void {
         // if there is no material, create a new one
         if (!this._material) {
             this._material = new MeshStandardMaterial();
@@ -116,7 +140,7 @@ export class DIVEModel extends DIVENode {
         }
     }
 
-    public PlaceOnFloor(): void {
+    public placeOnFloor(): void {
         // calculate and temporary save world position
         const worldPos = this.getWorldPosition(this._positionWorldBuffer);
         const oldWorldPos = worldPos.clone();
@@ -142,10 +166,10 @@ export class DIVEModel extends DIVENode {
         });
     }
 
-    public DropIt(): void {
+    public dropIt(): void {
         if (!this.parent) {
             console.warn(
-                'DIVEModel: DropIt() called on a model that is not in the scene.',
+                'DIVEModel: dropIt() called on a model that is not in the scene.',
                 this,
             );
             return;
@@ -162,7 +186,7 @@ export class DIVEModel extends DIVENode {
         const raycaster = new Raycaster(bbBottomCenter, new Vector3(0, -1, 0));
         raycaster.layers.mask = PRODUCT_LAYER_MASK;
         const intersections = raycaster.intersectObjects(
-            findSceneRecursive(this).Root.children,
+            findSceneRecursive(this).root.children,
             true,
         );
 

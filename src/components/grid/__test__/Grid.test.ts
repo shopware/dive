@@ -20,9 +20,9 @@ describe('dive/grid/DIVEGrid', () => {
     });
 
     it('should set visibility', () => {
-        grid.SetVisibility(false);
+        grid.setVisibility(false);
         expect(grid.visible).toBe(false);
-        grid.SetVisibility(true);
+        grid.setVisibility(true);
         expect(grid.visible).toBe(true);
     });
 });

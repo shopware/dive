@@ -76,18 +76,18 @@ describe('dive/primitive/DIVEPrimitive', () => {
 
         const scene = {
             parent: null,
-            Root: {
+            root: {
                 children: [
                     primitive,
                 ],
             },
         } as unknown as DIVEScene;
-        scene.Root.parent = scene;
+        scene.root.parent = scene;
 
-        primitive.parent = scene.Root;
+        primitive.parent = scene.root;
 
         // trigger and wait for the async update
-        primitive.PlaceOnFloor();
+        primitive.placeOnFloor();
         await new Promise(setImmediate);
         expect(spyperformAction).toHaveBeenCalledWith(
             'UPDATE_OBJECT',
@@ -131,32 +131,32 @@ describe('dive/primitive/DIVEPrimitive', () => {
 
         const scene = {
             parent: null,
-            Root: {
+            root: {
                 children: [
                     primitive,
                 ],
             },
         } as unknown as DIVEScene;
-        scene.Root.parent = scene;
+        scene.root.parent = scene;
 
         // test when parent is not set
         console.warn = vi.fn();
-        expect(() => primitive.DropIt()).not.toThrow();
+        expect(() => primitive.dropIt()).not.toThrow();
         expect(console.warn).toHaveBeenCalledTimes(1);
 
-        primitive.parent = scene.Root;
+        primitive.parent = scene.root;
 
-        expect(() => primitive.DropIt()).not.toThrow();
+        expect(() => primitive.dropIt()).not.toThrow();
         expect(primitive.position.y).toBe(2.5);
         expect(spy).toHaveBeenCalledTimes(1);
 
-        expect(() => primitive.DropIt()).not.toThrow();
+        expect(() => primitive.dropIt()).not.toThrow();
         expect(spy).toHaveBeenCalledTimes(1);
 
         // alter position so onMove will be called again
         primitive.position.y = 2;
         vi.spyOn(State, 'get').mockReturnValueOnce(undefined);
-        expect(() => primitive.DropIt()).not.toThrow();
+        expect(() => primitive.dropIt()).not.toThrow();
         expect(spy).toHaveBeenCalledTimes(2);
     });
 
@@ -238,11 +238,11 @@ describe('dive/primitive/DIVEPrimitive', () => {
         const material = primitive['_mesh'].material as MeshStandardMaterial;
 
         // apply invalid material should not crash
-        expect(() => primitive.SetMaterial({} as COMMaterial)).not.toThrow();
+        expect(() => primitive.setMaterial({} as COMMaterial)).not.toThrow();
         expect(material).toBeDefined();
 
         expect(() =>
-            primitive.SetMaterial({
+            primitive.setMaterial({
                 color: 0xffffff,
                 roughness: 0,
                 metalness: 1,
@@ -254,7 +254,7 @@ describe('dive/primitive/DIVEPrimitive', () => {
         expect((material as MeshStandardMaterial).metalnessMap).toBeUndefined();
 
         expect(() =>
-            primitive.SetMaterial({
+            primitive.setMaterial({
                 color: 0xff00ff,
                 vertexColors: true,
                 map: 'This_Is_A_Texture' as unknown as Texture,
@@ -271,19 +271,19 @@ describe('dive/primitive/DIVEPrimitive', () => {
         expect((material as MeshStandardMaterial).metalnessMap).toBeDefined();
     });
 
-    it.skip('should handle PlaceOnFloor with no mesh or geometry', () => {
+    it.skip('should handle placeOnFloor with no mesh or geometry', () => {
         primitive.userData.id = 'something';
 
         // Test with no geometry
         (primitive['_mesh'].geometry as unknown) = null;
-        expect(() => primitive.PlaceOnFloor()).not.toThrow();
+        expect(() => primitive.placeOnFloor()).not.toThrow();
 
         // Test with no mesh
         (primitive['_mesh'] as unknown) = null;
-        expect(() => primitive.PlaceOnFloor()).not.toThrow();
+        expect(() => primitive.placeOnFloor()).not.toThrow();
     });
 
-    it('should handle PlaceOnFloor when position does not change', async () => {
+    it('should handle placeOnFloor when position does not change', async () => {
         const State = await getModule('State');
 
         primitive.userData.id = 'something';
@@ -298,7 +298,7 @@ describe('dive/primitive/DIVEPrimitive', () => {
         } as unknown as State;
         vi.spyOn(State, 'get').mockReturnValue(comMock);
 
-        primitive.PlaceOnFloor();
+        primitive.placeOnFloor();
         expect(comMock.performAction).not.toHaveBeenCalled();
     });
 
@@ -314,7 +314,7 @@ describe('dive/primitive/DIVEPrimitive', () => {
             metalnessMap: {} as Texture,
         };
 
-        primitive.SetMaterial(material);
+        primitive.setMaterial(material);
 
         const primitiveMaterial = primitive['_mesh']
             .material as MeshStandardMaterial;

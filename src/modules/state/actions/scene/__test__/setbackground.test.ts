@@ -6,7 +6,7 @@ describe('SetBackgroundAction', () => {
     it('should set scene background', async () => {
         // Mock dependencies
         const mockScene = {
-            SetBackground: vi.fn(),
+            setBackground: vi.fn(),
         } as unknown as DIVEScene;
 
         const mockEngine = {
@@ -24,6 +24,6 @@ describe('SetBackgroundAction', () => {
         await action.execute();
 
         // Verify results
-        expect(mockScene.SetBackground).toHaveBeenCalledWith('#ff0000');
+        expect(mockScene.setBackground).toHaveBeenCalledWith('#ff0000');
     });
 });

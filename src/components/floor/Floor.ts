@@ -35,11 +35,11 @@ export class DIVEFloor extends Mesh {
         this.rotateX(-Math.PI / 2);
     }
 
-    public SetVisibility(visible: boolean): void {
+    public setVisibility(visible: boolean): void {
         this.visible = visible;
     }
 
-    public SetColor(color: ColorRepresentation): void {
+    public setColor(color: ColorRepresentation): void {
         (this.material as MeshStandardMaterial).color = new Color(color);
     }
 }

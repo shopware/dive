@@ -63,7 +63,7 @@ export class DIVESelectTool extends DIVETransformTool {
         super.onClick(e);
 
         const first = this._raycaster
-            .intersectObjects(this._scene.Root.children, true)
+            .intersectObjects(this._scene.root.children, true)
             .filter((intersect) => intersect.object.visible)[0];
         const selectable = findInterface<DIVESelectable>(
             first?.object,

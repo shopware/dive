@@ -72,7 +72,7 @@ describe('dive/node/DIVENode', () => {
     });
 
     it('should set visibility', () => {
-        expect(() => node.SetVisibility(true)).not.toThrow();
+        expect(() => node.setVisibility(true)).not.toThrow();
     });
 
     it('should set to world origin', () => {
