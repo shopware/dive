@@ -12,6 +12,7 @@ import {
     getFileTypeFromUri,
     isFileTypeSupported,
 } from '../../../helpers/index.ts';
+import { DRACOLoader } from 'three/examples/jsm/loaders/DRACOLoader.js';
 
 declare global {
     interface ModuleClasses {
@@ -41,7 +42,15 @@ export class AssetLoader {
     private _usdzLoader: USDZLoader;
 
     constructor() {
+        // create decompression loader
+        const dracoLoader = new DRACOLoader();
+        dracoLoader.setDecoderPath('../draco/');
+
+        // create gltf loader
         this._gltfLoader = new GLTFLoader();
+        this._gltfLoader.setDRACOLoader(dracoLoader);
+
+        // create usdz loader
         this._usdzLoader = new USDZLoader();
     }
 

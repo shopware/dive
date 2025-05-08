@@ -10,6 +10,7 @@
         "declarationDir": "./build/types",
         "emitDeclarationOnly": true,
         "esModuleInterop": true,
+        "allowSyntheticDefaultImports": true,
         "forceConsistentCasingInFileNames": true,
         "strict": true,
         "skipLibCheck": true,
@@ -17,7 +18,6 @@
     },
     "include": [
         "src/**/*",
-        "vite.config.ts",
         "docs/**/*",
         "ci/**/*"
     ],

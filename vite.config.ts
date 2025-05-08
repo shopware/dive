@@ -2,6 +2,7 @@ import { defineConfig } from 'vite';
 import type { UserConfigExport } from 'vite';
 import dts from 'vite-plugin-dts';
 import moduleBuildPlugin from './ci/build/vite/vite-plugin-module-exports.ts';
+import copy from 'rollup-plugin-copy';
 
 // --- Main Vite Export ---
 export default defineConfig({
@@ -43,6 +44,15 @@ export default defineConfig({
                 'src/**/*.test.ts',
                 'src/**/*.spec.ts',
             ],
+        }),
+        copy({
+            targets: [
+                {
+                    src: 'src/modules/asset/draco/**/*',
+                    dest: 'build/src/modules/asset/draco',
+                },
+            ],
+            hook: 'writeBundle',
         }),
     ],
 } as UserConfigExport);
