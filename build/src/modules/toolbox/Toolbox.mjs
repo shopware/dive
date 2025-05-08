@@ -1,0 +1,99 @@
+var n = Object.defineProperty;
+var l = (t, e, o) => e in t ? n(t, e, { enumerable: !0, configurable: !0, writable: !0, value: o }) : t[e] = o;
+var i = (t, e, o) => l(t, typeof e != "symbol" ? e + "" : e, o);
+import { D as s } from "../../../chunks/SelectTool-Bd8cC9nb.mjs";
+class r {
+  constructor(e, o) {
+    i(this, "_scene");
+    i(this, "_controller");
+    i(this, "_activeTool");
+    i(this, "_selectTool");
+    this._scene = e, this._controller = o, this._selectTool = null, this._activeTool = null;
+  }
+  get selectTool() {
+    return this._selectTool || (this._selectTool = new s(
+      this._scene,
+      this._controller
+    )), this._selectTool;
+  }
+  Dispose() {
+    this.removeEventListeners();
+  }
+  GetActiveTool() {
+    return this._activeTool;
+  }
+  UseTool(e) {
+    var o;
+    switch ((o = this._activeTool) == null || o.Deactivate(), e) {
+      case "select": {
+        this.addEventListeners(), this.selectTool.Activate(), this._activeTool = this.selectTool;
+        break;
+      }
+      case "none": {
+        this.removeEventListeners(), this._activeTool = null;
+        break;
+      }
+      default:
+        console.warn(`DIVEToolBox.UseTool: Unknown tool: ${e}`);
+    }
+  }
+  SetGizmoMode(e) {
+    this.selectTool.SetGizmoMode(e);
+  }
+  SetGizmoVisibility(e) {
+    this.selectTool.SetGizmoVisibility(e);
+  }
+  SetGizmoScaleLinked(e) {
+    this.selectTool.SetGizmoScaleLinked(e);
+  }
+  onPointerMove(e) {
+    var o;
+    (o = this._activeTool) == null || o.onPointerMove(e);
+  }
+  onPointerDown(e) {
+    var o;
+    (o = this._activeTool) == null || o.onPointerDown(e);
+  }
+  onPointerUp(e) {
+    var o;
+    (o = this._activeTool) == null || o.onPointerUp(e);
+  }
+  onWheel(e) {
+    var o;
+    (o = this._activeTool) == null || o.onWheel(e);
+  }
+  addEventListeners() {
+    this._controller.domElement.addEventListener(
+      "pointermove",
+      (e) => this.onPointerMove(e)
+    ), this._controller.domElement.addEventListener(
+      "pointerdown",
+      (e) => this.onPointerDown(e)
+    ), this._controller.domElement.addEventListener(
+      "pointerup",
+      (e) => this.onPointerUp(e)
+    ), this._controller.domElement.addEventListener(
+      "wheel",
+      (e) => this.onWheel(e)
+    );
+  }
+  removeEventListeners() {
+    this._controller.domElement.removeEventListener(
+      "pointermove",
+      (e) => this.onPointerMove(e)
+    ), this._controller.domElement.removeEventListener(
+      "pointerdown",
+      (e) => this.onPointerDown(e)
+    ), this._controller.domElement.removeEventListener(
+      "pointerup",
+      (e) => this.onPointerUp(e)
+    ), this._controller.domElement.removeEventListener(
+      "wheel",
+      (e) => this.onWheel(e)
+    );
+  }
+}
+i(r, "DefaultTool", "select");
+export {
+  r as Toolbox
+};
