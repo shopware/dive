@@ -23,6 +23,7 @@ export default tseslint.config(
             '**/*.js',
             '**/*.cjs',
             'vitest.setup.ts',
+            'vite.config.ts',
         ],
     },
     {

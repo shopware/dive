@@ -2,3 +2,5 @@ PULL_REQUEST_TEMPLATE.md
 
 *.md
 .vscode
+
+src/modules/asset/draco

@@ -23,6 +23,7 @@ export default defineConfig({
                 '**/__mocks__/**',
                 'src/modules/ar/webxr/**', // webxr currently not supported in dive
                 'src/engine/scene/xrroot/**', // webxr currently not supported in dive
+                'src/modules/asset/draco/**', // draco is static lib, does not need to be tested
             ],
             thresholds: {
                 lines: 98,
