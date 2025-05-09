@@ -1,0 +1,1 @@
+"use strict";exports.COORDINATE_LAYER_MASK=2;exports.DEFAULT_LAYER_MASK=1;exports.HELPER_LAYER_MASK=8;exports.PRODUCT_LAYER_MASK=16;exports.UI_LAYER_MASK=4;

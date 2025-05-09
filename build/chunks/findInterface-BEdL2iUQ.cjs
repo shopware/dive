@@ -1,0 +1,1 @@
+"use strict";const t="#c20017",n="#00ab26",o="#0081d4",f=t,u=n,x=o;function s(e,r){return e?r in e:!1}function l(e,r){if(e)return s(e,r)?e:l(e.parent,r)}exports.AxesColorBlue=x;exports.AxesColorBlueLetter=o;exports.AxesColorGreen=u;exports.AxesColorGreenLetter=n;exports.AxesColorRed=f;exports.AxesColorRedLetter=t;exports.findInterface=l;exports.implementsInterface=s;
