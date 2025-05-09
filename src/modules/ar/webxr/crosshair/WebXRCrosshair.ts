@@ -15,7 +15,7 @@ export class DIVEWebXRCrosshair extends Object3D {
         if (mesh) {
             this.mesh = mesh;
         } else {
-            this.UseDefaultMesh();
+            this.useDefaultMesh();
         }
 
         this.matrixAutoUpdate = false;
@@ -23,13 +23,13 @@ export class DIVEWebXRCrosshair extends Object3D {
         return this;
     }
 
-    public UseDefaultMesh(): void {
+    public useDefaultMesh(): void {
         const geometry = new RingGeometry(0.08, 0.1, 32).rotateX(-Math.PI / 2);
         const material = new MeshBasicMaterial();
         this.mesh = new Mesh(geometry, material);
     }
 
-    public UpdateFromPose(pose: XRPose): void {
+    public updateFromPose(pose: XRPose): void {
         this.matrix.fromArray(pose.transform.matrix);
     }
 }

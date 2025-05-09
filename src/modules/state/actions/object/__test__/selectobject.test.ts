@@ -22,13 +22,13 @@ const mockEngine = {
 
 const mockSelectTool = {
     isSelectTool: true,
-    AttachGizmo: vi.fn().mockImplementation(() => {}),
+    attachGizmo: vi.fn().mockImplementation(() => {}),
 } as unknown as DIVESelectTool;
 
 const mockGetActiveTool = vi.fn().mockReturnValue(mockSelectTool);
 const mockGetToolbox = () => {
     return Promise.resolve({
-        GetActiveTool: mockGetActiveTool,
+        getActiveTool: mockGetActiveTool,
     } as unknown as Toolbox);
 };
 
@@ -73,7 +73,7 @@ describe('SelectObjectAction', () => {
         await action.execute();
 
         // Assert
-        expect(mockSelectTool.AttachGizmo).toHaveBeenCalledWith(
+        expect(mockSelectTool.attachGizmo).toHaveBeenCalledWith(
             mockSceneObject,
         );
     });
@@ -203,6 +203,6 @@ describe('SelectObjectAction', () => {
         action.execute();
 
         // Assert
-        expect(mockSelectTool.AttachGizmo).not.toHaveBeenCalled();
+        expect(mockSelectTool.attachGizmo).not.toHaveBeenCalled();
     });
 });

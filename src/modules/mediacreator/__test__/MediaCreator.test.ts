@@ -1,9 +1,9 @@
-import { MediaCreator } from '../MediaCreator';
-import { DIVERenderPipeline } from '../../../engine/renderer/Renderer';
-import { DIVEScene } from '../../../engine/scene/Scene';
-import { DIVEPerspectiveCamera } from '../../../engine/camera/PerspectiveCamera';
-import { type COMPov } from '../../state/types';
-import { OrbitController } from '../../controller/orbit/OrbitController';
+import { MediaCreator } from '../MediaCreator.ts';
+import { DIVERenderPipeline } from '../../../engine/renderer/Renderer.ts';
+import { DIVEScene } from '../../../engine/scene/Scene.ts';
+import { DIVEPerspectiveCamera } from '../../../engine/camera/PerspectiveCamera.ts';
+import { type COMPov } from '../../state/types/index.ts';
+import { OrbitController } from '../../controller/orbit/OrbitController.ts';
 
 /**
  * @jest-environment jsdom
@@ -144,7 +144,7 @@ describe('MediaCreator', () => {
             target: { x: 0, y: 0, z: 0 },
         } as COMPov;
         expect(() => {
-            mediaCreator.GenerateMedia(
+            mediaCreator.generateMedia(
                 mock_POV.position,
                 mock_POV.target,
                 800,
@@ -157,7 +157,7 @@ describe('MediaCreator', () => {
 
     it('should draw canvas with custom canvas', () => {
         const canvas = document.createElement('canvas');
-        mediaCreator.DrawCanvas(canvas);
+        mediaCreator.drawCanvas(canvas);
         expect(mock_render).toHaveBeenCalledTimes(1);
     });
 });

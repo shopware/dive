@@ -46,20 +46,20 @@ export class Toolbox {
         this._activeTool = null;
     }
 
-    public Dispose(): void {
+    public dispose(): void {
         this.removeEventListeners();
     }
 
-    public GetActiveTool(): DIVEBaseTool | null {
+    public getActiveTool(): DIVEBaseTool | null {
         return this._activeTool;
     }
 
-    public UseTool(tool: ToolType): void {
-        this._activeTool?.Deactivate();
+    public useTool(tool: ToolType): void {
+        this._activeTool?.deactivate();
         switch (tool) {
             case 'select': {
                 this.addEventListeners();
-                this.selectTool.Activate();
+                this.selectTool.activate();
                 this._activeTool = this.selectTool;
                 break;
             }
@@ -69,21 +69,21 @@ export class Toolbox {
                 break;
             }
             default: {
-                console.warn(`DIVEToolBox.UseTool: Unknown tool: ${tool}`);
+                console.warn(`DIVEToolBox.useTool: Unknown tool: ${tool}`);
             }
         }
     }
 
-    public SetGizmoMode(mode: 'translate' | 'rotate' | 'scale'): void {
-        this.selectTool.SetGizmoMode(mode);
+    public setGizmoMode(mode: 'translate' | 'rotate' | 'scale'): void {
+        this.selectTool.setGizmoMode(mode);
     }
 
-    public SetGizmoVisibility(active: boolean): void {
-        this.selectTool.SetGizmoVisibility(active);
+    public setGizmoVisibility(active: boolean): void {
+        this.selectTool.setGizmoVisibility(active);
     }
 
-    public SetGizmoScaleLinked(linked: boolean): void {
-        this.selectTool.SetGizmoScaleLinked(linked);
+    public setGizmoScaleLinked(linked: boolean): void {
+        this.selectTool.setGizmoScaleLinked(linked);
     }
 
     public onPointerMove(e: PointerEvent): void {

@@ -111,33 +111,33 @@ describe('dive/toolbox/select/DIVETransformTool', () => {
     });
 
     it('should activate', () => {
-        expect(() => transformTool.Activate()).not.toThrow();
+        expect(() => transformTool.activate()).not.toThrow();
     });
 
     it('should set gizmo mode', () => {
-        expect(() => transformTool.SetGizmoMode('translate')).not.toThrow();
+        expect(() => transformTool.setGizmoMode('translate')).not.toThrow();
     });
 
     it('should set gizmo active', () => {
-        expect(() => transformTool.SetGizmoVisibility(true)).not.toThrow();
+        expect(() => transformTool.setGizmoVisibility(true)).not.toThrow();
 
         // mock that gizmo is in scene
         vi.spyOn(mockScene.children, 'includes').mockReturnValueOnce(true);
 
-        expect(() => transformTool.SetGizmoVisibility(false)).not.toThrow();
+        expect(() => transformTool.setGizmoVisibility(false)).not.toThrow();
     });
 
     it('should set gizmo unified scaling', () => {
-        expect(() => transformTool.SetGizmoScaleLinked(true)).not.toThrow();
+        expect(() => transformTool.setGizmoScaleLinked(true)).not.toThrow();
 
         // mock that gizmo is in scene
         vi.spyOn(mockScene.children, 'includes').mockReturnValueOnce(true);
 
-        expect(() => transformTool.SetGizmoVisibility(false)).not.toThrow();
+        expect(() => transformTool.setGizmoVisibility(false)).not.toThrow();
     });
 
     it('should scale unified if linked', () => {
-        transformTool.SetGizmoScaleLinked(true);
+        transformTool.setGizmoScaleLinked(true);
         transformTool['initGizmo']();
     });
 });

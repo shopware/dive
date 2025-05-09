@@ -11,7 +11,7 @@ export const UseToolAction = Action.define<
     description: 'Activates a specific tool from the toolbox.',
     execute: async (payload, { getToolbox }) => {
         const instance = await getToolbox();
-        instance.UseTool(payload.tool);
+        instance.useTool(payload.tool);
     },
 });
 

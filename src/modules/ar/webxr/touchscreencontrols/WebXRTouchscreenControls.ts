@@ -113,7 +113,7 @@ export class DIVEWebXRTouchscreenControls extends DIVEEventExecutor<DIVETouchscr
         );
     }
 
-    public Dispose(): void {
+    public dispose(): void {
         window.removeEventListener('touchstart', (e: TouchEvent) =>
             this.onTouchStart(e),
         );

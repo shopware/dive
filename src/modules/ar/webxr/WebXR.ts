@@ -69,7 +69,7 @@ export class DIVEWebXR {
             const overlay = new Overlay();
             DIVEWebXR._overlay = overlay;
         }
-        DIVEWebXR._options.domOverlay = { root: DIVEWebXR._overlay.Element };
+        DIVEWebXR._options.domOverlay = { root: DIVEWebXR._overlay.element };
 
         // request session
         const session = await navigator.xr
@@ -86,12 +86,12 @@ export class DIVEWebXR {
             this._referenceSpaceType,
         );
         await this._renderer.webglrenderer.xr.setSession(session);
-        DIVEWebXR._overlay.Element.style.display = '';
+        DIVEWebXR._overlay.element.style.display = '';
         this._session = session;
 
         // add end session event listener
-        DIVEWebXR._overlay.CloseButton.addEventListener('click', () =>
-            this.End(),
+        DIVEWebXR._overlay.closeButton.addEventListener('click', () =>
+            this.end(),
         );
 
         // start session
@@ -100,15 +100,15 @@ export class DIVEWebXR {
         return Promise.resolve();
     }
 
-    public static Update(_time: DOMHighResTimeStamp, frame: XRFrame): void {
+    public static update(_time: DOMHighResTimeStamp, frame: XRFrame): void {
         if (!this._session) return;
 
         if (this._xrController) {
-            this._xrController.Update(frame);
+            this._xrController.update(frame);
         }
     }
 
-    public static End(): void {
+    public static end(): void {
         if (!this._session) return;
         this._session.end();
     }
@@ -128,8 +128,8 @@ export class DIVEWebXR {
             this._renderer,
             this._scene,
         );
-        await this._xrController.Init().catch(() => {
-            this.End();
+        await this._xrController.init().catch(() => {
+            this.end();
         });
 
         return Promise.resolve();
@@ -139,7 +139,7 @@ export class DIVEWebXR {
         if (!this._session) return;
 
         if (this._xrController) {
-            this._xrController.Dispose();
+            this._xrController.dispose();
         }
 
         // remove Update() callback
@@ -174,7 +174,7 @@ export class DIVEWebXR {
         // this._scene.DisposeXR();
 
         this._session.removeEventListener('end', this._onSessionEnded);
-        DIVEWebXR._overlay!.Element.style.display = 'none';
+        DIVEWebXR._overlay!.element.style.display = 'none';
         this._session = null;
     }
 }

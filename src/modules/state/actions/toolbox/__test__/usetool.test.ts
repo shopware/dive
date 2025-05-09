@@ -2,7 +2,7 @@ import { UseToolAction } from '../usetool.ts';
 
 const mockUseTool = vi.fn();
 const mockGetToolbox = vi.fn().mockResolvedValue({
-    UseTool: mockUseTool,
+    useTool: mockUseTool,
 });
 
 describe('UseToolAction', () => {

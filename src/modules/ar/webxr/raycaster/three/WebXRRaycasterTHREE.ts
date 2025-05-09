@@ -24,12 +24,12 @@ export class DIVEWebXRRaycasterTHREE {
         this._controller = this._renderer.webglrenderer.xr.getController(0);
     }
 
-    public async Init(): Promise<this> {
+    public async init(): Promise<this> {
         console.log('DIVEWebXRRaycasterTHREE: Initialized');
         return Promise.resolve(this);
     }
 
-    public GetIntersections(): DIVEHitResult[] {
+    public getIntersections(): DIVEHitResult[] {
         this._controller.updateMatrixWorld();
         this._raycaster.setFromXRController(this._controller);
         // const intersections = this._raycaster.intersectObjects(

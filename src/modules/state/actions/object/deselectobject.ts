@@ -20,9 +20,9 @@ export const DeselectObjectAction = Action.define<
         if (!('isSelectable' in sceneObject))
             throw new Error('Object is not selectable.');
         const instance = await getToolbox();
-        const activeTool = instance.GetActiveTool();
+        const activeTool = instance.getActiveTool();
         if (activeTool && isSelectTool(activeTool)) {
-            activeTool.DetachGizmo();
+            activeTool.detachGizmo();
         }
     },
 });

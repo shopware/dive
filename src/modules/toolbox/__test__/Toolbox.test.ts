@@ -9,15 +9,15 @@ import { DIVEScene } from '../../../engine/scene/Scene.ts';
 vi.mock('../select/SelectTool.ts', () => {
     return {
         DIVESelectTool: vi.fn(function (this: any) {
-            this.Activate = vi.fn();
-            this.Deactivate = vi.fn();
+            this.activate = vi.fn();
+            this.deactivate = vi.fn();
             this.onPointerDown = vi.fn();
             this.onPointerMove = vi.fn();
             this.onPointerUp = vi.fn();
             this.onWheel = vi.fn();
-            this.SetGizmoMode = vi.fn();
-            this.SetGizmoVisibility = vi.fn();
-            this.SetGizmoScaleLinked = vi.fn();
+            this.setGizmoMode = vi.fn();
+            this.setGizmoVisibility = vi.fn();
+            this.setGizmoScaleLinked = vi.fn();
             return this;
         }),
     };
@@ -54,27 +54,27 @@ describe('dive/toolbox/DIVEToolBox', () => {
 
     it('should dispose', () => {
         const toolBox = new Toolbox({} as DIVEScene, mockController);
-        toolBox.Dispose();
+        toolBox.dispose();
     });
 
     it('should throw with incorrect tool', () => {
         const spy = vi.spyOn(console, 'warn').mockImplementation(() => {});
         const toolBox = new Toolbox({} as DIVEScene, mockController);
         expect(() =>
-            toolBox.UseTool('not a real tool' as unknown as ToolType),
+            toolBox.useTool('not a real tool' as unknown as ToolType),
         ).not.toThrow();
         expect(spy).toHaveBeenCalled();
     });
 
     it('should use no tool', () => {
         const toolBox = new Toolbox({} as DIVEScene, mockController);
-        expect(() => toolBox.UseTool('select')).not.toThrow();
-        expect(() => toolBox.UseTool('none')).not.toThrow();
+        expect(() => toolBox.useTool('select')).not.toThrow();
+        expect(() => toolBox.useTool('none')).not.toThrow();
     });
 
     it('should use select tool', () => {
         const toolBox = new Toolbox({} as DIVEScene, mockController);
-        expect(() => toolBox.UseTool(Toolbox.DefaultTool)).not.toThrow();
+        expect(() => toolBox.useTool(Toolbox.DefaultTool)).not.toThrow();
     });
 
     it('should execute pointer down event on tool', () => {
@@ -82,7 +82,7 @@ describe('dive/toolbox/DIVEToolBox', () => {
         expect(() =>
             toolBox.onPointerDown({ type: 'pointerdown' } as PointerEvent),
         ).not.toThrow();
-        expect(() => toolBox.UseTool('select')).not.toThrow();
+        expect(() => toolBox.useTool('select')).not.toThrow();
         expect(() =>
             toolBox.onPointerDown({ type: 'pointerdown' } as PointerEvent),
         ).not.toThrow();
@@ -93,7 +93,7 @@ describe('dive/toolbox/DIVEToolBox', () => {
         expect(() =>
             toolBox.onPointerMove({ type: 'pointermove' } as PointerEvent),
         ).not.toThrow();
-        expect(() => toolBox.UseTool('select')).not.toThrow();
+        expect(() => toolBox.useTool('select')).not.toThrow();
         expect(() =>
             toolBox.onPointerMove({ type: 'pointermove' } as PointerEvent),
         ).not.toThrow();
@@ -104,7 +104,7 @@ describe('dive/toolbox/DIVEToolBox', () => {
         expect(() =>
             toolBox.onPointerUp({ type: 'pointerup' } as PointerEvent),
         ).not.toThrow();
-        expect(() => toolBox.UseTool('select')).not.toThrow();
+        expect(() => toolBox.useTool('select')).not.toThrow();
         expect(() =>
             toolBox.onPointerUp({ type: 'pointerup' } as PointerEvent),
         ).not.toThrow();
@@ -115,7 +115,7 @@ describe('dive/toolbox/DIVEToolBox', () => {
         expect(() =>
             toolBox.onWheel({ type: 'wheel' } as WheelEvent),
         ).not.toThrow();
-        expect(() => toolBox.UseTool('select')).not.toThrow();
+        expect(() => toolBox.useTool('select')).not.toThrow();
         expect(() =>
             toolBox.onWheel({ type: 'wheel' } as WheelEvent),
         ).not.toThrow();
@@ -123,21 +123,21 @@ describe('dive/toolbox/DIVEToolBox', () => {
 
     it('should get active tool', () => {
         const toolBox = new Toolbox({} as DIVEScene, mockController);
-        expect(toolBox.GetActiveTool()).toBeDefined();
+        expect(toolBox.getActiveTool()).toBeDefined();
     });
 
     it('should set gizmo mode', () => {
         const toolBox = new Toolbox({} as DIVEScene, mockController);
-        expect(() => toolBox.SetGizmoMode('translate')).not.toThrow();
+        expect(() => toolBox.setGizmoMode('translate')).not.toThrow();
     });
 
     it('should set gizmo active', () => {
         const toolBox = new Toolbox({} as DIVEScene, mockController);
-        expect(() => toolBox.SetGizmoVisibility(true)).not.toThrow();
+        expect(() => toolBox.setGizmoVisibility(true)).not.toThrow();
     });
 
     it('should set gizmo unified scale', () => {
         const toolBox = new Toolbox({} as DIVEScene, mockController);
-        expect(() => toolBox.SetGizmoScaleLinked(true)).not.toThrow();
+        expect(() => toolBox.setGizmoScaleLinked(true)).not.toThrow();
     });
 });

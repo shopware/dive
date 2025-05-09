@@ -5,7 +5,6 @@ import { DIVESelectable } from '../../../../interfaces/Selectable.ts';
 import { type DIVEPerspectiveCamera } from '../../../../engine/camera/PerspectiveCamera.ts';
 import { type Object3D } from 'three';
 import { type DIVEBaseTool } from '../../BaseTool.ts';
-import { AnimationSystem } from '../../../animation/AnimationSystem.ts';
 import { Tween } from '@tweenjs/tween.js';
 import { type DIVEMovable } from '../../../../interfaces/Movable.ts';
 import { DIVERenderPipeline } from '../../../../engine/renderer/Renderer.ts';
@@ -60,7 +59,7 @@ vi.mock('../../../animation/AnimationSystem', () => {
             this.domElement = {
                 style: {},
             };
-            this.Animate = <T extends object>(obj: T) => {
+            this.animate = <T extends object>(obj: T) => {
                 return new Tween<T>(obj);
             };
 
@@ -110,11 +109,11 @@ describe('dive/toolbox/select/DIVESelectTool', () => {
     });
 
     it('should activate', () => {
-        expect(() => selectTool.Activate()).not.toThrow();
+        expect(() => selectTool.activate()).not.toThrow();
     });
 
     it('should execute onClick without hit', () => {
-        selectTool.AttachGizmo({} as unknown as DIVESelectable);
+        selectTool.attachGizmo({} as unknown as DIVESelectable);
         expect(() =>
             selectTool.onClick({ offsetX: 0, offsetY: 0 } as PointerEvent),
         ).not.toThrow();
@@ -156,7 +155,7 @@ describe('dive/toolbox/select/DIVESelectTool', () => {
                 },
             },
         ]);
-        selectTool.AttachGizmo({
+        selectTool.attachGizmo({
             visible: true,
             isSelectable: true,
             uuid: 'test0',
@@ -183,7 +182,7 @@ describe('dive/toolbox/select/DIVESelectTool', () => {
                 },
             },
         ]);
-        selectTool.AttachGizmo({
+        selectTool.attachGizmo({
             isSelectable: true,
             uuid: 'test1',
         } as unknown as Object3D & DIVESelectable);
@@ -216,9 +215,9 @@ describe('dive/toolbox/select/DIVESelectTool', () => {
 
     it('should Select', () => {
         const mock_onSelect = vi.fn();
-        expect(() => selectTool.Select({ isSelectable: true })).not.toThrow();
+        expect(() => selectTool.select({ isSelectable: true })).not.toThrow();
         expect(() =>
-            selectTool.Select({
+            selectTool.select({
                 isMovable: true,
                 onSelect: mock_onSelect,
             } as unknown as DIVESelectable),
@@ -228,9 +227,9 @@ describe('dive/toolbox/select/DIVESelectTool', () => {
 
     it('should Deselect', () => {
         const mock_onDeselect = vi.fn();
-        expect(() => selectTool.Deselect({ isSelectable: true })).not.toThrow();
+        expect(() => selectTool.deselect({ isSelectable: true })).not.toThrow();
         expect(() =>
-            selectTool.Deselect({
+            selectTool.deselect({
                 isMovable: true,
                 onDeselect: mock_onDeselect,
             } as unknown as DIVESelectable),
@@ -239,7 +238,7 @@ describe('dive/toolbox/select/DIVESelectTool', () => {
     });
 
     it('should set gizmo mode', () => {
-        expect(() => selectTool.SetGizmoMode('translate')).not.toThrow();
+        expect(() => selectTool.setGizmoMode('translate')).not.toThrow();
     });
 
     it('should identify as SelectTool', () => {
@@ -258,7 +257,7 @@ describe('dive/toolbox/select/DIVESelectTool', () => {
             onSelect: vi.fn(),
         } as unknown as DIVESelectable;
 
-        selectTool.Select(mockSelectable);
+        selectTool.select(mockSelectable);
         expect(mockSelectable.onSelect).toHaveBeenCalled();
     });
 
@@ -266,7 +265,7 @@ describe('dive/toolbox/select/DIVESelectTool', () => {
         const selectTool = new DIVESelectTool(mockScene, mockController);
         const mockSelectable = {} as unknown as DIVESelectable;
 
-        expect(() => selectTool.Select(mockSelectable)).not.toThrow();
+        expect(() => selectTool.select(mockSelectable)).not.toThrow();
     });
 
     it('should deselect object with onDeselect callback', () => {
@@ -275,7 +274,7 @@ describe('dive/toolbox/select/DIVESelectTool', () => {
             onDeselect: vi.fn(),
         } as unknown as DIVESelectable;
 
-        selectTool.Deselect(mockSelectable);
+        selectTool.deselect(mockSelectable);
         expect(mockSelectable.onDeselect).toHaveBeenCalled();
     });
 
@@ -283,7 +282,7 @@ describe('dive/toolbox/select/DIVESelectTool', () => {
         const selectTool = new DIVESelectTool(mockScene, mockController);
         const mockSelectable = {} as unknown as DIVESelectable;
 
-        expect(() => selectTool.Deselect(mockSelectable)).not.toThrow();
+        expect(() => selectTool.deselect(mockSelectable)).not.toThrow();
     });
 
     it('should attach gizmo to movable object', () => {
@@ -297,7 +296,7 @@ describe('dive/toolbox/select/DIVESelectTool', () => {
             attach: vi.fn(),
         } as any;
 
-        selectTool.AttachGizmo(mockMovable);
+        selectTool.attachGizmo(mockMovable);
         expect(selectTool['_gizmo'].attach).toHaveBeenCalledWith(mockMovable);
     });
 
@@ -307,7 +306,7 @@ describe('dive/toolbox/select/DIVESelectTool', () => {
             detach: vi.fn(),
         } as any;
 
-        selectTool.DetachGizmo();
+        selectTool.detachGizmo();
         expect(selectTool['_gizmo'].detach).toHaveBeenCalled();
     });
 

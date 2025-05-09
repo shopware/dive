@@ -87,34 +87,34 @@ export class DIVEWebXRController extends Object3D {
         );
 
         // translating
-        this._touchscreenControls.Subscribe('TOUCH_START', () =>
+        this._touchscreenControls.subscribe('TOUCH_START', () =>
             this.onTouchStart(),
         );
-        this._touchscreenControls.Subscribe('TOUCH_MOVE', () =>
+        this._touchscreenControls.subscribe('TOUCH_MOVE', () =>
             this.onTouchMove(),
         );
-        this._touchscreenControls.Subscribe('TOUCH_END', (p) =>
+        this._touchscreenControls.subscribe('TOUCH_END', (p) =>
             this.onTouchEnd(p),
         );
 
         // rotating
-        this._touchscreenControls.Subscribe('ROTATE_START', () =>
+        this._touchscreenControls.subscribe('ROTATE_START', () =>
             this.onRotateStart(),
         );
-        this._touchscreenControls.Subscribe('ROTATE_MOVE', (p) =>
+        this._touchscreenControls.subscribe('ROTATE_MOVE', (p) =>
             this.onRotateMove(p),
         );
 
         // scaling
-        this._touchscreenControls.Subscribe('PINCH_START', () =>
+        this._touchscreenControls.subscribe('PINCH_START', () =>
             this.onPinchStart(),
         );
-        this._touchscreenControls.Subscribe('PINCH_MOVE', (p) =>
+        this._touchscreenControls.subscribe('PINCH_MOVE', (p) =>
             this.onPinchMove(p),
         );
     }
 
-    public async Init(): Promise<this> {
+    public async init(): Promise<this> {
         this.prepareScene();
 
         await this.initOrigin();
@@ -123,24 +123,24 @@ export class DIVEWebXRController extends Object3D {
         return Promise.resolve(this);
     }
 
-    public Dispose(): void {
+    public dispose(): void {
         this.restoreScene();
 
-        this._origin.Dispose();
-        this._xrRaycaster.Dispose();
+        this._origin.dispose();
+        this._xrRaycaster.dispose();
 
         // reset placement members
         this._placed = false;
     }
 
-    public Update(frame: XRFrame): void {
+    public update(frame: XRFrame): void {
         this._frameBuffer = frame;
 
         if (!this._placed) {
             this.updateHandNode();
 
             if (this._origin) {
-                this._origin.Update(frame);
+                this._origin.update(frame);
             }
         }
     }
@@ -160,7 +160,7 @@ export class DIVEWebXRController extends Object3D {
     // placement
     private async initOrigin(): Promise<void> {
         // initialize origin
-        this._origin = await this._origin.Init();
+        this._origin = await this._origin.init();
 
         // set resolve callback: place objects at origin when it is set
         this._origin.originSet.then(() => {
@@ -197,7 +197,7 @@ export class DIVEWebXRController extends Object3D {
     }
 
     private onTouchStart(): void {
-        const sceneHits = this._xrRaycaster.GetSceneIntersections();
+        const sceneHits = this._xrRaycaster.getSceneIntersections();
         console.log('sceneHits', sceneHits);
         if (sceneHits.length === 0) return;
         if (!sceneHits[0].object) return;
@@ -216,7 +216,7 @@ export class DIVEWebXRController extends Object3D {
         if (!this._frameBuffer) return;
         if (!this._grabbedObject) return;
 
-        const intersections = this._xrRaycaster.GetARIntersections(
+        const intersections = this._xrRaycaster.getARIntersections(
             this._frameBuffer,
         );
         if (intersections.length === 0) {
@@ -331,14 +331,14 @@ export class DIVEWebXRController extends Object3D {
     // raycast
     private async initRaycaster(): Promise<void> {
         // initialize raycaster
-        await this._xrRaycaster.Init();
+        await this._xrRaycaster.init();
 
         // check if successful
         if (!this._xrRaycaster) {
             console.error(
                 'Raycaster not initialized successfully. Aborting WebXR...',
             );
-            this.Dispose();
+            this.dispose();
             return Promise.reject();
         }
     }

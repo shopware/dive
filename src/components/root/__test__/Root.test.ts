@@ -155,9 +155,9 @@ vi.mock('../../model/Model', () => {
             this.updateWorldMatrix = vi.fn();
             this.children = [];
             this.setFromGLTF = vi.fn();
-            this.SetPosition = vi.fn();
-            this.SetRotation = vi.fn();
-            this.SetScale = vi.fn();
+            this.setPosition = vi.fn();
+            this.setRotation = vi.fn();
+            this.setScale = vi.fn();
             this.setVisibility = vi.fn();
             this.setMaterial = vi.fn();
             this.placeOnFloor = vi.fn();
@@ -182,11 +182,11 @@ vi.mock('../../primitive/Primitive', () => {
             this.applyMatrix4 = vi.fn();
             this.updateWorldMatrix = vi.fn();
             this.children = [];
-            this.SetGeometry = vi.fn();
+            this.setGeometry = vi.fn();
             this.setMaterial = vi.fn();
-            this.SetPosition = vi.fn();
-            this.SetRotation = vi.fn();
-            this.SetScale = vi.fn();
+            this.setPosition = vi.fn();
+            this.setRotation = vi.fn();
+            this.setScale = vi.fn();
             this.setVisibility = vi.fn();
             this.placeOnFloor = vi.fn();
             this.removeFromParent = vi.fn();
@@ -210,13 +210,13 @@ vi.mock('../../group/Group', () => {
             this.applyMatrix4 = vi.fn();
             this.updateWorldMatrix = vi.fn();
             this.children = [];
-            this.SetGeometry = vi.fn();
+            this.setGeometry = vi.fn();
             this.setMaterial = vi.fn();
-            this.SetPosition = vi.fn();
-            this.SetRotation = vi.fn();
-            this.SetScale = vi.fn();
+            this.setPosition = vi.fn();
+            this.setRotation = vi.fn();
+            this.setScale = vi.fn();
             this.setVisibility = vi.fn();
-            this.SetLinesVisibility = vi.fn();
+            this.setLinesVisibility = vi.fn();
             this.placeOnFloor = vi.fn();
             this.removeFromParent = vi.fn();
             this.position = new Vector3();
@@ -525,9 +525,9 @@ describe('components/root/DIVERoot', () => {
             const model = root.getSceneObject(modelData);
             expect(model).toBeDefined();
             expect(model?.name).toBe('Test Model');
-            expect(model?.SetPosition).toHaveBeenCalledWith(modelData.position);
-            expect(model?.SetRotation).toHaveBeenCalledWith(modelData.rotation);
-            expect(model?.SetScale).toHaveBeenCalledWith(modelData.scale);
+            expect(model?.setPosition).toHaveBeenCalledWith(modelData.position);
+            expect(model?.setRotation).toHaveBeenCalledWith(modelData.rotation);
+            expect(model?.setScale).toHaveBeenCalledWith(modelData.scale);
             expect(model?.setVisibility).toHaveBeenCalledWith(
                 modelData.visible,
             );
@@ -553,16 +553,16 @@ describe('components/root/DIVERoot', () => {
             const primitive = root.getSceneObject(primitiveData);
             expect(primitive).toBeDefined();
             expect(primitive?.name).toBe('Test Primitive');
-            expect(primitive?.SetGeometry).toHaveBeenCalledWith(
+            expect(primitive?.setGeometry).toHaveBeenCalledWith(
                 primitiveData.geometry,
             );
-            expect(primitive?.SetPosition).toHaveBeenCalledWith(
+            expect(primitive?.setPosition).toHaveBeenCalledWith(
                 primitiveData.position,
             );
-            expect(primitive?.SetRotation).toHaveBeenCalledWith(
+            expect(primitive?.setRotation).toHaveBeenCalledWith(
                 primitiveData.rotation,
             );
-            expect(primitive?.SetScale).toHaveBeenCalledWith(
+            expect(primitive?.setScale).toHaveBeenCalledWith(
                 primitiveData.scale,
             );
             expect(primitive?.setVisibility).toHaveBeenCalledWith(
@@ -591,13 +591,13 @@ describe('components/root/DIVERoot', () => {
             const group = root.getSceneObject(groupData);
             expect(group).toBeDefined();
             expect(group?.name).toBe('Test Group');
-            expect(group?.SetPosition).toHaveBeenCalledWith(groupData.position);
-            expect(group?.SetRotation).toHaveBeenCalledWith(groupData.rotation);
-            expect(group?.SetScale).toHaveBeenCalledWith(groupData.scale);
+            expect(group?.setPosition).toHaveBeenCalledWith(groupData.position);
+            expect(group?.setRotation).toHaveBeenCalledWith(groupData.rotation);
+            expect(group?.setScale).toHaveBeenCalledWith(groupData.scale);
             expect(group?.setVisibility).toHaveBeenCalledWith(
                 groupData.visible,
             );
-            expect(group?.SetLinesVisibility).toHaveBeenCalledWith(
+            expect(group?.setLinesVisibility).toHaveBeenCalledWith(
                 groupData.bbVisible,
             );
         });
@@ -720,7 +720,7 @@ describe('components/root/DIVERoot', () => {
             };
 
             root.updateSceneObject(updatedData);
-            expect(model?.SetPosition).toHaveBeenCalledWith(
+            expect(model?.setPosition).toHaveBeenCalledWith(
                 updatedData.position,
             );
         });
@@ -782,7 +782,7 @@ describe('components/root/DIVERoot', () => {
             };
 
             root.updateSceneObject(updatedData);
-            expect((primitive as any).SetGeometry).toHaveBeenCalledWith(
+            expect((primitive as any).setGeometry).toHaveBeenCalledWith(
                 updatedData.geometry,
             );
         });
@@ -811,7 +811,7 @@ describe('components/root/DIVERoot', () => {
 
             root.updateSceneObject(updatedData);
             expect((group as any).setVisibility).toHaveBeenCalledWith(false);
-            expect((group as any).SetLinesVisibility).toHaveBeenCalledWith(
+            expect((group as any).setLinesVisibility).toHaveBeenCalledWith(
                 true,
             );
         });

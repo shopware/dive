@@ -6,7 +6,7 @@ const mockGenerateMedia = vi
     .fn()
     .mockResolvedValue('data:image/png;base64,test');
 const mockGetMediaCreator = vi.fn().mockResolvedValue({
-    GenerateMedia: mockGenerateMedia,
+    generateMedia: mockGenerateMedia,
 });
 
 describe('GenerateMediaAction', () => {

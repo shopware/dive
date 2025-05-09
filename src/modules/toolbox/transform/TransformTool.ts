@@ -48,13 +48,13 @@ export class DIVETransformTool extends DIVEBaseTool {
         this._scene.add(this._gizmo);
     }
 
-    public Activate(): void {}
+    public activate(): void {}
 
-    public SetGizmoMode(mode: 'translate' | 'rotate' | 'scale'): void {
+    public setGizmoMode(mode: 'translate' | 'rotate' | 'scale'): void {
         this._gizmo.mode = mode;
     }
 
-    public SetGizmoVisibility(active: boolean): void {
+    public setGizmoVisibility(active: boolean): void {
         const contains = this._scene.children.includes(this._gizmo);
         if (active && !contains) {
             this._scene.add(this._gizmo);
@@ -73,7 +73,7 @@ export class DIVETransformTool extends DIVEBaseTool {
         }
     }
 
-    public SetGizmoScaleLinked(linked: boolean): void {
+    public setGizmoScaleLinked(linked: boolean): void {
         this._scaleLinked = linked;
     }
 

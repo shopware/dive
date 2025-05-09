@@ -75,21 +75,21 @@ describe('DIVEAxisCamera', () => {
         });
     });
 
-    describe('Dispose', () => {
+    describe('dispose', () => {
         it('should clean up resources', () => {
-            axisCamera.Dispose();
+            axisCamera.dispose();
             expect(mockScene.remove).toHaveBeenCalledWith(axisCamera);
         });
 
         it('should not throw when called multiple times', () => {
             expect(() => {
-                axisCamera.Dispose();
-                axisCamera.Dispose();
+                axisCamera.dispose();
+                axisCamera.dispose();
             }).not.toThrow();
         });
     });
 
-    describe('SetFromCameraMatrix', () => {
+    describe('setFromCameraMatrix', () => {
         it('should update axes helper rotation based on camera matrix', () => {
             const testMatrix = new Matrix4();
             testMatrix.elements = [
@@ -111,7 +111,7 @@ describe('DIVEAxisCamera', () => {
                 1,
             ];
 
-            axisCamera.SetFromCameraMatrix(testMatrix);
+            axisCamera.setFromCameraMatrix(testMatrix);
 
             expect(
                 axisCamera['axesHelper'].rotation.setFromRotationMatrix,
@@ -121,7 +121,7 @@ describe('DIVEAxisCamera', () => {
         it('should handle identity matrix', () => {
             const identityMatrix = new Matrix4();
             expect(() => {
-                axisCamera.SetFromCameraMatrix(identityMatrix);
+                axisCamera.setFromCameraMatrix(identityMatrix);
             }).not.toThrow();
         });
     });

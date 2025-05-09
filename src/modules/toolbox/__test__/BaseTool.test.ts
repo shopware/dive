@@ -57,12 +57,12 @@ describe('dive/toolbox/DIVEBaseTool', () => {
 
     it('should Activate', () => {
         const baseTool = new abstractWrapper(mockScene, mockController);
-        expect(() => baseTool.Activate()).not.toThrow();
+        expect(() => baseTool.activate()).not.toThrow();
     });
 
     it('should Deactivate', () => {
         const baseTool = new abstractWrapper(mockScene, mockController);
-        expect(() => baseTool.Deactivate()).not.toThrow();
+        expect(() => baseTool.deactivate()).not.toThrow();
     });
 
     it('should raycast', () => {

@@ -35,7 +35,7 @@ export class DIVEXRLightRoot extends Object3D {
         this.add(this._lightRoot);
     }
 
-    public InitLightEstimation(renderer: DIVERenderPipeline): void {
+    public initLightEstimation(renderer: DIVERenderPipeline): void {
         if (!this._xrLight) {
             this._xrLight = new XREstimatedLight(renderer.webglrenderer, true);
             this._xrLight.layers.mask = PRODUCT_LAYER_MASK;
@@ -50,7 +50,7 @@ export class DIVEXRLightRoot extends Object3D {
         });
     }
 
-    public DisposeLightEstimation(): void {
+    public disposeLightEstimation(): void {
         if (!this._xrLight) return;
 
         this._xrLight.removeEventListener('estimationstart', () => {

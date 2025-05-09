@@ -87,7 +87,7 @@ export class DIVEAxisCamera extends OrthographicCamera implements DIVETicker {
         this._renderer.webglrenderer.setViewport(0, 0, 150, 150);
         this._renderer.webglrenderer.autoClear = false;
 
-        this.SetFromCameraMatrix(this._camera.matrix);
+        this.setFromCameraMatrix(this._camera.matrix);
 
         this._renderer.webglrenderer.render(this._scene, this);
 
@@ -97,11 +97,11 @@ export class DIVEAxisCamera extends OrthographicCamera implements DIVETicker {
         this._scene.background = restoreBackground;
     }
 
-    public Dispose(): void {
+    public dispose(): void {
         this._scene.remove(this);
     }
 
-    public SetFromCameraMatrix(matrix: Matrix4): void {
+    public setFromCameraMatrix(matrix: Matrix4): void {
         this.axesHelper.rotation.setFromRotationMatrix(
             new Matrix4().extractRotation(matrix).invert(),
         );

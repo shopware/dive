@@ -22,12 +22,12 @@ const mockEngine = {
 const mockDetachGizmo = vi.fn();
 const mockSelectTool = {
     isSelectTool: true,
-    DetachGizmo: mockDetachGizmo,
+    detachGizmo: mockDetachGizmo,
 } as unknown as DIVESelectTool;
 
 const mockGetActiveTool = vi.fn().mockReturnValue(mockSelectTool);
 const mockGetToolbox = vi.fn().mockResolvedValue({
-    GetActiveTool: mockGetActiveTool,
+    getActiveTool: mockGetActiveTool,
 });
 
 const mockRegistered = new Map<string, COMEntity>();
@@ -70,7 +70,7 @@ describe('DeselectObjectAction', () => {
         await action.execute();
 
         // Assert
-        expect(mockSelectTool.DetachGizmo).toHaveBeenCalled();
+        expect(mockSelectTool.detachGizmo).toHaveBeenCalled();
     });
 
     it('should return false if object does not exist', async () => {

@@ -111,6 +111,7 @@
         "typescript-eslint": "^7.7.1",
         "vite": "^6.2.1",
         "vite-plugin-dts": "^4.5.3",
+        "vite-plugin-wasm": "^3.4.1",
         "vitest": "^3.1.2"
     },
     "scripts": {

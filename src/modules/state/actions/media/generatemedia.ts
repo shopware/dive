@@ -48,7 +48,7 @@ export const GenerateMediaAction = Action.define<
         }
 
         return getMediaCreator().then((mediaCreator) => {
-            return mediaCreator.GenerateMedia(
+            return mediaCreator.generateMedia(
                 position,
                 target,
                 payload.width,

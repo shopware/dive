@@ -28,7 +28,7 @@ export class DIVENode extends applyMixins(Object3D, [
         this._boundingBox = new Box3();
     }
 
-    public SetPosition(position: Vector3Like): void {
+    public setPosition(position: Vector3Like): void {
         // if there is no parent, the object will be attached later and keep it's world position
         if (!this.parent) {
             this.position.set(position.x, position.y, position.z);
@@ -40,15 +40,15 @@ export class DIVENode extends applyMixins(Object3D, [
         this.position.copy(this.parent.worldToLocal(newPosition));
 
         if ('isDIVEGroup' in this.parent) {
-            (this.parent as unknown as DIVEGroup).UpdateLineTo(this);
+            (this.parent as unknown as DIVEGroup).updateLineTo(this);
         }
     }
 
-    public SetRotation(rotation: Vector3Like): void {
+    public setRotation(rotation: Vector3Like): void {
         this.rotation.set(rotation.x, rotation.y, rotation.z);
     }
 
-    public SetScale(scale: Vector3Like): void {
+    public setScale(scale: Vector3Like): void {
         this.scale.set(scale.x, scale.y, scale.z);
     }
 
@@ -56,7 +56,7 @@ export class DIVENode extends applyMixins(Object3D, [
         this.visible = visible;
     }
 
-    public SetToWorldOrigin(): void {
+    public setToWorldOrigin(): void {
         this.position.set(0, 0, 0);
         getModule('State').then((State) => {
             State.get(this.userData.id)?.performAction('UPDATE_OBJECT', {

@@ -10,7 +10,7 @@ export const SetGizmoVisibilityAction = Action.define<
     description: "Sets the gizmo's visibility.",
     execute: async (payload, { getToolbox }) => {
         const instance = await getToolbox();
-        instance.SetGizmoVisibility(payload);
+        instance.setGizmoVisibility(payload);
     },
 });
 

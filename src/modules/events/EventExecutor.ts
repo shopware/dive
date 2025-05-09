@@ -2,7 +2,7 @@ export class DIVEEventExecutor<T> {
     private _listeners: Map<keyof T, ((payload: T[keyof T]) => void)[]> =
         new Map();
 
-    public Subscribe<S extends keyof T>(
+    public subscribe<S extends keyof T>(
         type: S,
         listener: (payload: T[S]) => void,
     ): () => boolean {

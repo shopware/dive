@@ -45,7 +45,7 @@ export class DIVEPrimitive extends DIVENode {
         this.add(this._mesh);
     }
 
-    public SetGeometry(geometry: COMGeometry): void {
+    public setGeometry(geometry: COMGeometry): void {
         const geo = this.assembleGeometry(geometry);
         if (!geo) return;
 

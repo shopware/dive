@@ -55,7 +55,7 @@ describe('dive/animation/DIVEAnimationSystem', () => {
     });
 
     afterEach(() => {
-        animationSystem.Dispose();
+        animationSystem.dispose();
     });
 
     describe('Instance Management', () => {
@@ -125,7 +125,7 @@ describe('dive/animation/DIVEAnimationSystem', () => {
     describe('Animation Control', () => {
         it('should create a basic tween', () => {
             const target = { x: 0 };
-            const tween = animationSystem.Animate(target);
+            const tween = animationSystem.animate(target);
             expect(Tween).toHaveBeenCalledWith(target);
         });
 
@@ -134,9 +134,9 @@ describe('dive/animation/DIVEAnimationSystem', () => {
             const vectorTarget = { x: 0, y: 0, z: 0 };
             const colorTarget = { r: 0, g: 0, b: 0 };
 
-            const numberTween = animationSystem.Animate(numberTarget);
-            const vectorTween = animationSystem.Animate(vectorTarget);
-            const colorTween = animationSystem.Animate(colorTarget);
+            const numberTween = animationSystem.animate(numberTarget);
+            const vectorTween = animationSystem.animate(vectorTarget);
+            const colorTween = animationSystem.animate(colorTarget);
 
             expect(Tween).toHaveBeenCalledWith(numberTarget);
             expect(Tween).toHaveBeenCalledWith(vectorTarget);
@@ -195,7 +195,7 @@ describe('dive/animation/DIVEAnimationSystem', () => {
     });
 
     describe('Disposal', () => {
-        it('should have a Dispose method', () => {
+        it('should have a dispose method', () => {
             const object = { x: 0 };
             const to = { x: 100 };
             const duration = 1000;
@@ -210,7 +210,7 @@ describe('dive/animation/DIVEAnimationSystem', () => {
             expect(animationSystem['_tweens'].size).toBe(1);
 
             // Call dispose
-            animationSystem.Dispose();
+            animationSystem.dispose();
 
             // Verify maps are cleared
             expect(animationSystem['_callbackMap'].size).toBe(0);

@@ -88,9 +88,9 @@ describe('dive/group/DIVEGroup', () => {
     it('SetLinesVisibility toggles all lines and specific object line', () => {
         group.attach(obj as any);
         const lines = (group as any)._lines as any[];
-        group.SetLinesVisibility(false);
+        group.setLinesVisibility(false);
         expect(lines[0].visible).toBe(false);
-        group.SetLinesVisibility(true, obj as any);
+        group.setLinesVisibility(true, obj as any);
         expect(lines[0].visible).toBe(true);
     });
 
@@ -100,7 +100,7 @@ describe('dive/group/DIVEGroup', () => {
         group.attach(obj as any);
         const lines = (group as any)._lines as any[];
         obj.position.set(4, 5, 6);
-        group.UpdateLineTo(obj as any);
+        group.updateLineTo(obj as any);
     });
 
     it('should onMove', () => {
@@ -169,7 +169,7 @@ describe('dive/group/DIVEGroup', () => {
         ];
 
         const position: Vector3Like = { x: 4, y: 5, z: 6 };
-        group.SetPosition(position);
+        group.setPosition(position);
 
         // Check that onMove was called on diveNode1 and diveNode2
         expect(diveNode1.onMove).toHaveBeenCalled();
@@ -197,7 +197,7 @@ describe('dive/group/DIVEGroup', () => {
         ];
 
         const position: Vector3Like = { x: 7, y: 8, z: 9 };
-        group.SetPosition(position);
+        group.setPosition(position);
 
         // Since members do not have onMove, there's nothing to assert
         // If members have onMove as optional, you can spy on them to ensure they're not called
@@ -208,7 +208,7 @@ describe('dive/group/DIVEGroup', () => {
         (group as any)._members = [];
 
         const position: Vector3Like = { x: 10, y: 11, z: 12 };
-        expect(() => group.SetPosition(position)).not.toThrow();
+        expect(() => group.setPosition(position)).not.toThrow();
     });
 
     it('should handle _members with mixed types correctly', () => {
@@ -228,7 +228,7 @@ describe('dive/group/DIVEGroup', () => {
         ];
 
         const position: Vector3Like = { x: 13, y: 14, z: 15 };
-        group.SetPosition(position);
+        group.setPosition(position);
 
         // Ensure onMove is called only on diveNode
         expect(diveNode.onMove).toHaveBeenCalled();
@@ -236,14 +236,14 @@ describe('dive/group/DIVEGroup', () => {
 
     it('SetLinesVisibility with non-member object does nothing', () => {
         const nonMember = new Object3D();
-        group.SetLinesVisibility(true, nonMember);
+        group.setLinesVisibility(true, nonMember);
         // No error should be thrown
-        expect(() => group.SetLinesVisibility(true, nonMember)).not.toThrow();
+        expect(() => group.setLinesVisibility(true, nonMember)).not.toThrow();
     });
 
     it('UpdateLineTo with non-member object does nothing', () => {
         const nonMember = new Object3D();
-        expect(() => group.UpdateLineTo(nonMember)).not.toThrow();
+        expect(() => group.updateLineTo(nonMember)).not.toThrow();
     });
 
     it('attach with object without userData.id', () => {

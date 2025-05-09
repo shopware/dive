@@ -95,9 +95,9 @@ export abstract class DIVEBaseTool {
         this._dragRaycastOnObjects = null;
     }
 
-    public Activate(): void {}
+    public activate(): void {}
 
-    public Deactivate(): void {}
+    public deactivate(): void {}
 
     public onPointerDown(e: PointerEvent): void {
         switch (e.button) {

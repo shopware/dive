@@ -264,10 +264,10 @@ export class DIVERoot extends Object3D {
         if (model.uri !== undefined) sceneObject.setFromURL(model.uri);
         if (model.name !== undefined) sceneObject.name = model.name;
         if (model.position !== undefined)
-            sceneObject.SetPosition(model.position);
+            sceneObject.setPosition(model.position);
         if (model.rotation !== undefined)
-            sceneObject.SetRotation(model.rotation);
-        if (model.scale !== undefined) sceneObject.SetScale(model.scale);
+            sceneObject.setRotation(model.rotation);
+        if (model.scale !== undefined) sceneObject.setScale(model.scale);
         if (model.visible !== undefined)
             sceneObject.setVisibility(model.visible);
         if (model.material !== undefined)
@@ -282,13 +282,13 @@ export class DIVERoot extends Object3D {
     ): void {
         if (primitive.name !== undefined) sceneObject.name = primitive.name;
         if (primitive.geometry !== undefined)
-            (sceneObject as DIVEPrimitive).SetGeometry(primitive.geometry);
+            (sceneObject as DIVEPrimitive).setGeometry(primitive.geometry);
         if (primitive.position !== undefined)
-            (sceneObject as DIVEPrimitive).SetPosition(primitive.position);
+            (sceneObject as DIVEPrimitive).setPosition(primitive.position);
         if (primitive.rotation !== undefined)
-            (sceneObject as DIVEPrimitive).SetRotation(primitive.rotation);
+            (sceneObject as DIVEPrimitive).setRotation(primitive.rotation);
         if (primitive.scale !== undefined)
-            (sceneObject as DIVEPrimitive).SetScale(primitive.scale);
+            (sceneObject as DIVEPrimitive).setScale(primitive.scale);
         if (primitive.visible !== undefined)
             (sceneObject as DIVEPrimitive).setVisibility(primitive.visible);
         if (primitive.material !== undefined)
@@ -303,15 +303,15 @@ export class DIVERoot extends Object3D {
     ): void {
         if (props.name !== undefined) sceneObject.name = props.name;
         if (props.position !== undefined)
-            (sceneObject as DIVEGroup).SetPosition(props.position);
+            (sceneObject as DIVEGroup).setPosition(props.position);
         if (props.rotation !== undefined)
-            (sceneObject as DIVEGroup).SetRotation(props.rotation);
+            (sceneObject as DIVEGroup).setRotation(props.rotation);
         if (props.scale !== undefined)
-            (sceneObject as DIVEGroup).SetScale(props.scale);
+            (sceneObject as DIVEGroup).setScale(props.scale);
         if (props.visible !== undefined)
             (sceneObject as DIVEGroup).setVisibility(props.visible);
         if (props.bbVisible !== undefined)
-            (sceneObject as DIVEGroup).SetLinesVisibility(props.bbVisible);
+            (sceneObject as DIVEGroup).setLinesVisibility(props.bbVisible);
         if (props.parentId !== undefined)
             this._setParent({ ...props, parentId: props.parentId });
     }

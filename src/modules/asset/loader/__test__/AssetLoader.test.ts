@@ -41,6 +41,7 @@ vi.mock('three/examples/jsm/loaders/DRACOLoader.js', () => {
     return {
         DRACOLoader: vi.fn().mockImplementation(() => ({
             setDecoderPath: vi.fn(),
+            setDecoderConfig: vi.fn(),
         })),
     };
 });

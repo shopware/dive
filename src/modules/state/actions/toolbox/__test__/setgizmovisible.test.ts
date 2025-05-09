@@ -2,7 +2,7 @@ import { SetGizmoVisibilityAction } from '../setgizmovisible.ts';
 
 const mockSetGizmoVisibility = vi.fn();
 const mockGetToolbox = vi.fn().mockResolvedValue({
-    SetGizmoVisibility: mockSetGizmoVisibility,
+    setGizmoVisibility: mockSetGizmoVisibility,
 });
 
 describe('SetGizmoVisibilityAction', () => {

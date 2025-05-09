@@ -1,6 +1,5 @@
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { USDZLoader } from 'three/examples/jsm/loaders/USDZLoader.js';
-import { DRACOLoader } from 'three/examples/jsm/loaders/DRACOLoader.js';
 import { Object3D } from 'three';
 import {
     type FileType,
@@ -13,6 +12,7 @@ import {
     getFileTypeFromUri,
     isFileTypeSupported,
 } from '../../../helpers/index.ts';
+import { DracoLoader } from '../draco/DracoLoader.ts';
 
 declare global {
     interface ModuleClasses {
@@ -42,9 +42,11 @@ export class AssetLoader {
     private _usdzLoader: USDZLoader;
 
     constructor() {
-        // create decompression loader
-        const dracoLoader = new DRACOLoader();
-        dracoLoader.setDecoderPath('../draco/');
+        // create draco loader
+        const dracoLoader = new DracoLoader();
+
+        // use wasm decoder if supported
+        dracoLoader.setDecoderConfig({ type: 'wasm' });
 
         // create gltf loader
         this._gltfLoader = new GLTFLoader();

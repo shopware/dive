@@ -85,14 +85,14 @@ export class DIVEWebXROrigin {
         });
     }
 
-    public async Init(): Promise<this> {
+    public async init(): Promise<this> {
         if (this._initialized) {
             return Promise.resolve(this);
         }
 
         if (!this._session) {
             console.error(
-                'DIVEWebXROrigin: No session set in Init()! Aborting initialization...',
+                'DIVEWebXROrigin: No session set in init()! Aborting initialization...',
             );
             return Promise.reject();
         }
@@ -123,7 +123,7 @@ export class DIVEWebXROrigin {
         return Promise.resolve(this);
     }
 
-    public Dispose(): void {
+    public dispose(): void {
         this._initialized = false;
         this._requesting = false;
 
@@ -138,7 +138,7 @@ export class DIVEWebXROrigin {
         this._scale = new Vector3();
     }
 
-    public Update(frame: XRFrame): void {
+    public update(frame: XRFrame): void {
         if (!this._initialized) return;
 
         if (!this._hitTestSource) {

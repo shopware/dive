@@ -46,11 +46,11 @@ export class DIVEXRRoot extends Object3D {
         this.add(this._xrHandNode);
     }
 
-    public InitLightEstimation(renderer: DIVERenderPipeline): void {
-        this._xrLightRoot.InitLightEstimation(renderer);
+    public initLightEstimation(renderer: DIVERenderPipeline): void {
+        this._xrLightRoot.initLightEstimation(renderer);
     }
 
-    public DisposeLightEstimation(): void {
-        this._xrLightRoot.DisposeLightEstimation();
+    public disposeLightEstimation(): void {
+        this._xrLightRoot.disposeLightEstimation();
     }
 }

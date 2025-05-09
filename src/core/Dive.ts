@@ -58,7 +58,7 @@ export const DIVEDefaultSettings: DIVESettings = {
  *
  * myWrapper.appendChild(dive.Canvas);
  *
- * dive.Communication.Subscribe('GET_ALL_SCENE_DATA', () => {
+ * dive.Communication.subscribe('GET_ALL_SCENE_DATA', () => {
  *  // do something
  * }));
  *
@@ -212,14 +212,14 @@ export class DIVE {
         });
     }
 
-    public async Dispose(): Promise<void> {
+    public async dispose(): Promise<void> {
         return new Promise((resolve) => {
             this._engine.clock.removeTicker(this.orbitController);
             this.orbitController.dispose();
 
             if (this.axisCamera) {
                 this._engine.clock.removeTicker(this.axisCamera);
-                this.axisCamera.Dispose();
+                this.axisCamera.dispose();
             }
 
             resolve();

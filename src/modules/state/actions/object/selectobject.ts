@@ -22,9 +22,9 @@ export const SelectObjectAction = Action.define<
             throw new Error('Object is not selectable.');
 
         const instance = await getToolbox();
-        const activeTool = instance.GetActiveTool();
+        const activeTool = instance.getActiveTool();
         if (activeTool && isSelectTool(activeTool)) {
-            activeTool.AttachGizmo(sceneObject as DIVESelectable);
+            activeTool.attachGizmo(sceneObject as DIVESelectable);
         }
     },
 });

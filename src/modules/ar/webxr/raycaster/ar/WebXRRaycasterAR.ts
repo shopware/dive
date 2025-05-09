@@ -21,17 +21,17 @@ export class DIVEWebXRRaycasterAR {
         this._hitMatrixBuffer = new Matrix4();
     }
 
-    public Dispose(): void {
+    public dispose(): void {
         this._transientHitTestSource?.cancel();
         this._transientHitTestSource = undefined;
 
         this._initialized = false;
     }
 
-    public async Init(): Promise<this> {
+    public async init(): Promise<this> {
         if (!this._session) {
             console.error(
-                'DIVEWebXRRaycaster: No session set in Init()! Aborting initialization...',
+                'DIVEWebXRRaycaster: No session set in init()! Aborting initialization...',
             );
             return Promise.reject();
         }
@@ -70,7 +70,7 @@ export class DIVEWebXRRaycasterAR {
         return Promise.resolve(this);
     }
 
-    public GetIntersections(frame: XRFrame): DIVEHitResult[] {
+    public getIntersections(frame: XRFrame): DIVEHitResult[] {
         if (!this._transientHitTestSource) return [];
 
         const touches = frame.getHitTestResultsForTransientInput(

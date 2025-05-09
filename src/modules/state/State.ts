@@ -34,7 +34,7 @@ declare global {
  *
  * const dive = new DIVE();
  *
- * dive.State.Subscribe('GET_ALL_SCENE_DATA', () => {
+ * dive.State.subscribe('GET_ALL_SCENE_DATA', () => {
  *  // do something
  * });
  *

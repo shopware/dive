@@ -53,7 +53,7 @@ export class MediaCreator {
         this._controller = controller;
     }
 
-    public GenerateMedia(
+    public generateMedia(
         position: Vector3Like,
         target: Vector3Like,
         width: number,
@@ -69,7 +69,7 @@ export class MediaCreator {
         this._controller.target.copy(target);
         this._controller.update();
 
-        const dataUri = this.DrawCanvas().toDataURL();
+        const dataUri = this.drawCanvas().toDataURL();
 
         this._controller.object.position.copy(resetPosition);
         this._controller.object.quaternion.copy(resetRotation);
@@ -77,7 +77,7 @@ export class MediaCreator {
         return dataUri;
     }
 
-    public DrawCanvas(canvasElement?: HTMLCanvasElement): HTMLCanvasElement {
+    public drawCanvas(canvasElement?: HTMLCanvasElement): HTMLCanvasElement {
         // save current canvas
         const restore = this._renderer.webglrenderer.domElement;
         if (canvasElement) {

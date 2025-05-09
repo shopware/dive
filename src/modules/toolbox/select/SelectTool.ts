@@ -31,31 +31,31 @@ export class DIVESelectTool extends DIVETransformTool {
         this.name = 'SelectTool';
     }
 
-    public Activate(): void {}
+    public activate(): void {}
 
-    public Select(selectable: DIVESelectable): void {
-        this.AttachGizmo(selectable);
+    public select(selectable: DIVESelectable): void {
+        this.attachGizmo(selectable);
 
         if (selectable.onSelect) selectable.onSelect();
     }
 
-    public Deselect(selectable: DIVESelectable): void {
-        this.DetachGizmo();
+    public deselect(selectable: DIVESelectable): void {
+        this.detachGizmo();
 
         if (selectable.onDeselect) selectable.onDeselect();
     }
 
-    public AttachGizmo(selectable: DIVESelectable): void {
+    public attachGizmo(selectable: DIVESelectable): void {
         if ('isMovable' in selectable) {
             const movable = selectable as Object3D &
                 DIVESelectable &
                 DIVEMovable;
             this._gizmo.attach(movable);
-            this.SetGizmoVisibility(movable.visible);
+            this.setGizmoVisibility(movable.visible);
         }
     }
 
-    public DetachGizmo(): void {
+    public detachGizmo(): void {
         this._gizmo.detach();
     }
 
@@ -73,7 +73,7 @@ export class DIVESelectTool extends DIVETransformTool {
         // if nothing is hit
         if (!first || !selectable) {
             if (this._gizmo.object) {
-                this.Deselect(this._gizmo.object as Object3D & DIVESelectable);
+                this.deselect(this._gizmo.object as Object3D & DIVESelectable);
             }
             return;
         }
@@ -83,10 +83,10 @@ export class DIVESelectTool extends DIVETransformTool {
             if (this._gizmo.object.uuid === selectable.uuid) return;
 
             // deselect previous object
-            this.Deselect(this._gizmo.object as Object3D & DIVESelectable);
+            this.deselect(this._gizmo.object as Object3D & DIVESelectable);
         }
 
         // select clicked object
-        this.Select(selectable);
+        this.select(selectable);
     }
 }

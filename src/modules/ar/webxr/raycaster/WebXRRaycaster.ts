@@ -52,15 +52,15 @@ export class DIVEWebXRRaycaster extends DIVEEventExecutor<DIVEWebXRRaycasterEven
         this._arRaycaster = new DIVEWebXRRaycasterAR(session, renderer);
     }
 
-    public Dispose(): void {
+    public dispose(): void {
         // dispose code here
         this._initialized = false;
     }
 
-    public async Init(): Promise<this> {
+    public async init(): Promise<this> {
         if (!this._session) {
             console.error(
-                'DIVEWebXRRaycaster: No session set in Init()! Aborting initialization...',
+                'DIVEWebXRRaycaster: No session set in init()! Aborting initialization...',
             );
             return Promise.reject();
         }
@@ -72,8 +72,8 @@ export class DIVEWebXRRaycaster extends DIVEEventExecutor<DIVEWebXRRaycasterEven
             return Promise.reject();
         }
 
-        await this._threeRaycaster.Init();
-        await this._arRaycaster.Init();
+        await this._threeRaycaster.init();
+        await this._arRaycaster.init();
 
         console.log('DIVEWebXRRaycaster: Initialized');
 
@@ -82,9 +82,9 @@ export class DIVEWebXRRaycaster extends DIVEEventExecutor<DIVEWebXRRaycasterEven
         return Promise.resolve(this);
     }
 
-    public GetARIntersections(frame: XRFrame): DIVEHitResult[] {
+    public getARIntersections(frame: XRFrame): DIVEHitResult[] {
         // check for ar hits
-        this._arHitResultBuffer = this._arRaycaster.GetIntersections(frame);
+        this._arHitResultBuffer = this._arRaycaster.getIntersections(frame);
         if (this._arHitResultBuffer.length > 0) {
             // hit found
             this.onARHitFound(this._arHitResultBuffer[0]);
@@ -95,9 +95,9 @@ export class DIVEWebXRRaycaster extends DIVEEventExecutor<DIVEWebXRRaycasterEven
         return this._arHitResultBuffer;
     }
 
-    public GetSceneIntersections(): DIVEHitResult[] {
+    public getSceneIntersections(): DIVEHitResult[] {
         // check for scene hits
-        this._sceneHitResultBuffer = this._threeRaycaster.GetIntersections();
+        this._sceneHitResultBuffer = this._threeRaycaster.getIntersections();
         if (this._sceneHitResultBuffer.length > 0) {
             // scene hit found
             this.onSceneHitFound(this._sceneHitResultBuffer[0]);

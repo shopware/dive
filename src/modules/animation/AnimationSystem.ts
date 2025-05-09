@@ -66,7 +66,7 @@ export class AnimationSystem implements DIVETicker {
         this._tweens.delete(uuid);
     }
 
-    public Dispose(): void {
+    public dispose(): void {
         this._callbackMap.clear();
         this._tweens.clear();
     }
@@ -75,7 +75,7 @@ export class AnimationSystem implements DIVETicker {
         updateTween();
     }
 
-    public Animate<T extends object>(object: T): Tween<T> {
+    public animate<T extends object>(object: T): Tween<T> {
         return new Tween<T>(object);
     }
 

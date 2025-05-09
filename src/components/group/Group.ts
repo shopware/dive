@@ -30,8 +30,8 @@ export class DIVEGroup extends DIVENode {
         this._lines = [];
     }
 
-    public SetPosition(position: Vector3Like): void {
-        super.SetPosition(position);
+    public setPosition(position: Vector3Like): void {
+        super.setPosition(position);
         this._members.forEach((member) => {
             if ('isDIVENode' in member) {
                 (member as DIVENode).onMove();
@@ -39,7 +39,7 @@ export class DIVEGroup extends DIVENode {
         });
     }
 
-    public SetLinesVisibility(visible: boolean, object?: Object3D): void {
+    public setLinesVisibility(visible: boolean, object?: Object3D): void {
         if (!object) {
             this._lines.forEach((line) => {
                 line.visible = visible;
@@ -69,8 +69,8 @@ export class DIVEGroup extends DIVENode {
         this._members.push(object);
 
         // update line to object points
-        this.updateLineTo(line, object);
-        this.SetLinesVisibility(true, object);
+        this._updateLineTo(line, object);
+        this.setLinesVisibility(true, object);
 
         return this;
     }
@@ -98,11 +98,11 @@ export class DIVEGroup extends DIVENode {
         return this;
     }
 
-    public UpdateLineTo(object: Object3D): void {
+    public updateLineTo(object: Object3D): void {
         const index = this._members.indexOf(object);
         if (index === -1) return;
 
-        this.updateLineTo(this._lines[index], object);
+        this._updateLineTo(this._lines[index], object);
     }
 
     /**
@@ -123,7 +123,7 @@ export class DIVEGroup extends DIVENode {
     /**
      * Updates a line to the object.
      */
-    private updateLineTo(line: Line, object: Object3D): void {
+    private _updateLineTo(line: Line, object: Object3D): void {
         const points = [
             new Vector3(0, 0, 0),
             object.position.clone(),
@@ -132,7 +132,7 @@ export class DIVEGroup extends DIVENode {
         line.computeLineDistances();
     }
 
-    // public SetBoundingBoxVisibility(visible: boolean): void {
+    // public setBoundingBoxVisibility(visible: boolean): void {
     //     this._boxMesh.visible = visible;
     // }
 

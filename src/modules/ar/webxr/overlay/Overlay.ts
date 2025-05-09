@@ -1,11 +1,11 @@
 export class Overlay {
     private _element: HTMLDivElement;
-    public get Element(): HTMLDivElement {
+    public get element(): HTMLDivElement {
         return this._element;
     }
 
     private _closeButton: SVGSVGElement;
-    public get CloseButton(): SVGSVGElement {
+    public get closeButton(): SVGSVGElement {
         return this._closeButton;
     }
 

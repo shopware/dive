@@ -140,8 +140,8 @@ vi.mock('../../modules/axiscamera/AxisCamera', () => {
                 id: undefined,
             };
             this.removeFromParent = vi.fn();
-            this.SetFromCameraMatrix = vi.fn();
-            this.Dispose = vi.fn();
+            this.setFromCameraMatrix = vi.fn();
+            this.dispose = vi.fn();
             return this;
         }),
     };
@@ -202,13 +202,13 @@ describe('DIVE', () => {
 
     it('should dispose', () => {
         let dive = new DIVE();
-        expect(() => dive.Dispose()).not.toThrow();
+        expect(() => dive.dispose()).not.toThrow();
 
         const settings = {
             displayAxes: true,
         };
         dive = new DIVE(settings);
-        expect(() => dive.Dispose()).not.toThrow();
+        expect(() => dive.dispose()).not.toThrow();
     });
 
     it('should instantiate with settings', () => {
@@ -274,10 +274,10 @@ describe('DIVE', () => {
 
         const dive = new DIVE(settings);
 
-        await dive.Dispose();
+        await dive.dispose();
 
         expect(dive['orbitController'].dispose).toHaveBeenCalled();
-        expect(dive['axisCamera']?.Dispose).toHaveBeenCalled();
+        expect(dive['axisCamera']?.dispose).toHaveBeenCalled();
     });
 
     it('should handle dispose when animation system pipeline is not initialized', () => {
@@ -287,6 +287,6 @@ describe('DIVE', () => {
 
         const dive = new DIVE(settings);
 
-        expect(() => dive.Dispose()).not.toThrow();
+        expect(() => dive.dispose()).not.toThrow();
     });
 });

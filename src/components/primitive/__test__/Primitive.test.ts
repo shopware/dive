@@ -44,7 +44,7 @@ describe('dive/primitive/DIVEPrimitive', () => {
         const geometry = {
             name: 'cube' as COMGeometryType,
         } as COMGeometry;
-        expect(() => primitive.SetGeometry(geometry)).not.toThrow();
+        expect(() => primitive.setGeometry(geometry)).not.toThrow();
         expect(console.warn).not.toHaveBeenCalled();
     });
 
@@ -53,7 +53,7 @@ describe('dive/primitive/DIVEPrimitive', () => {
         const geometry = {
             name: 'INVALID' as COMGeometryType,
         } as COMGeometry;
-        expect(() => primitive.SetGeometry(geometry)).not.toThrow();
+        expect(() => primitive.setGeometry(geometry)).not.toThrow();
         expect(console.warn).toHaveBeenCalled();
     });
 
@@ -170,7 +170,7 @@ describe('dive/primitive/DIVEPrimitive', () => {
             height: 1.5,
             depth: 1,
         } as COMGeometry;
-        expect(() => primitive.SetGeometry(cylinder)).not.toThrow();
+        expect(() => primitive.setGeometry(cylinder)).not.toThrow();
 
         // sphere
         const sphere = {
@@ -179,7 +179,7 @@ describe('dive/primitive/DIVEPrimitive', () => {
             height: 1,
             depth: 1,
         } as COMGeometry;
-        expect(() => primitive.SetGeometry(sphere)).not.toThrow();
+        expect(() => primitive.setGeometry(sphere)).not.toThrow();
 
         // pyramid
         const pyramid = {
@@ -188,7 +188,7 @@ describe('dive/primitive/DIVEPrimitive', () => {
             height: 1.5,
             depth: 1,
         } as COMGeometry;
-        expect(() => primitive.SetGeometry(pyramid)).not.toThrow();
+        expect(() => primitive.setGeometry(pyramid)).not.toThrow();
 
         // box
         const box = {
@@ -197,7 +197,7 @@ describe('dive/primitive/DIVEPrimitive', () => {
             height: 1,
             depth: 1,
         } as COMGeometry;
-        expect(() => primitive.SetGeometry(box)).not.toThrow();
+        expect(() => primitive.setGeometry(box)).not.toThrow();
 
         // cone
         const cone = {
@@ -206,7 +206,7 @@ describe('dive/primitive/DIVEPrimitive', () => {
             height: 1.5,
             depth: 1,
         } as COMGeometry;
-        expect(() => primitive.SetGeometry(cone)).not.toThrow();
+        expect(() => primitive.setGeometry(cone)).not.toThrow();
 
         // wall
         const wall = {
@@ -215,14 +215,14 @@ describe('dive/primitive/DIVEPrimitive', () => {
             height: 1.5,
             depth: 0.1,
         } as COMGeometry;
-        expect(() => primitive.SetGeometry(wall)).not.toThrow();
+        expect(() => primitive.setGeometry(wall)).not.toThrow();
 
         const wallWithoutDepth = {
             name: 'wall',
             width: 1,
             height: 1.5,
         } as COMGeometry;
-        expect(() => primitive.SetGeometry(wallWithoutDepth)).not.toThrow();
+        expect(() => primitive.setGeometry(wallWithoutDepth)).not.toThrow();
 
         // plane
         const plane = {
@@ -231,7 +231,7 @@ describe('dive/primitive/DIVEPrimitive', () => {
             height: 0.1,
             depth: 1,
         } as COMGeometry;
-        expect(() => primitive.SetGeometry(plane)).not.toThrow();
+        expect(() => primitive.setGeometry(plane)).not.toThrow();
     });
 
     it('should set material', () => {

@@ -1,6 +1,6 @@
-import { SetBackgroundAction } from '../setbackground';
-import { DIVEEngine } from '../../../../../engine';
-import { DIVEScene } from '../../../../../engine/scene/Scene';
+import { SetBackgroundAction } from '../setbackground.ts';
+import { DIVEEngine } from '../../../../../engine/Engine.ts';
+import { DIVEScene } from '../../../../../engine/scene/Scene.ts';
 
 describe('SetBackgroundAction', () => {
     it('should set scene background', async () => {
