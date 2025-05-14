@@ -59,11 +59,23 @@ export function applyMixins<
 >(derivedCtor: T, constructors: K): MixedConstructor<T, K> {
     constructors.forEach((baseCtor) => {
         Object.getOwnPropertyNames(baseCtor.prototype).forEach((name) => {
-            Object.defineProperty(
-                derivedCtor.prototype,
+            if (name === 'constructor') {
+                return;
+            }
+            const descriptor = Object.getOwnPropertyDescriptor(
+                baseCtor.prototype,
                 name,
-                Object.getOwnPropertyDescriptor(baseCtor.prototype, name)!,
-            );
+            )!;
+            Object.defineProperty(derivedCtor.prototype, name, descriptor);
+        });
+        // Copy default instance properties from mixin to derived class prototype
+        const dummyInstance = new (baseCtor as any)();
+        Object.getOwnPropertyNames(dummyInstance).forEach((prop) => {
+            const descriptor = Object.getOwnPropertyDescriptor(
+                dummyInstance,
+                prop,
+            )!;
+            Object.defineProperty(derivedCtor.prototype, prop, descriptor);
         });
     });
     return derivedCtor as unknown as MixedConstructor<T, K>;

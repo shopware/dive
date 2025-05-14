@@ -34,6 +34,12 @@ describe('dive/node/DIVENode', () => {
         expect(node).toBeDefined();
     });
 
+    it('should have mixin properties and methods', () => {
+        expect(node.isObject3D).toBe(true);
+        expect(node.isMovable).toBe(true);
+        expect(node.isSelectable).toBe(true);
+    });
+
     it('should set position', () => {
         const spySet = vi.spyOn(node.position, 'set');
         const spyCopy = vi.spyOn(node.position, 'copy');
