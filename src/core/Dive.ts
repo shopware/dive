@@ -74,7 +74,6 @@ export class DIVE {
         settings?: Partial<DIVESettings & { lightIntensity?: number }>,
     ): Promise<DIVE> {
         const dive = new DIVE(settings);
-        window.DIVE.instances.push(dive);
 
         // set scene properties
         dive.engine.scene.background = new Color(0xffffff);
@@ -210,6 +209,8 @@ export class DIVE {
 
         `);
         });
+
+        window.DIVE.instances.push(this);
     }
 
     public async dispose(): Promise<void> {
