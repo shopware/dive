@@ -3,22 +3,17 @@ import { DRACOWorker } from './worker/DracoWorker.js';
 
 const DRACO_LOADER_REGISTRY = {
     LOAD_DRACO_JS_DECODER: async () =>
-        (
-            await import(
-                '../../../../node_modules/three/examples/jsm/libs/draco/draco_decoder.js?raw'
-            )
-        ).default,
+        (await import('three/examples/jsm/libs/draco/draco_decoder.js?raw'))
+            .default,
     LOAD_DRACO_WASM_WRAPPER: async () =>
         (
             await import(
-                '../../../../node_modules/three/examples/jsm/libs/draco/draco_wasm_wrapper.js?raw'
+                'three/examples/jsm/libs/draco/draco_wasm_wrapper.js?raw'
             )
         ).default,
     LOAD_DRACO_WASM_DECODER: async () => {
         const wasmURL = (
-            await import(
-                '../../../../node_modules/three/examples/jsm/libs/draco/draco_decoder.wasm?url'
-            )
+            await import('three/examples/jsm/libs/draco/draco_decoder.wasm?url')
         ).default;
         const response = await fetch(wasmURL);
         return await response.arrayBuffer();
