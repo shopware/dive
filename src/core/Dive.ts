@@ -78,7 +78,7 @@ export class DIVE {
         // set scene properties
         dive.engine.scene.background = new Color(0xffffff);
         dive.engine.scene.grid.setVisibility(false);
-        dive.engine.scene.root.floor.setVisibility(false);
+        dive.engine.scene.root.floor.setVisibility(true);
         dive.engine.scene.root.floor.setColor(0xffffff);
 
         dive.engine.camera.position.set(0, 2, 2);
