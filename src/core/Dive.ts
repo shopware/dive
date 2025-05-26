@@ -114,6 +114,7 @@ export class DIVE {
     }
 
     // descriptive members
+    private _instanceId: string = MathUtils.generateUUID();
     private _settings: DIVESettings;
 
     public get engine(): DIVEEngine {
@@ -222,6 +223,10 @@ export class DIVE {
                 this._engine.clock.removeTicker(this.axisCamera);
                 this.axisCamera.dispose();
             }
+
+            window.DIVE.instances = window.DIVE.instances.filter(
+                (instance) => instance._instanceId !== this._instanceId,
+            );
 
             resolve();
         });
