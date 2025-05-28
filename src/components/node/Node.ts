@@ -6,12 +6,10 @@ import { DIVEMovable } from '../../interfaces/Movable.ts';
 import { DIVESelectable } from '../../interfaces/Selectable.ts';
 import { type TransformControls } from 'three/examples/jsm/controls/TransformControls.ts';
 import { type DIVEGroup } from '../group/Group.ts';
-import { applyMixins } from '../../helpers/applyMixins/applyMixins.ts';
 
-export class DIVENode extends applyMixins(Object3D, [
-    DIVESelectable,
-    DIVEMovable,
-]) {
+export class DIVENode extends Object3D implements DIVESelectable, DIVEMovable {
+    readonly isSelectable: true = true;
+    readonly isMovable: true = true;
     readonly isDIVENode: true = true;
 
     public gizmo: TransformControls | null = null;
