@@ -1,7 +1,17 @@
 import { AnimationSystem } from '../AnimationSystem.ts';
+import { type Tween as TweenJsTween } from '@tweenjs/tween.js';
 import { Tween, Easing, update } from '@tweenjs/tween.js';
 import { TAnimatorParameters } from '../types/AnimatorParameters.ts';
 import type { Mock } from 'vitest';
+
+vi.mock('@tweenjs/tween.js', async () => {
+    const actual = (await vi.importActual('@tweenjs/tween.js')) as any;
+    return {
+        ...actual,
+        Tween: vi.fn(),
+        update: vi.fn(),
+    };
+});
 
 vi.mock('../animator/Animator', () => ({
     Animator: vi.fn().mockImplementation((object, to, duration, options) => ({
@@ -18,13 +28,14 @@ vi.mock('../animator/Animator', () => ({
 
 describe('dive/animation/DIVEAnimationSystem', () => {
     let animationSystem: AnimationSystem;
-    let mockTween: Tween<any> & {
+    let mockTween: TweenJsTween<any> & {
         updateCallback: (object: any, elapsed: number) => void;
         completeCallback: (object: any) => void;
     };
 
     beforeEach(() => {
-        animationSystem = new AnimationSystem();
+        vi.clearAllMocks();
+
         mockTween = {
             to: vi.fn().mockReturnThis(),
             easing: vi.fn().mockReturnThis(),
@@ -32,26 +43,28 @@ describe('dive/animation/DIVEAnimationSystem', () => {
                 .fn()
                 .mockImplementation(
                     (cb: (object: any, elapsed: number) => void) => {
-                        mockTween.updateCallback = cb;
+                        (mockTween as any).updateCallback = cb;
                         return mockTween;
                     },
                 ),
             onComplete: vi
                 .fn()
                 .mockImplementation((cb: (object: any) => void) => {
-                    mockTween.completeCallback = cb;
+                    (mockTween as any).completeCallback = cb;
                     return mockTween;
                 }),
             start: vi.fn(),
             stop: vi.fn(),
             updateCallback: vi.fn(),
             completeCallback: vi.fn(),
-        } as unknown as Tween<any> & {
+        } as unknown as TweenJsTween<any> & {
             updateCallback: (object: any, elapsed: number) => void;
             completeCallback: (object: any) => void;
         };
-        vi.mocked(Tween).mockReturnValue(mockTween);
-        vi.clearAllMocks();
+
+        vi.mocked(Tween).mockImplementation(() => mockTween);
+
+        animationSystem = new AnimationSystem();
     });
 
     afterEach(() => {
