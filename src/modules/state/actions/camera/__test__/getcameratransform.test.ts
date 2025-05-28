@@ -1,5 +1,5 @@
-import { GetCameraTransformAction } from '../getcameratransform';
-import { type OrbitController } from '../../../../controller/orbit/OrbitController';
+import { GetCameraTransformAction } from '../getcameratransform.ts';
+import { type OrbitController } from '../../../../controller/orbit/OrbitController.js';
 import { Vector3 } from 'three';
 
 describe('GetCameraTransformAction', () => {
