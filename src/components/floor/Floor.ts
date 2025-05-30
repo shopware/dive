@@ -1,6 +1,7 @@
 import {
     Color,
     ColorRepresentation,
+    FrontSide,
     Mesh,
     MeshStandardMaterial,
     PlaneGeometry,
@@ -19,20 +20,22 @@ export class DIVEFloor extends Mesh {
     readonly isDIVEFloor: true = true;
 
     constructor() {
-        super(
-            new PlaneGeometry(10000, 10000),
-            new MeshStandardMaterial({
-                color: new Color(150 / 255, 150 / 255, 150 / 255),
-            }),
-        );
+        const geo = new PlaneGeometry(1, 1);
+        geo.scale(1000, 1000, 1);
+        geo.rotateX(-Math.PI / 2);
+
+        const material = new MeshStandardMaterial({
+            color: new Color(0xffffff),
+            side: FrontSide,
+        });
+
+        super(geo, material);
 
         this.name = 'Floor';
 
         this.layers.mask = PRODUCT_LAYER_MASK;
 
         this.receiveShadow = true;
-
-        this.rotateX(-Math.PI / 2);
     }
 
     public setVisibility(visible: boolean): void {

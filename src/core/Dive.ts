@@ -79,7 +79,6 @@ export class DIVE {
         dive.engine.scene.background = new Color(0xffffff);
         dive.engine.scene.grid.setVisibility(false);
         dive.engine.scene.root.floor.setVisibility(true);
-        dive.engine.scene.root.floor.setColor(0xffffff);
 
         dive.engine.camera.position.set(0, 2, 2);
         dive.orbitController.target.set(0, 0.5, 0);
