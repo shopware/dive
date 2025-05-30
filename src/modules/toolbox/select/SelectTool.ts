@@ -11,10 +11,6 @@ export const isSelectTool = (tool: DIVEBaseTool): tool is DIVESelectTool => {
     return (tool as DIVESelectTool).isSelectTool !== undefined;
 };
 
-export interface DIVEObjectEventMap {
-    select: object;
-}
-
 /**
  * A Tool to select and move objects in the scene.
  *

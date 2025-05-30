@@ -2,9 +2,9 @@ import { AssetLoader } from '../AssetLoader.ts';
 import { GLTF, GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { USDZLoader } from 'three/examples/jsm/loaders/USDZLoader.js';
 import { Group } from 'three';
-import { FileTypeError } from '../../../../error/file-type/file-type-error.ts';
-import { NetworkError } from '../../../../error/network/network-error.ts';
-import { ParseError } from '../../../../error/parse/parse-error.ts';
+import { FileTypeError } from '../../../error/file-type/file-type-error.ts';
+import { NetworkError } from '../../../error/network/network-error.ts';
+import { ParseError } from '../../../error/parse/parse-error.ts';
 import { DRACOLoader } from 'three/examples/jsm/Addons.js';
 
 // Mock fetch

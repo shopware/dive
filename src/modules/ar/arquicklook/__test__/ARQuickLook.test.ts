@@ -1,7 +1,7 @@
 import { Object3D } from 'three';
 import { type ARSystemOptions } from '../../ARSystem.ts';
 import { ARQuickLook } from '../ARQuickLook.ts';
-import { AssetConverter } from '../../../asset/converter/AssetConverter.ts';
+import { AssetConverter } from '../../../assetconverter/AssetConverter.ts';
 import { SystemInfo, EBrowser } from '../../../systeminfo/SystemInfo.ts';
 import {
     ARQuickLookNotSafariError,

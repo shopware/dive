@@ -12,50 +12,60 @@
             "import": "./build/dive.mjs",
             "require": "./build/dive.cjs"
         },
-        "./modules/AnimationSystem": {
-            "types": "./build/src/modules/animation/AnimationSystem.d.ts",
-            "import": "./build/src/modules/animation/AnimationSystem.mjs",
-            "require": "./build/src/modules/animation/AnimationSystem.cjs"
+        "./animation": {
+            "types": "./build/modules/animation/index.d.ts",
+            "import": "./build/modules/animation/index.mjs",
+            "require": "./build/modules/animation/index.cjs"
         },
-        "./modules/ARSystem": {
-            "types": "./build/src/modules/ar/ARSystem.d.ts",
-            "import": "./build/src/modules/ar/ARSystem.mjs",
-            "require": "./build/src/modules/ar/ARSystem.cjs"
+        "./ar": {
+            "types": "./build/modules/ar/index.d.ts",
+            "import": "./build/modules/ar/index.mjs",
+            "require": "./build/modules/ar/index.cjs"
         },
-        "./modules/AssetConverter": {
-            "types": "./build/src/modules/asset/converter/AssetConverter.d.ts",
-            "import": "./build/src/modules/asset/converter/AssetConverter.mjs",
-            "require": "./build/src/modules/asset/converter/AssetConverter.cjs"
+        "./assetconverter": {
+            "types": "./build/modules/assetconverter/index.d.ts",
+            "import": "./build/modules/assetconverter/index.mjs",
+            "require": "./build/modules/assetconverter/index.cjs"
         },
-        "./modules/AssetExporter": {
-            "types": "./build/src/modules/asset/exporter/AssetExporter.d.ts",
-            "import": "./build/src/modules/asset/exporter/AssetExporter.mjs",
-            "require": "./build/src/modules/asset/exporter/AssetExporter.cjs"
+        "./assetexporter": {
+            "types": "./build/modules/assetexporter/index.d.ts",
+            "import": "./build/modules/assetexporter/index.mjs",
+            "require": "./build/modules/assetexporter/index.cjs"
         },
-        "./modules/AssetLoader": {
-            "types": "./build/src/modules/asset/loader/AssetLoader.d.ts",
-            "import": "./build/src/modules/asset/loader/AssetLoader.mjs",
-            "require": "./build/src/modules/asset/loader/AssetLoader.cjs"
+        "./assetloader": {
+            "types": "./build/modules/assetloader/index.d.ts",
+            "import": "./build/modules/assetloader/index.mjs",
+            "require": "./build/modules/assetloader/index.cjs"
         },
-        "./modules/MediaCreator": {
-            "types": "./build/src/modules/mediacreator/MediaCreator.d.ts",
-            "import": "./build/src/modules/mediacreator/MediaCreator.mjs",
-            "require": "./build/src/modules/mediacreator/MediaCreator.cjs"
+        "./axiscamera": {
+            "types": "./build/modules/axiscamera/index.d.ts",
+            "import": "./build/modules/axiscamera/index.mjs",
+            "require": "./build/modules/axiscamera/index.cjs"
         },
-        "./modules/State": {
-            "types": "./build/src/modules/state/State.d.ts",
-            "import": "./build/src/modules/state/State.mjs",
-            "require": "./build/src/modules/state/State.cjs"
+        "./controller": {
+            "types": "./build/modules/controller/index.d.ts",
+            "import": "./build/modules/controller/index.mjs",
+            "require": "./build/modules/controller/index.cjs"
         },
-        "./modules/SystemInfo": {
-            "types": "./build/src/modules/systeminfo/SystemInfo.d.ts",
-            "import": "./build/src/modules/systeminfo/SystemInfo.mjs",
-            "require": "./build/src/modules/systeminfo/SystemInfo.cjs"
+        "./mediacreator": {
+            "types": "./build/modules/mediacreator/index.d.ts",
+            "import": "./build/modules/mediacreator/index.mjs",
+            "require": "./build/modules/mediacreator/index.cjs"
         },
-        "./modules/Toolbox": {
-            "types": "./build/src/modules/toolbox/Toolbox.d.ts",
-            "import": "./build/src/modules/toolbox/Toolbox.mjs",
-            "require": "./build/src/modules/toolbox/Toolbox.cjs"
+        "./state": {
+            "types": "./build/modules/state/index.d.ts",
+            "import": "./build/modules/state/index.mjs",
+            "require": "./build/modules/state/index.cjs"
+        },
+        "./systeminfo": {
+            "types": "./build/modules/systeminfo/index.d.ts",
+            "import": "./build/modules/systeminfo/index.mjs",
+            "require": "./build/modules/systeminfo/index.cjs"
+        },
+        "./toolbox": {
+            "types": "./build/modules/toolbox/index.d.ts",
+            "import": "./build/modules/toolbox/index.mjs",
+            "require": "./build/modules/toolbox/index.cjs"
         }
     },
     "files": [

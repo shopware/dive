@@ -1,7 +1,7 @@
 import { type ARSystemOptions } from '../ARSystem.ts';
-import { AssetConverter } from '../../asset/converter/AssetConverter.ts';
-import { AssetLoader } from '../../asset/loader/AssetLoader.ts';
-import { AssetExporter } from '../../asset/exporter/AssetExporter.ts';
+import { AssetConverter } from '../../assetconverter/AssetConverter.ts';
+import { AssetLoader } from '../../assetloader/AssetLoader.ts';
+import { AssetExporter } from '../../assetexporter/AssetExporter.ts';
 import {
     ARQuickLookNotSafariError,
     ARQuickLookVersionMismatchError,

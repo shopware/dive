@@ -8,11 +8,11 @@ const ModuleRegistry = {
         (await import('./animation/AnimationSystem.ts')).AnimationSystem,
     ARSystem: async () => (await import('./ar/ARSystem.ts')).ARSystem,
     AssetConverter: async () =>
-        (await import('./asset/converter/AssetConverter.ts')).AssetConverter,
+        (await import('./assetconverter/AssetConverter.ts')).AssetConverter,
     AssetExporter: async () =>
-        (await import('./asset/exporter/AssetExporter.ts')).AssetExporter,
+        (await import('./assetexporter/AssetExporter.ts')).AssetExporter,
     AssetLoader: async () =>
-        (await import('./asset/loader/AssetLoader.ts')).AssetLoader,
+        (await import('./assetloader/AssetLoader.ts')).AssetLoader,
     MediaCreator: async () =>
         (await import('./mediacreator/MediaCreator.ts')).MediaCreator,
     State: async () => (await import('./state/State.ts')).State,

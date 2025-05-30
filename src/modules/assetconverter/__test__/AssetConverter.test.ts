@@ -1,8 +1,8 @@
 import { AssetConverter } from '../AssetConverter.ts';
-import { AssetLoader } from '../../loader/AssetLoader.ts';
-import { AssetExporter } from '../../exporter/AssetExporter.ts';
+import { AssetLoader } from '../../assetloader/AssetLoader.ts';
+import { AssetExporter } from '../../assetexporter/AssetExporter.ts';
 import { Object3D } from 'three';
-import { FileType } from '../../../../types/file/index.ts';
+import { FileType } from '../../../types/file/index.ts';
 
 const mockLoaderLoad = vi.fn();
 vi.mock('../../loader/AssetLoader', () => {

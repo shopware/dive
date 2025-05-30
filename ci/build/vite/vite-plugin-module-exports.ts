@@ -33,11 +33,12 @@ function updatePackageJsonExports(registrations: ModuleRegistration[]): void {
 
     // Add each module to exports
     registrations.forEach(({ name, buildPath }) => {
-        const modulePath = `./modules/${name}`;
-        exports[modulePath] = {
-            types: `./build/src/${buildPath}.d.ts`,
-            import: `./build/src/${buildPath}.mjs`,
-            require: `./build/src/${buildPath}.cjs`,
+        // Ensure buildPath for modules points to the module's own folder structure
+        const moduleExportPath = `./${name}`;
+        exports[moduleExportPath] = {
+            types: `./build/modules/${name}/index.d.ts`,
+            import: `./build/modules/${name}/index.mjs`,
+            require: `./build/modules/${name}/index.cjs`,
         };
     });
 
@@ -50,36 +51,15 @@ function updatePackageJsonExports(registrations: ModuleRegistration[]): void {
     console.log('[Dive Build] Updated package.json exports');
 }
 
-// Function to recursively find module files
-function findModuleFiles(dir: string, projectRoot: string): string[] {
-    let files: string[] = [];
-    const entries = fs.readdirSync(dir, { withFileTypes: true });
-
-    for (const entry of entries) {
-        const fullPath = join(dir, entry.name);
-        if (entry.isDirectory()) {
-            files = files.concat(findModuleFiles(fullPath, projectRoot));
-        } else if (
-            entry.isFile() &&
-            entry.name.endsWith('.ts') &&
-            entry.name !== 'index.ts'
-        ) {
-            // Store path relative to project root
-            files.push(relative(projectRoot, fullPath));
-        }
-    }
-    return files;
-}
-
 // Plugin to discover modules, configure library build, and inject path map
 export default function moduleBuildPlugin(): Plugin {
-    // --- Discover Registrations (Scan files for ModuleClasses interface extension) ---
+    // --- Discover Registrations (Scan for index.ts in module folders) ---
     console.log(
-        `[Dive Build] Discovering module registrations by scanning ${MODULES_PATH}...`,
+        `[Dive Build] Discovering module registrations by looking for index.ts in subdirectories of ${MODULES_PATH}...`,
     );
     const projectRoot = process.cwd();
     const modulesDirAbs = pathResolve(projectRoot, MODULES_PATH);
-    const registrations: ModuleRegistration[] = [];
+    let registrations: ModuleRegistration[] = [];
 
     if (!fs.existsSync(modulesDirAbs)) {
         console.warn(
@@ -87,42 +67,29 @@ export default function moduleBuildPlugin(): Plugin {
         );
     } else {
         try {
-            const moduleFiles = findModuleFiles(modulesDirAbs, projectRoot);
+            // Scan for index.ts files in the direct subdirectories of MODULES_PATH
+            const moduleDirs = fs
+                .readdirSync(modulesDirAbs, { withFileTypes: true })
+                .filter((dirent) => dirent.isDirectory())
+                .map((dirent) => dirent.name);
 
-            for (const relativeFilePath of moduleFiles) {
-                const absoluteFilePath = pathResolve(
-                    projectRoot,
-                    relativeFilePath,
-                );
-                const content = fs.readFileSync(absoluteFilePath, 'utf-8');
-
-                // Look for the specific pattern: interface ModuleClasses { ClassName: typeof ClassName; }
-                const interfaceRegex = /interface\s+ModuleClasses\s*{([^}]*)}/s;
-                const interfaceMatch = content.match(interfaceRegex);
-
-                if (interfaceMatch) {
-                    const interfaceContent = interfaceMatch[1];
-                    const classRegex =
-                        /\s*([A-Za-z0-9_]+)\s*:\s*typeof\s*\1\s*;/;
-                    const classMatch = interfaceContent.match(classRegex);
-
-                    if (classMatch && classMatch[1]) {
-                        const className = classMatch[1];
-                        console.log(
-                            `   Found module: ${className} in ${relativeFilePath}`,
-                        );
-
-                        // Convert source path to build path
-                        const buildPath = relativeFilePath
-                            .replace(/^src\//, '')
-                            .replace(/\.ts$/, '');
-
-                        registrations.push({
-                            name: className,
-                            path: relativeFilePath,
-                            buildPath: buildPath,
-                        });
-                    }
+            for (const dirName of moduleDirs) {
+                const indexPath = join(modulesDirAbs, dirName, 'index.ts');
+                if (fs.existsSync(indexPath)) {
+                    const relativeIndexPath = relative(projectRoot, indexPath);
+                    // Ensure module name is consistently cased (e.g. ar, not AR)
+                    // The module name should be the directory name for consistent export paths
+                    const moduleName = dirName; // Keep original casing for path, package.json export name can be lowercased if needed
+                    console.log(
+                        `   Found module: ${moduleName} at ${relativeIndexPath}`,
+                    );
+                    registrations.push({
+                        name: moduleName, // This name is used for the `modules/${name}` export path
+                        path: relativeIndexPath, // Path to the module's index.ts
+                        // buildPath determines the output structure within 'build/'
+                        // e.g., 'modules/ar/index' which becomes 'build/modules/ar/index.mjs'
+                        buildPath: `modules/${moduleName}/index`,
+                    });
                 }
             }
         } catch (error) {
@@ -146,10 +113,11 @@ export default function moduleBuildPlugin(): Plugin {
             };
 
             // Add module entry points
-            registrations.forEach(({ name, path }) => {
+            registrations.forEach(({ name, path, buildPath }) => {
                 const absoluteSrcPath = pathResolve(projectRoot, path);
-                const rollupEntryKey = path.replace(/\.ts$/, '');
-                rollupInput[rollupEntryKey] = absoluteSrcPath;
+                // The key in rollupInput should match the desired output path structure
+                // e.g., 'modules/ar/index' will produce 'build/modules/ar/index.mjs'
+                rollupInput[buildPath] = absoluteSrcPath;
             });
 
             return {
@@ -162,6 +130,7 @@ export default function moduleBuildPlugin(): Plugin {
                         output: [
                             {
                                 format: 'esm',
+                                // [name] will be replaced by the key in rollupInput (e.g., 'modules/ar/index')
                                 entryFileNames: '[name].mjs',
                                 chunkFileNames: 'chunks/[name]-[hash].mjs',
                                 exports: 'named',

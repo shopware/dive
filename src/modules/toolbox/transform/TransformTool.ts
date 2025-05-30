@@ -18,10 +18,6 @@ export const isTransformTool = (
     return (tool as DIVETransformTool).isTransformTool !== undefined;
 };
 
-export interface DIVEObjectEventMap {
-    select: object;
-}
-
 /**
  * A Tool to select and move objects in the scene.
  *

@@ -93,11 +93,11 @@ export class State {
     }
 
     private _assetExplorer:
-        | import('../asset/exporter/AssetExporter.ts').AssetExporter
+        | import('../assetexporter/AssetExporter.ts').AssetExporter
         | null = null;
 
     private async getAssetExporter(): Promise<
-        import('../asset/exporter/AssetExporter.ts').AssetExporter
+        import('../assetexporter/AssetExporter.ts').AssetExporter
     > {
         if (!this._assetExplorer) {
             this._assetExplorer = new (await getModule('AssetExporter'))();
