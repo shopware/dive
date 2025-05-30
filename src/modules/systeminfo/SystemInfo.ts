@@ -1,5 +1,13 @@
 import { ESystem, EWebXRUnsupportedReason } from '../../types/info/index.ts';
-import { ARCompatibilityError } from '../../error/ar-compatibility/ar-compatibility-error.ts';
+
+export enum EBrowser {
+    CHROMIUM = 'Chromium', // Chrome, Opera, Brave, new Edge, Chrome on iOS
+    SAFARI = 'Safari', // Apple Safari
+    WEBKIT = 'WebKit', // Other WebKit-based browsers (not Safari or iOS variants if specified)
+    FIREFOX = 'Firefox', // Firefox, Firefox on iOS
+    EDGE_LEGACY = 'EdgeLegacy', // Old EdgeHTML Edge
+    UNKNOWN = 'Unknown',
+}
 
 declare global {
     interface ModuleClasses {
@@ -141,19 +149,7 @@ export class SystemInfo {
             return true;
         }
 
-        const userAgent = window.navigator.userAgent;
-        const platform = window.navigator.platform;
-        const vendor = window.navigator.vendor;
-
-        // The base error message - the ARCompatibilityError constructor will add more details
-        const errorMessage = 'ARQuickLook is not supported';
-
-        throw new ARCompatibilityError(
-            errorMessage,
-            userAgent,
-            platform,
-            vendor,
-        );
+        return false;
     }
 
     /**
@@ -221,5 +217,96 @@ export class SystemInfo {
      */
     public static getSupportsAR(): boolean {
         return this.getSupportsARQuickLook() || this.getSupportsSceneViewer();
+    }
+
+    /**
+     * Gets the current browser engine.
+     * @returns EBrowser The current browser engine.
+     */
+    public static getBrowser(): EBrowser {
+        if (typeof window === 'undefined' || !window.navigator) {
+            return EBrowser.UNKNOWN;
+        }
+
+        const ua = window.navigator.userAgent.toLowerCase();
+        const vendor = window.navigator.vendor?.toLowerCase();
+
+        // Order of checks is important
+
+        // iOS specific browser brands (use WebKit engine but identify as brand)
+        if (ua.includes('fxios/')) {
+            // Firefox on iOS
+            return EBrowser.FIREFOX;
+        }
+        if (ua.includes('crios/')) {
+            // Chrome on iOS
+            return EBrowser.CHROMIUM;
+        }
+
+        // Firefox (Desktop/Android)
+        if (ua.includes('firefox/')) {
+            return EBrowser.FIREFOX;
+        }
+
+        // Safari (must be checked before Chromium and general WebKit for non-iOS Chrome/Firefox)
+        if (
+            ua.includes('safari/') &&
+            ua.includes('version/') &&
+            !ua.includes('chrome/') && // Excludes desktop Chrome, Edge Chromium
+            !ua.includes('edg/') &&
+            !ua.includes('opr/')
+        ) {
+            return EBrowser.SAFARI;
+        }
+
+        // Edge (Chromium-based) - check before generic Chromium due to "Edg/" token
+        if (ua.includes('edg/')) {
+            return EBrowser.CHROMIUM;
+        }
+
+        // Edge (Legacy EdgeHTML) - rare now
+        if (ua.includes('edge/')) {
+            return EBrowser.EDGE_LEGACY;
+        }
+
+        // Chromium (Chrome, Opera, Brave etc. - non-iOS versions not already caught)
+        if (ua.includes('chrome/') || vendor?.includes('google inc.')) {
+            return EBrowser.CHROMIUM;
+        }
+
+        // If still unsure, but WebKit is in UA (could be other WebKit browsers or less common ones)
+        // This is a fallback if no specific brand was identified above.
+        if (ua.includes('applewebkit')) {
+            return EBrowser.WEBKIT;
+        }
+
+        return EBrowser.UNKNOWN;
+    }
+
+    /**
+     * Gets the iOS version if the current system is iOS.
+     * @returns An object with { major: number, full: string } or null if not iOS or version not parsable.
+     */
+    public static getIOSVersion(): { major: number; full: string } | null {
+        if (
+            this.getSystem() !== ESystem.IOS ||
+            typeof window === 'undefined' ||
+            !window.navigator
+        ) {
+            return null;
+        }
+
+        const ua = window.navigator.userAgent;
+        const osMatch = ua.match(/(?:iPhone OS|iPad OS|OS) (\d+[._\d]*)/i); // More flexible regex for version
+
+        if (osMatch && osMatch[1]) {
+            const fullVersionString = osMatch[1].replace(/_/g, '.');
+            const majorVersion = parseInt(fullVersionString.split('.')[0], 10);
+
+            if (!isNaN(majorVersion)) {
+                return { major: majorVersion, full: fullVersionString };
+            }
+        }
+        return null;
     }
 }

@@ -1,6 +1,16 @@
 import { type ARSystemOptions } from '../ARSystem.ts';
 
 export class SceneViewer {
+    /**
+     * Launches AR using SceneViewer (Android-specific implementation)
+     * Note: SceneViewer is supported on all Android devices. If ARCore is not installed,
+     * the model will be displayed in 3D view mode instead of AR mode.
+     *
+     * @param uri - The URI of the 3D model to display in AR
+     * @param options - Optional configuration for the AR experience
+     * @returns Promise that resolves when SceneViewer is launched successfully
+     * @throws Error if there's an issue launching SceneViewer
+     */
     public launch(uri: string, options?: ARSystemOptions): void {
         const location = self.location.toString();
         const anchor = document.createElement('a');

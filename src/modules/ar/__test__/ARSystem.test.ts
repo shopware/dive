@@ -1,242 +1,190 @@
 import { ARSystem, type ARSystemOptions } from '../ARSystem.ts';
-import { SystemInfo } from '../../systeminfo/SystemInfo.ts';
-import { ARQuickLook } from '../arquicklook/ARQuickLook.ts';
-import { SceneViewer } from '../sceneviewer/SceneViewer.ts';
-import { ESystem } from '../../../types/index.ts';
+import { SystemInfo } from '../../systeminfo/SystemInfo.ts'; // This will be mocked
+import { ARQuickLook } from '../arquicklook/ARQuickLook.ts'; // This will be mocked
+import { SceneViewer } from '../sceneviewer/SceneViewer.ts'; // This will be mocked
+// Make sure ESystem is correctly imported based on ARSystem.ts's actual import path
+// ARSystem.ts uses: import { ESystem } from '../../types/info/index.ts';
+// So, for the test file, the relative path is:
+import { ESystem } from '../../../types/info/index.ts';
+import { ARDesktopPlatformError } from '../error/ar-errors.ts';
 
-// Helper for test failures
-const fail = (message: string): never => {
-    throw new Error(message);
-};
-
-// Mock Info
-vi.mock('../../systeminfo/SystemInfo', () => ({
-    SystemInfo: {
-        getSystem: vi.fn(),
-        getSupportsARQuickLook: vi.fn(),
-    },
-}));
-
-// Mock ARQuickLook
-const mockLaunchARQuickLook = vi.fn().mockResolvedValue(undefined);
-vi.mock('../arquicklook/ARQuickLook', () => ({
-    ARQuickLook: vi.fn().mockImplementation(() => ({
-        launch: mockLaunchARQuickLook,
-    })),
-}));
-
-// Mock SceneViewer
-const mockSceneViewerLaunch = vi.fn().mockResolvedValue(undefined);
-vi.mock('../sceneviewer/SceneViewer', () => ({
-    SceneViewer: vi.fn().mockImplementation(() => ({
-        launch: mockSceneViewerLaunch,
-    })),
-}));
+// Mock the modules ARSystem depends on
+vi.mock('../../systeminfo/SystemInfo');
+vi.mock('../arquicklook/ARQuickLook');
+vi.mock('../sceneviewer/SceneViewer');
 
 describe('ARSystem', () => {
-    let diveAR: ARSystem;
-    const mockUri = 'https://example.com/model.glb';
+    let arSystem: ARSystem;
+    const mockUri = 'test/model.glb';
+    const mockOptions: ARSystemOptions = {
+        arPlacement: 'vertical',
+        arScale: 'fixed',
+    };
+
+    // Create mock launch functions for ARQuickLook and SceneViewer instances
+    const mockARQuickLookLaunch = vi.fn();
+    const mockSceneViewerLaunch = vi.fn();
 
     beforeEach(() => {
-        diveAR = new ARSystem();
+        // Reset all mocks before each test
         vi.clearAllMocks();
+
+        // Setup mock implementations for ARQuickLook and SceneViewer
+        // When `new ARQuickLook()` is called in ARSystem, it will return an object with a mocked launch function.
+        vi.mocked(ARQuickLook).mockImplementation(() => {
+            return {
+                launch: mockARQuickLookLaunch,
+            } as unknown as ARQuickLook;
+        });
+
+        // When `new SceneViewer()` is called in ARSystem, it will return an object with a mocked launch function.
+        vi.mocked(SceneViewer).mockImplementation(() => {
+            return {
+                launch: mockSceneViewerLaunch,
+            } as unknown as SceneViewer;
+        });
+
+        arSystem = new ARSystem();
     });
 
     describe('launch', () => {
-        describe('AR Quick Look', () => {
-            it('should launch ARQuickLook on iOS', async () => {
+        describe('when on iOS platform', () => {
+            beforeEach(() => {
+                // Mock SystemInfo.getSystem() to return the actual ESystem.IOS value
                 vi.mocked(SystemInfo.getSystem).mockReturnValue(ESystem.IOS);
-                vi.mocked(SystemInfo.getSupportsARQuickLook).mockReturnValue(
-                    true,
+            });
+
+            it('should instantiate ARQuickLook and call its launch method with URI and options', async () => {
+                mockARQuickLookLaunch.mockResolvedValue(undefined); // ARQuickLook.launch is async
+                await arSystem.launch(mockUri, mockOptions);
+
+                expect(ARQuickLook).toHaveBeenCalledTimes(1);
+                expect(mockARQuickLookLaunch).toHaveBeenCalledWith(
+                    mockUri,
+                    mockOptions,
                 );
+                expect(SceneViewer).not.toHaveBeenCalled(); // Ensure SceneViewer is not involved
+            });
 
-                const consoleLogSpy = vi
-                    .spyOn(console, 'log')
-                    .mockImplementation(() => {});
+            it('should call ARQuickLook.launch with URI if no options are provided', async () => {
+                mockARQuickLookLaunch.mockResolvedValue(undefined);
+                await arSystem.launch(mockUri);
 
-                await diveAR.launch(mockUri);
-
-                expect(mockLaunchARQuickLook).toHaveBeenCalledWith(
+                expect(ARQuickLook).toHaveBeenCalledTimes(1);
+                expect(mockARQuickLookLaunch).toHaveBeenCalledWith(
                     mockUri,
                     undefined,
                 );
-                consoleLogSpy.mockRestore();
             });
 
-            it('should launch ARQuickLook on iOS with options', async () => {
-                vi.mocked(SystemInfo.getSystem).mockReturnValue(ESystem.IOS);
-                vi.mocked(SystemInfo.getSupportsARQuickLook).mockReturnValue(
-                    true,
-                );
+            it('should return the promise from ARQuickLook.launch when successful', async () => {
+                const successPromise = Promise.resolve(); // A distinct promise
+                mockARQuickLookLaunch.mockReturnValue(successPromise);
 
-                const options: ARSystemOptions = {
-                    arPlacement: 'vertical',
-                    arScale: 'fixed',
-                };
-
-                const consoleLogSpy = vi
-                    .spyOn(console, 'log')
-                    .mockImplementation(() => {});
-
-                await diveAR.launch(mockUri, options);
-
-                expect(mockLaunchARQuickLook).toHaveBeenCalledWith(
-                    mockUri,
-                    options,
-                );
-                consoleLogSpy.mockRestore();
+                const resultPromise = arSystem.launch(mockUri, mockOptions);
+                // ARSystem.launch wraps the call, so it's not the *exact* same promise object usually.
+                // We should check that it resolves when the underlying promise resolves.
+                await expect(resultPromise).resolves.toBeUndefined(); // ARSystem.launch is Promise<void>
+                expect(mockARQuickLookLaunch).toHaveBeenCalled();
             });
 
-            it('should not launch ARQuickLook on iOS if not supported', async () => {
-                vi.mocked(SystemInfo.getSystem).mockReturnValue(ESystem.IOS);
-
-                // Mock GetSupportsARQuickLook to throw an error
-                const mockError = new Error('ARQuickLook not supported');
-                vi.mocked(SystemInfo.getSupportsARQuickLook).mockImplementation(
-                    () => {
-                        throw mockError;
-                    },
+            it('should propagate rejection if ARQuickLook.launch rejects', async () => {
+                const expectedError = new Error(
+                    'ARQuickLook specific launch failure',
                 );
+                mockARQuickLookLaunch.mockRejectedValue(expectedError);
 
-                try {
-                    await diveAR.launch(mockUri);
-                    fail('Expected launch to reject');
-                } catch (error: unknown) {
-                    expect(error).toBe(mockError);
-                }
-            });
-
-            it('should handle ARQuickLook launch errors', async () => {
-                vi.mocked(SystemInfo.getSystem).mockReturnValue(ESystem.IOS);
-                vi.mocked(SystemInfo.getSupportsARQuickLook).mockReturnValue(
-                    true,
-                );
-
-                const mockError = new Error('Launch failed');
-                const mockInstance = {
-                    launch: vi.fn().mockImplementation(() => {
-                        throw mockError;
-                    }),
-                };
-                vi.mocked(ARQuickLook).mockImplementation(
-                    () =>
-                        ({
-                            launch: vi.fn().mockImplementation(() => {
-                                throw mockError;
-                            }),
-                            convertToUSDZ: vi.fn(),
-                            launchARQuickLook: vi.fn(),
-                        }) as unknown as ARQuickLook,
-                );
-
-                try {
-                    await diveAR.launch(mockUri);
-                    fail('Expected launch to reject');
-                } catch (error: unknown) {
-                    if (error instanceof Error) {
-                        expect(error.message).toBe('Launch failed');
-                    } else {
-                        fail('Expected error to be an Error instance');
-                    }
-                }
+                await expect(
+                    arSystem.launch(mockUri, mockOptions),
+                ).rejects.toThrow(expectedError);
+                expect(ARQuickLook).toHaveBeenCalledTimes(1); // Ensure it was attempted
             });
         });
 
-        describe('Scene Viewer', () => {
-            it('should launch SceneViewer on Android', async () => {
+        describe('when on Android platform', () => {
+            beforeEach(() => {
+                // Mock SystemInfo.getSystem() to return the actual ESystem.ANDROID value
                 vi.mocked(SystemInfo.getSystem).mockReturnValue(
                     ESystem.ANDROID,
                 );
+            });
 
-                await diveAR.launch(mockUri);
+            it('should instantiate SceneViewer and call its launch method with URI and options', async () => {
+                mockSceneViewerLaunch.mockImplementation(() => {}); // SceneViewer.launch is sync void
 
+                // ARSystem.launch itself is async, wrapping the synchronous or asynchronous nature of platform-specific launches
+                await arSystem.launch(mockUri, mockOptions);
+
+                expect(SceneViewer).toHaveBeenCalledTimes(1);
+                expect(mockSceneViewerLaunch).toHaveBeenCalledWith(
+                    mockUri,
+                    mockOptions,
+                );
+                expect(ARQuickLook).not.toHaveBeenCalled(); // Ensure ARQuickLook is not involved
+            });
+
+            it('should call SceneViewer.launch with URI if no options are provided', async () => {
+                mockSceneViewerLaunch.mockImplementation(() => {});
+                await arSystem.launch(mockUri);
+
+                expect(SceneViewer).toHaveBeenCalledTimes(1);
                 expect(mockSceneViewerLaunch).toHaveBeenCalledWith(
                     mockUri,
                     undefined,
                 );
             });
 
-            it('should launch SceneViewer on Android with options', async () => {
-                vi.mocked(SystemInfo.getSystem).mockReturnValue(
-                    ESystem.ANDROID,
-                );
-
-                const options: ARSystemOptions = {
-                    arPlacement: 'vertical',
-                    arScale: 'fixed',
-                };
-
-                await diveAR.launch(mockUri, options);
-
-                expect(mockSceneViewerLaunch).toHaveBeenCalledWith(
-                    mockUri,
-                    options,
-                );
+            it('should resolve to undefined when SceneViewer.launch completes synchronously', async () => {
+                mockSceneViewerLaunch.mockImplementation(() => {});
+                await expect(
+                    arSystem.launch(mockUri, mockOptions),
+                ).resolves.toBeUndefined();
             });
 
-            it('should handle SceneViewer launch errors', async () => {
-                vi.mocked(SystemInfo.getSystem).mockReturnValue(
-                    ESystem.ANDROID,
+            it('should propagate synchronous errors from SceneViewer.launch as rejections in the returned promise', async () => {
+                const expectedError = new Error(
+                    'SceneViewer sync launch failure',
                 );
+                mockSceneViewerLaunch.mockImplementation(() => {
+                    throw expectedError;
+                });
 
-                const mockError = new Error('Launch failed');
-                const mockInstance = {
-                    launch: vi.fn().mockImplementation(() => {
-                        throw mockError;
-                    }),
-                } as unknown as SceneViewer;
-                vi.mocked(SceneViewer).mockImplementation(() => mockInstance);
-
-                try {
-                    await diveAR.launch(mockUri);
-                    fail('Expected launch to reject');
-                } catch (error: unknown) {
-                    if (error instanceof Error) {
-                        expect(error.message).toBe('Launch failed');
-                    } else {
-                        fail('Expected error to be an Error instance');
-                    }
-                }
+                await expect(
+                    arSystem.launch(mockUri, mockOptions),
+                ).rejects.toThrow(expectedError);
+                expect(SceneViewer).toHaveBeenCalledTimes(1); // Ensure it was attempted
             });
         });
 
-        it('should reject on non-mobile systems', async () => {
-            vi.mocked(SystemInfo.getSystem).mockReturnValue(ESystem.WINDOWS);
+        describe('when on an unsupported platform (e.g., Desktop or Unknown)', () => {
+            it('should reject with ARDesktopPlatformError if system is not iOS or Android', async () => {
+                // Use a value that is not ESystem.IOS or ESystem.ANDROID
+                // This assumes ESystem might have other values like DESKTOP, or getSystem might return something else
+                vi.mocked(SystemInfo.getSystem).mockReturnValue(
+                    'OTHER_SYSTEM' as ESystem,
+                );
 
-            // Mock navigator properties for the ARCompatibilityError constructor
-            const originalNavigator = window.navigator;
-            const mockNavigator = {
-                userAgent:
-                    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
-                platform: 'Win32',
-                vendor: 'Google Inc.',
-            };
-
-            // Replace navigator properties temporarily
-            Object.defineProperty(window, 'navigator', {
-                value: mockNavigator,
-                writable: true,
-                configurable: true,
+                await expect(
+                    arSystem.launch(mockUri, mockOptions),
+                ).rejects.toThrow(ARDesktopPlatformError);
+                expect(ARQuickLook).not.toHaveBeenCalled();
+                expect(SceneViewer).not.toHaveBeenCalled();
             });
 
-            try {
-                await diveAR.launch(mockUri);
-                fail('Expected launch to reject');
-            } catch (error: unknown) {
-                if (error instanceof Error) {
-                    expect(error.message).toBe(
-                        'AR not supported on non-mobile systems',
-                    );
-                } else {
-                    fail('Expected error to be an Error instance');
-                }
-            }
+            it('should reject with ARDesktopPlatformError if SystemInfo.getSystem() returns null', async () => {
+                vi.mocked(SystemInfo.getSystem).mockReturnValue(null as any);
+                await expect(
+                    arSystem.launch(mockUri, mockOptions),
+                ).rejects.toThrow(ARDesktopPlatformError);
+            });
 
-            // Restore original navigator
-            Object.defineProperty(window, 'navigator', {
-                value: originalNavigator,
-                writable: true,
-                configurable: true,
+            it('should reject with ARDesktopPlatformError if SystemInfo.getSystem() returns undefined', async () => {
+                vi.mocked(SystemInfo.getSystem).mockReturnValue(
+                    undefined as any,
+                );
+                await expect(
+                    arSystem.launch(mockUri, mockOptions),
+                ).rejects.toThrow(ARDesktopPlatformError);
             });
         });
     });

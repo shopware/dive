@@ -1,7 +1,13 @@
 import { Object3D } from 'three';
-import { ARSystemOptions } from '../../ARSystem';
-import { ARQuickLook } from '../ARQuickLook';
-import { AssetConverter } from '../../../asset/converter/AssetConverter';
+import { type ARSystemOptions } from '../../ARSystem.ts';
+import { ARQuickLook } from '../ARQuickLook.ts';
+import { AssetConverter } from '../../../asset/converter/AssetConverter.ts';
+import { SystemInfo, EBrowser } from '../../../systeminfo/SystemInfo.ts';
+import {
+    ARQuickLookNotSafariError,
+    ARQuickLookVersionMismatchError,
+    ARQuickLookUnknownError,
+} from '../../error/ar-errors.ts';
 
 vi.mock('../../../../engine/scene/Scene', () => {
     return {
@@ -25,6 +31,7 @@ vi.mock('../../../../engine/scene/Scene', () => {
 const mockConvert = vi.fn().mockReturnThis();
 const mockTo = vi.fn().mockResolvedValue(new ArrayBuffer(0));
 
+vi.mock('../../../systeminfo/SystemInfo');
 vi.mock('../../../asset/converter/AssetConverter', () => ({
     AssetConverter: vi.fn().mockImplementation(() => ({
         convert: mockConvert,
@@ -42,6 +49,7 @@ document.createElement = vi.fn().mockReturnValue({
     href: '',
     download: '',
     click: vi.fn(),
+    setAttribute: vi.fn(),
 });
 
 describe('ARQuickLook', () => {
@@ -65,6 +73,14 @@ describe('ARQuickLook', () => {
         };
         vi.clearAllMocks();
         quickLook = new ARQuickLook();
+
+        // Default mocks for SystemInfo to allow most tests to pass without specific setup
+        vi.mocked(SystemInfo.getBrowser).mockReturnValue(EBrowser.SAFARI);
+        vi.mocked(SystemInfo.getIOSVersion).mockReturnValue({
+            major: 15,
+            full: '15.0',
+        });
+        vi.mocked(SystemInfo.getSupportsARQuickLook).mockReturnValue(true);
     });
 
     describe('constructor', () => {
@@ -107,6 +123,10 @@ describe('ARQuickLook', () => {
             });
             expect(URL.createObjectURL).toHaveBeenCalled();
             expect(document.createElement).toHaveBeenCalledWith('a');
+
+            const anchor = document.createElement('a') as any;
+            // Check if setAttribute was called with href
+            expect(anchor.href).toContain('#allowsContentScaling=0');
         });
 
         it('should handle conversion errors', async () => {
@@ -136,8 +156,45 @@ describe('ARQuickLook', () => {
             };
             await quickLook.launch(mockUri, options);
 
-            const anchor = document.createElement('a');
-            expect(anchor.href).toContain('#allowsContentScaling=0');
+            // Get the anchor element created in launchARQuickLook
+            const anchorMock = vi
+                .mocked(document.createElement)
+                .mock.results.find(
+                    (result) => result.value.rel === 'ar',
+                )?.value;
+
+            expect(anchorMock?.href).toContain('#allowsContentScaling=0');
+        });
+
+        it('should reject if browser is not Safari', async () => {
+            vi.mocked(SystemInfo.getBrowser).mockReturnValue(EBrowser.CHROMIUM);
+            await expect(quickLook.launch(mockUri)).rejects.toThrow(
+                ARQuickLookNotSafariError,
+            );
+        });
+
+        it('should reject if iOS version is too low', async () => {
+            vi.mocked(SystemInfo.getIOSVersion).mockReturnValue({
+                major: 11,
+                full: '11.0',
+            });
+            await expect(quickLook.launch(mockUri)).rejects.toThrow(
+                ARQuickLookVersionMismatchError,
+            );
+        });
+
+        it('should reject if iOS version details are null', async () => {
+            vi.mocked(SystemInfo.getIOSVersion).mockReturnValue(null);
+            await expect(quickLook.launch(mockUri)).rejects.toThrow(
+                ARQuickLookUnknownError, // Or a more specific error if defined for this case
+            );
+        });
+
+        it('should reject if ARQuickLook is not supported by SystemInfo', async () => {
+            vi.mocked(SystemInfo.getSupportsARQuickLook).mockReturnValue(false);
+            await expect(quickLook.launch(mockUri)).rejects.toThrow(
+                ARQuickLookUnknownError,
+            );
         });
     });
 });

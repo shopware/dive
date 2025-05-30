@@ -1,208 +1,325 @@
-import { ARSystemOptions } from '../../ARSystem.ts';
+import { type ARSystemOptions } from '../../ARSystem.ts';
 import { SceneViewer } from '../SceneViewer.ts';
 
-// Mock DIVEInfo
-vi.mock('../../../systeminfo/SystemInfo', () => ({
-    DIVEInfo: {
-        GetSystem: vi.fn().mockReturnValue('Android'),
-        GetSupportsARQuickLook: vi.fn().mockReturnValue(false),
-    },
-}));
+// Mock browser APIs that SceneViewer relies on
+const mockAnchorElement = {
+    setAttribute: vi.fn(),
+    click: vi.fn(),
+    href: '', // Allow href to be set and read for verification if needed
+};
+const mockCreateElement = vi.fn().mockReturnValue(mockAnchorElement);
+const mockSelfLocationToString = vi.fn();
 
-// Mock URL and document APIs
-const mockLocation = new URL('https://example.com');
-const mockCreateElement = vi.fn();
-const mockSetAttribute = vi.fn();
-const mockClick = vi.fn();
-
-Object.defineProperty(window, 'location', {
-    value: mockLocation,
+// Mock document.createElement
+Object.defineProperty(document, 'createElement', {
+    value: mockCreateElement,
     writable: true,
+    configurable: true,
 });
 
-document.createElement = mockCreateElement.mockReturnValue({
-    setAttribute: mockSetAttribute,
-    click: mockClick,
+// Mock self.location.toString()
+// SceneViewer uses `self.location.toString()`
+Object.defineProperty(self, 'location', {
+    value: {
+        toString: mockSelfLocationToString,
+        // Add other properties like hash if SceneViewer uses them directly
+        // For now, SceneViewer.ts uses `new URL(location)` and `locationUrl.hash`
+        // so a full mock of URL object might be better if we were testing URL parts directly.
+        // However, SceneViewer.ts reconstructs locationUrl.hash = noArViewerSigil, so toString is key.
+        hash: '',
+    },
+    writable: true,
+    configurable: true,
 });
 
-describe('DIVESceneViewer', () => {
-    const mockUri = 'https://example.com/model.glb';
-    let mockOptions: ARSystemOptions;
+describe('SceneViewer', () => {
+    let sceneViewer: SceneViewer;
+    const baseMockUri = 'model.glb'; // Relative URI
+    const mockPageLocation = 'https://example.com/path/';
+    const absoluteMockUri = `${mockPageLocation}${baseMockUri}`;
+
+    let defaultOptions: ARSystemOptions;
 
     beforeEach(() => {
-        mockOptions = {
+        vi.clearAllMocks();
+
+        // Set up default mocks for each test
+        mockSelfLocationToString.mockReturnValue(mockPageLocation);
+        // Reset anchor properties for each test if they are modified directly
+        mockAnchorElement.href = '';
+        // mockAnchorElement.setAttribute.mockClear(); // already cleared by vi.clearAllMocks()
+        // mockAnchorElement.click.mockClear();
+
+        sceneViewer = new SceneViewer();
+        defaultOptions = {
             arPlacement: 'horizontal',
             arScale: 'auto',
         };
-        vi.clearAllMocks();
-    });
-
-    describe('constructor', () => {
-        it('should create an instance', () => {
-            const sceneViewer = new SceneViewer();
-            expect(sceneViewer).toBeInstanceOf(SceneViewer);
-        });
     });
 
     describe('launch', () => {
-        it('should launch with default options', () => {
-            const sceneViewer = new SceneViewer();
-            sceneViewer.launch(mockUri);
-
+        it('should create an anchor element', () => {
+            sceneViewer.launch(baseMockUri, defaultOptions);
             expect(mockCreateElement).toHaveBeenCalledWith('a');
-            expect(mockSetAttribute).toHaveBeenCalledWith(
+        });
+
+        it('should click the anchor element', () => {
+            sceneViewer.launch(baseMockUri, defaultOptions);
+            expect(mockAnchorElement.click).toHaveBeenCalledTimes(1);
+        });
+
+        it('should set the anchor href with a valid intent URL structure', () => {
+            sceneViewer.launch(baseMockUri, defaultOptions);
+            expect(mockAnchorElement.setAttribute).toHaveBeenCalledWith(
                 'href',
-                expect.stringContaining('mode=ar_preferred'),
+                expect.stringMatching(
+                    /^intent:\/\/arvr\.google\.com\/scene-viewer\/1\.2\?/,
+                ),
             );
-            expect(mockClick).toHaveBeenCalled();
-        });
-
-        it('should launch with custom options', () => {
-            const options: ARSystemOptions = {
-                arPlacement: 'vertical',
-                arScale: 'fixed',
-            };
-            const sceneViewer = new SceneViewer();
-            sceneViewer.launch(mockUri, options);
-
-            expect(mockCreateElement).toHaveBeenCalledWith('a');
-            expect(mockSetAttribute).toHaveBeenCalledWith(
-                'href',
-                expect.stringContaining('enable_vertical_placement=true'),
-            );
-            expect(mockSetAttribute).toHaveBeenCalledWith(
-                'href',
-                expect.stringContaining('resizable=false'),
-            );
-            expect(mockClick).toHaveBeenCalled();
-        });
-
-        it('should handle sound parameter in URL', () => {
-            const sceneViewer = new SceneViewer();
-            const params = new URLSearchParams();
-            params.set('sound', 'sound.mp3');
-
-            // Access private method for testing
-            const applySoundOption = (sceneViewer as any)._applySoundOption;
-            applySoundOption(params, mockLocation.toString());
-
-            expect(params.get('sound')).toBe('https://example.com/sound.mp3');
-        });
-
-        it('should handle link parameter in URL', () => {
-            const sceneViewer = new SceneViewer();
-            const params = new URLSearchParams();
-            params.set('link', 'details.html');
-
-            // Access private method for testing
-            const applyLinkOption = (sceneViewer as any)._applyLinkOption;
-            applyLinkOption(params, mockLocation.toString());
-
-            expect(params.get('link')).toBe('https://example.com/details.html');
-        });
-
-        it('should create intent URL with correct parameters', () => {
-            const sceneViewer = new SceneViewer();
-            const params = new URLSearchParams();
-            params.set('mode', 'ar_preferred');
-
-            // Access private method for testing and bind it to the instance
-            const createIntent = (sceneViewer as any)._createIntent.bind(
-                sceneViewer,
-            );
-            const intentUrl = createIntent(
-                mockLocation.toString(),
-                mockUri,
-                params,
-            );
-
-            expect(intentUrl).toContain(
-                'intent://arvr.google.com/scene-viewer/1.2',
-            );
-            expect(intentUrl).toContain('mode=ar_preferred');
-            expect(intentUrl).toContain('file=' + mockUri);
-            expect(intentUrl).toContain('scheme=https');
-            expect(intentUrl).toContain(
-                'package=com.google.android.googlequicksearchbox',
-            );
-        });
-
-        it('should include all input parameters in the intent URL', () => {
-            const sceneViewer = new SceneViewer();
-            const options: ARSystemOptions = {
-                arPlacement: 'vertical',
-                arScale: 'fixed',
-            };
-
-            // Create a URL with additional parameters
-            const uriWithParams = `${mockUri}?sound=sound.mp3&link=details.html`;
-
-            sceneViewer.launch(uriWithParams, options);
-
-            // Get the last call to setAttribute which contains the complete intent URL
-            const lastCall =
-                mockSetAttribute.mock.calls[
-                    mockSetAttribute.mock.calls.length - 1
-                ];
-            const intentUrl = lastCall[1];
-
-            // Verify all expected parameters are present
-            expect(intentUrl).toContain('mode=ar_preferred');
-            expect(intentUrl).toContain('enable_vertical_placement=true');
-            expect(intentUrl).toContain('resizable=false');
-            expect(intentUrl).toContain(
-                'sound=https%3A%2F%2Fexample.com%2Fsound.mp3',
-            );
-            expect(intentUrl).toContain(
-                'link=https%3A%2F%2Fexample.com%2Fdetails.html',
-            );
-            expect(intentUrl).toContain(`file=${mockUri}`);
-            expect(intentUrl).toContain('scheme=https');
+            const intentUrl = mockAnchorElement.setAttribute.mock
+                .calls[0][1] as string;
             expect(intentUrl).toContain(
                 'package=com.google.android.googlequicksearchbox',
             );
             expect(intentUrl).toContain('action=android.intent.action.VIEW');
-            expect(intentUrl).toContain('S.browser_fallback_url');
-            expect(intentUrl).toContain('%23model-viewer-no-ar-fallback');
+            expect(intentUrl).toContain('scheme=https');
+            expect(intentUrl).toContain('S.browser_fallback_url=');
         });
 
-        it('should handle relative model URLs', () => {
-            const relativeUri = '/models/model.glb';
-            const sceneViewer = new SceneViewer();
-            sceneViewer.launch(relativeUri);
+        describe('Intent Parameter Construction', () => {
+            it('should include mode=ar_preferred by default', () => {
+                sceneViewer.launch(baseMockUri, defaultOptions);
+                const intentUrl = mockAnchorElement.setAttribute.mock
+                    .calls[0][1] as string;
+                expect(
+                    new URLSearchParams(
+                        new URL(intentUrl, 'intent://').search,
+                    ).get('mode'),
+                ).toBe('ar_preferred');
+            });
 
-            expect(mockSetAttribute).toHaveBeenCalledWith(
-                'href',
-                expect.stringContaining(
-                    'file=https://example.com/models/model.glb',
-                ),
-            );
-        });
+            it('should correctly set file parameter with absolute model URI', () => {
+                sceneViewer.launch(baseMockUri, defaultOptions);
+                const intentUrl = mockAnchorElement.setAttribute.mock
+                    .calls[0][1] as string;
+                // The file param is added separately from the other search params in the implementation
+                expect(intentUrl).toContain(`&file=${absoluteMockUri}`);
+            });
 
-        it('should handle absolute model URLs', () => {
-            const absoluteUri = 'https://cdn.example.com/model.glb';
-            const sceneViewer = new SceneViewer();
-            sceneViewer.launch(absoluteUri);
+            it('should handle an already absolute model URI for the file parameter', () => {
+                const alreadyAbsoluteUri =
+                    'https://another.domain.com/model.glb';
+                sceneViewer.launch(alreadyAbsoluteUri, defaultOptions);
+                const intentUrl = mockAnchorElement.setAttribute.mock
+                    .calls[0][1] as string;
+                expect(intentUrl).toContain(`&file=${alreadyAbsoluteUri}`);
+            });
 
-            expect(mockSetAttribute).toHaveBeenCalledWith(
-                'href',
-                expect.stringContaining(
-                    'file=https://cdn.example.com/model.glb',
-                ),
-            );
-        });
+            it('should encode special characters in the model URI for file parameter', () => {
+                const uriWithSpaces = 'model with spaces.glb';
+                // absoluteUriWithSpaces was `${mockPageLocation}${uriWithSpaces}`
+                // We need the version with path encoding, e.g. space to %20
+                const expectedFileValue = new URL(
+                    uriWithSpaces,
+                    mockPageLocation,
+                ).href;
+                sceneViewer.launch(uriWithSpaces, defaultOptions);
+                const intentUrl = mockAnchorElement.setAttribute.mock
+                    .calls[0][1] as string;
+                expect(intentUrl).toContain(`&file=${expectedFileValue}`);
+            });
 
-        it('should handle special characters in model URL', () => {
-            const specialUri = 'https://example.com/model with spaces.glb';
-            const sceneViewer = new SceneViewer();
-            sceneViewer.launch(specialUri);
+            describe('arScale option', () => {
+                it('should not include resizable=false if arScale is "auto"', () => {
+                    defaultOptions.arScale = 'auto';
+                    sceneViewer.launch(baseMockUri, defaultOptions);
+                    const intentUrl = mockAnchorElement.setAttribute.mock
+                        .calls[0][1] as string;
+                    expect(
+                        new URLSearchParams(
+                            new URL(intentUrl, 'intent://').search,
+                        ).has('resizable'),
+                    ).toBe(false);
+                });
 
-            expect(mockSetAttribute).toHaveBeenCalledWith(
-                'href',
-                expect.stringContaining(
-                    'file=https://example.com/model%20with%20spaces.glb',
-                ),
-            );
+                it('should include resizable=false if arScale is "fixed"', () => {
+                    defaultOptions.arScale = 'fixed';
+                    sceneViewer.launch(baseMockUri, defaultOptions);
+                    const intentUrl = mockAnchorElement.setAttribute.mock
+                        .calls[0][1] as string;
+                    expect(
+                        new URLSearchParams(
+                            new URL(intentUrl, 'intent://').search,
+                        ).get('resizable'),
+                    ).toBe('false');
+                });
+                it('should default to no resizable if options are undefined', () => {
+                    sceneViewer.launch(baseMockUri, undefined);
+                    const intentUrl = mockAnchorElement.setAttribute.mock
+                        .calls[0][1] as string;
+                    expect(
+                        new URLSearchParams(
+                            new URL(intentUrl, 'intent://').search,
+                        ).has('resizable'),
+                    ).toBe(false);
+                });
+            });
+
+            describe('arPlacement option', () => {
+                it('should not include enable_vertical_placement if arPlacement is "horizontal"', () => {
+                    defaultOptions.arPlacement = 'horizontal';
+                    sceneViewer.launch(baseMockUri, defaultOptions);
+                    const intentUrl = mockAnchorElement.setAttribute.mock
+                        .calls[0][1] as string;
+                    expect(
+                        new URLSearchParams(
+                            new URL(intentUrl, 'intent://').search,
+                        ).has('enable_vertical_placement'),
+                    ).toBe(false);
+                });
+
+                it('should include enable_vertical_placement=true if arPlacement is "vertical"', () => {
+                    defaultOptions.arPlacement = 'vertical';
+                    sceneViewer.launch(baseMockUri, defaultOptions);
+                    const intentUrl = mockAnchorElement.setAttribute.mock
+                        .calls[0][1] as string;
+                    expect(
+                        new URLSearchParams(
+                            new URL(intentUrl, 'intent://').search,
+                        ).get('enable_vertical_placement'),
+                    ).toBe('true');
+                });
+                it('should default to no enable_vertical_placement if options are undefined', () => {
+                    sceneViewer.launch(baseMockUri, undefined);
+                    const intentUrl = mockAnchorElement.setAttribute.mock
+                        .calls[0][1] as string;
+                    expect(
+                        new URLSearchParams(
+                            new URL(intentUrl, 'intent://').search,
+                        ).has('enable_vertical_placement'),
+                    ).toBe(false);
+                });
+            });
+
+            describe('sound option from input URI query params', () => {
+                it('should resolve relative sound URL from input URI to absolute and include it', () => {
+                    const uriWithSound = `${baseMockUri}?sound=./sound.mp3`;
+                    const absoluteSoundUrl = `${mockPageLocation}sound.mp3`; // Resolved from ./sound.mp3
+                    sceneViewer.launch(uriWithSound, defaultOptions);
+                    const intentUrl = mockAnchorElement.setAttribute.mock
+                        .calls[0][1] as string;
+                    expect(
+                        new URLSearchParams(
+                            new URL(intentUrl, 'intent://').search,
+                        ).get('sound'),
+                    ).toBe(absoluteSoundUrl);
+                });
+
+                it('should keep absolute sound URL from input URI as is', () => {
+                    const soundUrl = 'https://cdn.com/sound.mp3';
+                    const uriWithSound = `${baseMockUri}?sound=${encodeURIComponent(soundUrl)}`;
+                    sceneViewer.launch(uriWithSound, defaultOptions);
+                    const intentUrl = mockAnchorElement.setAttribute.mock
+                        .calls[0][1] as string;
+                    expect(
+                        new URLSearchParams(
+                            new URL(intentUrl, 'intent://').search,
+                        ).get('sound'),
+                    ).toBe(soundUrl);
+                });
+
+                it('should not include sound if not in input URI', () => {
+                    sceneViewer.launch(baseMockUri, defaultOptions);
+                    const intentUrl = mockAnchorElement.setAttribute.mock
+                        .calls[0][1] as string;
+                    expect(
+                        new URLSearchParams(
+                            new URL(intentUrl, 'intent://').search,
+                        ).has('sound'),
+                    ).toBe(false);
+                });
+            });
+
+            describe('link option from input URI query params', () => {
+                it('should resolve relative link URL from input URI to absolute and include it', () => {
+                    const uriWithLink = `${baseMockUri}?link=details.html`;
+                    const absoluteLinkUrl = `${mockPageLocation}details.html`;
+                    sceneViewer.launch(uriWithLink, defaultOptions);
+                    const intentUrl = mockAnchorElement.setAttribute.mock
+                        .calls[0][1] as string;
+                    expect(
+                        new URLSearchParams(
+                            new URL(intentUrl, 'intent://').search,
+                        ).get('link'),
+                    ).toBe(absoluteLinkUrl);
+                });
+
+                it('should keep absolute link URL from input URI as is', () => {
+                    const linkUrl = 'https://example.com/product-details';
+                    const uriWithLink = `${baseMockUri}?link=${encodeURIComponent(linkUrl)}`;
+                    sceneViewer.launch(uriWithLink, defaultOptions);
+                    const intentUrl = mockAnchorElement.setAttribute.mock
+                        .calls[0][1] as string;
+                    expect(
+                        new URLSearchParams(
+                            new URL(intentUrl, 'intent://').search,
+                        ).get('link'),
+                    ).toBe(linkUrl);
+                });
+
+                it('should not include link if not in input URI', () => {
+                    sceneViewer.launch(baseMockUri, defaultOptions);
+                    const intentUrl = mockAnchorElement.setAttribute.mock
+                        .calls[0][1] as string;
+                    expect(
+                        new URLSearchParams(
+                            new URL(intentUrl, 'intent://').search,
+                        ).has('link'),
+                    ).toBe(false);
+                });
+            });
+
+            it('should correctly construct the browser_fallback_url', () => {
+                sceneViewer.launch(baseMockUri, defaultOptions);
+                const intentUrl = mockAnchorElement.setAttribute.mock
+                    .calls[0][1] as string;
+                const fallbackMatch = intentUrl.match(
+                    /S\.browser_fallback_url=([^;]+);/,
+                );
+                expect(fallbackMatch).not.toBeNull();
+                const fallbackUrl = decodeURIComponent(fallbackMatch![1]);
+                expect(fallbackUrl).toBe(
+                    `${mockPageLocation}#model-viewer-no-ar-fallback`,
+                );
+            });
+
+            it('should correctly combine all parameters in the intent URL', () => {
+                const complexUri = `${baseMockUri}?sound=s.mp3&link=l.html`;
+                const complexOptions: ARSystemOptions = {
+                    arPlacement: 'vertical',
+                    arScale: 'fixed',
+                };
+                sceneViewer.launch(complexUri, complexOptions);
+
+                const intentUrl = mockAnchorElement.setAttribute.mock
+                    .calls[0][1] as string;
+                const params = new URLSearchParams(
+                    new URL(intentUrl, 'intent://').search,
+                );
+
+                expect(params.get('mode')).toBe('ar_preferred');
+                expect(params.get('resizable')).toBe('false');
+                expect(params.get('enable_vertical_placement')).toBe('true');
+                expect(params.get('sound')).toBe(`${mockPageLocation}s.mp3`);
+                expect(params.get('link')).toBe(`${mockPageLocation}l.html`);
+                // The file parameter should be the full resolved URI including its original query params, path-encoded.
+                const expectedFileValue = new URL(complexUri, mockPageLocation)
+                    .href;
+                expect(intentUrl).toContain(`&file=${expectedFileValue}`);
+                expect(intentUrl).toContain(
+                    `S.browser_fallback_url=${encodeURIComponent(mockPageLocation + '#model-viewer-no-ar-fallback')}`,
+                );
+            });
         });
     });
 });
