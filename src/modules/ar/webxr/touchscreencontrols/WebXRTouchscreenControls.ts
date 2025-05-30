@@ -1,5 +1,5 @@
 import { Vector2 } from 'three';
-import { DIVEEventExecutor } from '../../../../modules/events/EventExecutor.ts';
+import { DIVEEventExecutor } from '../../../../events/EventExecutor.ts';
 
 export type DIVETouchscreenEvents = {
     TOUCH_START: {
