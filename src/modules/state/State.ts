@@ -67,11 +67,11 @@ export class State {
 
     // modules
     private _mediaCreator:
-        | import('../mediacreator/MediaCreator.ts').MediaCreator
+        | import('../mediacreator/src/MediaCreator.ts').MediaCreator
         | null = null;
 
     private async getMediaCreator(): Promise<
-        import('../mediacreator/MediaCreator.ts').MediaCreator
+        import('../mediacreator/src/MediaCreator.ts').MediaCreator
     > {
         if (!this._mediaCreator) {
             this._mediaCreator = new (await getModule('MediaCreator'))(

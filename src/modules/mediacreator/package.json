@@ -1,4 +1,5 @@
 {
+  "name": "mediacreator",
   "description": "",
   "main": "index.ts",
   "type": "module",

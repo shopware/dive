@@ -1,1 +1,1 @@
-export { MediaCreator } from './MediaCreator.ts';
+export { MediaCreator } from './src/MediaCreator.ts';

@@ -40,7 +40,7 @@ export interface ActionDependencies {
         import('../../assetexporter/src/AssetExporter.ts').AssetExporter
     >;
     getMediaCreator: () => Promise<
-        import('../../mediacreator/MediaCreator.ts').MediaCreator
+        import('../../mediacreator/src/MediaCreator.ts').MediaCreator
     >;
     getToolbox: () => Promise<import('../../toolbox/Toolbox.ts').Toolbox>;
 }

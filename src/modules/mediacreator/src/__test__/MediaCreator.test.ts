@@ -1,8 +1,8 @@
 import { MediaCreator } from '../MediaCreator.ts';
-import { DIVERenderPipeline } from '../../../engine/renderer/Renderer.ts';
-import { DIVEScene } from '../../../engine/scene/Scene.ts';
-import { DIVEPerspectiveCamera } from '../../../engine/camera/PerspectiveCamera.ts';
-import { type COMPov } from '../../state/types/index.ts';
+import { DIVERenderPipeline } from '../../../../engine/renderer/Renderer.ts';
+import { DIVEScene } from '../../../../engine/scene/Scene.ts';
+import { DIVEPerspectiveCamera } from '../../../../engine/camera/PerspectiveCamera.ts';
+import { type COMPov } from '../../../state/types/index.ts';
 import { OrbitController } from '@shopware-ag/dive/orbitcontroller';
 
 /**

@@ -1,6 +1,6 @@
-import { DIVEPerspectiveCamera } from '../../engine/camera/PerspectiveCamera.ts';
-import { type DIVEScene } from '../../engine/scene/Scene.ts';
-import { type DIVERenderPipeline } from '../../engine/renderer/Renderer.ts';
+import { DIVEPerspectiveCamera } from '../../../engine/camera/PerspectiveCamera.ts';
+import { type DIVEScene } from '../../../engine/scene/Scene.ts';
+import { type DIVERenderPipeline } from '../../../engine/renderer/Renderer.ts';
 import { type OrbitController } from '@shopware-ag/dive/orbitcontroller';
 import { type Vector3Like } from 'three';
 
