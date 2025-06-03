@@ -135,6 +135,7 @@
         "docs": "yarn docs:actions && yarn docs:modules",
         "docs:actions": "tsx docs/generators/generate-actions-docs.ts",
         "docs:modules": "tsx docs/generators/generate-modules-docs.ts",
-        "ci": "yarn lint && yarn prettier:check && yarn docs && yarn coverage && yarn build"
+        "ci": "yarn lint && yarn prettier:check && yarn docs && yarn coverage && yarn build",
+        "postinstall": "bash scripts/install/install-plugins.sh"
     }
 }

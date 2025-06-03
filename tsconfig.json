@@ -23,7 +23,7 @@
     "include": [
         "src/**/*",
         "docs/**/*",
-        "ci/**/*"
+        "scripts/**/*.ts"
     ],
     "exclude": [
         "node_modules",

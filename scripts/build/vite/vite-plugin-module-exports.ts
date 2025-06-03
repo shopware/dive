@@ -32,7 +32,7 @@ function updatePackageJsonExports(registrations: ModuleRegistration[]): void {
     };
 
     // Add each module to exports
-    registrations.forEach(({ name, buildPath }) => {
+    registrations.forEach(({ name }) => {
         // Ensure buildPath for modules points to the module's own folder structure
         const moduleExportPath = `./${name}`;
         exports[moduleExportPath] = {
@@ -59,7 +59,7 @@ export default function moduleBuildPlugin(): Plugin {
     );
     const projectRoot = process.cwd();
     const modulesDirAbs = pathResolve(projectRoot, MODULES_PATH);
-    let registrations: ModuleRegistration[] = [];
+    const registrations: ModuleRegistration[] = [];
 
     if (!fs.existsSync(modulesDirAbs)) {
         console.warn(
@@ -105,7 +105,7 @@ export default function moduleBuildPlugin(): Plugin {
 
     return {
         name: 'module-build-config',
-        config(config: UserConfig): UserConfig {
+        config(): UserConfig {
             // Prepare build config
             const rollupInput: Record<string, string> = {
                 // Main library entry point
@@ -113,7 +113,7 @@ export default function moduleBuildPlugin(): Plugin {
             };
 
             // Add module entry points
-            registrations.forEach(({ name, path, buildPath }) => {
+            registrations.forEach(({ path, buildPath }) => {
                 const absoluteSrcPath = pathResolve(projectRoot, path);
                 // The key in rollupInput should match the desired output path structure
                 // e.g., 'modules/ar/index' will produce 'build/modules/ar/index.mjs'
