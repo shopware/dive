@@ -5,7 +5,7 @@ import { Object3D } from 'three';
 import { FileType } from '../../../types/file/index.ts';
 
 const mockLoaderLoad = vi.fn();
-vi.mock('../../loader/AssetLoader', () => {
+vi.mock('../../assetloader/AssetLoader.ts', () => {
     return {
         AssetLoader: vi.fn().mockImplementation(() => ({
             load: mockLoaderLoad,
@@ -15,7 +15,7 @@ vi.mock('../../loader/AssetLoader', () => {
 
 // Mock the Exporter class
 const mockExporterExport = vi.fn();
-vi.mock('../../exporter/AssetExporter', () => {
+vi.mock('../../assetexporter/AssetExporter.ts', () => {
     return {
         AssetExporter: vi.fn().mockImplementation(() => ({
             export: mockExporterExport,

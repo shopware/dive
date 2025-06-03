@@ -40,16 +40,19 @@ describe('DIVERenderPipeline', () => {
 
     it('should instantiate with default settings', () => {
         expect(renderer).toBeDefined();
-        expect(WebGLRenderer).toHaveBeenCalledWith({
-            antialias: DIVERenderPipelineDefaultSettings.antialias,
-            alpha: DIVERenderPipelineDefaultSettings.alpha,
-            powerPreference: DIVERenderPipelineDefaultSettings.powerPreference,
-            precision: DIVERenderPipelineDefaultSettings.precision,
-            stencil: DIVERenderPipelineDefaultSettings.stencil,
-            depth: DIVERenderPipelineDefaultSettings.depth,
-            logarithmicDepthBuffer:
-                DIVERenderPipelineDefaultSettings.logarithmicDepthBuffer,
-        });
+        expect(WebGLRenderer).toHaveBeenCalledWith(
+            expect.objectContaining({
+                antialias: DIVERenderPipelineDefaultSettings.antialias,
+                alpha: DIVERenderPipelineDefaultSettings.alpha,
+                powerPreference:
+                    DIVERenderPipelineDefaultSettings.powerPreference,
+                precision: DIVERenderPipelineDefaultSettings.precision,
+                stencil: DIVERenderPipelineDefaultSettings.stencil,
+                depth: DIVERenderPipelineDefaultSettings.depth,
+                logarithmicDepthBuffer:
+                    DIVERenderPipelineDefaultSettings.logarithmicDepthBuffer,
+            }),
+        );
     });
 
     it('should instantiate with custom settings', () => {
@@ -63,7 +66,9 @@ describe('DIVERenderPipeline', () => {
             logarithmicDepthBuffer: true,
         };
         renderer = new DIVERenderPipeline(scene, camera, customSettings);
-        expect(WebGLRenderer).toHaveBeenCalledWith(customSettings);
+        expect(WebGLRenderer).toHaveBeenCalledWith(
+            expect.objectContaining(customSettings),
+        );
     });
 
     it('should provide access to domElement', () => {

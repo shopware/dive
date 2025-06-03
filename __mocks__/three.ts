@@ -383,6 +383,8 @@ export const PointLight = vi.fn(function (this: any) {
 });
 
 export const PlaneGeometry = vi.fn(function (this: any) {
+    this.scale = vi.fn();
+    this.rotateX = vi.fn();
     return this;
 });
 

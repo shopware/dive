@@ -31,8 +31,8 @@ vi.mock('../../../../engine/scene/Scene', () => {
 const mockConvert = vi.fn().mockReturnThis();
 const mockTo = vi.fn().mockResolvedValue(new ArrayBuffer(0));
 
-vi.mock('../../../systeminfo/SystemInfo');
-vi.mock('../../../asset/converter/AssetConverter', () => ({
+vi.mock('../../../systeminfo/SystemInfo.ts');
+vi.mock('../../../assetconverter/AssetConverter.ts', () => ({
     AssetConverter: vi.fn().mockImplementation(() => ({
         convert: mockConvert,
         to: mockTo,
