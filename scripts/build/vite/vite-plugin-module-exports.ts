@@ -2,16 +2,16 @@ import { resolve as pathResolve, join, relative } from 'path';
 import * as fs from 'fs';
 import { Plugin, UserConfig } from 'vite';
 
-const MODULES_PATH = 'src/modules';
+const plugins_PATH = 'src/plugins';
 
-interface ModuleRegistration {
+interface pluginRegistration {
     name: string;
     path: string; // Original src path
     buildPath: string; // Path in the build output
 }
 
 // Function to update package.json exports
-function updatePackageJsonExports(registrations: ModuleRegistration[]): void {
+function updatePackageJsonExports(registrations: pluginRegistration[]): void {
     const packageJsonPath = pathResolve(process.cwd(), 'package.json');
     const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, 'utf-8'));
 
@@ -31,14 +31,14 @@ function updatePackageJsonExports(registrations: ModuleRegistration[]): void {
         },
     };
 
-    // Add each module to exports
+    // Add each plugin to exports
     registrations.forEach(({ name }) => {
-        // Ensure buildPath for modules points to the module's own folder structure
-        const moduleExportPath = `./${name}`;
-        exports[moduleExportPath] = {
-            types: `./build/modules/${name}/index.d.ts`,
-            import: `./build/modules/${name}/index.mjs`,
-            require: `./build/modules/${name}/index.cjs`,
+        // Ensure buildPath for plugins points to the plugin's own folder structure
+        const pluginExportPath = `./${name}`;
+        exports[pluginExportPath] = {
+            types: `./build/plugins/${name}/index.d.ts`,
+            import: `./build/plugins/${name}/index.mjs`,
+            require: `./build/plugins/${name}/index.cjs`,
         };
     });
 
@@ -48,53 +48,53 @@ function updatePackageJsonExports(registrations: ModuleRegistration[]): void {
         packageJsonPath,
         JSON.stringify(packageJson, null, 4) + '\n',
     );
-    console.log('[Dive Build] Updated package.json exports');
+    console.log('[DIVE Build] Updated package.json exports');
 }
 
-// Plugin to discover modules, configure library build, and inject path map
-export default function moduleBuildPlugin(): Plugin {
-    // --- Discover Registrations (Scan for index.ts in module folders) ---
+// Plugin to discover plugins, configure library build, and inject path map
+export default function pluginBuildPlugin(): Plugin {
+    // --- Discover Registrations (Scan for index.ts in plugin folders) ---
     console.log(
-        `[Dive Build] Discovering module registrations by looking for index.ts in subdirectories of ${MODULES_PATH}...`,
+        `[DIVE Build] Discovering plugin registrations by looking for index.ts in subdirectories of ${plugins_PATH}...`,
     );
     const projectRoot = process.cwd();
-    const modulesDirAbs = pathResolve(projectRoot, MODULES_PATH);
-    const registrations: ModuleRegistration[] = [];
+    const pluginsDirAbs = pathResolve(projectRoot, plugins_PATH);
+    const registrations: pluginRegistration[] = [];
 
-    if (!fs.existsSync(modulesDirAbs)) {
+    if (!fs.existsSync(pluginsDirAbs)) {
         console.warn(
-            `[Dive Build] Modules directory not found: ${modulesDirAbs}. No modules will be registered.`,
+            `[DIVE Build] plugins directory not found: ${pluginsDirAbs}. No plugins will be registered.`,
         );
     } else {
         try {
-            // Scan for index.ts files in the direct subdirectories of MODULES_PATH
-            const moduleDirs = fs
-                .readdirSync(modulesDirAbs, { withFileTypes: true })
+            // Scan for index.ts files in the direct subdirectories of plugins_PATH
+            const pluginDirs = fs
+                .readdirSync(pluginsDirAbs, { withFileTypes: true })
                 .filter((dirent) => dirent.isDirectory())
                 .map((dirent) => dirent.name);
 
-            for (const dirName of moduleDirs) {
-                const indexPath = join(modulesDirAbs, dirName, 'index.ts');
+            for (const dirName of pluginDirs) {
+                const indexPath = join(pluginsDirAbs, dirName, 'index.ts');
                 if (fs.existsSync(indexPath)) {
                     const relativeIndexPath = relative(projectRoot, indexPath);
-                    // Ensure module name is consistently cased (e.g. ar, not AR)
-                    // The module name should be the directory name for consistent export paths
-                    const moduleName = dirName; // Keep original casing for path, package.json export name can be lowercased if needed
+                    // Ensure plugin name is consistently cased (e.g. ar, not AR)
+                    // The plugin name should be the directory name for consistent export paths
+                    const pluginName = dirName; // Keep original casing for path, package.json export name can be lowercased if needed
                     console.log(
-                        `   Found module: ${moduleName} at ${relativeIndexPath}`,
+                        `   Found plugin: ${pluginName} at ${relativeIndexPath}`,
                     );
                     registrations.push({
-                        name: moduleName, // This name is used for the `modules/${name}` export path
-                        path: relativeIndexPath, // Path to the module's index.ts
+                        name: pluginName, // This name is used for the `plugins/${name}` export path
+                        path: relativeIndexPath, // Path to the plugin's index.ts
                         // buildPath determines the output structure within 'build/'
-                        // e.g., 'modules/ar/index' which becomes 'build/modules/ar/index.mjs'
-                        buildPath: `modules/${moduleName}/index`,
+                        // e.g., 'plugins/ar/index' which becomes 'build/plugins/ar/index.mjs'
+                        buildPath: `plugins/${pluginName}/index`,
                     });
                 }
             }
         } catch (error) {
             console.error(
-                `[Dive Build] Error scanning modules directory ${modulesDirAbs}:`,
+                `[Dive Build] Error scanning plugins directory ${pluginsDirAbs}:`,
                 error,
             );
         }
@@ -104,7 +104,7 @@ export default function moduleBuildPlugin(): Plugin {
     updatePackageJsonExports(registrations);
 
     return {
-        name: 'module-build-config',
+        name: 'plugin-build-config',
         config(): UserConfig {
             // Prepare build config
             const rollupInput: Record<string, string> = {
@@ -112,11 +112,11 @@ export default function moduleBuildPlugin(): Plugin {
                 dive: pathResolve(projectRoot, 'src/index.ts'),
             };
 
-            // Add module entry points
+            // Add plugin entry points
             registrations.forEach(({ path, buildPath }) => {
                 const absoluteSrcPath = pathResolve(projectRoot, path);
                 // The key in rollupInput should match the desired output path structure
-                // e.g., 'modules/ar/index' will produce 'build/modules/ar/index.mjs'
+                // e.g., 'plugins/ar/index' will produce 'build/plugins/ar/index.mjs'
                 rollupInput[buildPath] = absoluteSrcPath;
             });
 
@@ -130,7 +130,7 @@ export default function moduleBuildPlugin(): Plugin {
                         output: [
                             {
                                 format: 'esm',
-                                // [name] will be replaced by the key in rollupInput (e.g., 'modules/ar/index')
+                                // [name] will be replaced by the key in rollupInput (e.g., 'plugins/ar/index')
                                 entryFileNames: '[name].mjs',
                                 chunkFileNames: 'chunks/[name]-[hash].mjs',
                                 exports: 'named',
@@ -152,10 +152,10 @@ export default function moduleBuildPlugin(): Plugin {
             };
         },
         resolveId(source, importer) {
-            // For direct imports in the entry point, use ./src/modules/...
+            // For direct imports in the entry point, use ./src/plugins/...
             if (
                 importer?.endsWith('index.ts') &&
-                source.startsWith('./src/modules/')
+                source.startsWith('./src/plugins/')
             ) {
                 return { id: source, external: true };
             }
