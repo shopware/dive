@@ -8,7 +8,7 @@ import {
 } from 'three';
 import { type DIVEScene } from '../../../engine/scene/Scene.ts';
 import { RaycasterIntersectObjectMock } from '../../../../__mocks__/three.ts';
-import { type State } from '../../../modules/state/src/State.ts';
+import { type State } from '../../../plugins/state/src/State.ts';
 import {
     type GeometryTypeSchema,
     type GeometrySchema,

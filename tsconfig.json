@@ -19,37 +19,37 @@
         "paths": {
             "@shopware-ag/dive": ["./src/index.ts"],
             "@shopware-ag/dive/animation": [
-                "./src/modules/animation/index.ts"
+                "src/plugins/animation/index.ts"
             ],
             "@shopware-ag/dive/ar": [
-                "./src/modules/ar/index.ts"
+                "src/plugins/ar/index.ts"
             ],
             "@shopware-ag/dive/assetconverter": [
-                "./src/modules/assetconverter/index.ts"
+                "src/plugins/assetconverter/index.ts"
             ],
             "@shopware-ag/dive/assetexporter": [
-                "./src/modules/assetexporter/index.ts"
+                "src/plugins/assetexporter/index.ts"
             ],
             "@shopware-ag/dive/assetloader": [
-                "./src/modules/assetloader/index.ts"
+                "src/plugins/assetloader/index.ts"
             ],
             "@shopware-ag/dive/axiscamera": [
-                "./src/modules/axiscamera/index.ts"
+                "src/plugins/axiscamera/index.ts"
             ],
             "@shopware-ag/dive/mediacreator": [
-                "./src/modules/mediacreator/index.ts"
+                "src/plugins/mediacreator/index.ts"
             ],
             "@shopware-ag/dive/orbitcontroller": [
-                "./src/modules/orbitcontroller/index.ts"
+                "src/plugins/orbitcontroller/index.ts"
             ],
             "@shopware-ag/dive/state": [
-                "./src/modules/state/index.ts"
+                "src/plugins/state/index.ts"
             ],
             "@shopware-ag/dive/systeminfo": [
-                "./src/modules/systeminfo/index.ts"
+                "src/plugins/systeminfo/index.ts"
             ],
             "@shopware-ag/dive/toolbox": [
-                "./src/modules/toolbox/index.ts"
+                "src/plugins/toolbox/index.ts"
             ]
         }
     },
