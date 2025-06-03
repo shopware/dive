@@ -1,9 +1,11 @@
 import { Matrix4, Vector4, Color, Material } from 'three';
 import { DIVEAxisCamera } from '../AxisCamera.ts';
-import { DIVERenderPipeline } from '../../../engine/renderer/Renderer.ts';
-import { DIVEScene } from '../../../engine/scene/Scene.ts';
-import { COORDINATE_LAYER_MASK } from '../../../constants/VisibilityLayerMask.ts';
-import { DIVEPerspectiveCamera } from '../../../engine/camera/PerspectiveCamera.ts';
+import {
+    DIVERenderPipeline,
+    DIVEScene,
+    COORDINATE_LAYER_MASK,
+    DIVEPerspectiveCamera,
+} from '@shopware-ag/dive';
 
 const mockScene = {
     add: vi.fn(),

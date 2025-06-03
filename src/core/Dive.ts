@@ -3,7 +3,7 @@ import {
     OrbitControllerDefaultSettings,
     OrbitControllerSettings,
 } from '@shopware-ag/dive/orbitcontroller';
-import { DIVEAxisCamera } from '../modules/axiscamera/AxisCamera.ts';
+import { DIVEAxisCamera } from '@shopware-ag/dive/axiscamera';
 import { Color, MathUtils } from 'three';
 import {
     DIVEEngine,

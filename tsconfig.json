@@ -32,6 +32,9 @@
             ],
             "@shopware-ag/dive/orbitcontroller": [
                 "./src/modules/orbitcontroller/index.ts"
+            ],
+            "@shopware-ag/dive/axiscamera": [
+                "./src/modules/axiscamera/index.ts"
             ]
         }
     },

@@ -1,1 +1,1 @@
-export { DIVEAxisCamera } from './AxisCamera.ts';
+export * from './src/AxisCamera.ts';

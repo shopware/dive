@@ -90,8 +90,7 @@
     ],
     "dependencies": {
         "lodash": "^4.17.21",
-        "three": "^0.163.0",
-        "three-spritetext": "^1.8.2"
+        "three": "^0.163.0"
     },
     "devDependencies": {
         "@eslint/js": "^9.1.1",
