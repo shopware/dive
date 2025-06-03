@@ -1,7 +1,6 @@
 import { RaycasterIntersectObjectMock } from '../../../../__mocks__/three.ts';
 
 import { DIVEModel } from '../Model.ts';
-import { type State } from '../../../plugins/state/src/State.ts';
 import { DIVEScene } from '../../../engine/scene/Scene.ts';
 import {
     Vector3,

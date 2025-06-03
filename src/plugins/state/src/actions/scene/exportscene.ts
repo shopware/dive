@@ -1,6 +1,6 @@
 import { Action } from '../action.ts';
 import { type ActionDependencies } from '../../../types/index.ts';
-import { type StateExportFileType } from '@shopware-ag/dive';
+import { type StateExportFileType } from '../../../types/StateExportFileType.ts';
 import { registerAction } from '../../ActionRegistry.ts';
 
 export const ExportSceneAction = Action.define<

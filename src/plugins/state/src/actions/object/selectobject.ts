@@ -1,7 +1,7 @@
 import { Action } from '../action.ts';
 import { registerAction } from '../../ActionRegistry.ts';
 import { type ActionDependencies } from '../../../types/index.ts';
-import { isSelectTool } from 'src/plugins/toolbox/index.ts';
+import { isSelectTool } from '@shopware-ag/dive/toolbox';
 import { type EntitySchema } from '@shopware-ag/dive';
 import { type DIVESelectable } from '@shopware-ag/dive';
 

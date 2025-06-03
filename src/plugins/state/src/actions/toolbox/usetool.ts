@@ -1,7 +1,7 @@
 import { Action } from '../action.ts';
 import { registerAction } from '../../ActionRegistry.ts';
 import { type ActionDependencies } from '../../../types/index.ts';
-import { type ToolType } from 'src/plugins/toolbox/index.ts';
+import { type ToolType } from '@shopware-ag/dive/toolbox';
 
 export const UseToolAction = Action.define<
     { tool: ToolType },

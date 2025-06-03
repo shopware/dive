@@ -6,10 +6,10 @@ import {
     type Texture,
     type MeshStandardMaterial,
 } from 'three';
-import { type DIVEScene } from '../../../engine/scene/Scene.ts';
 import { RaycasterIntersectObjectMock } from '../../../../__mocks__/three.ts';
-import { type State } from '../../../plugins/state/src/State.ts';
+import { type State } from '@shopware-ag/dive/state';
 import {
+    type DIVEScene.
     type GeometryTypeSchema,
     type GeometrySchema,
     type MaterialSchema,

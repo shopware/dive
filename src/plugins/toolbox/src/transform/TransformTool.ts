@@ -9,7 +9,7 @@ import {
     type DIVEScene,
     implementsInterface,
 } from '@shopware-ag/dive';
-import { OrbitController } from 'src/plugins/orbitcontroller/index.ts';
+import { OrbitController } from '@shopware-ag/dive/orbitcontroller';
 import { type Mesh, type MeshBasicMaterial } from 'three';
 
 export const isTransformTool = (

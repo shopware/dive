@@ -5,8 +5,8 @@ import {
     DIVEPerspectiveCamera,
     DIVEScene,
 } from '@shopware-ag/dive';
-import { OrbitController } from 'src/plugins/orbitcontroller/index.ts';
-import { Toolbox } from 'src/plugins/toolbox/index.ts';
+import { OrbitController } from '@shopware-ag/dive/orbitcontroller';
+import { Toolbox } from '@shopware-ag/dive/toolbox';
 import { getActionClass } from '../ActionRegistry.ts';
 import { Action } from '../actions/action.ts';
 import { type ActionDependencies } from '../../types/index.ts';
@@ -45,27 +45,24 @@ vi.mock(import('../../../../engine/Engine.ts'), async (importOriginal) => {
         })),
     };
 });
-vi.mock(
-    import('src/plugins/orbitcontroller/index.ts'),
-    async (importOriginal) => {
-        const actual = await importOriginal();
-        const MockOrbitController = vi.fn().mockImplementation(() => ({
-            uuid: 'mock-orbit-controller-uuid',
-        }));
+vi.mock(import('@shopware-ag/dive/orbitcontroller'), async (importOriginal) => {
+    const actual = await importOriginal();
+    const MockOrbitController = vi.fn().mockImplementation(() => ({
+        uuid: 'mock-orbit-controller-uuid',
+    }));
 
-        // Explicitly define static properties
-        (MockOrbitController as any).DEFAULT_ZOOM_FACTOR = (
-            actual.OrbitController as any
-        ).DEFAULT_ZOOM_FACTOR;
-        // Add other static properties from actual.OrbitController if they exist and are needed
+    // Explicitly define static properties
+    (MockOrbitController as any).DEFAULT_ZOOM_FACTOR = (
+        actual.OrbitController as any
+    ).DEFAULT_ZOOM_FACTOR;
+    // Add other static properties from actual.OrbitController if they exist and are needed
 
-        return {
-            ...actual,
-            OrbitController:
-                MockOrbitController as unknown as typeof actual.OrbitController, // Cast to satisfy stricter type checking
-        };
-    },
-);
+    return {
+        ...actual,
+        OrbitController:
+            MockOrbitController as unknown as typeof actual.OrbitController, // Cast to satisfy stricter type checking
+    };
+});
 vi.mock('../../toolbox/Toolbox.ts', () => ({
     DIVEToolbox: vi.fn().mockImplementation(() => ({
         uuid: 'mock-toolbox-uuid',

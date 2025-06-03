@@ -2,7 +2,7 @@ import { DIVESelectTool, isSelectTool } from '../SelectTool.ts';
 import {
     OrbitController,
     OrbitControllerDefaultSettings,
-} from 'src/plugins/orbitcontroller/index.ts';
+} from '@shopware-ag/dive/orbitcontroller';
 import {
     DIVESelectable,
     DIVEScene,
@@ -50,7 +50,7 @@ vi.mock('@shopware-ag/dive', async () => {
 
 vi.mock('@shopware-ag/dive/orbitcontroller', async () => {
     const actual = await vi.importActual<
-        typeof import('src/plugins/orbitcontroller/index.ts')
+        typeof import('@shopware-ag/dive/orbitcontroller')
     >('@shopware-ag/dive/orbitcontroller');
     const mockOrbitController = vi.fn(function (this: any) {
         this.enabled = true;

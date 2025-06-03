@@ -6,7 +6,7 @@ import {
     findInterface,
 } from '@shopware-ag/dive';
 import { DIVETransformTool } from '../transform/TransformTool.ts';
-import { type OrbitController } from 'src/plugins/orbitcontroller/index.ts';
+import { type OrbitController } from '@shopware-ag/dive/orbitcontroller';
 import { type DIVEBaseTool } from '../BaseTool.ts';
 
 export const isSelectTool = (tool: DIVEBaseTool): tool is DIVESelectTool => {

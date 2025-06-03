@@ -1,7 +1,7 @@
 import { Action } from '../action.ts';
 import { registerAction } from '../../ActionRegistry.ts';
 import { type ActionDependencies } from '../../../types/index.ts';
-import { type ARSystemOptions } from 'src/plugins/ar/index.ts';
+import { type ARSystemOptions } from '@shopware-ag/dive/ar';
 
 export const LaunchARAction = Action.define<
     { uri: string; options?: ARSystemOptions },

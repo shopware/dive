@@ -1,8 +1,8 @@
-import { AssetLoader } from 'src/plugins/assetloader/index.ts';
+import { AssetLoader } from '@shopware-ag/dive/assetloader';
 import {
     AssetExporter,
     type FileTypeToExporterOptions,
-} from 'src/plugins/assetexporter/index.ts';
+} from '@shopware-ag/dive/assetexporter';
 import { type FileType } from '@shopware-ag/dive';
 
 export class AssetConverter {

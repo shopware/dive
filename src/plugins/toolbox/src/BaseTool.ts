@@ -13,7 +13,7 @@ import {
     UI_LAYER_MASK,
     findInterface,
 } from '@shopware-ag/dive';
-import { type OrbitController } from 'src/plugins/orbitcontroller/index.ts';
+import { type OrbitController } from '@shopware-ag/dive/orbitcontroller';
 
 export type DraggableEvent = {
     dragStart: Vector3;

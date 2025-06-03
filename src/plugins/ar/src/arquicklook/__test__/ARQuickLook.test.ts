@@ -1,8 +1,8 @@
 import { Object3D } from 'three';
 import { type ARSystemOptions } from '../../ARSystem.ts';
 import { ARQuickLook } from '../ARQuickLook.ts';
-import { AssetConverter } from 'src/plugins/assetconverter/index.ts';
-import { SystemInfo, EBrowser } from 'src/plugins/systeminfo/index.ts';
+import { AssetConverter } from '@shopware-ag/dive/assetconverter';
+import { SystemInfo, EBrowser } from '@shopware-ag/dive/systeminfo';
 import {
     ARQuickLookNotSafariError,
     ARQuickLookVersionMismatchError,

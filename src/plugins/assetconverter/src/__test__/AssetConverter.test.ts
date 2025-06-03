@@ -1,6 +1,6 @@
 import { AssetConverter } from '../AssetConverter.ts';
-import { AssetLoader } from 'src/plugins/assetloader/index.ts';
-import { AssetExporter } from 'src/plugins/assetexporter/index.ts';
+import { AssetLoader } from '@shopware-ag/dive/assetloader';
+import { AssetExporter } from '@shopware-ag/dive/assetexporter';
 import { Object3D } from 'three';
 
 const mockLoaderLoad = vi.fn();

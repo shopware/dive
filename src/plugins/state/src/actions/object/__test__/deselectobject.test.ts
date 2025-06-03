@@ -6,7 +6,7 @@ import {
     DIVESceneObject,
     type EntitySchema,
 } from '@shopware-ag/dive';
-import { type DIVESelectTool } from 'src/plugins/toolbox/index.ts';
+import { type DIVESelectTool } from '@shopware-ag/dive/toolbox';
 
 const mockSceneObject = {
     attach: vi.fn(),

@@ -1,6 +1,6 @@
 import { MoveCameraAction } from '../movecamera.ts';
 import { EntitySchema } from '@shopware-ag/dive';
-import { OrbitController } from 'src/plugins/orbitcontroller/index.ts';
+import { OrbitController } from '@shopware-ag/dive/orbitcontroller';
 import { Vector3 } from 'three';
 import { DIVEEngine } from '@shopware-ag/dive';
 

@@ -1,5 +1,5 @@
 import { DIVEEngine, DIVEScene } from '@shopware-ag/dive';
-import { OrbitController } from 'src/plugins/orbitcontroller/index.ts';
+import { OrbitController } from '@shopware-ag/dive/orbitcontroller';
 import { ComputeEncompassingViewAction } from '../computeencompassingview.ts';
 import { Vector3 } from 'three';
 

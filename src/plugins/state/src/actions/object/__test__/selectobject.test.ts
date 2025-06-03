@@ -6,7 +6,7 @@ import {
 } from '@shopware-ag/dive';
 import { SelectObjectAction } from '../selectobject.ts';
 import { Object3D } from 'three';
-import { DIVESelectTool, Toolbox } from 'src/plugins/toolbox/index.ts';
+import { DIVESelectTool, Toolbox } from '@shopware-ag/dive/toolbox';
 
 const mockSceneObject = {
     attach: vi.fn(),

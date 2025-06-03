@@ -1,13 +1,13 @@
 import { type ARSystemOptions } from '../ARSystem.ts';
-import { AssetConverter } from 'src/plugins/assetconverter/index.ts';
-import { AssetLoader } from 'src/plugins/assetloader/index.ts';
-import { AssetExporter } from 'src/plugins/assetexporter/index.ts';
+import { AssetConverter } from '@shopware-ag/dive/assetconverter';
+import { AssetLoader } from '@shopware-ag/dive/assetloader';
+import { AssetExporter } from '@shopware-ag/dive/assetexporter';
+import { EBrowser, SystemInfo } from '@shopware-ag/dive/systeminfo';
 import {
     ARQuickLookNotSafariError,
     ARQuickLookVersionMismatchError,
     ARQuickLookUnknownError,
 } from '../error/ar-errors.ts';
-import { EBrowser, SystemInfo } from 'src/plugins/systeminfo/index.ts';
 
 const MIN_IOS_VERSION_FOR_AR_QUICK_LOOK = 12;
 

@@ -1,5 +1,5 @@
 import { DIVETransformTool, isTransformTool } from '../TransformTool.ts';
-import { OrbitController } from 'src/plugins/orbitcontroller/index.ts';
+import { OrbitController } from '@shopware-ag/dive/orbitcontroller';
 import {
     DIVEPerspectiveCamera,
     DIVERenderPipeline,
@@ -36,7 +36,7 @@ vi.mock('../../../../engine/camera/PerspectiveCamera', () => {
 
 vi.mock('@shopware-ag/dive/orbitcontroller', async () => {
     const actual = await vi.importActual<
-        typeof import('src/plugins/orbitcontroller/index.ts')
+        typeof import('@shopware-ag/dive/orbitcontroller')
     >('@shopware-ag/dive/orbitcontroller');
     const mockOrbitController = vi.fn(function (this: any) {
         this.enabled = true;

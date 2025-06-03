@@ -1,5 +1,5 @@
 import { SetCameraTransformAction } from '../setcameratransform.ts';
-import { OrbitController } from 'src/plugins/orbitcontroller/index.ts';
+import { OrbitController } from '@shopware-ag/dive/orbitcontroller';
 import { Vector3 } from 'three';
 
 describe('SetCameraTransformAction', () => {

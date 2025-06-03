@@ -1,4 +1,4 @@
-import { SystemInfo, ESystem } from 'src/plugins/systeminfo/index.ts';
+import { SystemInfo, ESystem } from '@shopware-ag/dive/systeminfo';
 import { ARDesktopPlatformError } from './error/ar-errors.ts';
 import { ARQuickLook } from './arquicklook/ARQuickLook.ts';
 import { SceneViewer } from './sceneviewer/SceneViewer.ts';

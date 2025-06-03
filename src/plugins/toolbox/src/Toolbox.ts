@@ -1,7 +1,7 @@
 import { type DIVEScene } from '@shopware-ag/dive';
 import { type DIVEBaseTool } from './BaseTool.ts';
 import { DIVESelectTool } from './select/SelectTool.ts';
-import { OrbitController } from 'src/plugins/orbitcontroller/index.ts';
+import { OrbitController } from '@shopware-ag/dive/orbitcontroller';
 
 export type ToolType = 'select' | 'none';
 

@@ -2,7 +2,7 @@ import { generateUUID } from 'three/src/math/MathUtils.js';
 
 // type imports
 import { type EntitySchema, type DIVEEngine } from '@shopware-ag/dive';
-import { type OrbitController } from 'src/plugins/orbitcontroller/index.ts';
+import { type OrbitController } from '@shopware-ag/dive/orbitcontroller';
 import {
     ActionDependencies,
     ActionPayload,
@@ -41,15 +41,15 @@ export class State {
 
     // modules
     private _mediaCreator:
-        | import('src/plugins/mediacreator/index.ts').MediaCreator
+        | import('@shopware-ag/dive/mediacreator').MediaCreator
         | null = null;
 
     private async getMediaCreator(): Promise<
-        import('src/plugins/mediacreator/index.ts').MediaCreator
+        import('@shopware-ag/dive/mediacreator').MediaCreator
     > {
         if (!this._mediaCreator) {
             this._mediaCreator = new (
-                await import('src/plugins/mediacreator/index.ts')
+                await import('@shopware-ag/dive/mediacreator')
             ).MediaCreator(
                 this.engine.renderer,
                 this.engine.scene,
@@ -59,58 +59,57 @@ export class State {
         return this._mediaCreator;
     }
 
-    private _arSystem: import('src/plugins/ar/index.ts').ARSystem | null = null;
+    private _arSystem: import('@shopware-ag/dive/ar').ARSystem | null = null;
 
     private async getARSystem(): Promise<
-        import('src/plugins/ar/index.ts').ARSystem
+        import('@shopware-ag/dive/ar').ARSystem
     > {
         if (!this._arSystem) {
             this._arSystem = new (
-                await import('src/plugins/ar/index.ts')
+                await import('@shopware-ag/dive/ar')
             ).ARSystem();
         }
         return this._arSystem;
     }
 
     private _assetExplorer:
-        | import('src/plugins/assetexporter/index.ts').AssetExporter
+        | import('@shopware-ag/dive/assetexporter').AssetExporter
         | null = null;
 
     private async getAssetExporter(): Promise<
-        import('src/plugins/assetexporter/index.ts').AssetExporter
+        import('@shopware-ag/dive/assetexporter').AssetExporter
     > {
         if (!this._assetExplorer) {
             this._assetExplorer = new (
-                await import('src/plugins/assetexporter/index.ts')
+                await import('@shopware-ag/dive/assetexporter')
             ).AssetExporter();
         }
         return this._assetExplorer;
     }
 
     private _animationSystem:
-        | import('src/plugins/animation/index.ts').AnimationSystem
+        | import('@shopware-ag/dive/animation').AnimationSystem
         | null = null;
 
     private async getAnimationSystem(): Promise<
-        import('src/plugins/animation/index.ts').AnimationSystem
+        import('@shopware-ag/dive/animation').AnimationSystem
     > {
         if (!this._animationSystem) {
             this._animationSystem = new (
-                await import('src/plugins/animation/index.ts')
+                await import('@shopware-ag/dive/animation')
             ).AnimationSystem();
         }
         return this._animationSystem;
     }
 
-    private _toolbox: import('src/plugins/toolbox/index.ts').Toolbox | null =
-        null;
+    private _toolbox: import('@shopware-ag/dive/toolbox').Toolbox | null = null;
 
     private async getToolbox(): Promise<
-        import('src/plugins/toolbox/index.ts').Toolbox
+        import('@shopware-ag/dive/toolbox').Toolbox
     > {
         if (!this._toolbox) {
             this._toolbox = new (
-                await import('src/plugins/toolbox/index.ts')
+                await import('@shopware-ag/dive/toolbox')
             ).Toolbox(this.engine.scene, this.controller);
         }
         return this._toolbox;

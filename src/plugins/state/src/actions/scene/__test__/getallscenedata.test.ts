@@ -8,7 +8,7 @@ import {
     type PovSchema,
     type PrimitiveSchema,
 } from '@shopware-ag/dive';
-import { OrbitController } from 'src/plugins/orbitcontroller/index.ts';
+import { OrbitController } from '@shopware-ag/dive/orbitcontroller';
 import { Color, MeshStandardMaterial, Vector3 } from 'three';
 
 describe('GetAllSceneDataAction', () => {

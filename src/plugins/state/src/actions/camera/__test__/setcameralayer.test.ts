@@ -1,5 +1,5 @@
 import { SetCameraLayerAction } from '../setcameralayer.ts';
-import { OrbitController } from 'src/plugins/orbitcontroller/index.ts';
+import { OrbitController } from '@shopware-ag/dive/orbitcontroller';
 
 describe('SetCameraLayerAction', () => {
     it('should set camera layer', async () => {

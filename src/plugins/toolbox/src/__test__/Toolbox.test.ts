@@ -1,5 +1,5 @@
 import { Toolbox, type ToolType } from '../Toolbox.ts';
-import { OrbitController } from 'src/plugins/orbitcontroller/index.ts';
+import { OrbitController } from '@shopware-ag/dive/orbitcontroller';
 import { DIVEScene } from '@shopware-ag/dive';
 
 /**

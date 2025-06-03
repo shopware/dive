@@ -1,5 +1,5 @@
 import { LaunchARAction } from '../launchar.ts';
-import { type ARSystemOptions } from 'src/plugins/ar/index.ts';
+import { type ARSystemOptions } from '@shopware-ag/dive/ar';
 
 const mockARSystem = {
     launch: vi.fn(),

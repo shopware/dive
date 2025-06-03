@@ -1,5 +1,5 @@
 import { ARSystem, type ARSystemOptions } from '../ARSystem.ts';
-import { SystemInfo } from 'src/plugins/systeminfo/index.ts'; // This will be mocked
+import { SystemInfo } from '@shopware-ag/dive/systeminfo'; // This will be mocked
 import { ARQuickLook } from '../arquicklook/ARQuickLook.ts'; // This will be mocked
 import { SceneViewer } from '../sceneviewer/SceneViewer.ts'; // This will be mocked
 // Make sure ESystem is correctly imported based on ARSystem.ts's actual import path

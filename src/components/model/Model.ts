@@ -27,11 +27,11 @@ export class DIVEModel extends DIVENode {
     private _material: MeshStandardMaterial | null = null;
 
     private _assetLoader:
-        | import('../../plugins/assetloader/index.ts').AssetLoader
+        | import('@shopware-ag/dive/assetloader').AssetLoader
         | null = null;
 
     private async _getAssetLoader(): Promise<
-        import('../../plugins/assetloader/index.ts').AssetLoader
+        import('@shopware-ag/dive/assetloader').AssetLoader
     > {
         if (!this._assetLoader) {
             this._assetLoader = new (

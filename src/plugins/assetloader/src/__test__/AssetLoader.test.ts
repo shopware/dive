@@ -1,4 +1,4 @@
-import { AssetLoader } from 'src/plugins/assetloader/index.ts';
+import { AssetLoader } from '@shopware-ag/dive/assetloader';
 import { GLTF, GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { USDZLoader } from 'three/examples/jsm/loaders/USDZLoader.js';
 import { Group } from 'three';

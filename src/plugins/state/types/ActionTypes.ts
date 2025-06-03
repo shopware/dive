@@ -1,5 +1,5 @@
 import { DIVEEngine } from '@shopware-ag/dive';
-import { type OrbitController } from 'src/plugins/orbitcontroller/index.ts';
+import { type OrbitController } from '@shopware-ag/dive/orbitcontroller';
 import { type EntitySchema } from '@shopware-ag/dive';
 
 // Extracted types for performAction_new
@@ -33,14 +33,14 @@ export interface ActionDependencies {
     engine: DIVEEngine;
     controller: OrbitController;
     getAnimationSystem: () => Promise<
-        import('src/plugins/animation/index.ts').AnimationSystem
+        import('@shopware-ag/dive/animation').AnimationSystem
     >;
-    getARSystem: () => Promise<import('src/plugins/ar/index.ts').ARSystem>;
+    getARSystem: () => Promise<import('@shopware-ag/dive/ar').ARSystem>;
     getAssetExporter: () => Promise<
-        import('src/plugins/assetexporter/index.ts').AssetExporter
+        import('@shopware-ag/dive/assetexporter').AssetExporter
     >;
     getMediaCreator: () => Promise<
-        import('src/plugins/mediacreator/index.ts').MediaCreator
+        import('@shopware-ag/dive/mediacreator').MediaCreator
     >;
-    getToolbox: () => Promise<import('src/plugins/toolbox/index.ts').Toolbox>;
+    getToolbox: () => Promise<import('@shopware-ag/dive/toolbox').Toolbox>;
 }

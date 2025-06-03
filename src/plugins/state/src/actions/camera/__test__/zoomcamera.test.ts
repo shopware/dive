@@ -1,5 +1,5 @@
 import { ZoomCameraAction } from '../zoomcamera.ts';
-import { OrbitController } from 'src/plugins/orbitcontroller/index.ts';
+import { OrbitController } from '@shopware-ag/dive/orbitcontroller';
 
 describe('ZoomCameraAction', () => {
     it('should zoom the camera', async () => {
