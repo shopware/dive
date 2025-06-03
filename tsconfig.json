@@ -17,7 +17,10 @@
         "types": ["vitest/globals"],
         "baseUrl": ".",
         "paths": {
-            "@shopware-ag/dive": ["./src/index.ts"]
+            "@shopware-ag/dive": ["./src/index.ts"],
+            "@shopware-ag/dive/systeminfo": [
+                "./src/modules/systeminfo/index.ts"
+            ],
         }
     },
     "include": [

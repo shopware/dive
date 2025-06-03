@@ -10,6 +10,10 @@ export default defineConfig({
     resolve: {
         alias: {
             '@shopware-ag/dive': path.resolve(__dirname, './src/index.ts'),
+            '@shopware-ag/dive/systeminfo': path.resolve(
+                __dirname,
+                './src/modules/systeminfo/index.ts',
+            ),
         },
     },
     test: {

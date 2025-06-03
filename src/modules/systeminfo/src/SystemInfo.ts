@@ -1,4 +1,4 @@
-import { ESystem, EWebXRUnsupportedReason } from '../../types/info/index.ts';
+import { ESystem, EWebXRUnsupportedReason } from '../types/index.ts';
 
 export enum EBrowser {
     CHROMIUM = 'Chromium', // Chrome, Opera, Brave, new Edge, Chrome on iOS
