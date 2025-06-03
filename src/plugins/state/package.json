@@ -1,11 +1,6 @@
 {
     "name": "state",
     "description": "",
-    "main": "index.ts",
     "type": "module",
-    "dependencies": {
-        "lodash": "^4.17.21"
-    },
-    "author": "ffrank <f.frank@shopware.com>",
-    "license": "MIT"
+    "private": true
 }
