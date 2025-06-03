@@ -13,15 +13,14 @@ import {
     type COMGeometryType,
 } from '../../../modules/state/types/index.ts';
 import { RaycasterIntersectObjectMock } from '../../../../__mocks__/three.ts';
-import { getModule } from '../../../modules/ModuleRegistry.ts';
 import { type State } from '../../../modules/state/src/State.ts';
 
-vi.mock('../../../modules/ModuleRegistry.ts', () => ({
-    getModule: vi.fn().mockResolvedValue({
+vi.mock('@shopware-ag/dive/state', () => ({
+    State: {
         get: vi.fn().mockReturnValue({
             performAction: vi.fn(),
         }),
-    }),
+    },
 }));
 
 let primitive: DIVEPrimitive;
@@ -58,7 +57,9 @@ describe('dive/primitive/DIVEPrimitive', () => {
     });
 
     it('should place on floor', async () => {
-        const State = await getModule('State');
+        const State = await import('@shopware-ag/dive/state').then(
+            ({ State }) => State,
+        );
 
         const com = State.get('id')!;
         const spyperformAction = vi.spyOn(com, 'performAction');
@@ -100,7 +101,9 @@ describe('dive/primitive/DIVEPrimitive', () => {
     });
 
     it('should drop it', async () => {
-        const State = await getModule('State');
+        const State = await import('@shopware-ag/dive/state').then(
+            ({ State }) => State,
+        );
 
         const spy = vi.spyOn(primitive, 'onMove').mockImplementation(() => {});
 
@@ -284,7 +287,9 @@ describe('dive/primitive/DIVEPrimitive', () => {
     });
 
     it('should handle placeOnFloor when position does not change', async () => {
-        const State = await getModule('State');
+        const State = await import('@shopware-ag/dive/state').then(
+            ({ State }) => State,
+        );
 
         primitive.userData.id = 'something';
 

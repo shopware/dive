@@ -244,13 +244,6 @@ describe('components/root/DIVERoot', () => {
             expect(root.name).toBe('Root');
             expect(root.floor).toBeDefined();
         });
-
-        it('should initialize asset loader via _getAssetLoader()', async () => {
-            const root = new DIVERoot();
-            const loader = await (root as any)._getAssetLoader();
-            // loader is instance of our fake class and has a load method
-            expect(loader.load).toBeDefined();
-        });
     });
 
     describe('computeSceneBB', () => {
@@ -1597,24 +1590,6 @@ describe('components/root/DIVERoot', () => {
             const root = new DIVERoot();
             root['_detachTransformControls'](mockObject);
             // No error should be thrown
-        });
-    });
-
-    describe('bubble errors from getModule in _getAssetLoader()', () => {
-        it('should bubble errors from getModule in _getAssetLoader()', async () => {
-            const error = new Error('Failed to load');
-            // make getModule reject on next call
-            const moduleIndexTsFile = await import(
-                '../../../modules/ModuleRegistry.ts'
-            );
-            vi.spyOn(moduleIndexTsFile, 'getModule').mockRejectedValueOnce(
-                error,
-            );
-
-            const root = new DIVERoot();
-            await expect(root['_getAssetLoader']()).rejects.toThrow(
-                'Failed to load',
-            );
         });
     });
 });

@@ -19,7 +19,6 @@ import {
 } from '../../modules/state/types/index.ts';
 import { DIVELight, type DIVESceneObject } from '../../types/index.ts';
 import { DIVEGroup } from '../group/Group.ts';
-import { getModule } from '../../modules/ModuleRegistry.ts';
 import { DIVEFloor } from '../floor/Floor.ts';
 
 /**
@@ -36,19 +35,6 @@ export class DIVERoot extends Object3D {
     }
 
     private _floor: DIVEFloor;
-
-    private _assetLoader:
-        | import('../../modules/assetloader/index.ts').AssetLoader
-        | null = null;
-
-    private async _getAssetLoader(): Promise<
-        import('../../modules/assetloader/index.ts').AssetLoader
-    > {
-        if (!this._assetLoader) {
-            this._assetLoader = new (await getModule('AssetLoader'))();
-        }
-        return this._assetLoader;
-    }
 
     constructor() {
         super();

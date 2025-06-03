@@ -3,7 +3,6 @@ import { generateUUID } from 'three/src/math/MathUtils.js';
 // type imports
 import { type COMEntity } from '../types/index.ts';
 import { type OrbitController } from '@shopware-ag/dive/orbitcontroller';
-import { getModule } from '../../ModuleRegistry.ts';
 import { DIVEEngine } from '../../../engine/Engine.ts';
 import {
     ActionDependencies,
@@ -74,7 +73,9 @@ export class State {
         import('@shopware-ag/dive/mediacreator').MediaCreator
     > {
         if (!this._mediaCreator) {
-            this._mediaCreator = new (await getModule('MediaCreator'))(
+            this._mediaCreator = new (
+                await import('@shopware-ag/dive/mediacreator')
+            ).MediaCreator(
                 this.engine.renderer,
                 this.engine.scene,
                 this.controller,
@@ -89,7 +90,9 @@ export class State {
         import('@shopware-ag/dive/ar').ARSystem
     > {
         if (!this._arSystem) {
-            this._arSystem = new (await getModule('ARSystem'))();
+            this._arSystem = new (
+                await import('@shopware-ag/dive/ar')
+            ).ARSystem();
         }
         return this._arSystem;
     }
@@ -102,7 +105,9 @@ export class State {
         import('@shopware-ag/dive/assetexporter').AssetExporter
     > {
         if (!this._assetExplorer) {
-            this._assetExplorer = new (await getModule('AssetExporter'))();
+            this._assetExplorer = new (
+                await import('@shopware-ag/dive/assetexporter')
+            ).AssetExporter();
         }
         return this._assetExplorer;
     }
@@ -115,7 +120,9 @@ export class State {
         import('@shopware-ag/dive/animation').AnimationSystem
     > {
         if (!this._animationSystem) {
-            this._animationSystem = new (await getModule('AnimationSystem'))();
+            this._animationSystem = new (
+                await import('@shopware-ag/dive/animation')
+            ).AnimationSystem();
         }
         return this._animationSystem;
     }
@@ -126,10 +133,9 @@ export class State {
         import('@shopware-ag/dive/toolbox').Toolbox
     > {
         if (!this._toolbox) {
-            this._toolbox = new (await getModule('Toolbox'))(
-                this.engine.scene,
-                this.controller,
-            );
+            this._toolbox = new (
+                await import('@shopware-ag/dive/toolbox')
+            ).Toolbox(this.engine.scene, this.controller);
         }
         return this._toolbox;
     }

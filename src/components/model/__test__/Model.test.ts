@@ -12,14 +12,13 @@ import {
     Object3D,
 } from 'three';
 import { type COMMaterial } from '../../../modules/state/types/index.ts';
-import { getModule } from '../../../modules/ModuleRegistry.ts';
 
-vi.mock('../../../modules/ModuleRegistry.ts', () => ({
-    getModule: vi.fn().mockResolvedValue({
+vi.mock('@shopware-ag/dive/state', () => ({
+    State: {
         get: vi.fn().mockReturnValue({
             performAction: vi.fn(),
         }),
-    }),
+    },
 }));
 
 const object = new Object3D();
@@ -47,7 +46,9 @@ describe('dive/model/DIVEModel', () => {
     });
 
     it('should place on floor', async () => {
-        const State = await getModule('State');
+        const State = await import('@shopware-ag/dive/state').then(
+            ({ State }) => State,
+        );
 
         model.setFromGLTF(object);
 
@@ -85,7 +86,9 @@ describe('dive/model/DIVEModel', () => {
     });
 
     it('should drop it', async () => {
-        const State = await getModule('State');
+        const State = await import('@shopware-ag/dive/state').then(
+            ({ State }) => State,
+        );
 
         const spy = vi.spyOn(model, 'onMove').mockImplementation(() => {});
 
@@ -216,7 +219,9 @@ describe('dive/model/DIVEModel', () => {
     });
 
     it('should handle placeOnFloor when position does not change', async () => {
-        const State = await getModule('State');
+        const State = await import('@shopware-ag/dive/state').then(
+            ({ State }) => State,
+        );
 
         model.setFromGLTF(object);
         model.userData.id = 'something';

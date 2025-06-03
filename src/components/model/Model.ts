@@ -5,7 +5,6 @@ import {
     Raycaster,
     Vector3,
 } from 'three';
-import { getModule } from '../../modules/ModuleRegistry.ts';
 import { PRODUCT_LAYER_MASK } from '../../constants/VisibilityLayerMask.ts';
 import { findSceneRecursive } from '../../helpers/findSceneRecursive/findSceneRecursive.ts';
 import { type COMMaterial } from '../../modules/state/types/index.ts';
@@ -35,7 +34,9 @@ export class DIVEModel extends DIVENode {
         import('../../modules/assetloader/index.ts').AssetLoader
     > {
         if (!this._assetLoader) {
-            this._assetLoader = new (await getModule('AssetLoader'))();
+            this._assetLoader = new (
+                await import('@shopware-ag/dive/assetloader')
+            ).AssetLoader();
         }
         return this._assetLoader;
     }
@@ -44,7 +45,7 @@ export class DIVEModel extends DIVENode {
         const assetLoader = await this._getAssetLoader();
         const gltf = await assetLoader.load(url);
         this.setFromGLTF(gltf);
-        getModule('State').then((State) => {
+        import('@shopware-ag/dive/state').then(({ State }) => {
             State.get(this.userData.id!)?.performAction('MODEL_LOADED', {
                 id: this.userData.id!,
             });
@@ -156,7 +157,7 @@ export class DIVEModel extends DIVENode {
         // skip any action when the position did not change
         if (worldPos.y === oldWorldPos.y) return;
 
-        getModule('State').then((State) => {
+        import('@shopware-ag/dive/state').then(({ State }) => {
             State.get(this.userData.id)?.performAction('UPDATE_OBJECT', {
                 id: this.userData.id,
                 position: worldPos,

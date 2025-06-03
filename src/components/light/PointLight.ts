@@ -7,7 +7,6 @@ import {
     FrontSide,
     Object3D,
 } from 'three';
-import { getModule } from '../../modules/ModuleRegistry.ts';
 import {
     PRODUCT_LAYER_MASK,
     UI_LAYER_MASK,
@@ -93,7 +92,7 @@ export class DIVEPointLight
     }
 
     public onMove(): void {
-        getModule('State').then((State) => {
+        import('@shopware-ag/dive/state').then(({ State }) => {
             State.get(this.userData.id)?.performAction('UPDATE_OBJECT', {
                 id: this.userData.id,
                 position: this.position,
@@ -102,7 +101,7 @@ export class DIVEPointLight
     }
 
     public onSelect(): void {
-        getModule('State').then((State) => {
+        import('@shopware-ag/dive/state').then(({ State }) => {
             State.get(this.userData.id)?.performAction('SELECT_OBJECT', {
                 id: this.userData.id,
             });
@@ -110,7 +109,7 @@ export class DIVEPointLight
     }
 
     public onDeselect(): void {
-        getModule('State').then((State) => {
+        import('@shopware-ag/dive/state').then(({ State }) => {
             State.get(this.userData.id)?.performAction('DESELECT_OBJECT', {
                 id: this.userData.id,
             });
