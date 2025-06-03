@@ -38,11 +38,11 @@ export class DIVERoot extends Object3D {
     private _floor: DIVEFloor;
 
     private _assetLoader:
-        | import('../../modules/assetloader/AssetLoader.ts').AssetLoader
+        | import('../../modules/assetloader/index.ts').AssetLoader
         | null = null;
 
     private async _getAssetLoader(): Promise<
-        import('../../modules/assetloader/AssetLoader.ts').AssetLoader
+        import('../../modules/assetloader/index.ts').AssetLoader
     > {
         if (!this._assetLoader) {
             this._assetLoader = new (await getModule('AssetLoader'))();

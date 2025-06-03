@@ -1,10 +1,9 @@
 import { DIVETransformTool, isTransformTool } from '../TransformTool.ts';
 import { DIVEScene } from '../../../../engine/scene/Scene.ts';
-import { OrbitController } from '../../../controller/orbit/OrbitController.ts';
+import { OrbitController } from '@shopware-ag/dive/orbitcontroller';
 import { DIVERenderPipeline } from '../../../../engine/renderer/Renderer.ts';
 import { type DIVEBaseTool } from '../../BaseTool.ts';
 import { Tween } from '@tweenjs/tween.js';
-import { AnimationSystem } from '../../../animation/AnimationSystem.ts';
 import { DIVEPerspectiveCamera } from '../../../../engine/camera/PerspectiveCamera.ts';
 
 vi.mock('../../../../engine/renderer/Renderer', () => {
@@ -33,7 +32,7 @@ vi.mock('../../../../engine/camera/PerspectiveCamera', () => {
     };
 });
 
-vi.mock('../../../controller/orbit/OrbitController', () => {
+vi.mock('@shopware-ag/dive/orbitcontroller', () => {
     return {
         OrbitController: vi.fn(function (this: any) {
             this.enabled = true;

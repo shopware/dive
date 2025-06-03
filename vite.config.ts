@@ -3,31 +3,11 @@ import type { UserConfigExport } from 'vite';
 import dts from 'vite-plugin-dts';
 import moduleBuildPlugin from './scripts/build/vite/vite-plugin-module-exports.ts';
 import wasm from 'vite-plugin-wasm';
+import tsconfigPaths from 'vite-tsconfig-paths';
 import path from 'path';
 
 // --- Main Vite Export ---
 export default defineConfig({
-    resolve: {
-        alias: {
-            '@shopware-ag/dive': path.resolve(__dirname, './src/index.ts'),
-            '@shopware-ag/dive/systeminfo': path.resolve(
-                __dirname,
-                './src/modules/systeminfo/index.ts',
-            ),
-            '@shopware-ag/dive/assetconverter': path.resolve(
-                __dirname,
-                './src/modules/assetconverter/index.ts',
-            ),
-            '@shopware-ag/dive/assetexporter': path.resolve(
-                __dirname,
-                './src/modules/assetexporter/index.ts',
-            ),
-            '@shopware-ag/dive/assetloader': path.resolve(
-                __dirname,
-                './src/modules/assetloader/index.ts',
-            ),
-        },
-    },
     test: {
         globals: true,
         setupFiles: ['./vitest.setup.ts'],
@@ -56,6 +36,7 @@ export default defineConfig({
         },
     },
     plugins: [
+        tsconfigPaths(),
         moduleBuildPlugin(),
         dts({
             insertTypesEntry: true,

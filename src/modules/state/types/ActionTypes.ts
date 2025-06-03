@@ -1,5 +1,5 @@
 import { DIVEEngine } from '../../../engine/Engine.ts';
-import { type OrbitController } from '../../controller/orbit/OrbitController.ts';
+import { type OrbitController } from '@shopware-ag/dive/orbitcontroller';
 import { type COMEntity } from '../types/index.ts';
 
 // Extracted types for performAction_new

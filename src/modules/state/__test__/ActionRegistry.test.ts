@@ -1,4 +1,4 @@
-import { registerAction, getActionClass } from '../ActionRegistry';
+import { registerAction, getActionClass } from '../ActionRegistry.ts';
 
 describe('modules/state/ActionRegistry', () => {
     beforeEach(() => {

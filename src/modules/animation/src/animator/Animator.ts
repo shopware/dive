@@ -52,7 +52,6 @@ export class Animator<
         this._playing = true;
         this._stopped = false;
         this.dispatchEvent({ type: 'play', target: this });
-        console.log('play', this);
         return this;
     }
 

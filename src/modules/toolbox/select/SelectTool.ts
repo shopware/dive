@@ -2,7 +2,7 @@ import { type Object3D } from 'three';
 import { type DIVEScene } from '../../../engine/scene/Scene.ts';
 import { DIVETransformTool } from '../transform/TransformTool.ts';
 import { findInterface } from '../../../helpers/findInterface/findInterface.ts';
-import { type OrbitController } from '../../controller/orbit/OrbitController.ts';
+import { type OrbitController } from '@shopware-ag/dive/orbitcontroller';
 import { type DIVESelectable } from '../../../interfaces/Selectable.ts';
 import { type DIVEMovable } from '../../../interfaces/Movable.ts';
 import { type DIVEBaseTool } from '../BaseTool.ts';

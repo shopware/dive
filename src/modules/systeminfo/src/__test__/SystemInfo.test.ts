@@ -1,10 +1,5 @@
 import { SystemInfo, EBrowser } from '../SystemInfo.ts';
-import { ESystem, EWebXRUnsupportedReason } from '../../../types/info/index.ts';
-
-// Helper for test failures
-const fail = (message: string): never => {
-    throw new Error(message);
-};
+import { ESystem, EWebXRUnsupportedReason } from '../../types/index.ts';
 
 const mockNavigator = (navigator: any) => {
     Object.defineProperty(global, 'navigator', {

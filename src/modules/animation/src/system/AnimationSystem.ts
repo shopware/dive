@@ -2,10 +2,8 @@
 import { Easing, Tween, update as updateTween } from '@tweenjs/tween.js';
 import { MathUtils } from 'three/src/math/MathUtils.js';
 import { DIVETicker } from '@shopware-ag/dive';
-import { Animator } from '../animator/Animator.js';
-import { TAnimatorParameters } from '../types/AnimatorParameters.js';
-
-export type * from '../animator/Animator.js';
+import { Animator } from '../animator/Animator.ts';
+import { TAnimatorParameters } from '../types/AnimatorParameters.ts';
 
 type CallbackTuple<T> = {
     onUpdate: (object: T, elapsed: number) => void;

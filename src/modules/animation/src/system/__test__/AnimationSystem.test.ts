@@ -1,8 +1,6 @@
-import { AnimationSystem } from '../AnimationSystem.js';
-import { type Tween as TweenJsTween } from '@tweenjs/tween.js';
-import { Tween, Easing, update } from '@tweenjs/tween.js';
-import { TAnimatorParameters } from '../types/AnimatorParameters.js';
-import type { Mock } from 'vitest';
+import { AnimationSystem } from '../AnimationSystem.ts';
+import { Tween as TweenJsTween, Easing, update } from '@tweenjs/tween.js';
+import type { TAnimatorParameters } from '../../types/AnimatorParameters.ts';
 
 vi.mock('@tweenjs/tween.js', async () => {
     const actual = (await vi.importActual('@tweenjs/tween.js')) as any;
@@ -13,17 +11,19 @@ vi.mock('@tweenjs/tween.js', async () => {
     };
 });
 
-vi.mock('../animator/Animator', () => ({
-    Animator: vi.fn().mockImplementation((object, to, duration, options) => ({
-        uuid: 'mock-animator-uuid',
-        object,
-        to,
-        duration,
-        options,
-        addEventListener: vi.fn(),
-        play: vi.fn(),
-        stop: vi.fn(),
-    })),
+vi.mock('../animator/Animator.ts', () => ({
+    Animator: vi.fn().mockImplementation((object, to, duration, options) => {
+        return {
+            uuid: 'mock-animator-uuid',
+            object,
+            to,
+            duration,
+            options,
+            addEventListener: vi.fn(),
+            play: vi.fn(),
+            stop: vi.fn(),
+        };
+    }),
 }));
 
 describe('dive/animation/DIVEAnimationSystem', () => {
@@ -62,7 +62,7 @@ describe('dive/animation/DIVEAnimationSystem', () => {
             completeCallback: (object: any) => void;
         };
 
-        vi.mocked(Tween).mockImplementation(() => mockTween);
+        vi.mocked(TweenJsTween).mockImplementation(() => mockTween);
 
         animationSystem = new AnimationSystem();
     });
@@ -95,7 +95,7 @@ describe('dive/animation/DIVEAnimationSystem', () => {
                 onComplete: vi.fn(),
             };
 
-            const animator = animationSystem.createAnimator(
+            const animator = animationSystem.animate(
                 object,
                 to,
                 duration,
@@ -109,11 +109,7 @@ describe('dive/animation/DIVEAnimationSystem', () => {
             const to = { x: 100 };
             const duration = 1000;
 
-            const animator = animationSystem.createAnimator(
-                object,
-                to,
-                duration,
-            );
+            const animator = animationSystem.animate(object, to, duration);
 
             expect(mockTween.easing).toHaveBeenCalledWith(Easing.Quadratic.Out);
         });
@@ -122,11 +118,7 @@ describe('dive/animation/DIVEAnimationSystem', () => {
             const object = { x: 0 };
             const to = { x: 100 };
             const duration = 1000;
-            const animator = animationSystem.createAnimator(
-                object,
-                to,
-                duration,
-            );
+            const animator = animationSystem.animate(object, to, duration);
 
             expect(
                 animationSystem['_callbackMap'].has(animator.uuid),
@@ -138,8 +130,8 @@ describe('dive/animation/DIVEAnimationSystem', () => {
     describe('Animation Control', () => {
         it('should create a basic tween', () => {
             const target = { x: 0 };
-            const tween = animationSystem.animate(target);
-            expect(Tween).toHaveBeenCalledWith(target);
+            const tween = animationSystem.animate(target, target, 1000);
+            expect(TweenJsTween).toHaveBeenCalledWith(target);
         });
 
         it('should create tweens for different object types', () => {
@@ -147,24 +139,32 @@ describe('dive/animation/DIVEAnimationSystem', () => {
             const vectorTarget = { x: 0, y: 0, z: 0 };
             const colorTarget = { r: 0, g: 0, b: 0 };
 
-            const numberTween = animationSystem.animate(numberTarget);
-            const vectorTween = animationSystem.animate(vectorTarget);
-            const colorTween = animationSystem.animate(colorTarget);
+            const numberTween = animationSystem.animate(
+                numberTarget,
+                numberTarget,
+                1000,
+            );
+            const vectorTween = animationSystem.animate(
+                vectorTarget,
+                vectorTarget,
+                1000,
+            );
+            const colorTween = animationSystem.animate(
+                colorTarget,
+                colorTarget,
+                1000,
+            );
 
-            expect(Tween).toHaveBeenCalledWith(numberTarget);
-            expect(Tween).toHaveBeenCalledWith(vectorTarget);
-            expect(Tween).toHaveBeenCalledWith(colorTarget);
+            expect(TweenJsTween).toHaveBeenCalledWith(numberTarget);
+            expect(TweenJsTween).toHaveBeenCalledWith(vectorTarget);
+            expect(TweenJsTween).toHaveBeenCalledWith(colorTarget);
         });
 
         it('should handle tick updates with active tweens', () => {
             const object = { x: 0 };
             const to = { x: 100 };
             const duration = 1000;
-            const animator = animationSystem.createAnimator(
-                object,
-                to,
-                duration,
-            );
+            const animator = animationSystem.animate(object, to, duration);
 
             // Verify tween is in the map
             expect(animationSystem['_tweens'].size).toBe(1);
@@ -178,31 +178,27 @@ describe('dive/animation/DIVEAnimationSystem', () => {
     });
 
     describe('Callback Management', () => {
-        it('should unregister callbacks and tweens', () => {
+        it('should remove callbacks and tweens', () => {
             const object = { x: 0 };
             const to = { x: 100 };
             const duration = 1000;
-            const animator = animationSystem.createAnimator(
-                object,
-                to,
-                duration,
-            );
+            const animator = animationSystem.animate(object, to, duration);
             const uuid = animator.uuid;
 
-            animationSystem.unregister(uuid);
+            animationSystem.remove(uuid);
             expect(animationSystem['_callbackMap'].has(uuid)).toBeFalsy();
             expect(animationSystem['_tweens'].has(uuid)).toBeFalsy();
         });
 
-        it('should warn when unregistering non-existent animator', () => {
+        it('should warn when removing non-existent animator', () => {
             const consoleSpy = vi
                 .spyOn(console, 'warn')
                 .mockImplementation((message: string) => {});
             const nonExistentUuid = 'non-existent-uuid';
 
-            animationSystem.unregister(nonExistentUuid);
+            animationSystem.remove(nonExistentUuid);
             expect(consoleSpy).toHaveBeenCalledWith(
-                `Animator with uuid ${nonExistentUuid} not registered`,
+                `Animator with uuid ${nonExistentUuid} not found`,
             );
         });
     });
@@ -212,11 +208,7 @@ describe('dive/animation/DIVEAnimationSystem', () => {
             const object = { x: 0 };
             const to = { x: 100 };
             const duration = 1000;
-            const animator = animationSystem.createAnimator(
-                object,
-                to,
-                duration,
-            );
+            const animator = animationSystem.animate(object, to, duration);
 
             // Add some data to the maps
             expect(animationSystem['_callbackMap'].size).toBe(1);
@@ -236,19 +228,9 @@ describe('dive/animation/DIVEAnimationSystem', () => {
             const object = { x: 0 };
             const to = { x: 100 };
             const duration = 1000;
-            const animator = animationSystem.createAnimator(
-                object,
-                to,
-                duration,
-            );
 
-            // Get the play event listener callback
-            const playCallback = (
-                animator.addEventListener as Mock
-            ).mock.calls.find((call: any[]) => call[0] === 'play')![1];
-
-            // Trigger the play event
-            playCallback();
+            const animator = animationSystem.animate(object, to, duration);
+            animator.play();
 
             expect(mockTween.start).toHaveBeenCalled();
         });
@@ -257,19 +239,9 @@ describe('dive/animation/DIVEAnimationSystem', () => {
             const object = { x: 0 };
             const to = { x: 100 };
             const duration = 1000;
-            const animator = animationSystem.createAnimator(
-                object,
-                to,
-                duration,
-            );
 
-            // Get the stop event listener callback
-            const stopCallback = (
-                animator.addEventListener as Mock
-            ).mock.calls.find((call: any[]) => call[0] === 'stop')![1];
-
-            // Trigger the stop event
-            stopCallback();
+            const animator = animationSystem.animate(object, to, duration);
+            animator.stop();
 
             expect(mockTween.stop).toHaveBeenCalled();
         });
@@ -285,7 +257,7 @@ describe('dive/animation/DIVEAnimationSystem', () => {
                 onComplete,
             };
 
-            const animator = animationSystem.createAnimator(
+            const animator = animationSystem.animate(
                 object,
                 to,
                 duration,
@@ -316,11 +288,7 @@ describe('dive/animation/DIVEAnimationSystem', () => {
             const object = { x: 0 };
             const to = { x: 100 };
             const duration = 1000;
-            const animator = animationSystem.createAnimator(
-                object,
-                to,
-                duration,
-            );
+            const animator = animationSystem.animate(object, to, duration);
 
             // Get the update and complete callbacks from the mock tween
             const updateCallback = vi.mocked(mockTween.onUpdate).mock
@@ -340,11 +308,7 @@ describe('dive/animation/DIVEAnimationSystem', () => {
             const object = { x: 0 };
             const to = { x: 100 };
             const duration = 1000;
-            const animator = animationSystem.createAnimator(
-                object,
-                to,
-                duration,
-            );
+            const animator = animationSystem.animate(object, to, duration);
 
             // Get the callback tuple from the map
             const callbackTuple = animationSystem['_callbackMap'].get(

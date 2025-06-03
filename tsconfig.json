@@ -29,13 +29,17 @@
             ],
             "@shopware-ag/dive/assetloader": [
                 "./src/modules/assetloader/index.ts"
+            ],
+            "@shopware-ag/dive/orbitcontroller": [
+                "./src/modules/orbitcontroller/index.ts"
             ]
         }
     },
     "include": [
         "src/**/*",
         "docs/**/*",
-        "scripts/**/*.ts"
+        "scripts/**/*.ts",
+        "vite.shared.ts"
     ],
     "exclude": [
         "node_modules",

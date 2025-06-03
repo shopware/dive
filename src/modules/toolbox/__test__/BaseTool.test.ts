@@ -1,5 +1,5 @@
 import { DIVEBaseTool } from '../BaseTool.ts';
-import { OrbitController } from '../../controller/orbit/OrbitController.ts';
+import { OrbitController } from '@shopware-ag/dive/orbitcontroller';
 import { DIVEScene } from '../../../engine/scene/Scene.ts';
 import {
     Camera,

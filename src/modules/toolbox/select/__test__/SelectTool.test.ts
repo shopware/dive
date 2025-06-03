@@ -1,6 +1,6 @@
 import { DIVESelectTool, isSelectTool } from '../SelectTool.ts';
 import { DIVEScene } from '../../../../engine/scene/Scene.ts';
-import { OrbitController } from '../../../controller/orbit/OrbitController.ts';
+import { OrbitController } from '@shopware-ag/dive/orbitcontroller';
 import { DIVESelectable } from '../../../../interfaces/Selectable.ts';
 import { type DIVEPerspectiveCamera } from '../../../../engine/camera/PerspectiveCamera.ts';
 import { type Object3D } from 'three';
@@ -35,7 +35,7 @@ vi.mock('../../../../engine/camera/PerspectiveCamera', () => {
     };
 });
 
-vi.mock('../../../controller/orbit/OrbitController', () => {
+vi.mock('@shopware-ag/dive/orbitcontroller', () => {
     return {
         OrbitController: vi.fn(function (this: any) {
             this.enabled = true;

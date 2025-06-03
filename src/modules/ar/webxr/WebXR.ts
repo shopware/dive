@@ -1,5 +1,5 @@
 import { Vector3 } from 'three';
-import { OrbitController } from '../../../modules/controller/orbit/OrbitController.ts';
+import { OrbitController } from '@shopware-ag/dive/orbitcontroller';
 import { type DIVERenderPipeline } from '../../../engine/renderer/Renderer.ts';
 import { type DIVEScene } from '../../../engine/scene/Scene.ts';
 import { Overlay } from './overlay/Overlay.ts';

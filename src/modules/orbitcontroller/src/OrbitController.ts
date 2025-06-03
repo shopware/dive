@@ -1,7 +1,8 @@
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
-import { DIVEPerspectiveCamera } from '../../../engine/camera/PerspectiveCamera.ts';
-import { type Box3, MathUtils, Vector3, Vector3Like } from 'three';
-import { DIVETicker } from '../../../engine/clock/Clock.ts';
+import { Vector3, Vector3Like } from 'three/src/math/Vector3.js';
+import { MathUtils } from 'three/src/math/MathUtils.js';
+import { type Box3 } from 'three/src/math/Box3.js';
+import { DIVEPerspectiveCamera, DIVETicker } from '@shopware-ag/dive';
 
 export type OrbitControllerSettings = {
     /** Whether to enable damping for smooth camera movement */

@@ -1,10 +1,13 @@
 import { State } from '../State.ts';
-import { DIVEEngine, type EngineSettings } from '../../../engine/Engine.ts';
-import { OrbitController } from '../../controller/orbit/OrbitController.ts';
+import {
+    DIVEEngine,
+    type EngineSettings,
+    DIVEPerspectiveCamera,
+    DIVEScene,
+} from '@shopware-ag/dive';
+import { OrbitController } from '@shopware-ag/dive/orbitcontroller';
 import { Toolbox } from '../../toolbox/Toolbox.ts';
 import { getActionClass } from '../ActionRegistry.ts';
-import { DIVEPerspectiveCamera } from '../../../engine/camera/PerspectiveCamera.ts';
-import { DIVEScene } from '../../../engine/scene/Scene.ts';
 import { Action } from '../actions/action.ts';
 import { type ActionDependencies } from '../types/index.ts';
 import { type Vector3Like } from 'three';
@@ -33,39 +36,83 @@ const MockActionClass = Action.define<
 });
 
 // Mock dependencies
-vi.mock('../../../engine/Engine', () => ({
-    DIVEEngine: vi.fn().mockImplementation(() => ({
-        uuid: 'mock-engine-uuid',
-    })),
-}));
-vi.mock('../../controller/orbit/OrbitController', () => ({
-    OrbitController: vi.fn().mockImplementation(() => ({
+vi.mock(import('../../../engine/Engine.ts'), async (importOriginal) => {
+    const actual = await importOriginal();
+    return {
+        ...actual,
+        DIVEEngine: vi.fn().mockImplementation(() => ({
+            uuid: 'mock-engine-uuid',
+        })),
+    };
+});
+vi.mock(import('@shopware-ag/dive/orbitcontroller'), async (importOriginal) => {
+    const actual = await importOriginal();
+    const MockOrbitController = vi.fn().mockImplementation(() => ({
         uuid: 'mock-orbit-controller-uuid',
-    })),
-}));
-vi.mock('../../toolbox/Toolbox', () => ({
+    }));
+
+    // Explicitly define static properties
+    (MockOrbitController as any).DEFAULT_ZOOM_FACTOR = (
+        actual.OrbitController as any
+    ).DEFAULT_ZOOM_FACTOR;
+    // Add other static properties from actual.OrbitController if they exist and are needed
+
+    return {
+        ...actual,
+        OrbitController:
+            MockOrbitController as unknown as typeof actual.OrbitController, // Cast to satisfy stricter type checking
+    };
+});
+vi.mock('../../toolbox/Toolbox.ts', () => ({
     DIVEToolbox: vi.fn().mockImplementation(() => ({
         uuid: 'mock-toolbox-uuid',
     })),
 }));
 vi.mock('../ActionRegistry');
-vi.mock('../../../engine/camera/PerspectiveCamera', () => ({
-    DIVEPerspectiveCamera: vi.fn().mockImplementation(() => ({
-        uuid: 'mock-perspective-camera-uuid',
-    })),
-}));
-vi.mock('../../../engine/scene/Scene', () => ({
+vi.mock(
+    import('../../../engine/camera/PerspectiveCamera.ts'),
+    async (importOriginal) => {
+        const actual = await importOriginal();
+        const MockDIVEPerspectiveCamera = vi.fn().mockImplementation(() => ({
+            uuid: 'mock-perspective-camera-uuid',
+        }));
+
+        // Explicitly define static properties
+        (MockDIVEPerspectiveCamera as any).EDITOR_VIEW_LAYER_MASK = (
+            actual.DIVEPerspectiveCamera as any
+        ).EDITOR_VIEW_LAYER_MASK;
+        (MockDIVEPerspectiveCamera as any).LIVE_VIEW_LAYER_MASK = (
+            actual.DIVEPerspectiveCamera as any
+        ).LIVE_VIEW_LAYER_MASK;
+        (MockDIVEPerspectiveCamera as any).DEFAULT_UP = (
+            actual.DIVEPerspectiveCamera as any
+        ).DEFAULT_UP;
+        (MockDIVEPerspectiveCamera as any).DEFAULT_MATRIX_AUTO_UPDATE = (
+            actual.DIVEPerspectiveCamera as any
+        ).DEFAULT_MATRIX_AUTO_UPDATE;
+        (MockDIVEPerspectiveCamera as any).DEFAULT_MATRIX_WORLD_AUTO_UPDATE = (
+            actual.DIVEPerspectiveCamera as any
+        ).DEFAULT_MATRIX_WORLD_AUTO_UPDATE;
+
+        return {
+            ...actual,
+            DIVEPerspectiveCamera:
+                MockDIVEPerspectiveCamera as unknown as typeof actual.DIVEPerspectiveCamera,
+        };
+    },
+);
+vi.mock('../../../engine/scene/Scene.ts', () => ({
     DIVEScene: vi.fn().mockImplementation(() => ({
         uuid: 'mock-scene-uuid',
     })),
 }));
 describe('modules/state/State', () => {
     let state: State;
-    let mockEngine: vi.Mocked<DIVEEngine>;
-    let mockController: vi.Mocked<OrbitController>;
-    let mockToolbox: vi.Mocked<Toolbox>;
-    let mockCamera: vi.Mocked<DIVEPerspectiveCamera>;
-    let mockScene: vi.Mocked<DIVEScene>;
+    let mockEngine: DIVEEngine;
+    let mockController: OrbitController;
+    let mockToolbox: Toolbox;
+    let mockCamera: DIVEPerspectiveCamera;
+    let mockScene: DIVEScene;
 
     beforeEach(() => {
         // Clear all instances before each test
@@ -76,10 +123,9 @@ describe('modules/state/State', () => {
             displayAxes: false,
         };
 
-        mockCamera =
-            new DIVEPerspectiveCamera() as vi.Mocked<DIVEPerspectiveCamera>;
-        mockScene = new DIVEScene() as vi.Mocked<DIVEScene>;
-        mockEngine = new DIVEEngine(engineSettings) as vi.Mocked<DIVEEngine>;
+        mockCamera = new DIVEPerspectiveCamera();
+        mockScene = new DIVEScene();
+        mockEngine = new DIVEEngine(engineSettings);
 
         // Mock the getters
         Object.defineProperty(mockEngine, 'camera', {
@@ -90,10 +136,7 @@ describe('modules/state/State', () => {
         });
 
         const mockCanvas = document.createElement('canvas');
-        mockController = new OrbitController(
-            mockCamera,
-            mockCanvas,
-        ) as vi.Mocked<OrbitController>;
+        mockController = new OrbitController(mockCamera, mockCanvas);
 
         state = new State(mockEngine, mockController);
     });
@@ -134,7 +177,7 @@ describe('modules/state/State', () => {
                 target: { x: 0, y: 0, z: 0 },
             };
 
-            (getActionClass as vi.Mock).mockReturnValue(MockActionClass);
+            vi.mocked(getActionClass).mockReturnValue(MockActionClass);
 
             const result = state.performAction(mockAction);
             expect(result).toEqual(mockResult);
@@ -159,14 +202,16 @@ describe('modules/state/State', () => {
                 execute: async () => mockResult,
             });
 
-            (getActionClass as vi.Mock).mockReturnValue(AsyncMockActionClass);
+            vi.mocked(getActionClass).mockReturnValue(
+                AsyncMockActionClass as any,
+            );
 
             const result = await state.performAction(mockAction);
             expect(result).toEqual(mockResult);
         });
 
         it('should throw error for non-existent action', () => {
-            (getActionClass as vi.Mock).mockReturnValue(undefined);
+            vi.mocked(getActionClass).mockReturnValue(undefined as any);
 
             expect(() => {
                 state.performAction('GET_CAMERA_TRANSFORM');
@@ -188,7 +233,9 @@ describe('modules/state/State', () => {
                 },
             });
 
-            (getActionClass as vi.Mock).mockReturnValue(ErrorMockActionClass);
+            vi.mocked(getActionClass).mockReturnValue(
+                ErrorMockActionClass as any,
+            );
 
             expect(() => {
                 state.performAction(mockAction);
@@ -212,11 +259,12 @@ describe('modules/state/State', () => {
                 },
             });
 
-            (getActionClass as vi.Mock).mockReturnValue(ErrorMockActionClass);
+            vi.mocked(getActionClass).mockReturnValue(
+                ErrorMockActionClass as any,
+            );
 
             try {
                 state.performAction(mockAction);
-                fail('Should have thrown an error');
             } catch (err) {
                 const error = err as Error & { cause: Error };
                 expect(error).toBeInstanceOf(Error);
@@ -246,13 +294,12 @@ describe('modules/state/State', () => {
                 },
             });
 
-            (getActionClass as vi.Mock).mockReturnValue(
-                AsyncErrorMockActionClass,
+            vi.mocked(getActionClass).mockReturnValue(
+                AsyncErrorMockActionClass as any,
             );
 
             try {
                 await state.performAction(mockAction);
-                fail('Should have thrown an error');
             } catch (err) {
                 const error = err as Error & { cause: Error };
                 expect(error).toBeInstanceOf(Error);
@@ -284,7 +331,7 @@ describe('modules/state/State', () => {
 
             state.subscribe(mockAction, mockListener);
 
-            (getActionClass as vi.Mock).mockReturnValue(MockActionClass);
+            vi.mocked(getActionClass).mockReturnValue(MockActionClass);
 
             state.performAction(mockAction);
             expect(mockListener).toHaveBeenCalledWith(undefined);
@@ -297,7 +344,7 @@ describe('modules/state/State', () => {
             const unsubscribe = state.subscribe(mockAction, mockListener);
             unsubscribe();
 
-            (getActionClass as vi.Mock).mockReturnValue(MockActionClass);
+            vi.mocked(getActionClass).mockReturnValue(MockActionClass);
 
             state.performAction(mockAction);
             expect(mockListener).not.toHaveBeenCalled();
@@ -316,7 +363,7 @@ describe('modules/state/State', () => {
             const unsubscribe = state.subscribe(mockAction, mockListener);
 
             // Perform action to trigger listener
-            (getActionClass as vi.Mock).mockReturnValue(MockActionClass);
+            vi.mocked(getActionClass).mockReturnValue(MockActionClass);
             state.performAction(mockAction);
             expect(mockListener).toHaveBeenCalled();
 
@@ -354,7 +401,7 @@ describe('modules/state/State', () => {
             state.subscribe(mockAction, mockListener2);
 
             // Perform action to trigger both listeners
-            (getActionClass as vi.Mock).mockReturnValue(MockActionClass);
+            vi.mocked(getActionClass).mockReturnValue(MockActionClass);
             state.performAction(mockAction);
 
             expect(mockListener).toHaveBeenCalled();

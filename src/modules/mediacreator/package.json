@@ -1,0 +1,7 @@
+{
+  "description": "",
+  "main": "index.ts",
+  "type": "module",
+  "author": "ffrank <f.frank@shopware.com>",
+  "license": "MIT"
+}

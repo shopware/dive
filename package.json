@@ -42,15 +42,15 @@
             "import": "./build/modules/axiscamera/index.mjs",
             "require": "./build/modules/axiscamera/index.cjs"
         },
-        "./controller": {
-            "types": "./build/modules/controller/index.d.ts",
-            "import": "./build/modules/controller/index.mjs",
-            "require": "./build/modules/controller/index.cjs"
-        },
         "./mediacreator": {
             "types": "./build/modules/mediacreator/index.d.ts",
             "import": "./build/modules/mediacreator/index.mjs",
             "require": "./build/modules/mediacreator/index.cjs"
+        },
+        "./orbitcontroller": {
+            "types": "./build/modules/orbitcontroller/index.d.ts",
+            "import": "./build/modules/orbitcontroller/index.mjs",
+            "require": "./build/modules/orbitcontroller/index.cjs"
         },
         "./state": {
             "types": "./build/modules/state/index.d.ts",
@@ -121,6 +121,7 @@
         "vite": "^6.2.1",
         "vite-plugin-dts": "^4.5.3",
         "vite-plugin-wasm": "^3.4.1",
+        "vite-tsconfig-paths": "^5.1.4",
         "vitest": "^3.1.2"
     },
     "scripts": {

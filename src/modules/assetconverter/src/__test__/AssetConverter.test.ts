@@ -1,11 +1,10 @@
 import { AssetConverter } from '../AssetConverter.ts';
-import { AssetLoader } from '../../assetloader/AssetLoader.ts';
-import { AssetExporter } from '../../assetexporter/AssetExporter.ts';
+import { AssetLoader } from '@shopware-ag/dive/assetloader';
+import { AssetExporter } from '@shopware-ag/dive/assetexporter';
 import { Object3D } from 'three';
-import { FileType } from '../../../types/file/index.ts';
 
 const mockLoaderLoad = vi.fn();
-vi.mock('../../assetloader/AssetLoader.ts', () => {
+vi.mock('@shopware-ag/dive/assetloader', () => {
     return {
         AssetLoader: vi.fn().mockImplementation(() => ({
             load: mockLoaderLoad,
@@ -15,7 +14,7 @@ vi.mock('../../assetloader/AssetLoader.ts', () => {
 
 // Mock the Exporter class
 const mockExporterExport = vi.fn();
-vi.mock('../../assetexporter/AssetExporter.ts', () => {
+vi.mock('@shopware-ag/dive/assetexporter', () => {
     return {
         AssetExporter: vi.fn().mockImplementation(() => ({
             export: mockExporterExport,

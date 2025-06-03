@@ -10,7 +10,7 @@ import {
     UI_LAYER_MASK,
 } from '../../constants/VisibilityLayerMask.ts';
 import { type DIVEScene } from '../../engine/scene/Scene.ts';
-import { type OrbitController } from '../controller/orbit/OrbitController.ts';
+import { type OrbitController } from '@shopware-ag/dive/orbitcontroller';
 import { type DIVEDraggable } from '../../interfaces/Draggable.ts';
 import { type DIVEHoverable } from '../../interfaces/Hoverable.ts';
 import { findInterface } from '../../helpers/findInterface/findInterface.ts';

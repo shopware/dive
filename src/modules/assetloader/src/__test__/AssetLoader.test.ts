@@ -1,11 +1,8 @@
-import { AssetLoader } from '../../AssetLoader.ts';
+import { AssetLoader } from '@shopware-ag/dive/assetloader';
 import { GLTF, GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { USDZLoader } from 'three/examples/jsm/loaders/USDZLoader.js';
 import { Group } from 'three';
-import { FileTypeError } from '../../../error/file-type/file-type-error.ts';
-import { NetworkError } from '../../../error/network/network-error.ts';
-import { ParseError } from '../../../error/parse/parse-error.ts';
-import { DRACOLoader } from 'three/examples/jsm/Addons.js';
+import { FileTypeError, NetworkError, ParseError } from '@shopware-ag/dive';
 
 // Mock fetch
 global.fetch = vi.fn().mockImplementation(async (uri) => ({

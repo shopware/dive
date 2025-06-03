@@ -1,23 +1,23 @@
 import { MoveCameraAction } from '../movecamera.ts';
 import { COMEntity } from '../../../types/index.ts';
-import { OrbitController } from '../../../../controller/orbit/OrbitController.ts';
+import { OrbitController } from '@shopware-ag/dive/orbitcontroller';
 import { Vector3 } from 'three';
 import { DIVEEngine } from '../../../../../engine/Engine.ts';
-import { getModule } from '../../../../ModuleRegistry.ts';
 
 const mockStop = vi.fn();
-const mockCreateAnimator = vi.fn().mockReturnValue({
+const mockAnimate = vi.fn().mockReturnValue({
     play: vi.fn(),
     stop: mockStop,
 });
 
 const mockGetAnimationSystem = vi.fn().mockResolvedValue({
-    createAnimator: mockCreateAnimator,
+    animate: mockAnimate,
 });
 
 const mockEngine = {
     clock: {
         addTicker: vi.fn(),
+        hasTicker: vi.fn(),
     },
 } as unknown as DIVEEngine;
 
@@ -61,7 +61,7 @@ describe('MoveCameraAction', () => {
             expect(mockEngine.clock.addTicker).toHaveBeenCalled();
 
             // Verify animator creation for position
-            expect(mockCreateAnimator).toHaveBeenNthCalledWith(
+            expect(mockAnimate).toHaveBeenNthCalledWith(
                 1,
                 mockController.object.position,
                 expect.objectContaining({ x: 1, y: 1, z: 1 }),
@@ -70,7 +70,7 @@ describe('MoveCameraAction', () => {
             );
 
             // Verify animator creation for target
-            expect(mockCreateAnimator).toHaveBeenNthCalledWith(
+            expect(mockAnimate).toHaveBeenNthCalledWith(
                 2,
                 mockController.target,
                 expect.objectContaining({ x: 0, y: 0, z: 0 }),
@@ -108,8 +108,7 @@ describe('MoveCameraAction', () => {
             await action.execute();
 
             // Get the onComplete callback from the second animator call
-            const onCompleteCallback =
-                mockCreateAnimator.mock.calls[1][3].onComplete;
+            const onCompleteCallback = mockAnimate.mock.calls[1][3].onComplete;
             onCompleteCallback();
 
             // Verify controller is enabled when unlocked
@@ -151,7 +150,7 @@ describe('MoveCameraAction', () => {
             const result = await action.execute();
 
             // Verify animator creation with POV values
-            expect(mockCreateAnimator).toHaveBeenNthCalledWith(
+            expect(mockAnimate).toHaveBeenNthCalledWith(
                 1,
                 mockController.object.position,
                 expect.objectContaining({ x: 1, y: 1, z: 1 }),
@@ -159,7 +158,7 @@ describe('MoveCameraAction', () => {
                 expect.objectContaining({ easing: expect.any(Function) }),
             );
 
-            expect(mockCreateAnimator).toHaveBeenNthCalledWith(
+            expect(mockAnimate).toHaveBeenNthCalledWith(
                 2,
                 mockController.target,
                 expect.objectContaining({ x: 0, y: 0, z: 0 }),
@@ -254,8 +253,7 @@ describe('MoveCameraAction', () => {
             await action.execute();
 
             // Get the onUpdate callback from the second animator call
-            const onUpdateCallback =
-                mockCreateAnimator.mock.calls[1][3].onUpdate;
+            const onUpdateCallback = mockAnimate.mock.calls[1][3].onUpdate;
             onUpdateCallback();
 
             // Verify lookAt was called
@@ -270,12 +268,13 @@ describe('MoveCameraAction', () => {
                 { play: vi.fn().mockReturnThis(), stop: mockStop },
                 { play: vi.fn().mockReturnThis(), stop: mockStop },
             ];
-            mockCreateAnimator
+            mockAnimate
                 .mockReturnValueOnce(mockAnimators[0])
                 .mockReturnValueOnce(mockAnimators[1]);
             mockGetAnimationSystem.mockResolvedValueOnce({
-                createAnimator: mockCreateAnimator,
+                animate: mockAnimate,
                 addTicker: vi.fn(),
+                hasTicker: vi.fn(),
             });
 
             const action = new MoveCameraAction(

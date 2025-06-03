@@ -4,7 +4,7 @@ import {
     AxesColorGreen,
     AxesColorRed,
 } from '../../../constants/AxisHelperColors.ts';
-import { OrbitController } from '../../../modules/controller/orbit/OrbitController.ts';
+import { OrbitController } from '@shopware-ag/dive/orbitcontroller';
 import { DIVERadialHandle } from '../handles/RadialHandle.ts';
 import { DIVEGizmo, DIVEGizmoAxis } from '../Gizmo.ts';
 import { DraggableEvent } from '../../../modules/toolbox/BaseTool.ts';

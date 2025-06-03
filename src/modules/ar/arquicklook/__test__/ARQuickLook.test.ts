@@ -1,8 +1,8 @@
 import { Object3D } from 'three';
 import { type ARSystemOptions } from '../../ARSystem.ts';
 import { ARQuickLook } from '../ARQuickLook.ts';
-import { AssetConverter } from '../../../assetconverter/AssetConverter.ts';
-import { SystemInfo, EBrowser } from '../../../systeminfo/SystemInfo.ts';
+import { AssetConverter } from '@shopware-ag/dive/assetconverter';
+import { SystemInfo, EBrowser } from '@shopware-ag/dive/systeminfo';
 import {
     ARQuickLookNotSafariError,
     ARQuickLookVersionMismatchError,
@@ -31,8 +31,8 @@ vi.mock('../../../../engine/scene/Scene', () => {
 const mockConvert = vi.fn().mockReturnThis();
 const mockTo = vi.fn().mockResolvedValue(new ArrayBuffer(0));
 
-vi.mock('../../../systeminfo/SystemInfo.ts');
-vi.mock('../../../assetconverter/AssetConverter.ts', () => ({
+vi.mock('@shopware-ag/dive/systeminfo');
+vi.mock('@shopware-ag/dive/assetconverter', () => ({
     AssetConverter: vi.fn().mockImplementation(() => ({
         convert: mockConvert,
         to: mockTo,
