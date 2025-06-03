@@ -1,0 +1,1 @@
+"use strict";const e="#c20017",o="#00ab26",r="#0081d4",s=e,t=o,l=r;exports.AxesColorBlue=l;exports.AxesColorBlueLetter=r;exports.AxesColorGreen=t;exports.AxesColorGreenLetter=o;exports.AxesColorRed=s;exports.AxesColorRedLetter=e;
