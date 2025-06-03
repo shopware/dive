@@ -105,6 +105,7 @@
         "glob": "^11.0.1",
         "globals": "^15.0.0",
         "jsdom": "^26.1.0",
+        "log-update": "^6.1.0",
         "magic-string": "^0.30.17",
         "prettier": "^3.3.3",
         "prettier-plugin-multiline-arrays": "^3.0.6",
@@ -135,6 +136,6 @@
         "docs:actions": "tsx docs/generators/generate-actions-docs.ts",
         "docs:modules": "tsx docs/generators/generate-modules-docs.ts",
         "ci": "yarn lint && yarn prettier:check && yarn docs && yarn coverage && yarn build",
-        "postinstall": "bash scripts/install/install-plugins.sh"
+        "postinstall": "tsx scripts/install/install-plugins.ts"
     }
 }
