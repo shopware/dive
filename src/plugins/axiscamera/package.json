@@ -1,11 +1,11 @@
 {
-  "name": "axiscamera",
-  "description": "",
-  "main": "index.ts",
-  "type": "module",
-  "dependencies": {
-    "three-spritetext": "^1.8.2"
-  },
-  "author": "ffrank <f.frank@shopware.com>",
-  "license": "MIT"
+    "name": "axiscamera",
+    "description": "",
+    "main": "index.ts",
+    "type": "module",
+    "dependencies": {
+        "three-spritetext": "^1.8.2"
+    },
+    "author": "ffrank <f.frank@shopware.com>",
+    "license": "MIT"
 }

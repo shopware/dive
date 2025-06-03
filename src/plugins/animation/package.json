@@ -1,11 +1,11 @@
 {
-  "name": "animation",
-  "description": "",
-  "main": "index.ts",
-  "type": "module",
-  "dependencies": {
-    "@tweenjs/tween.js": "^23.1.1"
-  },
-  "author": "ffrank <f.frank@shopware.com>",
-  "license": "MIT"
+    "name": "animation",
+    "description": "",
+    "main": "index.ts",
+    "type": "module",
+    "dependencies": {
+        "@tweenjs/tween.js": "^23.1.1"
+    },
+    "author": "ffrank <f.frank@shopware.com>",
+    "license": "MIT"
 }

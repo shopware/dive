@@ -9,7 +9,7 @@ import {
 import { RaycasterIntersectObjectMock } from '../../../../__mocks__/three.ts';
 import { type State } from '@shopware-ag/dive/state';
 import {
-    type DIVEScene.
+    type DIVEScene,
     type GeometryTypeSchema,
     type GeometrySchema,
     type MaterialSchema,
