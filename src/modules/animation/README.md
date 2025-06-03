@@ -2,6 +2,12 @@
 # Animation System
 Leverages the workload for Animations in DIVE.
 
+## Features:
+- Uses reliable animation framework Tween in the background
+- play and stop mechanism
+- Customizable animation time in milliseconds
+- Observerability via `onUpdate` and `onComplete` callbacks
+
 ## Usage
 ```ts
 import { Vector3 } from 'three';
@@ -20,8 +26,11 @@ const onComplete = (object: Vector3): void => {
 };
 
 const animationSystem = new AnimationSystem();
-animationSystem.animate(obj.position, new Vector3(1, 1, 1), 1000, {
+const animator = animationSystem.animate(obj.position, new Vector3(1, 1, 1), 1000, {
     onUpdate,
     onComplete,
 });
+
+animator.play();
+animator.stop();
 ```
