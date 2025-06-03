@@ -1,7 +1,7 @@
 import { defineConfig } from 'vite';
 import type { UserConfigExport } from 'vite';
 import dts from 'vite-plugin-dts';
-import moduleBuildPlugin from './scripts/build/vite/vite-plugin-module-exports.ts';
+import pluginBuildPlugin from './scripts/build/vite/vite-plugin-exports.ts';
 import wasm from 'vite-plugin-wasm';
 import tsconfigPaths from 'vite-tsconfig-paths';
 import path from 'path';
@@ -23,7 +23,7 @@ export default defineConfig({
             exclude: [
                 '**/build/**',
                 '**/__mocks__/**',
-                'src/modules/ar/webxr/**', // webxr currently not supported in dive
+                'src/plugins/ar/src/webxr/**', // webxr currently not supported in dive
                 'src/engine/scene/xrroot/**', // webxr currently not supported in dive
             ],
             thresholds: {
@@ -38,8 +38,8 @@ export default defineConfig({
         // use tsconfig.json to resolve custom paths
         tsconfigPaths(),
 
-        // build modules, generates exports to write to {rootDir}/package.json
-        moduleBuildPlugin(),
+        // build plugins, generates exports to write to {rootDir}/package.json
+        pluginBuildPlugin(),
 
         // generate types
         dts({
