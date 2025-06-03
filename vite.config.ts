@@ -25,7 +25,6 @@ export default defineConfig({
                 '**/__mocks__/**',
                 'src/modules/ar/webxr/**', // webxr currently not supported in dive
                 'src/engine/scene/xrroot/**', // webxr currently not supported in dive
-                'src/modules/asset/draco/**', // draco is static lib, does not need to be tested
             ],
             thresholds: {
                 lines: 98,
@@ -36,8 +35,13 @@ export default defineConfig({
         },
     },
     plugins: [
+        // use tsconfig.json to resolve custom paths
         tsconfigPaths(),
+
+        // build modules, generates exports to write to {rootDir}/package.json
         moduleBuildPlugin(),
+
+        // generate types
         dts({
             insertTypesEntry: true,
             outDir: 'build',
@@ -49,6 +53,8 @@ export default defineConfig({
                 'src/**/*.spec.ts',
             ],
         }),
+
+        // build wasm for draco decoder
         wasm(),
     ],
 } as UserConfigExport);
