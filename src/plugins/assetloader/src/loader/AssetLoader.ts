@@ -12,29 +12,6 @@ import {
 } from '@shopware-ag/dive';
 import { DracoLoader } from '../draco/DracoLoader.ts';
 
-declare global {
-    interface ModuleClasses {
-        AssetLoader: typeof AssetLoader;
-    }
-}
-
-/**
- * @module AssetLoader
- *
- * Handles loading of 3D assets in various formats:
- *
- * ```ts
- * import { AssetLoader } from '@shopware-ag/dive/modules/AssetLoader';
- *
- * const assetLoader = new AssetLoader();
- * const model = await assetLoader.load('path/to/model.glb');
- * ```
- *
- * Supported formats:
- * - GLB/GLTF
- * - USDZ
- */
-
 export class AssetLoader {
     private _gltfLoader: GLTFLoader;
     private _usdzLoader: USDZLoader;

@@ -9,39 +9,6 @@ export enum EBrowser {
     UNKNOWN = 'Unknown',
 }
 
-declare global {
-    interface ModuleClasses {
-        SystemInfo: typeof SystemInfo;
-    }
-}
-
-/**
- * @module SystemInfo
- *
- * Provides information about the system's capabilities and performance:
- *
- * ```ts
- * import { SystemInfo } from '@shopware-ag/dive/modules/SystemInfo';
- *
- * // Get system information
- * const system = SystemInfo.getSystem(); // Returns ESystem enum (IOS, ANDROID, etc.)
- *
- * // Check AR capabilities
- * const supportsAR = SystemInfo.getSupportsAR();
- *
- * // Check device type
- * const isMobile = SystemInfo.isMobile;
- * const isDesktop = SystemInfo.isDesktop;
- * ```
- *
- * Features:
- * - System detection (iOS, Android, Windows, etc.)
- * - WebXR support detection
- * - AR capability checking
- * - Device type detection
- * - SceneViewer support detection
- */
-
 export class SystemInfo {
     private static _supportsWebXR: boolean = false;
     private static _webXRUnsupportedReason: EWebXRUnsupportedReason | null =

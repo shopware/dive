@@ -4,37 +4,6 @@ import { type DIVERenderPipeline } from '../../../engine/renderer/Renderer.ts';
 import { type OrbitController } from 'src/plugins/orbitcontroller/index.ts';
 import { type Vector3Like } from 'three';
 
-declare global {
-    interface ModuleClasses {
-        MediaCreator: typeof MediaCreator;
-    }
-}
-
-/**
- * @module MediaCreator
- *
- * Provides tools for creating media content from the 3D scene:
- *
- * ```ts
- * import { MediaCreator } from '@shopware-ag/dive/modules/MediaCreator';
- *
- * const mediaCreator = new MediaCreator(renderer, scene, controller);
- *
- * // Generate a screenshot
- * const screenshot = await mediaCreator.GenerateMedia(
- *     { x: 0, y: 0, z: 0 }, // camera position
- *     { x: 0, y: 0, z: 0 }, // camera target
- *     1920, // width
- *     1080  // height
- * );
- * ```
- *
- * Features:
- * - High-quality screenshot generation
- * - Customizable camera position and target
- * - Configurable output resolution
- */
-
 /**
  * @internal
  */

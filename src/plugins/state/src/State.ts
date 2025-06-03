@@ -16,30 +16,6 @@ export type ActionSubscriber<ActionType extends keyof ActionTypes> = (
 
 export type ActionUnsubscribe = () => void;
 
-declare global {
-    interface ModuleClasses {
-        State: typeof State;
-    }
-}
-/**
- * @module State
- * State class for communicating with DIVE.
- *
- * You can subscribe to actions and perform them from outside and inside DIVE.
- *
- * ```ts
- * import { DIVE } from "@shopware-ag/dive";
- *
- * const dive = new DIVE();
- *
- * dive.State.subscribe('GET_ALL_SCENE_DATA', () => {
- *  // do something
- * });
- *
- * dive.State.performAction('GET_ALL_SCENE_DATA', {});
- * ```
- */
-
 export class State {
     private static __instances: State[] = [];
 

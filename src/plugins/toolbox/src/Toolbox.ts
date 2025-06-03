@@ -5,17 +5,6 @@ import { OrbitController } from 'src/plugins/orbitcontroller/index.ts';
 
 export type ToolType = 'select' | 'none';
 
-declare global {
-    interface ModuleClasses {
-        Toolbox: typeof Toolbox;
-    }
-}
-
-/**
- * @module Toolbox
- * A Toolbox to activate and deactivate tools to use with the pointer.
- */
-
 export class Toolbox {
     public static readonly DefaultTool = 'select';
 

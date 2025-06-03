@@ -10,12 +10,6 @@ type CallbackTuple<T> = {
     onComplete: (object: T) => void;
 };
 
-declare global {
-    interface ModuleClasses {
-        AnimationSystem: typeof AnimationSystem;
-    }
-}
-
 export class AnimationSystem implements DIVETicker {
     public uuid: string = MathUtils.generateUUID();
 

@@ -5,25 +5,6 @@ import {
 } from 'src/plugins/assetexporter/index.ts';
 import { type FileType } from '@shopware-ag/dive';
 
-declare global {
-    interface ModuleClasses {
-        AssetConverter: typeof AssetConverter;
-    }
-}
-
-/**
- * @module AssetConverter
- *
- * Converts between different 3D file formats:
- *
- * ```ts
- * import { AssetConverter } from '@shopware-ag/dive/modules/AssetConverter';
- *
- * const assetConverter = new AssetConverter();
- * const usdzBuffer = await assetConverter.convert('input.glb').to('usdz');
- * ```
- */
-
 export class AssetConverter {
     private _uri: string = '';
 

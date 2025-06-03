@@ -7,12 +7,6 @@ import { type FileType } from '../../../types/file/FileTypes.ts';
 import { FileTypeError } from '../../../error/file-type/file-type-error.ts';
 import { ParseError } from '../../../error/parse/parse-error.ts';
 
-declare global {
-    interface ModuleClasses {
-        AssetExporter: typeof AssetExporter;
-    }
-}
-
 export type USDZExporterOptions = THREEUSDZExporterOptions & {
     ar?: {
         anchoring: { type: 'plane' | 'image' | 'face' | 'none' }; // source: https://developer.apple.com/documentation/realitykit/preliminary-anchoring-type
@@ -28,19 +22,6 @@ export type FileTypeToExporterOptions = {
     gltf: GLTFExporterOptions;
     usdz: USDZExporterOptions;
 };
-
-/**
- * @module AssetExporter
- *
- * Exports 3D assets to various formats:
- *
- * ```ts
- * import { AssetExporter } from '@shopware-ag/dive/modules/AssetExporter';
- *
- * const assetExporter = new AssetExporter();
- * const buffer = await assetExporter.export(model, 'glb');
- * ```
- */
 
 export class AssetExporter {
     private _gltfExporter: GLTFExporter;
