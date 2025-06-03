@@ -1,4 +1,5 @@
 {
+  "name": "assetconverter",
   "description": "",
   "main": "index.ts",
   "type": "module",

@@ -1,4 +1,5 @@
 {
+  "name": "assetexporter",
   "description": "",
   "main": "index.ts",
   "type": "module",

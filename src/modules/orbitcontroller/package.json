@@ -1,4 +1,5 @@
 {
+  "name": "orbitcontroller",
   "description": "",
   "main": "index.ts",
   "type": "module",
