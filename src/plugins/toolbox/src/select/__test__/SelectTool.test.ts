@@ -1,8 +1,5 @@
 import { DIVESelectTool, isSelectTool } from '../SelectTool.ts';
-import {
-    OrbitController,
-    OrbitControllerDefaultSettings,
-} from '@shopware-ag/dive/orbitcontroller';
+import { OrbitController } from '@shopware-ag/dive/orbitcontroller';
 import {
     DIVESelectable,
     DIVEScene,

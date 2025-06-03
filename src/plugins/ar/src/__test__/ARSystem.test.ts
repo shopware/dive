@@ -1,11 +1,10 @@
 import { ARSystem, type ARSystemOptions } from '../ARSystem.ts';
-import { SystemInfo } from '@shopware-ag/dive/systeminfo'; // This will be mocked
+import { SystemInfo, ESystem } from '@shopware-ag/dive/systeminfo'; // This will be mocked
 import { ARQuickLook } from '../arquicklook/ARQuickLook.ts'; // This will be mocked
 import { SceneViewer } from '../sceneviewer/SceneViewer.ts'; // This will be mocked
 // Make sure ESystem is correctly imported based on ARSystem.ts's actual import path
 // ARSystem.ts uses: import { ESystem } from '../../types/info/index.ts';
 // So, for the test file, the relative path is:
-import { ESystem } from '../../../../types/info/index.ts';
 import { ARDesktopPlatformError } from '../error/ar-errors.ts';
 
 // Mock the modules ARSystem depends on
