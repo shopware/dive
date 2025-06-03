@@ -1,0 +1,30 @@
+import { ColorRepresentation, Object3D, Vector3 } from 'three';
+import { DIVEHoverable } from '../../../interfaces/Hoverable.ts';
+import { DraggableEvent } from '../../../plugins/toolbox/index.ts';
+import { DIVERotateGizmo } from '../rotate/RotateGizmo.ts';
+import { DIVEDraggable } from '../../../interfaces/Draggable.ts';
+export declare class DIVERadialHandle extends Object3D implements DIVEHoverable, DIVEDraggable {
+    readonly isHoverable: true;
+    readonly isDraggable: true;
+    set debug(value: boolean);
+    parent: DIVERotateGizmo | null;
+    axis: 'x' | 'y' | 'z';
+    private _color;
+    private _colorHover;
+    private _hovered;
+    private _highlight;
+    get highlight(): boolean;
+    set highlight(highlight: boolean);
+    private _lineMaterial;
+    private _colliderMesh;
+    get forwardVector(): Vector3;
+    get rightVector(): Vector3;
+    get upVector(): Vector3;
+    constructor(axis: 'x' | 'y' | 'z', radius: number, arc: number, direction: Vector3, color: ColorRepresentation);
+    reset(): void;
+    onPointerEnter(): void;
+    onPointerLeave(): void;
+    onDragStart(): void;
+    onDrag(e: DraggableEvent): void;
+    onDragEnd(): void;
+}

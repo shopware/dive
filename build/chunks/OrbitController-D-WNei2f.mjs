@@ -1,0 +1,940 @@
+var ee = Object.defineProperty;
+var ie = (L, t, s) => t in L ? ee(L, t, { enumerable: !0, configurable: !0, writable: !0, value: s }) : L[t] = s;
+var G = (L, t, s) => ie(L, typeof t != "symbol" ? t + "" : t, s);
+import { Ray as se, Plane as ne, MathUtils as oe, EventDispatcher as ae, Vector3 as M, MOUSE as Y, TOUCH as F, Spherical as St, Quaternion as Dt, Vector2 as P } from "three";
+import { c as Rt, M as nt } from "./MathUtils-CFGjHuVF.mjs";
+const At = { type: "change" }, ot = { type: "start" }, kt = { type: "end" }, $ = new se(), jt = new ne(), re = Math.cos(70 * oe.DEG2RAD);
+class he extends ae {
+  constructor(t, s) {
+    super(), this.object = t, this.domElement = s, this.domElement.style.touchAction = "none", this.enabled = !0, this.target = new M(), this.cursor = new M(), this.minDistance = 0, this.maxDistance = 1 / 0, this.minZoom = 0, this.maxZoom = 1 / 0, this.minTargetRadius = 0, this.maxTargetRadius = 1 / 0, this.minPolarAngle = 0, this.maxPolarAngle = Math.PI, this.minAzimuthAngle = -1 / 0, this.maxAzimuthAngle = 1 / 0, this.enableDamping = !1, this.dampingFactor = 0.05, this.enableZoom = !0, this.zoomSpeed = 1, this.enableRotate = !0, this.rotateSpeed = 1, this.enablePan = !0, this.panSpeed = 1, this.screenSpacePanning = !0, this.keyPanSpeed = 7, this.zoomToCursor = !1, this.autoRotate = !1, this.autoRotateSpeed = 2, this.keys = { LEFT: "ArrowLeft", UP: "ArrowUp", RIGHT: "ArrowRight", BOTTOM: "ArrowDown" }, this.mouseButtons = { LEFT: Y.ROTATE, MIDDLE: Y.DOLLY, RIGHT: Y.PAN }, this.touches = { ONE: F.ROTATE, TWO: F.DOLLY_PAN }, this.target0 = this.target.clone(), this.position0 = this.object.position.clone(), this.zoom0 = this.object.zoom, this._domElementKeyEvents = null, this.getPolarAngle = function() {
+      return a.phi;
+    }, this.getAzimuthalAngle = function() {
+      return a.theta;
+    }, this.getDistance = function() {
+      return this.object.position.distanceTo(this.target);
+    }, this.listenToKeyEvents = function(i) {
+      i.addEventListener("keydown", st), this._domElementKeyEvents = i;
+    }, this.stopListenToKeyEvents = function() {
+      this._domElementKeyEvents.removeEventListener("keydown", st), this._domElementKeyEvents = null;
+    }, this.saveState = function() {
+      e.target0.copy(e.target), e.position0.copy(e.object.position), e.zoom0 = e.object.zoom;
+    }, this.reset = function() {
+      e.target.copy(e.target0), e.object.position.copy(e.position0), e.object.zoom = e.zoom0, e.object.updateProjectionMatrix(), e.dispatchEvent(At), e.update(), o = n.NONE;
+    }, this.update = function() {
+      const i = new M(), r = new Dt().setFromUnitVectors(t.up, new M(0, 1, 0)), x = r.clone().invert(), _ = new M(), g = new Dt(), j = new M(), E = 2 * Math.PI;
+      return function(te = null) {
+        const Pt = e.object.position;
+        i.copy(Pt).sub(e.target), i.applyQuaternion(r), a.setFromVector3(i), e.autoRotate && o === n.NONE && X(Nt(te)), e.enableDamping ? (a.theta += y.theta * e.dampingFactor, a.phi += y.phi * e.dampingFactor) : (a.theta += y.theta, a.phi += y.phi);
+        let D = e.minAzimuthAngle, A = e.maxAzimuthAngle;
+        isFinite(D) && isFinite(A) && (D < -Math.PI ? D += E : D > Math.PI && (D -= E), A < -Math.PI ? A += E : A > Math.PI && (A -= E), D <= A ? a.theta = Math.max(D, Math.min(A, a.theta)) : a.theta = a.theta > (D + A) / 2 ? Math.max(D, a.theta) : Math.min(A, a.theta)), a.phi = Math.max(e.minPolarAngle, Math.min(e.maxPolarAngle, a.phi)), a.makeSafe(), e.enableDamping === !0 ? e.target.addScaledVector(l, e.dampingFactor) : e.target.add(l), e.target.sub(e.cursor), e.target.clampLength(e.minTargetRadius, e.maxTargetRadius), e.target.add(e.cursor);
+        let U = !1;
+        if (e.zoomToCursor && R || e.object.isOrthographicCamera)
+          a.radius = et(a.radius);
+        else {
+          const k = a.radius;
+          a.radius = et(a.radius * c), U = k != a.radius;
+        }
+        if (i.setFromSpherical(a), i.applyQuaternion(x), Pt.copy(e.target).add(i), e.object.lookAt(e.target), e.enableDamping === !0 ? (y.theta *= 1 - e.dampingFactor, y.phi *= 1 - e.dampingFactor, l.multiplyScalar(1 - e.dampingFactor)) : (y.set(0, 0, 0), l.set(0, 0, 0)), e.zoomToCursor && R) {
+          let k = null;
+          if (e.object.isPerspectiveCamera) {
+            const K = i.length();
+            k = et(K * c);
+            const B = K - k;
+            e.object.position.addScaledVector(O, B), e.object.updateMatrixWorld(), U = !!B;
+          } else if (e.object.isOrthographicCamera) {
+            const K = new M(z.x, z.y, 0);
+            K.unproject(e.object);
+            const B = e.object.zoom;
+            e.object.zoom = Math.max(e.minZoom, Math.min(e.maxZoom, e.object.zoom / c)), e.object.updateProjectionMatrix(), U = B !== e.object.zoom;
+            const Ct = new M(z.x, z.y, 0);
+            Ct.unproject(e.object), e.object.position.sub(Ct).add(K), e.object.updateMatrixWorld(), k = i.length();
+          } else
+            console.warn("WARNING: OrbitControls.js encountered an unknown camera type - zoom to cursor disabled."), e.zoomToCursor = !1;
+          k !== null && (this.screenSpacePanning ? e.target.set(0, 0, -1).transformDirection(e.object.matrix).multiplyScalar(k).add(e.object.position) : ($.origin.copy(e.object.position), $.direction.set(0, 0, -1).transformDirection(e.object.matrix), Math.abs(e.object.up.dot($.direction)) < re ? t.lookAt(e.target) : (jt.setFromNormalAndCoplanarPoint(e.object.up, e.target), $.intersectPlane(jt, e.target))));
+        } else if (e.object.isOrthographicCamera) {
+          const k = e.object.zoom;
+          e.object.zoom = Math.max(e.minZoom, Math.min(e.maxZoom, e.object.zoom / c)), k !== e.object.zoom && (e.object.updateProjectionMatrix(), U = !0);
+        }
+        return c = 1, R = !1, U || _.distanceToSquared(e.object.position) > p || 8 * (1 - g.dot(e.object.quaternion)) > p || j.distanceToSquared(e.target) > p ? (e.dispatchEvent(At), _.copy(e.object.position), g.copy(e.object.quaternion), j.copy(e.target), !0) : !1;
+      };
+    }(), this.dispose = function() {
+      e.domElement.removeEventListener("contextmenu", Et), e.domElement.removeEventListener("pointerdown", ft), e.domElement.removeEventListener("pointercancel", H), e.domElement.removeEventListener("wheel", gt), e.domElement.removeEventListener("pointermove", it), e.domElement.removeEventListener("pointerup", H), e.domElement.getRootNode().removeEventListener("keydown", bt, { capture: !0 }), e._domElementKeyEvents !== null && (e._domElementKeyEvents.removeEventListener("keydown", st), e._domElementKeyEvents = null);
+    };
+    const e = this, n = {
+      NONE: -1,
+      ROTATE: 0,
+      DOLLY: 1,
+      PAN: 2,
+      TOUCH_ROTATE: 3,
+      TOUCH_PAN: 4,
+      TOUCH_DOLLY_PAN: 5,
+      TOUCH_DOLLY_ROTATE: 6
+    };
+    let o = n.NONE;
+    const p = 1e-6, a = new St(), y = new St();
+    let c = 1;
+    const l = new M(), u = new P(), m = new P(), h = new P(), d = new P(), w = new P(), b = new P(), T = new P(), S = new P(), C = new P(), O = new M(), z = new P();
+    let R = !1;
+    const f = [], Z = {};
+    let J = !1;
+    function Nt(i) {
+      return i !== null ? 2 * Math.PI / 60 * e.autoRotateSpeed * i : 2 * Math.PI / 60 / 60 * e.autoRotateSpeed;
+    }
+    function Q(i) {
+      const r = Math.abs(i * 0.01);
+      return Math.pow(0.95, e.zoomSpeed * r);
+    }
+    function X(i) {
+      y.theta -= i;
+    }
+    function W(i) {
+      y.phi -= i;
+    }
+    const ht = function() {
+      const i = new M();
+      return function(x, _) {
+        i.setFromMatrixColumn(_, 0), i.multiplyScalar(-x), l.add(i);
+      };
+    }(), ct = function() {
+      const i = new M();
+      return function(x, _) {
+        e.screenSpacePanning === !0 ? i.setFromMatrixColumn(_, 1) : (i.setFromMatrixColumn(_, 0), i.crossVectors(e.object.up, i)), i.multiplyScalar(x), l.add(i);
+      };
+    }(), N = function() {
+      const i = new M();
+      return function(x, _) {
+        const g = e.domElement;
+        if (e.object.isPerspectiveCamera) {
+          const j = e.object.position;
+          i.copy(j).sub(e.target);
+          let E = i.length();
+          E *= Math.tan(e.object.fov / 2 * Math.PI / 180), ht(2 * x * E / g.clientHeight, e.object.matrix), ct(2 * _ * E / g.clientHeight, e.object.matrix);
+        } else e.object.isOrthographicCamera ? (ht(x * (e.object.right - e.object.left) / e.object.zoom / g.clientWidth, e.object.matrix), ct(_ * (e.object.top - e.object.bottom) / e.object.zoom / g.clientHeight, e.object.matrix)) : (console.warn("WARNING: OrbitControls.js encountered an unknown camera type - pan disabled."), e.enablePan = !1);
+      };
+    }();
+    function v(i) {
+      e.object.isPerspectiveCamera || e.object.isOrthographicCamera ? c /= i : (console.warn("WARNING: OrbitControls.js encountered an unknown camera type - dolly/zoom disabled."), e.enableZoom = !1);
+    }
+    function lt(i) {
+      e.object.isPerspectiveCamera || e.object.isOrthographicCamera ? c *= i : (console.warn("WARNING: OrbitControls.js encountered an unknown camera type - dolly/zoom disabled."), e.enableZoom = !1);
+    }
+    function tt(i, r) {
+      if (!e.zoomToCursor)
+        return;
+      R = !0;
+      const x = e.domElement.getBoundingClientRect(), _ = i - x.left, g = r - x.top, j = x.width, E = x.height;
+      z.x = _ / j * 2 - 1, z.y = -(g / E) * 2 + 1, O.set(z.x, z.y, 1).unproject(e.object).sub(e.object.position).normalize();
+    }
+    function et(i) {
+      return Math.max(e.minDistance, Math.min(e.maxDistance, i));
+    }
+    function ut(i) {
+      u.set(i.clientX, i.clientY);
+    }
+    function It(i) {
+      tt(i.clientX, i.clientX), T.set(i.clientX, i.clientY);
+    }
+    function mt(i) {
+      d.set(i.clientX, i.clientY);
+    }
+    function Yt(i) {
+      m.set(i.clientX, i.clientY), h.subVectors(m, u).multiplyScalar(e.rotateSpeed);
+      const r = e.domElement;
+      X(2 * Math.PI * h.x / r.clientHeight), W(2 * Math.PI * h.y / r.clientHeight), u.copy(m), e.update();
+    }
+    function Ft(i) {
+      S.set(i.clientX, i.clientY), C.subVectors(S, T), C.y > 0 ? v(Q(C.y)) : C.y < 0 && lt(Q(C.y)), T.copy(S), e.update();
+    }
+    function Zt(i) {
+      w.set(i.clientX, i.clientY), b.subVectors(w, d).multiplyScalar(e.panSpeed), N(b.x, b.y), d.copy(w), e.update();
+    }
+    function Xt(i) {
+      tt(i.clientX, i.clientY), i.deltaY < 0 ? lt(Q(i.deltaY)) : i.deltaY > 0 && v(Q(i.deltaY)), e.update();
+    }
+    function Ht(i) {
+      let r = !1;
+      switch (i.code) {
+        case e.keys.UP:
+          i.ctrlKey || i.metaKey || i.shiftKey ? W(2 * Math.PI * e.rotateSpeed / e.domElement.clientHeight) : N(0, e.keyPanSpeed), r = !0;
+          break;
+        case e.keys.BOTTOM:
+          i.ctrlKey || i.metaKey || i.shiftKey ? W(-2 * Math.PI * e.rotateSpeed / e.domElement.clientHeight) : N(0, -e.keyPanSpeed), r = !0;
+          break;
+        case e.keys.LEFT:
+          i.ctrlKey || i.metaKey || i.shiftKey ? X(2 * Math.PI * e.rotateSpeed / e.domElement.clientHeight) : N(e.keyPanSpeed, 0), r = !0;
+          break;
+        case e.keys.RIGHT:
+          i.ctrlKey || i.metaKey || i.shiftKey ? X(-2 * Math.PI * e.rotateSpeed / e.domElement.clientHeight) : N(-e.keyPanSpeed, 0), r = !0;
+          break;
+      }
+      r && (i.preventDefault(), e.update());
+    }
+    function yt(i) {
+      if (f.length === 1)
+        u.set(i.pageX, i.pageY);
+      else {
+        const r = I(i), x = 0.5 * (i.pageX + r.x), _ = 0.5 * (i.pageY + r.y);
+        u.set(x, _);
+      }
+    }
+    function pt(i) {
+      if (f.length === 1)
+        d.set(i.pageX, i.pageY);
+      else {
+        const r = I(i), x = 0.5 * (i.pageX + r.x), _ = 0.5 * (i.pageY + r.y);
+        d.set(x, _);
+      }
+    }
+    function dt(i) {
+      const r = I(i), x = i.pageX - r.x, _ = i.pageY - r.y, g = Math.sqrt(x * x + _ * _);
+      T.set(0, g);
+    }
+    function Ut(i) {
+      e.enableZoom && dt(i), e.enablePan && pt(i);
+    }
+    function Kt(i) {
+      e.enableZoom && dt(i), e.enableRotate && yt(i);
+    }
+    function xt(i) {
+      if (f.length == 1)
+        m.set(i.pageX, i.pageY);
+      else {
+        const x = I(i), _ = 0.5 * (i.pageX + x.x), g = 0.5 * (i.pageY + x.y);
+        m.set(_, g);
+      }
+      h.subVectors(m, u).multiplyScalar(e.rotateSpeed);
+      const r = e.domElement;
+      X(2 * Math.PI * h.x / r.clientHeight), W(2 * Math.PI * h.y / r.clientHeight), u.copy(m);
+    }
+    function _t(i) {
+      if (f.length === 1)
+        w.set(i.pageX, i.pageY);
+      else {
+        const r = I(i), x = 0.5 * (i.pageX + r.x), _ = 0.5 * (i.pageY + r.y);
+        w.set(x, _);
+      }
+      b.subVectors(w, d).multiplyScalar(e.panSpeed), N(b.x, b.y), d.copy(w);
+    }
+    function zt(i) {
+      const r = I(i), x = i.pageX - r.x, _ = i.pageY - r.y, g = Math.sqrt(x * x + _ * _);
+      S.set(0, g), C.set(0, Math.pow(S.y / T.y, e.zoomSpeed)), v(C.y), T.copy(S);
+      const j = (i.pageX + r.x) * 0.5, E = (i.pageY + r.y) * 0.5;
+      tt(j, E);
+    }
+    function qt(i) {
+      e.enableZoom && zt(i), e.enablePan && _t(i);
+    }
+    function Vt(i) {
+      e.enableZoom && zt(i), e.enableRotate && xt(i);
+    }
+    function ft(i) {
+      e.enabled !== !1 && (f.length === 0 && (e.domElement.setPointerCapture(i.pointerId), e.domElement.addEventListener("pointermove", it), e.domElement.addEventListener("pointerup", H)), !vt(i) && ($t(i), i.pointerType === "touch" ? wt(i) : Qt(i)));
+    }
+    function it(i) {
+      e.enabled !== !1 && (i.pointerType === "touch" ? Gt(i) : Wt(i));
+    }
+    function H(i) {
+      switch (Jt(i), f.length) {
+        case 0:
+          e.domElement.releasePointerCapture(i.pointerId), e.domElement.removeEventListener("pointermove", it), e.domElement.removeEventListener("pointerup", H), e.dispatchEvent(kt), o = n.NONE;
+          break;
+        case 1:
+          const r = f[0], x = Z[r];
+          wt({ pointerId: r, pageX: x.x, pageY: x.y });
+          break;
+      }
+    }
+    function Qt(i) {
+      let r;
+      switch (i.button) {
+        case 0:
+          r = e.mouseButtons.LEFT;
+          break;
+        case 1:
+          r = e.mouseButtons.MIDDLE;
+          break;
+        case 2:
+          r = e.mouseButtons.RIGHT;
+          break;
+        default:
+          r = -1;
+      }
+      switch (r) {
+        case Y.DOLLY:
+          if (e.enableZoom === !1) return;
+          It(i), o = n.DOLLY;
+          break;
+        case Y.ROTATE:
+          if (i.ctrlKey || i.metaKey || i.shiftKey) {
+            if (e.enablePan === !1) return;
+            mt(i), o = n.PAN;
+          } else {
+            if (e.enableRotate === !1) return;
+            ut(i), o = n.ROTATE;
+          }
+          break;
+        case Y.PAN:
+          if (i.ctrlKey || i.metaKey || i.shiftKey) {
+            if (e.enableRotate === !1) return;
+            ut(i), o = n.ROTATE;
+          } else {
+            if (e.enablePan === !1) return;
+            mt(i), o = n.PAN;
+          }
+          break;
+        default:
+          o = n.NONE;
+      }
+      o !== n.NONE && e.dispatchEvent(ot);
+    }
+    function Wt(i) {
+      switch (o) {
+        case n.ROTATE:
+          if (e.enableRotate === !1) return;
+          Yt(i);
+          break;
+        case n.DOLLY:
+          if (e.enableZoom === !1) return;
+          Ft(i);
+          break;
+        case n.PAN:
+          if (e.enablePan === !1) return;
+          Zt(i);
+          break;
+      }
+    }
+    function gt(i) {
+      e.enabled === !1 || e.enableZoom === !1 || o !== n.NONE || (i.preventDefault(), e.dispatchEvent(ot), Xt(Bt(i)), e.dispatchEvent(kt));
+    }
+    function Bt(i) {
+      const r = i.deltaMode, x = {
+        clientX: i.clientX,
+        clientY: i.clientY,
+        deltaY: i.deltaY
+      };
+      switch (r) {
+        case 1:
+          x.deltaY *= 16;
+          break;
+        case 2:
+          x.deltaY *= 100;
+          break;
+      }
+      return i.ctrlKey && !J && (x.deltaY *= 10), x;
+    }
+    function bt(i) {
+      i.key === "Control" && (J = !0, e.domElement.getRootNode().addEventListener("keyup", Mt, { passive: !0, capture: !0 }));
+    }
+    function Mt(i) {
+      i.key === "Control" && (J = !1, e.domElement.getRootNode().removeEventListener("keyup", Mt, { passive: !0, capture: !0 }));
+    }
+    function st(i) {
+      e.enabled === !1 || e.enablePan === !1 || Ht(i);
+    }
+    function wt(i) {
+      switch (Tt(i), f.length) {
+        case 1:
+          switch (e.touches.ONE) {
+            case F.ROTATE:
+              if (e.enableRotate === !1) return;
+              yt(i), o = n.TOUCH_ROTATE;
+              break;
+            case F.PAN:
+              if (e.enablePan === !1) return;
+              pt(i), o = n.TOUCH_PAN;
+              break;
+            default:
+              o = n.NONE;
+          }
+          break;
+        case 2:
+          switch (e.touches.TWO) {
+            case F.DOLLY_PAN:
+              if (e.enableZoom === !1 && e.enablePan === !1) return;
+              Ut(i), o = n.TOUCH_DOLLY_PAN;
+              break;
+            case F.DOLLY_ROTATE:
+              if (e.enableZoom === !1 && e.enableRotate === !1) return;
+              Kt(i), o = n.TOUCH_DOLLY_ROTATE;
+              break;
+            default:
+              o = n.NONE;
+          }
+          break;
+        default:
+          o = n.NONE;
+      }
+      o !== n.NONE && e.dispatchEvent(ot);
+    }
+    function Gt(i) {
+      switch (Tt(i), o) {
+        case n.TOUCH_ROTATE:
+          if (e.enableRotate === !1) return;
+          xt(i), e.update();
+          break;
+        case n.TOUCH_PAN:
+          if (e.enablePan === !1) return;
+          _t(i), e.update();
+          break;
+        case n.TOUCH_DOLLY_PAN:
+          if (e.enableZoom === !1 && e.enablePan === !1) return;
+          qt(i), e.update();
+          break;
+        case n.TOUCH_DOLLY_ROTATE:
+          if (e.enableZoom === !1 && e.enableRotate === !1) return;
+          Vt(i), e.update();
+          break;
+        default:
+          o = n.NONE;
+      }
+    }
+    function Et(i) {
+      e.enabled !== !1 && i.preventDefault();
+    }
+    function $t(i) {
+      f.push(i.pointerId);
+    }
+    function Jt(i) {
+      delete Z[i.pointerId];
+      for (let r = 0; r < f.length; r++)
+        if (f[r] == i.pointerId) {
+          f.splice(r, 1);
+          return;
+        }
+    }
+    function vt(i) {
+      for (let r = 0; r < f.length; r++)
+        if (f[r] == i.pointerId) return !0;
+      return !1;
+    }
+    function Tt(i) {
+      let r = Z[i.pointerId];
+      r === void 0 && (r = new P(), Z[i.pointerId] = r), r.set(i.pageX, i.pageY);
+    }
+    function I(i) {
+      const r = i.pointerId === f[0] ? f[1] : f[0];
+      return Z[r];
+    }
+    e.domElement.addEventListener("contextmenu", Et), e.domElement.addEventListener("pointerdown", ft), e.domElement.addEventListener("pointercancel", H), e.domElement.addEventListener("wheel", gt, { passive: !1 }), e.domElement.getRootNode().addEventListener("keydown", bt, { passive: !0, capture: !0 }), this.update();
+  }
+}
+class ce {
+  constructor(t = 0, s = 0, e = 0, n = 1) {
+    this.isQuaternion = !0, this._x = t, this._y = s, this._z = e, this._w = n;
+  }
+  static slerpFlat(t, s, e, n, o, p, a) {
+    let y = e[n + 0], c = e[n + 1], l = e[n + 2], u = e[n + 3];
+    const m = o[p + 0], h = o[p + 1], d = o[p + 2], w = o[p + 3];
+    if (a === 0) {
+      t[s + 0] = y, t[s + 1] = c, t[s + 2] = l, t[s + 3] = u;
+      return;
+    }
+    if (a === 1) {
+      t[s + 0] = m, t[s + 1] = h, t[s + 2] = d, t[s + 3] = w;
+      return;
+    }
+    if (u !== w || y !== m || c !== h || l !== d) {
+      let b = 1 - a;
+      const T = y * m + c * h + l * d + u * w, S = T >= 0 ? 1 : -1, C = 1 - T * T;
+      if (C > Number.EPSILON) {
+        const z = Math.sqrt(C), R = Math.atan2(z, T * S);
+        b = Math.sin(b * R) / z, a = Math.sin(a * R) / z;
+      }
+      const O = a * S;
+      if (y = y * b + m * O, c = c * b + h * O, l = l * b + d * O, u = u * b + w * O, b === 1 - a) {
+        const z = 1 / Math.sqrt(y * y + c * c + l * l + u * u);
+        y *= z, c *= z, l *= z, u *= z;
+      }
+    }
+    t[s] = y, t[s + 1] = c, t[s + 2] = l, t[s + 3] = u;
+  }
+  static multiplyQuaternionsFlat(t, s, e, n, o, p) {
+    const a = e[n], y = e[n + 1], c = e[n + 2], l = e[n + 3], u = o[p], m = o[p + 1], h = o[p + 2], d = o[p + 3];
+    return t[s] = a * d + l * u + y * h - c * m, t[s + 1] = y * d + l * m + c * u - a * h, t[s + 2] = c * d + l * h + a * m - y * u, t[s + 3] = l * d - a * u - y * m - c * h, t;
+  }
+  get x() {
+    return this._x;
+  }
+  set x(t) {
+    this._x = t, this._onChangeCallback();
+  }
+  get y() {
+    return this._y;
+  }
+  set y(t) {
+    this._y = t, this._onChangeCallback();
+  }
+  get z() {
+    return this._z;
+  }
+  set z(t) {
+    this._z = t, this._onChangeCallback();
+  }
+  get w() {
+    return this._w;
+  }
+  set w(t) {
+    this._w = t, this._onChangeCallback();
+  }
+  set(t, s, e, n) {
+    return this._x = t, this._y = s, this._z = e, this._w = n, this._onChangeCallback(), this;
+  }
+  clone() {
+    return new this.constructor(this._x, this._y, this._z, this._w);
+  }
+  copy(t) {
+    return this._x = t.x, this._y = t.y, this._z = t.z, this._w = t.w, this._onChangeCallback(), this;
+  }
+  setFromEuler(t, s = !0) {
+    const e = t._x, n = t._y, o = t._z, p = t._order, a = Math.cos, y = Math.sin, c = a(e / 2), l = a(n / 2), u = a(o / 2), m = y(e / 2), h = y(n / 2), d = y(o / 2);
+    switch (p) {
+      case "XYZ":
+        this._x = m * l * u + c * h * d, this._y = c * h * u - m * l * d, this._z = c * l * d + m * h * u, this._w = c * l * u - m * h * d;
+        break;
+      case "YXZ":
+        this._x = m * l * u + c * h * d, this._y = c * h * u - m * l * d, this._z = c * l * d - m * h * u, this._w = c * l * u + m * h * d;
+        break;
+      case "ZXY":
+        this._x = m * l * u - c * h * d, this._y = c * h * u + m * l * d, this._z = c * l * d + m * h * u, this._w = c * l * u - m * h * d;
+        break;
+      case "ZYX":
+        this._x = m * l * u - c * h * d, this._y = c * h * u + m * l * d, this._z = c * l * d - m * h * u, this._w = c * l * u + m * h * d;
+        break;
+      case "YZX":
+        this._x = m * l * u + c * h * d, this._y = c * h * u + m * l * d, this._z = c * l * d - m * h * u, this._w = c * l * u - m * h * d;
+        break;
+      case "XZY":
+        this._x = m * l * u - c * h * d, this._y = c * h * u - m * l * d, this._z = c * l * d + m * h * u, this._w = c * l * u + m * h * d;
+        break;
+      default:
+        console.warn("THREE.Quaternion: .setFromEuler() encountered an unknown order: " + p);
+    }
+    return s === !0 && this._onChangeCallback(), this;
+  }
+  setFromAxisAngle(t, s) {
+    const e = s / 2, n = Math.sin(e);
+    return this._x = t.x * n, this._y = t.y * n, this._z = t.z * n, this._w = Math.cos(e), this._onChangeCallback(), this;
+  }
+  setFromRotationMatrix(t) {
+    const s = t.elements, e = s[0], n = s[4], o = s[8], p = s[1], a = s[5], y = s[9], c = s[2], l = s[6], u = s[10], m = e + a + u;
+    if (m > 0) {
+      const h = 0.5 / Math.sqrt(m + 1);
+      this._w = 0.25 / h, this._x = (l - y) * h, this._y = (o - c) * h, this._z = (p - n) * h;
+    } else if (e > a && e > u) {
+      const h = 2 * Math.sqrt(1 + e - a - u);
+      this._w = (l - y) / h, this._x = 0.25 * h, this._y = (n + p) / h, this._z = (o + c) / h;
+    } else if (a > u) {
+      const h = 2 * Math.sqrt(1 + a - e - u);
+      this._w = (o - c) / h, this._x = (n + p) / h, this._y = 0.25 * h, this._z = (y + l) / h;
+    } else {
+      const h = 2 * Math.sqrt(1 + u - e - a);
+      this._w = (p - n) / h, this._x = (o + c) / h, this._y = (y + l) / h, this._z = 0.25 * h;
+    }
+    return this._onChangeCallback(), this;
+  }
+  setFromUnitVectors(t, s) {
+    let e = t.dot(s) + 1;
+    return e < Number.EPSILON ? (e = 0, Math.abs(t.x) > Math.abs(t.z) ? (this._x = -t.y, this._y = t.x, this._z = 0, this._w = e) : (this._x = 0, this._y = -t.z, this._z = t.y, this._w = e)) : (this._x = t.y * s.z - t.z * s.y, this._y = t.z * s.x - t.x * s.z, this._z = t.x * s.y - t.y * s.x, this._w = e), this.normalize();
+  }
+  angleTo(t) {
+    return 2 * Math.acos(Math.abs(Rt(this.dot(t), -1, 1)));
+  }
+  rotateTowards(t, s) {
+    const e = this.angleTo(t);
+    if (e === 0) return this;
+    const n = Math.min(1, s / e);
+    return this.slerp(t, n), this;
+  }
+  identity() {
+    return this.set(0, 0, 0, 1);
+  }
+  invert() {
+    return this.conjugate();
+  }
+  conjugate() {
+    return this._x *= -1, this._y *= -1, this._z *= -1, this._onChangeCallback(), this;
+  }
+  dot(t) {
+    return this._x * t._x + this._y * t._y + this._z * t._z + this._w * t._w;
+  }
+  lengthSq() {
+    return this._x * this._x + this._y * this._y + this._z * this._z + this._w * this._w;
+  }
+  length() {
+    return Math.sqrt(this._x * this._x + this._y * this._y + this._z * this._z + this._w * this._w);
+  }
+  normalize() {
+    let t = this.length();
+    return t === 0 ? (this._x = 0, this._y = 0, this._z = 0, this._w = 1) : (t = 1 / t, this._x = this._x * t, this._y = this._y * t, this._z = this._z * t, this._w = this._w * t), this._onChangeCallback(), this;
+  }
+  multiply(t) {
+    return this.multiplyQuaternions(this, t);
+  }
+  premultiply(t) {
+    return this.multiplyQuaternions(t, this);
+  }
+  multiplyQuaternions(t, s) {
+    const e = t._x, n = t._y, o = t._z, p = t._w, a = s._x, y = s._y, c = s._z, l = s._w;
+    return this._x = e * l + p * a + n * c - o * y, this._y = n * l + p * y + o * a - e * c, this._z = o * l + p * c + e * y - n * a, this._w = p * l - e * a - n * y - o * c, this._onChangeCallback(), this;
+  }
+  slerp(t, s) {
+    if (s === 0) return this;
+    if (s === 1) return this.copy(t);
+    const e = this._x, n = this._y, o = this._z, p = this._w;
+    let a = p * t._w + e * t._x + n * t._y + o * t._z;
+    if (a < 0 ? (this._w = -t._w, this._x = -t._x, this._y = -t._y, this._z = -t._z, a = -a) : this.copy(t), a >= 1)
+      return this._w = p, this._x = e, this._y = n, this._z = o, this;
+    const y = 1 - a * a;
+    if (y <= Number.EPSILON) {
+      const h = 1 - s;
+      return this._w = h * p + s * this._w, this._x = h * e + s * this._x, this._y = h * n + s * this._y, this._z = h * o + s * this._z, this.normalize(), this;
+    }
+    const c = Math.sqrt(y), l = Math.atan2(c, a), u = Math.sin((1 - s) * l) / c, m = Math.sin(s * l) / c;
+    return this._w = p * u + this._w * m, this._x = e * u + this._x * m, this._y = n * u + this._y * m, this._z = o * u + this._z * m, this._onChangeCallback(), this;
+  }
+  slerpQuaternions(t, s, e) {
+    return this.copy(t).slerp(s, e);
+  }
+  random() {
+    const t = 2 * Math.PI * Math.random(), s = 2 * Math.PI * Math.random(), e = Math.random(), n = Math.sqrt(1 - e), o = Math.sqrt(e);
+    return this.set(
+      n * Math.sin(t),
+      n * Math.cos(t),
+      o * Math.sin(s),
+      o * Math.cos(s)
+    );
+  }
+  equals(t) {
+    return t._x === this._x && t._y === this._y && t._z === this._z && t._w === this._w;
+  }
+  fromArray(t, s = 0) {
+    return this._x = t[s], this._y = t[s + 1], this._z = t[s + 2], this._w = t[s + 3], this._onChangeCallback(), this;
+  }
+  toArray(t = [], s = 0) {
+    return t[s] = this._x, t[s + 1] = this._y, t[s + 2] = this._z, t[s + 3] = this._w, t;
+  }
+  fromBufferAttribute(t, s) {
+    return this._x = t.getX(s), this._y = t.getY(s), this._z = t.getZ(s), this._w = t.getW(s), this._onChangeCallback(), this;
+  }
+  toJSON() {
+    return this.toArray();
+  }
+  _onChange(t) {
+    return this._onChangeCallback = t, this;
+  }
+  _onChangeCallback() {
+  }
+  *[Symbol.iterator]() {
+    yield this._x, yield this._y, yield this._z, yield this._w;
+  }
+}
+class V {
+  constructor(t = 0, s = 0, e = 0) {
+    V.prototype.isVector3 = !0, this.x = t, this.y = s, this.z = e;
+  }
+  set(t, s, e) {
+    return e === void 0 && (e = this.z), this.x = t, this.y = s, this.z = e, this;
+  }
+  setScalar(t) {
+    return this.x = t, this.y = t, this.z = t, this;
+  }
+  setX(t) {
+    return this.x = t, this;
+  }
+  setY(t) {
+    return this.y = t, this;
+  }
+  setZ(t) {
+    return this.z = t, this;
+  }
+  setComponent(t, s) {
+    switch (t) {
+      case 0:
+        this.x = s;
+        break;
+      case 1:
+        this.y = s;
+        break;
+      case 2:
+        this.z = s;
+        break;
+      default:
+        throw new Error("index is out of range: " + t);
+    }
+    return this;
+  }
+  getComponent(t) {
+    switch (t) {
+      case 0:
+        return this.x;
+      case 1:
+        return this.y;
+      case 2:
+        return this.z;
+      default:
+        throw new Error("index is out of range: " + t);
+    }
+  }
+  clone() {
+    return new this.constructor(this.x, this.y, this.z);
+  }
+  copy(t) {
+    return this.x = t.x, this.y = t.y, this.z = t.z, this;
+  }
+  add(t) {
+    return this.x += t.x, this.y += t.y, this.z += t.z, this;
+  }
+  addScalar(t) {
+    return this.x += t, this.y += t, this.z += t, this;
+  }
+  addVectors(t, s) {
+    return this.x = t.x + s.x, this.y = t.y + s.y, this.z = t.z + s.z, this;
+  }
+  addScaledVector(t, s) {
+    return this.x += t.x * s, this.y += t.y * s, this.z += t.z * s, this;
+  }
+  sub(t) {
+    return this.x -= t.x, this.y -= t.y, this.z -= t.z, this;
+  }
+  subScalar(t) {
+    return this.x -= t, this.y -= t, this.z -= t, this;
+  }
+  subVectors(t, s) {
+    return this.x = t.x - s.x, this.y = t.y - s.y, this.z = t.z - s.z, this;
+  }
+  multiply(t) {
+    return this.x *= t.x, this.y *= t.y, this.z *= t.z, this;
+  }
+  multiplyScalar(t) {
+    return this.x *= t, this.y *= t, this.z *= t, this;
+  }
+  multiplyVectors(t, s) {
+    return this.x = t.x * s.x, this.y = t.y * s.y, this.z = t.z * s.z, this;
+  }
+  applyEuler(t) {
+    return this.applyQuaternion(Lt.setFromEuler(t));
+  }
+  applyAxisAngle(t, s) {
+    return this.applyQuaternion(Lt.setFromAxisAngle(t, s));
+  }
+  applyMatrix3(t) {
+    const s = this.x, e = this.y, n = this.z, o = t.elements;
+    return this.x = o[0] * s + o[3] * e + o[6] * n, this.y = o[1] * s + o[4] * e + o[7] * n, this.z = o[2] * s + o[5] * e + o[8] * n, this;
+  }
+  applyNormalMatrix(t) {
+    return this.applyMatrix3(t).normalize();
+  }
+  applyMatrix4(t) {
+    const s = this.x, e = this.y, n = this.z, o = t.elements, p = 1 / (o[3] * s + o[7] * e + o[11] * n + o[15]);
+    return this.x = (o[0] * s + o[4] * e + o[8] * n + o[12]) * p, this.y = (o[1] * s + o[5] * e + o[9] * n + o[13]) * p, this.z = (o[2] * s + o[6] * e + o[10] * n + o[14]) * p, this;
+  }
+  applyQuaternion(t) {
+    const s = this.x, e = this.y, n = this.z, o = t.x, p = t.y, a = t.z, y = t.w, c = 2 * (p * n - a * e), l = 2 * (a * s - o * n), u = 2 * (o * e - p * s);
+    return this.x = s + y * c + p * u - a * l, this.y = e + y * l + a * c - o * u, this.z = n + y * u + o * l - p * c, this;
+  }
+  project(t) {
+    return this.applyMatrix4(t.matrixWorldInverse).applyMatrix4(t.projectionMatrix);
+  }
+  unproject(t) {
+    return this.applyMatrix4(t.projectionMatrixInverse).applyMatrix4(t.matrixWorld);
+  }
+  transformDirection(t) {
+    const s = this.x, e = this.y, n = this.z, o = t.elements;
+    return this.x = o[0] * s + o[4] * e + o[8] * n, this.y = o[1] * s + o[5] * e + o[9] * n, this.z = o[2] * s + o[6] * e + o[10] * n, this.normalize();
+  }
+  divide(t) {
+    return this.x /= t.x, this.y /= t.y, this.z /= t.z, this;
+  }
+  divideScalar(t) {
+    return this.multiplyScalar(1 / t);
+  }
+  min(t) {
+    return this.x = Math.min(this.x, t.x), this.y = Math.min(this.y, t.y), this.z = Math.min(this.z, t.z), this;
+  }
+  max(t) {
+    return this.x = Math.max(this.x, t.x), this.y = Math.max(this.y, t.y), this.z = Math.max(this.z, t.z), this;
+  }
+  clamp(t, s) {
+    return this.x = Math.max(t.x, Math.min(s.x, this.x)), this.y = Math.max(t.y, Math.min(s.y, this.y)), this.z = Math.max(t.z, Math.min(s.z, this.z)), this;
+  }
+  clampScalar(t, s) {
+    return this.x = Math.max(t, Math.min(s, this.x)), this.y = Math.max(t, Math.min(s, this.y)), this.z = Math.max(t, Math.min(s, this.z)), this;
+  }
+  clampLength(t, s) {
+    const e = this.length();
+    return this.divideScalar(e || 1).multiplyScalar(Math.max(t, Math.min(s, e)));
+  }
+  floor() {
+    return this.x = Math.floor(this.x), this.y = Math.floor(this.y), this.z = Math.floor(this.z), this;
+  }
+  ceil() {
+    return this.x = Math.ceil(this.x), this.y = Math.ceil(this.y), this.z = Math.ceil(this.z), this;
+  }
+  round() {
+    return this.x = Math.round(this.x), this.y = Math.round(this.y), this.z = Math.round(this.z), this;
+  }
+  roundToZero() {
+    return this.x = Math.trunc(this.x), this.y = Math.trunc(this.y), this.z = Math.trunc(this.z), this;
+  }
+  negate() {
+    return this.x = -this.x, this.y = -this.y, this.z = -this.z, this;
+  }
+  dot(t) {
+    return this.x * t.x + this.y * t.y + this.z * t.z;
+  }
+  // TODO lengthSquared?
+  lengthSq() {
+    return this.x * this.x + this.y * this.y + this.z * this.z;
+  }
+  length() {
+    return Math.sqrt(this.x * this.x + this.y * this.y + this.z * this.z);
+  }
+  manhattanLength() {
+    return Math.abs(this.x) + Math.abs(this.y) + Math.abs(this.z);
+  }
+  normalize() {
+    return this.divideScalar(this.length() || 1);
+  }
+  setLength(t) {
+    return this.normalize().multiplyScalar(t);
+  }
+  lerp(t, s) {
+    return this.x += (t.x - this.x) * s, this.y += (t.y - this.y) * s, this.z += (t.z - this.z) * s, this;
+  }
+  lerpVectors(t, s, e) {
+    return this.x = t.x + (s.x - t.x) * e, this.y = t.y + (s.y - t.y) * e, this.z = t.z + (s.z - t.z) * e, this;
+  }
+  cross(t) {
+    return this.crossVectors(this, t);
+  }
+  crossVectors(t, s) {
+    const e = t.x, n = t.y, o = t.z, p = s.x, a = s.y, y = s.z;
+    return this.x = n * y - o * a, this.y = o * p - e * y, this.z = e * a - n * p, this;
+  }
+  projectOnVector(t) {
+    const s = t.lengthSq();
+    if (s === 0) return this.set(0, 0, 0);
+    const e = t.dot(this) / s;
+    return this.copy(t).multiplyScalar(e);
+  }
+  projectOnPlane(t) {
+    return at.copy(this).projectOnVector(t), this.sub(at);
+  }
+  reflect(t) {
+    return this.sub(at.copy(t).multiplyScalar(2 * this.dot(t)));
+  }
+  angleTo(t) {
+    const s = Math.sqrt(this.lengthSq() * t.lengthSq());
+    if (s === 0) return Math.PI / 2;
+    const e = this.dot(t) / s;
+    return Math.acos(Rt(e, -1, 1));
+  }
+  distanceTo(t) {
+    return Math.sqrt(this.distanceToSquared(t));
+  }
+  distanceToSquared(t) {
+    const s = this.x - t.x, e = this.y - t.y, n = this.z - t.z;
+    return s * s + e * e + n * n;
+  }
+  manhattanDistanceTo(t) {
+    return Math.abs(this.x - t.x) + Math.abs(this.y - t.y) + Math.abs(this.z - t.z);
+  }
+  setFromSpherical(t) {
+    return this.setFromSphericalCoords(t.radius, t.phi, t.theta);
+  }
+  setFromSphericalCoords(t, s, e) {
+    const n = Math.sin(s) * t;
+    return this.x = n * Math.sin(e), this.y = Math.cos(s) * t, this.z = n * Math.cos(e), this;
+  }
+  setFromCylindrical(t) {
+    return this.setFromCylindricalCoords(t.radius, t.theta, t.y);
+  }
+  setFromCylindricalCoords(t, s, e) {
+    return this.x = t * Math.sin(s), this.y = e, this.z = t * Math.cos(s), this;
+  }
+  setFromMatrixPosition(t) {
+    const s = t.elements;
+    return this.x = s[12], this.y = s[13], this.z = s[14], this;
+  }
+  setFromMatrixScale(t) {
+    const s = this.setFromMatrixColumn(t, 0).length(), e = this.setFromMatrixColumn(t, 1).length(), n = this.setFromMatrixColumn(t, 2).length();
+    return this.x = s, this.y = e, this.z = n, this;
+  }
+  setFromMatrixColumn(t, s) {
+    return this.fromArray(t.elements, s * 4);
+  }
+  setFromMatrix3Column(t, s) {
+    return this.fromArray(t.elements, s * 3);
+  }
+  setFromEuler(t) {
+    return this.x = t._x, this.y = t._y, this.z = t._z, this;
+  }
+  setFromColor(t) {
+    return this.x = t.r, this.y = t.g, this.z = t.b, this;
+  }
+  equals(t) {
+    return t.x === this.x && t.y === this.y && t.z === this.z;
+  }
+  fromArray(t, s = 0) {
+    return this.x = t[s], this.y = t[s + 1], this.z = t[s + 2], this;
+  }
+  toArray(t = [], s = 0) {
+    return t[s] = this.x, t[s + 1] = this.y, t[s + 2] = this.z, t;
+  }
+  fromBufferAttribute(t, s) {
+    return this.x = t.getX(s), this.y = t.getY(s), this.z = t.getZ(s), this;
+  }
+  random() {
+    return this.x = Math.random(), this.y = Math.random(), this.z = Math.random(), this;
+  }
+  randomDirection() {
+    const t = Math.random() * Math.PI * 2, s = Math.random() * 2 - 1, e = Math.sqrt(1 - s * s);
+    return this.x = e * Math.cos(t), this.y = s, this.z = e * Math.sin(t), this;
+  }
+  *[Symbol.iterator]() {
+    yield this.x, yield this.y, yield this.z;
+  }
+}
+const at = /* @__PURE__ */ new V(), Lt = /* @__PURE__ */ new ce(), rt = {
+  enableDamping: !0,
+  dampingFactor: 0.05
+}, q = class q extends he {
+  constructor(s, e, n = rt) {
+    super(s, e);
+    G(this, "uuid", nt.generateUUID());
+    G(this, "object");
+    this.domElement = e, this.domElement = e, this.object = s, this.enableDamping = n.enableDamping ?? rt.enableDamping, this.dampingFactor = n.dampingFactor ?? rt.dampingFactor, this.object.position.set(0, 2, 2), this.target.copy({ x: 0, y: 0.5, z: 0 }), this.update();
+  }
+  tick() {
+    this.enabled && this.update();
+  }
+  computeEncompassingView(s) {
+    const e = s.getCenter(new V()), n = s.getSize(new V()), o = Math.max(n.x, n.y, n.z) * 1.25;
+    return {
+      position: this.object.position.clone().normalize().clone().multiplyScalar(o),
+      target: e.clone()
+    };
+  }
+  zoomIn(s) {
+    const e = s || q.DEFAULT_ZOOM_FACTOR, { minDistance: n, maxDistance: o } = this;
+    this.minDistance = this.maxDistance = nt.clamp(
+      this.getDistance() - e,
+      n + e,
+      o - e
+    ), this.update(), this.minDistance = n, this.maxDistance = o;
+  }
+  zoomOut(s) {
+    const e = s || q.DEFAULT_ZOOM_FACTOR, { minDistance: n, maxDistance: o } = this;
+    this.minDistance = this.maxDistance = nt.clamp(
+      this.getDistance() + e,
+      n + e,
+      o - e
+    ), this.update(), this.minDistance = n, this.maxDistance = o;
+  }
+};
+G(q, "DEFAULT_ZOOM_FACTOR", 1);
+let Ot = q;
+export {
+  rt as O,
+  Ot as a
+};
