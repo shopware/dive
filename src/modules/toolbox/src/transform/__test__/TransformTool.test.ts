@@ -34,21 +34,29 @@ vi.mock('../../../../engine/camera/PerspectiveCamera', () => {
     };
 });
 
-vi.mock('@shopware-ag/dive/orbitcontroller', () => {
+vi.mock('@shopware-ag/dive/orbitcontroller', async () => {
+    const actual = await vi.importActual<
+        typeof import('@shopware-ag/dive/orbitcontroller')
+    >('@shopware-ag/dive/orbitcontroller');
+    const mockOrbitController = vi.fn(function (this: any) {
+        this.enabled = true;
+        this.domElement = {
+            clientWIdth: 0,
+            clientHeight: 0,
+        };
+        this.object = {
+            layers: {
+                mask: 0,
+            },
+        };
+        return this;
+    });
+    // Copy static properties
+    Object.assign(mockOrbitController, actual.OrbitController);
+
     return {
-        OrbitController: vi.fn(function (this: any) {
-            this.enabled = true;
-            this.domElement = {
-                clientWIdth: 0,
-                clientHeight: 0,
-            };
-            this.object = {
-                layers: {
-                    mask: 0,
-                },
-            };
-            return this;
-        }),
+        ...actual,
+        OrbitController: mockOrbitController,
     };
 });
 

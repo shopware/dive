@@ -12,6 +12,13 @@ const mockAnimate = vi.fn().mockReturnValue({
 
 const mockGetAnimationSystem = vi.fn().mockResolvedValue({
     animate: mockAnimate,
+    TWEEN: {
+        Easing: {
+            Quadratic: {
+                Out: vi.fn(),
+            },
+        },
+    },
 });
 
 const mockEngine = {
@@ -271,11 +278,6 @@ describe('MoveCameraAction', () => {
             mockAnimate
                 .mockReturnValueOnce(mockAnimators[0])
                 .mockReturnValueOnce(mockAnimators[1]);
-            mockGetAnimationSystem.mockResolvedValueOnce({
-                animate: mockAnimate,
-                addTicker: vi.fn(),
-                hasTicker: vi.fn(),
-            });
 
             const action = new MoveCameraAction(
                 {

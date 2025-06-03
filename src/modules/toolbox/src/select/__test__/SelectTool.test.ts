@@ -1,5 +1,8 @@
 import { DIVESelectTool, isSelectTool } from '../SelectTool.ts';
-import { OrbitController } from '@shopware-ag/dive/orbitcontroller';
+import {
+    OrbitController,
+    OrbitControllerDefaultSettings,
+} from '@shopware-ag/dive/orbitcontroller';
 import {
     DIVESelectable,
     DIVEScene,
@@ -11,8 +14,28 @@ import { type Object3D } from 'three';
 import { type DIVEBaseTool } from '../../BaseTool.ts';
 import { Tween } from '@tweenjs/tween.js';
 
-vi.mock('../../../../engine/renderer/Renderer', () => {
+vi.mock('@shopware-ag/dive', async () => {
+    const actual =
+        await vi.importActual<typeof import('@shopware-ag/dive')>(
+            '@shopware-ag/dive',
+        );
     return {
+        ...actual,
+        DIVEScene: vi.fn(function (this: any) {
+            this.add = vi.fn();
+            this.children = [];
+            this.root = {
+                children: [],
+            };
+            return this;
+        }),
+        DIVEPerspectiveCamera: vi.fn(function (this: any) {
+            this.isPerspectiveCamera = true;
+            this.layers = {
+                mask: 0,
+            };
+            return this;
+        }),
         DIVERenderPipeline: vi.fn(function (this: any) {
             this.webglrenderer = {
                 domElement: {
@@ -25,37 +48,33 @@ vi.mock('../../../../engine/renderer/Renderer', () => {
     };
 });
 
-vi.mock('../../../../engine/camera/PerspectiveCamera', () => {
-    return {
-        DIVEPerspectiveCamera: vi.fn(function (this: any) {
-            this.isPerspectiveCamera = true;
-            this.layers = {
+vi.mock('@shopware-ag/dive/orbitcontroller', async () => {
+    const actual = await vi.importActual<
+        typeof import('@shopware-ag/dive/orbitcontroller')
+    >('@shopware-ag/dive/orbitcontroller');
+    const mockOrbitController = vi.fn(function (this: any) {
+        this.enabled = true;
+        this.domElement = {
+            clientWidth: 0,
+            clientHeight: 0,
+        };
+        this.object = {
+            layers: {
                 mask: 0,
-            };
-            return this;
-        }),
-    };
-});
+            },
+        };
+        return this;
+    });
+    // Copy static properties
+    Object.assign(mockOrbitController, actual.OrbitController);
 
-vi.mock('@shopware-ag/dive/orbitcontroller', () => {
     return {
-        OrbitController: vi.fn(function (this: any) {
-            this.enabled = true;
-            this.domElement = {
-                clientWIdth: 0,
-                clientHeight: 0,
-            };
-            this.object = {
-                layers: {
-                    mask: 0,
-                },
-            };
-            return this;
-        }),
+        ...actual,
+        OrbitController: mockOrbitController,
     };
 });
 
-vi.mock('../../../animation/AnimationSystem', () => {
+vi.mock('@shopware-ag/dive/animation', () => {
     return {
         DIVEAnimationSystem: vi.fn(function (this: any) {
             this.domElement = {
@@ -65,19 +84,6 @@ vi.mock('../../../animation/AnimationSystem', () => {
                 return new Tween<T>(obj);
             };
 
-            return this;
-        }),
-    };
-});
-
-vi.mock('../../../../engine/scene/Scene', () => {
-    return {
-        DIVEScene: vi.fn(function (this: any) {
-            this.add = vi.fn();
-            this.children = [];
-            this.root = {
-                children: [],
-            };
             return this;
         }),
     };

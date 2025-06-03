@@ -5,18 +5,18 @@
 
 const ModuleRegistry = {
     AnimationSystem: async () =>
-        (await import('./animation/index.ts')).AnimationSystem,
-    ARSystem: async () => (await import('./ar/index.ts')).ARSystem,
+        (await import('@shopware-ag/dive/animation')).AnimationSystem,
+    ARSystem: async () => (await import('@shopware-ag/dive/ar')).ARSystem,
     AssetConverter: async () =>
-        (await import('./assetconverter/index.ts')).AssetConverter,
+        (await import('@shopware-ag/dive/assetconverter')).AssetConverter,
     AssetExporter: async () =>
-        (await import('./assetexporter/index.ts')).AssetExporter,
+        (await import('@shopware-ag/dive/assetexporter')).AssetExporter,
     AssetLoader: async () =>
-        (await import('./assetloader/index.ts')).AssetLoader,
+        (await import('@shopware-ag/dive/assetloader')).AssetLoader,
     MediaCreator: async () =>
-        (await import('./mediacreator/index.ts')).MediaCreator,
-    State: async () => (await import('./state/index.ts')).State,
-    Toolbox: async () => (await import('./toolbox/index.ts')).Toolbox,
+        (await import('@shopware-ag/dive/mediacreator')).MediaCreator,
+    State: async () => (await import('@shopware-ag/dive/state')).State,
+    Toolbox: async () => (await import('@shopware-ag/dive/toolbox')).Toolbox,
 } as const;
 
 type ModuleRegistry = typeof ModuleRegistry;

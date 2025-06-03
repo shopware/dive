@@ -7,6 +7,8 @@ import {
     DIVEPerspectiveCamera,
 } from '@shopware-ag/dive';
 
+vi.mock('three-spritetext');
+
 const mockScene = {
     add: vi.fn(),
     remove: vi.fn(),

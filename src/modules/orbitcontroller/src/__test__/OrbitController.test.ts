@@ -1,14 +1,21 @@
 import { OrbitController } from '../OrbitController.ts';
-import { type DIVEPerspectiveCamera } from '../../../../engine/camera/PerspectiveCamera.ts';
-import { DIVERenderPipeline } from '../../../../engine/renderer/Renderer.ts';
+import {
+    DIVEPerspectiveCamera,
+    DIVERenderPipeline,
+    DIVEScene,
+} from '@shopware-ag/dive';
 import { Box3, Vector3 } from 'three';
-import { DIVEScene } from '../../../../engine/scene/Scene.ts';
 
 // Add a real canvas for the controls domElement
 const canvas = document.createElement('canvas');
 
-vi.mock('../../../../engine/renderer/Renderer', () => {
+vi.mock('@shopware-ag/dive', async () => {
+    const actual =
+        await vi.importActual<typeof import('@shopware-ag/dive')>(
+            '@shopware-ag/dive',
+        );
     return {
+        ...actual,
         DIVERenderPipeline: vi.fn(function (this: any) {
             this.webglrenderer = {
                 domElement: canvas,
@@ -17,17 +24,6 @@ vi.mock('../../../../engine/renderer/Renderer', () => {
             this.onResize = vi.fn();
             this.getViewport = vi.fn();
             this.setViewport = vi.fn();
-            return this;
-        }),
-    };
-});
-
-vi.mock('../../../animation/AnimationSystem', () => {
-    return {
-        Animator: vi.fn(function (this: any) {
-            this.uuid = 'test-uuid';
-            this.tick = vi.fn();
-            this.dispose = vi.fn();
             return this;
         }),
     };

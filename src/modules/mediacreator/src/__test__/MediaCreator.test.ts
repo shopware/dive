@@ -1,9 +1,11 @@
 import { MediaCreator } from '../MediaCreator.ts';
-import { DIVERenderPipeline } from '../../../../engine/renderer/Renderer.ts';
-import { DIVEScene } from '../../../../engine/scene/Scene.ts';
-import { DIVEPerspectiveCamera } from '../../../../engine/camera/PerspectiveCamera.ts';
-import { type COMPov } from '../../../state/types/index.ts';
+import {
+    DIVEPerspectiveCamera,
+    DIVERenderPipeline,
+    DIVEScene,
+} from '@shopware-ag/dive';
 import { OrbitController } from '@shopware-ag/dive/orbitcontroller';
+import { type COMPov } from '../../../state/types/index.ts';
 
 /**
  * @jest-environment jsdom
@@ -20,21 +22,18 @@ global.ResizeObserver = MockResizeObserver as any;
 const mock_render = vi.fn();
 const mock_toDataURL = vi.fn();
 
-vi.mock('../../../engine/scene/Scene', () => {
+vi.mock('@shopware-ag/dive', () => {
     return {
-        DIVEScene: vi.fn(function (this: any) {
-            this.add = vi.fn();
-            this.children = [];
-            this.root = {
-                children: [],
+        DIVERenderPipeline: vi.fn(function (this: any) {
+            this.webglrenderer = {
+                domElement: {
+                    toDataURL: mock_toDataURL,
+                },
+                render: mock_render,
             };
+            this.onResize = vi.fn();
             return this;
         }),
-    };
-});
-
-vi.mock('../../../engine/camera/PerspectiveCamera', () => {
-    return {
         DIVEPerspectiveCamera: vi.fn(function (this: any) {
             this.position = {
                 clone: vi.fn(),
@@ -48,6 +47,14 @@ vi.mock('../../../engine/camera/PerspectiveCamera', () => {
                 mask: 0,
             };
             this.onResize = vi.fn();
+            return this;
+        }),
+        DIVEScene: vi.fn(function (this: any) {
+            this.add = vi.fn();
+            this.children = [];
+            this.root = {
+                children: [],
+            };
             return this;
         }),
     };
@@ -83,22 +90,7 @@ vi.mock('@shopware-ag/dive/orbitcontroller', () => {
     };
 });
 
-vi.mock('../../../engine/renderer/Renderer', () => {
-    return {
-        DIVERenderPipeline: vi.fn(function (this: any) {
-            this.webglrenderer = {
-                domElement: {
-                    toDataURL: mock_toDataURL,
-                },
-                render: mock_render,
-            };
-            this.onResize = vi.fn();
-            return this;
-        }),
-    };
-});
-
-vi.mock('../../../modules/animation/AnimationSystem', () => {
+vi.mock('@shopware-ag/dive/animation', () => {
     return {
         DIVEAnimationSystem: vi.fn(function (this: any) {
             this.domElement = {

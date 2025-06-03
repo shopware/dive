@@ -121,7 +121,7 @@ vi.mock('@shopware-ag/dive/orbitcontroller', async (importOriginal) => {
     };
 });
 
-vi.mock('../../modules/axiscamera/AxisCamera', () => {
+vi.mock('@shopware-ag/dive/axiscamera', () => {
     return {
         DIVEAxisCamera: vi.fn(function (this: any) {
             this.isObject3D = true;
