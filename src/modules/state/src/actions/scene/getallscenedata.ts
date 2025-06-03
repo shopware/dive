@@ -1,7 +1,7 @@
 import { Action } from '../action.ts';
 import { registerAction } from '../../ActionRegistry.ts';
 import { type ActionDependencies } from '../../../types/index.ts';
-import { type DIVESceneData } from '@shopware-ag/dive';
+import { type StateSceneData } from '../../../types/StateSceneData.ts';
 import { Color, MeshStandardMaterial } from 'three';
 import {
     GroupSchema,
@@ -14,7 +14,7 @@ import {
 export const GetAllSceneDataAction = Action.define<
     object,
     Pick<ActionDependencies, 'engine' | 'controller' | 'registered'>,
-    DIVESceneData
+    StateSceneData
 >({
     description: 'Retrieves all current scene data.',
     execute: (_payload, { engine, controller, registered }) => {

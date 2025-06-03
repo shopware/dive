@@ -1,10 +1,10 @@
 import { Action } from '../action.ts';
 import { type ActionDependencies } from '../../../types/index.ts';
-import { type DIVESceneFileType } from '@shopware-ag/dive';
+import { type StateExportFileType } from '@shopware-ag/dive';
 import { registerAction } from '../../ActionRegistry.ts';
 
 export const ExportSceneAction = Action.define<
-    { type: keyof DIVESceneFileType },
+    { type: keyof StateExportFileType },
     Pick<ActionDependencies, 'engine' | 'getAssetExporter'>,
     Promise<ArrayBuffer | null>
 >({

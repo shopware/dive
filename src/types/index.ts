@@ -1,12 +1,5 @@
-// Scene types
-export * from './SceneData.ts';
-export * from './SceneObjects.ts';
-export * from './SceneType.ts';
-
-// File types
+export * from './components/index.ts';
+export * from '../modules/state/types/StateExportFileType.ts';
 export * from './file/index.ts';
-
-// Info types
 export * from './info/index.ts';
-
 export * from './schema/index.ts';

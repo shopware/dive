@@ -1,6 +1,6 @@
 import { type GLTF } from 'three/examples/jsm/loaders/GLTFLoader.ts';
 
-export type DIVESceneFileType = {
+export type StateExportFileType = {
     glb: GLTF;
 
     // more types will be added at a later point in time
