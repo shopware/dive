@@ -1,15 +1,16 @@
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { USDZLoader } from 'three/examples/jsm/loaders/USDZLoader.js';
 import { Object3D } from 'three';
-import { type FileType, SUPPORTED_FILE_TYPES } from '../../types/file/index.ts';
-import { FileTypeError } from '../../error/file-type/file-type-error.ts';
-import { NetworkError } from '../../error/network/network-error.ts';
-import { ParseError } from '../../error/parse/parse-error.ts';
 import {
+    type FileType,
+    SUPPORTED_FILE_TYPES,
+    FileTypeError,
+    NetworkError,
+    ParseError,
     getFileTypeFromUri,
     isFileTypeSupported,
-} from '../../helpers/index.ts';
-import { DracoLoader } from './draco/DracoLoader.ts';
+} from '@shopware-ag/dive';
+import { DracoLoader } from '../draco/DracoLoader.ts';
 
 declare global {
     interface ModuleClasses {

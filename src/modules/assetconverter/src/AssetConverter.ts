@@ -1,9 +1,9 @@
-import { AssetLoader } from '../assetloader/AssetLoader.ts';
+import { AssetLoader } from '@shopware-ag/dive/assetloader';
 import {
     AssetExporter,
     type FileTypeToExporterOptions,
-} from '../assetexporter/AssetExporter.ts';
-import { type FileType } from '../../types/file/index.ts';
+} from '@shopware-ag/dive/assetexporter';
+import { type FileType } from '@shopware-ag/dive';
 
 declare global {
     interface ModuleClasses {

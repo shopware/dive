@@ -14,6 +14,18 @@ export default defineConfig({
                 __dirname,
                 './src/modules/systeminfo/index.ts',
             ),
+            '@shopware-ag/dive/assetconverter': path.resolve(
+                __dirname,
+                './src/modules/assetconverter/index.ts',
+            ),
+            '@shopware-ag/dive/assetexporter': path.resolve(
+                __dirname,
+                './src/modules/assetexporter/index.ts',
+            ),
+            '@shopware-ag/dive/assetloader': path.resolve(
+                __dirname,
+                './src/modules/assetloader/index.ts',
+            ),
         },
     },
     test: {

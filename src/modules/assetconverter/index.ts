@@ -1,1 +1,1 @@
-export * from './AssetConverter.ts';
+export * from './src/AssetConverter.ts';

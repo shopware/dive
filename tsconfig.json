@@ -21,6 +21,15 @@
             "@shopware-ag/dive/systeminfo": [
                 "./src/modules/systeminfo/index.ts"
             ],
+            "@shopware-ag/dive/assetconverter": [
+                "./src/modules/assetconverter/index.ts"
+            ],
+            "@shopware-ag/dive/assetexporter": [
+                "./src/modules/assetexporter/index.ts"
+            ],
+            "@shopware-ag/dive/assetloader": [
+                "./src/modules/assetloader/index.ts"
+            ]
         }
     },
     "include": [

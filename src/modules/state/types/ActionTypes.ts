@@ -37,7 +37,7 @@ export interface ActionDependencies {
     >;
     getARSystem: () => Promise<import('../../ar/ARSystem.ts').ARSystem>;
     getAssetExporter: () => Promise<
-        import('../../assetexporter/AssetExporter.ts').AssetExporter
+        import('../../assetexporter/src/AssetExporter.ts').AssetExporter
     >;
     getMediaCreator: () => Promise<
         import('../../mediacreator/MediaCreator.ts').MediaCreator

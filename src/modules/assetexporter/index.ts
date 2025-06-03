@@ -1,1 +1,1 @@
-export * from './AssetExporter.ts';
+export * from './src/AssetExporter.ts';
