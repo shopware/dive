@@ -7,7 +7,7 @@ import {
 } from 'three';
 import { PRODUCT_LAYER_MASK } from '../../constants/VisibilityLayerMask.ts';
 import { findSceneRecursive } from '../../helpers/findSceneRecursive/findSceneRecursive.ts';
-import { type COMMaterial } from '../../modules/state/types/index.ts';
+import { type MaterialSchema } from '@shopware-ag/dive';
 import { DIVENode } from '../node/Node.ts';
 
 /**
@@ -80,7 +80,7 @@ export class DIVEModel extends DIVENode {
         this.add(gltf);
     }
 
-    public setMaterial(material: Partial<COMMaterial>): void {
+    public setMaterial(material: Partial<MaterialSchema>): void {
         // if there is no material, create a new one
         if (!this._material) {
             this._material = new MeshStandardMaterial();

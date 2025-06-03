@@ -1,6 +1,6 @@
 import { type Texture } from 'three';
 
-export type COMMaterial = {
+export type MaterialSchema = {
     vertexColors: boolean;
     color: string | number;
     map: Texture | null;

@@ -4,12 +4,12 @@ import { type ActionDependencies } from '../../../types/index.ts';
 import { type DIVESceneData } from '@shopware-ag/dive';
 import { Color, MeshStandardMaterial } from 'three';
 import {
-    type COMGroup,
-    type COMLight,
-    type COMModel,
-    type COMPov,
-    type COMPrimitive,
-} from '../../../types/index.ts';
+    GroupSchema,
+    LightSchema,
+    ModelSchema,
+    PovSchema,
+    PrimitiveSchema,
+} from '@shopware-ag/dive';
 
 export const GetAllSceneDataAction = Action.define<
     object,
@@ -36,19 +36,19 @@ export const GetAllSceneDataAction = Action.define<
             spotmarks: [],
             lights: Array.from(registered.values()).filter(
                 (object) => object.entityType === 'light',
-            ) as COMLight[],
+            ) as LightSchema[],
             objects: Array.from(registered.values()).filter(
                 (object) => object.entityType === 'model',
-            ) as COMModel[],
+            ) as ModelSchema[],
             cameras: Array.from(registered.values()).filter(
                 (object) => object.entityType === 'pov',
-            ) as COMPov[],
+            ) as PovSchema[],
             primitives: Array.from(registered.values()).filter(
                 (object) => object.entityType === 'primitive',
-            ) as COMPrimitive[],
+            ) as PrimitiveSchema[],
             groups: Array.from(registered.values()).filter(
                 (object) => object.entityType === 'group',
-            ) as COMGroup[],
+            ) as GroupSchema[],
         };
     },
 });

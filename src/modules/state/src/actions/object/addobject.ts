@@ -1,10 +1,10 @@
 import { Action } from '../action.ts';
 import { registerAction } from '../../ActionRegistry.ts';
 import { type ActionDependencies } from '../../../types/index.ts';
-import { type COMEntity } from '../../../types/index.ts';
+import { type EntitySchema } from '@shopware-ag/dive';
 
 export const AddObjectAction = Action.define<
-    COMEntity,
+    EntitySchema,
     Pick<ActionDependencies, 'engine' | 'registered'>,
     void
 >({

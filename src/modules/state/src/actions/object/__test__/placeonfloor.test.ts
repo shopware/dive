@@ -1,6 +1,5 @@
-import { DIVEEngine, DIVEModel } from '@shopware-ag/dive';
 import { PlaceOnFloorAction } from '../placeonfloor.ts';
-import { COMEntity } from '../../../../types/index.ts';
+import { DIVEEngine, DIVEModel, type EntitySchema } from '@shopware-ag/dive';
 
 const mockModel = {
     isDIVEModel: true,
@@ -15,7 +14,7 @@ const mockEngine = {
     },
 } as unknown as DIVEEngine;
 
-const mockRegistered = new Map<string, COMEntity>();
+const mockRegistered = new Map<string, EntitySchema>();
 
 describe('PlaceOnFloorAction', () => {
     beforeEach(() => {
@@ -24,7 +23,7 @@ describe('PlaceOnFloorAction', () => {
     });
 
     it('should place an object on the floor', async () => {
-        const testObject: COMEntity = {
+        const testObject: EntitySchema = {
             id: 'test-object',
             entityType: 'model',
             position: { x: 0, y: 0, z: 0 },
@@ -32,7 +31,7 @@ describe('PlaceOnFloorAction', () => {
             scale: { x: 1, y: 1, z: 1 },
             name: 'Test Object',
             visible: true,
-        } as unknown as COMEntity;
+        } as unknown as EntitySchema;
 
         // Add the object first
         mockRegistered.set(testObject.id, testObject);
@@ -75,7 +74,7 @@ describe('PlaceOnFloorAction', () => {
             undefined,
         );
 
-        const testObject: COMEntity = {
+        const testObject: EntitySchema = {
             id: 'test-object',
             entityType: 'model',
             position: { x: 0, y: 0, z: 0 },
@@ -83,7 +82,7 @@ describe('PlaceOnFloorAction', () => {
             scale: { x: 1, y: 1, z: 1 },
             name: 'Test Object',
             visible: true,
-        } as unknown as COMEntity;
+        } as unknown as EntitySchema;
 
         // Add the object first
         mockRegistered.set(testObject.id, testObject);
@@ -103,7 +102,7 @@ describe('PlaceOnFloorAction', () => {
     });
 
     it('should throw error if object is not a DIVEModel', async () => {
-        const testObject: COMEntity = {
+        const testObject: EntitySchema = {
             id: 'test-object',
             entityType: 'model',
             position: { x: 0, y: 0, z: 0 },

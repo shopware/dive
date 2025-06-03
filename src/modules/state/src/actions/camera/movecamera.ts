@@ -1,7 +1,7 @@
 import { Action } from '../action.ts';
 import { registerAction } from '../../ActionRegistry.ts';
 import { type ActionDependencies } from '../../../types/index.ts';
-import { isCOMPov } from '../../../types/index.ts';
+import { isPovSchema } from '@shopware-ag/dive';
 import { type Vector3Like } from 'three';
 
 export const MoveCameraAction = Action.define<
@@ -37,7 +37,7 @@ export const MoveCameraAction = Action.define<
                 );
             }
 
-            if (!isCOMPov(object)) {
+            if (!isPovSchema(object)) {
                 throw new Error(
                     `Object with id ${payload.id} is not a POV. Object: ${object}`,
                 );

@@ -1,5 +1,5 @@
 import { MoveCameraAction } from '../movecamera.ts';
-import { COMEntity } from '../../../../types/index.ts';
+import { EntitySchema } from '@shopware-ag/dive';
 import { OrbitController } from '@shopware-ag/dive/orbitcontroller';
 import { Vector3 } from 'three';
 import { DIVEEngine } from '@shopware-ag/dive';
@@ -44,7 +44,7 @@ describe('MoveCameraAction', () => {
 
     describe('Direct Position Movement', () => {
         it('should move camera to a new position and target', async () => {
-            const mockRegistered = new Map<string, COMEntity>();
+            const mockRegistered = new Map<string, EntitySchema>();
 
             const action = new MoveCameraAction(
                 {
@@ -95,7 +95,7 @@ describe('MoveCameraAction', () => {
         });
 
         it('should handle unlocked camera movement', async () => {
-            const mockRegistered = new Map<string, COMEntity>();
+            const mockRegistered = new Map<string, EntitySchema>();
 
             const action = new MoveCameraAction(
                 {
@@ -125,9 +125,9 @@ describe('MoveCameraAction', () => {
 
     describe('POV-based Movement', () => {
         it('should move camera to a POV position and target', async () => {
-            const mockRegistered = new Map<string, COMEntity>();
+            const mockRegistered = new Map<string, EntitySchema>();
 
-            const testPOV: COMEntity = {
+            const testPOV: EntitySchema = {
                 id: 'test-pov',
                 entityType: 'pov',
                 position: new Vector3(1, 1, 1),
@@ -136,7 +136,7 @@ describe('MoveCameraAction', () => {
                 scale: { x: 1, y: 1, z: 1 },
                 name: 'Test POV',
                 visible: true,
-            } as unknown as COMEntity;
+            } as unknown as EntitySchema;
 
             mockRegistered.set(testPOV.id, testPOV);
 
@@ -183,7 +183,7 @@ describe('MoveCameraAction', () => {
         });
 
         it('should throw error if POV is not registered', async () => {
-            const mockRegistered = new Map<string, COMEntity>();
+            const mockRegistered = new Map<string, EntitySchema>();
 
             const action = new MoveCameraAction(
                 {
@@ -205,16 +205,16 @@ describe('MoveCameraAction', () => {
         });
 
         it('should throw error if object is not a POV', async () => {
-            const mockRegistered = new Map<string, COMEntity>();
+            const mockRegistered = new Map<string, EntitySchema>();
 
-            const testObject: COMEntity = {
+            const testObject: EntitySchema = {
                 id: 'test-object',
                 entityType: 'model',
                 position: new Vector3(1, 1, 1),
                 target: new Vector3(0, 0, 0),
                 rotation: { x: 0, y: 0, z: 0 },
                 scale: { x: 1, y: 1, z: 1 },
-            } as unknown as COMEntity;
+            } as unknown as EntitySchema;
 
             mockRegistered.set(testObject.id, testObject);
 
@@ -240,7 +240,7 @@ describe('MoveCameraAction', () => {
 
     describe('Animation Callbacks', () => {
         it('should call lookAt on update', async () => {
-            const mockRegistered = new Map<string, COMEntity>();
+            const mockRegistered = new Map<string, EntitySchema>();
 
             const action = new MoveCameraAction(
                 {
@@ -270,7 +270,7 @@ describe('MoveCameraAction', () => {
         });
 
         it('should handle animation stop', async () => {
-            const mockRegistered = new Map<string, COMEntity>();
+            const mockRegistered = new Map<string, EntitySchema>();
             const mockAnimators = [
                 { play: vi.fn().mockReturnThis(), stop: mockStop },
                 { play: vi.fn().mockReturnThis(), stop: mockStop },

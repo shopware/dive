@@ -8,3 +8,5 @@ export * from './file/index.ts';
 
 // Info types
 export * from './info/index.ts';
+
+export * from './schema/index.ts';

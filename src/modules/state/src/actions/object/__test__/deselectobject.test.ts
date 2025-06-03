@@ -1,10 +1,10 @@
 import { DeselectObjectAction } from '../deselectobject.ts';
-import { type COMEntity } from '../../../../types/index.ts';
 import { Object3D } from 'three';
 import {
     DIVEEngine,
     type DIVESelectable,
     DIVESceneObject,
+    type EntitySchema,
 } from '@shopware-ag/dive';
 import { type DIVESelectTool } from '@shopware-ag/dive/toolbox';
 
@@ -32,7 +32,7 @@ const mockGetToolbox = vi.fn().mockResolvedValue({
     getActiveTool: mockGetActiveTool,
 });
 
-const mockRegistered = new Map<string, COMEntity>();
+const mockRegistered = new Map<string, EntitySchema>();
 describe('DeselectObjectAction', () => {
     beforeEach(() => {
         mockRegistered.clear();
@@ -41,7 +41,7 @@ describe('DeselectObjectAction', () => {
 
     it('should deselect an object', async () => {
         // Arrange
-        const testObject: COMEntity = {
+        const testObject: EntitySchema = {
             id: 'test-object',
             name: 'Test Object',
             entityType: 'primitive',
@@ -56,7 +56,7 @@ describe('DeselectObjectAction', () => {
                 height: 1,
                 depth: 1,
             },
-        };
+        } as unknown as EntitySchema;
 
         mockRegistered.set(testObject.id, testObject);
 
@@ -92,7 +92,7 @@ describe('DeselectObjectAction', () => {
 
     it('should return false if object is not found in scene', async () => {
         // Arrange
-        const testObject: COMEntity = {
+        const testObject: EntitySchema = {
             id: 'test-object',
             name: 'Test Object',
             entityType: 'primitive',
@@ -107,7 +107,7 @@ describe('DeselectObjectAction', () => {
                 height: 1,
                 depth: 1,
             },
-        };
+        } as unknown as EntitySchema;
 
         mockRegistered.set(testObject.id, testObject);
         vi.mocked(mockEngine.scene.root.getSceneObject).mockReturnValueOnce(
@@ -132,7 +132,7 @@ describe('DeselectObjectAction', () => {
 
     it('should return false if object is not selectable', async () => {
         // Arrange
-        const testObject: COMEntity = {
+        const testObject: EntitySchema = {
             id: 'test-object',
             name: 'Test Object',
             entityType: 'primitive',
@@ -147,7 +147,7 @@ describe('DeselectObjectAction', () => {
                 height: 1,
                 depth: 1,
             },
-        };
+        } as unknown as EntitySchema;
 
         mockRegistered.set(testObject.id, testObject);
         vi.mocked(mockEngine.scene.root.getSceneObject).mockReturnValueOnce(
@@ -174,7 +174,7 @@ describe('DeselectObjectAction', () => {
         mockGetActiveTool.mockReturnValueOnce(null);
 
         // Arrange
-        const testObject: COMEntity = {
+        const testObject: EntitySchema = {
             id: 'test-object',
             name: 'Test Object',
             entityType: 'primitive',
@@ -189,7 +189,7 @@ describe('DeselectObjectAction', () => {
                 height: 1,
                 depth: 1,
             },
-        };
+        } as unknown as EntitySchema;
 
         mockRegistered.set(testObject.id, testObject);
 

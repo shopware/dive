@@ -1,14 +1,15 @@
 import { GetAllSceneDataAction } from '../getallscenedata.ts';
-import { DIVEEngine, DIVEScene } from '@shopware-ag/dive';
+import {
+    DIVEEngine,
+    DIVEScene,
+    type GroupSchema,
+    type LightSchema,
+    type ModelSchema,
+    type PovSchema,
+    type PrimitiveSchema,
+} from '@shopware-ag/dive';
 import { OrbitController } from '@shopware-ag/dive/orbitcontroller';
 import { Color, MeshStandardMaterial, Vector3 } from 'three';
-import {
-    COMGroup,
-    COMLight,
-    COMModel,
-    COMPov,
-    COMPrimitive,
-} from '../../../../types/index.ts';
 
 describe('GetAllSceneDataAction', () => {
     it('should get all scene data', async () => {
@@ -43,31 +44,31 @@ describe('GetAllSceneDataAction', () => {
             entityType: 'light',
             position: new Vector3(0, 0, 0),
             target: new Vector3(0, 0, 0),
-        } as unknown as COMLight);
+        } as unknown as LightSchema);
 
         mockRegistered.set('model', {
             entityType: 'model',
             position: new Vector3(0, 0, 0),
             target: new Vector3(0, 0, 0),
-        } as unknown as COMModel);
+        } as unknown as ModelSchema);
 
         mockRegistered.set('pov', {
             entityType: 'pov',
             position: new Vector3(0, 0, 0),
             target: new Vector3(0, 0, 0),
-        } as unknown as COMPov);
+        } as unknown as PovSchema);
 
         mockRegistered.set('primitive', {
             entityType: 'primitive',
             position: new Vector3(0, 0, 0),
             target: new Vector3(0, 0, 0),
-        } as unknown as COMPrimitive);
+        } as unknown as PrimitiveSchema);
 
         mockRegistered.set('group', {
             entityType: 'group',
             position: new Vector3(0, 0, 0),
             target: new Vector3(0, 0, 0),
-        } as unknown as COMGroup);
+        } as unknown as GroupSchema);
 
         const action = new GetAllSceneDataAction(
             {},

@@ -1,6 +1,6 @@
 import { DIVEEngine } from '@shopware-ag/dive';
 import { type OrbitController } from '@shopware-ag/dive/orbitcontroller';
-import { type COMEntity } from '../types/index.ts';
+import { type EntitySchema } from '@shopware-ag/dive';
 
 // Extracted types for performAction_new
 export type ActionPayload<T> = T extends new (
@@ -29,7 +29,7 @@ export type ActionDeps<T> = T extends new (
     : never;
 
 export interface ActionDependencies {
-    registered: Map<string, COMEntity>;
+    registered: Map<string, EntitySchema>;
     engine: DIVEEngine;
     controller: OrbitController;
     getAnimationSystem: () => Promise<

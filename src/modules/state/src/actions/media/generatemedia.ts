@@ -2,7 +2,7 @@ import { Action } from '../action.ts';
 import { registerAction } from '../../ActionRegistry.ts';
 import { type ActionDependencies } from '../../../types/index.ts';
 import { type Vector3Like } from 'three';
-import { isCOMPov } from '../../../types/index.ts';
+import { isPovSchema } from '@shopware-ag/dive';
 
 export const GenerateMediaAction = Action.define<
     (
@@ -34,7 +34,7 @@ export const GenerateMediaAction = Action.define<
                 );
             }
 
-            if (!isCOMPov(object)) {
+            if (!isPovSchema(object)) {
                 throw new Error(
                     `Object with id ${payload.id} is not a POV. Object: ${object}`,
                 );

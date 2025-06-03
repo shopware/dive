@@ -1,7 +1,5 @@
-import { DIVEEngine } from '../../../../../../engine/Engine.ts';
-import { DIVEScene } from '../../../../../../engine/scene/Scene.ts';
 import { DeleteObjectAction } from '../deleteobject.ts';
-import { COMEntity } from '../../../../types/index.ts';
+import { DIVEEngine, DIVEScene, type EntitySchema } from '@shopware-ag/dive';
 import { SetParentAction } from '../setparent.ts';
 import { UpdateObjectAction } from '../updateobject.ts';
 
@@ -20,7 +18,7 @@ describe('DeleteObjectAction', () => {
         scene: mockScene,
     } as unknown as DIVEEngine;
 
-    const mockRegistered = new Map<string, COMEntity>();
+    const mockRegistered = new Map<string, EntitySchema>();
 
     beforeEach(() => {
         mockRegistered.clear();
@@ -31,7 +29,7 @@ describe('DeleteObjectAction', () => {
 
     it('should delete a standalone object', () => {
         // Arrange
-        const object: COMEntity = {
+        const object: EntitySchema = {
             id: 'test-object',
             name: 'Test Object',
             entityType: 'primitive',
@@ -65,7 +63,7 @@ describe('DeleteObjectAction', () => {
 
     it('should detach from parent before deleting', () => {
         // Arrange
-        const object: COMEntity = {
+        const object: EntitySchema = {
             id: 'test-object',
             name: 'Test Object',
             entityType: 'primitive',
@@ -109,7 +107,7 @@ describe('DeleteObjectAction', () => {
 
     it('should update children when deleting a group', () => {
         // Arrange
-        const group: COMEntity = {
+        const group: EntitySchema = {
             id: 'test-group',
             name: 'Test Group',
             entityType: 'group',
@@ -119,7 +117,7 @@ describe('DeleteObjectAction', () => {
             rotation: { x: 0, y: 0, z: 0 },
             scale: { x: 1, y: 1, z: 1 },
         };
-        const child1: COMEntity = {
+        const child1: EntitySchema = {
             id: 'child1',
             name: 'Child 1',
             entityType: 'primitive',
@@ -135,7 +133,7 @@ describe('DeleteObjectAction', () => {
                 depth: 1,
             },
         };
-        const child2: COMEntity = {
+        const child2: EntitySchema = {
             id: 'child2',
             name: 'Child 2',
             entityType: 'primitive',

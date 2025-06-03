@@ -2,10 +2,10 @@ import { Action } from '../action.ts';
 import { registerAction } from '../../ActionRegistry.ts';
 import { type ActionDependencies } from '../../../types/index.ts';
 import { isSelectTool } from '@shopware-ag/dive/toolbox';
-import { type COMEntity } from '../../../types/index.ts';
+import { type EntitySchema } from '@shopware-ag/dive';
 
 export const DeselectObjectAction = Action.define<
-    Partial<COMEntity> & { id: string },
+    Partial<EntitySchema> & { id: string },
     Pick<ActionDependencies, 'engine' | 'getToolbox' | 'registered'>,
     Promise<void>
 >({

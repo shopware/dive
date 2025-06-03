@@ -11,7 +11,7 @@ import {
     type Texture,
     Object3D,
 } from 'three';
-import { type COMMaterial } from '../../../modules/state/types/index.ts';
+import { type MaterialSchema } from '@shopware-ag/dive';
 
 vi.mock('@shopware-ag/dive/state', () => ({
     State: {
@@ -150,7 +150,7 @@ describe('dive/model/DIVEModel', () => {
 
     it('should set material', () => {
         // apply invalid material should not crash
-        expect(() => model.setMaterial({} as COMMaterial)).not.toThrow();
+        expect(() => model.setMaterial({} as MaterialSchema)).not.toThrow();
         expect(model['_material']).not.toBeNull();
 
         expect(() =>
@@ -158,7 +158,7 @@ describe('dive/model/DIVEModel', () => {
                 color: 0xffffff,
                 roughness: 0,
                 metalness: 1,
-            } as COMMaterial),
+            } as MaterialSchema),
         ).not.toThrow();
         expect((model['_material'] as MeshStandardMaterial).roughness).toBe(0);
         expect(
@@ -179,7 +179,7 @@ describe('dive/model/DIVEModel', () => {
                 roughnessMap: 'This_Is_A_Texture' as unknown as Texture,
                 metalness: 1,
                 metalnessMap: 'This_Is_A_Texture' as unknown as Texture,
-            } as COMMaterial),
+            } as MaterialSchema),
         ).not.toThrow();
         expect((model['_material'] as MeshStandardMaterial).roughness).toBe(1);
         expect(
@@ -192,7 +192,7 @@ describe('dive/model/DIVEModel', () => {
     });
 
     it('should set model material when material already set before', () => {
-        model.setMaterial({ roughness: 0.5 } as COMMaterial);
+        model.setMaterial({ roughness: 0.5 } as MaterialSchema);
         expect(() => model.setFromGLTF(object)).not.toThrow();
         expect(
             (model['_mesh']?.material as MeshStandardMaterial).roughness,
@@ -202,7 +202,7 @@ describe('dive/model/DIVEModel', () => {
     it('should set material to model when model already set before', () => {
         model.setFromGLTF(object);
         expect(() =>
-            model.setMaterial({ roughness: 0.5 } as COMMaterial),
+            model.setMaterial({ roughness: 0.5 } as MaterialSchema),
         ).not.toThrow();
         expect(
             (model['_mesh']?.material as MeshStandardMaterial).roughness,
@@ -242,7 +242,9 @@ describe('dive/model/DIVEModel', () => {
         // Test with null material and mesh
         (model['_material'] as unknown) = null;
         (model['_mesh'] as unknown) = null;
-        expect(() => model.setMaterial({ roughness: 0.5 })).not.toThrow();
+        expect(() =>
+            model.setMaterial({ roughness: 0.5 } as MaterialSchema),
+        ).not.toThrow();
 
         // Verify new material was created
         expect(model['_material']).toBeInstanceOf(MeshStandardMaterial);

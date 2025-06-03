@@ -13,6 +13,3 @@ export { ParseError } from './error/parse/parse-error.ts';
 
 // types
 export * from './types/index.ts';
-
-// export all modules
-export * from './modules/ModuleRegistry.ts';

@@ -1,9 +1,8 @@
 import { generateUUID } from 'three/src/math/MathUtils.js';
 
 // type imports
-import { type COMEntity } from '../types/index.ts';
+import { type EntitySchema, type DIVEEngine } from '@shopware-ag/dive';
 import { type OrbitController } from '@shopware-ag/dive/orbitcontroller';
-import { DIVEEngine } from '../../../engine/Engine.ts';
 import {
     ActionDependencies,
     ActionPayload,
@@ -141,7 +140,7 @@ export class State {
     }
 
     // registered entities
-    private registered: Map<string, COMEntity> = new Map();
+    private registered: Map<string, EntitySchema> = new Map();
 
     private listeners: Map<
         keyof ActionTypes,

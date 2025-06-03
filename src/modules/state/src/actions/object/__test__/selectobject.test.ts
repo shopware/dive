@@ -1,6 +1,10 @@
-import { DIVEEngine, DIVESceneObject, DIVESelectable } from '@shopware-ag/dive';
+import {
+    DIVEEngine,
+    DIVESceneObject,
+    DIVESelectable,
+    type EntitySchema,
+} from '@shopware-ag/dive';
 import { SelectObjectAction } from '../selectobject.ts';
-import { COMEntity } from '../../../../types/index.ts';
 import { Object3D } from 'three';
 import { DIVESelectTool, Toolbox } from '@shopware-ag/dive/toolbox';
 
@@ -29,7 +33,7 @@ const mockGetToolbox = () => {
     } as unknown as Toolbox);
 };
 
-const mockRegistered = new Map<string, COMEntity>();
+const mockRegistered = new Map<string, EntitySchema>();
 
 describe('SelectObjectAction', () => {
     beforeEach(() => {
@@ -39,7 +43,7 @@ describe('SelectObjectAction', () => {
 
     it('should select an object', async () => {
         // Arrange
-        const testObject: COMEntity = {
+        const testObject: EntitySchema = {
             id: 'test-object',
             name: 'Test Object',
             entityType: 'primitive',
@@ -90,7 +94,7 @@ describe('SelectObjectAction', () => {
 
     it('should return false if object is not found in scene', async () => {
         // Arrange
-        const testObject: COMEntity = {
+        const testObject: EntitySchema = {
             id: 'test-object',
             name: 'Test Object',
             entityType: 'primitive',
@@ -128,7 +132,7 @@ describe('SelectObjectAction', () => {
 
     it('should return false if object is not selectable', async () => {
         // Arrange
-        const testObject: COMEntity = {
+        const testObject: EntitySchema = {
             id: 'test-object',
             name: 'Test Object',
             entityType: 'primitive',
@@ -168,7 +172,7 @@ describe('SelectObjectAction', () => {
 
     it('should not throw if no select tool is active', () => {
         // Arrange
-        const testObject: COMEntity = {
+        const testObject: EntitySchema = {
             id: 'test-object',
             name: 'Test Object',
             entityType: 'primitive',

@@ -3,10 +3,10 @@ import { registerAction } from '../../ActionRegistry.ts';
 import { type ActionDependencies } from '../../../types/index.ts';
 import { SetParentAction } from './setparent.ts';
 import { UpdateObjectAction } from './updateobject.ts';
-import { type COMEntity } from '../../../types/index.ts';
+import { type EntitySchema } from '@shopware-ag/dive';
 
 export const DeleteObjectAction = Action.define<
-    Partial<COMEntity> & { id: string },
+    Partial<EntitySchema> & { id: string },
     Pick<ActionDependencies, 'engine' | 'registered'>,
     void
 >({

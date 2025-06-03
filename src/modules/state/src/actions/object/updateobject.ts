@@ -1,11 +1,11 @@
 import { Action } from '../action.ts';
 import { registerAction } from '../../ActionRegistry.ts';
 import { type ActionDependencies } from '../../../types/index.ts';
-import { type COMEntity } from '../../../types/index.ts';
+import { type EntitySchema } from '@shopware-ag/dive';
 import { merge } from 'lodash';
 
 export const UpdateObjectAction = Action.define<
-    Partial<COMEntity> & { id: string },
+    Partial<EntitySchema> & { id: string },
     Pick<ActionDependencies, 'engine' | 'registered'>,
     void
 >({
@@ -21,7 +21,7 @@ export const UpdateObjectAction = Action.define<
             ...payload,
             id: updatedObject.id,
             entityType: updatedObject.entityType,
-        } as COMEntity);
+        } as EntitySchema);
     },
 });
 

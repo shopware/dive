@@ -1,6 +1,5 @@
 import { DropItAction } from '../dropit.ts';
-import { COMEntity } from '../../../../types/index.ts';
-import { DIVEModel, DIVEEngine } from '@shopware-ag/dive';
+import { DIVEModel, DIVEEngine, type EntitySchema } from '@shopware-ag/dive';
 
 const mockModel = {
     isDIVEModel: true,
@@ -15,7 +14,7 @@ const mockEngine = {
     },
 } as unknown as DIVEEngine;
 
-const mockRegistered = new Map<string, COMEntity>();
+const mockRegistered = new Map<string, EntitySchema>();
 
 describe('DropItAction', () => {
     beforeEach(() => {
@@ -24,7 +23,7 @@ describe('DropItAction', () => {
     });
 
     it('should drop an object on the floor or another object', async () => {
-        const testObject: COMEntity = {
+        const testObject: EntitySchema = {
             id: 'test-object',
             entityType: 'model',
             position: { x: 0, y: 0, z: 0 },
@@ -77,7 +76,7 @@ describe('DropItAction', () => {
             undefined,
         );
 
-        const testObject: COMEntity = {
+        const testObject: EntitySchema = {
             id: 'test-object',
             entityType: 'model',
             position: { x: 0, y: 0, z: 0 },
@@ -85,7 +84,7 @@ describe('DropItAction', () => {
             scale: { x: 1, y: 1, z: 1 },
             name: 'Test Object',
             visible: true,
-        } as unknown as COMEntity;
+        } as unknown as EntitySchema;
 
         // Add the object first
         mockRegistered.set(testObject.id, testObject);
@@ -105,7 +104,7 @@ describe('DropItAction', () => {
     });
 
     it('should throw error if object is not a DIVEModel', async () => {
-        const testObject: COMEntity = {
+        const testObject: EntitySchema = {
             id: 'test-object',
             entityType: 'model',
             position: { x: 0, y: 0, z: 0 },

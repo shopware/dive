@@ -5,9 +5,9 @@ import { DIVESceneLight } from '../components/light/SceneLight.ts';
 import { DIVEModel } from '../components/model/Model.ts';
 import { DIVEPrimitive } from '../components/primitive/Primitive.ts';
 
-import { COMEntityType } from '../modules/state/types/index.ts';
+import { EntityTypeSchema } from '@shopware-ag/dive';
 
-export type DIVESceneObject<T extends COMEntityType | void = void> =
+export type DIVESceneObject<T extends EntityTypeSchema | void = void> =
     T extends 'model'
         ? DIVEModel
         : T extends 'group'

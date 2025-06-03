@@ -1,7 +1,7 @@
 import { Action } from '../action.ts';
 import { registerAction } from '../../ActionRegistry.ts';
 import { type ActionDependencies } from '../../../types/index.ts';
-import { isCOMModel } from '../../../types/index.ts';
+import { isModelSchema } from '@shopware-ag/dive';
 
 export const ModelLoadedAction = Action.define<
     { id: string },
@@ -16,8 +16,8 @@ export const ModelLoadedAction = Action.define<
             throw new Error(`Model with id ${payload.id} not found`);
         }
 
-        if (!isCOMModel(model)) {
-            throw new Error(`Model with id ${payload.id} is not a COMModel`);
+        if (!isModelSchema(model)) {
+            throw new Error(`Model with id ${payload.id} is not a ModelSchema`);
         }
 
         model.loaded = true;

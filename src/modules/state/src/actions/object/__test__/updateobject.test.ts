@@ -1,6 +1,5 @@
-import { DIVEEngine, DIVEScene } from '@shopware-ag/dive';
+import { DIVEEngine, DIVEScene, type EntitySchema } from '@shopware-ag/dive';
 import { UpdateObjectAction } from '../updateobject.ts';
-import { COMEntity } from '../../../../types/index.ts';
 
 // Mock dependencies
 const mockEngine = {
@@ -11,7 +10,7 @@ const mockEngine = {
     } as unknown as DIVEScene,
 } as unknown as DIVEEngine;
 
-const mockRegistered = new Map<string, COMEntity>();
+const mockRegistered = new Map<string, EntitySchema>();
 
 describe('UpdateObjectAction', () => {
     beforeEach(() => {
@@ -20,7 +19,7 @@ describe('UpdateObjectAction', () => {
     });
 
     it('should update an existing object', async () => {
-        const originalObject: COMEntity = {
+        const originalObject: EntitySchema = {
             id: 'test-object',
             entityType: 'model',
             position: { x: 0, y: 0, z: 0 },
@@ -28,7 +27,7 @@ describe('UpdateObjectAction', () => {
             scale: { x: 1, y: 1, z: 1 },
             name: 'Test Object',
             visible: true,
-        } as unknown as COMEntity;
+        } as unknown as EntitySchema;
 
         const updatePayload = {
             id: 'test-object',

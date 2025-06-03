@@ -2,12 +2,12 @@ import { Action } from '../action.ts';
 import { registerAction } from '../../ActionRegistry.ts';
 import { type ActionDependencies } from '../../../types/index.ts';
 import { UpdateObjectAction } from './updateobject.ts';
-import { type COMEntity } from '../../../types/index.ts';
+import { type EntitySchema } from '@shopware-ag/dive';
 
 export const SetParentAction = Action.define<
     {
-        object: Partial<COMEntity> & { id: string };
-        parent: (Partial<COMEntity> & { id: string }) | null;
+        object: Partial<EntitySchema> & { id: string };
+        parent: (Partial<EntitySchema> & { id: string }) | null;
     },
     Pick<ActionDependencies, 'engine' | 'registered'>,
     void

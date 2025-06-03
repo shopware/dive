@@ -14,10 +14,7 @@ import {
 import { PRODUCT_LAYER_MASK } from '../../constants/VisibilityLayerMask.ts';
 import { findSceneRecursive } from '../../helpers/findSceneRecursive/findSceneRecursive.ts';
 import { DIVENode } from '../node/Node.ts';
-import {
-    type COMGeometry,
-    type COMMaterial,
-} from '../../modules/state/types/index.ts';
+import { type GeometrySchema, type MaterialSchema } from '@shopware-ag/dive';
 
 /**
  * A basic model class.
@@ -44,7 +41,7 @@ export class DIVEPrimitive extends DIVENode {
         this.add(this._mesh);
     }
 
-    public setGeometry(geometry: COMGeometry): void {
+    public setGeometry(geometry: GeometrySchema): void {
         const geo = this.assembleGeometry(geometry);
         if (!geo) return;
 
@@ -52,7 +49,7 @@ export class DIVEPrimitive extends DIVENode {
         this._boundingBox.setFromObject(this._mesh);
     }
 
-    public setMaterial(material: Partial<COMMaterial>): void {
+    public setMaterial(material: Partial<MaterialSchema>): void {
         const primitiveMaterial = this._mesh.material as MeshStandardMaterial;
 
         if (material.vertexColors !== undefined) {
@@ -178,7 +175,7 @@ export class DIVEPrimitive extends DIVENode {
         }
     }
 
-    private assembleGeometry(geometry: COMGeometry): BufferGeometry | null {
+    private assembleGeometry(geometry: GeometrySchema): BufferGeometry | null {
         // reset material to smooth shading
         (this._mesh.material as MeshStandardMaterial).flatShading = false;
 
@@ -211,7 +208,7 @@ export class DIVEPrimitive extends DIVENode {
         }
     }
 
-    private createCylinderGeometry(geometry: COMGeometry): BufferGeometry {
+    private createCylinderGeometry(geometry: GeometrySchema): BufferGeometry {
         const geo = new CylinderGeometry(
             geometry.width / 2,
             geometry.width / 2,
@@ -222,12 +219,12 @@ export class DIVEPrimitive extends DIVENode {
         return geo;
     }
 
-    private createSphereGeometry(geometry: COMGeometry): BufferGeometry {
+    private createSphereGeometry(geometry: GeometrySchema): BufferGeometry {
         const geo = new SphereGeometry(geometry.width / 2, 256, 256);
         return geo;
     }
 
-    private createPyramidGeometry(geometry: COMGeometry): BufferGeometry {
+    private createPyramidGeometry(geometry: GeometrySchema): BufferGeometry {
         // prettier-multiline-arrays-next-line-pattern: 3
         const vertices = new Float32Array([
             -geometry.width / 2, 0, -geometry.depth / 2, // 0
@@ -260,7 +257,7 @@ export class DIVEPrimitive extends DIVENode {
         return geometryBuffer;
     }
 
-    private createBoxGeometry(geometry: COMGeometry): BufferGeometry {
+    private createBoxGeometry(geometry: GeometrySchema): BufferGeometry {
         const geo = new BoxGeometry(
             geometry.width,
             geometry.height,
@@ -270,13 +267,13 @@ export class DIVEPrimitive extends DIVENode {
         return geo;
     }
 
-    private createConeGeometry(geometry: COMGeometry): BufferGeometry {
+    private createConeGeometry(geometry: GeometrySchema): BufferGeometry {
         const geo = new ConeGeometry(geometry.width / 2, geometry.height, 256);
         geo.translate(0, geometry.height / 2, 0);
         return geo;
     }
 
-    private createWallGeometry(geometry: COMGeometry): BufferGeometry {
+    private createWallGeometry(geometry: GeometrySchema): BufferGeometry {
         const geo = new BoxGeometry(
             geometry.width,
             geometry.height,
@@ -287,7 +284,7 @@ export class DIVEPrimitive extends DIVENode {
         return geo;
     }
 
-    private createPlaneGeometry(geometry: COMGeometry): BufferGeometry {
+    private createPlaneGeometry(geometry: GeometrySchema): BufferGeometry {
         const geo = new BoxGeometry(
             geometry.width,
             geometry.height,

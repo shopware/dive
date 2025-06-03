@@ -1,5 +1,5 @@
 import { GenerateMediaAction } from '../generatemedia.ts';
-import { COMEntity } from '../../../../types/index.ts';
+import { type EntitySchema } from '@shopware-ag/dive';
 import { Vector3 } from 'three';
 
 const mockGenerateMedia = vi
@@ -10,7 +10,7 @@ const mockGetMediaCreator = vi.fn().mockResolvedValue({
 });
 
 describe('GenerateMediaAction', () => {
-    const mockRegistered = new Map<string, COMEntity>();
+    const mockRegistered = new Map<string, EntitySchema>();
 
     it('should generate media from position and target', async () => {
         const action = new GenerateMediaAction(
@@ -41,7 +41,7 @@ describe('GenerateMediaAction', () => {
     });
 
     it('should generate media from POV', async () => {
-        const testPOV: COMEntity = {
+        const testPOV: EntitySchema = {
             id: 'test-pov',
             entityType: 'pov',
             position: new Vector3(1, 1, 1),
@@ -50,7 +50,7 @@ describe('GenerateMediaAction', () => {
             scale: { x: 1, y: 1, z: 1 },
             name: 'Test POV',
             visible: true,
-        } as unknown as COMEntity;
+        } as unknown as EntitySchema;
 
         // Add the POV first
         mockRegistered.set(testPOV.id, testPOV);
@@ -101,7 +101,7 @@ describe('GenerateMediaAction', () => {
     });
 
     it('should throw error if object is not a POV', async () => {
-        const testObject: COMEntity = {
+        const testObject: EntitySchema = {
             id: 'test-object',
             entityType: 'model',
             position: new Vector3(1, 1, 1),
@@ -110,7 +110,7 @@ describe('GenerateMediaAction', () => {
             scale: { x: 1, y: 1, z: 1 },
             name: 'Test Object',
             visible: true,
-        } as unknown as COMEntity;
+        } as unknown as EntitySchema;
 
         // Add the object first
         mockRegistered.set(testObject.id, testObject);

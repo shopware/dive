@@ -1,4 +1,4 @@
-export type COMGeometryType =
+export type GeometryTypeSchema =
     | 'cylinder'
     | 'sphere'
     | 'pyramid'

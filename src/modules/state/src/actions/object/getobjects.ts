@@ -1,12 +1,12 @@
 import { Action } from '../action.ts';
 import { registerAction } from '../../ActionRegistry.ts';
 import { type ActionDependencies } from '../../../types/index.ts';
-import { type COMEntity } from '../../../types/index.ts';
+import { type EntitySchema } from '@shopware-ag/dive';
 
 export const GetObjectsAction = Action.define<
     { ids: string[] },
     Pick<ActionDependencies, 'engine' | 'registered'>,
-    COMEntity[]
+    EntitySchema[]
 >({
     description: 'Returns a list of objects of given IDs.',
     execute: (payload, { registered }) => {

@@ -1,6 +1,10 @@
-import { DIVEEngine, DIVEScene, DIVESceneObject } from '@shopware-ag/dive';
 import { SetParentAction } from '../setparent.ts';
-import { COMEntity } from '../../../../types/index.ts';
+import {
+    DIVEEngine,
+    DIVEScene,
+    DIVESceneObject,
+    type EntitySchema,
+} from '@shopware-ag/dive';
 import { Object3D } from 'three';
 
 describe('SetParentAction', () => {
@@ -18,7 +22,7 @@ describe('SetParentAction', () => {
             getSceneObject: vi
                 .fn()
                 .mockImplementation(
-                    (obj: Partial<COMEntity> & { id: string }) => {
+                    (obj: Partial<EntitySchema> & { id: string }) => {
                         if (obj.id === 'test-object') return mockSceneObject;
                         if (obj.id === 'parent-object') return mockParentObject;
                         return null;
@@ -32,7 +36,7 @@ describe('SetParentAction', () => {
         scene: mockScene,
     } as unknown as DIVEEngine;
 
-    const mockRegistered = new Map<string, COMEntity>();
+    const mockRegistered = new Map<string, EntitySchema>();
 
     beforeEach(() => {
         mockRegistered.clear();
@@ -41,7 +45,7 @@ describe('SetParentAction', () => {
 
     it('should set a parent for an object', () => {
         // Arrange
-        const testObject: COMEntity = {
+        const testObject: EntitySchema = {
             id: 'test-object',
             name: 'Test Object',
             entityType: 'primitive',
@@ -58,7 +62,7 @@ describe('SetParentAction', () => {
             },
         };
 
-        const parentObject: COMEntity = {
+        const parentObject: EntitySchema = {
             id: 'parent-object',
             name: 'Parent Object',
             entityType: 'group',
@@ -91,7 +95,7 @@ describe('SetParentAction', () => {
 
     it('should detach object from parent when parent is null', () => {
         // Arrange
-        const testObject: COMEntity = {
+        const testObject: EntitySchema = {
             id: 'test-object',
             name: 'Test Object',
             entityType: 'primitive',
@@ -144,7 +148,7 @@ describe('SetParentAction', () => {
 
     it('should throw error if object is not found in scene', () => {
         // Arrange
-        const testObject: COMEntity = {
+        const testObject: EntitySchema = {
             id: 'test-object',
             name: 'Test Object',
             entityType: 'primitive',
@@ -181,7 +185,7 @@ describe('SetParentAction', () => {
 
     it('should throw error if parent does not exist', () => {
         // Arrange
-        const testObject: COMEntity = {
+        const testObject: EntitySchema = {
             id: 'test-object',
             name: 'Test Object',
             entityType: 'primitive',
@@ -217,7 +221,7 @@ describe('SetParentAction', () => {
 
     it('should throw error if parent is not found in scene', () => {
         // Arrange
-        const testObject: COMEntity = {
+        const testObject: EntitySchema = {
             id: 'test-object',
             name: 'Test Object',
             entityType: 'primitive',
@@ -234,7 +238,7 @@ describe('SetParentAction', () => {
             },
         };
 
-        const parentObject: COMEntity = {
+        const parentObject: EntitySchema = {
             id: 'parent-object',
             name: 'Parent Object',
             entityType: 'group',
@@ -248,7 +252,7 @@ describe('SetParentAction', () => {
         mockRegistered.set(testObject.id, testObject);
         mockRegistered.set(parentObject.id, parentObject);
         vi.mocked(mockScene.root.getSceneObject).mockImplementation(
-            (obj: Partial<COMEntity> & { id: string }) => {
+            (obj: Partial<EntitySchema> & { id: string }) => {
                 if (obj.id === 'test-object') return mockSceneObject;
                 if (obj.id === 'parent-object') return undefined;
                 return undefined;
@@ -274,7 +278,7 @@ describe('SetParentAction', () => {
 
     it('should throw error if object tries to attach to itself', () => {
         // Arrange
-        const testObject: COMEntity = {
+        const testObject: EntitySchema = {
             id: 'test-object',
             name: 'Test Object',
             entityType: 'primitive',

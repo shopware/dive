@@ -1,11 +1,11 @@
 import type { Vector3Like } from 'three';
 import type {
-    COMGroup,
-    COMLight,
-    COMModel,
-    COMPov,
-    COMPrimitive,
-} from '../modules/state/types/index.ts';
+    GroupSchema,
+    LightSchema,
+    ModelSchema,
+    PovSchema,
+    PrimitiveSchema,
+} from '@shopware-ag/dive';
 
 export type DIVESceneData = {
     name: string;
@@ -18,9 +18,9 @@ export type DIVESceneData = {
         target: Vector3Like;
     };
     spotmarks: object[];
-    lights: COMLight[];
-    objects: COMModel[];
-    cameras: COMPov[];
-    primitives: COMPrimitive[];
-    groups: COMGroup[];
+    lights: LightSchema[];
+    objects: ModelSchema[];
+    cameras: PovSchema[];
+    primitives: PrimitiveSchema[];
+    groups: GroupSchema[];
 };

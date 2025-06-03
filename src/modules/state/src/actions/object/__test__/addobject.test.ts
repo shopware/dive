@@ -1,7 +1,5 @@
-import { DIVEEngine } from '../../../../../../engine/Engine.ts';
-import { DIVEScene } from '../../../../../../engine/scene/Scene.ts';
 import { AddObjectAction } from '../addobject.ts';
-import { COMEntity } from '../../../../types/index.ts';
+import { DIVEEngine, DIVEScene, type EntitySchema } from '@shopware-ag/dive';
 
 const mockEngine = {
     scene: {
@@ -11,7 +9,7 @@ const mockEngine = {
     } as unknown as DIVEScene,
 } as unknown as DIVEEngine;
 
-const mockRegistered = new Map<string, COMEntity>();
+const mockRegistered = new Map<string, EntitySchema>();
 
 describe('AddObjectAction', () => {
     beforeEach(() => {
@@ -20,7 +18,7 @@ describe('AddObjectAction', () => {
     });
 
     it('should add an object to the scene', async () => {
-        const testObject: COMEntity = {
+        const testObject: EntitySchema = {
             id: 'test-object',
             entityType: 'model',
             position: { x: 0, y: 0, z: 0 },
@@ -28,7 +26,7 @@ describe('AddObjectAction', () => {
             scale: { x: 1, y: 1, z: 1 },
             name: 'Test Object',
             visible: true,
-        } as unknown as COMEntity;
+        } as unknown as EntitySchema;
 
         const action = new AddObjectAction(testObject, {
             engine: mockEngine,
@@ -46,7 +44,7 @@ describe('AddObjectAction', () => {
     });
 
     it('should not add an object if it already exists', async () => {
-        const testObject: COMEntity = {
+        const testObject: EntitySchema = {
             id: 'test-object',
             entityType: 'model',
             position: { x: 0, y: 0, z: 0 },
@@ -54,7 +52,7 @@ describe('AddObjectAction', () => {
             scale: { x: 1, y: 1, z: 1 },
             name: 'Test Object',
             visible: true,
-        } as unknown as COMEntity;
+        } as unknown as EntitySchema;
 
         // Add the object first
         mockRegistered.set(testObject.id, testObject);

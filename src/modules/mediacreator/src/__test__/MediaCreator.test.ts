@@ -5,7 +5,7 @@ import {
     DIVEScene,
 } from '@shopware-ag/dive';
 import { OrbitController } from '@shopware-ag/dive/orbitcontroller';
-import { type COMPov } from '../../../state/types/index.ts';
+import { type PovSchema } from '@shopware-ag/dive';
 
 /**
  * @jest-environment jsdom
@@ -134,7 +134,7 @@ describe('MediaCreator', () => {
         const mock_POV = {
             position: { x: 0, y: 0, z: 0 },
             target: { x: 0, y: 0, z: 0 },
-        } as COMPov;
+        } as PovSchema;
         expect(() => {
             mediaCreator.generateMedia(
                 mock_POV.position,

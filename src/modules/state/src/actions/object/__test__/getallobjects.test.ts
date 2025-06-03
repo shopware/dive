@@ -1,8 +1,8 @@
 import { GetAllObjectsAction } from '../getallobjects.ts';
-import { COMEntity } from '../../../../types/index.ts';
+import { type EntitySchema } from '@shopware-ag/dive';
 
 describe('GetAllObjectsAction', () => {
-    const mockRegistered = new Map<string, COMEntity>();
+    const mockRegistered = new Map<string, EntitySchema>();
 
     beforeEach(() => {
         mockRegistered.clear();
@@ -10,7 +10,7 @@ describe('GetAllObjectsAction', () => {
 
     it('should return all registered objects', () => {
         // Arrange
-        const object1: COMEntity = {
+        const object1: EntitySchema = {
             id: 'object1',
             name: 'Object 1',
             entityType: 'primitive',
@@ -27,7 +27,7 @@ describe('GetAllObjectsAction', () => {
             },
         };
 
-        const object2: COMEntity = {
+        const object2: EntitySchema = {
             id: 'object2',
             name: 'Object 2',
             entityType: 'group',

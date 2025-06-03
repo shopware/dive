@@ -1,8 +1,8 @@
 import { GetObjectsAction } from '../getobjects.ts';
-import { COMEntity } from '../../../../types/index.ts';
+import { type EntitySchema } from '@shopware-ag/dive';
 
 describe('GetObjectsAction', () => {
-    const mockRegistered = new Map<string, COMEntity>();
+    const mockRegistered = new Map<string, EntitySchema>();
 
     beforeEach(() => {
         mockRegistered.clear();
@@ -10,7 +10,7 @@ describe('GetObjectsAction', () => {
 
     it('should return objects with specified IDs', () => {
         // Arrange
-        const object1: COMEntity = {
+        const object1: EntitySchema = {
             id: 'object1',
             name: 'Object 1',
             entityType: 'primitive',
@@ -27,7 +27,7 @@ describe('GetObjectsAction', () => {
             },
         };
 
-        const object2: COMEntity = {
+        const object2: EntitySchema = {
             id: 'object2',
             name: 'Object 2',
             entityType: 'group',
@@ -38,7 +38,7 @@ describe('GetObjectsAction', () => {
             scale: { x: 1, y: 1, z: 1 },
         };
 
-        const object3: COMEntity = {
+        const object3: EntitySchema = {
             id: 'object3',
             name: 'Object 3',
             entityType: 'primitive',
@@ -92,7 +92,7 @@ describe('GetObjectsAction', () => {
 
     it('should return empty array when no matching objects are found', () => {
         // Arrange
-        const object1: COMEntity = {
+        const object1: EntitySchema = {
             id: 'object1',
             name: 'Object 1',
             entityType: 'primitive',
