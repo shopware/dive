@@ -14,11 +14,13 @@ jobs:
             - name: Setup Node.js
               uses: actions/setup-node@main
             - name: Search for cached dependencies
-              uses: actions/cache@main
+              uses: actions/cache@v4
               id: yarn-cache
               with:
-                  path: node_modules
-                  key: node-modules-${{ runner.os }}-${{ hashFiles('yarn.lock') }}
+                  path: |
+                      node_modules
+                      src/plugins/*/node_modules
+                  key: node-modules-${{ runner.os }}-${{ hashFiles('yarn.lock', 'src/plugins/*/yarn.lock') }}
             - name: Install DIVE dependencies (if cache not found)
               if: steps.yarn-cache.outputs.cache-hit != 'true'
               run: yarn
@@ -29,11 +31,13 @@ jobs:
             - name: Checkout DIVE
               uses: actions/checkout@main
             - name: Search for cached dependencies
-              uses: actions/cache@main
+              uses: actions/cache@v4
               id: yarn-cache
               with:
-                  path: node_modules
-                  key: node-modules-${{ runner.os }}-${{ hashFiles('yarn.lock') }}
+                  path: |
+                      node_modules
+                      src/plugins/*/node_modules
+                  key: node-modules-${{ runner.os }}-${{ hashFiles('yarn.lock', 'src/plugins/*/yarn.lock') }}
             - name: Install DIVE dependencies (if cache not found)
               if: steps.yarn-cache.outputs.cache-hit != 'true'
               run: yarn
@@ -46,11 +50,13 @@ jobs:
             - name: Checkout DIVE
               uses: actions/checkout@main
             - name: Search for cached dependencies
-              uses: actions/cache@main
+              uses: actions/cache@v4
               id: yarn-cache
               with:
-                  path: node_modules
-                  key: node-modules-${{ runner.os }}-${{ hashFiles('yarn.lock') }}
+                  path: |
+                      node_modules
+                      src/plugins/*/node_modules
+                  key: node-modules-${{ runner.os }}-${{ hashFiles('yarn.lock', 'src/plugins/*/yarn.lock') }}
             - name: Install DIVE dependencies (if cache not found)
               if: steps.yarn-cache.outputs.cache-hit != 'true'
               run: yarn
@@ -67,11 +73,13 @@ jobs:
             - name: Checkout DIVE
               uses: actions/checkout@main
             - name: Search for cached dependencies
-              uses: actions/cache@main
+              uses: actions/cache@v4
               id: yarn-cache
               with:
-                  path: node_modules
-                  key: node-modules-${{ runner.os }}-${{ hashFiles('yarn.lock') }}
+                  path: |
+                      node_modules
+                      src/plugins/*/node_modules
+                  key: node-modules-${{ runner.os }}-${{ hashFiles('yarn.lock', 'src/plugins/*/yarn.lock') }}
             - name: Install DIVE dependencies (if cache not found)
               if: steps.yarn-cache.outputs.cache-hit != 'true'
               run: yarn
@@ -91,8 +99,10 @@ jobs:
               uses: actions/cache@v4
               id: yarn-cache
               with:
-                  path: node_modules
-                  key: node-modules-${{ runner.os }}-${{ hashFiles('yarn.lock') }}
+                  path: |
+                      node_modules
+                      src/plugins/*/node_modules
+                  key: node-modules-${{ runner.os }}-${{ hashFiles('yarn.lock', 'src/plugins/*/yarn.lock') }}
             - name: Install dependencies (if cache not found)
               if: steps.yarn-cache.outputs.cache-hit != 'true'
               run: yarn
