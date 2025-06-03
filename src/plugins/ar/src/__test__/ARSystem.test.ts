@@ -5,7 +5,7 @@ import { SceneViewer } from '../sceneviewer/SceneViewer.ts'; // This will be moc
 // Make sure ESystem is correctly imported based on ARSystem.ts's actual import path
 // ARSystem.ts uses: import { ESystem } from '../../types/info/index.ts';
 // So, for the test file, the relative path is:
-import { ESystem } from '../../../types/info/index.ts';
+import { ESystem } from '../../../../types/info/index.ts';
 import { ARDesktopPlatformError } from '../error/ar-errors.ts';
 
 // Mock the modules ARSystem depends on

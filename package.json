@@ -11,61 +11,6 @@
             "types": "./build/dive.d.ts",
             "import": "./build/dive.mjs",
             "require": "./build/dive.cjs"
-        },
-        "./animation": {
-            "types": "./build/modules/animation/index.d.ts",
-            "import": "./build/modules/animation/index.mjs",
-            "require": "./build/modules/animation/index.cjs"
-        },
-        "./ar": {
-            "types": "./build/modules/ar/index.d.ts",
-            "import": "./build/modules/ar/index.mjs",
-            "require": "./build/modules/ar/index.cjs"
-        },
-        "./assetconverter": {
-            "types": "./build/modules/assetconverter/index.d.ts",
-            "import": "./build/modules/assetconverter/index.mjs",
-            "require": "./build/modules/assetconverter/index.cjs"
-        },
-        "./assetexporter": {
-            "types": "./build/modules/assetexporter/index.d.ts",
-            "import": "./build/modules/assetexporter/index.mjs",
-            "require": "./build/modules/assetexporter/index.cjs"
-        },
-        "./assetloader": {
-            "types": "./build/modules/assetloader/index.d.ts",
-            "import": "./build/modules/assetloader/index.mjs",
-            "require": "./build/modules/assetloader/index.cjs"
-        },
-        "./axiscamera": {
-            "types": "./build/modules/axiscamera/index.d.ts",
-            "import": "./build/modules/axiscamera/index.mjs",
-            "require": "./build/modules/axiscamera/index.cjs"
-        },
-        "./mediacreator": {
-            "types": "./build/modules/mediacreator/index.d.ts",
-            "import": "./build/modules/mediacreator/index.mjs",
-            "require": "./build/modules/mediacreator/index.cjs"
-        },
-        "./orbitcontroller": {
-            "types": "./build/modules/orbitcontroller/index.d.ts",
-            "import": "./build/modules/orbitcontroller/index.mjs",
-            "require": "./build/modules/orbitcontroller/index.cjs"
-        },
-        "./state": {
-            "types": "./build/modules/state/index.d.ts",
-            "import": "./build/modules/state/index.mjs",
-            "require": "./build/modules/state/index.cjs"
-        },
-        "./systeminfo": {
-            "types": "./build/modules/systeminfo/index.d.ts",
-            "import": "./build/modules/systeminfo/index.mjs",
-            "require": "./build/modules/systeminfo/index.cjs"
-        },
-        "./toolbox": {
-            "types": "./build/modules/toolbox/index.d.ts",
-            "import": "./build/modules/toolbox/index.mjs",
-            "require": "./build/modules/toolbox/index.cjs"
         }
     },
     "files": [

@@ -1,9 +1,9 @@
 import { Matrix4, Mesh, Vector3 } from 'three';
-import { DIVERenderPipeline } from '../../../../engine/renderer/Renderer.ts';
+import { DIVERenderPipeline } from '../../../../../engine/renderer/Renderer.ts';
 import { DIVEWebXRRaycasterAR } from './ar/WebXRRaycasterAR.ts';
 import { DIVEWebXRRaycasterTHREE } from './three/WebXRRaycasterTHREE.ts';
-import { DIVEScene } from '../../../../engine/scene/Scene.ts';
-import { DIVEEventExecutor } from '../../../../events/EventExecutor.ts';
+import { DIVEScene } from '../../../../../engine/scene/Scene.ts';
+import { DIVEEventExecutor } from '../../../../../events/EventExecutor.ts';
 
 /**
  * object is undefined when AR world is hit.

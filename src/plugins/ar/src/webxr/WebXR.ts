@@ -1,10 +1,10 @@
 import { Vector3 } from 'three';
 import { OrbitController } from 'src/plugins/orbitcontroller/index.ts';
-import { type DIVERenderPipeline } from '../../../engine/renderer/Renderer.ts';
-import { type DIVEScene } from '../../../engine/scene/Scene.ts';
+import { type DIVERenderPipeline } from '../../../../engine/renderer/Renderer.ts';
+import { type DIVEScene } from '../../../../engine/scene/Scene.ts';
 import { Overlay } from './overlay/Overlay.ts';
 import { DIVEWebXRController } from './controller/WebXRController.ts';
-import { DIVEEngine } from '../../../engine/Engine.ts';
+import { DIVEEngine } from '../../../../engine/Engine.ts';
 
 export class DIVEWebXR {
     // general members

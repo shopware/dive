@@ -4,8 +4,8 @@ import {
     Raycaster,
     type XRTargetRaySpace,
 } from 'three';
-import { type DIVERenderPipeline } from '../../../../../engine/renderer/Renderer.ts';
-import { type DIVEScene } from '../../../../../engine/scene/Scene.ts';
+import { type DIVERenderPipeline } from '../../../../../../engine/renderer/Renderer.ts';
+import { type DIVEScene } from '../../../../../../engine/scene/Scene.ts';
 import { type DIVEHitResult } from '../WebXRRaycaster.ts';
 
 export class DIVEWebXRRaycasterTHREE {
