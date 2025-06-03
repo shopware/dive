@@ -14,12 +14,50 @@
         "forceConsistentCasingInFileNames": true,
         "strict": true,
         "skipLibCheck": true,
-        "types": ["vitest/globals"]
+        "types": ["vitest/globals"],
+        "baseUrl": ".",
+        "paths": {
+            "@shopware-ag/dive": ["./src/index.ts"],
+            "@shopware-ag/dive/animation": [
+                "src/plugins/animation/index.ts"
+            ],
+            "@shopware-ag/dive/ar": [
+                "src/plugins/ar/index.ts"
+            ],
+            "@shopware-ag/dive/assetconverter": [
+                "src/plugins/assetconverter/index.ts"
+            ],
+            "@shopware-ag/dive/assetexporter": [
+                "src/plugins/assetexporter/index.ts"
+            ],
+            "@shopware-ag/dive/assetloader": [
+                "src/plugins/assetloader/index.ts"
+            ],
+            "@shopware-ag/dive/axiscamera": [
+                "src/plugins/axiscamera/index.ts"
+            ],
+            "@shopware-ag/dive/mediacreator": [
+                "src/plugins/mediacreator/index.ts"
+            ],
+            "@shopware-ag/dive/orbitcontroller": [
+                "src/plugins/orbitcontroller/index.ts"
+            ],
+            "@shopware-ag/dive/state": [
+                "src/plugins/state/index.ts"
+            ],
+            "@shopware-ag/dive/systeminfo": [
+                "src/plugins/systeminfo/index.ts"
+            ],
+            "@shopware-ag/dive/toolbox": [
+                "src/plugins/toolbox/index.ts"
+            ]
+        }
     },
     "include": [
         "src/**/*",
         "docs/**/*",
-        "ci/**/*"
+        "scripts/**/*.ts",
+        "vite.shared.ts"
     ],
     "exclude": [
         "node_modules",

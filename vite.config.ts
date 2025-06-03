@@ -1,8 +1,10 @@
 import { defineConfig } from 'vite';
 import type { UserConfigExport } from 'vite';
 import dts from 'vite-plugin-dts';
-import moduleBuildPlugin from './ci/build/vite/vite-plugin-module-exports.ts';
+import pluginBuildPlugin from './scripts/build/vite/vite-plugin-exports.ts';
 import wasm from 'vite-plugin-wasm';
+import tsconfigPaths from 'vite-tsconfig-paths';
+import path from 'path';
 
 // --- Main Vite Export ---
 export default defineConfig({
@@ -21,9 +23,8 @@ export default defineConfig({
             exclude: [
                 '**/build/**',
                 '**/__mocks__/**',
-                'src/modules/ar/webxr/**', // webxr currently not supported in dive
+                'src/plugins/ar/src/webxr/**', // webxr currently not supported in dive
                 'src/engine/scene/xrroot/**', // webxr currently not supported in dive
-                'src/modules/asset/draco/**', // draco is static lib, does not need to be tested
             ],
             thresholds: {
                 lines: 98,
@@ -34,7 +35,13 @@ export default defineConfig({
         },
     },
     plugins: [
-        moduleBuildPlugin(),
+        // use tsconfig.json to resolve custom paths
+        tsconfigPaths(),
+
+        // build plugins, generates exports to write to {rootDir}/package.json
+        pluginBuildPlugin(),
+
+        // generate types
         dts({
             insertTypesEntry: true,
             outDir: 'build',
@@ -46,6 +53,8 @@ export default defineConfig({
                 'src/**/*.spec.ts',
             ],
         }),
+
+        // build wasm for draco decoder
         wasm(),
     ],
 } as UserConfigExport);

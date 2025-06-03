@@ -6,22 +6,21 @@ import {
     type Texture,
     type MeshStandardMaterial,
 } from 'three';
-import { type DIVEScene } from '../../../engine/scene/Scene.ts';
-import {
-    type COMMaterial,
-    type COMGeometry,
-    type COMGeometryType,
-} from '../../../modules/state/types/index.ts';
 import { RaycasterIntersectObjectMock } from '../../../../__mocks__/three.ts';
-import { getModule } from '../../../modules/ModuleRegistry.ts';
-import { type State } from '../../../modules/state/State.ts';
+import { type State } from '@shopware-ag/dive/state';
+import {
+    type DIVEScene,
+    type GeometryTypeSchema,
+    type GeometrySchema,
+    type MaterialSchema,
+} from '@shopware-ag/dive';
 
-vi.mock('../../../modules/ModuleRegistry.ts', () => ({
-    getModule: vi.fn().mockResolvedValue({
+vi.mock('@shopware-ag/dive/state', () => ({
+    State: {
         get: vi.fn().mockReturnValue({
             performAction: vi.fn(),
         }),
-    }),
+    },
 }));
 
 let primitive: DIVEPrimitive;
@@ -42,8 +41,8 @@ describe('dive/primitive/DIVEPrimitive', () => {
     it('should set geometry', () => {
         vi.spyOn(console, 'warn');
         const geometry = {
-            name: 'cube' as COMGeometryType,
-        } as COMGeometry;
+            name: 'cube' as GeometryTypeSchema,
+        } as GeometrySchema;
         expect(() => primitive.setGeometry(geometry)).not.toThrow();
         expect(console.warn).not.toHaveBeenCalled();
     });
@@ -51,14 +50,16 @@ describe('dive/primitive/DIVEPrimitive', () => {
     it('should warn when geometry is invalid', () => {
         vi.spyOn(console, 'warn').mockImplementation(() => {});
         const geometry = {
-            name: 'INVALID' as COMGeometryType,
-        } as COMGeometry;
+            name: 'INVALID' as GeometryTypeSchema,
+        } as GeometrySchema;
         expect(() => primitive.setGeometry(geometry)).not.toThrow();
         expect(console.warn).toHaveBeenCalled();
     });
 
     it('should place on floor', async () => {
-        const State = await getModule('State');
+        const State = await import('@shopware-ag/dive/state').then(
+            ({ State }) => State,
+        );
 
         const com = State.get('id')!;
         const spyperformAction = vi.spyOn(com, 'performAction');
@@ -100,7 +101,9 @@ describe('dive/primitive/DIVEPrimitive', () => {
     });
 
     it('should drop it', async () => {
-        const State = await getModule('State');
+        const State = await import('@shopware-ag/dive/state').then(
+            ({ State }) => State,
+        );
 
         const spy = vi.spyOn(primitive, 'onMove').mockImplementation(() => {});
 
@@ -169,7 +172,7 @@ describe('dive/primitive/DIVEPrimitive', () => {
             width: 1,
             height: 1.5,
             depth: 1,
-        } as COMGeometry;
+        } as GeometrySchema;
         expect(() => primitive.setGeometry(cylinder)).not.toThrow();
 
         // sphere
@@ -178,7 +181,7 @@ describe('dive/primitive/DIVEPrimitive', () => {
             width: 1,
             height: 1,
             depth: 1,
-        } as COMGeometry;
+        } as GeometrySchema;
         expect(() => primitive.setGeometry(sphere)).not.toThrow();
 
         // pyramid
@@ -187,7 +190,7 @@ describe('dive/primitive/DIVEPrimitive', () => {
             width: 1,
             height: 1.5,
             depth: 1,
-        } as COMGeometry;
+        } as GeometrySchema;
         expect(() => primitive.setGeometry(pyramid)).not.toThrow();
 
         // box
@@ -196,7 +199,7 @@ describe('dive/primitive/DIVEPrimitive', () => {
             width: 1,
             height: 1,
             depth: 1,
-        } as COMGeometry;
+        } as GeometrySchema;
         expect(() => primitive.setGeometry(box)).not.toThrow();
 
         // cone
@@ -205,7 +208,7 @@ describe('dive/primitive/DIVEPrimitive', () => {
             width: 1,
             height: 1.5,
             depth: 1,
-        } as COMGeometry;
+        } as GeometrySchema;
         expect(() => primitive.setGeometry(cone)).not.toThrow();
 
         // wall
@@ -214,14 +217,14 @@ describe('dive/primitive/DIVEPrimitive', () => {
             width: 1,
             height: 1.5,
             depth: 0.1,
-        } as COMGeometry;
+        } as GeometrySchema;
         expect(() => primitive.setGeometry(wall)).not.toThrow();
 
         const wallWithoutDepth = {
             name: 'wall',
             width: 1,
             height: 1.5,
-        } as COMGeometry;
+        } as GeometrySchema;
         expect(() => primitive.setGeometry(wallWithoutDepth)).not.toThrow();
 
         // plane
@@ -230,7 +233,7 @@ describe('dive/primitive/DIVEPrimitive', () => {
             width: 1,
             height: 0.1,
             depth: 1,
-        } as COMGeometry;
+        } as GeometrySchema;
         expect(() => primitive.setGeometry(plane)).not.toThrow();
     });
 
@@ -238,7 +241,7 @@ describe('dive/primitive/DIVEPrimitive', () => {
         const material = primitive['_mesh'].material as MeshStandardMaterial;
 
         // apply invalid material should not crash
-        expect(() => primitive.setMaterial({} as COMMaterial)).not.toThrow();
+        expect(() => primitive.setMaterial({} as MaterialSchema)).not.toThrow();
         expect(material).toBeDefined();
 
         expect(() =>
@@ -246,7 +249,7 @@ describe('dive/primitive/DIVEPrimitive', () => {
                 color: 0xffffff,
                 roughness: 0,
                 metalness: 1,
-            } as COMMaterial),
+            } as MaterialSchema),
         ).not.toThrow();
         expect((material as MeshStandardMaterial).roughness).toBe(0);
         expect((material as MeshStandardMaterial).roughnessMap).toBeUndefined();
@@ -263,7 +266,7 @@ describe('dive/primitive/DIVEPrimitive', () => {
                 roughnessMap: 'This_Is_A_Texture' as unknown as Texture,
                 metalness: 1,
                 metalnessMap: 'This_Is_A_Texture' as unknown as Texture,
-            } as COMMaterial),
+            } as MaterialSchema),
         ).not.toThrow();
         expect((material as MeshStandardMaterial).roughness).toBe(1);
         expect((material as MeshStandardMaterial).roughnessMap).toBeDefined();
@@ -284,7 +287,9 @@ describe('dive/primitive/DIVEPrimitive', () => {
     });
 
     it('should handle placeOnFloor when position does not change', async () => {
-        const State = await getModule('State');
+        const State = await import('@shopware-ag/dive/state').then(
+            ({ State }) => State,
+        );
 
         primitive.userData.id = 'something';
 

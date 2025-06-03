@@ -86,45 +86,42 @@ vi.mock('../../modules/ModuleRegistry', () => {
     };
 });
 
-vi.mock(
-    '../../modules/controller/orbit/OrbitController',
-    async (importOriginal) => {
-        const actual =
-            await importOriginal<
-                typeof import('../../modules/controller/orbit/OrbitController.ts')
-            >();
-        return {
-            ...actual,
-            OrbitController: vi.fn(function (this: any) {
-                this.isObject3D = true;
-                this.parent = null;
-                this.dispatchEvent = vi.fn();
-                this.position = {
-                    set: vi.fn(),
-                };
-                this.target = {
-                    set: vi.fn(),
-                    copy: vi.fn(),
-                };
-                this.setIntensity = vi.fn();
-                this.setEnabled = vi.fn();
-                this.setColor = vi.fn();
-                this.userData = {
-                    id: undefined,
-                };
-                this.removeFromParent = vi.fn();
-                this.dispose = vi.fn();
-                this.computeEncompassingView = vi.fn().mockReturnValue({
-                    position: { x: 0, y: 0, z: 0 },
-                    target: { x: 0, y: 0, z: 0 },
-                });
-                return this;
-            }),
-        };
-    },
-);
+vi.mock('@shopware-ag/dive/orbitcontroller', async (importOriginal) => {
+    const actual =
+        await importOriginal<
+            typeof import('@shopware-ag/dive/orbitcontroller')
+        >();
+    return {
+        ...actual,
+        OrbitController: vi.fn(function (this: any) {
+            this.isObject3D = true;
+            this.parent = null;
+            this.dispatchEvent = vi.fn();
+            this.position = {
+                set: vi.fn(),
+            };
+            this.target = {
+                set: vi.fn(),
+                copy: vi.fn(),
+            };
+            this.setIntensity = vi.fn();
+            this.setEnabled = vi.fn();
+            this.setColor = vi.fn();
+            this.userData = {
+                id: undefined,
+            };
+            this.removeFromParent = vi.fn();
+            this.dispose = vi.fn();
+            this.computeEncompassingView = vi.fn().mockReturnValue({
+                position: { x: 0, y: 0, z: 0 },
+                target: { x: 0, y: 0, z: 0 },
+            });
+            return this;
+        }),
+    };
+});
 
-vi.mock('../../modules/axiscamera/AxisCamera', () => {
+vi.mock('@shopware-ag/dive/axiscamera', () => {
     return {
         DIVEAxisCamera: vi.fn(function (this: any) {
             this.isObject3D = true;

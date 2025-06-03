@@ -1,1 +1,0 @@
-export type COMEntityType = 'pov' | 'light' | 'model' | 'primitive' | 'group';

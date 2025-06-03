@@ -36,5 +36,10 @@ export const OrbitControls = vi.fn(function () {
         set: vi.fn(),
         copy: vi.fn(),
     };
+    this.object = {
+        position: {
+            set: vi.fn(),
+        },
+    };
     return this;
 });

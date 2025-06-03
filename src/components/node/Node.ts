@@ -1,6 +1,5 @@
 import { Box3, Object3D, Vector3, type Vector3Like } from 'three';
 import { PRODUCT_LAYER_MASK } from '../../constants/VisibilityLayerMask.ts';
-import { getModule } from '../../modules/ModuleRegistry.ts';
 
 import { DIVEMovable } from '../../interfaces/Movable.ts';
 import { DIVESelectable } from '../../interfaces/Selectable.ts';
@@ -56,7 +55,7 @@ export class DIVENode extends Object3D implements DIVESelectable, DIVEMovable {
 
     public setToWorldOrigin(): void {
         this.position.set(0, 0, 0);
-        getModule('State').then((State) => {
+        import('@shopware-ag/dive/state').then(({ State }) => {
             State.get(this.userData.id)?.performAction('UPDATE_OBJECT', {
                 id: this.userData.id,
                 position: this.getWorldPosition(this._positionWorldBuffer),
@@ -70,7 +69,7 @@ export class DIVENode extends Object3D implements DIVESelectable, DIVEMovable {
      * Can be called when the object is moved from a foreign object (gizmo, parent, etc.) to update the object's position.
      */
     public onMove(): void {
-        getModule('State').then((State) => {
+        import('@shopware-ag/dive/state').then(({ State }) => {
             State.get(this.userData.id)?.performAction('UPDATE_OBJECT', {
                 id: this.userData.id,
                 position: this.getWorldPosition(this._positionWorldBuffer),
@@ -81,7 +80,7 @@ export class DIVENode extends Object3D implements DIVESelectable, DIVEMovable {
     }
 
     public onSelect(): void {
-        getModule('State').then((State) => {
+        import('@shopware-ag/dive/state').then(({ State }) => {
             State.get(this.userData.id)?.performAction('SELECT_OBJECT', {
                 id: this.userData.id,
             });
@@ -89,7 +88,7 @@ export class DIVENode extends Object3D implements DIVESelectable, DIVEMovable {
     }
 
     public onDeselect(): void {
-        getModule('State').then((State) => {
+        import('@shopware-ag/dive/state').then(({ State }) => {
             State.get(this.userData.id)?.performAction('DESELECT_OBJECT', {
                 id: this.userData.id,
             });

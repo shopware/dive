@@ -1,7 +1,7 @@
 import { Euler, Object3D, Vector3 } from 'three';
 import { DIVERotateGizmo } from './rotate/RotateGizmo.ts';
 import { DIVETranslateGizmo } from './translate/TranslateGizmo.ts';
-import { OrbitController } from '../../modules/controller/orbit/OrbitController.ts';
+import { OrbitController } from '@shopware-ag/dive/orbitcontroller';
 import { DIVEScaleGizmo } from './scale/ScaleGizmo.ts';
 import { DIVEGizmoPlane as DIVEGizmoPlane } from './plane/GizmoPlane.ts';
 import { DIVESelectable } from '../../interfaces/Selectable.ts';

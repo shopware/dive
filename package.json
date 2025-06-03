@@ -13,59 +13,59 @@
             "require": "./build/dive.cjs"
         },
         "./animation": {
-            "types": "./build/modules/animation/index.d.ts",
-            "import": "./build/modules/animation/index.mjs",
-            "require": "./build/modules/animation/index.cjs"
+            "types": "./build/plugins/animation/index.d.ts",
+            "import": "./build/plugins/animation/index.mjs",
+            "require": "./build/plugins/animation/index.cjs"
         },
         "./ar": {
-            "types": "./build/modules/ar/index.d.ts",
-            "import": "./build/modules/ar/index.mjs",
-            "require": "./build/modules/ar/index.cjs"
+            "types": "./build/plugins/ar/index.d.ts",
+            "import": "./build/plugins/ar/index.mjs",
+            "require": "./build/plugins/ar/index.cjs"
         },
         "./assetconverter": {
-            "types": "./build/modules/assetconverter/index.d.ts",
-            "import": "./build/modules/assetconverter/index.mjs",
-            "require": "./build/modules/assetconverter/index.cjs"
+            "types": "./build/plugins/assetconverter/index.d.ts",
+            "import": "./build/plugins/assetconverter/index.mjs",
+            "require": "./build/plugins/assetconverter/index.cjs"
         },
         "./assetexporter": {
-            "types": "./build/modules/assetexporter/index.d.ts",
-            "import": "./build/modules/assetexporter/index.mjs",
-            "require": "./build/modules/assetexporter/index.cjs"
+            "types": "./build/plugins/assetexporter/index.d.ts",
+            "import": "./build/plugins/assetexporter/index.mjs",
+            "require": "./build/plugins/assetexporter/index.cjs"
         },
         "./assetloader": {
-            "types": "./build/modules/assetloader/index.d.ts",
-            "import": "./build/modules/assetloader/index.mjs",
-            "require": "./build/modules/assetloader/index.cjs"
+            "types": "./build/plugins/assetloader/index.d.ts",
+            "import": "./build/plugins/assetloader/index.mjs",
+            "require": "./build/plugins/assetloader/index.cjs"
         },
         "./axiscamera": {
-            "types": "./build/modules/axiscamera/index.d.ts",
-            "import": "./build/modules/axiscamera/index.mjs",
-            "require": "./build/modules/axiscamera/index.cjs"
-        },
-        "./controller": {
-            "types": "./build/modules/controller/index.d.ts",
-            "import": "./build/modules/controller/index.mjs",
-            "require": "./build/modules/controller/index.cjs"
+            "types": "./build/plugins/axiscamera/index.d.ts",
+            "import": "./build/plugins/axiscamera/index.mjs",
+            "require": "./build/plugins/axiscamera/index.cjs"
         },
         "./mediacreator": {
-            "types": "./build/modules/mediacreator/index.d.ts",
-            "import": "./build/modules/mediacreator/index.mjs",
-            "require": "./build/modules/mediacreator/index.cjs"
+            "types": "./build/plugins/mediacreator/index.d.ts",
+            "import": "./build/plugins/mediacreator/index.mjs",
+            "require": "./build/plugins/mediacreator/index.cjs"
+        },
+        "./orbitcontroller": {
+            "types": "./build/plugins/orbitcontroller/index.d.ts",
+            "import": "./build/plugins/orbitcontroller/index.mjs",
+            "require": "./build/plugins/orbitcontroller/index.cjs"
         },
         "./state": {
-            "types": "./build/modules/state/index.d.ts",
-            "import": "./build/modules/state/index.mjs",
-            "require": "./build/modules/state/index.cjs"
+            "types": "./build/plugins/state/index.d.ts",
+            "import": "./build/plugins/state/index.mjs",
+            "require": "./build/plugins/state/index.cjs"
         },
         "./systeminfo": {
-            "types": "./build/modules/systeminfo/index.d.ts",
-            "import": "./build/modules/systeminfo/index.mjs",
-            "require": "./build/modules/systeminfo/index.cjs"
+            "types": "./build/plugins/systeminfo/index.d.ts",
+            "import": "./build/plugins/systeminfo/index.mjs",
+            "require": "./build/plugins/systeminfo/index.cjs"
         },
         "./toolbox": {
-            "types": "./build/modules/toolbox/index.d.ts",
-            "import": "./build/modules/toolbox/index.mjs",
-            "require": "./build/modules/toolbox/index.cjs"
+            "types": "./build/plugins/toolbox/index.d.ts",
+            "import": "./build/plugins/toolbox/index.mjs",
+            "require": "./build/plugins/toolbox/index.cjs"
         }
     },
     "files": [
@@ -89,10 +89,10 @@
         "> 1%, not dead, not ie 11, not op_mini all"
     ],
     "dependencies": {
-        "@tweenjs/tween.js": "^23.1.1",
-        "lodash": "^4.17.21",
         "three": "^0.163.0",
-        "three-spritetext": "^1.8.2"
+        "@tweenjs/tween.js": "^23.1.1",
+        "three-spritetext": "^1.8.2",
+        "lodash": "^4.17.21"
     },
     "devDependencies": {
         "@eslint/js": "^9.1.1",
@@ -108,6 +108,7 @@
         "glob": "^11.0.1",
         "globals": "^15.0.0",
         "jsdom": "^26.1.0",
+        "log-update": "^6.1.0",
         "magic-string": "^0.30.17",
         "prettier": "^3.3.3",
         "prettier-plugin-multiline-arrays": "^3.0.6",
@@ -122,6 +123,7 @@
         "vite": "^6.2.1",
         "vite-plugin-dts": "^4.5.3",
         "vite-plugin-wasm": "^3.4.1",
+        "vite-tsconfig-paths": "^5.1.4",
         "vitest": "^3.1.2"
     },
     "scripts": {
@@ -136,6 +138,6 @@
         "docs": "yarn docs:actions && yarn docs:modules",
         "docs:actions": "tsx docs/generators/generate-actions-docs.ts",
         "docs:modules": "tsx docs/generators/generate-modules-docs.ts",
-        "ci": "yarn lint && yarn prettier:check && yarn docs && yarn coverage && yarn build"
+        "ci": "yarn && yarn lint && yarn prettier:check && yarn coverage && yarn build"
     }
 }

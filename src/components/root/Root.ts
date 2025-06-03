@@ -8,18 +8,17 @@ import { DIVEPrimitive } from '../primitive/Primitive.ts';
 import { type DIVEScene } from '../../engine/scene/Scene.ts';
 import { type TransformControls } from 'three/examples/jsm/controls/TransformControls.ts';
 import {
-    type COMLight,
-    type COMModel,
-    type COMEntity,
-    type COMPrimitive,
-    type COMGroup,
-    type COMEntityType,
-    COMMinimal,
-    COMPartial,
-} from '../../modules/state/types/index.ts';
+    LightSchema,
+    ModelSchema,
+    EntitySchema,
+    PrimitiveSchema,
+    GroupSchema,
+    EntityTypeSchema,
+    MinimalSchema,
+    PartialSchema,
+} from '@shopware-ag/dive';
 import { DIVELight, type DIVESceneObject } from '../../types/index.ts';
 import { DIVEGroup } from '../group/Group.ts';
-import { getModule } from '../../modules/ModuleRegistry.ts';
 import { DIVEFloor } from '../floor/Floor.ts';
 
 /**
@@ -36,19 +35,6 @@ export class DIVERoot extends Object3D {
     }
 
     private _floor: DIVEFloor;
-
-    private _assetLoader:
-        | import('../../modules/assetloader/AssetLoader.ts').AssetLoader
-        | null = null;
-
-    private async _getAssetLoader(): Promise<
-        import('../../modules/assetloader/AssetLoader.ts').AssetLoader
-    > {
-        if (!this._assetLoader) {
-            this._assetLoader = new (await getModule('AssetLoader'))();
-        }
-        return this._assetLoader;
-    }
 
     constructor() {
         super();
@@ -71,8 +57,8 @@ export class DIVERoot extends Object3D {
         return bb;
     }
 
-    public getSceneObject<E extends COMEntityType>(
-        object: Partial<COMEntity> & { id: string; entityType: E },
+    public getSceneObject<E extends EntityTypeSchema>(
+        object: Partial<EntitySchema> & { id: string; entityType: E },
     ): DIVESceneObject<E> | undefined {
         let foundObject: DIVESceneObject<E> | undefined;
         this.traverse((object3D) => {
@@ -84,7 +70,7 @@ export class DIVERoot extends Object3D {
         return foundObject;
     }
 
-    public addSceneObject(object: COMEntity): DIVESceneObject | undefined {
+    public addSceneObject(object: EntitySchema): DIVESceneObject | undefined {
         let sceneObject = this.getSceneObject(object);
         if (sceneObject) {
             console.warn(
@@ -113,7 +99,7 @@ export class DIVERoot extends Object3D {
                     }
                     default: {
                         throw new Error(
-                            `DIVERoot.addSceneObject: Unknown light type: ${(object as unknown as COMLight).type}`,
+                            `DIVERoot.addSceneObject: Unknown light type: ${(object as unknown as LightSchema).type}`,
                         );
                     }
                 }
@@ -151,7 +137,7 @@ export class DIVERoot extends Object3D {
             }
             default: {
                 throw new Error(
-                    `DIVERoot.addSceneObject: Unknown entity type: ${(object as unknown as COMEntity).entityType}`,
+                    `DIVERoot.addSceneObject: Unknown entity type: ${(object as unknown as EntitySchema).entityType}`,
                 );
             }
         }
@@ -159,7 +145,7 @@ export class DIVERoot extends Object3D {
         return sceneObject;
     }
 
-    public updateSceneObject(object: COMPartial): void {
+    public updateSceneObject(object: PartialSchema): void {
         const sceneObject = this.getSceneObject(object);
         if (!sceneObject) {
             console.warn(
@@ -190,13 +176,13 @@ export class DIVERoot extends Object3D {
             }
             default: {
                 throw new Error(
-                    `DIVERoot.updateSceneObject: Unknown entity type: ${(object as unknown as COMEntity).entityType}`,
+                    `DIVERoot.updateSceneObject: Unknown entity type: ${(object as unknown as EntitySchema).entityType}`,
                 );
             }
         }
     }
 
-    public deleteSceneObject(object: COMMinimal<COMEntity>): void {
+    public deleteSceneObject(object: MinimalSchema<EntitySchema>): void {
         const sceneObject = this.getSceneObject(object);
         if (!sceneObject) {
             console.warn(
@@ -227,7 +213,7 @@ export class DIVERoot extends Object3D {
             }
             default: {
                 throw new Error(
-                    `DIVERoot.deleteSceneObject: Unknown entity type: ${(object as unknown as COMEntity).entityType}`,
+                    `DIVERoot.deleteSceneObject: Unknown entity type: ${(object as unknown as EntitySchema).entityType}`,
                 );
             }
         }
@@ -235,7 +221,7 @@ export class DIVERoot extends Object3D {
 
     private _updateLight(
         sceneObject: DIVELight,
-        props: COMPartial<COMLight>,
+        props: PartialSchema<LightSchema>,
     ): void {
         if (props.name !== undefined && props.name !== null)
             sceneObject.name = props.name;
@@ -259,7 +245,7 @@ export class DIVERoot extends Object3D {
 
     private _updateModel(
         sceneObject: DIVEModel,
-        model: COMPartial<COMModel>,
+        model: PartialSchema<ModelSchema>,
     ): void {
         if (model.uri !== undefined) sceneObject.setFromURL(model.uri);
         if (model.name !== undefined) sceneObject.name = model.name;
@@ -278,7 +264,7 @@ export class DIVERoot extends Object3D {
 
     private _updatePrimitive(
         sceneObject: DIVEPrimitive,
-        primitive: COMPartial<COMPrimitive>,
+        primitive: PartialSchema<PrimitiveSchema>,
     ): void {
         if (primitive.name !== undefined) sceneObject.name = primitive.name;
         if (primitive.geometry !== undefined)
@@ -299,7 +285,7 @@ export class DIVERoot extends Object3D {
 
     private _updateGroup(
         sceneObject: DIVEGroup,
-        props: COMPartial<COMGroup>,
+        props: PartialSchema<GroupSchema>,
     ): void {
         if (props.name !== undefined) sceneObject.name = props.name;
         if (props.position !== undefined)
@@ -345,7 +331,7 @@ export class DIVERoot extends Object3D {
     }
 
     private _setParent(
-        object: COMMinimal<COMEntity> & {
+        object: MinimalSchema<EntitySchema> & {
             parentId: string | null;
         },
     ): void {

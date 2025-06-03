@@ -1,5 +1,5 @@
 import { Object3D, type Vector3Like } from 'three';
-import { State } from '../../../modules/state/State.ts';
+import { State } from '@shopware-ag/dive/state';
 import { type DIVENode } from '../../node/Node.ts';
 import { DIVEGroup } from '../Group.ts';
 

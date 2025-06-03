@@ -1,14 +1,14 @@
 import { DIVERoot } from '../Root.ts';
 import {
-    type COMPrimitive,
-    type COMLight,
-    type COMModel,
-    type COMPov,
-    type COMEntity,
-    type COMGroup,
-    type COMEntityType,
-    type COMGeometryType,
-} from '../../../modules/state/types/index.ts';
+    LightSchema,
+    ModelSchema,
+    EntitySchema,
+    PrimitiveSchema,
+    GroupSchema,
+    PovSchema,
+    EntityTypeSchema,
+    GeometryTypeSchema,
+} from '@shopware-ag/dive';
 import { Object3D, Vector3, Box3 } from 'three';
 
 vi.mock('../../../modules/ModuleRegistry', () => ({
@@ -244,13 +244,6 @@ describe('components/root/DIVERoot', () => {
             expect(root.name).toBe('Root');
             expect(root.floor).toBeDefined();
         });
-
-        it('should initialize asset loader via _getAssetLoader()', async () => {
-            const root = new DIVERoot();
-            const loader = await (root as any)._getAssetLoader();
-            // loader is instance of our fake class and has a load method
-            expect(loader.load).toBeDefined();
-        });
     });
 
     describe('computeSceneBB', () => {
@@ -408,7 +401,7 @@ describe('components/root/DIVERoot', () => {
 
     describe('addSceneObject', () => {
         it('should add different types of lights', () => {
-            const sceneLightData: COMLight = {
+            const sceneLightData: LightSchema = {
                 id: 'scene-light-1',
                 entityType: 'light',
                 type: 'scene',
@@ -420,7 +413,7 @@ describe('components/root/DIVERoot', () => {
                 color: '#ffffff',
             };
 
-            const ambientLightData: COMLight = {
+            const ambientLightData: LightSchema = {
                 id: 'ambient-light-1',
                 entityType: 'light',
                 type: 'ambient',
@@ -432,7 +425,7 @@ describe('components/root/DIVERoot', () => {
                 color: '#ffffff',
             };
 
-            const pointLightData: COMLight = {
+            const pointLightData: LightSchema = {
                 id: 'point-light-1',
                 entityType: 'light',
                 type: 'point',
@@ -444,7 +437,7 @@ describe('components/root/DIVERoot', () => {
                 color: '#ffffff',
             };
 
-            const unknownLightData: COMLight = {
+            const unknownLightData: LightSchema = {
                 id: 'unknown-light-1',
                 entityType: 'light',
                 type: 'unknown',
@@ -476,7 +469,7 @@ describe('components/root/DIVERoot', () => {
         });
 
         it('should update all light properties', () => {
-            const lightData: COMLight = {
+            const lightData: LightSchema = {
                 id: 'light-1',
                 entityType: 'light',
                 type: 'point',
@@ -506,7 +499,7 @@ describe('components/root/DIVERoot', () => {
         });
 
         it('should update all model properties', () => {
-            const modelData: COMModel = {
+            const modelData: ModelSchema = {
                 id: 'model-1',
                 entityType: 'model',
                 name: 'Test Model',
@@ -535,7 +528,7 @@ describe('components/root/DIVERoot', () => {
         });
 
         it('should update all primitive properties', () => {
-            const primitiveData: COMPrimitive = {
+            const primitiveData: PrimitiveSchema = {
                 id: 'primitive-1',
                 entityType: 'primitive',
                 name: 'Test Primitive',
@@ -574,7 +567,7 @@ describe('components/root/DIVERoot', () => {
         });
 
         it('should update all group properties', () => {
-            const groupData: COMGroup = {
+            const groupData: GroupSchema = {
                 id: 'group-1',
                 entityType: 'group',
                 name: 'Test Group',
@@ -603,7 +596,7 @@ describe('components/root/DIVERoot', () => {
         });
 
         it('should add a model object', () => {
-            const modelData: COMModel = {
+            const modelData: ModelSchema = {
                 id: 'model-1',
                 entityType: 'model',
                 name: 'Test Model',
@@ -624,7 +617,7 @@ describe('components/root/DIVERoot', () => {
         });
 
         it('should add a primitive object', () => {
-            const primitiveData: COMPrimitive = {
+            const primitiveData: PrimitiveSchema = {
                 id: 'primitive-1',
                 entityType: 'primitive',
                 name: 'Test Primitive',
@@ -643,7 +636,7 @@ describe('components/root/DIVERoot', () => {
         });
 
         it('should add a group object', () => {
-            const groupData: COMGroup = {
+            const groupData: GroupSchema = {
                 id: 'group-1',
                 entityType: 'group',
                 name: 'Test Group',
@@ -661,7 +654,7 @@ describe('components/root/DIVERoot', () => {
         });
 
         it('should handle POV objects', () => {
-            const povData: COMPov = {
+            const povData: PovSchema = {
                 id: 'pov-1',
                 entityType: 'pov',
                 name: 'Test POV',
@@ -680,13 +673,13 @@ describe('components/root/DIVERoot', () => {
         it('should warn for unknown entity type', () => {
             const unknownData = {
                 id: 'unknown',
-                entityType: 'unknown' as COMEntityType,
+                entityType: 'unknown' as EntityTypeSchema,
                 name: 'Unknown',
                 visible: true,
                 position: { x: 0, y: 0, z: 0 },
                 rotation: { x: 0, y: 0, z: 0 },
                 scale: { x: 1, y: 1, z: 1 },
-            } as unknown as COMEntity;
+            } as unknown as EntitySchema;
 
             const root = new DIVERoot();
             expect(() => root.addSceneObject(unknownData)).toThrow(
@@ -697,7 +690,7 @@ describe('components/root/DIVERoot', () => {
 
     describe('updateSceneObject', () => {
         it('should update existing object properties', () => {
-            const modelData: COMModel = {
+            const modelData: ModelSchema = {
                 id: 'model-1',
                 entityType: 'model',
                 name: 'Test Model',
@@ -726,7 +719,7 @@ describe('components/root/DIVERoot', () => {
         });
 
         it('should update existing light properties', () => {
-            const lightData: COMLight = {
+            const lightData: LightSchema = {
                 id: 'light-1',
                 entityType: 'light',
                 type: 'point',
@@ -755,7 +748,7 @@ describe('components/root/DIVERoot', () => {
         });
 
         it('should update existing primitive properties', () => {
-            const primitiveData: COMPrimitive = {
+            const primitiveData: PrimitiveSchema = {
                 id: 'primitive-1',
                 entityType: 'primitive',
                 name: 'Test Primitive',
@@ -774,7 +767,7 @@ describe('components/root/DIVERoot', () => {
             const updatedData = {
                 ...primitiveData,
                 geometry: {
-                    name: 'box' as COMGeometryType,
+                    name: 'box' as GeometryTypeSchema,
                     width: 2,
                     height: 2,
                     depth: 2,
@@ -788,7 +781,7 @@ describe('components/root/DIVERoot', () => {
         });
 
         it('should update existing group properties', () => {
-            const groupData: COMGroup = {
+            const groupData: GroupSchema = {
                 id: 'group-1',
                 entityType: 'group',
                 name: 'Test Group',
@@ -819,7 +812,7 @@ describe('components/root/DIVERoot', () => {
         it('should handle update of non-existent object', () => {
             const nonExistentData = {
                 id: 'non-existent',
-                entityType: 'model' as COMEntityType,
+                entityType: 'model' as EntityTypeSchema,
                 name: 'Non Existent',
                 visible: true,
             };
@@ -834,7 +827,7 @@ describe('components/root/DIVERoot', () => {
         it('should handle POV update', () => {
             const povData = {
                 id: 'pov-1',
-                entityType: 'pov' as COMEntityType,
+                entityType: 'pov' as EntityTypeSchema,
                 name: 'Test POV',
                 visible: true,
             };
@@ -849,7 +842,7 @@ describe('components/root/DIVERoot', () => {
         it('should warn for unknown entity type in update', () => {
             const unknownData = {
                 id: 'unknown',
-                entityType: 'unknown' as COMEntityType,
+                entityType: 'unknown' as EntityTypeSchema,
                 name: 'Unknown',
             };
 
@@ -864,7 +857,7 @@ describe('components/root/DIVERoot', () => {
 
     describe('deleteSceneObject', () => {
         it('should remove object from scene', () => {
-            const modelData: COMModel = {
+            const modelData: ModelSchema = {
                 id: 'model-1',
                 entityType: 'model',
                 name: 'Test Model',
@@ -894,7 +887,7 @@ describe('components/root/DIVERoot', () => {
         it('should warn when trying to delete non-existent object', () => {
             const nonExistentData = {
                 id: 'non-existent',
-                entityType: 'model' as COMEntityType,
+                entityType: 'model' as EntityTypeSchema,
                 name: 'Non Existent',
                 visible: true,
             };
@@ -907,7 +900,7 @@ describe('components/root/DIVERoot', () => {
         });
 
         it('should handle POV deletion', () => {
-            const povData: COMPov = {
+            const povData: PovSchema = {
                 id: 'pov-1',
                 entityType: 'pov',
                 name: 'Test POV',
@@ -926,7 +919,7 @@ describe('components/root/DIVERoot', () => {
         it('should warn for unknown entity type in deletion', () => {
             const unknownData = {
                 id: 'unknown',
-                entityType: 'unknown' as COMEntityType,
+                entityType: 'unknown' as EntityTypeSchema,
                 name: 'Unknown',
             };
 
@@ -944,7 +937,7 @@ describe('components/root/DIVERoot', () => {
         });
 
         it('should handle group member detachment', () => {
-            const groupData: COMGroup = {
+            const groupData: GroupSchema = {
                 id: 'group-1',
                 entityType: 'group',
                 name: 'Test Group',
@@ -954,7 +947,7 @@ describe('components/root/DIVERoot', () => {
                 scale: { x: 1, y: 1, z: 1 },
             };
 
-            const memberData: COMModel = {
+            const memberData: ModelSchema = {
                 id: 'member-1',
                 entityType: 'model',
                 name: 'Test Member',
@@ -987,7 +980,7 @@ describe('components/root/DIVERoot', () => {
         });
 
         it('should handle transform controls detachment', () => {
-            const modelData: COMModel = {
+            const modelData: ModelSchema = {
                 id: 'model-1',
                 entityType: 'model',
                 name: 'Test Model',
@@ -1022,7 +1015,7 @@ describe('components/root/DIVERoot', () => {
         });
 
         it('should handle primitive deletion', () => {
-            const primitiveData: COMPrimitive = {
+            const primitiveData: PrimitiveSchema = {
                 id: 'primitive-1',
                 entityType: 'primitive',
                 name: 'Test Primitive',
@@ -1056,7 +1049,7 @@ describe('components/root/DIVERoot', () => {
         });
 
         it('should handle group deletion with transform controls', () => {
-            const groupData: COMGroup = {
+            const groupData: GroupSchema = {
                 id: 'group-1',
                 entityType: 'group',
                 name: 'Test Group',
@@ -1093,7 +1086,7 @@ describe('components/root/DIVERoot', () => {
 
     describe('_setParent', () => {
         it('should set parent-child relationship', () => {
-            const parentData: COMGroup = {
+            const parentData: GroupSchema = {
                 id: 'parent-1',
                 entityType: 'group',
                 name: 'Parent Group',
@@ -1103,7 +1096,7 @@ describe('components/root/DIVERoot', () => {
                 scale: { x: 1, y: 1, z: 1 },
             };
 
-            const childData: COMModel = {
+            const childData: ModelSchema = {
                 id: 'child-1',
                 entityType: 'model',
                 name: 'Child Model',
@@ -1129,7 +1122,7 @@ describe('components/root/DIVERoot', () => {
         });
 
         it('should attach to root when parent is null', () => {
-            const childData: COMModel = {
+            const childData: ModelSchema = {
                 id: 'child-1',
                 entityType: 'model',
                 name: 'Child Model',
@@ -1150,7 +1143,7 @@ describe('components/root/DIVERoot', () => {
         });
 
         it('should handle non-existent parent', () => {
-            const childData: COMModel = {
+            const childData: ModelSchema = {
                 id: 'child-1',
                 entityType: 'model',
                 name: 'Child Model',
@@ -1172,7 +1165,7 @@ describe('components/root/DIVERoot', () => {
         });
 
         it('should handle non-existent object', () => {
-            const modelData: COMModel = {
+            const modelData: ModelSchema = {
                 id: 'model-1',
                 entityType: 'model',
                 name: 'Test Model',
@@ -1194,7 +1187,7 @@ describe('components/root/DIVERoot', () => {
 
     describe('_updateLight', () => {
         it('should handle light with undefined properties', () => {
-            const lightData: Partial<COMLight> & {
+            const lightData: Partial<LightSchema> & {
                 id: string;
                 entityType: string;
                 type: string;
@@ -1211,13 +1204,13 @@ describe('components/root/DIVERoot', () => {
             };
 
             const root = new DIVERoot();
-            root.addSceneObject(lightData as COMLight);
+            root.addSceneObject(lightData as LightSchema);
             const light = root.getSceneObject(lightData);
             expect(light).toBeDefined();
         });
 
         it('should handle light with null properties', () => {
-            const lightData: Partial<COMLight> & {
+            const lightData: Partial<LightSchema> & {
                 id: string;
                 entityType: string;
                 type: string;
@@ -1238,7 +1231,7 @@ describe('components/root/DIVERoot', () => {
             };
 
             const root = new DIVERoot();
-            root.addSceneObject(lightData as COMLight);
+            root.addSceneObject(lightData as LightSchema);
             const light = root.getSceneObject(lightData);
             expect(light).toBeDefined();
         });
@@ -1246,7 +1239,7 @@ describe('components/root/DIVERoot', () => {
 
     describe('_deleteLight', () => {
         it('should handle light with transform controls', () => {
-            const lightData: COMLight = {
+            const lightData: LightSchema = {
                 id: 'light-1',
                 entityType: 'light',
                 type: 'point',
@@ -1281,7 +1274,7 @@ describe('components/root/DIVERoot', () => {
         });
 
         it('should handle non-existent light', () => {
-            const lightData: COMLight = {
+            const lightData: LightSchema = {
                 id: 'non-existent-light',
                 entityType: 'light',
                 type: 'point',
@@ -1303,7 +1296,7 @@ describe('components/root/DIVERoot', () => {
 
     describe('_deleteGroup', () => {
         it('should handle group with transform controls and members', () => {
-            const groupData: COMGroup = {
+            const groupData: GroupSchema = {
                 id: 'group-1',
                 entityType: 'group',
                 name: 'Test Group',
@@ -1338,7 +1331,7 @@ describe('components/root/DIVERoot', () => {
         });
 
         it('should handle non-existent group', () => {
-            const groupData: COMGroup = {
+            const groupData: GroupSchema = {
                 id: 'non-existent-group',
                 entityType: 'group',
                 name: 'Test Group',
@@ -1358,7 +1351,7 @@ describe('components/root/DIVERoot', () => {
 
     describe('_setParent', () => {
         it('should handle object with null parentId', () => {
-            const modelData: COMModel = {
+            const modelData: ModelSchema = {
                 id: 'model-1',
                 entityType: 'model',
                 name: 'Test Model',
@@ -1379,7 +1372,7 @@ describe('components/root/DIVERoot', () => {
         });
 
         it('should handle object with non-existent parent', () => {
-            const modelData: COMModel = {
+            const modelData: ModelSchema = {
                 id: 'model-1',
                 entityType: 'model',
                 name: 'Test Model',
@@ -1402,7 +1395,7 @@ describe('components/root/DIVERoot', () => {
 
     describe('_updateModel', () => {
         it('should handle model with undefined properties', () => {
-            const modelData: Partial<COMModel> & {
+            const modelData: Partial<ModelSchema> & {
                 id: string;
                 entityType: string;
             } = {
@@ -1425,13 +1418,13 @@ describe('components/root/DIVERoot', () => {
             };
 
             const root = new DIVERoot();
-            root.addSceneObject(modelData as COMModel);
+            root.addSceneObject(modelData as ModelSchema);
             const model = root.getSceneObject(modelData);
             expect(model).toBeDefined();
         });
 
         it('should handle model with null properties', () => {
-            const modelData: Partial<COMModel> & {
+            const modelData: Partial<ModelSchema> & {
                 id: string;
                 entityType: string;
             } = {
@@ -1456,7 +1449,7 @@ describe('components/root/DIVERoot', () => {
             };
 
             const root = new DIVERoot();
-            root.addSceneObject(modelData as COMModel);
+            root.addSceneObject(modelData as ModelSchema);
             const model = root.getSceneObject(modelData);
             expect(model).toBeDefined();
         });
@@ -1464,7 +1457,7 @@ describe('components/root/DIVERoot', () => {
 
     describe('_updatePrimitive', () => {
         it('should handle primitive with undefined properties', () => {
-            const primitiveData: Partial<COMPrimitive> & {
+            const primitiveData: Partial<PrimitiveSchema> & {
                 id: string;
                 entityType: string;
             } = {
@@ -1480,13 +1473,13 @@ describe('components/root/DIVERoot', () => {
             };
 
             const root = new DIVERoot();
-            root.addSceneObject(primitiveData as COMPrimitive);
+            root.addSceneObject(primitiveData as PrimitiveSchema);
             const primitive = root.getSceneObject(primitiveData);
             expect(primitive).toBeDefined();
         });
 
         it('should handle primitive with null properties', () => {
-            const primitiveData: Partial<COMPrimitive> & {
+            const primitiveData: Partial<PrimitiveSchema> & {
                 id: string;
                 entityType: string;
             } = {
@@ -1515,7 +1508,7 @@ describe('components/root/DIVERoot', () => {
             };
 
             const root = new DIVERoot();
-            root.addSceneObject(primitiveData as COMPrimitive);
+            root.addSceneObject(primitiveData as PrimitiveSchema);
             const primitive = root.getSceneObject(primitiveData);
             expect(primitive).toBeDefined();
         });
@@ -1523,7 +1516,7 @@ describe('components/root/DIVERoot', () => {
 
     describe('_deletePrimitive', () => {
         it('should handle non-existent primitive', () => {
-            const primitiveData: COMPrimitive = {
+            const primitiveData: PrimitiveSchema = {
                 id: 'non-existent-primitive',
                 entityType: 'primitive',
                 name: 'Test Primitive',
@@ -1597,24 +1590,6 @@ describe('components/root/DIVERoot', () => {
             const root = new DIVERoot();
             root['_detachTransformControls'](mockObject);
             // No error should be thrown
-        });
-    });
-
-    describe('bubble errors from getModule in _getAssetLoader()', () => {
-        it('should bubble errors from getModule in _getAssetLoader()', async () => {
-            const error = new Error('Failed to load');
-            // make getModule reject on next call
-            const moduleIndexTsFile = await import(
-                '../../../modules/ModuleRegistry.ts'
-            );
-            vi.spyOn(moduleIndexTsFile, 'getModule').mockRejectedValueOnce(
-                error,
-            );
-
-            const root = new DIVERoot();
-            await expect(root['_getAssetLoader']()).rejects.toThrow(
-                'Failed to load',
-            );
         });
     });
 });

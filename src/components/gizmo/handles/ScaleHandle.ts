@@ -12,7 +12,7 @@ import { UI_LAYER_MASK } from '../../../constants/VisibilityLayerMask.ts';
 import { DIVEHoverable } from '../../../interfaces/Hoverable.ts';
 import { DIVEScaleGizmo } from '../scale/ScaleGizmo.ts';
 import { DIVEDraggable } from '../../../interfaces/Draggable.ts';
-import { DraggableEvent } from '../../../modules/toolbox/BaseTool.ts';
+import { DraggableEvent } from '@shopware-ag/dive/toolbox';
 
 export class DIVEScaleHandle
     extends Object3D

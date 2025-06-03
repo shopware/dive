@@ -33,6 +33,10 @@ export class DIVEClock {
         this._tickers.push(ticker);
     }
 
+    public hasTicker(ticker: DIVETicker): boolean {
+        return this._tickers.find((t) => t.uuid === ticker.uuid) !== undefined;
+    }
+
     public removeTicker(ticker: DIVETicker): void {
         const index = this._tickers.findIndex((t) => t.uuid === ticker.uuid);
         if (index !== -1) {

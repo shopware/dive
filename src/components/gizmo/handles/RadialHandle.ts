@@ -9,7 +9,7 @@ import {
 } from 'three';
 import { UI_LAYER_MASK } from '../../../constants/VisibilityLayerMask.ts';
 import { DIVEHoverable } from '../../../interfaces/Hoverable.ts';
-import { DraggableEvent } from '../../../modules/toolbox/BaseTool.ts';
+import { DraggableEvent } from '@shopware-ag/dive/toolbox';
 import { DIVERotateGizmo } from '../rotate/RotateGizmo.ts';
 import { DIVEDraggable } from '../../../interfaces/Draggable.ts';
 
