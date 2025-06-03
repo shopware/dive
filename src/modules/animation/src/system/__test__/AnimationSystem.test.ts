@@ -1,7 +1,7 @@
-import { AnimationSystem } from '../AnimationSystem.ts';
+import { AnimationSystem } from '../AnimationSystem.js';
 import { type Tween as TweenJsTween } from '@tweenjs/tween.js';
 import { Tween, Easing, update } from '@tweenjs/tween.js';
-import { TAnimatorParameters } from '../types/AnimatorParameters.ts';
+import { TAnimatorParameters } from '../types/AnimatorParameters.js';
 import type { Mock } from 'vitest';
 
 vi.mock('@tweenjs/tween.js', async () => {

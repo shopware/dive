@@ -3,6 +3,7 @@ import type { UserConfigExport } from 'vite';
 import dts from 'vite-plugin-dts';
 import moduleBuildPlugin from './ci/build/vite/vite-plugin-module-exports.ts';
 import wasm from 'vite-plugin-wasm';
+import path from 'path';
 
 // --- Main Vite Export ---
 export default defineConfig({

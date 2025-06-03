@@ -54,12 +54,14 @@ export const MoveCameraAction = Action.define<
 
         const animatorArray = await getAnimationSystem().then(
             (animationSystem) => {
-                engine.clock.addTicker(animationSystem);
+                if (!engine.clock.hasTicker(animationSystem)) {
+                    engine.clock.addTicker(animationSystem);
+                }
 
                 controller.enabled = true;
 
                 const animatorPosition = animationSystem
-                    .createAnimator(
+                    .animate(
                         controller.object.position,
                         position,
                         payload.duration,
@@ -70,20 +72,15 @@ export const MoveCameraAction = Action.define<
                     .play();
 
                 const animatorTarget = animationSystem
-                    .createAnimator(
-                        controller.target,
-                        target,
-                        payload.duration,
-                        {
-                            easing: Easing.Quadratic.Out,
-                            onUpdate: () => {
-                                controller.object.lookAt(controller.target);
-                            },
-                            onComplete: () => {
-                                controller.enabled = !payload.locked;
-                            },
+                    .animate(controller.target, target, payload.duration, {
+                        easing: Easing.Quadratic.Out,
+                        onUpdate: () => {
+                            controller.object.lookAt(controller.target);
                         },
-                    )
+                        onComplete: () => {
+                            controller.enabled = !payload.locked;
+                        },
+                    })
                     .play();
 
                 return [

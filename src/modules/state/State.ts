@@ -106,11 +106,11 @@ export class State {
     }
 
     private _animationSystem:
-        | import('../animation/AnimationSystem.ts').AnimationSystem
+        | import('../animation/index.ts').AnimationSystem
         | null = null;
 
     private async getAnimationSystem(): Promise<
-        import('../animation/AnimationSystem.ts').AnimationSystem
+        import('../animation/index.ts').AnimationSystem
     > {
         if (!this._animationSystem) {
             this._animationSystem = new (await getModule('AnimationSystem'))();

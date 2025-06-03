@@ -1,0 +1,11 @@
+{
+  "description": "",
+  "main": "index.ts",
+  "type": "module",
+  "dependencies": {
+    "@shopware-ag/dive": "file:../../../",
+    "@tweenjs/tween.js": "^23.1.1"
+  },
+  "author": "ffrank <f.frank@shopware.com>",
+  "license": "MIT"
+}

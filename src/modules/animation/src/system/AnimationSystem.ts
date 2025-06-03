@@ -1,12 +1,11 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { Easing, Tween, update as updateTween } from '@tweenjs/tween.js';
-import { Animator } from './animator/Animator.ts';
-import { UUID } from '../../types/index.ts';
-import { DIVETicker } from '../../engine/clock/Clock.ts';
-import { TAnimatorParameters } from './types/AnimatorParameters.ts';
+import { Animator } from '../animator/Animator.js';
+import { DIVETicker } from '@shopware-ag/dive';
+import { TAnimatorParameters } from '../types/AnimatorParameters.js';
 import { MathUtils } from 'three';
 
-export type * from './animator/Animator.ts';
+export type * from '../animator/Animator.js';
 
 type CallbackTuple<T> = {
     onUpdate: (object: T, elapsed: number) => void;
@@ -19,28 +18,21 @@ declare global {
     }
 }
 
-/**
- * @module AnimationSystem
- *
- * Updates all animations.
- * DIVE uses Tween.js to handle animations.
- */
-
 export class AnimationSystem implements DIVETicker {
     public uuid: string = MathUtils.generateUUID();
 
-    private _callbackMap: Map<UUID, CallbackTuple<any>> = new Map();
-    private _tweens: Map<UUID, Tween<any>> = new Map();
+    private _callbackMap: Map<string, CallbackTuple<any>> = new Map();
+    private _tweens: Map<string, Tween<any>> = new Map();
 
     /**
      * Creates a new animator and registers it.
      * @param object - The object to animate.
-     * @param to - The target object.
-     * @param duration - The duration of the animation.
+     * @param to - The target value.
+     * @param duration - The duration of the animation in milliseconds.
      * @param options - The options for the animation.
      * @returns The animator.
      */
-    public createAnimator<T extends object>(
+    public animate<T extends object>(
         object: T,
         to: T,
         duration: number,
@@ -52,13 +44,13 @@ export class AnimationSystem implements DIVETicker {
             onComplete: animator.options?.onComplete ?? (() => {}),
         });
 
-        this._setupTween(animator);
+        this._createTween(animator);
         return animator;
     }
 
-    public unregister(uuid: UUID): void {
+    public remove(uuid: string): void {
         if (!this._callbackMap.has(uuid)) {
-            console.warn(`Animator with uuid ${uuid} not registered`);
+            console.warn(`Animator with uuid ${uuid} not found`);
             return;
         }
 
@@ -75,11 +67,7 @@ export class AnimationSystem implements DIVETicker {
         updateTween();
     }
 
-    public animate<T extends object>(object: T): Tween<T> {
-        return new Tween<T>(object);
-    }
-
-    private _setupTween<T extends object>(animator: Animator<T>): void {
+    private _createTween<T extends object>(animator: Animator<T>): void {
         const tween = new Tween<T>(animator.object)
             .to(animator.to, animator.duration)
             .easing(animator.options?.easing ?? Easing.Quadratic.Out)

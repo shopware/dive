@@ -33,7 +33,7 @@ export interface ActionDependencies {
     engine: DIVEEngine;
     controller: OrbitController;
     getAnimationSystem: () => Promise<
-        import('../../animation/AnimationSystem.ts').AnimationSystem
+        import('../../animation/index.ts').AnimationSystem
     >;
     getARSystem: () => Promise<import('../../ar/ARSystem.ts').ARSystem>;
     getAssetExporter: () => Promise<

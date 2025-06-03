@@ -89,7 +89,6 @@
         "> 1%, not dead, not ie 11, not op_mini all"
     ],
     "dependencies": {
-        "@tweenjs/tween.js": "^23.1.1",
         "lodash": "^4.17.21",
         "three": "^0.163.0",
         "three-spritetext": "^1.8.2"

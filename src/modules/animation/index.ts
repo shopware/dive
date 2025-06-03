@@ -1,2 +1,1 @@
-export { AnimationSystem } from './AnimationSystem.ts';
-export * from './animator/Animator.ts';
+export * from './src/index.ts';

@@ -1,6 +1,5 @@
 import { EventDispatcher, MathUtils, Event } from 'three';
-import { UUID } from '../../../types/index.ts';
-import { TAnimatorParameters } from '../types/AnimatorParameters.ts';
+import { TAnimatorParameters } from '../types/AnimatorParameters.js';
 
 type TAnimatorEventMap = {
     play: Event;
@@ -12,7 +11,7 @@ type TAnimatorEventMap = {
 export class Animator<
     T extends object,
 > extends EventDispatcher<TAnimatorEventMap> {
-    private _uuid: UUID = MathUtils.generateUUID();
+    private _uuid: string = MathUtils.generateUUID();
     private _playing: boolean = false;
     private _stopped: boolean = false;
     private _completed: boolean = false;
@@ -26,7 +25,7 @@ export class Animator<
         super();
     }
 
-    public get uuid(): UUID {
+    public get uuid(): string {
         return this._uuid;
     }
 

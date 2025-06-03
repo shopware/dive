@@ -5,18 +5,18 @@
 
 const ModuleRegistry = {
     AnimationSystem: async () =>
-        (await import('./animation/AnimationSystem.ts')).AnimationSystem,
-    ARSystem: async () => (await import('./ar/ARSystem.ts')).ARSystem,
+        (await import('./animation/index.ts')).AnimationSystem,
+    ARSystem: async () => (await import('./ar/index.ts')).ARSystem,
     AssetConverter: async () =>
-        (await import('./assetconverter/AssetConverter.ts')).AssetConverter,
+        (await import('./assetconverter/index.ts')).AssetConverter,
     AssetExporter: async () =>
-        (await import('./assetexporter/AssetExporter.ts')).AssetExporter,
+        (await import('./assetexporter/index.ts')).AssetExporter,
     AssetLoader: async () =>
-        (await import('./assetloader/AssetLoader.ts')).AssetLoader,
+        (await import('./assetloader/index.ts')).AssetLoader,
     MediaCreator: async () =>
-        (await import('./mediacreator/MediaCreator.ts')).MediaCreator,
-    State: async () => (await import('./state/State.ts')).State,
-    Toolbox: async () => (await import('./toolbox/Toolbox.ts')).Toolbox,
+        (await import('./mediacreator/index.ts')).MediaCreator,
+    State: async () => (await import('./state/index.ts')).State,
+    Toolbox: async () => (await import('./toolbox/index.ts')).Toolbox,
 } as const;
 
 type ModuleRegistry = typeof ModuleRegistry;
