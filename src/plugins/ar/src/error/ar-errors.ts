@@ -1,4 +1,11 @@
-export class ARError extends Error {
+export enum EARErrorType {
+    AR_DESKTOP_PLATFORM_ERROR = 'ar-desktop-platform-error',
+    AR_QUICK_LOOK_NOT_SAFARI_ERROR = 'ar-quicklook-not-safari-error',
+    AR_QUICK_LOOK_VERSION_MISMATCH_ERROR = 'ar-quicklook-version-mismatch-error',
+    AR_QUICK_LOOK_UNKNOWN_ERROR = 'ar-quicklook-unknown-error',
+}
+
+export abstract class ARError extends Error {
     public readonly type: string;
 
     constructor(message: string, type: string) {
@@ -13,7 +20,7 @@ export class ARDesktopPlatformError extends ARError {
     constructor() {
         super(
             'AR features are not supported on desktop platforms.',
-            'ar-desktop-platform-error',
+            EARErrorType.AR_DESKTOP_PLATFORM_ERROR,
         );
     }
 }
@@ -22,7 +29,7 @@ export class ARQuickLookNotSafariError extends ARError {
     constructor() {
         super(
             'ARQuickLook on iOS is only available in Safari.',
-            'ar-not-safari-on-ios-error',
+            EARErrorType.AR_QUICK_LOOK_NOT_SAFARI_ERROR,
         );
     }
 }
@@ -34,7 +41,7 @@ export class ARQuickLookVersionMismatchError extends ARError {
     ) {
         super(
             `ARQuickLook requires iOS version ${requiredVersion} or later. Current version: ${currentVersion}.`,
-            'ar-ios-version-too-low-error',
+            EARErrorType.AR_QUICK_LOOK_VERSION_MISMATCH_ERROR,
         );
     }
 }
@@ -43,7 +50,7 @@ export class ARQuickLookUnknownError extends ARError {
     constructor() {
         super(
             'An unknown ARQuickLook compatibility error occurred.',
-            'ar-quicklook-unknown-error', // Updated type to be more specific
+            EARErrorType.AR_QUICK_LOOK_UNKNOWN_ERROR,
         );
     }
 }

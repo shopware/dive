@@ -100,7 +100,7 @@ export class SystemInfo {
      * 1. AR support via relList
      *
      * Requirements:
-     * - iOS 13.0 or later
+     * - iOS 12.0 or later
      * - Safari browser (ARQuickLook is only supported in Safari)
      * - Device with AR capabilities (iPhone/iPad with LiDAR scanner or ARKit support)
      *
