@@ -1,9 +1,9 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { Easing, Tween, update as updateTween } from '@tweenjs/tween.js';
-import { Animator } from '../animator/Animator.js';
+import { MathUtils } from 'three/src/math/MathUtils.js';
 import { DIVETicker } from '@shopware-ag/dive';
+import { Animator } from '../animator/Animator.js';
 import { TAnimatorParameters } from '../types/AnimatorParameters.js';
-import { MathUtils } from 'three';
 
 export type * from '../animator/Animator.js';
 

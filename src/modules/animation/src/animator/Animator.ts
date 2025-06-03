@@ -1,4 +1,5 @@
-import { EventDispatcher, MathUtils, Event } from 'three';
+import { MathUtils } from 'three/src/math/MathUtils.js';
+import { EventDispatcher, Event } from 'three/src/core/EventDispatcher.js';
 import { TAnimatorParameters } from '../types/AnimatorParameters.js';
 
 type TAnimatorEventMap = {

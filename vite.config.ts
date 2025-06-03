@@ -7,6 +7,11 @@ import path from 'path';
 
 // --- Main Vite Export ---
 export default defineConfig({
+    resolve: {
+        alias: {
+            '@shopware-ag/dive': path.resolve(__dirname, './src/index.ts'),
+        },
+    },
     test: {
         globals: true,
         setupFiles: ['./vitest.setup.ts'],
