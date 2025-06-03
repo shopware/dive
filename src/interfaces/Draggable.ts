@@ -4,7 +4,7 @@
  * @module
  */
 
-import { type DraggableEvent } from '../modules/toolbox/BaseTool.ts';
+import { type DraggableEvent } from '@shopware-ag/dive/toolbox';
 
 export interface DIVEDraggable {
     isDraggable: true;

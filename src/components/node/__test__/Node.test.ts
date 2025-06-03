@@ -1,7 +1,6 @@
 import { DIVENode } from '../Node.ts';
-import { State } from '../../../modules/state/State.ts';
+import { State } from '@shopware-ag/dive/state';
 import { Vector3 } from 'three';
-import { type DIVEGroup } from '../../group/Group.ts';
 
 vi.mock('../../../modules/state/State', () => {
     return {

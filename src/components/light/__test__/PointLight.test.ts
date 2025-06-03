@@ -1,5 +1,5 @@
 import { DIVEPointLight } from '../PointLight.ts';
-import { State } from '../../../modules/state/State.ts';
+import { State } from '@shopware-ag/dive/state';
 import { type Color, type PointLight } from 'three';
 
 vi.mock('../../../modules/state/State', () => {

@@ -1,4 +1,4 @@
-import { State } from '../../../modules/state/State.ts';
+import { State } from '@shopware-ag/dive/state';
 import { type Color } from 'three';
 import { DIVESceneLight } from '../SceneLight.ts';
 

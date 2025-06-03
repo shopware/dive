@@ -1,4 +1,4 @@
-import { DIVEEngine } from '../../../engine/Engine.ts';
+import { DIVEEngine } from '@shopware-ag/dive';
 import { type OrbitController } from '@shopware-ag/dive/orbitcontroller';
 import { type COMEntity } from '../types/index.ts';
 
@@ -33,14 +33,14 @@ export interface ActionDependencies {
     engine: DIVEEngine;
     controller: OrbitController;
     getAnimationSystem: () => Promise<
-        import('../../animation/index.ts').AnimationSystem
+        import('@shopware-ag/dive/animation').AnimationSystem
     >;
-    getARSystem: () => Promise<import('../../ar/ARSystem.ts').ARSystem>;
+    getARSystem: () => Promise<import('@shopware-ag/dive/ar').ARSystem>;
     getAssetExporter: () => Promise<
-        import('../../assetexporter/src/AssetExporter.ts').AssetExporter
+        import('@shopware-ag/dive/assetexporter').AssetExporter
     >;
     getMediaCreator: () => Promise<
-        import('../../mediacreator/src/MediaCreator.ts').MediaCreator
+        import('@shopware-ag/dive/mediacreator').MediaCreator
     >;
-    getToolbox: () => Promise<import('../../toolbox/Toolbox.ts').Toolbox>;
+    getToolbox: () => Promise<import('@shopware-ag/dive/toolbox').Toolbox>;
 }

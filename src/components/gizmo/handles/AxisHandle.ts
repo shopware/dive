@@ -11,7 +11,7 @@ import { UI_LAYER_MASK } from '../../../constants/VisibilityLayerMask.ts';
 import { DIVEHoverable } from '../../../interfaces/Hoverable.ts';
 import { DIVETranslateGizmo } from '../translate/TranslateGizmo.ts';
 import { DIVEDraggable } from '../../../interfaces/Draggable.ts';
-import { DraggableEvent } from '../../../modules/toolbox/BaseTool.ts';
+import { DraggableEvent } from '@shopware-ag/dive/toolbox';
 
 export class DIVEAxisHandle
     extends Object3D

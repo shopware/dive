@@ -7,7 +7,7 @@ import {
 import { OrbitController } from '@shopware-ag/dive/orbitcontroller';
 import { DIVERadialHandle } from '../handles/RadialHandle.ts';
 import { DIVEGizmo, DIVEGizmoAxis } from '../Gizmo.ts';
-import { DraggableEvent } from '../../../modules/toolbox/BaseTool.ts';
+import { DraggableEvent } from '@shopware-ag/dive/toolbox';
 import { DIVEMath } from '../../../helpers/math/index.ts';
 
 export class DIVERotateGizmo extends Object3D {

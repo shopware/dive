@@ -1,4 +1,4 @@
-export { Toolbox, type ToolType } from './Toolbox.ts';
-export { DIVEBaseTool } from './BaseTool.ts';
-export * from './select/SelectTool.ts';
-export * from './transform/TransformTool.ts';
+export * from './src/Toolbox.ts';
+export * from './src/BaseTool.ts';
+export * from './src/select/SelectTool.ts';
+export * from './src/transform/TransformTool.ts';

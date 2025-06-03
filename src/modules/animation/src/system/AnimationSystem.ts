@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { Easing, Tween, update as updateTween } from '@tweenjs/tween.js';
+import * as TWEEN from '@tweenjs/tween.js';
 import { MathUtils } from 'three/src/math/MathUtils.js';
 import { DIVETicker } from '@shopware-ag/dive';
 import { Animator } from '../animator/Animator.ts';
@@ -19,8 +19,10 @@ declare global {
 export class AnimationSystem implements DIVETicker {
     public uuid: string = MathUtils.generateUUID();
 
+    public TWEEN: typeof TWEEN = TWEEN;
+
     private _callbackMap: Map<string, CallbackTuple<any>> = new Map();
-    private _tweens: Map<string, Tween<any>> = new Map();
+    private _tweens: Map<string, TWEEN.Tween<any>> = new Map();
 
     /**
      * Creates a new animator and registers it.
@@ -62,13 +64,13 @@ export class AnimationSystem implements DIVETicker {
     }
 
     public tick(): void {
-        updateTween();
+        this.TWEEN.update();
     }
 
     private _createTween<T extends object>(animator: Animator<T>): void {
-        const tween = new Tween<T>(animator.object)
+        const tween = new this.TWEEN.Tween<T>(animator.object)
             .to(animator.to, animator.duration)
-            .easing(animator.options?.easing ?? Easing.Quadratic.Out)
+            .easing(animator.options?.easing ?? this.TWEEN.Easing.Quadratic.Out)
             .onUpdate((object, elapsed) => {
                 this._callbackMap.get(animator.uuid)?.onUpdate(object, elapsed);
             })

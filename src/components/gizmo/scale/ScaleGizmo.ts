@@ -7,7 +7,7 @@ import {
 import { DIVEHoverable } from '../../../interfaces/Hoverable.ts';
 import { OrbitController } from '@shopware-ag/dive/orbitcontroller';
 import { DIVEScaleHandle } from '../handles/ScaleHandle.ts';
-import { DraggableEvent } from '../../../modules/toolbox/BaseTool.ts';
+import { DraggableEvent } from '@shopware-ag/dive/toolbox';
 import { DIVEGizmoAxis, DIVEGizmo } from '../Gizmo.ts';
 
 export class DIVEScaleGizmo extends Object3D implements DIVEHoverable {

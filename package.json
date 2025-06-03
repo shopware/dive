@@ -89,7 +89,6 @@
         "> 1%, not dead, not ie 11, not op_mini all"
     ],
     "dependencies": {
-        "lodash": "^4.17.21",
         "three": "^0.163.0"
     },
     "devDependencies": {

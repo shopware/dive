@@ -14,7 +14,7 @@ import {
 } from '../../../modules/state/types/index.ts';
 import { RaycasterIntersectObjectMock } from '../../../../__mocks__/three.ts';
 import { getModule } from '../../../modules/ModuleRegistry.ts';
-import { type State } from '../../../modules/state/State.ts';
+import { type State } from '../../../modules/state/src/State.ts';
 
 vi.mock('../../../modules/ModuleRegistry.ts', () => ({
     getModule: vi.fn().mockResolvedValue({

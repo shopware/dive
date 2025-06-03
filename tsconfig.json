@@ -18,8 +18,11 @@
         "baseUrl": ".",
         "paths": {
             "@shopware-ag/dive": ["./src/index.ts"],
-            "@shopware-ag/dive/systeminfo": [
-                "./src/modules/systeminfo/index.ts"
+            "@shopware-ag/dive/animation": [
+                "./src/modules/animation/index.ts"
+            ],
+            "@shopware-ag/dive/ar": [
+                "./src/modules/ar/index.ts"
             ],
             "@shopware-ag/dive/assetconverter": [
                 "./src/modules/assetconverter/index.ts"
@@ -30,11 +33,23 @@
             "@shopware-ag/dive/assetloader": [
                 "./src/modules/assetloader/index.ts"
             ],
+            "@shopware-ag/dive/axiscamera": [
+                "./src/modules/axiscamera/index.ts"
+            ],
+            "@shopware-ag/dive/mediacreator": [
+                "./src/modules/mediacreator/index.ts"
+            ],
             "@shopware-ag/dive/orbitcontroller": [
                 "./src/modules/orbitcontroller/index.ts"
             ],
-            "@shopware-ag/dive/axiscamera": [
-                "./src/modules/axiscamera/index.ts"
+            "@shopware-ag/dive/state": [
+                "./src/modules/state/index.ts"
+            ],
+            "@shopware-ag/dive/systeminfo": [
+                "./src/modules/systeminfo/index.ts"
+            ],
+            "@shopware-ag/dive/toolbox": [
+                "./src/modules/toolbox/index.ts"
             ]
         }
     },
