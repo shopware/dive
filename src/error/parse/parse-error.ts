@@ -1,9 +1,9 @@
 export class ParseError extends Error {
     constructor(
-        message: string,
+        public readonly uri: string,
         public readonly cause?: unknown,
     ) {
-        super(message);
+        super(`Failed to parse array buffer from ${uri}`);
         this.name = 'ParseError';
     }
 }
