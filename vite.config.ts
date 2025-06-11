@@ -25,6 +25,7 @@ export default defineConfig({
                 '**/__mocks__/**',
                 'src/plugins/ar/src/webxr/**', // webxr currently not supported in dive
                 'src/engine/scene/xrroot/**', // webxr currently not supported in dive
+                '**/index.ts', // Exclude all index.ts barrel export files
             ],
             thresholds: {
                 lines: 98,
