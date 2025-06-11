@@ -3,7 +3,7 @@ import { DIVERenderPipeline } from '../../../../../engine/renderer/Renderer.ts';
 import { DIVEWebXRRaycasterAR } from './ar/WebXRRaycasterAR.ts';
 import { DIVEWebXRRaycasterTHREE } from './three/WebXRRaycasterTHREE.ts';
 import { DIVEScene } from '../../../../../engine/scene/Scene.ts';
-import { DIVEEventExecutor } from '../../../../../events/index.ts';
+import { EventDispatcher } from '../../../../../events/index.ts';
 
 /**
  * object is undefined when AR world is hit.
@@ -25,7 +25,7 @@ export type DIVEWebXRRaycasterEvents = {
     SCENE_HIT_LOST: undefined;
 };
 
-export class DIVEWebXRRaycaster extends DIVEEventExecutor<DIVEWebXRRaycasterEvents> {
+export class DIVEWebXRRaycaster extends EventDispatcher<DIVEWebXRRaycasterEvents> {
     private _session: XRSession;
 
     private _initialized: boolean = false;
@@ -111,25 +111,25 @@ export class DIVEWebXRRaycaster extends DIVEEventExecutor<DIVEWebXRRaycasterEven
 
     private onARHitFound(hit: DIVEHitResult): void {
         this._hasHit = true;
-        this.dispatch('AR_HIT_FOUND', { hit });
+        this.dispatchEvent('AR_HIT_FOUND', { hit });
     }
 
     private onARHitLost(): void {
         if (!this._hasHit) return;
 
         this._hasHit = false;
-        this.dispatch('AR_HIT_LOST');
+        this.dispatchEvent('AR_HIT_LOST');
     }
 
     private onSceneHitFound(hit: DIVEHitResult): void {
         this._hasHit = true;
-        this.dispatch('SCENE_HIT_FOUND', { hit });
+        this.dispatchEvent('SCENE_HIT_FOUND', { hit });
     }
 
     private onSceneHitLost(): void {
         if (!this._hasHit) return;
 
         this._hasHit = false;
-        this.dispatch('SCENE_HIT_LOST');
+        this.dispatchEvent('SCENE_HIT_LOST');
     }
 }

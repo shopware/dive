@@ -87,29 +87,29 @@ export class DIVEWebXRController extends Object3D {
         );
 
         // translating
-        this._touchscreenControls.subscribe('TOUCH_START', () =>
+        this._touchscreenControls.addEventListener('TOUCH_START', () =>
             this.onTouchStart(),
         );
-        this._touchscreenControls.subscribe('TOUCH_MOVE', () =>
+        this._touchscreenControls.addEventListener('TOUCH_MOVE', () =>
             this.onTouchMove(),
         );
-        this._touchscreenControls.subscribe('TOUCH_END', (p) =>
+        this._touchscreenControls.addEventListener('TOUCH_END', (p) =>
             this.onTouchEnd(p),
         );
 
         // rotating
-        this._touchscreenControls.subscribe('ROTATE_START', () =>
+        this._touchscreenControls.addEventListener('ROTATE_START', () =>
             this.onRotateStart(),
         );
-        this._touchscreenControls.subscribe('ROTATE_MOVE', (p) =>
+        this._touchscreenControls.addEventListener('ROTATE_MOVE', (p) =>
             this.onRotateMove(p),
         );
 
         // scaling
-        this._touchscreenControls.subscribe('PINCH_START', () =>
+        this._touchscreenControls.addEventListener('PINCH_START', () =>
             this.onPinchStart(),
         );
-        this._touchscreenControls.subscribe('PINCH_MOVE', (p) =>
+        this._touchscreenControls.addEventListener('PINCH_MOVE', (p) =>
             this.onPinchMove(p),
         );
     }

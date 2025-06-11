@@ -1,5 +1,5 @@
 import { Vector2 } from 'three';
-import { DIVEEventExecutor } from '../../../../../events/index.ts';
+import { EventDispatcher } from '../../../../../events/index.ts';
 
 export type DIVETouchscreenEvents = {
     TOUCH_START: {
@@ -49,7 +49,7 @@ type DIVETouch = {
     delta: Vector2;
 };
 
-export class DIVEWebXRTouchscreenControls extends DIVEEventExecutor<DIVETouchscreenEvents> {
+export class DIVEWebXRTouchscreenControls extends EventDispatcher<DIVETouchscreenEvents> {
     // general members
     private _session: XRSession;
 
@@ -163,14 +163,14 @@ export class DIVEWebXRTouchscreenControls extends DIVEEventExecutor<DIVETouchscr
         }
 
         if (this._handleRotateStarted) {
-            this.dispatch('ROTATE_START', {
+            this.dispatchEvent('ROTATE_START', {
                 current: 0,
             });
             this._handleRotateStarted = false;
         }
 
         if (this._handlePinchStarted) {
-            this.dispatch('PINCH_START', {
+            this.dispatchEvent('PINCH_START', {
                 current: 0,
             });
             this._handlePinchStarted = false;
@@ -212,7 +212,7 @@ export class DIVEWebXRTouchscreenControls extends DIVEEventExecutor<DIVETouchscr
         }
 
         if (this._touchCount === 1) {
-            this.dispatch('TOUCH_MOVE', {
+            this.dispatchEvent('TOUCH_MOVE', {
                 touches: [
                     {
                         current: this._touches[0].current.clone(),
@@ -229,7 +229,7 @@ export class DIVEWebXRTouchscreenControls extends DIVEEventExecutor<DIVETouchscr
 
         if (this._touchCount === 2) {
             if (this._handleRotateMoved) {
-                this.dispatch('ROTATE_MOVE', {
+                this.dispatchEvent('ROTATE_MOVE', {
                     current: this._lastAngle,
                     delta: this._angleDelta,
                 });
@@ -237,7 +237,7 @@ export class DIVEWebXRTouchscreenControls extends DIVEEventExecutor<DIVETouchscr
             }
 
             if (this._handlePinchMoved) {
-                this.dispatch('PINCH_MOVE', {
+                this.dispatchEvent('PINCH_MOVE', {
                     current: this._currentDistance,
                     delta: this._deltaDistance,
                 });
@@ -265,14 +265,14 @@ export class DIVEWebXRTouchscreenControls extends DIVEEventExecutor<DIVETouchscr
         }
 
         if (this._handleRotateEnded) {
-            this.dispatch('ROTATE_END', {
+            this.dispatchEvent('ROTATE_END', {
                 current: this._lastAngle,
             });
             this._handleRotateEnded = false;
         }
 
         if (this._handlePinchEnded) {
-            this.dispatch('PINCH_END', {
+            this.dispatchEvent('PINCH_END', {
                 current: this._currentDistance,
             });
             this._handlePinchEnded = false;
@@ -280,7 +280,7 @@ export class DIVEWebXRTouchscreenControls extends DIVEEventExecutor<DIVETouchscr
     }
 
     private onSessionSelectStart(): void {
-        this.dispatch('TOUCH_START', {
+        this.dispatchEvent('TOUCH_START', {
             touches: [
                 {
                     current: this._touches[0].current.clone(),
@@ -294,7 +294,7 @@ export class DIVEWebXRTouchscreenControls extends DIVEEventExecutor<DIVETouchscr
     }
 
     private onSessionSelectEnd(): void {
-        this.dispatch('TOUCH_END', {
+        this.dispatchEvent('TOUCH_END', {
             touches: [
                 {
                     current: this._touches[0].current.clone(),
