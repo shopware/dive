@@ -3,6 +3,7 @@ import { type BaseEntitySchema } from './BaseEntitySchema.ts';
 import { type GeometrySchema } from './GeometrySchema.ts';
 import { type MaterialSchema } from './MaterialSchema.ts';
 import { type EntitySchema } from './EntitySchema.ts';
+
 export function isPrimitiveSchema(
     entity: EntitySchema,
 ): entity is PrimitiveSchema {
