@@ -33,10 +33,7 @@ describe('ARError System', () => {
 
     describe('ARQuickLookVersionMismatchError', () => {
         it('should create an ARQuickLookVersionMismatchError with default message and type', () => {
-            const error = new ARQuickLookVersionMismatchError(
-                '1.0.0',
-                '1.0.1',
-            );
+            const error = new ARQuickLookVersionMismatchError('1.0.0', '1.0.1');
             expect(error).toBeInstanceOf(ARError);
             expect(error.name).toBe('ARQuickLookVersionMismatchError');
             expect(error.message).toBe(

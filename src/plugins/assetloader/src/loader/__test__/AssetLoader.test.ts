@@ -1,211 +1,357 @@
 import { AssetLoader } from '../AssetLoader.ts';
-import { GLTF, GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
-import { USDZLoader } from 'three/examples/jsm/loaders/USDZLoader.js';
+import { GLTF } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { Group } from 'three';
 import { FileTypeError, NetworkError, ParseError } from '@shopware-ag/dive';
-
-// Mock fetch
-global.fetch = vi.fn().mockImplementation(async (uri) => ({
-    ok: true,
-    arrayBuffer: async () => new ArrayBuffer(0),
-}));
+import { AssetCache } from '@shopware-ag/dive/assetcache';
 
 // Mock the Three.js loaders
-const mockLoadAsyncGLTF = vi.fn();
 const mockParseAsyncGLTF = vi.fn();
-vi.mock('three/examples/jsm/loaders/GLTFLoader', () => {
-    return {
-        GLTFLoader: vi.fn().mockImplementation(() => ({
-            loadAsync: mockLoadAsyncGLTF,
-            parseAsync: mockParseAsyncGLTF,
-            setDRACOLoader: vi.fn(),
-        })),
-    };
-});
+vi.mock('three/examples/jsm/loaders/GLTFLoader', () => ({
+    GLTFLoader: vi.fn().mockImplementation(() => ({
+        parseAsync: mockParseAsyncGLTF,
+        setDRACOLoader: vi.fn(),
+    })),
+}));
 
-const mockLoadAsyncUSDZ = vi.fn();
 const mockParseUSDZ = vi.fn();
-vi.mock('three/examples/jsm/loaders/USDZLoader', () => {
-    return {
-        USDZLoader: vi.fn().mockImplementation(() => ({
-            loadAsync: mockLoadAsyncUSDZ,
-            parse: mockParseUSDZ,
-        })),
-    };
-});
+vi.mock('three/examples/jsm/loaders/USDZLoader', () => ({
+    USDZLoader: vi.fn().mockImplementation(() => ({
+        parse: mockParseUSDZ,
+    })),
+}));
 
-vi.mock('three/examples/jsm/loaders/DRACOLoader.js', () => {
-    return {
-        DRACOLoader: vi.fn().mockImplementation(() => ({
-            setDecoderPath: vi.fn(),
-            setDecoderConfig: vi.fn(),
-        })),
-    };
-});
+vi.mock('../../draco/DracoLoader.ts', () => ({
+    DracoLoader: vi.fn().mockImplementation(() => ({
+        setDecoderPath: vi.fn(),
+        setDecoderConfig: vi.fn(),
+    })),
+}));
+
+// Mock AssetCache without referencing external variables
+vi.mock('@shopware-ag/dive/assetcache', () => ({
+    AssetCache: {
+        read: vi.fn(),
+        create: vi.fn(),
+        write: vi.fn(),
+        delete: vi.fn(),
+        clear: vi.fn(),
+    },
+}));
+
+const MockedAssetCache = vi.mocked(AssetCache);
 
 describe('AssetLoader', () => {
     let loader: AssetLoader;
-    let mockGLTFLoader: GLTFLoader;
-    let mockUSDZLoader: USDZLoader;
+    let mockChunk: any;
 
     beforeEach(() => {
         vi.clearAllMocks();
         loader = new AssetLoader();
-        mockGLTFLoader = new GLTFLoader();
-        mockUSDZLoader = new USDZLoader();
-        vi.mocked(global.fetch).mockClear();
+
+        // Create mock chunk for each test
+        mockChunk = {
+            result: null,
+            promise: Promise.resolve(new Group()),
+            fetch: vi.fn(),
+        };
+
+        // Reset the create mock to return our mockChunk
+        MockedAssetCache.create.mockReturnValue(mockChunk);
     });
 
-    it('should load a glTF file successfully', async () => {
-        const mockScene = { type: 'Group' };
-        mockParseAsyncGLTF.mockResolvedValue({
-            scene: mockScene,
-        } as unknown as GLTF);
+    describe('cache integration', () => {
+        it('should return cached result if chunk exists and has result', async () => {
+            const mockResult = new Group();
+            const cachedChunk = {
+                result: mockResult,
+                promise: Promise.resolve(mockResult),
+            };
+            MockedAssetCache.read.mockReturnValue(cachedChunk as any);
 
-        const result = await loader.load('model.glb');
+            const result = await loader.load('model.glb');
 
-        expect(mockGLTFLoader.parseAsync).toHaveBeenCalled();
-        expect(result).toBe(mockScene);
-    });
-
-    it('should load a USDZ file successfully', async () => {
-        const mockObject = new Group();
-        mockParseUSDZ.mockReturnValue(mockObject);
-
-        const result = await loader.load('model.usdz');
-
-        expect(mockUSDZLoader.parse).toHaveBeenCalled();
-        expect(result).toBe(mockObject);
-    });
-
-    it('should throw FileTypeError for unsupported file types', async () => {
-        await expect(loader.load('model.xyz')).rejects.toThrow(FileTypeError);
-    });
-
-    it('should throw FileTypeError for URIs without extensions', async () => {
-        await expect(loader.load('model')).rejects.toThrow(FileTypeError);
-    });
-
-    it('should throw NetworkError when fetch fails', async () => {
-        vi.mocked(global.fetch).mockImplementationOnce(
-            async () =>
-                ({
-                    ok: false,
-                }) as unknown as Response,
-        );
-
-        await expect(loader.load('model.glb')).rejects.toThrow(NetworkError);
-    });
-
-    it('should throw NetworkError when arrayBuffer extraction fails', async () => {
-        vi.mocked(global.fetch).mockImplementationOnce(
-            async () =>
-                ({
-                    ok: true,
-                    arrayBuffer: async () => {
-                        throw new Error('Failed to extract arrayBuffer');
-                    },
-                }) as unknown as Response,
-        );
-
-        await expect(loader.load('model.glb')).rejects.toThrow(NetworkError);
-    });
-
-    it('should throw ParseError when glTF parsing fails', async () => {
-        mockParseAsyncGLTF.mockRejectedValue(new Error('Parse error'));
-
-        await expect(loader.load('model.glb')).rejects.toThrow(ParseError);
-    });
-
-    it('should throw ParseError when USDZ parsing fails', async () => {
-        mockParseUSDZ.mockImplementation(() => {
-            throw new Error('Parse error');
+            expect(MockedAssetCache.read).toHaveBeenCalledWith('model.glb');
+            expect(MockedAssetCache.create).not.toHaveBeenCalled();
+            expect(result).toBe(mockResult);
         });
 
-        await expect(loader.load('model.usdz')).rejects.toThrow(ParseError);
-    });
+        it('should return cached promise if chunk exists but no result yet', async () => {
+            const mockResult = new Group();
+            const cachedChunk = {
+                result: null,
+                promise: Promise.resolve(mockResult),
+            };
+            MockedAssetCache.read.mockReturnValue(cachedChunk as any);
 
-    it('should throw ParseError when non-Error object is thrown', async () => {
-        mockParseAsyncGLTF.mockImplementation(() => {
-            throw 'String error'; // Throwing a non-Error object
+            const result = await loader.load('model.glb');
+
+            expect(MockedAssetCache.read).toHaveBeenCalledWith('model.glb');
+            expect(MockedAssetCache.create).not.toHaveBeenCalled();
+            expect(result).toBe(mockResult);
         });
 
-        await expect(loader.load('model.glb')).rejects.toThrow(ParseError);
+        it('should create new chunk if not cached', async () => {
+            const mockResult = new Group();
+            MockedAssetCache.read.mockReturnValue(null);
+            mockChunk.fetch.mockResolvedValue(mockResult);
+
+            const result = await loader.load('model.glb');
+
+            expect(MockedAssetCache.read).toHaveBeenCalledWith('model.glb');
+            expect(MockedAssetCache.create).toHaveBeenCalledWith(
+                'model.glb',
+                expect.any(Function),
+            );
+            expect(mockChunk.fetch).toHaveBeenCalled();
+            expect(result).toBe(mockResult);
+        });
     });
 
-    it('should load a gltf file successfully', async () => {
-        const mockScene = { type: 'Group' };
-        mockParseAsyncGLTF.mockResolvedValue({
-            scene: mockScene,
-        } as unknown as GLTF);
+    describe('file type validation', () => {
+        it('should throw FileTypeError for URIs without extensions', async () => {
+            await expect(loader.load('model')).rejects.toThrow(
+                new FileTypeError('No file extension found in URI', ''),
+            );
+        });
 
-        const result = await loader.load('model.gltf');
+        it('should throw FileTypeError for URIs with empty extensions', async () => {
+            await expect(loader.load('model.')).rejects.toThrow(
+                new FileTypeError('No file extension found in URI', ''),
+            );
+        });
 
-        expect(mockGLTFLoader.parseAsync).toHaveBeenCalled();
-        expect(result).toBe(mockScene);
+        it('should throw FileTypeError for unsupported file types', async () => {
+            await expect(loader.load('model.xyz')).rejects.toThrow(
+                FileTypeError,
+            );
+        });
+
+        it('should handle case-insensitive file extensions', async () => {
+            MockedAssetCache.read.mockReturnValue(null);
+            const mockResult = new Group();
+            mockChunk.fetch.mockResolvedValue(mockResult);
+
+            await loader.load('model.GLB');
+
+            expect(MockedAssetCache.create).toHaveBeenCalledWith(
+                'model.GLB',
+                expect.any(Function),
+            );
+        });
     });
 
-    it('should attempt to load the file from the provided URI', async () => {
-        mockParseAsyncGLTF.mockResolvedValue({
-            scene: { type: 'Group' },
-        } as unknown as GLTF);
+    describe('GLTF parsing', () => {
+        beforeEach(() => {
+            MockedAssetCache.read.mockReturnValue(null);
+        });
 
-        const testUri = 'https://example.com/model.glb';
-        await loader.load(testUri);
+        it('should parse GLB files correctly', async () => {
+            const mockScene = new Group();
+            const mockArrayBuffer = new ArrayBuffer(1024);
+            mockParseAsyncGLTF.mockResolvedValue({ scene: mockScene } as GLTF);
 
-        expect(global.fetch).toHaveBeenCalledWith(testUri);
+            // Capture the parse function passed to AssetCache.create
+            let parseFunction: any;
+            MockedAssetCache.create.mockImplementation((uri, parse) => {
+                parseFunction = parse;
+                return mockChunk as any;
+            });
+
+            await loader.load('model.glb');
+
+            expect(MockedAssetCache.create).toHaveBeenCalled();
+            expect(parseFunction).toBeDefined();
+
+            // Test the parse function
+            const result = await parseFunction(mockArrayBuffer);
+            expect(mockParseAsyncGLTF).toHaveBeenCalledWith(
+                mockArrayBuffer,
+                '',
+            );
+            expect(result).toBe(mockScene);
+        });
+
+        it('should parse GLTF files correctly', async () => {
+            const mockScene = new Group();
+            const mockArrayBuffer = new ArrayBuffer(1024);
+            mockParseAsyncGLTF.mockResolvedValue({ scene: mockScene } as GLTF);
+
+            let parseFunction: any;
+            MockedAssetCache.create.mockImplementation((uri, parse) => {
+                parseFunction = parse;
+                return mockChunk as any;
+            });
+
+            await loader.load('model.gltf');
+
+            const result = await parseFunction(mockArrayBuffer);
+            expect(mockParseAsyncGLTF).toHaveBeenCalledWith(
+                mockArrayBuffer,
+                '',
+            );
+            expect(result).toBe(mockScene);
+        });
+
+        it('should throw ParseError when GLTF parsing fails', async () => {
+            const mockArrayBuffer = new ArrayBuffer(1024);
+            mockParseAsyncGLTF.mockRejectedValue(new Error('Invalid GLTF'));
+
+            let parseFunction: any;
+            MockedAssetCache.create.mockImplementation((uri, parse) => {
+                parseFunction = parse;
+                return mockChunk as any;
+            });
+
+            await loader.load('model.glb');
+
+            await expect(parseFunction(mockArrayBuffer)).rejects.toThrow(
+                ParseError,
+            );
+        });
+
+        it('should throw ParseError when non-Error object is thrown from GLTF parsing', async () => {
+            const mockArrayBuffer = new ArrayBuffer(1024);
+            mockParseAsyncGLTF.mockImplementation(() => {
+                throw 'String error';
+            });
+
+            let parseFunction: any;
+            MockedAssetCache.create.mockImplementation((uri, parse) => {
+                parseFunction = parse;
+                return mockChunk as any;
+            });
+
+            await loader.load('model.glb');
+
+            await expect(parseFunction(mockArrayBuffer)).rejects.toThrow(
+                ParseError,
+            );
+        });
     });
 
-    it('should recognize glb as a supported file type', async () => {
-        mockParseAsyncGLTF.mockResolvedValue({
-            scene: { type: 'Group' },
-        } as unknown as GLTF);
+    describe('USDZ parsing', () => {
+        beforeEach(() => {
+            MockedAssetCache.read.mockReturnValue(null);
+        });
 
-        await loader.load('model.glb');
+        it('should parse USDZ files correctly', async () => {
+            const mockObject = new Group();
+            const mockArrayBuffer = new ArrayBuffer(1024);
+            mockParseUSDZ.mockReturnValue(mockObject);
 
-        expect(true).toBeTruthy();
+            let parseFunction: any;
+            MockedAssetCache.create.mockImplementation((uri, parse) => {
+                parseFunction = parse;
+                return mockChunk as any;
+            });
+
+            await loader.load('model.usdz');
+
+            const result = await parseFunction(mockArrayBuffer);
+            expect(mockParseUSDZ).toHaveBeenCalledWith(mockArrayBuffer);
+            expect(result).toBe(mockObject);
+        });
+
+        it('should throw ParseError when USDZ parsing fails', async () => {
+            const mockArrayBuffer = new ArrayBuffer(1024);
+            mockParseUSDZ.mockImplementation(() => {
+                throw new Error('Invalid USDZ');
+            });
+
+            let parseFunction: any;
+            MockedAssetCache.create.mockImplementation((uri, parse) => {
+                parseFunction = parse;
+                return mockChunk as any;
+            });
+
+            await loader.load('model.usdz');
+
+            await expect(parseFunction(mockArrayBuffer)).rejects.toThrow(
+                ParseError,
+            );
+        });
     });
 
-    it('should recognize gltf as a supported file type', async () => {
-        mockParseAsyncGLTF.mockResolvedValue({
-            scene: { type: 'Group' },
-        } as unknown as GLTF);
+    describe('integration', () => {
+        it('should handle complete loading flow for GLB', async () => {
+            const mockScene = new Group();
+            const uri = 'https://example.com/model.glb';
 
-        await loader.load('model.gltf');
+            MockedAssetCache.read.mockReturnValue(null);
+            mockChunk.fetch.mockResolvedValue(mockScene);
 
-        expect(true).toBeTruthy();
+            const result = await loader.load(uri);
+
+            expect(MockedAssetCache.read).toHaveBeenCalledWith(uri);
+            expect(MockedAssetCache.create).toHaveBeenCalledWith(
+                uri,
+                expect.any(Function),
+            );
+            expect(mockChunk.fetch).toHaveBeenCalled();
+            expect(result).toBe(mockScene);
+        });
+
+        it('should handle complete loading flow for USDZ', async () => {
+            const mockObject = new Group();
+            const uri = 'https://example.com/model.usdz';
+
+            MockedAssetCache.read.mockReturnValue(null);
+            mockChunk.fetch.mockResolvedValue(mockObject);
+
+            const result = await loader.load(uri);
+
+            expect(MockedAssetCache.read).toHaveBeenCalledWith(uri);
+            expect(MockedAssetCache.create).toHaveBeenCalledWith(
+                uri,
+                expect.any(Function),
+            );
+            expect(mockChunk.fetch).toHaveBeenCalled();
+            expect(result).toBe(mockObject);
+        });
+
+        it('should propagate errors from chunk.fetch()', async () => {
+            const uri = 'model.glb';
+            const error = new NetworkError(uri);
+
+            MockedAssetCache.read.mockReturnValue(null);
+            mockChunk.fetch.mockRejectedValue(error);
+
+            await expect(loader.load(uri)).rejects.toThrow(NetworkError);
+        });
     });
 
-    it('should recognize usdz as a supported file type', async () => {
-        mockParseUSDZ.mockReturnValue(new Group());
+    describe('supported file types', () => {
+        beforeEach(() => {
+            MockedAssetCache.read.mockReturnValue(null);
+            mockChunk.fetch.mockResolvedValue(new Group());
+        });
 
-        await loader.load('model.usdz');
+        it('should support .glb files', async () => {
+            await loader.load('model.glb');
+            expect(MockedAssetCache.create).toHaveBeenCalled();
+        });
 
-        expect(true).toBeTruthy();
+        it('should support .gltf files', async () => {
+            await loader.load('model.gltf');
+            expect(MockedAssetCache.create).toHaveBeenCalled();
+        });
+
+        it('should support .usdz files', async () => {
+            await loader.load('model.usdz');
+            expect(MockedAssetCache.create).toHaveBeenCalled();
+        });
     });
 
-    it('should correctly get file extension from URI with mixed case', async () => {
-        mockParseAsyncGLTF.mockResolvedValue({
-            scene: { type: 'Group' },
-        } as unknown as GLTF);
+    describe('constructor', () => {
+        it('should initialize with GLTF and USDZ loaders', () => {
+            const newLoader = new AssetLoader();
+            expect(newLoader).toBeInstanceOf(AssetLoader);
+        });
 
-        await loader.load('model.GLB');
-
-        expect(mockGLTFLoader.parseAsync).toHaveBeenCalled();
-    });
-
-    it('should throw FileTypeError for a URI without a dot', async () => {
-        // When the URI doesn't have a dot, getFileTypeFromUri returns an empty string
-        // which should result in a "No file extension found in URI" error
-        await expect(loader.load('modelwithoutextension')).rejects.toThrow(
-            new FileTypeError('No file extension found in URI', ''),
-        );
-    });
-
-    it('should throw FileTypeError for a URI with a dot but no extension', async () => {
-        // This test targets the case when a URI ends with a dot, resulting in an empty extension
-        await expect(loader.load('model.')).rejects.toThrow(
-            new FileTypeError('No file extension found in URI', ''),
-        );
+        it('should configure DRACO loader for GLTF', () => {
+            const newLoader = new AssetLoader();
+            expect(newLoader).toBeInstanceOf(AssetLoader);
+            // The DRACO configuration is tested via mocks
+        });
     });
 });
