@@ -1,1 +1,1 @@
-export { DIVEEventExecutor } from './executor/EventExecutor.ts';
+export { EventDispatcher } from './dispatcher/EventDispatcher.ts';
