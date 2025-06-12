@@ -33,6 +33,9 @@
             "@shopware-ag/dive/assetloader": [
                 "src/plugins/assetloader/index.ts"
             ],
+            "@shopware-ag/dive/assetcache": [
+                "src/plugins/assetcache/index.ts"
+            ],
             "@shopware-ag/dive/axiscamera": [
                 "src/plugins/axiscamera/index.ts"
             ],

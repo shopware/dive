@@ -22,6 +22,11 @@
             "import": "./build/plugins/ar/index.mjs",
             "require": "./build/plugins/ar/index.cjs"
         },
+        "./assetcache": {
+            "types": "./build/plugins/assetcache/index.d.ts",
+            "import": "./build/plugins/assetcache/index.mjs",
+            "require": "./build/plugins/assetcache/index.cjs"
+        },
         "./assetconverter": {
             "types": "./build/plugins/assetconverter/index.d.ts",
             "import": "./build/plugins/assetconverter/index.mjs",
