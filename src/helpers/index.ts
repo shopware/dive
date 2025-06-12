@@ -1,9 +1,10 @@
-export * from './getFileTypeFromUri/getFileTypeFromUri.ts';
-export * from './isFileTypeSupported/isFileTypeSupported.ts';
+export * from './applyMixins/applyMixins.ts';
+export * from './deepClone/deepClone.ts';
+export * from './findInterface/findInterface.ts';
 export * from './findSceneRecursive/findSceneRecursive.ts';
+export * from './getFileTypeFromUri/getFileTypeFromUri.ts';
 export * from './getObjectDelta/getObjectDelta.ts';
 export * from './implementsInterface/implementsInterface.ts';
-export * from './findInterface/findInterface.ts';
-export * from './applyMixins/applyMixins.ts';
+export * from './isFileTypeSupported/isFileTypeSupported.ts';
 
 export * from './math/index.ts';

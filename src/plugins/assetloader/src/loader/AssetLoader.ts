@@ -5,12 +5,12 @@ import {
     type FileType,
     SUPPORTED_FILE_TYPES,
     FileTypeError,
-    NetworkError,
     ParseError,
     getFileTypeFromUri,
     isFileTypeSupported,
 } from '@shopware-ag/dive';
 import { DracoLoader } from '../draco/DracoLoader.ts';
+import { AssetCache } from '@shopware-ag/dive/assetcache';
 
 export class AssetLoader {
     private _gltfLoader: GLTFLoader;
@@ -31,19 +31,6 @@ export class AssetLoader {
         this._usdzLoader = new USDZLoader();
     }
 
-    private async _loadFile(uri: string): Promise<ArrayBuffer> {
-        const response = await fetch(uri);
-        if (!response.ok) {
-            throw new NetworkError(uri, `Failed to fetch file from ${uri}`);
-        }
-
-        try {
-            return await response.arrayBuffer();
-        } catch (error) {
-            throw new NetworkError(uri, `Failed to fetch file from ${uri}`);
-        }
-    }
-
     public async load(uri: string): Promise<Object3D> {
         const extension = getFileTypeFromUri(uri);
         if (extension.length === 0) {
@@ -56,10 +43,41 @@ export class AssetLoader {
             );
         }
 
-        const arrayBuffer = await this._loadFile(uri);
+        // check if chunk is already registered in cache and if it is already fetched
+        const exstingChunk = AssetCache.read(uri);
+        if (exstingChunk) {
+            if (exstingChunk.arrayBuffer) {
+                return this._parse(exstingChunk.arrayBuffer, extension);
+            }
+            return exstingChunk.promise.then((arrayBuffer) => {
+                return this._parse(arrayBuffer, extension);
+            });
+        }
 
+        /**
+         * manual chunk creation (handle with care)
+         * const chunk = new Chunk<Object3D>(uri, parse);
+         * AssetCache.write(uri, chunk);
+         */
+
+        // factory chunk creation (recommended)
+        const chunk = AssetCache.create(uri);
+        const arrayBuffer = await chunk.load();
+        return this._parse(arrayBuffer, extension);
+    }
+
+    /**
+     * parse function for the chunk
+     * @param arrayBuffer - the array buffer to parse, will be provided within the chunk
+     * @param type - the file type of the array buffer
+     * @returns the parsed object, will be stored within the    chunk
+     */
+    private async _parse(
+        arrayBuffer: ArrayBuffer,
+        type: FileType,
+    ): Promise<Object3D> {
         try {
-            switch (extension as FileType) {
+            switch (type as FileType) {
                 case 'glb':
                 case 'gltf': {
                     const gltf = await this._gltfLoader.parseAsync(
@@ -75,11 +93,11 @@ export class AssetLoader {
         } catch (error) {
             if (error instanceof Error) {
                 throw new ParseError(
-                    `Failed to parse ${extension} file: ${error.message}`,
+                    `Failed to parse ${type} file: ${error.message}`,
                     error,
                 );
             }
-            throw new ParseError(`Failed to parse ${extension} file`);
+            throw new ParseError(`Failed to parse ${type} file`);
         }
     }
 }
