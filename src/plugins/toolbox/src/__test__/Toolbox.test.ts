@@ -16,7 +16,7 @@ vi.mock('../select/SelectTool.ts', () => {
             this.onPointerUp = vi.fn();
             this.onWheel = vi.fn();
             this.setGizmoMode = vi.fn();
-            this.setGizmoVisibility = vi.fn();
+            this.setGizmoVisible = vi.fn();
             this.setGizmoScaleLinked = vi.fn();
             return this;
         }),
@@ -133,7 +133,7 @@ describe('dive/toolbox/DIVEToolBox', () => {
 
     it('should set gizmo active', () => {
         const toolBox = new Toolbox({} as DIVEScene, mockController);
-        expect(() => toolBox.setGizmoVisibility(true)).not.toThrow();
+        expect(() => toolBox.setGizmoVisible(true)).not.toThrow();
     });
 
     it('should set gizmo unified scale', () => {

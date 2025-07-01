@@ -1,13 +1,13 @@
-import { SetGizmoVisibilityAction } from '../setgizmovisible.ts';
+import { SetGizmoVisibleAction } from '../setgizmovisible.ts';
 
-const mockSetGizmoVisibility = vi.fn();
+const mockSetGizmoVisible = vi.fn();
 const mockGetToolbox = vi.fn().mockResolvedValue({
-    setGizmoVisibility: mockSetGizmoVisibility,
+    setGizmoVisible: mockSetGizmoVisible,
 });
 
-describe('SetGizmoVisibilityAction', () => {
+describe('SetGizmoVisibleAction', () => {
     it('should set gizmo visibility', async () => {
-        const action = new SetGizmoVisibilityAction(true, {
+        const action = new SetGizmoVisibleAction(true, {
             getToolbox: mockGetToolbox,
         });
 
@@ -15,6 +15,6 @@ describe('SetGizmoVisibilityAction', () => {
         await action.execute();
 
         // Verify results
-        expect(mockSetGizmoVisibility).toHaveBeenCalledWith(true);
+        expect(mockSetGizmoVisible).toHaveBeenCalledWith(true);
     });
 });

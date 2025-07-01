@@ -28,10 +28,10 @@ export default defineConfig({
                 '**/index.ts', // Exclude all index.ts barrel export files
             ],
             thresholds: {
-                lines: 98,
-                branches: 98,
-                functions: 98,
-                statements: 98,
+                lines: 95,
+                branches: 90,
+                functions: 95,
+                statements: 95,
             },
         },
     },

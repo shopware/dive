@@ -49,7 +49,7 @@ export class DIVESelectTool extends DIVETransformTool {
                 DIVESelectable &
                 DIVEMovable;
             this._gizmo.attach(movable);
-            this.setGizmoVisibility(movable.visible);
+            this.setGizmoVisible(movable.visible);
         }
     }
 

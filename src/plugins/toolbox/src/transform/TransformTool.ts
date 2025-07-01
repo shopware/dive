@@ -50,16 +50,16 @@ export class DIVETransformTool extends DIVEBaseTool {
         this._gizmo.mode = mode;
     }
 
-    public setGizmoVisibility(active: boolean): void {
+    public setGizmoVisible(visible: boolean): void {
         const contains = this._scene.children.includes(this._gizmo);
-        if (active && !contains) {
+        if (visible && !contains) {
             this._scene.add(this._gizmo);
             if ('isTransformControls' in this._gizmo) {
                 (this._gizmo as TransformControls)
                     .getRaycaster()
                     .layers.enableAll();
             }
-        } else if (!active && contains) {
+        } else if (!visible && contains) {
             this._scene.remove(this._gizmo);
             if ('isTransformControls' in this._gizmo) {
                 (this._gizmo as TransformControls)

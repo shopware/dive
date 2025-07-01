@@ -5,28 +5,24 @@ import {
     Vector3 as THREEVector3,
 } from 'three';
 
+// Global event listeners storage
+let eventListeners: { [key: string]: Function[] } = {};
+
 export const TransformControls = vi.fn(function () {
     this.isTransformControls = true;
-    this.addEventListener = vi.fn(
-        (type: string, callback: (e: object) => void) => {
-            this.object = null;
-            callback({ value: false });
-            this.object = {};
-            callback({ value: false });
-            this.object = {
-                isMovable: true,
-            };
-            callback({ value: false });
-            this.object = {
-                isMovable: true,
-                onMove: vi.fn(),
-                onMoveStart: vi.fn(),
-                onMoveEnd: vi.fn(),
-                scale: new THREEVector3(1, 1, 1),
-            };
-            callback({ value: false });
-        },
-    );
+    this.mode = 'translate';
+    this.object = null;
+    this.enabled = true;
+
+    // Store event listeners for testing
+    this.addEventListener = vi.fn((event: string, listener: Function) => {
+        if (!eventListeners[event]) {
+            eventListeners[event] = [];
+        }
+        eventListeners[event].push(listener);
+    });
+
+    this.removeEventListener = vi.fn();
     this.attach = vi.fn();
     this.detach = vi.fn();
     this.children = [];
@@ -61,15 +57,22 @@ export const TransformControls = vi.fn(function () {
         });
     });
     this.setMode = vi.fn();
-    this.getRaycaster = vi.fn().mockReturnValue({
+
+    // Create a persistent raycaster object for this instance
+    const raycaster = {
         layers: {
             mask: 0,
             disableAll: vi.fn(),
             enableAll: vi.fn(),
         },
-    });
+    };
+    this.getRaycaster = vi.fn(() => raycaster);
+
     this.layers = {
         mask: 0,
     };
     return this;
 });
+
+// Export event listeners for testing
+export { eventListeners };

@@ -67,8 +67,8 @@ export class Toolbox {
         this.selectTool.setGizmoMode(mode);
     }
 
-    public setGizmoVisibility(active: boolean): void {
-        this.selectTool.setGizmoVisibility(active);
+    public setGizmoVisible(active: boolean): void {
+        this.selectTool.setGizmoVisible(active);
     }
 
     public setGizmoScaleLinked(linked: boolean): void {
