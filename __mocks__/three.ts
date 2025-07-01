@@ -50,6 +50,9 @@ export const Vector3 = vi.fn(function (
     });
     this.cross = THREEVector3.prototype.cross;
     this.dot = THREEVector3.prototype.dot;
+    this.applyQuaternion = vi.fn(() => {
+        return this;
+    });
     this.crossVectors = THREEVector3.prototype.crossVectors;
     this.setY = vi.fn((y: number) => {
         this.y = y;
@@ -67,7 +70,11 @@ export const Vector3 = vi.fn(function (
         this.z -= vec3.z;
         return this;
     });
+    this.projectOnVector = vi.fn((vec3: THREEVector3) => {
+        return this;
+    });
     this.subVectors = vi.fn();
+    this.normalize = vi.fn();
     return this;
 });
 
@@ -82,6 +89,7 @@ export const Object3D = vi.fn(function (this: any) {
     this.layers = {
         mask: 0,
     };
+    this.lookAt = vi.fn();
     this.shadow = {
         radius: 0,
         mapSize: { width: 0, height: 0 },
@@ -130,7 +138,42 @@ export const Object3D = vi.fn(function (this: any) {
     this.getWorldPosition = vi.fn(() => {
         return this.position.clone();
     });
+    this.translateX = vi.fn();
+    this.translateY = vi.fn();
+    this.translateZ = vi.fn();
     this.rotateX = vi.fn();
+    this.rotateY = vi.fn();
+    this.rotateZ = vi.fn();
+    this.translateY = vi.fn();
+    this.lookAt = vi.fn();
+
+    // Mock getter properties for handles
+    Object.defineProperty(this, 'forwardVector', {
+        get: vi.fn(() => {
+            // Simulate the actual calculation based on axis
+            if (this.axis === 'x') return new THREEVector3(1, 0, 0);
+            if (this.axis === 'y') return new THREEVector3(0, 1, 0);
+            return new THREEVector3(0, 0, 1);
+        }),
+        configurable: true,
+    });
+    Object.defineProperty(this, 'rightVector', {
+        get: vi.fn(() => {
+            if (this.axis === 'x') return new THREEVector3(0, 1, 0);
+            if (this.axis === 'y') return new THREEVector3(0, 0, 1);
+            return new THREEVector3(1, 0, 0);
+        }),
+        configurable: true,
+    });
+    Object.defineProperty(this, 'upVector', {
+        get: vi.fn(() => {
+            if (this.axis === 'x') return new THREEVector3(0, 0, 1);
+            if (this.axis === 'y') return new THREEVector3(1, 0, 0);
+            return new THREEVector3(0, 1, 0);
+        }),
+        configurable: true,
+    });
+
     this.clone = vi.fn(() => {
         // Create a new Object3D instance with the same properties
         const cloned = new Object3D();
@@ -194,12 +237,15 @@ export const Mesh = vi.fn(function (this: any) {
         boundingBox: new Box3(),
     };
     this.rotateX = vi.fn();
+    this.rotateY = vi.fn();
+    this.rotateZ = vi.fn();
     this.material = new MeshStandardMaterial();
     this.castShadow = true;
     this.receiveShadow = true;
     this.layers = {
         mask: 0,
     };
+    this.translateY = vi.fn();
     this.updateWorldMatrix = vi.fn();
     this.traverse = vi.fn();
     this.removeFromParent = vi.fn();
@@ -413,9 +459,14 @@ export const SphereGeometry = vi.fn(function (this: any) {
     return this;
 });
 
+export const TorusGeometry = vi.fn(function (this: any) {
+    return this;
+});
+
 export const MeshBasicMaterial = vi.fn(function (this: any) {
     this.opacity = 1.0;
     this.color = new Color();
+    this.clone = vi.fn(() => this);
     return this;
 });
 

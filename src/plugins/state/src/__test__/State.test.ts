@@ -16,6 +16,11 @@ import { type Vector3Like } from 'three';
 declare global {
     interface ActionTypes {
         GET_CAMERA_TRANSFORM: typeof MockActionClass;
+        TEST_MEDIA_CREATOR: typeof MediaCreatorActionClass;
+        TEST_AR_SYSTEM: typeof ARSystemActionClass;
+        TEST_ASSET_EXPORTER: typeof AssetExporterActionClass;
+        TEST_ANIMATION_SYSTEM: typeof AnimationSystemActionClass;
+        TEST_TOOLBOX: typeof ToolboxActionClass;
     }
 }
 
@@ -33,6 +38,62 @@ const MockActionClass = Action.define<
         position: { x: 0, y: 0, z: 0 },
         target: { x: 0, y: 0, z: 0 },
     }),
+});
+
+// Create action classes that use different dependencies
+const MediaCreatorActionClass = Action.define<
+    void,
+    Pick<ActionDependencies, 'getMediaCreator'>,
+    void
+>({
+    description: 'Test media creator action',
+    execute: async (payload, deps) => {
+        await deps.getMediaCreator();
+    },
+});
+
+const ARSystemActionClass = Action.define<
+    void,
+    Pick<ActionDependencies, 'getARSystem'>,
+    void
+>({
+    description: 'Test AR system action',
+    execute: async (payload, deps) => {
+        await deps.getARSystem();
+    },
+});
+
+const AssetExporterActionClass = Action.define<
+    void,
+    Pick<ActionDependencies, 'getAssetExporter'>,
+    void
+>({
+    description: 'Test asset exporter action',
+    execute: async (payload, deps) => {
+        await deps.getAssetExporter();
+    },
+});
+
+const AnimationSystemActionClass = Action.define<
+    void,
+    Pick<ActionDependencies, 'getAnimationSystem'>,
+    void
+>({
+    description: 'Test animation system action',
+    execute: async (payload, deps) => {
+        await deps.getAnimationSystem();
+    },
+});
+
+const ToolboxActionClass = Action.define<
+    void,
+    Pick<ActionDependencies, 'getToolbox'>,
+    void
+>({
+    description: 'Test toolbox action',
+    execute: async (payload, deps) => {
+        await deps.getToolbox();
+    },
 });
 
 // Mock dependencies
@@ -133,6 +194,9 @@ describe('modules/state/State', () => {
         });
         Object.defineProperty(mockEngine, 'scene', {
             get: () => mockScene,
+        });
+        Object.defineProperty(mockEngine, 'renderer', {
+            get: () => ({ uuid: 'mock-renderer-uuid' }),
         });
 
         const mockCanvas = document.createElement('canvas');
@@ -434,6 +498,190 @@ describe('modules/state/State', () => {
         it('should return undefined when instance not found', () => {
             const foundState = State.get('non-existent-id');
             expect(foundState).toBeUndefined();
+        });
+    });
+
+    describe('Lazy Loading Module Getters', () => {
+        beforeEach(() => {
+            // Mock the dynamic imports for each module
+            vi.mock('@shopware-ag/dive/mediacreator', () => ({
+                MediaCreator: vi.fn().mockImplementation(() => ({
+                    uuid: 'mock-media-creator-uuid',
+                })),
+            }));
+
+            vi.mock('@shopware-ag/dive/ar', () => ({
+                ARSystem: vi.fn().mockImplementation(() => ({
+                    uuid: 'mock-ar-system-uuid',
+                })),
+            }));
+
+            vi.mock('@shopware-ag/dive/assetexporter', () => ({
+                AssetExporter: vi.fn().mockImplementation(() => ({
+                    uuid: 'mock-asset-exporter-uuid',
+                })),
+            }));
+
+            vi.mock('@shopware-ag/dive/animation', () => ({
+                AnimationSystem: vi.fn().mockImplementation(() => ({
+                    uuid: 'mock-animation-system-uuid',
+                })),
+            }));
+
+            vi.mock('@shopware-ag/dive/toolbox', () => ({
+                Toolbox: vi.fn().mockImplementation(() => ({
+                    uuid: 'mock-toolbox-uuid',
+                })),
+            }));
+        });
+
+        it('should lazy load MediaCreator when getMediaCreator is called', async () => {
+            vi.mocked(getActionClass).mockReturnValue(
+                MediaCreatorActionClass as any,
+            );
+
+            await state.performAction('TEST_MEDIA_CREATOR');
+
+            // Verify that MediaCreator was instantiated
+            const { MediaCreator } = await import(
+                '@shopware-ag/dive/mediacreator'
+            );
+            expect(MediaCreator).toHaveBeenCalledWith(
+                mockEngine.renderer,
+                mockEngine.scene,
+                mockController,
+            );
+        });
+
+        it('should lazy load ARSystem when getARSystem is called', async () => {
+            vi.mocked(getActionClass).mockReturnValue(
+                ARSystemActionClass as any,
+            );
+
+            await state.performAction('TEST_AR_SYSTEM');
+
+            // Verify that ARSystem was instantiated
+            const { ARSystem } = await import('@shopware-ag/dive/ar');
+            expect(ARSystem).toHaveBeenCalled();
+        });
+
+        it('should lazy load AssetExporter when getAssetExporter is called', async () => {
+            vi.mocked(getActionClass).mockReturnValue(
+                AssetExporterActionClass as any,
+            );
+
+            await state.performAction('TEST_ASSET_EXPORTER');
+
+            // Verify that AssetExporter was instantiated
+            const { AssetExporter } = await import(
+                '@shopware-ag/dive/assetexporter'
+            );
+            expect(AssetExporter).toHaveBeenCalled();
+        });
+
+        it('should lazy load AnimationSystem when getAnimationSystem is called', async () => {
+            vi.mocked(getActionClass).mockReturnValue(
+                AnimationSystemActionClass as any,
+            );
+
+            await state.performAction('TEST_ANIMATION_SYSTEM');
+
+            // Verify that AnimationSystem was instantiated
+            const { AnimationSystem } = await import(
+                '@shopware-ag/dive/animation'
+            );
+            expect(AnimationSystem).toHaveBeenCalled();
+        });
+
+        it('should lazy load Toolbox when getToolbox is called', async () => {
+            vi.mocked(getActionClass).mockReturnValue(
+                ToolboxActionClass as any,
+            );
+
+            await state.performAction('TEST_TOOLBOX');
+
+            // Verify that Toolbox was instantiated
+            const { Toolbox } = await import('@shopware-ag/dive/toolbox');
+            expect(Toolbox).toHaveBeenCalledWith(
+                mockEngine.scene,
+                mockController,
+            );
+        });
+
+        it('should reuse existing MediaCreator instance on subsequent calls', async () => {
+            vi.mocked(getActionClass).mockReturnValue(
+                MediaCreatorActionClass as any,
+            );
+
+            // Call twice
+            await state.performAction('TEST_MEDIA_CREATOR');
+            await state.performAction('TEST_MEDIA_CREATOR');
+
+            // Verify that MediaCreator was only instantiated once
+            const { MediaCreator } = await import(
+                '@shopware-ag/dive/mediacreator'
+            );
+            expect(MediaCreator).toHaveBeenCalledTimes(1);
+        });
+
+        it('should reuse existing ARSystem instance on subsequent calls', async () => {
+            vi.mocked(getActionClass).mockReturnValue(
+                ARSystemActionClass as any,
+            );
+
+            // Call twice
+            await state.performAction('TEST_AR_SYSTEM');
+            await state.performAction('TEST_AR_SYSTEM');
+
+            // Verify that ARSystem was only instantiated once
+            const { ARSystem } = await import('@shopware-ag/dive/ar');
+            expect(ARSystem).toHaveBeenCalledTimes(1);
+        });
+
+        it('should reuse existing AssetExporter instance on subsequent calls', async () => {
+            vi.mocked(getActionClass).mockReturnValue(
+                AssetExporterActionClass as any,
+            );
+
+            // Call twice
+            await state.performAction('TEST_ASSET_EXPORTER');
+            await state.performAction('TEST_ASSET_EXPORTER');
+
+            // Verify that AssetExporter was only instantiated once
+            const { AssetExporter } = await import(
+                '@shopware-ag/dive/assetexporter'
+            );
+            expect(AssetExporter).toHaveBeenCalledTimes(1);
+        });
+
+        it('should reuse existing AnimationSystem instance on subsequent calls', async () => {
+            vi.mocked(getActionClass).mockReturnValue(
+                AnimationSystemActionClass as any,
+            );
+
+            // Call twice
+            await state.performAction('TEST_ANIMATION_SYSTEM');
+            await state.performAction('TEST_ANIMATION_SYSTEM');
+
+            // Verify that AnimationSystem was only instantiated once
+            const { AnimationSystem } = await import(
+                '@shopware-ag/dive/animation'
+            );
+            expect(AnimationSystem).toHaveBeenCalledTimes(1);
+        });
+
+        it('should reuse existing Toolbox instance on subsequent calls', async () => {
+            vi.mocked(getActionClass).mockReturnValue(
+                ToolboxActionClass as any,
+            );
+
+            // Call twice
+            await state.performAction('TEST_TOOLBOX');
+            await state.performAction('TEST_TOOLBOX');
+
+            // Verify that Toolbox was only instantiated once
+            const { Toolbox } = await import('@shopware-ag/dive/toolbox');
+            expect(Toolbox).toHaveBeenCalledTimes(1);
         });
     });
 });
