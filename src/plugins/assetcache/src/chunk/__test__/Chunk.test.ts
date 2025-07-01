@@ -78,8 +78,8 @@ describe('Chunk', () => {
             const chunk = new Chunk(mockUri);
             const initialUpdatedAt = chunk.updatedAt;
 
-            // Wait a bit to ensure timestamp difference
-            await new Promise((resolve) => setTimeout(resolve, 1));
+            // Wait 100ms to ensure timestamp difference
+            await new Promise((resolve) => setTimeout(resolve, 100));
 
             await chunk.load();
 
