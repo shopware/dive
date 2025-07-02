@@ -11,6 +11,7 @@ import {
     EngineSettings,
 } from '../engine/Engine.ts';
 import { DIVEModel, DIVESceneLight } from '../components/index.ts';
+import { BoundingBox } from 'src/components/boundingbox/BoundingBox.ts';
 
 declare global {
     interface Window {
@@ -104,7 +105,9 @@ export class DIVE {
         await model.setFromURL(uri);
 
         // set camera to encompass the loaded model
-        const sceneBB = dive.engine.scene.computeSceneBB();
+        const sceneBB = new BoundingBox(model);
+        dive.engine.scene.add(sceneBB);
+
         const transform = dive.orbitController.computeEncompassingView(sceneBB);
         dive.engine.camera.position.copy(transform.position);
         dive.orbitController.target.copy(transform.target);
