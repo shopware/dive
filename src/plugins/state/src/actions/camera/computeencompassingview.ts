@@ -2,6 +2,7 @@ import { Action } from '../action.ts';
 import { registerAction } from '../../ActionRegistry.ts';
 import { type Vector3Like } from 'three';
 import { type ActionDependencies } from '../../../types/index.ts';
+import { BoundingBox } from 'src/components/boundingbox/BoundingBox.ts';
 
 export const ComputeEncompassingViewAction = Action.define<
     void,
@@ -14,7 +15,7 @@ export const ComputeEncompassingViewAction = Action.define<
     description:
         'Calculates the camera position and target to view the whole scene. (experimental).',
     execute: (_payload, { engine, controller }) => {
-        const sceneBB = engine.scene.computeSceneBB();
+        const sceneBB = new BoundingBox(engine.scene.root, false, 0x00ff00);
         return controller.computeEncompassingView(sceneBB);
     },
 });
