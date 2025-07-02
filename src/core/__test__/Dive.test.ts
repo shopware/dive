@@ -13,6 +13,10 @@ class MockResizeObserver {
 }
 global.ResizeObserver = MockResizeObserver as any;
 
+vi.mock('../../components/boundingbox/BoundingBox.ts', () => ({
+    BoundingBox: vi.fn(),
+}));
+
 vi.mock('../../engine/Engine', async (importOriginal) => {
     const actual =
         await importOriginal<typeof import('../../engine/Engine.ts')>();
@@ -26,7 +30,7 @@ vi.mock('../../engine/Engine', async (importOriginal) => {
                 },
             };
             this.scene = {
-                computeSceneBB: vi.fn(),
+                add: vi.fn(),
                 background: {
                     set: vi.fn(),
                 },
@@ -121,23 +125,10 @@ vi.mock('@shopware-ag/dive/orbitcontroller', async (importOriginal) => {
     };
 });
 
-vi.mock('@shopware-ag/dive/axiscamera', () => {
+vi.mock('@shopware-ag/dive/orientationdisplay', () => {
     return {
-        DIVEAxisCamera: vi.fn(function (this: any) {
-            this.isObject3D = true;
-            this.parent = null;
-            this.dispatchEvent = vi.fn();
-            this.position = {
-                set: vi.fn(),
-            };
-            this.setIntensity = vi.fn();
-            this.setEnabled = vi.fn();
-            this.setColor = vi.fn();
-            this.userData = {
-                id: undefined,
-            };
-            this.removeFromParent = vi.fn();
-            this.setFromCameraMatrix = vi.fn();
+        OrientationDisplay: vi.fn(function (this: any) {
+            this.tick = vi.fn();
             this.dispose = vi.fn();
             return this;
         }),
@@ -252,7 +243,7 @@ describe('DIVE', () => {
         } as DIVESettings;
 
         const dive = new DIVE(settings);
-        expect(dive['axisCamera']).toBeDefined();
+        expect(dive['orientationDisplay']).toBeDefined();
     });
 
     it('should not initialize axis camera when displayAxes is false', () => {
@@ -261,7 +252,7 @@ describe('DIVE', () => {
         } as DIVESettings;
 
         const dive = new DIVE(settings);
-        expect(dive['axisCamera']).toBeNull();
+        expect(dive['orientationDisplay']).toBeNull();
     });
 
     it('should properly dispose all components', async () => {
@@ -274,7 +265,7 @@ describe('DIVE', () => {
         await dive.dispose();
 
         expect(dive['orbitController'].dispose).toHaveBeenCalled();
-        expect(dive['axisCamera']?.dispose).toHaveBeenCalled();
+        expect(dive['orientationDisplay']?.dispose).toHaveBeenCalled();
     });
 
     it('should handle dispose when animation system pipeline is not initialized', () => {

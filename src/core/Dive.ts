@@ -3,7 +3,7 @@ import {
     OrbitControllerDefaultSettings,
     OrbitControllerSettings,
 } from '@shopware-ag/dive/orbitcontroller';
-import { DIVEAxisCamera } from '@shopware-ag/dive/axiscamera';
+import { OrientationDisplay } from '@shopware-ag/dive/orientationdisplay';
 import { Color, MathUtils } from 'three';
 import {
     DIVEEngine,
@@ -127,7 +127,7 @@ export class DIVE {
 
     private orbitController: OrbitController;
 
-    private axisCamera: DIVEAxisCamera | null;
+    private orientationDisplay: OrientationDisplay | null;
 
     public get canvas(): HTMLCanvasElement {
         return this._engine.renderer.webglrenderer.domElement;
@@ -166,14 +166,14 @@ export class DIVE {
 
         // initialize axis camera
         if (this._settings.displayAxes) {
-            this.axisCamera = new DIVEAxisCamera(
+            this.orientationDisplay = new OrientationDisplay(
                 this._engine.renderer,
                 this._engine.scene,
                 this._engine.camera,
             );
-            this._engine.clock.addTicker(this.axisCamera);
+            this._engine.clock.addTicker(this.orientationDisplay);
         } else {
-            this.axisCamera = null;
+            this.orientationDisplay = null;
         }
 
         // Load version info
@@ -221,9 +221,9 @@ export class DIVE {
             this._engine.clock.removeTicker(this.orbitController);
             this.orbitController.dispose();
 
-            if (this.axisCamera) {
-                this._engine.clock.removeTicker(this.axisCamera);
-                this.axisCamera.dispose();
+            if (this.orientationDisplay) {
+                this._engine.clock.removeTicker(this.orientationDisplay);
+                this.orientationDisplay.dispose();
             }
 
             window.DIVE.instances = window.DIVE.instances.filter(

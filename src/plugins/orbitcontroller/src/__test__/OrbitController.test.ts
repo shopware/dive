@@ -4,10 +4,24 @@ import {
     DIVERenderPipeline,
     DIVEScene,
 } from '@shopware-ag/dive';
-import { Box3, Vector3 } from 'three';
+import { BoundingBox } from 'src/components/boundingbox/BoundingBox.ts';
+import { Box3, Vector3, Object3D, Sphere } from 'three';
 
 // Add a real canvas for the controls domElement
 const canvas = document.createElement('canvas');
+
+// Mock BoundingBox class
+vi.mock('src/components/boundingbox/BoundingBox.ts', () => ({
+    BoundingBox: vi.fn().mockImplementation(() => ({
+        center: new Vector3(0, 0, 0),
+        sphere: {
+            radius: 1,
+        },
+        box: new Box3(),
+        size: new Vector3(2, 2, 2),
+        radius: 1,
+    })),
+}));
 
 vi.mock('@shopware-ag/dive', async () => {
     const actual =
@@ -29,22 +43,24 @@ vi.mock('@shopware-ag/dive', async () => {
     };
 });
 
+// Create a proper Vector3 mock for camera position
+const mockPosition = {
+    clone: vi.fn(() => mockPosition),
+    normalize: vi.fn(() => mockPosition),
+    multiplyScalar: vi.fn(() => mockPosition),
+    set: vi.fn(() => mockPosition),
+    sub: vi.fn(() => mockPosition),
+    length: vi.fn(() => 1),
+    x: 0,
+    y: 2,
+    z: 2,
+};
+
 const mockCamera = {
-    position: {
-        clone: vi.fn(() => {
-            return mockCamera.position;
-        }),
-        normalize: vi.fn(() => {
-            return mockCamera.position;
-        }),
-        multiplyScalar: vi.fn(() => {
-            return mockCamera.position;
-        }),
-        set: vi.fn(() => {
-            return mockCamera.position;
-        }),
-    },
+    position: mockPosition,
     lookAt: vi.fn(),
+    fov: 75,
+    aspect: 1,
 } as unknown as DIVEPerspectiveCamera;
 const mockRenderer = new DIVERenderPipeline(new DIVEScene(), mockCamera);
 
@@ -79,7 +95,8 @@ describe('modules/controller/orbit/OrbitController', () => {
     });
 
     it('should compute encompassing view', () => {
-        const box = new Box3(new Vector3(-1, -1, -1), new Vector3(1, 1, 1));
+        const mockObject = new Object3D();
+        const box = new BoundingBox(mockObject);
         const result = controller.computeEncompassingView(box);
         expect(result).toBeDefined();
         expect(result.position).toBeDefined();
@@ -89,7 +106,8 @@ describe('modules/controller/orbit/OrbitController', () => {
     });
 
     it('should compute encompassing view with non-centered box', () => {
-        const box = new Box3(new Vector3(1, 1, 1), new Vector3(3, 3, 3));
+        const mockObject = new Object3D();
+        const box = new BoundingBox(mockObject);
         const result = controller.computeEncompassingView(box);
         expect(result).toBeDefined();
         expect(result.position).toBeDefined();
@@ -99,7 +117,8 @@ describe('modules/controller/orbit/OrbitController', () => {
     });
 
     it('should compute encompassing view with zero-size box', () => {
-        const box = new Box3(new Vector3(0, 0, 0), new Vector3(0, 0, 0));
+        const mockObject = new Object3D();
+        const box = new BoundingBox(mockObject);
         const result = controller.computeEncompassingView(box);
         expect(result).toBeDefined();
         expect(result.position).toBeDefined();

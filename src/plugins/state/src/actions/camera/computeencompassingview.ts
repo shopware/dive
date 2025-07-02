@@ -2,7 +2,7 @@ import { Action } from '../action.ts';
 import { registerAction } from '../../ActionRegistry.ts';
 import { type Vector3Like } from 'three';
 import { type ActionDependencies } from '../../../types/index.ts';
-import { BoundingBox } from 'src/components/boundingbox/BoundingBox.ts';
+import { BoundingBox } from '../../../../../components/boundingbox/BoundingBox.ts';
 
 export const ComputeEncompassingViewAction = Action.define<
     void,

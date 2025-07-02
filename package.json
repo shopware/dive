@@ -42,11 +42,6 @@
             "import": "./build/plugins/assetloader/index.mjs",
             "require": "./build/plugins/assetloader/index.cjs"
         },
-        "./axiscamera": {
-            "types": "./build/plugins/axiscamera/index.d.ts",
-            "import": "./build/plugins/axiscamera/index.mjs",
-            "require": "./build/plugins/axiscamera/index.cjs"
-        },
         "./mediacreator": {
             "types": "./build/plugins/mediacreator/index.d.ts",
             "import": "./build/plugins/mediacreator/index.mjs",
@@ -56,6 +51,11 @@
             "types": "./build/plugins/orbitcontroller/index.d.ts",
             "import": "./build/plugins/orbitcontroller/index.mjs",
             "require": "./build/plugins/orbitcontroller/index.cjs"
+        },
+        "./orientationdisplay": {
+            "types": "./build/plugins/orientationdisplay/index.d.ts",
+            "import": "./build/plugins/orientationdisplay/index.mjs",
+            "require": "./build/plugins/orientationdisplay/index.cjs"
         },
         "./state": {
             "types": "./build/plugins/state/index.d.ts",

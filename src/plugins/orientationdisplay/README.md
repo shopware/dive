@@ -1,4 +1,4 @@
-# Axis Camera
+# Orientation Display
 Displays scene axes in the corner of the screen for orientation.
 
 ## Features:
@@ -9,8 +9,8 @@ Displays scene axes in the corner of the screen for orientation.
 
 ## Usage
 ```ts
-import { DIVEAxisCamera } from '@shopware-ag/dive/axiscamera';
+import { OrientationDisplay } from '@shopware-ag/dive/orientationdisplay';
 
-const axisCamera = new DIVEAxisCamera(renderer, scene, camera);
+const orientationDisplay = new OrientationDisplay(renderer, scene, camera);
 // Automatically added to the scene and updated each frame
 ```

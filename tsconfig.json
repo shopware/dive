@@ -36,8 +36,8 @@
             "@shopware-ag/dive/assetcache": [
                 "src/plugins/assetcache/index.ts"
             ],
-            "@shopware-ag/dive/axiscamera": [
-                "src/plugins/axiscamera/index.ts"
+            "@shopware-ag/dive/orientationdisplay": [
+                "src/plugins/orientationdisplay/index.ts"
             ],
             "@shopware-ag/dive/mediacreator": [
                 "src/plugins/mediacreator/index.ts"
