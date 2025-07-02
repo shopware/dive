@@ -1,4 +1,4 @@
-name: Beta Release
+name: 'Publish Beta Manually'
 
 on:
     workflow_dispatch: # This allows manual triggering only from the Actions tab
@@ -114,7 +114,7 @@ jobs:
                   next_version="$major.$minor.$next_patch"
 
                   # Find all beta branches matching the pattern
-                  prefix="beta/v$next_version-beta"
+                  prefix="beta/$next_version-beta"
                   last_beta=$(git branch -r | grep "origin/$prefix" | awk -F '-' '{print $NF}' | sort -n | tail -n 1)
 
                   if [ -z "$last_beta" ]; then
@@ -135,7 +135,7 @@ jobs:
 
             - name: Create beta branch
               run: |
-                  git checkout -b beta/v${{ env.next_beta }}
+                  git checkout -b beta/${{ env.next_beta }}
 
             - name: Build DIVE
               run: yarn build
@@ -145,15 +145,15 @@ jobs:
 
             - name: Commit changes
               run: |
-                  git commit -m "Beta v$(node -p "require('./package.json').version")"
+                  git commit -m "Beta $(node -p "require('./package.json').version")"
 
             - name: Create tag
               run: |
-                  git tag -a v$(node -p "require('./package.json').version") -m "Beta v$(node -p "require('./package.json').version")"
+                  git tag -a $(node -p "require('./package.json').version") -m "Beta v$(node -p "require('./package.json').version")"
 
             - name: Push changes
               run: |
-                  git push origin beta/v$(node -p "require('./package.json').version") --follow-tags
+                  git push origin beta/$(node -p "require('./package.json').version") --follow-tags
 
             - name: Authenticate with NPM
               env:
