@@ -82,6 +82,18 @@ export const Vector4 = vi.fn(function (this: any) {
     return this;
 });
 
+export const Quaternion = vi.fn(function (this: any) {
+    this.set = vi.fn();
+    this.multiplyQuaternions = vi.fn();
+    this.multiplyScalar = vi.fn();
+    this.setFromEuler = vi.fn();
+    this.setFromAxisAngle = vi.fn();
+    this.setFromUnitVectors = vi.fn();
+    this.setFromRotationMatrix = vi.fn();
+    this.invert = vi.fn();
+    return this;
+});
+
 export const Object3D = vi.fn(function (this: any) {
     this.clear = vi.fn();
     this.color = {};
@@ -235,6 +247,9 @@ export const Mesh = vi.fn(function (this: any) {
     this.geometry = {
         computeBoundingBox: vi.fn(),
         boundingBox: new Box3(),
+        clone: vi.fn(() => this.geometry),
+        applyMatrix4: vi.fn(),
+        applyQuaternion: vi.fn(),
     };
     this.rotateX = vi.fn();
     this.rotateY = vi.fn();
@@ -245,12 +260,24 @@ export const Mesh = vi.fn(function (this: any) {
     this.layers = {
         mask: 0,
     };
+    this.position = new Vector3();
+    this.rotation = new Euler();
+    this.scale = new Vector3();
     this.translateY = vi.fn();
     this.updateWorldMatrix = vi.fn();
     this.traverse = vi.fn();
     this.removeFromParent = vi.fn();
+    this.getWorldQuaternion = vi.fn(() => {
+        return new Quaternion();
+    });
     this.localToWorld = vi.fn((vec3: THREEVector3) => {
         return vec3;
+    });
+    this.visible = false;
+    this.children = [];
+    this.add = vi.fn((child: any) => {
+        this.children.push(child);
+        return this;
     });
     return this;
 });
@@ -265,6 +292,14 @@ export const Box3 = vi.fn(function (this: any) {
     this.makeEmpty = vi.fn();
     this.getSize = vi.fn(() => new Vector3());
     this.setFromObject = vi.fn();
+    this.getBoundingSphere = vi.fn((target: any) => {
+        if (target) {
+            target.center = new THREEVector3(0, 0, 0);
+            target.radius = 1;
+        }
+        return target;
+    });
+    this.union = vi.fn();
     return this;
 });
 
@@ -278,8 +313,41 @@ export const Raycaster = vi.fn(function (this: any) {
     return this;
 });
 
-export const MeshStandardMaterial = vi.fn(function (this: any) {
-    this.color = new Color();
+export const MeshStandardMaterial = vi.fn(function (
+    this: any,
+    parameters: any = {},
+) {
+    let colorInstance = new Color();
+    if (parameters.color !== undefined) {
+        colorInstance.set(parameters.color);
+    }
+    let colorProxy = new Proxy(colorInstance, {
+        set(target, prop, value) {
+            if (
+                prop === 'set' &&
+                (typeof value === 'number' || typeof value === 'string')
+            ) {
+                target.set(value);
+                return true;
+            }
+            target[prop] = value;
+            return true;
+        },
+    });
+    Object.defineProperty(this, 'color', {
+        get() {
+            return colorProxy;
+        },
+        set(value) {
+            if (typeof value === 'number' || typeof value === 'string') {
+                colorProxy.set(value);
+            } else if (value && typeof value.getHex === 'function') {
+                colorProxy = value;
+            }
+        },
+        configurable: true,
+        enumerable: true,
+    });
     this.roughness = 1;
     this.roughnessMap = undefined;
     this.metalness = 0;
@@ -287,7 +355,116 @@ export const MeshStandardMaterial = vi.fn(function (this: any) {
     return this;
 });
 
-export const Color = THREEColor;
+export const Color = vi.fn(function (this: any, color?: any) {
+    let r = 0,
+        g = 0,
+        b = 0;
+    const self = this;
+    Object.defineProperty(this, 'r', {
+        get() {
+            return r;
+        },
+        set(val) {
+            r = val;
+        },
+        configurable: true,
+        enumerable: true,
+    });
+    Object.defineProperty(this, 'g', {
+        get() {
+            return g;
+        },
+        set(val) {
+            g = val;
+        },
+        configurable: true,
+        enumerable: true,
+    });
+    Object.defineProperty(this, 'b', {
+        get() {
+            return b;
+        },
+        set(val) {
+            b = val;
+        },
+        configurable: true,
+        enumerable: true,
+    });
+    this.clone = vi.fn(() => {
+        const cloned = new (Color as any)();
+        cloned.r = self.r;
+        cloned.g = self.g;
+        cloned.b = self.b;
+        return cloned;
+    });
+    this.set = vi.fn((color: any) => {
+        if (typeof color === 'number') {
+            r = ((color >> 16) & 255) / 255;
+            g = ((color >> 8) & 255) / 255;
+            b = (color & 255) / 255;
+        } else if (typeof color === 'string') {
+            const hex = color.replace('#', '');
+            r = parseInt(hex.substr(0, 2), 16) / 255;
+            g = parseInt(hex.substr(2, 2), 16) / 255;
+            b = parseInt(hex.substr(4, 2), 16) / 255;
+        } else if (
+            color &&
+            typeof color.r === 'number' &&
+            typeof color.g === 'number' &&
+            typeof color.b === 'number'
+        ) {
+            r = color.r;
+            g = color.g;
+            b = color.b;
+        }
+        return self;
+    });
+    this.copy = vi.fn((color: any) => {
+        r = color.r;
+        g = color.g;
+        b = color.b;
+        return self;
+    });
+    this.multiplyScalar = vi.fn((scalar: number) => {
+        r *= scalar;
+        g *= scalar;
+        b *= scalar;
+        return self;
+    });
+    this.getHex = vi.fn(() => {
+        const rr = Math.round(r * 255);
+        const gg = Math.round(g * 255);
+        const bb = Math.round(b * 255);
+        return (rr << 16) | (gg << 8) | bb;
+    });
+    this.getHexString = vi.fn(() => {
+        const rr = Math.round(r * 255);
+        const gg = Math.round(g * 255);
+        const bb = Math.round(b * 255);
+        return (
+            rr.toString(16).padStart(2, '0') +
+            gg.toString(16).padStart(2, '0') +
+            bb.toString(16).padStart(2, '0')
+        );
+    });
+    if (color !== undefined) {
+        this.set(color);
+    }
+    // Custom setter for the instance itself
+    return new Proxy(this, {
+        set(target, prop, value) {
+            if (
+                prop === 'set' &&
+                (typeof value === 'number' || typeof value === 'string')
+            ) {
+                self.set(value);
+                return true;
+            }
+            target[prop] = value;
+            return true;
+        },
+    });
+});
 
 export const WebGLRendererRenderMock = vi.fn();
 export const WebGLRendererSetSizeMock = vi.fn();
@@ -325,6 +502,7 @@ export const MathUtils = {
 
 export const Euler = vi.fn(function (this: any) {
     this.set = vi.fn();
+    this.copy = vi.fn();
     return this;
 });
 
@@ -456,6 +634,7 @@ export const PlaneGeometry = vi.fn(function (this: any) {
 });
 
 export const SphereGeometry = vi.fn(function (this: any) {
+    this.translate = vi.fn();
     return this;
 });
 
@@ -463,9 +642,16 @@ export const TorusGeometry = vi.fn(function (this: any) {
     return this;
 });
 
-export const MeshBasicMaterial = vi.fn(function (this: any) {
+export const MeshBasicMaterial = vi.fn(function (
+    this: any,
+    parameters: any = {},
+) {
     this.opacity = 1.0;
     this.color = new Color();
+    if (parameters.color !== undefined) {
+        this.color.set(parameters.color);
+    }
+    this.wireframe = parameters.wireframe || false;
     this.clone = vi.fn(() => this);
     return this;
 });
@@ -560,6 +746,11 @@ export const Line = vi.fn(function (this: any) {
     return this;
 });
 
+export const Sphere = vi.fn(function (this: any) {
+    this.radius = 1;
+    return this;
+});
+
 export const EventDispatcher = vi.fn(function (this: any) {
     this.dispatchEvent = vi.fn();
     return this;
@@ -569,5 +760,22 @@ export const Vector3Like = vi.fn(function (this: any) {
     this.x = 0;
     this.y = 0;
     this.z = 0;
+    return this;
+});
+
+export const Box3Helper = vi.fn(function (this: any) {
+    this.isObject3D = true;
+    this.parent = null;
+    this.dispatchEvent = vi.fn();
+    this.layers = {
+        mask: 0,
+    };
+    this.visible = false;
+    this.children = [];
+    this.add = vi.fn((child: any) => {
+        this.children.push(child);
+        return this;
+    });
+    this.removeFromParent = vi.fn();
     return this;
 });
