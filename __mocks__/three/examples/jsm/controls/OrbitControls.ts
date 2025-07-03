@@ -1,4 +1,6 @@
-export const OrbitControls = jest.fn(function () {
+import { vi } from 'vitest';
+
+export const OrbitControls = vi.fn(function () {
     this.enableDamping = true;
     this.dampingFactor = 0.25;
     this.enableZoom = true;
@@ -26,13 +28,18 @@ export const OrbitControls = jest.fn(function () {
         MIDDLE: 1,
         RIGHT: 2,
     };
-    this.update = jest.fn();
-    this.dispose = jest.fn();
-    this.getDistance = jest.fn();
+    this.update = vi.fn();
+    this.dispose = vi.fn();
+    this.getDistance = vi.fn();
     this.target = {
-        clone: jest.fn(),
-        set: jest.fn(),
-        copy: jest.fn(),
+        clone: vi.fn(),
+        set: vi.fn(),
+        copy: vi.fn(),
+    };
+    this.object = {
+        position: {
+            set: vi.fn(),
+        },
     };
     return this;
 });

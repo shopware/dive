@@ -1,5 +1,7 @@
-export const DRACOLoader = jest.fn(() => {
+import { vi } from 'vitest';
+
+export const DRACOLoader = vi.fn(() => {
     return {
-        setDecoderPath: jest.fn(),
+        setDecoderPath: vi.fn(),
     };
 });

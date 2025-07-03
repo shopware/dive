@@ -1,7 +1,8 @@
-name: 🐞 Bug
+name: Bug Report
 description: File a bug/issue
 title: '[BUG] '
-labels: [bug]
+type: Bug
+labels: [bug, service/shopping-experience]
 body:
     - type: checkboxes
       attributes:

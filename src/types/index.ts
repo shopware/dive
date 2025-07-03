@@ -1,5 +1,3 @@
-import { type DIVESceneObject } from './SceneObjects';
-import { type DIVESceneFileType } from './SceneType';
-import { type DIVESceneData } from './SceneData';
-
-export { type DIVESceneObject, type DIVESceneFileType, type DIVESceneData };
+export * from './components/index.ts';
+export * from './file/index.ts';
+export * from './schema/index.ts';

@@ -1,0 +1,28 @@
+name: User Story
+description: Use this template to draft user stories.
+type: Story
+labels: [enhancement, service/shopping-experience]
+body:
+    - type: textarea
+      id: description
+      attributes:
+          label: Description
+          description: One-line description of what the story involves.
+      validations:
+          required: true
+    - type: textarea
+      id: acceptance-criteria
+      attributes:
+          label: Acceptance criteria
+          description: Please add acceptance criteria to the story. If some of the topics are not applicable, please remove them. (e.g. if not directly related to shopware, remove the Shopware Functionality topic)
+          value: |
+              DIVE Functionality:
+              - [ ]
+              Shopware Functionality:
+              - [ ]
+              Integration:
+              - [ ] All of the above changes are available on (shopware/)showpare->trunk.
+              Testing:
+              - [ ] All of the above changes are unit-tested completely.
+      validations:
+          required: true

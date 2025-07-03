@@ -7,18 +7,19 @@ import {
     type Object3D as THREEObject3D,
     // Box3,
     // MeshStandardMaterial as THREEMeshStandardMaterial,
-    // Color as THREEColor,
+    Color as THREEColor,
     MathUtils as THREEMathUtils,
 } from 'three';
 
-export const Vector2 = jest.fn(function () {
-    this.copy = jest.fn();
-    this.distanceTo = jest.fn();
-    this.set = jest.fn();
+export const Vector2 = vi.fn(function (this: any) {
+    this.copy = vi.fn();
+    this.distanceTo = vi.fn();
+    this.set = vi.fn();
     return this;
 });
 
-export const Vector3 = jest.fn(function (
+export const Vector3 = vi.fn(function (
+    this: any,
     x: number = 0,
     y: number = 0,
     z: number = 0,
@@ -26,61 +27,81 @@ export const Vector3 = jest.fn(function (
     this.x = x;
     this.y = y;
     this.z = z;
-    this.copy = jest.fn((vec3: THREEVector3) => {
+    this.copy = vi.fn((vec3: THREEVector3) => {
         this.x = vec3.x;
         this.y = vec3.y;
         this.z = vec3.z;
         return this;
     });
-    this.set = jest.fn((x: number, y: number, z: number) => {
+    this.set = vi.fn((x: number, y: number, z: number) => {
         this.x = x;
         this.y = y;
         this.z = z;
         return this;
     });
-    this.multiply = jest.fn((vec3: THREEVector3) => {
+    this.multiply = vi.fn((vec3: THREEVector3) => {
         this.x *= vec3.x;
         this.y *= vec3.y;
         this.z *= vec3.z;
         return this;
     });
-    this.clone = jest.fn(() => {
+    this.clone = vi.fn(() => {
         return new Vector3(this.x, this.y, this.z);
     });
     this.cross = THREEVector3.prototype.cross;
     this.dot = THREEVector3.prototype.dot;
+    this.applyQuaternion = vi.fn(() => {
+        return this;
+    });
     this.crossVectors = THREEVector3.prototype.crossVectors;
-    this.setY = jest.fn((y: number) => {
+    this.setY = vi.fn((y: number) => {
         this.y = y;
         return this;
     });
-    this.add = jest.fn((vec3: THREEVector3) => {
+    this.add = vi.fn((vec3: THREEVector3) => {
         this.x += vec3.x;
         this.y += vec3.y;
         this.z += vec3.z;
         return this;
     });
-    this.sub = jest.fn((vec3: THREEVector3) => {
+    this.sub = vi.fn((vec3: THREEVector3) => {
         this.x -= vec3.x;
         this.y -= vec3.y;
         this.z -= vec3.z;
         return this;
     });
-    this.subVectors = jest.fn();
+    this.projectOnVector = vi.fn((vec3: THREEVector3) => {
+        return this;
+    });
+    this.subVectors = vi.fn();
+    this.normalize = vi.fn();
     return this;
 });
 
-export const Vector4 = jest.fn(function () {
+export const Vector4 = vi.fn(function (this: any) {
     return this;
 });
 
-export const Object3D = jest.fn(function () {
-    this.clear = jest.fn();
+export const Quaternion = vi.fn(function (this: any) {
+    this.set = vi.fn();
+    this.multiplyQuaternions = vi.fn();
+    this.multiplyScalar = vi.fn();
+    this.setFromEuler = vi.fn();
+    this.setFromAxisAngle = vi.fn();
+    this.setFromUnitVectors = vi.fn();
+    this.setFromRotationMatrix = vi.fn();
+    this.invert = vi.fn();
+    return this;
+});
+
+export const Object3D = vi.fn(function (this: any) {
+    this.clear = vi.fn();
     this.color = {};
     this.intensity = 0;
     this.layers = {
         mask: 0,
     };
+    this.lookAt = vi.fn();
     this.shadow = {
         radius: 0,
         mapSize: { width: 0, height: 0 },
@@ -91,19 +112,22 @@ export const Object3D = jest.fn(function () {
             fov: 0,
         },
     };
-    this.add = jest.fn((obj: THREEObject3D) => {
+    this.add = vi.fn((obj: THREEObject3D) => {
         this.children.push(obj);
         return this;
     });
-    // this.attach = jest.fn();
-    this.remove = jest.fn((obj: THREEObject3D) => {
+    this.attach = vi.fn((obj: THREEObject3D) => {
+        this.children.push(obj);
+        return this;
+    });
+    this.remove = vi.fn((obj: THREEObject3D) => {
         const index = this.children.indexOf(obj);
         if (index !== -1) {
             this.children.splice(index, 1);
         }
         return this;
     });
-    this.sub = jest.fn();
+    this.sub = vi.fn();
     this.children = [];
     this.userData = {};
     this.position = new THREEVector3();
@@ -112,80 +136,218 @@ export const Object3D = jest.fn(function () {
         x: 1,
         y: 1,
         z: 1,
-        set: jest.fn(),
+        set: vi.fn(),
     };
-    this.localToWorld = jest.fn((vec3: THREEVector3) => {
+    this.localToWorld = vi.fn((vec3: THREEVector3) => {
         return vec3;
     });
-    this.traverse = jest.fn((callback) => {
+    this.traverse = vi.fn((callback) => {
         callback(this);
         this.children.forEach((child: THREEObject3D) => {
             callback(child);
         });
     });
-    this.getWorldPosition = jest.fn(() => {
+    this.getWorldPosition = vi.fn(() => {
         return this.position.clone();
     });
-    this.rotateX = jest.fn();
-    this.clone = jest.fn(() => {
-        return this;
+    this.translateX = vi.fn();
+    this.translateY = vi.fn();
+    this.translateZ = vi.fn();
+    this.rotateX = vi.fn();
+    this.rotateY = vi.fn();
+    this.rotateZ = vi.fn();
+    this.translateY = vi.fn();
+    this.lookAt = vi.fn();
+
+    // Mock getter properties for handles
+    Object.defineProperty(this, 'forwardVector', {
+        get: vi.fn(() => {
+            // Simulate the actual calculation based on axis
+            if (this.axis === 'x') return new THREEVector3(1, 0, 0);
+            if (this.axis === 'y') return new THREEVector3(0, 1, 0);
+            return new THREEVector3(0, 0, 1);
+        }),
+        configurable: true,
     });
+    Object.defineProperty(this, 'rightVector', {
+        get: vi.fn(() => {
+            if (this.axis === 'x') return new THREEVector3(0, 1, 0);
+            if (this.axis === 'y') return new THREEVector3(0, 0, 1);
+            return new THREEVector3(1, 0, 0);
+        }),
+        configurable: true,
+    });
+    Object.defineProperty(this, 'upVector', {
+        get: vi.fn(() => {
+            if (this.axis === 'x') return new THREEVector3(0, 0, 1);
+            if (this.axis === 'y') return new THREEVector3(1, 0, 0);
+            return new THREEVector3(0, 1, 0);
+        }),
+        configurable: true,
+    });
+
+    this.clone = vi.fn(() => {
+        // Create a new Object3D instance with the same properties
+        const cloned = new Object3D();
+        // Copy over key properties that tests might check
+        if (this.position) {
+            cloned.position = {
+                ...this.position,
+                equals: vi.fn((other) => true), // Mock equals to return true for tests
+            };
+        }
+        if (this.rotation) {
+            cloned.rotation = {
+                ...this.rotation,
+                equals: vi.fn((other) => true),
+            };
+        }
+        if (this.scale) {
+            cloned.scale = {
+                ...this.scale,
+                equals: vi.fn((other) => true),
+            };
+        }
+        return cloned;
+    });
+    this.isObject3D = true;
+    this.name = '';
+    this.parent = null;
+    this.dispatchEvent = vi.fn();
+    this.updateMatrixWorld = vi.fn();
+    this.applyMatrix4 = vi.fn();
+    this.updateWorldMatrix = vi.fn();
     return this;
 });
 
-export const Scene = jest.fn(function () {
-    this.add = jest.fn();
+export const Group = vi.fn(function (this: any) {
+    this.isGroup = true;
+    return this;
+});
+
+export const Scene = vi.fn(function (this: any) {
+    this.add = vi.fn((obj: THREEObject3D) => {
+        this.children.push(obj);
+        return this;
+    });
+    this.remove = vi.fn((obj: THREEObject3D) => {
+        const index = this.children.indexOf(obj);
+        if (index !== -1) {
+            this.children.splice(index, 1);
+        }
+        return this;
+    });
+    this.children = [];
     this.background = new Color();
     return this;
 });
 
-export const Mesh = jest.fn(function () {
+export const Mesh = vi.fn(function (this: any) {
     this.isMesh = true;
     this.geometry = {
-        computeBoundingBox: jest.fn(),
+        computeBoundingBox: vi.fn(),
         boundingBox: new Box3(),
+        clone: vi.fn(() => this.geometry),
+        applyMatrix4: vi.fn(),
+        applyQuaternion: vi.fn(),
     };
-    this.rotateX = jest.fn();
+    this.rotateX = vi.fn();
+    this.rotateY = vi.fn();
+    this.rotateZ = vi.fn();
     this.material = new MeshStandardMaterial();
     this.castShadow = true;
     this.receiveShadow = true;
     this.layers = {
         mask: 0,
     };
-    this.updateWorldMatrix = jest.fn();
-    this.traverse = jest.fn();
-    this.removeFromParent = jest.fn();
-    this.localToWorld = jest.fn((vec3: THREEVector3) => {
+    this.position = new Vector3();
+    this.rotation = new Euler();
+    this.scale = new Vector3();
+    this.translateY = vi.fn();
+    this.updateWorldMatrix = vi.fn();
+    this.traverse = vi.fn();
+    this.removeFromParent = vi.fn();
+    this.getWorldQuaternion = vi.fn(() => {
+        return new Quaternion();
+    });
+    this.localToWorld = vi.fn((vec3: THREEVector3) => {
         return vec3;
     });
+    this.visible = false;
+    this.children = [];
+    this.add = vi.fn((child: any) => {
+        this.children.push(child);
+        return this;
+    });
     return this;
 });
 
-export const Box3 = jest.fn(function () {
+export const Box3 = vi.fn(function (this: any) {
     this.min = new THREEVector3(Infinity, Infinity, Infinity);
     this.max = new THREEVector3(-Infinity, -Infinity, -Infinity);
-    this.getCenter = jest.fn(() => {
+    this.getCenter = vi.fn(() => {
         return new THREEVector3(0, 0, 0);
     });
-    this.expandByObject = jest.fn();
-    this.makeEmpty = jest.fn();
-    this.getSize = jest.fn(() => new Vector3());
-    this.setFromObject = jest.fn();
+    this.expandByObject = vi.fn();
+    this.makeEmpty = vi.fn();
+    this.getSize = vi.fn(() => new Vector3());
+    this.setFromObject = vi.fn();
+    this.getBoundingSphere = vi.fn((target: any) => {
+        if (target) {
+            target.center = new THREEVector3(0, 0, 0);
+            target.radius = 1;
+        }
+        return target;
+    });
+    this.union = vi.fn();
     return this;
 });
 
-export const RaycasterIntersectObjectMock = jest.fn();
-export const Raycaster = jest.fn(function () {
+export const RaycasterIntersectObjectMock = vi.fn();
+export const Raycaster = vi.fn(function (this: any) {
     this.intersectObjects = RaycasterIntersectObjectMock;
     this.layers = {
         mask: 0,
     };
-    this.setFromCamera = jest.fn();
+    this.setFromCamera = vi.fn();
     return this;
 });
 
-export const MeshStandardMaterial = jest.fn(function () {
-    this.color = new Color();
+export const MeshStandardMaterial = vi.fn(function (
+    this: any,
+    parameters: any = {},
+) {
+    let colorInstance = new Color();
+    if (parameters.color !== undefined) {
+        colorInstance.set(parameters.color);
+    }
+    let colorProxy = new Proxy(colorInstance, {
+        set(target, prop, value) {
+            if (
+                prop === 'set' &&
+                (typeof value === 'number' || typeof value === 'string')
+            ) {
+                target.set(value);
+                return true;
+            }
+            target[prop] = value;
+            return true;
+        },
+    });
+    Object.defineProperty(this, 'color', {
+        get() {
+            return colorProxy;
+        },
+        set(value) {
+            if (typeof value === 'number' || typeof value === 'string') {
+                colorProxy.set(value);
+            } else if (value && typeof value.getHex === 'function') {
+                colorProxy = value;
+            }
+        },
+        configurable: true,
+        enumerable: true,
+    });
     this.roughness = 1;
     this.roughnessMap = undefined;
     this.metalness = 0;
@@ -193,15 +355,120 @@ export const MeshStandardMaterial = jest.fn(function () {
     return this;
 });
 
-export const Color = jest.fn(function () {
-    this.set = jest.fn();
-    this.getHex = jest.fn();
-    return this;
+export const Color = vi.fn(function (this: any, color?: any) {
+    let r = 0,
+        g = 0,
+        b = 0;
+    const self = this;
+    Object.defineProperty(this, 'r', {
+        get() {
+            return r;
+        },
+        set(val) {
+            r = val;
+        },
+        configurable: true,
+        enumerable: true,
+    });
+    Object.defineProperty(this, 'g', {
+        get() {
+            return g;
+        },
+        set(val) {
+            g = val;
+        },
+        configurable: true,
+        enumerable: true,
+    });
+    Object.defineProperty(this, 'b', {
+        get() {
+            return b;
+        },
+        set(val) {
+            b = val;
+        },
+        configurable: true,
+        enumerable: true,
+    });
+    this.clone = vi.fn(() => {
+        const cloned = new (Color as any)();
+        cloned.r = self.r;
+        cloned.g = self.g;
+        cloned.b = self.b;
+        return cloned;
+    });
+    this.set = vi.fn((color: any) => {
+        if (typeof color === 'number') {
+            r = ((color >> 16) & 255) / 255;
+            g = ((color >> 8) & 255) / 255;
+            b = (color & 255) / 255;
+        } else if (typeof color === 'string') {
+            const hex = color.replace('#', '');
+            r = parseInt(hex.substr(0, 2), 16) / 255;
+            g = parseInt(hex.substr(2, 2), 16) / 255;
+            b = parseInt(hex.substr(4, 2), 16) / 255;
+        } else if (
+            color &&
+            typeof color.r === 'number' &&
+            typeof color.g === 'number' &&
+            typeof color.b === 'number'
+        ) {
+            r = color.r;
+            g = color.g;
+            b = color.b;
+        }
+        return self;
+    });
+    this.copy = vi.fn((color: any) => {
+        r = color.r;
+        g = color.g;
+        b = color.b;
+        return self;
+    });
+    this.multiplyScalar = vi.fn((scalar: number) => {
+        r *= scalar;
+        g *= scalar;
+        b *= scalar;
+        return self;
+    });
+    this.getHex = vi.fn(() => {
+        const rr = Math.round(r * 255);
+        const gg = Math.round(g * 255);
+        const bb = Math.round(b * 255);
+        return (rr << 16) | (gg << 8) | bb;
+    });
+    this.getHexString = vi.fn(() => {
+        const rr = Math.round(r * 255);
+        const gg = Math.round(g * 255);
+        const bb = Math.round(b * 255);
+        return (
+            rr.toString(16).padStart(2, '0') +
+            gg.toString(16).padStart(2, '0') +
+            bb.toString(16).padStart(2, '0')
+        );
+    });
+    if (color !== undefined) {
+        this.set(color);
+    }
+    // Custom setter for the instance itself
+    return new Proxy(this, {
+        set(target, prop, value) {
+            if (
+                prop === 'set' &&
+                (typeof value === 'number' || typeof value === 'string')
+            ) {
+                self.set(value);
+                return true;
+            }
+            target[prop] = value;
+            return true;
+        },
+    });
 });
 
-export const WebGLRendererRenderMock = jest.fn();
-export const WebGLRendererSetSizeMock = jest.fn();
-export const WebGLRenderer = jest.fn(function () {
+export const WebGLRendererRenderMock = vi.fn();
+export const WebGLRendererSetSizeMock = vi.fn();
+export const WebGLRenderer = vi.fn(function (this: any) {
     this.domElement = {
         clientWidth: 800,
         clientHeight: 600,
@@ -214,13 +481,13 @@ export const WebGLRenderer = jest.fn(function () {
         checkShaderErrors: true,
     };
     this.setSize = WebGLRendererSetSizeMock;
-    this.setPixelRatio = jest.fn();
+    this.setPixelRatio = vi.fn();
     this.render = WebGLRendererRenderMock;
-    this.setAnimationLoop = jest.fn();
+    this.setAnimationLoop = vi.fn();
     this.shadowMap = {
         enabled: false,
     };
-    this.dispose = jest.fn();
+    this.dispose = vi.fn();
     return this;
 });
 
@@ -229,20 +496,21 @@ export const MathUtils = {
     generateUUID: (): string => {
         return 'test_uuid';
     },
-    degToRad: jest.fn(),
-    radToDeg: jest.fn(),
+    degToRad: vi.fn(),
+    radToDeg: vi.fn(),
 };
 
-export const Euler = jest.fn(function () {
-    this.set = jest.fn();
+export const Euler = vi.fn(function (this: any) {
+    this.set = vi.fn();
+    this.copy = vi.fn();
     return this;
 });
 
-export const Matrix4 = jest.fn(function () {
-    this.extractRotation = jest.fn(() => {
+export const Matrix4 = vi.fn(function (this: any) {
+    this.extractRotation = vi.fn(() => {
         return this;
     });
-    this.invert = jest.fn(() => {
+    this.invert = vi.fn(() => {
         return this;
     });
     // prettier-multiline-arrays-next-line-pattern: 4
@@ -255,67 +523,83 @@ export const Matrix4 = jest.fn(function () {
     return this;
 });
 
-export const PerspectiveCamera = jest.fn(function () {
+export const PerspectiveCamera = vi.fn(function (
+    this: any,
+    fov?: number,
+    aspect?: number,
+    near?: number,
+    far?: number,
+) {
     this.isObject3D = true;
     this.parent = null;
-    this.dispatchEvent = jest.fn();
+    this.dispatchEvent = vi.fn();
     this.layers = {
         mask: 0,
     };
     this.position = {
-        set: jest.fn(),
+        set: vi.fn(),
     };
-    this.add = jest.fn();
-    this.updateProjectionMatrix = jest.fn();
+    this.add = vi.fn();
+    this.updateProjectionMatrix = vi.fn();
+    this.aspect = aspect;
+    this.fov = fov;
+    this.near = near;
+    this.far = far;
     return this;
 });
 
-export const OrthographicCamera = jest.fn(function () {
+export const OrthographicCamera = vi.fn(function (this: any) {
     this.isObject3D = true;
     this.parent = null;
-    this.dispatchEvent = jest.fn();
+    this.dispatchEvent = vi.fn();
     this.layers = {
         mask: 0,
     };
     this.position = {
-        set: jest.fn(),
+        set: vi.fn(),
     };
-    this.add = jest.fn();
+    this.add = vi.fn();
+    this.removeFromParent = vi.fn();
     return this;
 });
 
-export const AxesHelper = jest.fn(function () {
+export const AxesHelper = vi.fn(function (this: any) {
     this.isObject3D = true;
     this.parent = null;
-    this.dispatchEvent = jest.fn();
+    this.dispatchEvent = vi.fn();
     this.layers = {
         mask: 0,
     };
     this.position = {
-        set: jest.fn(),
+        set: vi.fn(),
     };
-    this.add = jest.fn();
+    this.add = vi.fn((obj: THREEObject3D) => {
+        this.children.push(obj);
+        return this;
+    });
+    this.children = [];
+    this.removeFromParent = vi.fn();
     this.material = {
         depthTest: false,
     };
-    this.setColors = jest.fn();
+    this.setColors = vi.fn();
     this.rotation = {
-        setFromRotationMatrix: jest.fn(),
+        setFromRotationMatrix: vi.fn(),
     };
     return this;
 });
 
-export const AmbientLight = jest.fn(function () {
+export const AmbientLight = vi.fn(function (this: any) {
     this.color = {};
     this.intensity = 0;
     this.layers = {
         mask: 0,
     };
-    this.removeFromParent = jest.fn();
+    this.removeFromParent = vi.fn();
     return this;
 });
 
-export const PointLight = jest.fn(function () {
+export const PointLight = vi.fn(function (this: any) {
     this.visible = true;
     this.color = {};
     this.intensity = 0;
@@ -332,7 +616,7 @@ export const PointLight = jest.fn(function () {
             fov: 0,
         },
     };
-    this.add = jest.fn();
+    this.add = vi.fn();
     this.children = [
         {
             material: {
@@ -343,40 +627,55 @@ export const PointLight = jest.fn(function () {
     return this;
 });
 
-export const PlaneGeometry = jest.fn(function () {
+export const PlaneGeometry = vi.fn(function (this: any) {
+    this.scale = vi.fn();
+    this.rotateX = vi.fn();
     return this;
 });
 
-export const SphereGeometry = jest.fn(function () {
+export const SphereGeometry = vi.fn(function (this: any) {
+    this.translate = vi.fn();
     return this;
 });
 
-export const MeshBasicMaterial = jest.fn(function () {
+export const TorusGeometry = vi.fn(function (this: any) {
+    return this;
+});
+
+export const MeshBasicMaterial = vi.fn(function (
+    this: any,
+    parameters: any = {},
+) {
     this.opacity = 1.0;
     this.color = new Color();
+    if (parameters.color !== undefined) {
+        this.color.set(parameters.color);
+    }
+    this.wireframe = parameters.wireframe || false;
+    this.clone = vi.fn(() => this);
     return this;
 });
 
-export const HemisphereLight = jest.fn(function () {
+export const HemisphereLight = vi.fn(function (this: any) {
     this.visible = true;
     this.layers = {
         mask: 0,
     };
     this.position = {
-        set: jest.fn(),
+        set: vi.fn(),
     };
-    this.removeFromParent = jest.fn();
+    this.removeFromParent = vi.fn();
     return this;
 });
 
-export const DirectionalLight = jest.fn(function () {
+export const DirectionalLight = vi.fn(function (this: any) {
     this.visible = true;
     this.layers = {
         mask: 0,
     };
     this.position = {
-        set: jest.fn(),
-        multiplyScalar: jest.fn(),
+        set: vi.fn(),
+        multiplyScalar: vi.fn(),
     };
     this.shadow = {
         radius: 0,
@@ -388,61 +687,95 @@ export const DirectionalLight = jest.fn(function () {
             fov: 0,
         },
     };
-    this.removeFromParent = jest.fn();
+    this.removeFromParent = vi.fn();
     return this;
 });
 
-export const BufferGeometry = jest.fn(function () {
-    this.setAttribute = jest.fn();
-    this.setIndex = jest.fn();
-    this.translate = jest.fn();
-    this.computeVertexNormals = jest.fn();
-    this.computeBoundingBox = jest.fn();
-    this.computeBoundingSphere = jest.fn();
-    this.setFromPoints = jest.fn();
+export const BufferGeometry = vi.fn(function (this: any) {
+    this.setAttribute = vi.fn();
+    this.setIndex = vi.fn();
+    this.translate = vi.fn();
+    this.computeVertexNormals = vi.fn();
+    this.computeBoundingBox = vi.fn();
+    this.computeBoundingSphere = vi.fn();
+    this.setFromPoints = vi.fn();
     return this;
 });
 
-export const BufferAttribute = jest.fn(function () {
+export const BufferAttribute = vi.fn(function (this: any) {
     return this;
 });
 
-export const CylinderGeometry = jest.fn(function () {
-    this.translate = jest.fn();
+export const CylinderGeometry = vi.fn(function (this: any) {
+    this.translate = vi.fn();
     return this;
 });
 
-export const BoxGeometry = jest.fn(function () {
-    this.translate = jest.fn();
+export const BoxGeometry = vi.fn(function (this: any) {
+    this.translate = vi.fn();
     return this;
 });
 
-export const ConeGeometry = jest.fn(function () {
-    this.rotateY = jest.fn();
-    this.translate = jest.fn();
+export const ConeGeometry = vi.fn(function (this: any) {
+    this.rotateY = vi.fn();
+    this.translate = vi.fn();
     return this;
 });
 
-export const Float32BufferAttribute = jest.fn(function () {
+export const Float32BufferAttribute = vi.fn(function (this: any) {
     return this;
 });
 
-export const Uint32BufferAttribute = jest.fn(function () {
+export const Uint32BufferAttribute = vi.fn(function (this: any) {
     return this;
 });
 
-export const GridHelper = jest.fn(function () {
+export const GridHelper = vi.fn(function (this: any) {
     const obj = new Object3D();
     obj.material = new MeshStandardMaterial();
     return obj;
 });
 
-export const LineDashedMaterial = jest.fn(function () {
+export const LineDashedMaterial = vi.fn(function (this: any) {
     return new MeshStandardMaterial();
 });
 
-export const Line = jest.fn(function () {
+export const Line = vi.fn(function (this: any) {
     this.geometry = new BufferGeometry();
-    this.computeLineDistances = jest.fn();
+    this.computeLineDistances = vi.fn();
+    return this;
+});
+
+export const Sphere = vi.fn(function (this: any) {
+    this.radius = 1;
+    return this;
+});
+
+export const EventDispatcher = vi.fn(function (this: any) {
+    this.dispatchEvent = vi.fn();
+    return this;
+});
+
+export const Vector3Like = vi.fn(function (this: any) {
+    this.x = 0;
+    this.y = 0;
+    this.z = 0;
+    return this;
+});
+
+export const Box3Helper = vi.fn(function (this: any) {
+    this.isObject3D = true;
+    this.parent = null;
+    this.dispatchEvent = vi.fn();
+    this.layers = {
+        mask: 0,
+    };
+    this.visible = false;
+    this.children = [];
+    this.add = vi.fn((child: any) => {
+        this.children.push(child);
+        return this;
+    });
+    this.removeFromParent = vi.fn();
     return this;
 });

@@ -1,33 +1,30 @@
+import { vi } from 'vitest';
 import {
     type Object3D as THREEObject3D,
     Mesh as THREEMesh,
     Vector3 as THREEVector3,
 } from 'three';
 
-export const TransformControls = jest.fn(function () {
+// Global event listeners storage
+let eventListeners: { [key: string]: Function[] } = {};
+
+export const TransformControls = vi.fn(function () {
     this.isTransformControls = true;
-    this.addEventListener = jest.fn(
-        (type: string, callback: (e: object) => void) => {
-            this.object = null;
-            callback({ value: false });
-            this.object = {};
-            callback({ value: false });
-            this.object = {
-                isMovable: true,
-            };
-            callback({ value: false });
-            this.object = {
-                isMovable: true,
-                onMove: jest.fn(),
-                onMoveStart: jest.fn(),
-                onMoveEnd: jest.fn(),
-                scale: new THREEVector3(1, 1, 1),
-            };
-            callback({ value: false });
-        },
-    );
-    this.attach = jest.fn();
-    this.detach = jest.fn();
+    this.mode = 'translate';
+    this.object = null;
+    this.enabled = true;
+
+    // Store event listeners for testing
+    this.addEventListener = vi.fn((event: string, listener: Function) => {
+        if (!eventListeners[event]) {
+            eventListeners[event] = [];
+        }
+        eventListeners[event].push(listener);
+    });
+
+    this.removeEventListener = vi.fn();
+    this.attach = vi.fn();
+    this.detach = vi.fn();
     this.children = [];
     const x = new THREEMesh();
     x.name = 'X';
@@ -53,22 +50,29 @@ export const TransformControls = jest.fn(function () {
     xz.name = 'XZ';
     this.children.push(xz);
 
-    this.traverse = jest.fn((callback) => {
+    this.traverse = vi.fn((callback) => {
         callback(this);
         this.children.forEach((child: THREEObject3D) => {
             callback(child);
         });
     });
-    this.setMode = jest.fn();
-    this.getRaycaster = jest.fn().mockReturnValue({
+    this.setMode = vi.fn();
+
+    // Create a persistent raycaster object for this instance
+    const raycaster = {
         layers: {
             mask: 0,
-            disableAll: jest.fn(),
-            enableAll: jest.fn(),
+            disableAll: vi.fn(),
+            enableAll: vi.fn(),
         },
-    });
+    };
+    this.getRaycaster = vi.fn(() => raycaster);
+
     this.layers = {
         mask: 0,
     };
     return this;
 });
+
+// Export event listeners for testing
+export { eventListeners };

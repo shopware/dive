@@ -253,7 +253,7 @@
     </testcase>
     <testcase classname="src/scene/__test__/Scene.test.ts" name="dive/scene/DIVEScene should set background color" time="0.001">
     </testcase>
-    <testcase classname="src/scene/__test__/Scene.test.ts" name="dive/scene/DIVEScene should ComputeSceneBB" time="0.001">
+    <testcase classname="src/scene/__test__/Scene.test.ts" name="dive/scene/DIVEScene should computeSceneBB" time="0.001">
     </testcase>
     <testcase classname="src/scene/__test__/Scene.test.ts" name="dive/scene/DIVEScene should add object" time="0.001">
     </testcase>
@@ -313,7 +313,7 @@
   <testsuite name="DIVE/scene/root/DIVERoot" errors="0" failures="0" skipped="0" timestamp="2025-01-03T08:13:50" time="0.117" tests="11">
     <testcase classname="src/scene/root/__test__/Root.test.ts" name="DIVE/scene/root/DIVERoot should instantiate" time="0.001">
     </testcase>
-    <testcase classname="src/scene/root/__test__/Root.test.ts" name="DIVE/scene/root/DIVERoot should ComputeSceneBB" time="0.001">
+    <testcase classname="src/scene/root/__test__/Root.test.ts" name="DIVE/scene/root/DIVERoot should computeSceneBB" time="0.001">
     </testcase>
     <testcase classname="src/scene/root/__test__/Root.test.ts" name="DIVE/scene/root/DIVERoot should get scene object" time="0">
     </testcase>
@@ -570,50 +570,50 @@
     <testcase classname="src/toolbox/__test__/Toolbox.test.ts" name="dive/toolbox/DIVEToolBox should set gizmo active" time="0">
     </testcase>
   </testsuite>
-  <testsuite name="dive/renderer/DIVERenderer" errors="0" failures="0" skipped="0" timestamp="2025-01-03T08:13:50" time="0.062" tests="22">
-    <testcase classname="src/renderer/__test__/Renderer.test.ts" name="dive/renderer/DIVERenderer should instantiate" time="0.001">
+  <testsuite name="dive/renderer/DIVERenderPipeline" errors="0" failures="0" skipped="0" timestamp="2025-01-03T08:13:50" time="0.062" tests="22">
+    <testcase classname="src/renderer/__test__/Renderer.test.ts" name="dive/renderer/DIVERenderPipeline should instantiate" time="0.001">
     </testcase>
-    <testcase classname="src/renderer/__test__/Renderer.test.ts" name="dive/renderer/DIVERenderer should instantiate" time="0">
+    <testcase classname="src/renderer/__test__/Renderer.test.ts" name="dive/renderer/DIVERenderPipeline should instantiate" time="0">
     </testcase>
-    <testcase classname="src/renderer/__test__/Renderer.test.ts" name="dive/renderer/DIVERenderer should instantiate with settings parameter" time="0">
+    <testcase classname="src/renderer/__test__/Renderer.test.ts" name="dive/renderer/DIVERenderPipeline should instantiate with settings parameter" time="0">
     </testcase>
-    <testcase classname="src/renderer/__test__/Renderer.test.ts" name="dive/renderer/DIVERenderer should dispose" time="0">
+    <testcase classname="src/renderer/__test__/Renderer.test.ts" name="dive/renderer/DIVERenderPipeline should dispose" time="0">
     </testcase>
-    <testcase classname="src/renderer/__test__/Renderer.test.ts" name="dive/renderer/DIVERenderer should start render" time="0">
+    <testcase classname="src/renderer/__test__/Renderer.test.ts" name="dive/renderer/DIVERenderPipeline should start render" time="0">
     </testcase>
-    <testcase classname="src/renderer/__test__/Renderer.test.ts" name="dive/renderer/DIVERenderer should pause render" time="0.001">
+    <testcase classname="src/renderer/__test__/Renderer.test.ts" name="dive/renderer/DIVERenderPipeline should pause render" time="0.001">
     </testcase>
-    <testcase classname="src/renderer/__test__/Renderer.test.ts" name="dive/renderer/DIVERenderer should resume render" time="0">
+    <testcase classname="src/renderer/__test__/Renderer.test.ts" name="dive/renderer/DIVERenderPipeline should resume render" time="0">
     </testcase>
-    <testcase classname="src/renderer/__test__/Renderer.test.ts" name="dive/renderer/DIVERenderer should stop render" time="0">
+    <testcase classname="src/renderer/__test__/Renderer.test.ts" name="dive/renderer/DIVERenderPipeline should stop render" time="0">
     </testcase>
-    <testcase classname="src/renderer/__test__/Renderer.test.ts" name="dive/renderer/DIVERenderer should resize renderer" time="0">
+    <testcase classname="src/renderer/__test__/Renderer.test.ts" name="dive/renderer/DIVERenderPipeline should resize renderer" time="0">
     </testcase>
-    <testcase classname="src/renderer/__test__/Renderer.test.ts" name="dive/renderer/DIVERenderer should render" time="0">
+    <testcase classname="src/renderer/__test__/Renderer.test.ts" name="dive/renderer/DIVERenderPipeline should render" time="0">
     </testcase>
-    <testcase classname="src/renderer/__test__/Renderer.test.ts" name="dive/renderer/DIVERenderer should force render" time="0.001">
+    <testcase classname="src/renderer/__test__/Renderer.test.ts" name="dive/renderer/DIVERenderPipeline should force render" time="0.001">
     </testcase>
-    <testcase classname="src/renderer/__test__/Renderer.test.ts" name="dive/renderer/DIVERenderer should not render when not started" time="0">
+    <testcase classname="src/renderer/__test__/Renderer.test.ts" name="dive/renderer/DIVERenderPipeline should not render when not started" time="0">
     </testcase>
-    <testcase classname="src/renderer/__test__/Renderer.test.ts" name="dive/renderer/DIVERenderer should not render when stopped" time="0">
+    <testcase classname="src/renderer/__test__/Renderer.test.ts" name="dive/renderer/DIVERenderPipeline should not render when stopped" time="0">
     </testcase>
-    <testcase classname="src/renderer/__test__/Renderer.test.ts" name="dive/renderer/DIVERenderer should not render when paused" time="0">
+    <testcase classname="src/renderer/__test__/Renderer.test.ts" name="dive/renderer/DIVERenderPipeline should not render when paused" time="0">
     </testcase>
-    <testcase classname="src/renderer/__test__/Renderer.test.ts" name="dive/renderer/DIVERenderer should resume render when running" time="0">
+    <testcase classname="src/renderer/__test__/Renderer.test.ts" name="dive/renderer/DIVERenderPipeline should resume render when running" time="0">
     </testcase>
-    <testcase classname="src/renderer/__test__/Renderer.test.ts" name="dive/renderer/DIVERenderer should add pre render callback" time="0">
+    <testcase classname="src/renderer/__test__/Renderer.test.ts" name="dive/renderer/DIVERenderPipeline should add pre render callback" time="0">
     </testcase>
-    <testcase classname="src/renderer/__test__/Renderer.test.ts" name="dive/renderer/DIVERenderer should remove pre render callback" time="0">
+    <testcase classname="src/renderer/__test__/Renderer.test.ts" name="dive/renderer/DIVERenderPipeline should remove pre render callback" time="0">
     </testcase>
-    <testcase classname="src/renderer/__test__/Renderer.test.ts" name="dive/renderer/DIVERenderer should not crash while removing non-existing pre render callback" time="0.001">
+    <testcase classname="src/renderer/__test__/Renderer.test.ts" name="dive/renderer/DIVERenderPipeline should not crash while removing non-existing pre render callback" time="0.001">
     </testcase>
-    <testcase classname="src/renderer/__test__/Renderer.test.ts" name="dive/renderer/DIVERenderer should add post render callback" time="0">
+    <testcase classname="src/renderer/__test__/Renderer.test.ts" name="dive/renderer/DIVERenderPipeline should add post render callback" time="0">
     </testcase>
-    <testcase classname="src/renderer/__test__/Renderer.test.ts" name="dive/renderer/DIVERenderer should remove post render callback" time="0">
+    <testcase classname="src/renderer/__test__/Renderer.test.ts" name="dive/renderer/DIVERenderPipeline should remove post render callback" time="0">
     </testcase>
-    <testcase classname="src/renderer/__test__/Renderer.test.ts" name="dive/renderer/DIVERenderer should not crash while removing non-existing post render callback" time="0">
+    <testcase classname="src/renderer/__test__/Renderer.test.ts" name="dive/renderer/DIVERenderPipeline should not crash while removing non-existing post render callback" time="0">
     </testcase>
-    <testcase classname="src/renderer/__test__/Renderer.test.ts" name="dive/renderer/DIVERenderer should execute pre and post render callbacks" time="0">
+    <testcase classname="src/renderer/__test__/Renderer.test.ts" name="dive/renderer/DIVERenderPipeline should execute pre and post render callbacks" time="0">
     </testcase>
   </testsuite>
   <testsuite name="DIVEAR" errors="0" failures="0" skipped="0" timestamp="2025-01-03T08:13:50" time="0.077" tests="6">
