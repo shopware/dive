@@ -41,7 +41,7 @@ function findTypeDefinition(type: string): string | null {
         DIVESceneFileType: 'src/types/SceneType.ts',
         DIVESceneData: 'src/types/SceneData.ts',
         DIVESceneObject: 'src/types/SceneObjects.ts',
-        COMEntity: 'src/modules/state/types.ts',
+        COMEntity: 'src/plugins/state/types.ts',
     };
 
     if (type in specialTypes) {
@@ -174,6 +174,7 @@ function extractActionDefinitions(
                 const initializer = declaration.initializer;
                 if (initializer && ts.isCallExpression(initializer)) {
                     const callExpr = initializer;
+                    // Loosened: match any .define call on something called Action
                     if (
                         ts.isPropertyAccessExpression(callExpr.expression) &&
                         callExpr.expression.name.text === 'define' &&
@@ -181,29 +182,45 @@ function extractActionDefinitions(
                         callExpr.expression.expression.text === 'Action'
                     ) {
                         const typeArgs = callExpr.typeArguments;
-                        if (typeArgs && typeArgs.length === 2) {
+                        if (typeArgs && typeArgs.length >= 2) {
                             const payloadType = typeArgs[0].getText();
-                            const returnType = typeArgs[1].getText();
-                            const description = callExpr.arguments[0]
-                                .getText()
-                                .slice(1, -1);
-
-                            actions.push({
-                                name: declaration.name.text,
-                                description,
-                                payloadType,
-                                returnType,
-                                sourceFile: sourceFile.fileName,
-                            });
+                            const returnType = typeArgs[2]
+                                ? typeArgs[2].getText()
+                                : 'void';
+                            // Extract description from the options object
+                            let description = '';
+                            if (callExpr.arguments.length > 0) {
+                                const optionsArg = callExpr.arguments[0];
+                                if (ts.isObjectLiteralExpression(optionsArg)) {
+                                    for (const prop of optionsArg.properties) {
+                                        if (
+                                            ts.isPropertyAssignment(prop) &&
+                                            ts.isIdentifier(prop.name) &&
+                                            prop.name.text === 'description' &&
+                                            ts.isStringLiteral(prop.initializer)
+                                        ) {
+                                            description = prop.initializer.text;
+                                            break;
+                                        }
+                                    }
+                                }
+                            }
+                            if (description) {
+                                actions.push({
+                                    name: declaration.name.text,
+                                    description,
+                                    payloadType,
+                                    returnType,
+                                    sourceFile: sourceFile.fileName,
+                                });
+                            }
                         }
                     }
                 }
             }
         }
-
         ts.forEachChild(node, visit);
     }
-
     visit(sourceFile);
     return actions;
 }
@@ -231,8 +248,20 @@ function findActionFiles(dir: string): string[] {
     return files;
 }
 
+function escapeMarkdownTableCell(text: string): string {
+    return text
+        .replace(/\|/g, '\\|') // Escape pipe
+        .replace(/\n/g, '<br/>') // Replace newlines with <br/>
+        .replace(/\r/g, '') // Remove carriage returns
+        .replace(/\s+$/gm, '') // Trim trailing whitespace on each line
+        .trim();
+}
+
 function generateReadme(): void {
-    const actionsDir = path.join(process.cwd(), 'src/modules/state/actions');
+    const actionsDir = path.join(
+        process.cwd(),
+        'src/plugins/state/src/actions',
+    );
     const actionsReferencePath = path.join(
         __dirname,
         '../actions-reference.md',
@@ -253,7 +282,8 @@ function generateReadme(): void {
             ts.ScriptTarget.Latest,
             true,
         );
-        actions.push(...extractActionDefinitions(sourceFile));
+        const fileActions = extractActionDefinitions(sourceFile);
+        actions.push(...fileActions);
     }
 
     // Sort actions by name
@@ -265,9 +295,13 @@ function generateReadme(): void {
 
     for (const action of actions) {
         const relativePath = path.relative(process.cwd(), action.sourceFile);
-        const formattedPayloadType = formatType(action.payloadType);
-        const formattedReturnType = formatType(action.returnType);
-        actionsSection += `| [${action.name}](${relativePath}) | ${action.description} | <code>${formattedPayloadType}</code> | <code>${formattedReturnType.replace(/\|/g, '\\|')}</code> |\n`;
+        const formattedPayloadType = escapeMarkdownTableCell(
+            formatType(action.payloadType),
+        );
+        const formattedReturnType = escapeMarkdownTableCell(
+            formatType(action.returnType),
+        );
+        actionsSection += `| [${action.name}](${relativePath}) | ${action.description} | <code>${formattedPayloadType}</code> | <code>${formattedReturnType}</code> |\n`;
     }
 
     actionsSection += '\n';
