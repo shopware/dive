@@ -1,0 +1,35 @@
+import { DIVEEngine } from '../../../index.ts';
+import { OrbitController } from '../../orbitcontroller/index.ts';
+import { ActionPayload, ActionReturn } from '../types/index.ts';
+export type ActionSubscriber<ActionType extends keyof ActionTypes> = (payload: ActionPayload<ActionTypes[ActionType]>) => void;
+export type ActionUnsubscribe = () => void;
+export declare class State {
+    private static __instances;
+    static get(id: string): State | undefined;
+    private _id;
+    get id(): string;
+    private engine;
+    private controller;
+    private _mediaCreator;
+    private getMediaCreator;
+    private _arSystem;
+    private getARSystem;
+    private _assetExplorer;
+    private getAssetExporter;
+    private _animationSystem;
+    private getAnimationSystem;
+    private _toolbox;
+    private getToolbox;
+    private registered;
+    private listeners;
+    constructor(engine: DIVEEngine, controller: OrbitController);
+    destroyInstance(): boolean;
+    performAction<ActionType extends keyof ActionTypes>(action: ActionType, ...args: ActionPayload<ActionTypes[ActionType]> extends void ? [] : [ActionPayload<ActionTypes[ActionType]>]): ActionReturn<ActionTypes[ActionType]>;
+    subscribe<ActionType extends keyof ActionTypes>(type: ActionType, listener: ActionSubscriber<ActionType>): ActionUnsubscribe;
+    private dispatch;
+    private getDependencies;
+}
+export * from './ActionRegistry.ts';
+export * from './actions/index.ts';
+export * from '../types/index.ts';
+export type { ActionTypes };
