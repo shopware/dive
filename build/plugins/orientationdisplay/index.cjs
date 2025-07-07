@@ -1,0 +1,1 @@
+"use strict";Object.defineProperty(exports,Symbol.toStringTag,{value:"Module"});const e=require("../../chunks/FileTypes-BuvsJl08.cjs");exports.OrientationDisplay=e.OrientationDisplay;exports.OrientationDisplayAxes=e.OrientationDisplayAxes;

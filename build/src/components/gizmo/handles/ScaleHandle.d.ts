@@ -1,0 +1,33 @@
+import { ColorRepresentation, Object3D, Vector3 } from 'three';
+import { DIVEHoverable } from '../../../interfaces/Hoverable.ts';
+import { DIVEScaleGizmo } from '../scale/ScaleGizmo.ts';
+import { DIVEDraggable } from '../../../interfaces/Draggable.ts';
+import { DraggableEvent } from '../../../plugins/toolbox/index.ts';
+export declare class DIVEScaleHandle extends Object3D implements DIVEHoverable, DIVEDraggable {
+    readonly isHoverable: true;
+    readonly isDraggable: true;
+    set debug(value: boolean);
+    parent: DIVEScaleGizmo | null;
+    axis: 'x' | 'y' | 'z';
+    private _color;
+    private _colorHover;
+    private _hovered;
+    private _highlight;
+    get highlight(): boolean;
+    set highlight(highlight: boolean);
+    private _lineMaterial;
+    private _colliderMesh;
+    private _box;
+    private _boxSize;
+    get forwardVector(): Vector3;
+    get rightVector(): Vector3;
+    get upVector(): Vector3;
+    constructor(axis: 'x' | 'y' | 'z', length: number, direction: Vector3, color: ColorRepresentation, boxSize?: number);
+    reset(): void;
+    update(scale: Vector3): void;
+    onPointerEnter(): void;
+    onPointerLeave(): void;
+    onDragStart(): void;
+    onDrag(e: DraggableEvent): void;
+    onDragEnd(): void;
+}
