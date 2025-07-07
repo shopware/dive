@@ -1,5 +1,6 @@
 import { AmbientLight, Color, Object3D } from 'three';
 import { PRODUCT_LAYER_MASK } from '../../constants/VisibilityLayerMask.ts';
+import { DIVESelectable } from '@shopware-ag/dive';
 
 /**
  * A basic ambient light.
@@ -9,9 +10,10 @@ import { PRODUCT_LAYER_MASK } from '../../constants/VisibilityLayerMask.ts';
  * @module
  */
 
-export class DIVEAmbientLight extends Object3D {
+export class DIVEAmbientLight extends Object3D implements DIVESelectable {
     readonly isDIVELight: true = true;
     readonly isDIVEAmbientLight: true = true;
+    readonly isSelectable: true = true;
 
     private _light: AmbientLight;
 

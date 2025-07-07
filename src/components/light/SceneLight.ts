@@ -1,3 +1,4 @@
+import { DIVESelectable } from '@shopware-ag/dive';
 import { PRODUCT_LAYER_MASK } from '../../constants/VisibilityLayerMask.ts';
 import { Color, DirectionalLight, HemisphereLight, Object3D } from 'three';
 
@@ -9,9 +10,10 @@ import { Color, DirectionalLight, HemisphereLight, Object3D } from 'three';
  * @module
  */
 
-export class DIVESceneLight extends Object3D {
+export class DIVESceneLight extends Object3D implements DIVESelectable {
     readonly isDIVELight: true = true;
     readonly isDIVESceneLight: true = true;
+    readonly isSelectable: true = true;
 
     private _hemiLight: HemisphereLight;
     private _dirLight: DirectionalLight;
