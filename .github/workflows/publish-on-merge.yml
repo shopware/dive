@@ -106,8 +106,8 @@ jobs:
             - name: Generate docs
               run: yarn docs
 
-            - name: 'Add docs folder to git'
-              run: git add git add docs -f
+            - name: 'Add generated docs to git'
+              run: git add .
 
             - name: 'Automated Version Bump'
               uses: 'phips28/gh-action-bump-version@master'

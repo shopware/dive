@@ -132,7 +132,6 @@
         "vitest": "^3.1.2"
     },
     "scripts": {
-        "validate-build-paths": "NODE_OPTIONS='--loader ts-node/esm' ts-node ci/build/validate-build-paths.ts",
         "build": "vite build",
         "dev": "vite build --watch",
         "lint": "eslint",
@@ -140,9 +139,8 @@
         "prettier:fix": "prettier --write .",
         "unit": "vitest --run",
         "coverage": "vitest --coverage --run",
-        "docs": "yarn docs:actions && yarn docs:modules",
+        "docs": "yarn docs:actions",
         "docs:actions": "tsx docs/generators/generate-actions-docs.ts",
-        "docs:modules": "tsx docs/generators/generate-modules-docs.ts",
         "ci": "yarn && yarn lint && yarn prettier:check && yarn coverage && yarn build"
     }
 }

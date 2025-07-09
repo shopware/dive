@@ -1,30 +1,21 @@
 import { Action } from '../action.ts';
 import { registerAction } from '../../ActionRegistry.ts';
 import { type ActionDependencies } from '../../../types/index.ts';
-import { type Vector3Like } from 'three';
 import { isPovSchema } from '@shopware-ag/dive';
+import {
+    type MediaGenerationByPosition,
+    type MediaGenerationById,
+} from '@shopware-ag/dive/mediacreator';
 
 export const GenerateMediaAction = Action.define<
-    (
-        | {
-              position: Vector3Like;
-              target: Vector3Like;
-          }
-        | {
-              id: string;
-          }
-    ) & {
-        width: number;
-        height: number;
-    },
+    MediaGenerationByPosition | MediaGenerationById,
     Pick<ActionDependencies, 'registered' | 'getMediaCreator'>,
     Promise<string>
 >({
     description:
         'Generates a screenshot, stores it in a Blob and returns a Promise of a valid URI.',
     execute: async (payload, { registered, getMediaCreator }) => {
-        let position = { x: 0, y: 0, z: 0 };
-        let target = { x: 0, y: 0, z: 0 };
+        const mediaCreator = await getMediaCreator();
 
         if ('id' in payload) {
             const object = registered.get(payload.id);
@@ -40,21 +31,17 @@ export const GenerateMediaAction = Action.define<
                 );
             }
 
-            position = object.position;
-            target = object.target;
-        } else {
-            position = payload.position;
-            target = payload.target;
-        }
+            const { resolution } = payload;
+            const { position, target } = object;
 
-        return getMediaCreator().then((mediaCreator) => {
-            return mediaCreator.generateMedia(
+            return mediaCreator.generateMedia({
                 position,
                 target,
-                payload.width,
-                payload.height,
-            );
-        });
+                resolution,
+            });
+        }
+
+        return mediaCreator.generateMedia(payload);
     },
 });
 

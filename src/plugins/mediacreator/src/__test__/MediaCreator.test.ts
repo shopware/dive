@@ -5,7 +5,7 @@ import {
     DIVEScene,
 } from '@shopware-ag/dive';
 import { OrbitController } from '@shopware-ag/dive/orbitcontroller';
-import { type PovSchema } from '@shopware-ag/dive';
+import { type MediaGenerationByPosition } from '../../types/index.ts';
 
 /**
  * @jest-environment jsdom
@@ -130,19 +130,20 @@ describe('MediaCreator', () => {
         expect(mediaCreator).toBeDefined();
     });
 
-    it('should generate media', () => {
-        const mock_POV = {
+    it('should generate media by position', () => {
+        const options: MediaGenerationByPosition = {
             position: { x: 0, y: 0, z: 0 },
             target: { x: 0, y: 0, z: 0 },
-        } as PovSchema;
+            resolution: {
+                width: 800,
+                height: 600,
+            },
+        };
+
         expect(() => {
-            mediaCreator.generateMedia(
-                mock_POV.position,
-                mock_POV.target,
-                800,
-                600,
-            );
+            mediaCreator.generateMedia(options);
         }).not.toThrow();
+
         expect(mock_render).toHaveBeenCalledTimes(1);
         expect(mock_toDataURL).toHaveBeenCalledTimes(1);
     });

@@ -25,7 +25,7 @@
 - [Getting Started](#getting-started)
   - [Basic Setup](#basic-setup)
   - [Quick View](#quick-view)
-- [Modules](#modules)
+- [Plugins](#plugins)
 - [Documentation](#documentation)
 
 ## About
@@ -80,13 +80,12 @@ const myCanvasWrapper = document.createElement('div');
 myCanvasWrapper.appendChild(dive.canvas);
 ```
 
-## Modules
+## Plugins
 
-DIVE comes with several built-in modules that provide specific functionality. Served modules are
-independent and can be accessed directly from the modules directory:
+DIVE comes with several built-in plugins that provide specific functionality. They are self-contained and can be imported as a subpath export from the package:
 
 ```ts
-import { ARSystem } from '@shopware-ag/dive/modules/ARSystem';
+import { ARSystem } from '@shopware-ag/dive/ar';
 
 // Initialize AR with options
 const arSystem = new ARSystem();
@@ -96,16 +95,15 @@ await arSystem.launch('path/to/model.glb', {
 });
 ```
 
-For detailed information about the module system, see
-[Module System Documentation](docs/module-system.md).
+For detailed information about the plugin system, see
+[Plugin System Documentation](docs/plugin-system.md).
 
 ## Documentation
 
 For detailed documentation, please refer to the following sections:
 
-- [Module System](docs/module-system.md) - Detailed module system architecture and usage
+- [Plugin System](docs/plugin-system.md) - Detailed plugin system architecture and usage
 - [Shopware Integration](docs/shopware-integration.md) - Integration with Shopware projects
 - [Testing and Quality Assurance](docs/testing.md) - Testing guidelines and best practices
 - [Local Development](docs/local-development.md) - Local development setup and workflow
-- [Module Reference](docs/module-reference.md) - Complete list of available modules
 - [Actions Reference](docs/actions-reference.md) - Complete list of available actions

@@ -2,7 +2,7 @@ import { DIVEPerspectiveCamera } from '../../../engine/camera/PerspectiveCamera.
 import { type DIVEScene } from '../../../engine/scene/Scene.ts';
 import { type DIVERenderPipeline } from '../../../engine/renderer/Renderer.ts';
 import { type OrbitController } from '@shopware-ag/dive/orbitcontroller';
-import { type Vector3Like } from 'three';
+import { MediaGenerationByPosition } from '../types/index.ts';
 
 /**
  * @internal
@@ -22,12 +22,9 @@ export class MediaCreator {
         this._controller = controller;
     }
 
-    public generateMedia(
-        position: Vector3Like,
-        target: Vector3Like,
-        width: number,
-        height: number,
-    ): string {
+    public generateMedia(options: MediaGenerationByPosition): string {
+        const { position, target, resolution } = options;
+        const { width, height } = resolution;
         const resetPosition = this._controller.object.position.clone();
         const resetRotation = this._controller.object.quaternion.clone();
 
