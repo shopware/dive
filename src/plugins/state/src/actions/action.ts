@@ -32,7 +32,7 @@ export abstract class Action<
     /**
      * Factory method to create a new Action class with the specified description and execution logic.
      *
-     * @template T - The type of the payload (use void for actions without payload)
+     * @template P - The type of the payload (use void for actions without payload)
      * @template D - The type of dependencies
      * @template R - The return type of the action
      * @param options - Configuration options for the action
@@ -41,7 +41,7 @@ export abstract class Action<
      * @returns A new Action class that can be instantiated with payload and dependencies
      */
     public static define<
-        T = void,
+        P = void,
         D extends Partial<ActionDependencies> = Partial<ActionDependencies>,
         R = void,
     >({
@@ -49,13 +49,13 @@ export abstract class Action<
         execute,
     }: {
         description: string;
-        execute: (payload: T, dependencies: D) => R;
-    }): new (payload: T, dependencies: D) => Action<T, D, R> {
-        return class extends Action<T, D, R> {
+        execute: (payload: P, dependencies: D) => R;
+    }): new (payload: P, dependencies: D) => Action<P, D, R> {
+        return class extends Action<P, D, R> {
             readonly _description = description;
-            readonly _payload: T;
+            readonly _payload: P;
 
-            constructor(payload: T, dependencies: D) {
+            constructor(payload: P, dependencies: D) {
                 super(payload, dependencies);
                 this._payload = payload;
             }
