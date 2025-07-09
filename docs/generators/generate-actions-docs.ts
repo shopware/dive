@@ -6,6 +6,29 @@ const ACTIONS_FOLDER = 'src/plugins/state/src/actions';
 const README_PATH = 'src/plugins/state/README.md';
 const MAIN_BRANCH = 'trunk';
 
+let allTsFiles: string[] | null = null;
+
+function findAllTypeScriptFiles(dir: string): string[] {
+    const files: string[] = [];
+    const entries = fs.readdirSync(dir);
+
+    for (const entry of entries) {
+        const fullPath = path.join(dir, entry);
+        const stat = fs.statSync(fullPath);
+
+        if (stat.isDirectory()) {
+            if (entry.includes('__test__')) {
+                continue;
+            }
+            files.push(...findAllTypeScriptFiles(fullPath));
+        } else if (stat.isFile() && entry.endsWith('.ts')) {
+            files.push(fullPath);
+        }
+    }
+
+    return files;
+}
+
 interface ActionDefinition {
     name: string;
     description: string;
@@ -72,12 +95,19 @@ function findTypeDefinition(type: string): string | null {
         return specialTypes[type];
     }
 
-    // Search in src directory
-    const srcDir = path.join(process.cwd(), 'src');
-    const files = findActionFiles(srcDir);
-    for (const file of files) {
+    if (!allTsFiles) {
+        const srcDir = path.join(process.cwd(), 'src');
+        allTsFiles = findAllTypeScriptFiles(srcDir);
+    }
+
+    for (const file of allTsFiles) {
         const content = fs.readFileSync(file, 'utf-8');
-        if (new RegExp(`(type|interface|enum)\\s+${type}\\b`).test(content)) {
+        if (
+            new RegExp(
+                `^\\s*(export\\s+)?(type|interface|enum|class)\\s+${type}\\b`,
+                'm',
+            ).test(content)
+        ) {
             return file;
         }
     }
