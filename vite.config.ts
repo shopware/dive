@@ -4,7 +4,6 @@ import dts from 'vite-plugin-dts';
 import pluginBuildPlugin from './scripts/build/vite/vite-plugin-exports.ts';
 import wasm from 'vite-plugin-wasm';
 import tsconfigPaths from 'vite-tsconfig-paths';
-import path from 'path';
 
 // --- Main Vite Export ---
 export default defineConfig({

@@ -1,8 +1,9 @@
 import * as ts from 'typescript';
 import * as fs from 'fs';
 import * as path from 'path';
-import { fileURLToPath } from 'url';
-import { dirname } from 'path';
+
+const ACTIONS_FOLDER = 'src/plugins/state/src/actions';
+const README_PATH = 'src/plugins/state/README.md';
 
 interface ActionDefinition {
     name: string;
@@ -11,9 +12,6 @@ interface ActionDefinition {
     returnType: string;
     sourceFile: string;
 }
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
 
 const INSERT_MARKER = '<!-- INSERT_ACTIONS -->';
 const END_MARKER = '<!-- END_ACTIONS -->';
@@ -91,7 +89,25 @@ function findTypeDefinition(type: string): string | null {
     return null;
 }
 
-function formatType(type: string): string {
+function makePathRelative(
+    filePath: string | null,
+    relativeTo: string,
+): string | null {
+    if (!filePath || filePath.startsWith('http')) {
+        return filePath;
+    }
+    return path.posix.relative(relativeTo, path.join(process.cwd(), filePath));
+}
+
+function formatType(type: string, relativeTo: string): string {
+    const formatLink = (
+        typeName: string,
+        typeDefPath: string | null,
+    ): string => {
+        const relativePath = makePathRelative(typeDefPath, relativeTo);
+        return relativePath ? `[${typeName}](${relativePath})` : typeName;
+    };
+
     // Handle generic types (Map, Array, Promise, etc.)
     const genericMatch = type.match(/^([A-Za-z0-9_]+)<(.+)>$/);
     if (genericMatch) {
@@ -100,10 +116,10 @@ function formatType(type: string): string {
             baseType,
             genericParams,
         ] = genericMatch;
-        const typeDef = findTypeDefinition(baseType);
-        const formattedBaseType = typeDef
-            ? `[${baseType}](${typeDef})`
-            : baseType;
+        const formattedBaseType = formatLink(
+            baseType,
+            findTypeDefinition(baseType),
+        );
 
         // Format each generic parameter
         const formattedParams = genericParams
@@ -112,9 +128,8 @@ function formatType(type: string): string {
                 param = param.trim();
                 // Handle keyof operator in generic parameters
                 if (param.startsWith('keyof ')) {
-                    const baseType = param.substring(6);
-                    const typeDef = findTypeDefinition(baseType);
-                    return `keyof ${typeDef ? `[${baseType}](${typeDef})` : baseType}`;
+                    const baseTypeName = param.substring(6);
+                    return `keyof ${formatLink(baseTypeName, findTypeDefinition(baseTypeName))}`;
                 }
                 // Handle complex types in generic parameters
                 if (
@@ -123,13 +138,11 @@ function formatType(type: string): string {
                     param.includes('&')
                 ) {
                     return param.replace(/\b([A-Za-z0-9_]+)\b/g, (match) => {
-                        const typeDef = findTypeDefinition(match);
-                        return typeDef ? `[${match}](${typeDef})` : match;
+                        return formatLink(match, findTypeDefinition(match));
                     });
                 }
                 // Handle simple types in generic parameters
-                const typeDef = findTypeDefinition(param);
-                return typeDef ? `[${param}](${typeDef})` : param;
+                return formatLink(param, findTypeDefinition(param));
             })
             .join(', ');
 
@@ -139,23 +152,17 @@ function formatType(type: string): string {
     // Handle keyof operator
     if (type.startsWith('keyof ')) {
         const baseType = type.substring(6);
-        const typeDef = findTypeDefinition(baseType);
-        return `keyof ${typeDef ? `[${baseType}](${typeDef})` : baseType}`;
+        return `keyof ${formatLink(baseType, findTypeDefinition(baseType))}`;
     }
 
     // Handle complex types (objects, unions, etc.)
     if (type.includes('{') || type.includes('|') || type.includes('&')) {
         return type.replace(/\b([A-Za-z0-9_]+)\b/g, (match) => {
-            const typeDef = findTypeDefinition(match);
-            return typeDef ? `[${match}](${typeDef})` : match;
+            return formatLink(match, findTypeDefinition(match));
         });
     }
 
-    const typeDef = findTypeDefinition(type);
-    if (typeDef) {
-        return `[${type}](${typeDef})`;
-    }
-    return type;
+    return formatLink(type, findTypeDefinition(type));
 }
 
 function extractActionDefinitions(
@@ -258,17 +265,12 @@ function escapeMarkdownTableCell(text: string): string {
 }
 
 function generateReadme(): void {
-    const actionsDir = path.join(
-        process.cwd(),
-        'src/plugins/state/src/actions',
-    );
-    const actionsReferencePath = path.join(
-        __dirname,
-        '../actions-reference.md',
-    );
+    const actionsDir = path.join(process.cwd(), ACTIONS_FOLDER);
+    const readmePath = path.join(process.cwd(), README_PATH);
+    const readmeDir = path.dirname(readmePath);
 
     // Read template
-    const actionsReferenceFile = fs.readFileSync(actionsReferencePath, 'utf-8');
+    const actionsReferenceFile = fs.readFileSync(readmePath, 'utf-8');
 
     // Find all TypeScript files in actions directory recursively
     const actionFiles = findActionFiles(actionsDir);
@@ -294,12 +296,12 @@ function generateReadme(): void {
     actionsSection += '|--------|-------------|-------|--------|\n';
 
     for (const action of actions) {
-        const relativePath = path.relative(process.cwd(), action.sourceFile);
+        const relativePath = path.posix.relative(readmeDir, action.sourceFile);
         const formattedPayloadType = escapeMarkdownTableCell(
-            formatType(action.payloadType),
+            formatType(action.payloadType, readmeDir),
         );
         const formattedReturnType = escapeMarkdownTableCell(
-            formatType(action.returnType),
+            formatType(action.returnType, readmeDir),
         );
         actionsSection += `| [${action.name}](${relativePath}) | ${action.description} | <code>${formattedPayloadType}</code> | <code>${formattedReturnType}</code> |\n`;
     }
@@ -311,7 +313,7 @@ function generateReadme(): void {
         new RegExp(`${INSERT_MARKER}[\\s\\S]*?${END_MARKER}`, 'g'),
         `${INSERT_MARKER}\n${actionsSection}${END_MARKER}`,
     );
-    fs.writeFileSync(actionsReferencePath, newContent);
+    fs.writeFileSync(readmePath, newContent);
 
     console.log('Actions documentation generated successfully!');
 }
