@@ -131,16 +131,16 @@ jobs:
                   force: true
 
             - name: 'Create release branch'
-              run: git checkout -b release/v$(node -p "require('./package.json').version")
+              run: git checkout -b release/$(node -p "require('./package.json').version")
 
             - name: 'Add Build files to git'
               run: git add ./build -f && echo "Staged build files! Status:" && git status
             - name: 'Commit changes'
-              run: echo "Committing ..." && git commit -m "Release v$(node -p "require('./package.json').version")" && echo "Committed! Status:" && git status
+              run: echo "Committing ..." && git commit -m "Release $(node -p "require('./package.json').version")" && echo "Committed! Status:" && git status
             - name: 'Add tag'
-              run: git tag -a v$(node -p "require('./package.json').version") -m "Release v$(node -p "require('./package.json').version")"
+              run: git tag -a $(node -p "require('./package.json').version") -m "Release $(node -p "require('./package.json').version")"
             - name: 'Push to release branch'
-              run: git push origin release/v$(node -p "require('./package.json').version") && git push origin tag v$(node -p "require('./package.json').version")
+              run: git push origin release/$(node -p "require('./package.json').version") && git push origin tag $(node -p "require('./package.json').version")
             - name: Publish DIVE to npm
               uses: JS-DevTools/npm-publish@v3
               with:
