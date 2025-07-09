@@ -48,6 +48,10 @@ function findTypeDefinition(type: string): string | null {
             'null',
             'undefined',
             'object',
+            'Promise',
+            'Map',
+            'Array',
+            'Partial',
         ].includes(type)
     ) {
         return null;
@@ -101,8 +105,15 @@ function formatType(type: string, relativeTo: string): string {
         return relativePath ? `[${typeName}](${relativePath})` : typeName;
     };
 
+    // Handle array types
+    const arrayMatch = type.match(/^(.*)\[\]$/);
+    if (arrayMatch) {
+        const baseType = arrayMatch[1];
+        return `${formatType(baseType, relativeTo)}[]`;
+    }
+
     // Handle generic types (Map, Array, Promise, etc.)
-    const genericMatch = type.match(/^([A-Za-z0-9_]+)<(.+)>$/);
+    const genericMatch = type.match(/^([A-Z][A-Za-z0-9_]+)<(.+)>$/);
     if (genericMatch) {
         const [
             ,
@@ -130,9 +141,12 @@ function formatType(type: string, relativeTo: string): string {
                     param.includes('|') ||
                     param.includes('&')
                 ) {
-                    return param.replace(/\b([A-Za-z0-9_]+)\b/g, (match) => {
-                        return formatLink(match, findTypeDefinition(match));
-                    });
+                    return param.replace(
+                        /\b([A-Z][A-Za-z0-9_]*)\b/g,
+                        (match) => {
+                            return formatLink(match, findTypeDefinition(match));
+                        },
+                    );
                 }
                 // Handle simple types in generic parameters
                 return formatLink(param, findTypeDefinition(param));
@@ -150,7 +164,7 @@ function formatType(type: string, relativeTo: string): string {
 
     // Handle complex types (objects, unions, etc.)
     if (type.includes('{') || type.includes('|') || type.includes('&')) {
-        return type.replace(/\b([A-Za-z0-9_]+)\b/g, (match) => {
+        return type.replace(/\b([A-Z][A-Za-z0-9_]*)\b/g, (match) => {
             return formatLink(match, findTypeDefinition(match));
         });
     }
