@@ -1,6 +1,10 @@
 import { GenerateMediaAction } from '../generatemedia.ts';
 import { type EntitySchema } from '@shopware-ag/dive';
 import { Vector3 } from 'three';
+import {
+    type MediaGenerationById,
+    type MediaGenerationByPosition,
+} from '@shopware-ag/dive/mediacreator';
 
 const mockGenerateMedia = vi
     .fn()
@@ -17,9 +21,11 @@ describe('GenerateMediaAction', () => {
             {
                 position: new Vector3(1, 1, 1),
                 target: new Vector3(0, 0, 0),
-                width: 800,
-                height: 600,
-            },
+                resolution: {
+                    width: 800,
+                    height: 600,
+                },
+            } as MediaGenerationByPosition,
             {
                 getMediaCreator: mockGetMediaCreator,
                 registered: mockRegistered,
@@ -31,12 +37,14 @@ describe('GenerateMediaAction', () => {
 
         // Verify results
         expect(mockGetMediaCreator).toHaveBeenCalled();
-        expect(mockGenerateMedia).toHaveBeenCalledWith(
-            expect.objectContaining({ x: 1, y: 1, z: 1 }),
-            expect.objectContaining({ x: 0, y: 0, z: 0 }),
-            800,
-            600,
-        );
+        expect(mockGenerateMedia).toHaveBeenCalledWith({
+            position: expect.objectContaining({ x: 1, y: 1, z: 1 }),
+            target: expect.objectContaining({ x: 0, y: 0, z: 0 }),
+            resolution: {
+                width: 800,
+                height: 600,
+            },
+        });
         expect(result).toBe('data:image/png;base64,test');
     });
 
@@ -58,9 +66,11 @@ describe('GenerateMediaAction', () => {
         const action = new GenerateMediaAction(
             {
                 id: 'test-pov',
-                width: 800,
-                height: 600,
-            },
+                resolution: {
+                    width: 800,
+                    height: 600,
+                },
+            } as MediaGenerationById,
             {
                 getMediaCreator: mockGetMediaCreator,
                 registered: mockRegistered,
@@ -72,12 +82,14 @@ describe('GenerateMediaAction', () => {
 
         // Verify results
         expect(mockGetMediaCreator).toHaveBeenCalled();
-        expect(mockGenerateMedia).toHaveBeenCalledWith(
-            expect.objectContaining({ x: 1, y: 1, z: 1 }),
-            expect.objectContaining({ x: 0, y: 0, z: 0 }),
-            800,
-            600,
-        );
+        expect(mockGenerateMedia).toHaveBeenCalledWith({
+            position: expect.objectContaining({ x: 1, y: 1, z: 1 }),
+            target: expect.objectContaining({ x: 0, y: 0, z: 0 }),
+            resolution: {
+                width: 800,
+                height: 600,
+            },
+        });
         expect(result).toBe('data:image/png;base64,test');
     });
 
@@ -85,9 +97,11 @@ describe('GenerateMediaAction', () => {
         const action = new GenerateMediaAction(
             {
                 id: 'non-existent-pov',
-                width: 800,
-                height: 600,
-            },
+                resolution: {
+                    width: 800,
+                    height: 600,
+                },
+            } as MediaGenerationById,
             {
                 getMediaCreator: mockGetMediaCreator,
                 registered: mockRegistered,
@@ -118,9 +132,11 @@ describe('GenerateMediaAction', () => {
         const action = new GenerateMediaAction(
             {
                 id: 'test-object',
-                width: 800,
-                height: 600,
-            },
+                resolution: {
+                    width: 800,
+                    height: 600,
+                },
+            } as MediaGenerationById,
             {
                 getMediaCreator: mockGetMediaCreator,
                 registered: mockRegistered,
