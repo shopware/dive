@@ -16,6 +16,26 @@ interface ActionDefinition {
 const INSERT_MARKER = '<!-- INSERT_ACTIONS -->';
 const END_MARKER = '<!-- END_ACTIONS -->';
 
+function getGitRepoUrl(): string | null {
+    const packageJsonPath = path.join(process.cwd(), 'package.json');
+    if (fs.existsSync(packageJsonPath)) {
+        const packageJson = JSON.parse(
+            fs.readFileSync(packageJsonPath, 'utf-8'),
+        );
+        const repository = packageJson.repository;
+        if (typeof repository === 'string') {
+            // Convert ssh git url to https
+            return repository
+                .replace(/^git@/, 'https://')
+                .replace(/.git$/, '')
+                .replace(/:/, '/');
+        } else if (typeof repository === 'object' && repository.url) {
+            return repository.url.replace(/^git\+/, '').replace(/.git$/, '');
+        }
+    }
+    return null;
+}
+
 function findTypeDefinition(type: string): string | null {
     // Handle built-in types
     if (
@@ -36,53 +56,19 @@ function findTypeDefinition(type: string): string | null {
     // Handle special cases
     const specialTypes: Record<string, string> = {
         Vector3Like: 'https://threejs.org/docs/#api/en/math/Vector3',
-        DIVESceneFileType: 'src/types/SceneType.ts',
-        DIVESceneData: 'src/types/SceneData.ts',
-        DIVESceneObject: 'src/types/SceneObjects.ts',
-        COMEntity: 'src/plugins/state/types.ts',
     };
 
     if (type in specialTypes) {
         return specialTypes[type];
     }
 
-    // Search in types directory
-    const typesDir = path.join(process.cwd(), 'src/types');
-    if (fs.existsSync(typesDir)) {
-        for (const file of fs.readdirSync(typesDir)) {
-            if (file.endsWith('.ts')) {
-                const content = fs.readFileSync(
-                    path.join(typesDir, file),
-                    'utf-8',
-                );
-                if (
-                    new RegExp(`(type|interface|enum)\\s+${type}\\b`).test(
-                        content,
-                    )
-                ) {
-                    return `src/types/${file}`;
-                }
-            }
-        }
-    }
-
     // Search in src directory
     const srcDir = path.join(process.cwd(), 'src');
-    if (fs.existsSync(srcDir)) {
-        for (const file of fs.readdirSync(srcDir)) {
-            if (file.endsWith('.ts')) {
-                const content = fs.readFileSync(
-                    path.join(srcDir, file),
-                    'utf-8',
-                );
-                if (
-                    new RegExp(`(type|interface|enum)\\s+${type}\\b`).test(
-                        content,
-                    )
-                ) {
-                    return `src/${file}`;
-                }
-            }
+    const files = findActionFiles(srcDir);
+    for (const file of files) {
+        const content = fs.readFileSync(file, 'utf-8');
+        if (new RegExp(`(type|interface|enum)\\s+${type}\\b`).test(content)) {
+            return file;
         }
     }
 
@@ -96,6 +82,13 @@ function makePathRelative(
     if (!filePath || filePath.startsWith('http')) {
         return filePath;
     }
+
+    const repoUrl = getGitRepoUrl();
+    if (repoUrl) {
+        const relativePath = path.posix.relative(process.cwd(), filePath);
+        return `${repoUrl}/blob/main/${relativePath}`;
+    }
+
     return path.posix.relative(relativeTo, path.join(process.cwd(), filePath));
 }
 
