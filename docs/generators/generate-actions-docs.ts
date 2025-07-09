@@ -8,8 +8,6 @@ const README_PATH = 'src/plugins/state/README.md';
 interface ActionDefinition {
     name: string;
     description: string;
-    payloadType: string;
-    returnType: string;
     sourceFile: string;
 }
 
@@ -39,39 +37,30 @@ function extractActionDefinitions(
                         ts.isIdentifier(callExpr.expression.expression) &&
                         callExpr.expression.expression.text === 'Action'
                     ) {
-                        const typeArgs = callExpr.typeArguments;
-                        if (typeArgs && typeArgs.length >= 2) {
-                            const payloadType = typeArgs[0].getText();
-                            const returnType = typeArgs[2]
-                                ? typeArgs[2].getText()
-                                : 'void';
-                            // Extract description from the options object
-                            let description = '';
-                            if (callExpr.arguments.length > 0) {
-                                const optionsArg = callExpr.arguments[0];
-                                if (ts.isObjectLiteralExpression(optionsArg)) {
-                                    for (const prop of optionsArg.properties) {
-                                        if (
-                                            ts.isPropertyAssignment(prop) &&
-                                            ts.isIdentifier(prop.name) &&
-                                            prop.name.text === 'description' &&
-                                            ts.isStringLiteral(prop.initializer)
-                                        ) {
-                                            description = prop.initializer.text;
-                                            break;
-                                        }
+                        // Extract description from the options object
+                        let description = '';
+                        if (callExpr.arguments.length > 0) {
+                            const optionsArg = callExpr.arguments[0];
+                            if (ts.isObjectLiteralExpression(optionsArg)) {
+                                for (const prop of optionsArg.properties) {
+                                    if (
+                                        ts.isPropertyAssignment(prop) &&
+                                        ts.isIdentifier(prop.name) &&
+                                        prop.name.text === 'description' &&
+                                        ts.isStringLiteral(prop.initializer)
+                                    ) {
+                                        description = prop.initializer.text;
+                                        break;
                                     }
                                 }
                             }
-                            if (description) {
-                                actions.push({
-                                    name: declaration.name.text,
-                                    description,
-                                    payloadType,
-                                    returnType,
-                                    sourceFile: sourceFile.fileName,
-                                });
-                            }
+                        }
+                        if (description) {
+                            actions.push({
+                                name: declaration.name.text,
+                                description,
+                                sourceFile: sourceFile.fileName,
+                            });
                         }
                     }
                 }
@@ -106,15 +95,6 @@ function findActionFiles(dir: string): string[] {
     return files;
 }
 
-function escapeMarkdownTableCell(text: string): string {
-    return text
-        .replace(/\|/g, '\\|') // Escape pipe
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
-        .replace(/\r/g, '') // Remove carriage returns
-        .replace(/\n/g, '<br/>'); // Replace newlines with <br/>
-}
-
 function generateReadme(): void {
     const actionsDir = path.join(process.cwd(), ACTIONS_FOLDER);
     const readmePath = path.join(process.cwd(), README_PATH);
@@ -143,16 +123,12 @@ function generateReadme(): void {
     actions.sort((a, b) => a.name.localeCompare(b.name));
 
     // Generate actions section
-    let actionsSection = '| Action | Description | Input | Return |\n';
-    actionsSection += '|--------|-------------|-------|--------|\n';
+    let actionsSection = '| Action | Description |\n';
+    actionsSection += '|--------|-------------|\n';
 
     for (const action of actions) {
         const relativePath = path.posix.relative(readmeDir, action.sourceFile);
-        const formattedPayloadType = escapeMarkdownTableCell(
-            action.payloadType,
-        );
-        const formattedReturnType = escapeMarkdownTableCell(action.returnType);
-        actionsSection += `| [${action.name}](${relativePath}) | ${action.description} | <code>${formattedPayloadType}</code> | <code>${formattedReturnType}</code> |\n`;
+        actionsSection += `| [${action.name}](${relativePath}) | ${action.description} |\n`;
     }
 
     actionsSection += '\n';
