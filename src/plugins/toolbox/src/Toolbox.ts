@@ -2,7 +2,7 @@ import { type DIVEScene } from '@shopware-ag/dive';
 import { type DIVEBaseTool } from './BaseTool.ts';
 import { DIVESelectTool } from './select/SelectTool.ts';
 import { OrbitController } from '@shopware-ag/dive/orbitcontroller';
-import { ToolType } from '../types/index.ts';
+import { type ToolType } from '../types/index.ts';
 
 export class Toolbox {
     public static readonly DefaultTool = 'select';
