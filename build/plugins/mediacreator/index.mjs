@@ -1,0 +1,30 @@
+var h = Object.defineProperty;
+var b = (t, e, r) => e in t ? h(t, e, { enumerable: !0, configurable: !0, writable: !0, value: r }) : t[e] = r;
+var n = (t, e, r) => b(t, typeof e != "symbol" ? e + "" : e, r);
+import { D as c } from "../../chunks/PerspectiveCamera-PMJPzAn3.mjs";
+class g {
+  constructor(e, r, o) {
+    n(this, "_renderer");
+    n(this, "_scene");
+    n(this, "_controller");
+    this._renderer = e, this._scene = r, this._controller = o;
+  }
+  generateMedia(e) {
+    const { position: r, target: o, resolution: l } = e, { width: s, height: i } = l, _ = this._controller.object.position.clone(), a = this._controller.object.quaternion.clone();
+    this._renderer.onResize(s, i), this._controller.object.onResize(s, i), this._controller.object.position.copy(r), this._controller.target.copy(o), this._controller.update();
+    const d = this.drawCanvas().toDataURL();
+    return this._controller.object.position.copy(_), this._controller.object.quaternion.copy(a), d;
+  }
+  drawCanvas(e) {
+    const r = this._renderer.webglrenderer.domElement;
+    e && (this._renderer.webglrenderer.domElement = e), this._controller.object.layers.mask = c.LIVE_VIEW_LAYER_MASK, this._renderer.webglrenderer.render(
+      this._scene,
+      this._controller.object
+    ), this._controller.object.layers.mask = c.EDITOR_VIEW_LAYER_MASK;
+    const o = this._renderer.webglrenderer.domElement;
+    return e && (this._renderer.webglrenderer.domElement = r), o;
+  }
+}
+export {
+  g as MediaCreator
+};
