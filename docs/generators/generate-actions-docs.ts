@@ -4,6 +4,7 @@ import * as path from 'path';
 
 const ACTIONS_FOLDER = 'src/plugins/state/src/actions';
 const README_PATH = 'src/plugins/state/README.md';
+const MAIN_BRANCH = 'trunk';
 
 interface ActionDefinition {
     name: string;
@@ -22,15 +23,20 @@ function getGitRepoUrl(): string | null {
         const packageJson = JSON.parse(
             fs.readFileSync(packageJsonPath, 'utf-8'),
         );
-        const repository = packageJson.repository;
+        let repository = packageJson.repository;
+        if (typeof repository === 'object' && repository.url) {
+            repository = repository.url;
+        }
+
         if (typeof repository === 'string') {
-            // Convert ssh git url to https
-            return repository
-                .replace(/^git@/, 'https://')
-                .replace(/.git$/, '')
-                .replace(/:/, '/');
-        } else if (typeof repository === 'object' && repository.url) {
-            return repository.url.replace(/^git\+/, '').replace(/.git$/, '');
+            if (repository.startsWith('git@')) {
+                return `https://${repository
+                    .substring(4)
+                    .replace(/:/, '/')
+                    .replace(/.git$/, '')}`;
+            }
+
+            return repository.replace(/^git\+/, '').replace(/.git$/, '');
         }
     }
     return null;
@@ -90,7 +96,7 @@ function makePathRelative(
     const repoUrl = getGitRepoUrl();
     if (repoUrl) {
         const relativePath = path.posix.relative(process.cwd(), filePath);
-        return `${repoUrl}/blob/main/${relativePath}`;
+        return `${repoUrl}/blob/${MAIN_BRANCH}/${relativePath}`;
     }
 
     return path.posix.relative(relativeTo, path.join(process.cwd(), filePath));
