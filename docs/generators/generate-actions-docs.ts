@@ -258,6 +258,8 @@ function findActionFiles(dir: string): string[] {
 function escapeMarkdownTableCell(text: string): string {
     return text
         .replace(/\|/g, '\\|') // Escape pipe
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
         .replace(/\n/g, '<br/>') // Replace newlines with <br/>
         .replace(/\r/g, '') // Remove carriage returns
         .replace(/\s+$/gm, '') // Trim trailing whitespace on each line
