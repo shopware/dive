@@ -1,0 +1,1 @@
+"use strict";function r(e){var i;const t=e.split("/").pop()||"";return!t.includes(".")||t.endsWith(".")?"":((i=t.split(".").pop())==null?void 0:i.toLowerCase().split("?")[0])||""}function n(e){return e.toLowerCase()in{glb:!0,gltf:!0,usdz:!0}}exports.getFileTypeFromUri=r;exports.isFileTypeSupported=n;

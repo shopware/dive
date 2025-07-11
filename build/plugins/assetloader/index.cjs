@@ -1,0 +1,1 @@
+"use strict";Object.defineProperty(exports,Symbol.toStringTag,{value:"Module"});const e=require("../../chunks/AssetLoader-Ct1Lh-P1.cjs");exports.AssetLoader=e.AssetLoader;exports.DRACOWorker=e.DRACOWorker;exports.DracoLoader=e.DracoLoader;
