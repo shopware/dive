@@ -59,6 +59,7 @@ export class ARQuickLook {
 
     private async convertToUSDZ(
         uri: string,
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
         options?: ARSystemOptions,
     ): Promise<string> {
         // Convert the file to USDZ format
@@ -67,10 +68,7 @@ export class ARQuickLook {
             ar: {
                 anchoring: { type: 'plane' },
                 planeAnchoring: {
-                    alignment:
-                        options?.arPlacement === 'vertical'
-                            ? 'vertical'
-                            : 'horizontal',
+                    alignment: 'horizontal',
                 },
             },
         });

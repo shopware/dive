@@ -10,7 +10,7 @@ import { ParseError } from '../../../error/parse/parse-error.ts';
 export type USDZExporterOptions = THREEUSDZExporterOptions & {
     ar?: {
         anchoring: { type: 'plane' | 'image' | 'face' | 'none' }; // source: https://developer.apple.com/documentation/realitykit/preliminary-anchoring-type
-        planeAnchoring: { alignment: 'horizontal' | 'vertical' | 'any' }; // source: https://developer.apple.com/documentation/realitykit/preliminary-planeanchoring-alignment
+        planeAnchoring: { alignment: 'horizontal' | 'vertical' | 'any' }; // source: https://developer.apple.com/documentation/arkit/planeanchor
     };
 };
 

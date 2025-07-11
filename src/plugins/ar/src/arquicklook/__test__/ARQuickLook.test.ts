@@ -118,7 +118,7 @@ describe('ARQuickLook', () => {
                 quickLookCompatible: true,
                 ar: {
                     anchoring: { type: 'plane' },
-                    planeAnchoring: { alignment: 'vertical' },
+                    planeAnchoring: { alignment: 'horizontal' }, // we always use horizontal alignment for AR Quick Look
                 },
             });
             expect(URL.createObjectURL).toHaveBeenCalled();
