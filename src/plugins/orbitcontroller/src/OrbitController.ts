@@ -4,6 +4,7 @@ import { MathUtils } from 'three/src/math/MathUtils.js';
 import { Object3D } from 'three/src/core/Object3D.js';
 import { DIVEPerspectiveCamera, DIVETicker } from '@shopware-ag/dive';
 import { BoundingBox } from 'src/components/boundingbox/BoundingBox.ts';
+import { OrbitControllerState } from '../types/index.ts';
 
 export type OrbitControllerSettings = {
     /** Whether to enable damping for smooth camera movement */
@@ -58,6 +59,38 @@ export class OrbitController extends OrbitControls implements DIVETicker {
     public tick(): void {
         if (!this.enabled) return;
         this.update();
+    }
+
+    public setState(state: OrbitControllerState): void {
+        this.target.copy(state.target);
+        this.minAzimuthAngle = state.azimuthalAngle;
+        this.maxAzimuthAngle = state.azimuthalAngle;
+        this.minPolarAngle = state.polarAngle;
+        this.maxPolarAngle = state.polarAngle;
+        this.minDistance = state.distance;
+        this.maxDistance = state.distance;
+        this.object.position.copy(state.position);
+        this.object.quaternion.copy(state.quaternion);
+
+        this.update();
+
+        this.minAzimuthAngle = Infinity;
+        this.maxAzimuthAngle = Infinity;
+        this.minPolarAngle = 0;
+        this.maxPolarAngle = Math.PI;
+        this.minDistance = 0;
+        this.maxDistance = Infinity;
+    }
+
+    public getState(): OrbitControllerState {
+        return {
+            target: this.target.clone(),
+            azimuthalAngle: this.getAzimuthalAngle(),
+            polarAngle: this.getPolarAngle(),
+            distance: this.getDistance(),
+            position: this.object.position.clone(),
+            quaternion: this.object.quaternion.clone(),
+        };
     }
 
     /**

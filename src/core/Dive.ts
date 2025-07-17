@@ -136,6 +136,9 @@ export class DIVE {
     public setCanvas(canvas: HTMLCanvasElement): void {
         this._engine.setCanvas(canvas);
 
+        // save state of orbit controller
+        const state = this.orbitController.getState();
+
         // remove old orbit controller
         this._engine.clock.removeTicker(this.orbitController);
         this.orbitController.dispose();
@@ -146,6 +149,9 @@ export class DIVE {
             canvas,
             this._settings,
         );
+
+        // set state of new orbit controller
+        this.orbitController.setState(state);
         this._engine.clock.addTicker(this.orbitController);
     }
 
