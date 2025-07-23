@@ -11,13 +11,7 @@ import { DIVEGrid } from '../../components/grid/Grid.ts';
  */
 
 export class DIVEScene extends Scene {
-    public get root(): DIVERoot {
-        return this._root;
-    }
-
-    public get grid(): DIVEGrid {
-        return this._grid;
-    }
+    public readonly isDIVEScene: true = true;
 
     private _root: DIVERoot;
     private _grid: DIVEGrid;
@@ -34,11 +28,19 @@ export class DIVEScene extends Scene {
         this.add(this._grid);
     }
 
+    public get root(): DIVERoot {
+        return this._root;
+    }
+
+    public get grid(): DIVEGrid {
+        return this._grid;
+    }
+
     public setBackground(color: ColorRepresentation): void {
         this.background = new Color(color);
     }
 
     public computeSceneBB(): Box3 {
-        return this.root.computeSceneBB();
+        return this._root.computeSceneBB();
     }
 }

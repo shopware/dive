@@ -7,7 +7,7 @@ import {
 import { DIVEScene } from '../scene/Scene.ts';
 import { DIVEPerspectiveCamera } from '../camera/PerspectiveCamera.ts';
 
-export type DIVERenderPipelineSettings = {
+export type DIVERendererSettings = {
     /**
      * The canvas to render to. When undefined, the canvas will be created automatically and reachable via the `diveInstance.canvas` property.
      *
@@ -67,19 +67,18 @@ export type DIVERenderPipelineSettings = {
     shadowQuality: 'high' | 'medium' | 'low';
 };
 
-export const DIVERenderPipelineDefaultSettings: Required<DIVERenderPipelineSettings> =
-    {
-        canvas: undefined,
-        antialias: true,
-        alpha: true,
-        powerPreference: 'high-performance',
-        precision: 'highp',
-        stencil: false,
-        depth: true,
-        logarithmicDepthBuffer: false,
-        shadows: true,
-        shadowQuality: 'high',
-    };
+export const DIVERendererDefaultSettings: Required<DIVERendererSettings> = {
+    canvas: undefined,
+    antialias: true,
+    alpha: true,
+    powerPreference: 'high-performance',
+    precision: 'highp',
+    stencil: false,
+    depth: true,
+    logarithmicDepthBuffer: false,
+    shadows: true,
+    shadowQuality: 'high',
+};
 
 /**
  * A changed version of the WebGLRenderer.
@@ -90,40 +89,31 @@ export const DIVERenderPipelineDefaultSettings: Required<DIVERenderPipelineSetti
  */
 
 export class DIVERenderer {
+    public readonly isDIVERenderer: true = true;
+
     private _webglrenderer: WebGLRenderer;
-    private _settings: DIVERenderPipelineSettings;
+
+    private _settings: DIVERendererSettings;
 
     constructor(
         private _scene: DIVEScene,
         private _camera: DIVEPerspectiveCamera,
-        settings?: Partial<DIVERenderPipelineSettings>,
+        settings?: Partial<DIVERendererSettings>,
     ) {
         this._settings = {
-            ...DIVERenderPipelineDefaultSettings,
+            ...DIVERendererDefaultSettings,
             ...(settings ?? {}),
         };
 
-        this._webglrenderer = new WebGLRenderer(this._settings);
-        this._webglrenderer.shadowMap.enabled = this._settings.shadows;
-        this._webglrenderer.shadowMap.type =
-            this._settings.shadowQuality === 'high'
-                ? PCFSoftShadowMap
-                : this._settings.shadowQuality === 'medium'
-                  ? PCFShadowMap
-                  : BasicShadowMap;
+        this._webglrenderer = this._createWebGLRenderer();
     }
 
     public get webglrenderer(): WebGLRenderer {
         return this._webglrenderer;
     }
 
-    public setCanvas(canvas: HTMLCanvasElement): void {
-        // dispose old renderer
-        this._webglrenderer.dispose();
-
-        // create new renderer with canvas
-        this._settings.canvas = canvas;
-        this._webglrenderer = new WebGLRenderer(this._settings);
+    public get canvas(): HTMLCanvasElement {
+        return this._webglrenderer.domElement;
     }
 
     public render(): void {
@@ -136,5 +126,27 @@ export class DIVERenderer {
 
     public dispose(): void {
         this._webglrenderer.dispose();
+    }
+
+    public setCanvas(canvas: HTMLCanvasElement): void {
+        // dispose old renderer
+        this._webglrenderer.dispose();
+
+        // create new renderer with canvas
+        this._settings.canvas = canvas;
+        this._webglrenderer = this._createWebGLRenderer();
+    }
+
+    private _createWebGLRenderer(): WebGLRenderer {
+        const renderer = new WebGLRenderer(this._settings);
+        renderer.shadowMap.enabled = this._settings.shadows;
+        renderer.shadowMap.type =
+            this._settings.shadowQuality === 'high'
+                ? PCFSoftShadowMap
+                : this._settings.shadowQuality === 'medium'
+                  ? PCFShadowMap
+                  : BasicShadowMap;
+        renderer.setPixelRatio(window.devicePixelRatio);
+        return renderer;
     }
 }

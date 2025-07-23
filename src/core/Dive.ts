@@ -1,17 +1,26 @@
+import { Color, MathUtils } from 'three';
+import { DIVEClock } from '../engine/clock/Clock.ts';
+import { DIVEView } from '../engine/view/View.ts';
+import { DIVEScene } from '../engine/scene/Scene.ts';
+import { DIVEModel } from '../components/model/Model.ts';
+import { DIVESceneLight } from '../components/light/SceneLight.ts';
+import { BoundingBox } from '../components/boundingbox/BoundingBox.ts';
 import {
     OrbitController,
     OrbitControllerDefaultSettings,
     OrbitControllerSettings,
 } from '@shopware-ag/dive/orbitcontroller';
 import { OrientationDisplay } from '@shopware-ag/dive/orientationdisplay';
-import { Color, MathUtils } from 'three';
 import {
-    DIVEEngine,
-    EngineDefaultSettings,
-    EngineSettings,
-} from '../engine/Engine.ts';
-import { DIVEModel, DIVESceneLight } from '../components/index.ts';
-import { BoundingBox } from 'src/components/boundingbox/BoundingBox.ts';
+    DIVEPerspectiveCamera,
+    DIVEPerspectiveCameraDefaultSettings,
+    DIVEPerspectiveCameraSettings,
+} from '../engine/camera/PerspectiveCamera.ts';
+import {
+    DIVERenderer,
+    DIVERendererDefaultSettings,
+    DIVERendererSettings,
+} from '../engine/renderer/Renderer.ts';
 
 declare global {
     interface Window {
@@ -35,13 +44,28 @@ window.DIVE = {
     },
 };
 
-export type DIVESettings = EngineSettings & {
-    /** Settings for modules */
-    useLocalDRACOLoader?: boolean;
-} & Partial<OrbitControllerSettings>;
+export type DIVESettings = {
+    /**
+     * Whether the engine should start automatically after initialization.
+     *
+     * @default true
+     */
+    autoStart: boolean;
+    /**
+     * Whether to display coordinate axes in the scene.
+     *
+     * @default false
+     */
+    displayAxes: boolean;
+} & Partial<DIVEPerspectiveCameraSettings> &
+    Partial<DIVERendererSettings> &
+    Partial<OrbitControllerSettings>;
 
 export const DIVEDefaultSettings: DIVESettings = {
-    ...EngineDefaultSettings,
+    autoStart: true,
+    displayAxes: false,
+    ...DIVEPerspectiveCameraDefaultSettings,
+    ...DIVERendererDefaultSettings,
     ...OrbitControllerDefaultSettings,
 };
 
@@ -77,11 +101,11 @@ export class DIVE {
         const dive = new DIVE(settings);
 
         // set scene properties
-        dive.engine.scene.background = new Color(0xffffff);
-        dive.engine.scene.grid.setVisibility(false);
-        dive.engine.scene.root.floor.setVisibility(true);
+        dive.scene.background = new Color(0xffffff);
+        dive.scene.grid.setVisibility(false);
+        dive.scene.root.floor.setVisibility(true);
 
-        dive.engine.camera.position.set(0, 2, 2);
+        dive.mainView.camera.position.set(0, 2, 2);
         dive.orbitController.target.set(0, 0.5, 0);
 
         // add scene light
@@ -92,7 +116,7 @@ export class DIVE {
         light.visible = true;
         light.setIntensity(settings?.lightIntensity ?? 1);
         light.setColor(new Color(0xffffff));
-        dive.engine.scene.root.add(light);
+        dive.scene.root.add(light);
 
         // instantiate model
         const model = new DIVEModel();
@@ -100,16 +124,16 @@ export class DIVE {
         model.userData.id = MathUtils.generateUUID();
         model.userData.uri = uri;
         model.visible = true;
-        dive.engine.scene.root.add(model);
+        dive.scene.root.add(model);
 
         await model.setFromURL(uri);
 
         // set camera to encompass the loaded model
         const sceneBB = new BoundingBox(model);
-        dive.engine.scene.add(sceneBB);
+        dive.scene.add(sceneBB);
 
         const transform = dive.orbitController.computeEncompassingView(sceneBB);
-        dive.engine.camera.position.copy(transform.position);
+        dive.mainView.camera.position.copy(transform.position);
         dive.orbitController.target.copy(transform.target);
 
         return dive;
@@ -119,65 +143,50 @@ export class DIVE {
     private _instanceId: string = MathUtils.generateUUID();
     private _settings: DIVESettings;
 
-    public get engine(): DIVEEngine {
-        return this._engine;
-    }
-
-    private _engine: DIVEEngine;
+    private _views: DIVEView[];
+    private _scene: DIVEScene;
+    private _clock: DIVEClock;
 
     private orbitController: OrbitController;
 
     private orientationDisplay: OrientationDisplay | null;
-
-    public get canvas(): HTMLCanvasElement {
-        return this._engine.renderer.webglrenderer.domElement;
-    }
-
-    public setCanvas(canvas: HTMLCanvasElement): void {
-        this._engine.setCanvas(canvas);
-
-        // save state of orbit controller
-        const state = this.orbitController.getState();
-
-        // remove old orbit controller
-        this._engine.clock.removeTicker(this.orbitController);
-        this.orbitController.dispose();
-
-        // create new orbit controller
-        this.orbitController = new OrbitController(
-            this._engine.camera,
-            canvas,
-            this._settings,
-        );
-
-        // set state of new orbit controller
-        this.orbitController.setState(state);
-        this._engine.clock.addTicker(this.orbitController);
-    }
 
     constructor(settings?: Partial<DIVESettings>) {
         this._settings = {
             ...DIVEDefaultSettings,
             ...(settings ?? {}),
         };
+        // set up the clock to define the tick
+        this._clock = new DIVEClock();
 
-        this._engine = new DIVEEngine(settings);
+        // set up scene
+        this._scene = new DIVEScene();
 
+        // set up main view
+        const mainView = new DIVEView(this._scene, this._settings);
+        this._clock.addTicker(mainView);
+        this._views = [mainView];
+
+        if (this._settings.autoStart) {
+            this.start();
+        }
+
+        // set up the controller
         this.orbitController = new OrbitController(
-            this._engine.camera,
-            this._engine.renderer.webglrenderer.domElement,
+            this.mainView.camera,
+            this.mainView.canvas,
             this._settings,
         );
-        this._engine.clock.addTicker(this.orbitController);
+        this.clock.addTicker(this.orbitController);
 
         // initialize axis camera
         if (this._settings.displayAxes) {
             this.orientationDisplay = new OrientationDisplay(
-                this._engine.renderer,
-                this._engine.scene,
-                this._engine.camera,
+                this.mainView.renderer,
+                this.scene,
+                this.mainView.camera,
             );
-            this._engine.clock.addTicker(this.orientationDisplay);
+            this.clock.addTicker(this.orientationDisplay);
         } else {
             this.orientationDisplay = null;
         }
@@ -222,13 +231,82 @@ export class DIVE {
         window.DIVE.instances.push(this);
     }
 
+    /**
+     * @deprecated This property will be removed in a future version. Please use properties on the DIVE instance and mainView directly.
+     */
+    public get engine(): {
+        scene: DIVEScene;
+        camera: DIVEPerspectiveCamera;
+        renderer: DIVERenderer;
+        setCanvas: (canvas: HTMLCanvasElement) => void;
+        clock: DIVEClock;
+        start: () => void;
+        stop: () => void;
+        dispose: () => void;
+    } {
+        return {
+            ...this,
+            camera: this.mainView.camera,
+            renderer: this.mainView.renderer,
+            setCanvas: (canvas: HTMLCanvasElement) => {
+                const state = this.orbitController.getState();
+
+                this.clock.removeTicker(this.orbitController);
+                this.orbitController.dispose();
+
+                this.orbitController = new OrbitController(
+                    this.mainView.camera,
+                    canvas,
+                    this._settings,
+                );
+                this.orbitController.setState(state);
+                this.clock.addTicker(this.orbitController);
+
+                this.mainView.setCanvas(canvas);
+            },
+        };
+    }
+
+    public get views(): DIVEView[] {
+        return this._views;
+    }
+
+    public get mainView(): DIVEView {
+        return this._views[0];
+    }
+
+    public get canvas(): HTMLCanvasElement {
+        return this.mainView.canvas;
+    }
+
+    public get scene(): DIVEScene {
+        return this._scene;
+    }
+
+    public get clock(): DIVEClock {
+        return this._clock;
+    }
+
+    public start(): void {
+        this._clock.start();
+    }
+
+    public stop(): void {
+        this._clock.stop();
+    }
+
     public async dispose(): Promise<void> {
         return new Promise((resolve) => {
-            this._engine.clock.removeTicker(this.orbitController);
+            this._views.forEach((view) => {
+                view.dispose();
+            });
+            this._views = [];
+
+            this._clock.removeTicker(this.orbitController);
             this.orbitController.dispose();
 
             if (this.orientationDisplay) {
-                this._engine.clock.removeTicker(this.orientationDisplay);
+                this._clock.removeTicker(this.orientationDisplay);
                 this.orientationDisplay.dispose();
             }
 
@@ -239,4 +317,39 @@ export class DIVE {
             resolve();
         });
     }
+
+    // public cloneCanvas(): HTMLCanvasElement {
+    //     const canvas = this._renderer.createView();
+    //     const state = this.orbitController.getState();
+    //     const orbitController = new OrbitController(
+    //         this._renderer.mainView.camera,
+    //         this._renderer.mainView.canvas,
+    //         this._settings,
+    //     );
+    //     orbitController.setState(state);
+    //     this._clock.addTicker(orbitController);
+    //     return canvas;
+    // }
+
+    // public setCanvas(canvas: HTMLCanvasElement): void {
+    //     this._engine.setCanvas(canvas);
+
+    //     // save state of orbit controller
+    //     const state = this.orbitController.getState();
+
+    //     // remove old orbit controller
+    //     this._engine.clock.removeTicker(this.orbitController);
+    //     this.orbitController.dispose();
+
+    //     // create new orbit controller
+    //     this.orbitController = new OrbitController(
+    //         this._engine.camera,
+    //         canvas,
+    //         this._settings,
+    //     );
+
+    //     // set state of new orbit controller
+    //     this.orbitController.setState(state);
+    //     this._engine.clock.addTicker(this.orbitController);
+    // }
 }

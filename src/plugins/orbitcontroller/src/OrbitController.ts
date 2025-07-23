@@ -32,6 +32,8 @@ export class OrbitController extends OrbitControls implements DIVETicker {
 
     public object: DIVEPerspectiveCamera;
 
+    private _domElements: HTMLCanvasElement[] = [];
+
     constructor(
         camera: DIVEPerspectiveCamera,
         public domElement: HTMLCanvasElement,
@@ -40,6 +42,7 @@ export class OrbitController extends OrbitControls implements DIVETicker {
         super(camera, domElement);
 
         this.domElement = domElement;
+        this._domElements.push(domElement);
 
         this.object = camera;
 
@@ -59,38 +62,6 @@ export class OrbitController extends OrbitControls implements DIVETicker {
     public tick(): void {
         if (!this.enabled) return;
         this.update();
-    }
-
-    public setState(state: OrbitControllerState): void {
-        this.target.copy(state.target);
-        this.minAzimuthAngle = state.azimuthalAngle;
-        this.maxAzimuthAngle = state.azimuthalAngle;
-        this.minPolarAngle = state.polarAngle;
-        this.maxPolarAngle = state.polarAngle;
-        this.minDistance = state.distance;
-        this.maxDistance = state.distance;
-        this.object.position.copy(state.position);
-        this.object.quaternion.copy(state.quaternion);
-
-        this.update();
-
-        this.minAzimuthAngle = Infinity;
-        this.maxAzimuthAngle = Infinity;
-        this.minPolarAngle = 0;
-        this.maxPolarAngle = Math.PI;
-        this.minDistance = 0;
-        this.maxDistance = Infinity;
-    }
-
-    public getState(): OrbitControllerState {
-        return {
-            target: this.target.clone(),
-            azimuthalAngle: this.getAzimuthalAngle(),
-            polarAngle: this.getPolarAngle(),
-            distance: this.getDistance(),
-            position: this.object.position.clone(),
-            quaternion: this.object.quaternion.clone(),
-        };
     }
 
     /**
@@ -178,5 +149,50 @@ export class OrbitController extends OrbitControls implements DIVETicker {
         this.update();
         this.minDistance = minDistance;
         this.maxDistance = maxDistance;
+    }
+
+    public getState(): OrbitControllerState {
+        return {
+            target: this.target.clone(),
+            azimuthalAngle: this.getAzimuthalAngle(),
+            polarAngle: this.getPolarAngle(),
+            distance: this.getDistance(),
+            position: this.object.position.clone(),
+            quaternion: this.object.quaternion.clone(),
+        };
+    }
+
+    public setState(state: OrbitControllerState): void {
+        this.target.copy(state.target);
+        this.minAzimuthAngle = state.azimuthalAngle;
+        this.maxAzimuthAngle = state.azimuthalAngle;
+        this.minPolarAngle = state.polarAngle;
+        this.maxPolarAngle = state.polarAngle;
+        this.minDistance = state.distance;
+        this.maxDistance = state.distance;
+        this.object.position.copy(state.position);
+        this.object.quaternion.copy(state.quaternion);
+
+        this.update();
+
+        this.minAzimuthAngle = Infinity;
+        this.maxAzimuthAngle = Infinity;
+        this.minPolarAngle = 0;
+        this.maxPolarAngle = Math.PI;
+        this.minDistance = 0;
+        this.maxDistance = Infinity;
+    }
+
+    public addCanvas(canvas: HTMLCanvasElement): void {
+        this._domElements.push(canvas);
+        this._addListeners(canvas);
+    }
+
+    private _addListeners(canvas: HTMLCanvasElement): void {
+        // copy all event listeners from parent class
+    }
+
+    private _removeListeners(canvas: HTMLCanvasElement): void {
+        // remove all event listeners
     }
 }

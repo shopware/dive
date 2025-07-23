@@ -1,10 +1,6 @@
 import { Vector3 } from 'three';
 import { OrbitController } from '@shopware-ag/dive/orbitcontroller';
-import {
-    type DIVERenderer,
-    type DIVEScene,
-    DIVEEngine,
-} from '@shopware-ag/dive';
+import { type DIVERenderer, type DIVEScene, DIVE } from '@shopware-ag/dive';
 import { Overlay } from './overlay/Overlay.ts';
 import { DIVEWebXRController } from './controller/WebXRController.ts';
 
@@ -46,10 +42,10 @@ export class DIVEWebXR {
     private static _xrController: DIVEWebXRController | null = null;
 
     public static async Launch(
-        engine: DIVEEngine,
+        engine: DIVE,
         controller: OrbitController,
     ): Promise<void> {
-        this._renderer = engine.renderer;
+        this._renderer = engine.mainView.renderer;
         this._scene = engine.scene;
         this._controller = controller;
 

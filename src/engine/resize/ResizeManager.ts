@@ -1,13 +1,15 @@
 import { DIVEPerspectiveCamera } from '../camera/PerspectiveCamera.ts';
-import { DIVERenderPipeline } from '../renderer/Renderer.ts';
+import { DIVERenderer } from '../renderer/Renderer.ts';
 
 export class DIVEResizeManager {
+    public readonly isDIVEResizeManager: true = true;
+
     private _resizeObserver: ResizeObserver;
     private _width: number = 0;
     private _height: number = 0;
 
     constructor(
-        private _renderer: DIVERenderPipeline,
+        private _renderer: DIVERenderer,
         private _camera: DIVEPerspectiveCamera,
     ) {
         this._resizeObserver = new ResizeObserver((entries) => {
@@ -24,7 +26,7 @@ export class DIVEResizeManager {
             this._height = height;
         });
 
-        this._observeCanvas(this._renderer.webglrenderer.domElement);
+        this._observeCanvas(this._renderer.canvas);
     }
 
     public setCanvas(canvas: HTMLCanvasElement): void {

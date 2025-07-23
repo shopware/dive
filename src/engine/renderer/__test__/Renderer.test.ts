@@ -2,10 +2,7 @@
  * @jest-environment jsdom
  */
 
-import {
-    DIVERenderer,
-    DIVERenderPipelineDefaultSettings,
-} from '../Renderer.ts';
+import { DIVERenderer, DIVERendererDefaultSettings } from '../Renderer.ts';
 import { DIVEScene } from '../../scene/Scene.ts';
 import { DIVEPerspectiveCamera } from '../../camera/PerspectiveCamera.ts';
 import { vi } from 'vitest';
@@ -42,15 +39,14 @@ describe('DIVERenderPipeline', () => {
         expect(renderer).toBeDefined();
         expect(WebGLRenderer).toHaveBeenCalledWith(
             expect.objectContaining({
-                antialias: DIVERenderPipelineDefaultSettings.antialias,
-                alpha: DIVERenderPipelineDefaultSettings.alpha,
-                powerPreference:
-                    DIVERenderPipelineDefaultSettings.powerPreference,
-                precision: DIVERenderPipelineDefaultSettings.precision,
-                stencil: DIVERenderPipelineDefaultSettings.stencil,
-                depth: DIVERenderPipelineDefaultSettings.depth,
+                antialias: DIVERendererDefaultSettings.antialias,
+                alpha: DIVERendererDefaultSettings.alpha,
+                powerPreference: DIVERendererDefaultSettings.powerPreference,
+                precision: DIVERendererDefaultSettings.precision,
+                stencil: DIVERendererDefaultSettings.stencil,
+                depth: DIVERendererDefaultSettings.depth,
                 logarithmicDepthBuffer:
-                    DIVERenderPipelineDefaultSettings.logarithmicDepthBuffer,
+                    DIVERendererDefaultSettings.logarithmicDepthBuffer,
             }),
         );
     });
