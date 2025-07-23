@@ -1,8 +1,8 @@
 import { Matrix4, Quaternion, Vector3 } from 'three';
-import { DIVERenderPipeline } from '../../../../../engine/renderer/Renderer.ts';
+import { DIVERenderer } from '../../../../../engine/renderer/Renderer.ts';
 
 export class DIVEWebXROrigin {
-    private _renderer: DIVERenderPipeline;
+    private _renderer: DIVERenderer;
     private _session: XRSession;
 
     private _requesting: boolean;
@@ -48,7 +48,7 @@ export class DIVEWebXROrigin {
 
     constructor(
         session: XRSession,
-        renderer: DIVERenderPipeline,
+        renderer: DIVERenderer,
         entityTypes?: XRHitTestTrackableType[],
     ) {
         this._renderer = renderer;

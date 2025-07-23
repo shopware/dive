@@ -1,6 +1,6 @@
 import { Mesh, Object3D, PlaneGeometry, ShadowMaterial } from 'three';
 import { DIVERoot } from '../../../components/root/Root.ts';
-import { type DIVERenderPipeline } from '../../renderer/Renderer.ts';
+import { type DIVERenderer } from '../../renderer/Renderer.ts';
 import { DIVEXRLightRoot } from './xrlightroot/XRLightRoot.ts';
 import { type DIVEScene } from '../Scene.ts';
 
@@ -46,7 +46,7 @@ export class DIVEXRRoot extends Object3D {
         this.add(this._xrHandNode);
     }
 
-    public initLightEstimation(renderer: DIVERenderPipeline): void {
+    public initLightEstimation(renderer: DIVERenderer): void {
         this._xrLightRoot.initLightEstimation(renderer);
     }
 

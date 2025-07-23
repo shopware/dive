@@ -1,7 +1,7 @@
 import { Vector3 } from 'three';
 import { OrbitController } from '@shopware-ag/dive/orbitcontroller';
 import {
-    type DIVERenderPipeline,
+    type DIVERenderer,
     type DIVEScene,
     DIVEEngine,
 } from '@shopware-ag/dive';
@@ -10,7 +10,7 @@ import { DIVEWebXRController } from './controller/WebXRController.ts';
 
 export class DIVEWebXR {
     // general members
-    private static _renderer: DIVERenderPipeline;
+    private static _renderer: DIVERenderer;
     private static _scene: DIVEScene;
     private static _controller: OrbitController;
 

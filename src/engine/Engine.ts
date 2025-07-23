@@ -5,7 +5,7 @@ import {
     DIVEPerspectiveCameraSettings,
 } from './camera/PerspectiveCamera.ts';
 import {
-    DIVERenderPipeline,
+    DIVERenderer,
     DIVERenderPipelineDefaultSettings,
     DIVERenderPipelineSettings,
 } from './renderer/Renderer.ts';
@@ -28,7 +28,7 @@ export const EngineDefaultSettings: EngineSettings = {
 };
 
 export class DIVEEngine {
-    private _renderer: DIVERenderPipeline;
+    private _renderer: DIVERenderer;
     private _scene: DIVEScene;
     private _camera: DIVEPerspectiveCamera;
     private _resizeManager: DIVEResizeManager;
@@ -44,7 +44,7 @@ export class DIVEEngine {
 
         this._scene = new DIVEScene();
         this._camera = new DIVEPerspectiveCamera(this._settings);
-        this._renderer = new DIVERenderPipeline(
+        this._renderer = new DIVERenderer(
             this._scene,
             this._camera,
             this._settings,
@@ -71,7 +71,7 @@ export class DIVEEngine {
         return this._camera;
     }
 
-    public get renderer(): DIVERenderPipeline {
+    public get renderer(): DIVERenderer {
         return this._renderer;
     }
 

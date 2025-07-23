@@ -3,7 +3,7 @@
  */
 
 import {
-    DIVERenderPipeline,
+    DIVERenderer,
     DIVERenderPipelineDefaultSettings,
 } from '../Renderer.ts';
 import { DIVEScene } from '../../scene/Scene.ts';
@@ -27,7 +27,7 @@ const WebGLRenderer = WebGLRendererOriginal as any;
 // });
 
 describe('DIVERenderPipeline', () => {
-    let renderer: DIVERenderPipeline;
+    let renderer: DIVERenderer;
     let scene: DIVEScene;
     let camera: DIVEPerspectiveCamera;
 
@@ -35,7 +35,7 @@ describe('DIVERenderPipeline', () => {
         vi.clearAllMocks();
         scene = new DIVEScene();
         camera = new DIVEPerspectiveCamera();
-        renderer = new DIVERenderPipeline(scene, camera);
+        renderer = new DIVERenderer(scene, camera);
     });
 
     it('should instantiate with default settings', () => {
@@ -65,7 +65,7 @@ describe('DIVERenderPipeline', () => {
             depth: false,
             logarithmicDepthBuffer: true,
         };
-        renderer = new DIVERenderPipeline(scene, camera, customSettings);
+        renderer = new DIVERenderer(scene, camera, customSettings);
         expect(WebGLRenderer).toHaveBeenCalledWith(
             expect.objectContaining(customSettings),
         );

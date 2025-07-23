@@ -1,7 +1,7 @@
 import { Matrix4, Vector4, Color, Material } from 'three';
 import { OrientationDisplay } from '../OrientationDisplay.ts';
 import {
-    DIVERenderPipeline,
+    DIVERenderer,
     DIVEScene,
     COORDINATE_LAYER_MASK,
     DIVEPerspectiveCamera,
@@ -27,7 +27,7 @@ const mockRenderer = {
         render: vi.fn(),
         autoClear: true,
     },
-} as unknown as DIVERenderPipeline;
+} as unknown as DIVERenderer;
 
 describe('OrientationDisplay', () => {
     let orientationDisplay: OrientationDisplay;

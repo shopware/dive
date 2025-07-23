@@ -6,7 +6,7 @@ import {
     Vector3,
     WebXRArrayCamera,
 } from 'three';
-import { DIVERenderPipeline } from '../../../../../engine/renderer/Renderer.ts';
+import { DIVERenderer } from '../../../../../engine/renderer/Renderer.ts';
 import { DIVEScene } from '../../../../../engine/scene/Scene.ts';
 import { DIVEWebXRCrosshair } from '../crosshair/WebXRCrosshair.ts';
 import { DIVEWebXRRaycaster } from '../raycaster/WebXRRaycaster.ts';
@@ -20,7 +20,7 @@ import { findInterface } from '../../../../../helpers/findInterface/findInterfac
 
 export class DIVEWebXRController extends Object3D {
     // general members
-    private _renderer: DIVERenderPipeline;
+    private _renderer: DIVERenderer;
     private _scene: DIVEScene;
     private _session: XRSession;
 
@@ -57,11 +57,7 @@ export class DIVEWebXRController extends Object3D {
     private _touchScale: number = 1;
     private _scaleThreshold: number = 0.1;
 
-    constructor(
-        session: XRSession,
-        renderer: DIVERenderPipeline,
-        scene: DIVEScene,
-    ) {
+    constructor(session: XRSession, renderer: DIVERenderer, scene: DIVEScene) {
         super();
 
         this._renderer = renderer;

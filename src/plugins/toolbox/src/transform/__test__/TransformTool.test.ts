@@ -2,7 +2,7 @@ import { DIVETransformTool, isTransformTool } from '../TransformTool.ts';
 import { OrbitController } from '@shopware-ag/dive/orbitcontroller';
 import {
     DIVEPerspectiveCamera,
-    DIVERenderPipeline,
+    DIVERenderer,
     DIVEScene,
 } from '@shopware-ag/dive';
 import { type DIVEBaseTool } from '../../BaseTool.ts';
@@ -94,7 +94,7 @@ vi.mock('../../../animation/AnimationSystem', () => {
 
 const mockScene: DIVEScene = new DIVEScene();
 const mockCamera = new DIVEPerspectiveCamera();
-const mockRenderer = new DIVERenderPipeline(mockScene, mockCamera);
+const mockRenderer = new DIVERenderer(mockScene, mockCamera);
 const mockController: OrbitController = new OrbitController(
     mockCamera,
     mockRenderer.webglrenderer.domElement,

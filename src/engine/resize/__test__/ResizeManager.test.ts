@@ -1,5 +1,5 @@
 import { DIVEResizeManager } from '../ResizeManager.ts';
-import { DIVERenderPipeline } from '../../renderer/Renderer.ts';
+import { DIVERenderer } from '../../renderer/Renderer.ts';
 import { DIVEPerspectiveCamera } from '../../camera/PerspectiveCamera.ts';
 import { DIVEScene } from '../../scene/Scene.ts';
 
@@ -48,7 +48,7 @@ vi.mock('../../camera/PerspectiveCamera', () => {
 
 describe('DIVEResizeManager', () => {
     let resizeManager: DIVEResizeManager;
-    let renderer: DIVERenderPipeline;
+    let renderer: DIVERenderer;
     let camera: DIVEPerspectiveCamera;
     let mockResizeObserver: vi.Mock;
     let mockObserve: vi.Mock;
@@ -56,7 +56,7 @@ describe('DIVEResizeManager', () => {
 
     beforeEach(() => {
         vi.clearAllMocks();
-        renderer = new DIVERenderPipeline(
+        renderer = new DIVERenderer(
             new DIVEScene(),
             new DIVEPerspectiveCamera(),
         );

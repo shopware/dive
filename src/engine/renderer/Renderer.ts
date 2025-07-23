@@ -89,7 +89,7 @@ export const DIVERenderPipelineDefaultSettings: Required<DIVERenderPipelineSetti
  * @module
  */
 
-export class DIVERenderPipeline {
+export class DIVERenderer {
     private _webglrenderer: WebGLRenderer;
     private _settings: DIVERenderPipelineSettings;
 

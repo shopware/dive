@@ -1,4 +1,4 @@
-import { DIVERenderPipeline } from '../renderer/Renderer.ts';
+import { DIVERenderer } from '../renderer/Renderer.ts';
 
 export interface DIVETicker {
     uuid: string;
@@ -7,7 +7,7 @@ export interface DIVETicker {
 }
 
 export class DIVEClock {
-    private _renderer: DIVERenderPipeline | null = null;
+    private _renderer: DIVERenderer | null = null;
 
     private _lastTime: number = 0;
     private _isRunning: boolean = false;
@@ -24,7 +24,7 @@ export class DIVEClock {
         this._isRunning = false;
     }
 
-    public setRenderer(renderer: DIVERenderPipeline): void {
+    public setRenderer(renderer: DIVERenderer): void {
         this._renderer = renderer;
     }
 

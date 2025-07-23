@@ -1,7 +1,7 @@
 import { OrbitController } from '../OrbitController.ts';
 import {
     DIVEPerspectiveCamera,
-    DIVERenderPipeline,
+    DIVERenderer,
     DIVEScene,
 } from '@shopware-ag/dive';
 import { BoundingBox } from 'src/components/boundingbox/BoundingBox.ts';
@@ -62,7 +62,7 @@ const mockCamera = {
     fov: 75,
     aspect: 1,
 } as unknown as DIVEPerspectiveCamera;
-const mockRenderer = new DIVERenderPipeline(new DIVEScene(), mockCamera);
+const mockRenderer = new DIVERenderer(new DIVEScene(), mockCamera);
 
 let controller: OrbitController;
 

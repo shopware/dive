@@ -3,7 +3,7 @@ import {
     DIVEPerspectiveCamera,
     DIVEPerspectiveCameraDefaultSettings,
 } from '../camera/PerspectiveCamera.ts';
-import { DIVERenderPipeline } from '../renderer/Renderer.ts';
+import { DIVERenderer } from '../renderer/Renderer.ts';
 import { DIVEScene } from '../scene/Scene.ts';
 import { DIVEResizeManager } from '../resize/ResizeManager.ts';
 import { DIVEClock } from '../clock/Clock.ts';
@@ -20,7 +20,7 @@ const mockClock = {
 } as unknown as DIVEClock;
 const mockRenderPipeline = {
     dispose: vi.fn(),
-} as unknown as DIVERenderPipeline;
+} as unknown as DIVERenderer;
 const mockResizeManager = {
     dispose: vi.fn(),
 } as unknown as DIVEResizeManager;
@@ -87,7 +87,7 @@ describe('DIVEEngine', () => {
                 ...DIVEPerspectiveCameraDefaultSettings,
             }),
         );
-        expect(DIVERenderPipeline).toHaveBeenCalled();
+        expect(DIVERenderer).toHaveBeenCalled();
         expect(DIVEScene).toHaveBeenCalled();
         expect(DIVEResizeManager).toHaveBeenCalled();
         expect(DIVEClock).toHaveBeenCalled();
