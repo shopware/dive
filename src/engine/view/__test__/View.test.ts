@@ -1,4 +1,4 @@
-import { DIVEScene } from '@shopware-ag/dive';
+import { DIVEPerspectiveCamera, DIVEScene } from '@shopware-ag/dive';
 import { DIVEView } from '../View.ts';
 
 vi.useFakeTimers();
@@ -8,7 +8,7 @@ describe('DIVEView', () => {
 
     beforeEach(() => {
         vi.clearAllMocks();
-        view = new DIVEView(new DIVEScene(), {});
+        view = new DIVEView(new DIVEScene(), new DIVEPerspectiveCamera(), {});
     });
 
     it('should instantiate', () => {

@@ -163,7 +163,12 @@ export class DIVE {
         this._scene = new DIVEScene();
 
         // set up main view
-        const mainView = new DIVEView(this._scene, this._settings);
+        const mainViewCamera = new DIVEPerspectiveCamera();
+        const mainView = new DIVEView(
+            this._scene,
+            mainViewCamera,
+            this._settings,
+        );
         this._clock.addTicker(mainView);
         this._views = [mainView];
 
@@ -316,6 +321,16 @@ export class DIVE {
 
             resolve();
         });
+    }
+
+    public createView(camera: DIVEPerspectiveCamera): DIVEView {
+        const view = new DIVEView(this._scene, camera, {
+            ...this._settings,
+            canvas: undefined,
+        });
+        this._views.push(view);
+        this._clock.addTicker(view);
+        return view;
     }
 
     // public cloneCanvas(): HTMLCanvasElement {

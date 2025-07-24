@@ -14,15 +14,13 @@ export class DIVEView implements DIVETicker {
     public readonly uuid: string = MathUtils.generateUUID();
 
     private _renderer: DIVERenderer;
-    private _camera: DIVEPerspectiveCamera;
     private _resizeManager: DIVEResizeManager;
 
     constructor(
         private _scene: DIVEScene,
+        private _camera: DIVEPerspectiveCamera,
         private _settings: Partial<DIVERendererSettings>,
     ) {
-        this._camera = new DIVEPerspectiveCamera();
-
         this._renderer = new DIVERenderer(
             this._scene,
             this._camera,
