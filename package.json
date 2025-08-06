@@ -47,6 +47,11 @@
             "import": "./build/plugins/mediacreator/index.mjs",
             "require": "./build/plugins/mediacreator/index.cjs"
         },
+        "./offloader": {
+            "types": "./build/plugins/offloader/index.d.ts",
+            "import": "./build/plugins/offloader/index.mjs",
+            "require": "./build/plugins/offloader/index.cjs"
+        },
         "./orbitcontroller": {
             "types": "./build/plugins/orbitcontroller/index.d.ts",
             "import": "./build/plugins/orbitcontroller/index.mjs",

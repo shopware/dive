@@ -11,6 +11,10 @@ export const FILE_TYPES = {
         key: 'usdz' as const,
         extension: 'usdz',
     },
+    off: {
+        key: 'off' as const,
+        extension: 'off',
+    },
 } as const;
 
 export type FileType = keyof typeof FILE_TYPES;
