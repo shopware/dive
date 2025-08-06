@@ -147,7 +147,7 @@ export class DIVE {
     private _scene: DIVEScene;
     private _clock: DIVEClock;
 
-    private orbitController: OrbitController;
+    private orbitController!: OrbitController;
 
     private orientationDisplay: OrientationDisplay | null;
 
@@ -177,12 +177,12 @@ export class DIVE {
         }
 
         // set up the controller
-        this.orbitController = new OrbitController(
-            this.mainView.camera,
-            this.mainView.canvas,
-            this._settings,
-        );
-        this.clock.addTicker(this.orbitController);
+        // this.orbitController = new OrbitController(
+        //     this.mainView.camera,
+        //     this.mainView.canvas,
+        //     this._settings,
+        // );
+        // this.clock.addTicker(this.orbitController);
 
         // initialize axis camera
         if (this._settings.displayAxes) {
@@ -259,13 +259,13 @@ export class DIVE {
                 this.clock.removeTicker(this.orbitController);
                 this.orbitController.dispose();
 
-                this.orbitController = new OrbitController(
-                    this.mainView.camera,
-                    canvas,
-                    this._settings,
-                );
-                this.orbitController.setState(state);
-                this.clock.addTicker(this.orbitController);
+                // this.orbitController = new OrbitController(
+                //     this.mainView.camera,
+                //     canvas,
+                //     this._settings,
+                // );
+                // this.orbitController.setState(state);
+                // this.clock.addTicker(this.orbitController);
 
                 this.mainView.setCanvas(canvas);
             },
