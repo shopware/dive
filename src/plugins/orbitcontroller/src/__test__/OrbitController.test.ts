@@ -26,6 +26,7 @@ vi.mock('src/components/boundingbox/BoundingBox.ts', () => ({
 vi.mock('@shopware-ag/dive', () => {
     return {
         DIVEPerspectiveCamera: vi.fn(function (this: any) {
+            this.isPerspectiveCamera = true;
             this.position = new Vector3(0, 2, 2);
             this.lookAt = vi.fn();
             this.quaternion = new Quaternion();
@@ -134,18 +135,22 @@ describe('modules/controller/orbit/OrbitController', () => {
     });
 
     it('should zoom in with default value', () => {
+        controller.enableZoom = true;
         expect(() => controller.zoomIn()).not.toThrow();
     });
 
     it('should zoom in with custom value', () => {
+        controller.enableZoom = true;
         expect(() => controller.zoomIn(10)).not.toThrow();
     });
 
     it('should zoom out with default value', () => {
+        controller.enableZoom = true;
         expect(() => controller.zoomOut()).not.toThrow();
     });
 
     it('should zoom out with custom value', () => {
+        controller.enableZoom = true;
         expect(() => controller.zoomOut(10)).not.toThrow();
     });
 

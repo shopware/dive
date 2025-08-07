@@ -563,8 +563,8 @@ export class OrbitController
 
     private dollyIn(dollyScale: number): void {
         if (
-            this.object instanceof PerspectiveCamera ||
-            this.object instanceof OrthographicCamera
+            'isPerspectiveCamera' in this.object ||
+            'isOrthographicCamera' in this.object
         ) {
             this.scale *= dollyScale;
         } else {
@@ -577,8 +577,8 @@ export class OrbitController
 
     private dollyOut(dollyScale: number): void {
         if (
-            this.object instanceof PerspectiveCamera ||
-            this.object instanceof OrthographicCamera
+            'isPerspectiveCamera' in this.object ||
+            'isOrthographicCamera' in this.object
         ) {
             this.scale /= dollyScale;
         } else {
