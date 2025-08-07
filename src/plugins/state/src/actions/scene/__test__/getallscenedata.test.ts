@@ -1,6 +1,6 @@
 import { GetAllSceneDataAction } from '../getallscenedata.ts';
 import {
-    DIVEEngine,
+    DIVE,
     DIVEScene,
     type GroupSchema,
     type LightSchema,
@@ -29,7 +29,7 @@ describe('GetAllSceneDataAction', () => {
 
         const mockEngine = {
             scene: mockScene,
-        } as unknown as DIVEEngine;
+        } as unknown as DIVE;
 
         const mockController = {
             object: {

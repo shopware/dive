@@ -1,5 +1,5 @@
 import { ExportSceneAction } from '../exportscene.ts';
-import { DIVEEngine } from '@shopware-ag/dive';
+import { DIVE } from '@shopware-ag/dive';
 
 const mockExport = vi.fn().mockResolvedValue('exported-scene-data');
 const mockGetAssetExporter = vi.fn().mockResolvedValue({
@@ -10,7 +10,7 @@ const mockEngine = {
     scene: {
         root: {},
     },
-} as unknown as DIVEEngine;
+} as unknown as DIVE;
 
 describe('ExportSceneAction', () => {
     it('should export scene', async () => {
@@ -18,7 +18,7 @@ describe('ExportSceneAction', () => {
             scene: {
                 root: {},
             },
-        } as unknown as DIVEEngine;
+        } as unknown as DIVE;
 
         const action = new ExportSceneAction(
             { type: 'glb' },

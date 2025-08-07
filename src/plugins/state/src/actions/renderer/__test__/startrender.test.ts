@@ -1,12 +1,12 @@
 import { StartRenderAction } from '../startrender.ts';
-import { DIVEEngine } from '@shopware-ag/dive';
+import { DIVE } from '@shopware-ag/dive';
 
 describe('StartRenderAction', () => {
     it('should start the renderer', async () => {
         // Mock dependencies
         const mockEngine = {
             start: vi.fn(),
-        } as unknown as DIVEEngine;
+        } as unknown as DIVE;
 
         const action = new StartRenderAction(undefined, {
             engine: mockEngine,

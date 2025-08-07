@@ -1,6 +1,6 @@
 import { SetParentAction } from '../setparent.ts';
 import {
-    DIVEEngine,
+    DIVE,
     DIVEScene,
     DIVESceneObject,
     type EntitySchema,
@@ -34,7 +34,7 @@ describe('SetParentAction', () => {
 
     const mockEngine = {
         scene: mockScene,
-    } as unknown as DIVEEngine;
+    } as unknown as DIVE;
 
     const mockRegistered = new Map<string, EntitySchema>();
 

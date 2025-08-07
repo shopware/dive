@@ -2,7 +2,7 @@ import { MoveCameraAction } from '../movecamera.ts';
 import { EntitySchema } from '@shopware-ag/dive';
 import { OrbitController } from '@shopware-ag/dive/orbitcontroller';
 import { Vector3 } from 'three';
-import { DIVEEngine } from '@shopware-ag/dive';
+import { DIVE } from '@shopware-ag/dive';
 
 const mockStop = vi.fn();
 const mockAnimate = vi.fn().mockReturnValue({
@@ -26,7 +26,7 @@ const mockEngine = {
         addTicker: vi.fn(),
         hasTicker: vi.fn(),
     },
-} as unknown as DIVEEngine;
+} as unknown as DIVE;
 
 const mockController = {
     object: {

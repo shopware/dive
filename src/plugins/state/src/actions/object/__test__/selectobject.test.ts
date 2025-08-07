@@ -1,5 +1,5 @@
 import {
-    DIVEEngine,
+    DIVE,
     DIVESceneObject,
     DIVESelectable,
     type EntitySchema,
@@ -19,7 +19,7 @@ const mockEngine = {
             getSceneObject: vi.fn().mockReturnValue(mockSceneObject),
         },
     },
-} as unknown as DIVEEngine;
+} as unknown as DIVE;
 
 const mockSelectTool = {
     isSelectTool: true,

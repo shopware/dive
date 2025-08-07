@@ -1,5 +1,5 @@
 import { UpdateSceneAction } from '../updatescene.ts';
-import { DIVEEngine, DIVEScene } from '@shopware-ag/dive';
+import { DIVE, DIVEScene } from '@shopware-ag/dive';
 import { Color, MeshStandardMaterial } from 'three';
 
 describe('UpdateSceneAction', () => {
@@ -29,7 +29,7 @@ describe('UpdateSceneAction', () => {
 
         const mockEngine = {
             scene: mockScene,
-        } as unknown as DIVEEngine;
+        } as unknown as DIVE;
 
         const action = new UpdateSceneAction(
             {
@@ -81,7 +81,7 @@ describe('UpdateSceneAction', () => {
 
         const mockEngine = {
             scene: mockScene,
-        } as unknown as DIVEEngine;
+        } as unknown as DIVE;
 
         const action = new UpdateSceneAction(
             {
