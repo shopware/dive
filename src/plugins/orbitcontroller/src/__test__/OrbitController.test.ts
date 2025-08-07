@@ -5,7 +5,7 @@ import {
     DIVEScene,
 } from '@shopware-ag/dive';
 import { BoundingBox } from 'src/components/boundingbox/BoundingBox.ts';
-import { Box3, Vector3, Object3D, Sphere } from 'three';
+import { Box3, Vector3, Object3D, Sphere, Quaternion } from 'three';
 
 // Add a real canvas for the controls domElement
 const canvas = document.createElement('canvas');
@@ -23,45 +23,57 @@ vi.mock('src/components/boundingbox/BoundingBox.ts', () => ({
     })),
 }));
 
-vi.mock('@shopware-ag/dive', async () => {
-    const actual =
-        await vi.importActual<typeof import('@shopware-ag/dive')>(
-            '@shopware-ag/dive',
-        );
+vi.mock('@shopware-ag/dive', () => {
     return {
-        ...actual,
-        DIVERenderPipeline: vi.fn(function (this: any) {
-            this.webglrenderer = {
-                domElement: canvas,
+        DIVEPerspectiveCamera: vi.fn(function (this: any) {
+            this.position = new Vector3(0, 2, 2);
+            this.lookAt = vi.fn();
+            this.quaternion = new Quaternion();
+            return this;
+        }),
+        BoundingBox: vi.fn(function (this: any) {
+            this.center = new Vector3(0, 0, 0);
+            this.sphere = {
+                radius: 1,
             };
-            this.render = vi.fn();
+            return this;
+        }),
+        DIVERenderer: vi.fn(function (this: any) {
+            this.canvas = {
+                parentElement: document.createElement('div'),
+                getBoundingClientRect: vi.fn().mockReturnValue({
+                    width: 100,
+                    height: 100,
+                }),
+                style: {
+                    touchAction: 'none',
+                },
+                addEventListener: vi.fn(),
+                removeEventListener: vi.fn(),
+            };
+            this.dispose = vi.fn();
             this.onResize = vi.fn();
-            this.getViewport = vi.fn();
+            this.render = vi.fn();
             this.setViewport = vi.fn();
+            this.getViewport = vi.fn();
+            this.setSize = vi.fn();
+            this.setPixelRatio = vi.fn();
+            return this;
+        }),
+        DIVEScene: vi.fn(function (this: any) {
+            this.setBackground = vi.fn();
+            this.setGrid = vi.fn();
+            this.setRoot = vi.fn();
+            this.setRootFloor = vi.fn();
+            this.setRootFloorColor = vi.fn();
+            this.addSceneObject = vi.fn();
+            this.dispose = vi.fn();
             return this;
         }),
     };
 });
 
-// Create a proper Vector3 mock for camera position
-const mockPosition = {
-    clone: vi.fn(() => mockPosition),
-    normalize: vi.fn(() => mockPosition),
-    multiplyScalar: vi.fn(() => mockPosition),
-    set: vi.fn(() => mockPosition),
-    sub: vi.fn(() => mockPosition),
-    length: vi.fn(() => 1),
-    x: 0,
-    y: 2,
-    z: 2,
-};
-
-const mockCamera = {
-    position: mockPosition,
-    lookAt: vi.fn(),
-    fov: 75,
-    aspect: 1,
-} as unknown as DIVEPerspectiveCamera;
+const mockCamera = new DIVEPerspectiveCamera();
 const mockRenderer = new DIVERenderer(new DIVEScene(), mockCamera);
 
 let controller: OrbitController;
@@ -72,10 +84,7 @@ describe('modules/controller/orbit/OrbitController', () => {
     });
 
     beforeEach(() => {
-        controller = new OrbitController(
-            mockCamera,
-            mockRenderer.webglrenderer.domElement,
-        );
+        controller = new OrbitController(mockCamera, mockRenderer.canvas);
     });
 
     it('should instantiate', () => {
@@ -83,10 +92,7 @@ describe('modules/controller/orbit/OrbitController', () => {
     });
 
     it('should instantiate with settings', () => {
-        controller = new OrbitController(
-            mockCamera,
-            mockRenderer.webglrenderer.domElement,
-        );
+        controller = new OrbitController(mockCamera, mockRenderer.canvas);
         expect(controller).toBeDefined();
     });
 
@@ -174,49 +180,34 @@ describe('modules/controller/orbit/OrbitController', () => {
     });
 
     it('should instantiate with default settings when no settings provided', () => {
-        controller = new OrbitController(
-            mockCamera,
-            mockRenderer.webglrenderer.domElement,
-        );
+        controller = new OrbitController(mockCamera, mockRenderer.canvas);
         expect(controller.enableDamping).toBe(true);
         expect(controller.dampingFactor).toBe(0.05);
     });
 
     it('should instantiate with custom settings', () => {
-        controller = new OrbitController(
-            mockCamera,
-            mockRenderer.webglrenderer.domElement,
-            {
-                enableDamping: false,
-                dampingFactor: 0.1,
-            },
-        );
+        controller = new OrbitController(mockCamera, mockRenderer.canvas, {
+            enableDamping: false,
+            dampingFactor: 0.1,
+        });
         expect(controller.enableDamping).toBe(false);
         expect(controller.dampingFactor).toBe(0.1);
     });
 
     it('should instantiate with partial settings with enableDamping false', () => {
-        controller = new OrbitController(
-            mockCamera,
-            mockRenderer.webglrenderer.domElement,
-            {
-                enableDamping: false,
-                // dampingFactor not provided, should use default
-            },
-        );
+        controller = new OrbitController(mockCamera, mockRenderer.canvas, {
+            enableDamping: false,
+            // dampingFactor not provided, should use default
+        });
         expect(controller.enableDamping).toBe(false);
         expect(controller.dampingFactor).toBe(0.05); // default value
     });
 
     it('should instantiate with partial settings with enableDamping true', () => {
-        controller = new OrbitController(
-            mockCamera,
-            mockRenderer.webglrenderer.domElement,
-            {
-                // enableDamping not provided, should use default
-                dampingFactor: 0.1,
-            },
-        );
+        controller = new OrbitController(mockCamera, mockRenderer.canvas, {
+            // enableDamping not provided, should use default
+            dampingFactor: 0.1,
+        });
         expect(controller.enableDamping).toBe(true);
         expect(controller.dampingFactor).toBe(0.1); // default value
     });

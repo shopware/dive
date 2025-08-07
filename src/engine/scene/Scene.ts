@@ -2,6 +2,33 @@ import { Color, Scene, type Box3, type ColorRepresentation } from 'three';
 import { DIVERoot } from '../../components/root/Root.ts';
 import { DIVEGrid } from '../../components/grid/Grid.ts';
 
+export type DIVESceneSettings = {
+    /**
+     * Whether to add a floor to the scene.
+     *
+     * @default false
+     */
+    displayFloor: boolean;
+    /**
+     * Whether to add a grid to the scene.
+     *
+     * @default false
+     */
+    displayGrid: boolean;
+    /**
+     * Whether to add a grid to the scene.
+     *
+     * @default #ffffff
+     */
+    backgroundColor: ColorRepresentation;
+};
+
+export const DIVESceneDefaultSettings: DIVESceneSettings = {
+    displayFloor: false,
+    displayGrid: false,
+    backgroundColor: '#ffffff',
+};
+
 /**
  * A basic scene class.
  *
@@ -16,15 +43,24 @@ export class DIVEScene extends Scene {
     private _root: DIVERoot;
     private _grid: DIVEGrid;
 
-    constructor() {
+    constructor(settings?: Partial<DIVESceneSettings>) {
         super();
 
-        this.background = new Color(0xffffff);
+        this.background = new Color(
+            settings?.backgroundColor ??
+                DIVESceneDefaultSettings.backgroundColor,
+        );
 
         this._root = new DIVERoot();
+        this._root.floor.setVisibility(
+            settings?.displayFloor ?? DIVESceneDefaultSettings.displayFloor,
+        );
         this.add(this._root);
 
         this._grid = new DIVEGrid();
+        this._grid.setVisibility(
+            settings?.displayGrid ?? DIVESceneDefaultSettings.displayGrid,
+        );
         this.add(this._grid);
     }
 

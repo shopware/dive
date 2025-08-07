@@ -1,3 +1,4 @@
+export * from './Dive.ts';
 export * from './camera/PerspectiveCamera.ts';
 export * from './clock/Clock.ts';
 export * from './renderer/Renderer.ts';

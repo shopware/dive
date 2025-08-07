@@ -26,6 +26,7 @@ export class DIVESceneLight extends Object3D implements DIVESelectable {
         this._hemiLight = new HemisphereLight(0xffffff, 0xffffff, 2);
         this._hemiLight.layers.mask = PRODUCT_LAYER_MASK;
         this._hemiLight.position.set(0, 50, 0);
+        this._hemiLight.visible = true;
         this.add(this._hemiLight);
 
         this._dirLight = new DirectionalLight(0xffffff, 3);
@@ -34,6 +35,7 @@ export class DIVESceneLight extends Object3D implements DIVESelectable {
         this._dirLight.position.set(1, 1.75, 1);
         this._dirLight.position.multiplyScalar(30);
         this._dirLight.castShadow = true;
+        this._dirLight.visible = true;
 
         this._dirLight.shadow.mapSize.width = 2048;
         this._dirLight.shadow.mapSize.height = 2048;

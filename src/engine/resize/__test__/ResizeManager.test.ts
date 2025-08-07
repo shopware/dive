@@ -5,10 +5,14 @@ import { DIVEScene } from '../../scene/Scene.ts';
 
 vi.mock('../../renderer/Renderer', () => {
     return {
-        DIVERenderPipeline: vi.fn(function (this: any) {
+        DIVERenderer: vi.fn(function (this: any) {
             return {
-                webglrenderer: {
-                    domElement: document.createElement('canvas'),
+                canvas: {
+                    parentElement: document.createElement('div'),
+                    getBoundingClientRect: vi.fn().mockReturnValue({
+                        width: 100,
+                        height: 100,
+                    }),
                 },
                 onResize: vi.fn(),
             };
@@ -50,9 +54,9 @@ describe('DIVEResizeManager', () => {
     let resizeManager: DIVEResizeManager;
     let renderer: DIVERenderer;
     let camera: DIVEPerspectiveCamera;
-    let mockResizeObserver: vi.Mock;
-    let mockObserve: vi.Mock;
-    let mockDisconnect: vi.Mock;
+    let mockResizeObserver: ReturnType<typeof vi.fn>;
+    let mockObserve: ReturnType<typeof vi.fn>;
+    let mockDisconnect: ReturnType<typeof vi.fn>;
 
     beforeEach(() => {
         vi.clearAllMocks();
@@ -72,14 +76,10 @@ describe('DIVEResizeManager', () => {
         global.ResizeObserver = mockResizeObserver;
 
         // Mock canvas parent element
-        Object.defineProperty(
-            renderer.webglrenderer.domElement,
-            'parentElement',
-            {
-                value: document.createElement('div'),
-                writable: true,
-            },
-        );
+        Object.defineProperty(renderer.canvas, 'parentElement', {
+            value: document.createElement('div'),
+            writable: true,
+        });
 
         resizeManager = new DIVEResizeManager(renderer, camera);
     });
@@ -90,9 +90,7 @@ describe('DIVEResizeManager', () => {
     });
 
     it('should observe canvas parent element', () => {
-        expect(mockObserve).toHaveBeenCalledWith(
-            renderer.webglrenderer.domElement.parentElement,
-        );
+        expect(mockObserve).toHaveBeenCalledWith(renderer.canvas.parentElement);
     });
 
     it('should handle resize events', () => {
@@ -134,14 +132,10 @@ describe('DIVEResizeManager', () => {
         resizeManager.dispose();
 
         // Mock parent element as null initially
-        Object.defineProperty(
-            renderer.webglrenderer.domElement,
-            'parentElement',
-            {
-                value: null,
-                writable: true,
-            },
-        );
+        Object.defineProperty(renderer.canvas, 'parentElement', {
+            value: null,
+            writable: true,
+        });
 
         // Mock setInterval
         vi.useFakeTimers();
@@ -155,22 +149,16 @@ describe('DIVEResizeManager', () => {
         expect(mockSetInterval).toHaveBeenCalled();
 
         // Simulate parent element becoming available
-        Object.defineProperty(
-            renderer.webglrenderer.domElement,
-            'parentElement',
-            {
-                value: document.createElement('div'),
-                writable: true,
-            },
-        );
+        Object.defineProperty(renderer.canvas, 'parentElement', {
+            value: document.createElement('div'),
+            writable: true,
+        });
 
         // Fast-forward timers
         vi.advanceTimersByTime(16);
 
         // Verify observe was called with parent element
-        expect(mockObserve).toHaveBeenCalledWith(
-            renderer.webglrenderer.domElement.parentElement,
-        );
+        expect(mockObserve).toHaveBeenCalledWith(renderer.canvas.parentElement);
 
         // Verify interval was cleared
         expect(mockClearInterval).toHaveBeenCalled();

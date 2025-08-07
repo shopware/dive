@@ -1,17 +1,17 @@
-import {
-    DIVEPerspectiveCamera,
-    DIVERenderer,
-    DIVERendererSettings,
-    DIVEResizeManager,
-    DIVEScene,
-    DIVETicker,
-} from '@shopware-ag/dive';
 import { MathUtils } from 'three';
+import { DIVETicker } from '../clock/Clock.ts';
+import { DIVEPerspectiveCamera } from '../camera/PerspectiveCamera.ts';
+import { DIVERenderer } from '../renderer/Renderer.ts';
+import { DIVEResizeManager } from '../resize/ResizeManager.ts';
+import { DIVEScene } from '../scene/Scene.ts';
+import { DIVERendererSettings } from '../renderer/Renderer.ts';
 
 export class DIVEView implements DIVETicker {
     public readonly isDIVEView: true = true;
 
     public readonly uuid: string = MathUtils.generateUUID();
+
+    private _paused: boolean = false;
 
     private _renderer: DIVERenderer;
     private _resizeManager: DIVEResizeManager;
@@ -46,6 +46,7 @@ export class DIVEView implements DIVETicker {
     }
 
     public tick(): void {
+        if (this._paused) return;
         this._renderer.render();
     }
 
@@ -61,6 +62,19 @@ export class DIVEView implements DIVETicker {
 
     public setCanvas(canvas: HTMLCanvasElement): void {
         this._renderer.setCanvas(canvas);
-        this.onResize(canvas.clientWidth, canvas.clientHeight);
+        this._resizeManager.setCanvas(canvas);
+        this.onResize(
+            this._renderer.canvas.clientWidth,
+            this._renderer.canvas.clientHeight,
+        );
+    }
+
+    // TODO: add methods to individually pause and resume the view
+    public pause(): void {
+        this._paused = true;
+    }
+
+    public resume(): void {
+        this._paused = false;
     }
 }

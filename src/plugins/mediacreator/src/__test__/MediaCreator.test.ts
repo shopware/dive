@@ -24,7 +24,7 @@ const mock_toDataURL = vi.fn();
 
 vi.mock('@shopware-ag/dive', () => {
     return {
-        DIVERenderPipeline: vi.fn(function (this: any) {
+        DIVERenderer: vi.fn(function (this: any) {
             this.webglrenderer = {
                 domElement: {
                     toDataURL: mock_toDataURL,

@@ -276,9 +276,7 @@ export class OrbitController
     }
 
     public update(): boolean {
-        const position = this.object.position;
-
-        this.offset.copy(position).sub(this.target);
+        this.offset.copy(this.object.position).sub(this.target);
         this.offset.applyQuaternion(this.quat);
         this.spherical.setFromVector3(this.offset);
 
@@ -320,7 +318,7 @@ export class OrbitController
         this.offset.setFromSpherical(this.spherical);
         this.offset.applyQuaternion(this.quatInverse);
 
-        position.copy(this.target).add(this.offset);
+        this.object.position.copy(this.target).add(this.offset);
 
         this.object.lookAt(this.target);
 
@@ -361,18 +359,22 @@ export class OrbitController
         this.dispatchEvent({ type: 'dispose' });
     }
 
-    public addCanvas(canvas: HTMLCanvasElement): void {
-        if (this.domElements.includes(canvas)) return;
-        this.domElements.push(canvas);
-        this.addEventListeners(canvas);
+    public addDomElements(...domElements: HTMLCanvasElement[]): void {
+        domElements.forEach((domElement) => {
+            if (this.domElements.includes(domElement)) return;
+            this.domElements.push(domElement);
+            this.addEventListeners(domElement);
+        });
     }
 
-    public removeCanvas(canvas: HTMLCanvasElement): void {
-        const index = this.domElements.indexOf(canvas);
-        if (index > -1) {
-            this.removeEventListeners(canvas);
-            this.domElements.splice(index, 1);
-        }
+    public removeDomElements(...domElements: HTMLCanvasElement[]): void {
+        domElements.forEach((domElement) => {
+            const index = this.domElements.indexOf(domElement);
+            if (index > -1) {
+                this.removeEventListeners(domElement);
+                this.domElements.splice(index, 1);
+            }
+        });
     }
 
     public computeEncompassingView(
@@ -411,7 +413,7 @@ export class OrbitController
         };
     }
 
-    public focusOnObject(object: Object3D, padding = 0.0): void {
+    public focusObject(object: Object3D, padding = 0.0): void {
         const bb = new BoundingBox(object);
         const transform = this.computeEncompassingView(bb, padding);
 
