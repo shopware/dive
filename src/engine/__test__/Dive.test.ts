@@ -28,6 +28,7 @@ vi.mock('../view/View.ts', async (importOriginal) => {
             this.dispose = vi.fn();
             this.onResize = vi.fn();
             this.tick = vi.fn();
+            this.setCanvas = vi.fn();
             this.camera = {
                 position: {
                     set: vi.fn(),
@@ -233,6 +234,7 @@ vi.mock('../../components/model/Model', () => {
 
 describe('DIVE', () => {
     beforeEach(() => {
+        window.DIVE.instances = [];
         console.log = vi.fn();
     });
 
@@ -346,5 +348,110 @@ describe('DIVE', () => {
         const dive = new DIVE(settings);
 
         expect(() => dive.dispose()).not.toThrow();
+    });
+
+    it('should add a new instance to the instances list', () => {
+        const dive = new DIVE();
+        expect(window.DIVE.instances).toContain(dive);
+    });
+
+    it('should create a new view', () => {
+        const dive = new DIVE();
+        const view = dive.createView();
+        expect(view).toBeDefined();
+        expect(dive.views).toContain(view);
+    });
+
+    it('should dispose a view', () => {
+        const dive = new DIVE();
+        const view = dive.createView();
+        dive.disposeView(view);
+        expect(dive.views).not.toContain(view);
+    });
+
+    it('should get the engine', () => {
+        const dive = new DIVE();
+        const engine = dive.engine;
+        expect(engine).toBeDefined();
+    });
+
+    it('should set the canvas', () => {
+        const dive = new DIVE();
+        const canvas = document.createElement('canvas');
+        dive.engine.setCanvas(canvas);
+        expect(dive.mainView.setCanvas).toHaveBeenCalledWith(canvas);
+    });
+
+    it('should start the clock', () => {
+        const dive = new DIVE();
+        dive.start();
+        expect(dive.clock.start).toHaveBeenCalled();
+    });
+
+    it('should stop the clock', () => {
+        const dive = new DIVE();
+        dive.stop();
+        expect(dive.clock.stop).toHaveBeenCalled();
+    });
+
+    it('should set a new mainView when the current one is disposed', () => {
+        const dive = new DIVE();
+        const firstMainView = dive.mainView;
+        const newView = dive.createView();
+
+        dive.disposeView(firstMainView);
+
+        expect(dive.mainView).toBe(newView);
+        expect(dive.views).not.toContain(firstMainView);
+    });
+
+    it('should handle disposing the only view', () => {
+        const dive = new DIVE();
+        const onlyView = dive.mainView;
+
+        dive.disposeView(onlyView);
+
+        expect(dive.mainView).toBeUndefined();
+        expect(dive.views.length).toBe(0);
+    });
+
+    it('should set mainView when creating a view after all views were disposed', async () => {
+        const dive = new DIVE();
+        await dive.dispose();
+
+        const view = dive.createView();
+        expect(dive.mainView).toBe(view);
+    });
+
+    it('should QuickView with settings', async () => {
+        const settings = {
+            backgroundColor: 0xff0000,
+            displayGrid: true,
+            displayFloor: false,
+            lightIntensity: 2,
+        };
+        const dive = await DIVE.QuickView('test_uri', settings);
+
+        expect(dive).toBeDefined();
+        expect(dive.scene.setBackground).toHaveBeenCalledWith(
+            settings.backgroundColor,
+        );
+        expect(dive.scene.grid.setVisibility).toHaveBeenCalledWith(
+            settings.displayGrid,
+        );
+        expect(dive.scene.root.floor.setVisibility).toHaveBeenCalledWith(
+            settings.displayFloor,
+        );
+    });
+
+    it('should get the canvas', () => {
+        const dive = new DIVE();
+        const canvas = dive.canvas;
+        expect(canvas).toBeDefined();
+    });
+
+    it('should get the first instance', () => {
+        const dive = new DIVE();
+        expect(window.DIVE.instance).toBe(dive);
     });
 });

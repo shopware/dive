@@ -525,7 +525,7 @@ export class OrbitController
     ): void {
         const offset = new Vector3();
 
-        if (this.object instanceof PerspectiveCamera) {
+        if ('isPerspectiveCamera' in this.object) {
             const position = this.object.position;
             offset.copy(position).sub(this.target);
             let targetDistance = offset.length();
@@ -540,7 +540,7 @@ export class OrbitController
                 (2 * deltaY * targetDistance) / element.clientHeight,
                 this.object.matrix,
             );
-        } else if (this.object instanceof OrthographicCamera) {
+        } else if ('isOrthographicCamera' in this.object) {
             this.panLeft(
                 (deltaX * (this.object.right - this.object.left)) /
                     this.object.zoom /
