@@ -23,7 +23,7 @@ export type DIVESceneSettings = {
     backgroundColor: ColorRepresentation;
 };
 
-export const DIVESceneDefaultSettings: DIVESceneSettings = {
+export const DIVESceneDefaultSettings: Required<DIVESceneSettings> = {
     displayFloor: false,
     displayGrid: false,
     backgroundColor: '#ffffff',
