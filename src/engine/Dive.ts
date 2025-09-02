@@ -97,12 +97,14 @@ export const DIVEDefaultSettings: DIVESettings = {
  * @module
  */
 
+export type QuickView = DIVE & { orbitController: OrbitController };
+
 export class DIVE {
     // static members
     public static async QuickView(
         uri: string,
         settings?: Partial<DIVESettings & Partial<{ lightIntensity: number }>>,
-    ): Promise<DIVE> {
+    ): Promise<QuickView> {
         const dive = new DIVE(settings);
         dive.mainView.camera.position.set(0, 1, 2);
 
@@ -134,7 +136,7 @@ export class DIVE {
         orbitController.focusObject(model);
         dive.clock.addTicker(orbitController);
 
-        return dive;
+        return Object.assign(dive, { orbitController });
     }
 
     // descriptive members
