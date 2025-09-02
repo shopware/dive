@@ -60,12 +60,12 @@ export type DIVESettings = {
      * @default false
      */
     displayAxes: boolean;
-} & Partial<DIVESceneSettings> &
-    Partial<DIVEPerspectiveCameraSettings> &
-    Partial<DIVERendererSettings> &
-    Partial<OrbitControllerSettings>;
+} & DIVESceneSettings &
+    DIVEPerspectiveCameraSettings &
+    DIVERendererSettings &
+    OrbitControllerSettings;
 
-export const DIVEDefaultSettings: DIVESettings = {
+export const DIVEDefaultSettings: Required<DIVESettings> = {
     autoStart: true,
     displayAxes: false,
     ...DIVESceneDefaultSettings,
@@ -99,11 +99,20 @@ export const DIVEDefaultSettings: DIVESettings = {
 
 export type QuickView = DIVE & { orbitController: OrbitController };
 
+export type QuickViewSettings = DIVESettings & {
+    lightIntensity: number;
+};
+
+export const DefaultQuickViewSettings: Required<QuickViewSettings> = {
+    ...DIVEDefaultSettings,
+    lightIntensity: 1,
+};
+
 export class DIVE {
     // static members
     public static async QuickView(
         uri: string,
-        settings?: Partial<DIVESettings & Partial<{ lightIntensity: number }>>,
+        settings?: Partial<QuickViewSettings>,
     ): Promise<QuickView> {
         const dive = new DIVE(settings);
         dive.mainView.camera.position.set(0, 1, 2);
@@ -111,13 +120,13 @@ export class DIVE {
         // set scene properties
         dive.scene.setBackground(
             settings?.backgroundColor ??
-                DIVESceneDefaultSettings.backgroundColor,
+                DefaultQuickViewSettings.backgroundColor,
         );
         dive.scene.grid.setVisibility(
-            settings?.displayGrid ?? DIVESceneDefaultSettings.displayGrid,
+            settings?.displayGrid ?? DefaultQuickViewSettings.displayGrid,
         );
         dive.scene.root.floor.setVisibility(
-            settings?.displayFloor ?? DIVESceneDefaultSettings.displayFloor,
+            settings?.displayFloor ?? DefaultQuickViewSettings.displayFloor,
         );
 
         // add scene light
