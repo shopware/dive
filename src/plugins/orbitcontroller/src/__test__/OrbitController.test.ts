@@ -3089,6 +3089,18 @@ describe('modules/controller/orbit/OrbitController', () => {
             controller.removeDomElements(nonExistentCanvas);
             expect(controller.domElements.length).toBe(initialLength);
         });
+
+        it('should handle setDomElements with multiple elements', () => {
+            const canvas1 = document.createElement('canvas');
+            controller.addDomElements(canvas1);
+
+            const canvas2 = document.createElement('canvas');
+            const canvas3 = document.createElement('canvas');
+            const canvas4 = document.createElement('canvas');
+            controller.setDomElements(canvas2, canvas3, canvas4);
+
+            expect(controller.domElements.length).toBe(3);
+        });
     });
 
     describe('Edge Cases - Additional', () => {

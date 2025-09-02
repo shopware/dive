@@ -377,6 +377,12 @@ export class OrbitController
         });
     }
 
+    public setDomElements(...domElements: HTMLCanvasElement[]): void {
+        this.removeDomElements(...this.domElements);
+        this.domElements = [];
+        this.addDomElements(...domElements);
+    }
+
     public computeEncompassingView(
         bb: BoundingBox,
         padding = 0.0,
