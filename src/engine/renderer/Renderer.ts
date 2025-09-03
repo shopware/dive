@@ -150,3 +150,8 @@ export class DIVERenderer {
         return renderer;
     }
 }
+
+/**
+ * @deprecated Use `import { DIVERenderer } from '@shopware-ag/dive'` instead.
+ */
+export const DIVERenderPipeline = DIVERenderer;

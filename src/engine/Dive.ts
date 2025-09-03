@@ -276,3 +276,8 @@ export class DIVE {
         view.dispose();
     }
 }
+
+/**
+ * @deprecated Use `import { DIVE } from '@shopware-ag/dive'` instead.
+ */
+export const DIVEEngine = DIVE;
