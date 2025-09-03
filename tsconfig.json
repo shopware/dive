@@ -45,6 +45,9 @@
             "@shopware-ag/dive/orbitcontroller": [
                 "src/plugins/orbitcontroller/index.ts"
             ],
+            "@shopware-ag/dive/quickview": [
+                "src/plugins/quickview/index.ts"
+            ],
             "@shopware-ag/dive/state": [
                 "src/plugins/state/index.ts"
             ],

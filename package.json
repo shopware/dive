@@ -57,6 +57,11 @@
             "import": "./build/plugins/orientationdisplay/index.mjs",
             "require": "./build/plugins/orientationdisplay/index.cjs"
         },
+        "./quickview": {
+            "types": "./build/plugins/quickview/index.d.ts",
+            "import": "./build/plugins/quickview/index.mjs",
+            "require": "./build/plugins/quickview/index.cjs"
+        },
         "./state": {
             "types": "./build/plugins/state/index.d.ts",
             "import": "./build/plugins/state/index.mjs",

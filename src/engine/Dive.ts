@@ -6,8 +6,6 @@ import {
     DIVESceneDefaultSettings,
     DIVESceneSettings,
 } from './scene/Scene.ts';
-import { DIVEModel } from '../components/model/Model.ts';
-import { DIVESceneLight } from '../components/light/SceneLight.ts';
 import {
     DIVEPerspectiveCamera,
     DIVEPerspectiveCameraDefaultSettings,
@@ -19,11 +17,11 @@ import {
     DIVERendererSettings,
 } from './renderer/Renderer.ts';
 import {
-    OrbitController,
     OrbitControllerDefaultSettings,
     OrbitControllerSettings,
 } from '@shopware-ag/dive/orbitcontroller';
 import { OrientationDisplay } from '@shopware-ag/dive/orientationdisplay';
+import { QuickView, type QuickViewSettings } from '@shopware-ag/dive/quickview';
 
 declare global {
     interface Window {
@@ -97,55 +95,15 @@ export const DIVEDefaultSettings: Required<DIVESettings> = {
  * @module
  */
 
-export type QuickView = DIVE & { orbitController: OrbitController };
-
-export type QuickViewSettings = DIVESettings & {
-    lightIntensity: number;
-};
-
-export const DefaultQuickViewSettings: Required<QuickViewSettings> = {
-    ...DIVEDefaultSettings,
-    lightIntensity: 1,
-};
-
 export class DIVE {
-    // static members
+    /**
+     * @deprecated This static method will be removed in a future version. Please use `import { QuickView, QuickViewSettings, QuickViewDefaultSettings } from '@shopware-ag/dive/quickview'` instead.
+     */
     public static async QuickView(
         uri: string,
         settings?: Partial<QuickViewSettings>,
     ): Promise<QuickView> {
-        const dive = new DIVE(settings);
-        dive.mainView.camera.position.set(0, 1, 2);
-
-        // set scene properties
-        dive.scene.setBackground(
-            settings?.backgroundColor ??
-                DefaultQuickViewSettings.backgroundColor,
-        );
-        dive.scene.grid.setVisibility(
-            settings?.displayGrid ?? DefaultQuickViewSettings.displayGrid,
-        );
-        dive.scene.root.floor.setVisibility(
-            settings?.displayFloor ?? DefaultQuickViewSettings.displayFloor,
-        );
-
-        // add scene light
-        const light = new DIVESceneLight();
-        light.setIntensity(settings?.lightIntensity ?? 1);
-        dive.scene.root.add(light);
-
-        // instantiate model
-        const model = await new DIVEModel().setFromURL(uri);
-        dive.scene.root.add(model);
-
-        const orbitController = new OrbitController(
-            dive.mainView.camera,
-            dive.mainView.canvas,
-        );
-        orbitController.focusObject(model);
-        dive.clock.addTicker(orbitController);
-
-        return Object.assign(dive, { orbitController });
+        return QuickView(uri, settings);
     }
 
     // descriptive members
