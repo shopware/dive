@@ -156,8 +156,11 @@ export class DIVEWebXR {
             const { clientWidth, clientHeight } = canvasWrapper;
             this._renderer.onResize(clientWidth, clientHeight);
 
-            // resize camera
-            this._controller.object.onResize(clientWidth, clientHeight);
+            // will be removed in the future when DIVEOrthographicCamera will be implemented
+            if ('onResize' in this._controller.object) {
+                // resize camera
+                this._controller.object.onResize(clientWidth, clientHeight);
+            }
         }
 
         // reset camera

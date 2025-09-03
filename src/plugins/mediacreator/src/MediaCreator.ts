@@ -29,7 +29,10 @@ export class MediaCreator {
         const resetRotation = this._controller.object.quaternion.clone();
 
         this._renderer.onResize(width, height);
-        this._controller.object.onResize(width, height);
+        // will be removed in the future when DIVEOrthographicCamera will be implemented
+        if ('onResize' in this._controller.object) {
+            this._controller.object.onResize(width, height);
+        }
 
         this._controller.object.position.copy(position);
         this._controller.target.copy(target);
