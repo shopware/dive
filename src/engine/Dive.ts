@@ -250,14 +250,22 @@ export class DIVE {
         stop: () => void;
         dispose: () => void;
     } {
-        return {
-            ...this,
+        return Object.assign(this, {
             camera: this.mainView.camera,
             renderer: this.mainView.renderer,
             setCanvas: (canvas: HTMLCanvasElement) => {
                 this.mainView.setCanvas(canvas);
             },
-        };
+            start: () => {
+                this.start();
+            },
+            stop: () => {
+                this.stop();
+            },
+            dispose: () => {
+                this.dispose();
+            },
+        });
     }
 
     public get views(): DIVEView[] {
