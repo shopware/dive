@@ -1,9 +1,9 @@
 import { State } from '../State.ts';
 import {
-    DIVEEngine,
-    type EngineSettings,
+    DIVE,
     DIVEPerspectiveCamera,
     DIVEScene,
+    DIVESettings,
 } from '@shopware-ag/dive';
 import { OrbitController } from '@shopware-ag/dive/orbitcontroller';
 import { Toolbox } from '@shopware-ag/dive/toolbox';
@@ -97,13 +97,30 @@ const ToolboxActionClass = Action.define<
 });
 
 // Mock dependencies
-vi.mock(import('../../../../engine/Engine.ts'), async (importOriginal) => {
-    const actual = await importOriginal();
+vi.mock('../../../../engine/Dive.ts', async () => {
+    const mockDiveInstance = {
+        uuid: 'mock-engine-uuid',
+        mainView: {
+            renderer: {
+                uuid: 'mock-renderer-uuid',
+            },
+        },
+        scene: {
+            uuid: 'mock-scene-uuid',
+        },
+        camera: {
+            uuid: 'mock-camera-uuid',
+        },
+    };
+
+    const DIVE = vi.fn().mockImplementation(() => mockDiveInstance);
+
+    (DIVE as any).QuickView = vi
+        .fn()
+        .mockImplementation(() => mockDiveInstance);
+
     return {
-        ...actual,
-        DIVEEngine: vi.fn().mockImplementation(() => ({
-            uuid: 'mock-engine-uuid',
-        })),
+        DIVE,
     };
 });
 vi.mock(import('@shopware-ag/dive/orbitcontroller'), async (importOriginal) => {
@@ -169,7 +186,7 @@ vi.mock('../../../engine/scene/Scene.ts', () => ({
 }));
 describe('modules/state/State', () => {
     let state: State;
-    let mockEngine: DIVEEngine;
+    let mockDive: DIVE;
     let mockController: OrbitController;
     let mockToolbox: Toolbox;
     let mockCamera: DIVEPerspectiveCamera;
@@ -179,30 +196,19 @@ describe('modules/state/State', () => {
         // Clear all instances before each test
         State['__instances'] = [];
 
-        const engineSettings: Partial<EngineSettings> = {
+        const diveSettings: Partial<DIVESettings> = {
             autoStart: false,
             displayAxes: false,
         };
 
         mockCamera = new DIVEPerspectiveCamera();
         mockScene = new DIVEScene();
-        mockEngine = new DIVEEngine(engineSettings);
-
-        // Mock the getters
-        Object.defineProperty(mockEngine, 'camera', {
-            get: () => mockCamera,
-        });
-        Object.defineProperty(mockEngine, 'scene', {
-            get: () => mockScene,
-        });
-        Object.defineProperty(mockEngine, 'renderer', {
-            get: () => ({ uuid: 'mock-renderer-uuid' }),
-        });
+        mockDive = new DIVE(diveSettings);
 
         const mockCanvas = document.createElement('canvas');
         mockController = new OrbitController(mockCamera, mockCanvas);
 
-        state = new State(mockEngine, mockController);
+        state = new State(mockDive, mockController);
     });
 
     afterEach(() => {
@@ -547,8 +553,8 @@ describe('modules/state/State', () => {
                 '@shopware-ag/dive/mediacreator'
             );
             expect(MediaCreator).toHaveBeenCalledWith(
-                mockEngine.renderer,
-                mockEngine.scene,
+                mockDive.mainView.renderer,
+                mockDive.scene,
                 mockController,
             );
         });
@@ -603,7 +609,7 @@ describe('modules/state/State', () => {
             // Verify that Toolbox was instantiated
             const { Toolbox } = await import('@shopware-ag/dive/toolbox');
             expect(Toolbox).toHaveBeenCalledWith(
-                mockEngine.scene,
+                mockDive.scene,
                 mockController,
             );
         });

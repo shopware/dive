@@ -100,24 +100,28 @@ jobs:
             - name: Build DIVE
               run: yarn build
 
-            - name: 'Add package.json to git'
-              run: git add package.json
+            - name: 'Add tag'
+              run: git tag -a $(node -p "require('./package.json').version") -m "DIVE Release Version $(node -p "require('./package.json').version")"
 
-            - name: Generate docs
-              run: yarn docs
+            - name: 'Push tag'
+              run: git push origin tag $(node -p "require('./package.json').version")"
 
-            - name: 'Add generated docs to git'
-              run: git add .
+            - name: Publish DIVE to npm
+              uses: JS-DevTools/npm-publish@v3
+              with:
+                  token: ${{ secrets.NPM_TOKEN }}
+                  access: 'public'
+                  dry-run: false
 
             - name: 'Automated Version Bump'
               uses: 'phips28/gh-action-bump-version@master'
               env:
                   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-                  GITHUB_USER: 'DIVE[bot]'
-                  GITHUB_EMAIL: 'f.frank@shopware.com'
+                  GITHUB_USER: 'GitHub Actions'
+                  GITHUB_EMAIL: 'actions@github.com'
               with:
                   target-branch: 'trunk'
-                  commit-message: 'DIVE[bot]: Release {{version}} [skip ci]'
+                  commit-message: 'Automated Version Bump [skip ci]'
                   skip-push: 'true'
                   skip-tag: 'true'
 
@@ -129,21 +133,3 @@ jobs:
                   unprotect_reviews: true
                   tags: true
                   force: true
-
-            - name: 'Create release branch'
-              run: git checkout -b release/$(node -p "require('./package.json').version")
-
-            - name: 'Add Build files to git'
-              run: git add ./build -f && echo "Staged build files! Status:" && git status
-            - name: 'Commit changes'
-              run: echo "Committing ..." && git commit -m "Release $(node -p "require('./package.json').version")" && echo "Committed! Status:" && git status
-            - name: 'Add tag'
-              run: git tag -a $(node -p "require('./package.json').version") -m "Release $(node -p "require('./package.json').version")"
-            - name: 'Push to release branch'
-              run: git push origin release/$(node -p "require('./package.json').version") && git push origin tag $(node -p "require('./package.json').version")
-            - name: Publish DIVE to npm
-              uses: JS-DevTools/npm-publish@v3
-              with:
-                  token: ${{ secrets.NPM_TOKEN }}
-                  access: 'public'
-                  dry-run: false

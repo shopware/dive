@@ -3,7 +3,7 @@ import { OrbitController } from '@shopware-ag/dive/orbitcontroller';
 import {
     DIVESelectable,
     DIVEScene,
-    DIVERenderPipeline,
+    DIVERenderer,
     type DIVEPerspectiveCamera,
     type DIVEMovable,
 } from '@shopware-ag/dive';
@@ -90,7 +90,7 @@ const mockCamera: DIVEPerspectiveCamera = {} as DIVEPerspectiveCamera;
 const mockScene: DIVEScene = new DIVEScene();
 const mockController: OrbitController = new OrbitController(
     mockCamera,
-    new DIVERenderPipeline(mockScene, mockCamera).webglrenderer.domElement,
+    new DIVERenderer(mockScene, mockCamera).webglrenderer.domElement,
 );
 
 let selectTool: DIVESelectTool;

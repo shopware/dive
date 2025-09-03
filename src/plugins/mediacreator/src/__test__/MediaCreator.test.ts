@@ -1,7 +1,7 @@
 import { MediaCreator } from '../MediaCreator.ts';
 import {
     DIVEPerspectiveCamera,
-    DIVERenderPipeline,
+    DIVERenderer,
     DIVEScene,
 } from '@shopware-ag/dive';
 import { OrbitController } from '@shopware-ag/dive/orbitcontroller';
@@ -24,7 +24,7 @@ const mock_toDataURL = vi.fn();
 
 vi.mock('@shopware-ag/dive', () => {
     return {
-        DIVERenderPipeline: vi.fn(function (this: any) {
+        DIVERenderer: vi.fn(function (this: any) {
             this.webglrenderer = {
                 domElement: {
                     toDataURL: mock_toDataURL,
@@ -109,7 +109,7 @@ vi.mock('@shopware-ag/dive/animation', () => {
 
 const mockScene = new DIVEScene();
 const mockCamera = new DIVEPerspectiveCamera();
-const mockRenderer = new DIVERenderPipeline(mockScene, mockCamera);
+const mockRenderer = new DIVERenderer(mockScene, mockCamera);
 const mockOrbitController = new OrbitController(
     mockCamera,
     mockRenderer.webglrenderer.domElement,

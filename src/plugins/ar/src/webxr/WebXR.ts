@@ -1,16 +1,12 @@
 import { Vector3 } from 'three';
 import { OrbitController } from '@shopware-ag/dive/orbitcontroller';
-import {
-    type DIVERenderPipeline,
-    type DIVEScene,
-    DIVEEngine,
-} from '@shopware-ag/dive';
+import { type DIVERenderer, type DIVEScene, DIVE } from '@shopware-ag/dive';
 import { Overlay } from './overlay/Overlay.ts';
 import { DIVEWebXRController } from './controller/WebXRController.ts';
 
 export class DIVEWebXR {
     // general members
-    private static _renderer: DIVERenderPipeline;
+    private static _renderer: DIVERenderer;
     private static _scene: DIVEScene;
     private static _controller: OrbitController;
 
@@ -46,10 +42,10 @@ export class DIVEWebXR {
     private static _xrController: DIVEWebXRController | null = null;
 
     public static async Launch(
-        engine: DIVEEngine,
+        engine: DIVE,
         controller: OrbitController,
     ): Promise<void> {
-        this._renderer = engine.renderer;
+        this._renderer = engine.mainView.renderer;
         this._scene = engine.scene;
         this._controller = controller;
 
@@ -160,8 +156,11 @@ export class DIVEWebXR {
             const { clientWidth, clientHeight } = canvasWrapper;
             this._renderer.onResize(clientWidth, clientHeight);
 
-            // resize camera
-            this._controller.object.onResize(clientWidth, clientHeight);
+            // will be removed in the future when DIVEOrthographicCamera will be implemented
+            if ('onResize' in this._controller.object) {
+                // resize camera
+                this._controller.object.onResize(clientWidth, clientHeight);
+            }
         }
 
         // reset camera

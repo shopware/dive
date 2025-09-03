@@ -1,7 +1,7 @@
 import { DeselectObjectAction } from '../deselectobject.ts';
 import { Object3D } from 'three';
 import {
-    DIVEEngine,
+    DIVE,
     type DIVESelectable,
     DIVESceneObject,
     type EntitySchema,
@@ -19,7 +19,7 @@ const mockEngine = {
             getSceneObject: vi.fn().mockReturnValue(mockSceneObject),
         },
     },
-} as unknown as DIVEEngine;
+} as unknown as DIVE;
 
 const mockDetachGizmo = vi.fn();
 const mockSelectTool = {

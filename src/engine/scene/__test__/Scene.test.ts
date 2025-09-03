@@ -13,6 +13,9 @@ vi.mock('../../../components/root/Root', () => {
             this.getSceneObject = mock_GetSceneObject;
             this.computeSceneBB = mock_ComputeSceneBB;
             this.removeFromParent = vi.fn();
+            this.floor = {
+                setVisibility: vi.fn(),
+            };
             return this;
         }),
     };
@@ -30,6 +33,7 @@ vi.mock('../../../components/grid/Grid', () => {
             this.isObject3D = true;
             this.parent = null;
             this.dispatchEvent = vi.fn();
+            this.setVisibility = vi.fn();
             return this;
         }),
     };

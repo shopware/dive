@@ -26,6 +26,12 @@ export class DIVEModel extends DIVENode {
     private _mesh: Mesh | null = null;
     private _material: MeshStandardMaterial | null = null;
 
+    constructor() {
+        super();
+
+        this.name = 'DIVEModel';
+    }
+
     private _assetLoader:
         | import('@shopware-ag/dive/assetloader').AssetLoader
         | null = null;
@@ -41,7 +47,7 @@ export class DIVEModel extends DIVENode {
         return this._assetLoader;
     }
 
-    public async setFromURL(url: string): Promise<void> {
+    public async setFromURL(url: string): Promise<this> {
         const assetLoader = await this._getAssetLoader();
         const gltf = await assetLoader.load(url);
         this.setFromGLTF(gltf);
@@ -50,9 +56,11 @@ export class DIVEModel extends DIVENode {
                 id: this.userData.id!,
             });
         });
+
+        return this;
     }
 
-    public setFromGLTF(gltf: Object3D): void {
+    public setFromGLTF(gltf: Object3D): this {
         this.clear();
         this._boundingBox.makeEmpty();
 
@@ -78,6 +86,8 @@ export class DIVEModel extends DIVENode {
         });
 
         this.add(gltf);
+
+        return this;
     }
 
     public setMaterial(material: Partial<MaterialSchema>): void {

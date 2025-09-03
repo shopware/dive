@@ -1,4 +1,4 @@
-import { DIVEEngine, DIVEScene } from '@shopware-ag/dive';
+import { DIVE, DIVEScene } from '@shopware-ag/dive';
 import { OrbitController } from '@shopware-ag/dive/orbitcontroller';
 import { ComputeEncompassingViewAction } from '../computeencompassingview.ts';
 import { Vector3 } from 'three';
@@ -27,7 +27,7 @@ describe('modules/state/actions/camera/computeEncompassingView', () => {
 
         const mockEngine = {
             scene: mockScene,
-        } as unknown as DIVEEngine;
+        } as unknown as DIVE;
 
         const action = new ComputeEncompassingViewAction(undefined, {
             engine: mockEngine,

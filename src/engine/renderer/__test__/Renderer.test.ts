@@ -2,10 +2,7 @@
  * @jest-environment jsdom
  */
 
-import {
-    DIVERenderPipeline,
-    DIVERenderPipelineDefaultSettings,
-} from '../Renderer.ts';
+import { DIVERenderer, DIVERendererDefaultSettings } from '../Renderer.ts';
 import { DIVEScene } from '../../scene/Scene.ts';
 import { DIVEPerspectiveCamera } from '../../camera/PerspectiveCamera.ts';
 import { vi } from 'vitest';
@@ -27,7 +24,7 @@ const WebGLRenderer = WebGLRendererOriginal as any;
 // });
 
 describe('DIVERenderPipeline', () => {
-    let renderer: DIVERenderPipeline;
+    let renderer: DIVERenderer;
     let scene: DIVEScene;
     let camera: DIVEPerspectiveCamera;
 
@@ -35,22 +32,21 @@ describe('DIVERenderPipeline', () => {
         vi.clearAllMocks();
         scene = new DIVEScene();
         camera = new DIVEPerspectiveCamera();
-        renderer = new DIVERenderPipeline(scene, camera);
+        renderer = new DIVERenderer(scene, camera);
     });
 
     it('should instantiate with default settings', () => {
         expect(renderer).toBeDefined();
         expect(WebGLRenderer).toHaveBeenCalledWith(
             expect.objectContaining({
-                antialias: DIVERenderPipelineDefaultSettings.antialias,
-                alpha: DIVERenderPipelineDefaultSettings.alpha,
-                powerPreference:
-                    DIVERenderPipelineDefaultSettings.powerPreference,
-                precision: DIVERenderPipelineDefaultSettings.precision,
-                stencil: DIVERenderPipelineDefaultSettings.stencil,
-                depth: DIVERenderPipelineDefaultSettings.depth,
+                antialias: DIVERendererDefaultSettings.antialias,
+                alpha: DIVERendererDefaultSettings.alpha,
+                powerPreference: DIVERendererDefaultSettings.powerPreference,
+                precision: DIVERendererDefaultSettings.precision,
+                stencil: DIVERendererDefaultSettings.stencil,
+                depth: DIVERendererDefaultSettings.depth,
                 logarithmicDepthBuffer:
-                    DIVERenderPipelineDefaultSettings.logarithmicDepthBuffer,
+                    DIVERendererDefaultSettings.logarithmicDepthBuffer,
             }),
         );
     });
@@ -65,7 +61,7 @@ describe('DIVERenderPipeline', () => {
             depth: false,
             logarithmicDepthBuffer: true,
         };
-        renderer = new DIVERenderPipeline(scene, camera, customSettings);
+        renderer = new DIVERenderer(scene, camera, customSettings);
         expect(WebGLRenderer).toHaveBeenCalledWith(
             expect.objectContaining(customSettings),
         );

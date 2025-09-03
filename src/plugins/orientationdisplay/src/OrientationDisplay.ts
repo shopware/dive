@@ -1,6 +1,6 @@
 import { MathUtils, Vector4 } from 'three';
 import {
-    type DIVERenderPipeline,
+    type DIVERenderer,
     DIVETicker,
     DIVEScene,
     DIVEPerspectiveCamera,
@@ -23,7 +23,7 @@ export class OrientationDisplay implements DIVETicker {
     private _restoreViewport: Vector4 = new Vector4();
 
     constructor(
-        private _renderer: DIVERenderPipeline,
+        private _renderer: DIVERenderer,
         private _scene: DIVEScene,
         private _camera: DIVEPerspectiveCamera,
     ) {

@@ -29,6 +29,8 @@ export const DIVEPerspectiveCameraDefaultSettings: Required<DIVEPerspectiveCamer
  */
 
 export class DIVEPerspectiveCamera extends PerspectiveCamera {
+    public readonly isDIVEPerspectiveCamera: true = true;
+
     public static readonly EDITOR_VIEW_LAYER_MASK =
         DEFAULT_LAYER_MASK |
         UI_LAYER_MASK |

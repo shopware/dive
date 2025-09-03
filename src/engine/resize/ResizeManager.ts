@@ -1,30 +1,42 @@
 import { DIVEPerspectiveCamera } from '../camera/PerspectiveCamera.ts';
-import { DIVERenderPipeline } from '../renderer/Renderer.ts';
+import { DIVERenderer } from '../renderer/Renderer.ts';
 
 export class DIVEResizeManager {
+    public readonly isDIVEResizeManager: true = true;
+
     private _resizeObserver: ResizeObserver;
     private _width: number = 0;
     private _height: number = 0;
 
-    constructor(renderer: DIVERenderPipeline, camera: DIVEPerspectiveCamera) {
+    constructor(
+        private _renderer: DIVERenderer,
+        private _camera: DIVEPerspectiveCamera,
+    ) {
         this._resizeObserver = new ResizeObserver((entries) => {
-            for (const entry of entries) {
-                const { width, height } = entry.contentRect;
-                if (width === this._width && height === this._height) continue;
-
-                renderer.onResize(width, height);
-                camera.onResize(width, height);
-                this._width = width;
-                this._height = height;
+            // only one entry is expected
+            const entry = entries[0];
+            const { width, height } = entry.contentRect;
+            if (width === this._width && height === this._height) {
+                return;
             }
+
+            this._renderer.onResize(width, height);
+            this._camera.onResize(width, height);
+            this._width = width;
+            this._height = height;
         });
 
-        this._observeCanvas(renderer.webglrenderer.domElement);
+        this._observeCanvas(this._renderer.canvas);
     }
 
     public setCanvas(canvas: HTMLCanvasElement): void {
         this._resizeObserver.disconnect();
         this._observeCanvas(canvas);
+        const { width, height } = canvas.getBoundingClientRect();
+        this._renderer.onResize(width, height);
+        this._camera.onResize(width, height);
+        this._width = width;
+        this._height = height;
     }
 
     public dispose(): void {

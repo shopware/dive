@@ -1,5 +1,5 @@
 import { SetBackgroundAction } from '../setbackground.ts';
-import { DIVEEngine, DIVEScene } from '@shopware-ag/dive';
+import { DIVE, DIVEScene } from '@shopware-ag/dive';
 
 describe('SetBackgroundAction', () => {
     it('should set scene background', async () => {
@@ -10,7 +10,7 @@ describe('SetBackgroundAction', () => {
 
         const mockEngine = {
             scene: mockScene,
-        } as unknown as DIVEEngine;
+        } as unknown as DIVE;
 
         const action = new SetBackgroundAction(
             { color: '#ff0000' },

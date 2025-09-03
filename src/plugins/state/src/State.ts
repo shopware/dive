@@ -1,7 +1,7 @@
-import { generateUUID } from 'three/src/math/MathUtils.js';
+import { MathUtils } from 'three';
 
 // type imports
-import { type EntitySchema, type DIVEEngine } from '@shopware-ag/dive';
+import { type EntitySchema, type DIVE } from '@shopware-ag/dive';
 import { type OrbitController } from '@shopware-ag/dive/orbitcontroller';
 import {
     ActionDependencies,
@@ -36,7 +36,7 @@ export class State {
         return this._id;
     }
 
-    private engine: DIVEEngine;
+    private engine: DIVE;
     private controller: OrbitController;
 
     // modules
@@ -51,7 +51,7 @@ export class State {
             this._mediaCreator = new (
                 await import('@shopware-ag/dive/mediacreator')
             ).MediaCreator(
-                this.engine.renderer,
+                this.engine.mainView.renderer,
                 this.engine.scene,
                 this.controller,
             );
@@ -123,9 +123,9 @@ export class State {
         ActionSubscriber<keyof ActionTypes>[]
     > = new Map();
 
-    constructor(engine: DIVEEngine, controller: OrbitController) {
-        this._id = generateUUID();
-        this.engine = engine;
+    constructor(dive: DIVE, controller: OrbitController) {
+        this._id = MathUtils.generateUUID();
+        this.engine = dive;
         this.controller = controller;
 
         State.__instances.push(this);

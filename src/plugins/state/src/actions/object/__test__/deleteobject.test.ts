@@ -1,5 +1,5 @@
 import { DeleteObjectAction } from '../deleteobject.ts';
-import { DIVEEngine, DIVEScene, type EntitySchema } from '@shopware-ag/dive';
+import { DIVE, DIVEScene, type EntitySchema } from '@shopware-ag/dive';
 import { SetParentAction } from '../setparent.ts';
 import { UpdateObjectAction } from '../updateobject.ts';
 
@@ -16,7 +16,7 @@ describe('DeleteObjectAction', () => {
 
     const mockEngine = {
         scene: mockScene,
-    } as unknown as DIVEEngine;
+    } as unknown as DIVE;
 
     const mockRegistered = new Map<string, EntitySchema>();
 

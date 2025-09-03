@@ -94,26 +94,6 @@ describe('DIVEClock', () => {
         expect(() => clock.removeTicker(nonExistentTicker)).not.toThrow();
     });
 
-    it('should call dispose on tickers that have it', () => {
-        const tickerWithDispose: DIVETicker = {
-            uuid: 'ticker-with-dispose',
-            tick: vi.fn(),
-            dispose: vi.fn(),
-        };
-        const tickerWithoutDispose: DIVETicker = {
-            uuid: 'ticker-without-dispose',
-            tick: vi.fn(),
-        };
-
-        clock.addTicker(tickerWithDispose);
-        clock.addTicker(tickerWithoutDispose);
-
-        clock.dispose();
-
-        expect(tickerWithDispose.dispose).toHaveBeenCalled();
-        expect(clock['_tickers']).toHaveLength(0);
-    });
-
     it('should not add ticker with duplicate UUID', () => {
         const ticker1: DIVETicker = {
             uuid: 'same-uuid',
@@ -129,18 +109,5 @@ describe('DIVEClock', () => {
 
         expect(clock['_tickers']).toHaveLength(1);
         expect(clock['_tickers'][0]).toBe(ticker1);
-    });
-
-    it('should set renderer and call render on tick', () => {
-        const mockRenderer = {
-            render: vi.fn(),
-        };
-
-        clock.setRenderer(mockRenderer as any);
-        clock.start();
-
-        vi.advanceTimersByTime(16);
-
-        expect(mockRenderer.render).toHaveBeenCalled();
     });
 });

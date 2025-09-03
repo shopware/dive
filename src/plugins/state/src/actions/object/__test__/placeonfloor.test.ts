@@ -1,5 +1,5 @@
 import { PlaceOnFloorAction } from '../placeonfloor.ts';
-import { DIVEEngine, DIVEModel, type EntitySchema } from '@shopware-ag/dive';
+import { DIVE, DIVEModel, type EntitySchema } from '@shopware-ag/dive';
 
 const mockModel = {
     isDIVEModel: true,
@@ -12,7 +12,7 @@ const mockEngine = {
             getSceneObject: vi.fn().mockReturnValue(mockModel),
         },
     },
-} as unknown as DIVEEngine;
+} as unknown as DIVE;
 
 const mockRegistered = new Map<string, EntitySchema>();
 

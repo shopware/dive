@@ -1,6 +1,6 @@
 import { DIVEPerspectiveCamera } from '../../../engine/camera/PerspectiveCamera.ts';
 import { type DIVEScene } from '../../../engine/scene/Scene.ts';
-import { type DIVERenderPipeline } from '../../../engine/renderer/Renderer.ts';
+import { type DIVERenderer } from '../../../engine/renderer/Renderer.ts';
 import { type OrbitController } from '@shopware-ag/dive/orbitcontroller';
 import { MediaGenerationByPosition } from '../types/index.ts';
 
@@ -8,12 +8,12 @@ import { MediaGenerationByPosition } from '../types/index.ts';
  * @internal
  */
 export class MediaCreator {
-    private _renderer: DIVERenderPipeline;
+    private _renderer: DIVERenderer;
     private _scene: DIVEScene;
     private _controller: OrbitController;
 
     constructor(
-        renderer: DIVERenderPipeline,
+        renderer: DIVERenderer,
         scene: DIVEScene,
         controller: OrbitController,
     ) {
@@ -29,7 +29,10 @@ export class MediaCreator {
         const resetRotation = this._controller.object.quaternion.clone();
 
         this._renderer.onResize(width, height);
-        this._controller.object.onResize(width, height);
+        // will be removed in the future when DIVEOrthographicCamera will be implemented
+        if ('onResize' in this._controller.object) {
+            this._controller.object.onResize(width, height);
+        }
 
         this._controller.object.position.copy(position);
         this._controller.target.copy(target);

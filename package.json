@@ -1,6 +1,6 @@
 {
     "name": "@shopware-ag/dive",
-    "version": "2.0.3",
+    "version": "2.1.0",
     "description": "Shopware Spatial Framework",
     "type": "module",
     "main": "build/dive.cjs",
@@ -56,6 +56,11 @@
             "types": "./build/plugins/orientationdisplay/index.d.ts",
             "import": "./build/plugins/orientationdisplay/index.mjs",
             "require": "./build/plugins/orientationdisplay/index.cjs"
+        },
+        "./quickview": {
+            "types": "./build/plugins/quickview/index.d.ts",
+            "import": "./build/plugins/quickview/index.mjs",
+            "require": "./build/plugins/quickview/index.cjs"
         },
         "./state": {
             "types": "./build/plugins/state/index.d.ts",

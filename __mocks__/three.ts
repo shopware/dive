@@ -11,10 +11,30 @@ import {
     MathUtils as THREEMathUtils,
 } from 'three';
 
-export const Vector2 = vi.fn(function (this: any) {
-    this.copy = vi.fn();
-    this.distanceTo = vi.fn();
-    this.set = vi.fn();
+export const Vector2 = vi.fn(function (this: any, x = 0, y = 0) {
+    this.x = x;
+    this.y = y;
+    this.copy = vi.fn((v) => {
+        this.x = v.x;
+        this.y = v.y;
+        return this;
+    });
+    this.distanceTo = vi.fn(() => 0);
+    this.set = vi.fn((x, y) => {
+        this.x = x;
+        this.y = y;
+        return this;
+    });
+    this.subVectors = vi.fn((a, b) => {
+        this.x = a.x - b.x;
+        this.y = a.y - b.y;
+        return this;
+    });
+    this.multiplyScalar = vi.fn((s) => {
+        this.x *= s;
+        this.y *= s;
+        return this;
+    });
     return this;
 });
 
@@ -70,11 +90,23 @@ export const Vector3 = vi.fn(function (
         this.z -= vec3.z;
         return this;
     });
-    this.projectOnVector = vi.fn((vec3: THREEVector3) => {
+    this.projectOnVector = vi.fn((_vec3: THREEVector3) => {
         return this;
     });
-    this.subVectors = vi.fn();
-    this.normalize = vi.fn();
+    this.subVectors = vi.fn((a, b) => {
+        this.x = a.x - b.x;
+        this.y = a.y - b.y;
+        this.z = a.z - b.z;
+        return this;
+    });
+    this.normalize = vi.fn(() => this);
+    this.distanceTo = vi.fn(() => 0);
+    this.distanceToSquared = vi.fn(() => 0);
+    this.length = vi.fn(() => 0);
+    this.multiplyScalar = vi.fn(() => this);
+    this.addScaledVector = vi.fn(() => this);
+    this.setFromSpherical = vi.fn(() => this);
+    this.setFromMatrixColumn = vi.fn(() => this);
     return this;
 });
 
@@ -83,14 +115,38 @@ export const Vector4 = vi.fn(function (this: any) {
 });
 
 export const Quaternion = vi.fn(function (this: any) {
+    this.x = 0;
+    this.y = 0;
+    this.z = 0;
+    this.w = 1;
     this.set = vi.fn();
     this.multiplyQuaternions = vi.fn();
     this.multiplyScalar = vi.fn();
     this.setFromEuler = vi.fn();
     this.setFromAxisAngle = vi.fn();
-    this.setFromUnitVectors = vi.fn();
+    this.setFromUnitVectors = vi.fn(() => {
+        return this;
+    });
     this.setFromRotationMatrix = vi.fn();
-    this.invert = vi.fn();
+    this.invert = vi.fn(() => {
+        return this;
+    });
+    this.clone = vi.fn(() => {
+        const newQuat = new Quaternion();
+        newQuat.x = this.x;
+        newQuat.y = this.y;
+        newQuat.z = this.z;
+        newQuat.w = this.w;
+        return newQuat;
+    });
+    this.dot = vi.fn(() => 0);
+    this.copy = vi.fn((q) => {
+        this.x = q.x;
+        this.y = q.y;
+        this.z = q.z;
+        this.w = q.w;
+        return this;
+    });
     return this;
 });
 
@@ -130,8 +186,10 @@ export const Object3D = vi.fn(function (this: any) {
     this.sub = vi.fn();
     this.children = [];
     this.userData = {};
-    this.position = new THREEVector3();
+    this.position = new Vector3();
     this.rotation = new Euler();
+    this.quaternion = new Quaternion();
+    this.up = new Vector3(0, 1, 0);
     this.scale = {
         x: 1,
         y: 1,
@@ -156,8 +214,6 @@ export const Object3D = vi.fn(function (this: any) {
     this.rotateX = vi.fn();
     this.rotateY = vi.fn();
     this.rotateZ = vi.fn();
-    this.translateY = vi.fn();
-    this.lookAt = vi.fn();
 
     // Mock getter properties for handles
     Object.defineProperty(this, 'forwardVector', {
@@ -193,19 +249,19 @@ export const Object3D = vi.fn(function (this: any) {
         if (this.position) {
             cloned.position = {
                 ...this.position,
-                equals: vi.fn((other) => true), // Mock equals to return true for tests
+                equals: vi.fn((_other) => true), // Mock equals to return true for tests
             };
         }
         if (this.rotation) {
             cloned.rotation = {
                 ...this.rotation,
-                equals: vi.fn((other) => true),
+                equals: vi.fn((_other) => true),
             };
         }
         if (this.scale) {
             cloned.scale = {
                 ...this.scale,
-                equals: vi.fn((other) => true),
+                equals: vi.fn((_other) => true),
             };
         }
         return cloned;
@@ -397,32 +453,32 @@ export const Color = vi.fn(function (this: any, color?: any) {
         cloned.b = self.b;
         return cloned;
     });
-    this.set = vi.fn((color: any) => {
-        if (typeof color === 'number') {
-            r = ((color >> 16) & 255) / 255;
-            g = ((color >> 8) & 255) / 255;
-            b = (color & 255) / 255;
-        } else if (typeof color === 'string') {
-            const hex = color.replace('#', '');
+    this.set = vi.fn((colorValue: any) => {
+        if (typeof colorValue === 'number') {
+            r = ((colorValue >> 16) & 255) / 255;
+            g = ((colorValue >> 8) & 255) / 255;
+            b = (colorValue & 255) / 255;
+        } else if (typeof colorValue === 'string') {
+            const hex = colorValue.replace('#', '');
             r = parseInt(hex.substr(0, 2), 16) / 255;
             g = parseInt(hex.substr(2, 2), 16) / 255;
             b = parseInt(hex.substr(4, 2), 16) / 255;
         } else if (
-            color &&
-            typeof color.r === 'number' &&
-            typeof color.g === 'number' &&
-            typeof color.b === 'number'
+            colorValue &&
+            typeof colorValue.r === 'number' &&
+            typeof colorValue.g === 'number' &&
+            typeof colorValue.b === 'number'
         ) {
-            r = color.r;
-            g = color.g;
-            b = color.b;
+            r = colorValue.r;
+            g = colorValue.g;
+            b = colorValue.b;
         }
         return self;
     });
-    this.copy = vi.fn((color: any) => {
-        r = color.r;
-        g = color.g;
-        b = color.b;
+    this.copy = vi.fn((colorValue: any) => {
+        r = colorValue.r;
+        g = colorValue.g;
+        b = colorValue.b;
         return self;
     });
     this.multiplyScalar = vi.fn((scalar: number) => {
@@ -536,9 +592,10 @@ export const PerspectiveCamera = vi.fn(function (
     this.layers = {
         mask: 0,
     };
-    this.position = {
-        set: vi.fn(),
-    };
+    this.position = new Vector3();
+    this.quaternion = new Quaternion();
+    this.up = new Vector3(0, 1, 0);
+    this.zoom = 1;
     this.add = vi.fn();
     this.updateProjectionMatrix = vi.fn();
     this.aspect = aspect;
@@ -555,11 +612,17 @@ export const OrthographicCamera = vi.fn(function (this: any) {
     this.layers = {
         mask: 0,
     };
-    this.position = {
-        set: vi.fn(),
-    };
+    this.position = new Vector3();
+    this.quaternion = new Quaternion();
+    this.up = new Vector3(0, 1, 0);
+    this.zoom = 1;
     this.add = vi.fn();
     this.removeFromParent = vi.fn();
+    this.updateProjectionMatrix = vi.fn();
+    this.right = 1;
+    this.left = -1;
+    this.top = 1;
+    this.bottom = -1;
     return this;
 });
 
@@ -777,5 +840,32 @@ export const Box3Helper = vi.fn(function (this: any) {
         return this;
     });
     this.removeFromParent = vi.fn();
+    return this;
+});
+
+export enum MOUSE {
+    LEFT = 0,
+    MIDDLE = 1,
+    RIGHT = 2,
+    ROTATE = 0,
+    DOLLY = 1,
+    PAN = 2,
+}
+
+export enum TOUCH {
+    ROTATE = 0,
+    PAN = 1,
+    DOLLY_PAN = 2,
+    DOLLY_ROTATE = 3,
+}
+
+export const Spherical = vi.fn(function (this: any) {
+    this.radius = 1;
+    this.phi = 0;
+    this.theta = 0;
+    this.setFromVector3 = vi.fn(() => this);
+    this.makeSafe = vi.fn(() => this);
+    this.set = vi.fn(() => this);
+    this.copy = vi.fn(() => this);
     return this;
 });

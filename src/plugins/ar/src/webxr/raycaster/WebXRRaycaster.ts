@@ -1,5 +1,5 @@
 import { Matrix4, Mesh, Vector3 } from 'three';
-import { DIVERenderPipeline } from '../../../../../engine/renderer/Renderer.ts';
+import { DIVERenderer } from '../../../../../engine/renderer/Renderer.ts';
 import { DIVEWebXRRaycasterAR } from './ar/WebXRRaycasterAR.ts';
 import { DIVEWebXRRaycasterTHREE } from './three/WebXRRaycasterTHREE.ts';
 import { DIVEScene } from '../../../../../engine/scene/Scene.ts';
@@ -39,11 +39,7 @@ export class DIVEWebXRRaycaster extends EventDispatcher<DIVEWebXRRaycasterEvents
     // buffers
     private _hasHit: boolean = false;
 
-    constructor(
-        session: XRSession,
-        renderer: DIVERenderPipeline,
-        scene: DIVEScene,
-    ) {
+    constructor(session: XRSession, renderer: DIVERenderer, scene: DIVEScene) {
         super();
 
         this._session = session;

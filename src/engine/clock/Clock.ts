@@ -1,13 +1,10 @@
-import { DIVERenderPipeline } from '../renderer/Renderer.ts';
-
 export interface DIVETicker {
     uuid: string;
     tick(deltaTime: number): void;
-    dispose?(): void;
 }
 
 export class DIVEClock {
-    private _renderer: DIVERenderPipeline | null = null;
+    public readonly isDIVEClock: true = true;
 
     private _lastTime: number = 0;
     private _isRunning: boolean = false;
@@ -22,10 +19,6 @@ export class DIVEClock {
 
     public stop(): void {
         this._isRunning = false;
-    }
-
-    public setRenderer(renderer: DIVERenderPipeline): void {
-        this._renderer = renderer;
     }
 
     public addTicker(ticker: DIVETicker): void {
@@ -46,7 +39,6 @@ export class DIVEClock {
 
     public dispose(): void {
         this.stop();
-        this._tickers.forEach((ticker) => ticker.dispose?.());
         this._tickers = [];
         this._isRunning = false;
         this._lastTime = 0;
@@ -59,8 +51,6 @@ export class DIVEClock {
         this._lastTime = currentTime;
 
         this._tickers.forEach((ticker) => ticker.tick(deltaTime));
-
-        this._renderer?.render();
 
         requestAnimationFrame(this._tick.bind(this));
     }

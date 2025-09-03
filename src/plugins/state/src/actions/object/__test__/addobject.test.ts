@@ -1,5 +1,5 @@
 import { AddObjectAction } from '../addobject.ts';
-import { DIVEEngine, DIVEScene, type EntitySchema } from '@shopware-ag/dive';
+import { DIVE, DIVEScene, type EntitySchema } from '@shopware-ag/dive';
 
 const mockEngine = {
     scene: {
@@ -7,7 +7,7 @@ const mockEngine = {
             addSceneObject: vi.fn(),
         },
     } as unknown as DIVEScene,
-} as unknown as DIVEEngine;
+} as unknown as DIVE;
 
 const mockRegistered = new Map<string, EntitySchema>();
 
