@@ -117,11 +117,11 @@ jobs:
               uses: 'phips28/gh-action-bump-version@master'
               env:
                   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-                  GITHUB_USER: 'DIVE[bot]'
-                  GITHUB_EMAIL: 'f.frank@shopware.com'
+                  GITHUB_USER: 'GitHub Actions'
+                  GITHUB_EMAIL: 'actions@github.com'
               with:
                   target-branch: 'trunk'
-                  commit-message: 'DIVE[bot]: Automated Version Bump [skip ci]'
+                  commit-message: 'Automated Version Bump [skip ci]'
                   skip-push: 'true'
                   skip-tag: 'true'
 
