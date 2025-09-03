@@ -106,4 +106,3 @@ For detailed documentation, please refer to the following sections:
 - [Shopware Integration](docs/shopware-integration.md) - Integration with Shopware projects
 - [Testing and Quality Assurance](docs/testing.md) - Testing guidelines and best practices
 - [Local Development](docs/local-development.md) - Local development setup and workflow
-- [Actions Reference](docs/actions-reference.md) - Complete list of available actions
