@@ -1,7 +1,16 @@
-import { DIVE, DIVEModel, DIVESceneLight } from '@shopware-ag/dive';
+import {
+    DIVE,
+    DIVEDefaultSettings,
+    DIVEModel,
+    DIVESceneLight,
+} from '@shopware-ag/dive';
 import { OrbitController } from '@shopware-ag/dive/orbitcontroller';
-import { QuickViewDefaultSettings } from './QuickViewDefaultSettings.ts';
 import { type QuickViewSettings } from '../types/index.ts';
+
+export const QuickViewDefaultSettings: Required<QuickViewSettings> = {
+    ...DIVEDefaultSettings,
+    lightIntensity: 1,
+};
 
 export type QuickView = DIVE & { orbitController: OrbitController };
 

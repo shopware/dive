@@ -238,18 +238,6 @@ describe('DIVE', () => {
         console.log = vi.fn();
     });
 
-    it('should QuickView', async () => {
-        const dive = await DIVE.QuickView('test_uri');
-        expect(dive).toBeDefined();
-    });
-
-    it('should handle QuickView with multiple instances', async () => {
-        const dive1 = await DIVE.QuickView('test_uri');
-        const dive2 = await DIVE.QuickView('test_uri');
-        expect(dive1).toBeDefined();
-        expect(dive2).toBeDefined();
-    });
-
     it('should instantiate', () => {
         const dive = new DIVE();
         expect(dive).toBeDefined();
@@ -295,7 +283,7 @@ describe('DIVE', () => {
                 enableDamping: false,
                 dampingFactor: 0,
             },
-        } as DIVESettings;
+        };
         const dive = new DIVE(settings);
         expect(dive).toBeDefined();
     });
@@ -421,27 +409,6 @@ describe('DIVE', () => {
 
         const view = dive.createView();
         expect(dive.mainView).toBe(view);
-    });
-
-    it('should QuickView with settings', async () => {
-        const settings = {
-            backgroundColor: 0xff0000,
-            displayGrid: true,
-            displayFloor: false,
-            lightIntensity: 2,
-        };
-        const dive = await DIVE.QuickView('test_uri', settings);
-
-        expect(dive).toBeDefined();
-        expect(dive.scene.setBackground).toHaveBeenCalledWith(
-            settings.backgroundColor,
-        );
-        expect(dive.scene.grid.setVisibility).toHaveBeenCalledWith(
-            settings.displayGrid,
-        );
-        expect(dive.scene.root.floor.setVisibility).toHaveBeenCalledWith(
-            settings.displayFloor,
-        );
     });
 
     it('should get the canvas', () => {
