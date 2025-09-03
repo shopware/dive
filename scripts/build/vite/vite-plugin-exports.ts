@@ -107,14 +107,6 @@ export default function pluginBuildPlugin(): Plugin {
         name: 'plugin-build-config',
         config(): UserConfig {
             // Prepare build config
-            // reusable manualChunks to include engine & types in main bundle
-            const manualChunks = (id: string): string | void => {
-                const enginePath = pathResolve(projectRoot, 'src/engine');
-                const typesPath = pathResolve(projectRoot, 'src/types/file');
-                if (id.startsWith(enginePath) || id.startsWith(typesPath)) {
-                    return 'dive';
-                }
-            };
             const rollupInput: Record<string, string> = {
                 // Main library entry point
                 dive: pathResolve(projectRoot, 'src/index.ts'),
@@ -142,16 +134,12 @@ export default function pluginBuildPlugin(): Plugin {
                                 entryFileNames: '[name].mjs',
                                 chunkFileNames: 'chunks/[name]-[hash].mjs',
                                 exports: 'named',
-                                // use shared manualChunks logic
-                                manualChunks,
                             },
                             {
                                 format: 'cjs',
                                 entryFileNames: '[name].cjs',
                                 chunkFileNames: 'chunks/[name]-[hash].cjs',
                                 exports: 'named',
-                                // use shared manualChunks logic
-                                manualChunks,
                             },
                         ],
                         external: [

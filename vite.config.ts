@@ -4,9 +4,13 @@ import dts from 'vite-plugin-dts';
 import pluginBuildPlugin from './scripts/build/vite/vite-plugin-exports.ts';
 import wasm from 'vite-plugin-wasm';
 import tsconfigPaths from 'vite-tsconfig-paths';
+import pkg from './package.json';
 
 // --- Main Vite Export ---
 export default defineConfig({
+    define: {
+        __APP_VERSION__: JSON.stringify(pkg.version),
+    },
     test: {
         globals: true,
         setupFiles: ['./vitest.setup.ts'],
