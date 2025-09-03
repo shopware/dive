@@ -1,4 +1,4 @@
-import { MathUtils } from 'three/src/math/MathUtils.js';
+import { MathUtils } from 'three';
 import { EventDispatcher, Event } from 'three/src/core/EventDispatcher.js';
 import { TAnimatorParameters } from '../types/AnimatorParameters.ts';
 

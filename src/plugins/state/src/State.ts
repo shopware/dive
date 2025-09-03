@@ -1,4 +1,4 @@
-import { generateUUID } from 'three/src/math/MathUtils.js';
+import { MathUtils } from 'three';
 
 // type imports
 import { type EntitySchema, type DIVE } from '@shopware-ag/dive';
@@ -124,7 +124,7 @@ export class State {
     > = new Map();
 
     constructor(dive: DIVE, controller: OrbitController) {
-        this._id = generateUUID();
+        this._id = MathUtils.generateUUID();
         this.engine = dive;
         this.controller = controller;
 

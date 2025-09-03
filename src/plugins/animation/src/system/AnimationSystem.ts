@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import * as TWEEN from '@tweenjs/tween.js';
-import { MathUtils } from 'three/src/math/MathUtils.js';
+import { MathUtils } from 'three';
 import { DIVETicker } from '@shopware-ag/dive';
 import { Animator } from '../animator/Animator.ts';
 import { TAnimatorParameters } from '../types/AnimatorParameters.ts';
