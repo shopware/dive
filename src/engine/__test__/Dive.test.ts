@@ -283,9 +283,22 @@ describe('DIVE', () => {
                 enableDamping: false,
                 dampingFactor: 0,
             },
+            backgroundColor: '#ffffff',
+            displayGrid: false,
+            displayFloor: false,
         };
         const dive = new DIVE(settings);
         expect(dive).toBeDefined();
+
+        expect(dive.scene.setBackground).toHaveBeenCalledWith(
+            settings.backgroundColor,
+        );
+        expect(dive.scene.grid.setVisibility).toHaveBeenCalledWith(
+            settings.displayGrid,
+        );
+        expect(dive.scene.root.floor.setVisibility).toHaveBeenCalledWith(
+            settings.displayFloor,
+        );
     });
 
     it('should have Canvas', () => {

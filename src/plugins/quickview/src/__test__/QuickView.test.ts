@@ -91,14 +91,5 @@ describe('QuickView', () => {
         const dive = await QuickView('test_uri', settings);
 
         expect(dive).toBeDefined();
-        expect(dive.scene.setBackground).toHaveBeenCalledWith(
-            settings.backgroundColor,
-        );
-        expect(dive.scene.grid.setVisibility).toHaveBeenCalledWith(
-            settings.displayGrid,
-        );
-        expect(dive.scene.root.floor.setVisibility).toHaveBeenCalledWith(
-            settings.displayFloor,
-        );
     });
 });

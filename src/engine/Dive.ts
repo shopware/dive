@@ -131,6 +131,15 @@ export class DIVE {
 
         // set up scene
         this._scene = new DIVEScene();
+        this.scene.setBackground(
+            settings?.backgroundColor ?? DIVEDefaultSettings.backgroundColor,
+        );
+        this.scene.grid.setVisibility(
+            settings?.displayGrid ?? DIVEDefaultSettings.displayGrid,
+        );
+        this.scene.root.floor.setVisibility(
+            settings?.displayFloor ?? DIVEDefaultSettings.displayFloor,
+        );
 
         // set up main view
         const mainView = new DIVEView(

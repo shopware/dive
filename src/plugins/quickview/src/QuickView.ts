@@ -27,17 +27,6 @@ export const QuickView = async (
     const dive = new DIVE(settings);
     dive.mainView.camera.position.set(0, 1, 2);
 
-    // set scene properties
-    dive.scene.setBackground(
-        settings?.backgroundColor ?? QuickViewDefaultSettings.backgroundColor,
-    );
-    dive.scene.grid.setVisibility(
-        settings?.displayGrid ?? QuickViewDefaultSettings.displayGrid,
-    );
-    dive.scene.root.floor.setVisibility(
-        settings?.displayFloor ?? QuickViewDefaultSettings.displayFloor,
-    );
-
     // add scene light
     const light = new DIVESceneLight();
     light.setIntensity(settings?.lightIntensity ?? 1);
