@@ -29,6 +29,7 @@ describe('SetParentAction', () => {
                     },
                 ),
             attach: vi.fn(),
+            updateSceneObject: vi.fn(),
         },
     } as unknown as DIVEScene;
 
@@ -127,7 +128,10 @@ describe('SetParentAction', () => {
         );
 
         // Assert
-        expect(() => action.execute()).toThrow('Object not found in scene.');
+        action.execute();
+
+        // Assert
+        expect(mockScene.root.attach).toHaveBeenCalledWith(mockSceneObject);
     });
 
     it('should throw error if object does not exist', () => {
@@ -183,7 +187,7 @@ describe('SetParentAction', () => {
         expect(() => action.execute()).toThrow('Object not found in scene.');
     });
 
-    it('should throw error if parent does not exist', () => {
+    it('should warn if parent does not exist', () => {
         // Arrange
         const testObject: EntitySchema = {
             id: 'test-object',
@@ -202,6 +206,8 @@ describe('SetParentAction', () => {
             },
         };
 
+        const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+
         mockRegistered.set(testObject.id, testObject);
 
         // Act & Assert
@@ -216,10 +222,11 @@ describe('SetParentAction', () => {
             },
         );
 
-        expect(() => action.execute()).toThrow('Parent object not found.');
+        action.execute();
+        expect(warnSpy).toHaveBeenCalledWith('Parent object not found.');
     });
 
-    it('should throw error if parent is not found in scene', () => {
+    it('should warn if parent is not found in scene', () => {
         // Arrange
         const testObject: EntitySchema = {
             id: 'test-object',
@@ -249,6 +256,8 @@ describe('SetParentAction', () => {
             scale: { x: 1, y: 1, z: 1 },
         };
 
+        const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+
         mockRegistered.set(testObject.id, testObject);
         mockRegistered.set(parentObject.id, parentObject);
         vi.mocked(mockScene.root.getSceneObject).mockImplementation(
@@ -271,12 +280,13 @@ describe('SetParentAction', () => {
             },
         );
 
-        expect(() => action.execute()).toThrow(
+        action.execute();
+        expect(warnSpy).toHaveBeenCalledWith(
             'Parent object not found in scene.',
         );
     });
 
-    it('should throw error if object tries to attach to itself', () => {
+    it('should warn if object tries to attach to itself', () => {
         // Arrange
         const testObject: EntitySchema = {
             id: 'test-object',
@@ -295,6 +305,8 @@ describe('SetParentAction', () => {
             },
         };
 
+        const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+
         mockRegistered.set(testObject.id, testObject);
 
         // Act & Assert
@@ -309,8 +321,7 @@ describe('SetParentAction', () => {
             },
         );
 
-        expect(() => action.execute()).toThrow(
-            'Cannot attach object to itself.',
-        );
+        action.execute();
+        expect(warnSpy).toHaveBeenCalledWith('Cannot attach object to itself.');
     });
 });

@@ -30,44 +30,27 @@ export const SetParentAction = Action.define<
                     parentId: null,
                 },
                 { engine, registered },
-            );
-            throw new Error('Object not found in scene.');
+            ).execute();
+            return;
         }
 
         if (payload.object.id === payload.parent.id) {
             // cannot attach object to itself
-            throw new Error('Cannot attach object to itself.');
+            console.warn('Cannot attach object to itself.');
+            return;
         }
 
         const parent = registered.get(payload.parent.id);
         if (!parent) {
-            // detach from current parent
-            engine.scene.root.attach(sceneObject);
-            // Update registration to reflect no parent
-            new UpdateObjectAction(
-                {
-                    id: object.id,
-                    parentId: null,
-                },
-                { engine, registered },
-            );
-            throw new Error('Parent object not found.');
+            console.warn('Parent object not found.');
+            return;
         }
 
         // attach to new parent
         const parentObject = engine.scene.root.getSceneObject(parent);
         if (!parentObject) {
-            // detach from current parent
-            engine.scene.root.attach(sceneObject);
-            // Update registration to reflect no parent
-            new UpdateObjectAction(
-                {
-                    id: object.id,
-                    parentId: null,
-                },
-                { engine, registered },
-            );
-            throw new Error('Parent object not found in scene.');
+            console.warn('Parent object not found in scene.');
+            return;
         }
 
         // attach to new parent
@@ -79,7 +62,7 @@ export const SetParentAction = Action.define<
                 parentId: parent.id,
             },
             { engine, registered },
-        );
+        ).execute();
     },
 });
 
