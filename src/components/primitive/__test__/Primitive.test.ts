@@ -268,9 +268,9 @@ describe('dive/primitive/DIVEPrimitive', () => {
                 metalnessMap: 'This_Is_A_Texture' as unknown as Texture,
             } as MaterialSchema),
         ).not.toThrow();
-        expect((material as MeshStandardMaterial).roughness).toBe(1);
+        expect((material as MeshStandardMaterial).roughness).toBe(1.0);
         expect((material as MeshStandardMaterial).roughnessMap).toBeDefined();
-        expect((material as MeshStandardMaterial).metalness).toBe(0);
+        expect((material as MeshStandardMaterial).metalness).toBe(1.0);
         expect((material as MeshStandardMaterial).metalnessMap).toBeDefined();
     });
 
@@ -329,7 +329,7 @@ describe('dive/primitive/DIVEPrimitive', () => {
         expect(primitiveMaterial.normalMap).toBeDefined();
         expect(primitiveMaterial.roughness).toBe(1.0); // Should be 1.0 because roughnessMap is set
         expect(primitiveMaterial.roughnessMap).toBeDefined();
-        expect(primitiveMaterial.metalness).toBe(0.0); // Should be 0.0 because metalnessMap is set
+        expect(primitiveMaterial.metalness).toBe(1.0); // Should be 1.0 because metalnessMap is set
         expect(primitiveMaterial.metalnessMap).toBeDefined();
     });
 });

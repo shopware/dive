@@ -2,19 +2,15 @@ import {
     BoxGeometry,
     BufferAttribute,
     BufferGeometry,
-    Color,
     ConeGeometry,
     CylinderGeometry,
     Mesh,
     MeshStandardMaterial,
-    Raycaster,
     SphereGeometry,
-    Vector3,
 } from 'three';
 import { PRODUCT_LAYER_MASK } from '../../constants/VisibilityLayerMask.ts';
-import { findSceneRecursive } from '../../helpers/findSceneRecursive/findSceneRecursive.ts';
-import { DIVENode } from '../node/Node.ts';
-import { type GeometrySchema, type MaterialSchema } from '@shopware-ag/dive';
+import { DIVEModel } from '../model/Model.ts';
+import { type GeometrySchema } from '../../types/index.ts';
 
 /**
  * A basic model class.
@@ -25,20 +21,24 @@ import { type GeometrySchema, type MaterialSchema } from '@shopware-ag/dive';
  *
  * @module
  */
-export class DIVEPrimitive extends DIVENode {
+export class DIVEPrimitive extends DIVEModel {
     readonly isDIVEPrimitive: true = true;
 
-    private _mesh: Mesh;
+    protected _mesh: Mesh;
+    protected _material: MeshStandardMaterial;
 
     constructor() {
         super();
 
         this._mesh = new Mesh();
+        this._mesh.name = 'PrimitiveMesh';
         this._mesh.layers.mask = PRODUCT_LAYER_MASK;
         this._mesh.castShadow = true;
         this._mesh.receiveShadow = true;
-        this._mesh.material = new MeshStandardMaterial();
         this.add(this._mesh);
+
+        this._material = new MeshStandardMaterial();
+        this._mesh.material = this._material;
     }
 
     public setGeometry(geometry: GeometrySchema): void {
@@ -49,135 +49,9 @@ export class DIVEPrimitive extends DIVENode {
         this._boundingBox.setFromObject(this._mesh);
     }
 
-    public setMaterial(material: Partial<MaterialSchema>): void {
-        const primitiveMaterial = this._mesh.material as MeshStandardMaterial;
-
-        if (material.vertexColors !== undefined) {
-            primitiveMaterial.vertexColors = material.vertexColors;
-        }
-
-        // apply color if supplied
-        if (material.color !== undefined) {
-            primitiveMaterial.color = new Color(material.color);
-        }
-
-        // apply albedo map if supplied
-        if (material.map !== undefined) {
-            primitiveMaterial.map = material.map;
-        }
-
-        // apply normal map
-        if (material.normalMap !== undefined) {
-            primitiveMaterial.normalMap = material.normalMap;
-        }
-
-        // set roughness value
-        // if supplied, apply roughness map
-        // if we applied a roughness map, set roughness to 1.0
-        if (material.roughness !== undefined) {
-            primitiveMaterial.roughness = material.roughness;
-        }
-
-        if (material.roughnessMap !== undefined) {
-            primitiveMaterial.roughnessMap = material.roughnessMap;
-
-            if (primitiveMaterial.roughnessMap) {
-                primitiveMaterial.roughness = 1.0;
-            }
-        }
-
-        // set metalness value
-        // if supplied, apply metalness map
-        // if we applied a metalness map, set metalness to 1.0
-        if (material.metalness !== undefined) {
-            primitiveMaterial.metalness = material.metalness;
-        }
-
-        if (material.metalnessMap !== undefined) {
-            primitiveMaterial.metalnessMap = material.metalnessMap;
-
-            if (primitiveMaterial.metalnessMap) {
-                primitiveMaterial.metalness = 0.0;
-            }
-        }
-
-        // if the mesh is already set, update the material
-        if (this._mesh) this._mesh.material = primitiveMaterial;
-    }
-
-    public placeOnFloor(): void {
-        // calculate and temporary save world position
-        const worldPos = this.getWorldPosition(this._positionWorldBuffer);
-        const oldWorldPos = worldPos.clone();
-
-        // compute the bounding box
-        this._mesh?.geometry?.computeBoundingBox();
-        const meshBB = this._mesh?.geometry?.boundingBox;
-
-        // subtract the bounding box min y axis value from the world position y value
-        if (!meshBB || !this._mesh) return;
-        worldPos.y = worldPos.y - this._mesh.localToWorld(meshBB.min.clone()).y;
-
-        // skip any action when the position did not change
-        if (worldPos.y === oldWorldPos.y) return;
-        import('@shopware-ag/dive/state').then(({ State }) => {
-            State.get(this.userData.id)?.performAction('UPDATE_OBJECT', {
-                id: this.userData.id,
-                position: worldPos,
-                rotation: this.rotation,
-                scale: this.scale,
-            });
-        });
-    }
-
-    public dropIt(): void {
-        if (!this.parent) {
-            console.warn(
-                'DIVEPrimitive: dropIt() called on a model that is not in the scene.',
-                this,
-            );
-            return;
-        }
-
-        // calculate the bottom center of the bounding box
-        const bottomY = this._boundingBox.min.y * this.scale.y;
-        const bbBottomCenter = this.localToWorld(
-            this._boundingBox.getCenter(new Vector3()).multiply(this.scale),
-        );
-        bbBottomCenter.y = bottomY + this.position.y;
-
-        // set up raycaster and raycast all scene objects (product layer)
-        const raycaster = new Raycaster(bbBottomCenter, new Vector3(0, -1, 0));
-        raycaster.layers.mask = PRODUCT_LAYER_MASK;
-        const intersections = raycaster.intersectObjects(
-            findSceneRecursive(this).root.children,
-            true,
-        );
-
-        // if we hit something, move the model to the top on the hit object's bounding box
-        if (intersections.length > 0) {
-            const mesh = intersections[0].object as Mesh;
-            mesh.geometry.computeBoundingBox();
-            const meshBB = mesh.geometry.boundingBox!;
-            const worldPos = mesh.localToWorld(meshBB.max.clone());
-
-            const oldPos = this.position.clone();
-            const newPos = this.position
-                .clone()
-                .setY(worldPos.y)
-                .sub(new Vector3(0, bottomY, 0));
-            this.position.copy(newPos);
-
-            // if the position changed, update the object in communication
-            if (this.position.y === oldPos.y) return;
-
-            this.onMove();
-        }
-    }
-
     private assembleGeometry(geometry: GeometrySchema): BufferGeometry | null {
         // reset material to smooth shading
-        (this._mesh.material as MeshStandardMaterial).flatShading = false;
+        this._material.flatShading = false;
 
         switch (geometry.name.toLowerCase()) {
             case 'cylinder':
@@ -186,8 +60,7 @@ export class DIVEPrimitive extends DIVENode {
                 return this.createSphereGeometry(geometry);
             case 'pyramid':
                 // set material to flat shading for pyramid
-                (this._mesh.material as MeshStandardMaterial).flatShading =
-                    true;
+                this._material.flatShading = true;
                 return this.createPyramidGeometry(geometry);
             case 'cube':
             case 'box':
