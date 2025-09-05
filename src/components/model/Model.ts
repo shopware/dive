@@ -23,8 +23,8 @@ import { DIVENode } from '../node/Node.ts';
 export class DIVEModel extends DIVENode {
     readonly isDIVEModel: true = true;
 
-    private _mesh: Mesh | null = null;
-    private _material: MeshStandardMaterial | null = null;
+    protected _mesh: Mesh | null = null;
+    protected _material: MeshStandardMaterial | null = null;
 
     constructor() {
         super();
