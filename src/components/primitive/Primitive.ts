@@ -45,6 +45,9 @@ export class DIVEPrimitive extends DIVEModel {
         const geo = this.assembleGeometry(geometry);
         if (!geo) return;
 
+        geo.computeVertexNormals();
+        geo.computeBoundingBox();
+        geo.computeBoundingSphere();
         this._mesh.geometry = geo;
         this._boundingBox.setFromObject(this._mesh);
     }
@@ -123,10 +126,6 @@ export class DIVEPrimitive extends DIVEModel {
             new BufferAttribute(vertices, 3),
         );
         geometryBuffer.setIndex(new BufferAttribute(indices, 1));
-        geometryBuffer.computeVertexNormals();
-
-        geometryBuffer.computeBoundingBox();
-        geometryBuffer.computeBoundingSphere();
         return geometryBuffer;
     }
 

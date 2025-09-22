@@ -1,5 +1,6 @@
 import {
     Box3,
+    Box3Helper,
     Mesh,
     MeshStandardMaterial,
     Object3D,
@@ -8,7 +9,7 @@ import {
 } from 'three';
 import { PRODUCT_LAYER_MASK } from '../../constants/VisibilityLayerMask.ts';
 import { findSceneRecursive } from '../../helpers/findSceneRecursive/findSceneRecursive.ts';
-import { type MaterialSchema } from '@shopware-ag/dive';
+import { BoundingBox, type MaterialSchema } from '@shopware-ag/dive';
 import { DIVENode } from '../node/Node.ts';
 
 /**
@@ -158,15 +159,19 @@ export class DIVEModel extends DIVENode {
     }
 
     public placeOnFloor(): void {
-        if (!this._gltf) return;
-
         this.updateWorldMatrix(true, true);
 
         const worldPos = this.getWorldPosition(this._positionWorldBuffer);
         const oldWorldPos = worldPos.clone();
 
         // compute the world bounding box
-        const box = new Box3().setFromObject(this._gltf);
+        const box = new Box3();
+        this.children.forEach((child) => {
+            if (child instanceof BoundingBox) return;
+            console.log(child);
+            box.expandByObject(child);
+        });
+        findSceneRecursive(this).root.add(new Box3Helper(box, 0x00ff00));
         const delta = -box.min.y;
 
         // skip any action when delta is too small
@@ -200,19 +205,15 @@ export class DIVEModel extends DIVENode {
             return;
         }
 
-        if (!this._gltf) {
-            console.warn(
-                'DIVEModel: dropIt() called on a model that has no GLTF.',
-                this,
-            );
-            return;
-        }
-
         const worldPos = this.getWorldPosition(this._positionWorldBuffer);
         const oldWorldPos = worldPos.clone();
 
         // compute the world bounding box
-        const box = new Box3().setFromObject(this._gltf);
+        const box = new Box3();
+        this.children.forEach((child) => {
+            if (child instanceof BoundingBox) return;
+            box.expandByObject(child);
+        });
 
         // calculate the bottom center of the bounding box
         const bottomCenter = box.getCenter(new Vector3());
