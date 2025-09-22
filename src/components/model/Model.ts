@@ -1,14 +1,16 @@
 import {
+    Box3,
     Mesh,
     MeshStandardMaterial,
-    type Object3D,
+    Object3D,
     Raycaster,
     Vector3,
 } from 'three';
 import { PRODUCT_LAYER_MASK } from '../../constants/VisibilityLayerMask.ts';
 import { findSceneRecursive } from '../../helpers/findSceneRecursive/findSceneRecursive.ts';
-import { type MaterialSchema } from '@shopware-ag/dive';
 import { DIVENode } from '../node/Node.ts';
+import { MaterialSchema } from 'src/types/index.ts';
+import { BoundingBox } from '../boundingbox/BoundingBox.ts';
 
 /**
  * A basic model class.
@@ -22,6 +24,8 @@ import { DIVENode } from '../node/Node.ts';
 
 export class DIVEModel extends DIVENode {
     readonly isDIVEModel: true = true;
+
+    protected _gltf: Object3D | null = null;
 
     protected _mesh: Mesh | null = null;
     protected _material: MeshStandardMaterial | null = null;
@@ -64,7 +68,10 @@ export class DIVEModel extends DIVENode {
         this.clear();
         this._boundingBox.makeEmpty();
 
-        gltf.traverse((child) => {
+        this._gltf = gltf;
+        this._gltf.name = 'GLTF';
+
+        this._gltf.traverse((child) => {
             child.castShadow = true;
             child.receiveShadow = true;
 
@@ -85,7 +92,7 @@ export class DIVEModel extends DIVENode {
             }
         });
 
-        this.add(gltf);
+        this.add(this._gltf);
 
         return this;
     }
@@ -152,20 +159,28 @@ export class DIVEModel extends DIVENode {
     }
 
     public placeOnFloor(): void {
-        // calculate and temporary save world position
+        this.updateWorldMatrix(true, true);
+
         const worldPos = this.getWorldPosition(this._positionWorldBuffer);
         const oldWorldPos = worldPos.clone();
 
-        // compute the bounding box
-        this._mesh?.geometry?.computeBoundingBox();
-        const meshBB = this._mesh?.geometry?.boundingBox;
+        // compute the world bounding box
+        const box = new Box3();
+        this.children.forEach((child) => {
+            if (child instanceof BoundingBox) return;
+            box.expandByObject(child, true);
+        });
+        const delta = -box.min.y;
 
-        // subtract the bounding box min y axis value from the world position y value
-        if (!meshBB || !this._mesh) return;
-        worldPos.y = worldPos.y - this._mesh.localToWorld(meshBB.min.clone()).y;
+        // skip any action when delta is too small
+        if (Math.abs(delta) < 1e-9) return;
+
+        worldPos.y += delta;
 
         // skip any action when the position did not change
         if (worldPos.y === oldWorldPos.y) return;
+
+        this.setPosition(worldPos);
 
         import('@shopware-ag/dive/state').then(({ State }) => {
             State.get(this.userData.id)?.performAction('UPDATE_OBJECT', {
@@ -175,6 +190,8 @@ export class DIVEModel extends DIVENode {
                 scale: this.scale,
             });
         });
+
+        this.onMove();
     }
 
     public dropIt(): void {
@@ -186,15 +203,22 @@ export class DIVEModel extends DIVENode {
             return;
         }
 
+        const worldPos = this.getWorldPosition(this._positionWorldBuffer);
+        const oldWorldPos = worldPos.clone();
+
+        // compute the world bounding box
+        const box = new Box3();
+        this.children.forEach((child) => {
+            if (child instanceof BoundingBox) return;
+            box.expandByObject(child, true);
+        });
+
         // calculate the bottom center of the bounding box
-        const bottomY = this._boundingBox.min.y * this.scale.y;
-        const bbBottomCenter = this.localToWorld(
-            this._boundingBox.getCenter(new Vector3()).multiply(this.scale),
-        );
-        bbBottomCenter.y = bottomY + this.position.y;
+        const bottomCenter = box.getCenter(new Vector3());
+        bottomCenter.y = box.min.y;
 
         // set up raycaster and raycast all scene objects (product layer)
-        const raycaster = new Raycaster(bbBottomCenter, new Vector3(0, -1, 0));
+        const raycaster = new Raycaster(bottomCenter, new Vector3(0, -1, 0));
         raycaster.layers.mask = PRODUCT_LAYER_MASK;
         const intersections = raycaster.intersectObjects(
             findSceneRecursive(this).root.children,
@@ -204,21 +228,34 @@ export class DIVEModel extends DIVENode {
         // if we hit something, move the model to the top on the hit object's bounding box
         if (intersections.length > 0) {
             const mesh = intersections[0].object as Mesh;
-            mesh.geometry.computeBoundingBox();
-            const meshBB = mesh.geometry.boundingBox!;
-            const worldPos = mesh.localToWorld(meshBB.max.clone());
 
-            const oldPos = this.position.clone();
-            const newPos = this.position
-                .clone()
-                .setY(worldPos.y)
-                .sub(new Vector3(0, bottomY, 0));
-            this.position.copy(newPos);
+            const targetBox = new Box3().setFromObject(mesh);
+            const targetBoxMaxY = targetBox.max.y;
 
-            // if the position changed, update the object in communication
-            if (this.position.y === oldPos.y) return;
+            const delta = targetBoxMaxY - box.min.y;
+
+            // skip any action when delta is too small
+            if (Math.abs(delta) < 1e-9) return;
+
+            worldPos.y += delta;
+
+            // skip any action when the position did not change
+            if (worldPos.y === oldWorldPos.y) return;
+
+            this.setPosition(worldPos);
+
+            import('@shopware-ag/dive/state').then(({ State }) => {
+                State.get(this.userData.id)?.performAction('UPDATE_OBJECT', {
+                    id: this.userData.id,
+                    position: worldPos,
+                    rotation: this.rotation,
+                    scale: this.scale,
+                });
+            });
 
             this.onMove();
+        } else {
+            this.placeOnFloor();
         }
     }
 }

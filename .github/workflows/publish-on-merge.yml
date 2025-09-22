@@ -129,6 +129,7 @@ jobs:
                   commit-message: 'Automated Version Bump [skip ci]'
                   skip-push: 'true'
                   skip-tag: 'true'
+                  version-type: 'patch'
 
             - name: Push to protected branch trunk
               uses: CasperWA/push-protected@v2

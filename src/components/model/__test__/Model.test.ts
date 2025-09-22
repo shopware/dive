@@ -10,7 +10,8 @@ import {
     type Texture,
     Object3D,
 } from 'three';
-import { type MaterialSchema } from '@shopware-ag/dive';
+import { DIVENode } from '../../node/Node.ts';
+import { type MaterialSchema } from '../../../types/schema/MaterialSchema.ts';
 
 vi.mock('@shopware-ag/dive/state', () => ({
     State: {
@@ -57,9 +58,14 @@ describe('dive/model/DIVEModel', () => {
         model.userData.id = 'something';
         model.position.set(0, 4, 0);
 
-        vi.spyOn(model['_mesh']!, 'localToWorld').mockReturnValueOnce(
-            new Vector3(0, 2, 0),
-        );
+        (Box3 as any).mockImplementationOnce(function (this: any) {
+            this.min = new Vector3(0, -2, 0);
+            (this.max = new Vector3(0, 2, 0)),
+                (this.getCenter = vi.fn(() => new Vector3()));
+            this.expandByObject = vi.fn(() => this);
+            this.setFromObject = vi.fn(() => this);
+            return this;
+        });
 
         const scene = {
             parent: null,
@@ -72,16 +78,23 @@ describe('dive/model/DIVEModel', () => {
         scene.root.parent = scene;
         model.parent = scene.root;
 
+        vi.spyOn(DIVENode.prototype, 'setPosition').mockImplementationOnce(
+            () => {},
+        );
+        const onMoveSpy = vi
+            .spyOn(model, 'onMove')
+            .mockImplementation(() => {});
         model.placeOnFloor();
         await new Promise(setImmediate);
         expect(spyperformAction).toHaveBeenCalledWith(
             'UPDATE_OBJECT',
             expect.objectContaining({
                 position: expect.objectContaining({
-                    y: 2,
+                    y: 6,
                 }),
             }),
         );
+        expect(onMoveSpy).toHaveBeenCalledTimes(1);
     });
 
     it('should drop it', async () => {
@@ -89,7 +102,9 @@ describe('dive/model/DIVEModel', () => {
             ({ State }) => State,
         );
 
-        const spy = vi.spyOn(model, 'onMove').mockImplementation(() => {});
+        const spyOnMove = vi
+            .spyOn(model, 'onMove')
+            .mockImplementation(() => {});
 
         const size = {
             x: 1,
@@ -98,23 +113,42 @@ describe('dive/model/DIVEModel', () => {
         };
 
         model.userData.id = 'something';
-        model.position.set(0, 4, 0);
-        model['_boundingBox'] = {
-            min: new Vector3(-size.x / 2, -size.y / 2, -size.z / 2),
-            max: new Vector3(size.x / 2, size.y / 2, size.z / 2),
-            getCenter: vi.fn(() => {
-                return new Vector3(0, 0, 0);
-            }),
-        } as unknown as Box3;
+        model.setFromGLTF(object);
+        model.position.set(0, 6, 0);
 
         const hitObject = new Mesh();
-        hitObject.geometry.boundingBox = new Box3();
-        hitObject.geometry.boundingBox.max = new Vector3(0, 2, 0);
         RaycasterIntersectObjectMock.mockReturnValue([
             {
                 object: hitObject,
             },
         ]);
+
+        // prepare Box3 mocks AFTER mesh construction (mesh constructor creates its own Box3)
+        (Box3 as any)
+            .mockImplementationOnce(function (this: any) {
+                (this.min = new Vector3(
+                    -size.x / 2,
+                    -size.y / 2,
+                    -size.z / 2,
+                )).add(model.position);
+                (this.max = new Vector3(
+                    size.x / 2,
+                    size.y / 2,
+                    size.z / 2,
+                )).add(model.position);
+                this.getCenter = vi.fn(() => new Vector3());
+                this.expandByObject = vi.fn(() => this);
+                this.setFromObject = vi.fn(() => this);
+                return this;
+            })
+            .mockImplementationOnce(function (this: any) {
+                this.min = new Vector3(0, 0, 0);
+                this.max = new Vector3(0, 2, 0);
+                this.getCenter = vi.fn(() => new Vector3());
+                this.expandByObject = vi.fn(() => this);
+                this.setFromObject = vi.fn(() => this);
+                return this;
+            });
 
         const scene = {
             parent: null,
@@ -125,6 +159,8 @@ describe('dive/model/DIVEModel', () => {
             },
         } as unknown as DIVEScene;
         scene.root.parent = scene;
+        // ensure worldToLocal exists and is identity so setPosition works
+        (scene.root as any).worldToLocal = (v: Vector3) => v;
 
         // test when parent is not set
         console.warn = vi.fn();
@@ -133,18 +169,83 @@ describe('dive/model/DIVEModel', () => {
 
         model.parent = scene.root;
 
+        // first drop with movement
+        const com = State.get('id')!;
+        const spyPerform = vi.spyOn(com, 'performAction');
         expect(() => model.dropIt()).not.toThrow();
-        expect(model.position.y).toBe(2.5);
-        expect(spy).toHaveBeenCalledTimes(1);
+        await new Promise(setImmediate);
+        expect(spyPerform).toHaveBeenCalledWith(
+            'UPDATE_OBJECT',
+            expect.objectContaining({
+                position: expect.objectContaining({ y: 2.5 }),
+            }),
+        );
+        expect(spyOnMove).toHaveBeenCalledTimes(1);
 
+        // second drop with zero delta -> no move
+        (Box3 as any)
+            .mockImplementationOnce(function (this: any) {
+                // use updated position (2.5) to compute model box
+                const size = { x: 1, y: 1, z: 1 };
+                (this.min = new Vector3(
+                    -size.x / 2,
+                    -size.y / 2,
+                    -size.z / 2,
+                )).add(model.position);
+                (this.max = new Vector3(
+                    size.x / 2,
+                    size.y / 2,
+                    size.z / 2,
+                )).add(model.position);
+                this.getCenter = vi.fn(() => new Vector3());
+                this.expandByObject = vi.fn(() => this);
+                this.setFromObject = vi.fn(() => this);
+                return this;
+            })
+            .mockImplementationOnce(function (this: any) {
+                // target box with top exactly at current model bottom -> delta 0
+                this.min = new Vector3(0, 0, 0);
+                this.max = new Vector3(0, model.position.y - 0.5, 0);
+                this.getCenter = vi.fn(() => new Vector3());
+                this.expandByObject = vi.fn(() => this);
+                this.setFromObject = vi.fn(() => this);
+                return this;
+            });
         expect(() => model.dropIt()).not.toThrow();
-        expect(spy).toHaveBeenCalledTimes(1);
+        expect(spyOnMove).toHaveBeenCalledTimes(1);
 
         // alter position so onMove will be called again
         model.position.y = 2;
-        vi.spyOn(State, 'get').mockReturnValueOnce(undefined);
+        // mock boxes for third drop with positive delta -> move again
+        (Box3 as any)
+            .mockImplementationOnce(function (this: any) {
+                const size = { x: 1, y: 1, z: 1 };
+                (this.min = new Vector3(
+                    -size.x / 2,
+                    -size.y / 2,
+                    -size.z / 2,
+                )).add(model.position);
+                (this.max = new Vector3(
+                    size.x / 2,
+                    size.y / 2,
+                    size.z / 2,
+                )).add(model.position);
+                this.getCenter = vi.fn(() => new Vector3());
+                this.expandByObject = vi.fn(() => this);
+                this.setFromObject = vi.fn(() => this);
+                return this;
+            })
+            .mockImplementationOnce(function (this: any) {
+                this.min = new Vector3(0, 0, 0);
+                this.max = new Vector3(0, 2, 0);
+                this.getCenter = vi.fn(() => new Vector3());
+                this.expandByObject = vi.fn(() => this);
+                this.setFromObject = vi.fn(() => this);
+                return this;
+            });
+        vi.spyOn(State, 'get').mockReturnValueOnce(undefined as any);
         expect(() => model.dropIt()).not.toThrow();
-        expect(spy).toHaveBeenCalledTimes(2);
+        expect(spyOnMove).toHaveBeenCalledTimes(2);
     });
 
     it('should set material', () => {
@@ -225,16 +326,24 @@ describe('dive/model/DIVEModel', () => {
         model.setFromGLTF(object);
         model.userData.id = 'something';
 
-        // Mock localToWorld to return same Y value as current position
-        vi.spyOn(model['_mesh']!, 'localToWorld').mockReturnValueOnce(
-            new Vector3(0, model.position.y, 0),
-        );
+        // Make Box3 report min.y = 0 so delta = 0 -> no change
+        (Box3 as any).mockImplementationOnce(function (this: any) {
+            this.min = new Vector3(0, 0, 0);
+            this.max = new Vector3(0, 0, 0);
+            this.getCenter = vi.fn(() => new Vector3());
+            this.expandByObject = vi.fn(() => this);
+            return this;
+        });
 
         const com = State.get('id')!;
         const spyperformAction = vi.spyOn(com, 'performAction');
+        const onMoveSpy = vi
+            .spyOn(model, 'onMove')
+            .mockImplementation(() => {});
 
         model.placeOnFloor();
         expect(spyperformAction).not.toHaveBeenCalled();
+        expect(onMoveSpy).not.toHaveBeenCalled();
     });
 
     it('should handle setMaterial with null material and mesh', () => {
