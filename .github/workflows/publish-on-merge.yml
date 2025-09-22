@@ -108,9 +108,6 @@ jobs:
             - name: 'Add tag'
               run: git tag -a $(node -p "require('./package.json').version") -m "DIVE Release Version $(node -p "require('./package.json').version")"
 
-            - name: 'Push tag'
-              run: git push origin tag $(node -p "require('./package.json').version")
-
             - name: Publish DIVE to npm
               uses: JS-DevTools/npm-publish@v3
               with:
