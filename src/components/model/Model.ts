@@ -1,6 +1,5 @@
 import {
     Box3,
-    Box3Helper,
     Mesh,
     MeshStandardMaterial,
     Object3D,
@@ -168,10 +167,8 @@ export class DIVEModel extends DIVENode {
         const box = new Box3();
         this.children.forEach((child) => {
             if (child instanceof BoundingBox) return;
-            console.log(child);
             box.expandByObject(child, true);
         });
-        findSceneRecursive(this).root.add(new Box3Helper(box, 0x00ff00));
         const delta = -box.min.y;
 
         // skip any action when delta is too small
