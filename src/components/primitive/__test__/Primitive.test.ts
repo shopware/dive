@@ -8,12 +8,10 @@ import {
 } from 'three';
 import { RaycasterIntersectObjectMock } from '../../../../__mocks__/three.ts';
 import { type State } from '@shopware-ag/dive/state';
-import {
-    type DIVEScene,
-    type GeometryTypeSchema,
-    type GeometrySchema,
-    type MaterialSchema,
-} from '@shopware-ag/dive';
+import { DIVEScene } from 'src/engine/scene/Scene.ts';
+import { GeometrySchema } from 'src/types/schema/GeometrySchema.ts';
+import { MaterialSchema } from 'src/types/schema/MaterialSchema.ts';
+import { GeometryTypeSchema } from 'src/types/schema/GeometryTypeSchema.ts';
 
 vi.mock('@shopware-ag/dive/state', () => ({
     State: {
@@ -74,7 +72,7 @@ describe('dive/primitive/DIVEPrimitive', () => {
             this.min = new Vector3(0, -2, 0);
             this.max = new Vector3(0, 2, 0);
             this.getCenter = vi.fn(() => new Vector3());
-            this.setFromObject = vi.fn(() => this);
+            this.expandByObject = vi.fn(() => this);
             return this;
         });
 
@@ -140,13 +138,14 @@ describe('dive/primitive/DIVEPrimitive', () => {
                     size.z / 2,
                 )).add(primitive.position);
                 this.getCenter = vi.fn(() => new Vector3());
-                this.setFromObject = vi.fn(() => this);
+                this.expandByObject = vi.fn(() => this);
                 return this;
             })
             .mockImplementationOnce(function (this: any) {
                 this.min = new Vector3(0, 0, 0);
                 this.max = new Vector3(0, 2, 0);
                 this.getCenter = vi.fn(() => new Vector3());
+                this.expandByObject = vi.fn(() => this);
                 this.setFromObject = vi.fn(() => this);
                 return this;
             });
@@ -191,6 +190,7 @@ describe('dive/primitive/DIVEPrimitive', () => {
                     size.z / 2,
                 )).add(primitive.position);
                 this.getCenter = vi.fn(() => new Vector3());
+                this.expandByObject = vi.fn(() => this);
                 this.setFromObject = vi.fn(() => this);
                 return this;
             })
@@ -198,6 +198,7 @@ describe('dive/primitive/DIVEPrimitive', () => {
                 this.min = new Vector3(0, 0, 0);
                 this.max = new Vector3(0, primitive.position.y - 0.5, 0);
                 this.getCenter = vi.fn(() => new Vector3());
+                this.expandByObject = vi.fn(() => this);
                 this.setFromObject = vi.fn(() => this);
                 return this;
             });
@@ -220,6 +221,7 @@ describe('dive/primitive/DIVEPrimitive', () => {
                     size.z / 2,
                 )).add(primitive.position);
                 this.getCenter = vi.fn(() => new Vector3());
+                this.expandByObject = vi.fn(() => this);
                 this.setFromObject = vi.fn(() => this);
                 return this;
             })
@@ -227,6 +229,7 @@ describe('dive/primitive/DIVEPrimitive', () => {
                 this.min = new Vector3(0, 0, 0);
                 this.max = new Vector3(0, 2, 0);
                 this.getCenter = vi.fn(() => new Vector3());
+                this.expandByObject = vi.fn(() => this);
                 this.setFromObject = vi.fn(() => this);
                 return this;
             });
@@ -370,7 +373,7 @@ describe('dive/primitive/DIVEPrimitive', () => {
             this.min = new Vector3(0, 0, 0);
             this.max = new Vector3(0, 0, 0);
             this.getCenter = vi.fn(() => new Vector3());
-            this.setFromObject = vi.fn(() => this);
+            this.expandByObject = vi.fn(() => this);
             return this;
         });
 

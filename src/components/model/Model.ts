@@ -8,8 +8,9 @@ import {
 } from 'three';
 import { PRODUCT_LAYER_MASK } from '../../constants/VisibilityLayerMask.ts';
 import { findSceneRecursive } from '../../helpers/findSceneRecursive/findSceneRecursive.ts';
-import { BoundingBox, type MaterialSchema } from '@shopware-ag/dive';
 import { DIVENode } from '../node/Node.ts';
+import { MaterialSchema } from 'src/types/index.ts';
+import { BoundingBox } from '../boundingbox/BoundingBox.ts';
 
 /**
  * A basic model class.

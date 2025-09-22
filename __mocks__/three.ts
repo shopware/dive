@@ -693,15 +693,24 @@ export const PointLight = vi.fn(function (this: any) {
 export const PlaneGeometry = vi.fn(function (this: any) {
     this.scale = vi.fn();
     this.rotateX = vi.fn();
+    this.computeVertexNormals = vi.fn();
+    this.computeBoundingBox = vi.fn();
+    this.computeBoundingSphere = vi.fn();
     return this;
 });
 
 export const SphereGeometry = vi.fn(function (this: any) {
     this.translate = vi.fn();
+    this.computeVertexNormals = vi.fn();
+    this.computeBoundingBox = vi.fn();
+    this.computeBoundingSphere = vi.fn();
     return this;
 });
 
 export const TorusGeometry = vi.fn(function (this: any) {
+    this.computeVertexNormals = vi.fn();
+    this.computeBoundingBox = vi.fn();
+    this.computeBoundingSphere = vi.fn();
     return this;
 });
 
@@ -771,17 +780,26 @@ export const BufferAttribute = vi.fn(function (this: any) {
 
 export const CylinderGeometry = vi.fn(function (this: any) {
     this.translate = vi.fn();
+    this.computeVertexNormals = vi.fn();
+    this.computeBoundingBox = vi.fn();
+    this.computeBoundingSphere = vi.fn();
     return this;
 });
 
 export const BoxGeometry = vi.fn(function (this: any) {
     this.translate = vi.fn();
+    this.computeVertexNormals = vi.fn();
+    this.computeBoundingBox = vi.fn();
+    this.computeBoundingSphere = vi.fn();
     return this;
 });
 
 export const ConeGeometry = vi.fn(function (this: any) {
     this.rotateY = vi.fn();
     this.translate = vi.fn();
+    this.computeVertexNormals = vi.fn();
+    this.computeBoundingBox = vi.fn();
+    this.computeBoundingSphere = vi.fn();
     return this;
 });
 
