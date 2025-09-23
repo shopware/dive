@@ -110,7 +110,8 @@ jobs:
                   git config user.name "octo-sts bot"
                   git config user.email "octo-sts@example"
                   git remote set-url origin \
-                  https://x-access-token:${{ steps.sts.outputs.token }}@github.com/shopware/dive.git
+                    https://x-access-token:${{ steps.sts.outputs.token }}@github.com/shopware/dive.git
+                  git remote -v
 
             - name: 'Print git remote'
               run: git remote -v
