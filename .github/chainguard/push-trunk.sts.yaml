@@ -1,5 +1,5 @@
 issuer: https://token.actions.githubusercontent.com
-subject: repo:shopware/dive:.*
+subject_pattern: repo:shopware/dive:.*
 
 permissions:
     contents: write
