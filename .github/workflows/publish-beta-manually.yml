@@ -139,6 +139,8 @@ jobs:
             - name: 'Add tag'
               run: git tag -a ${{ env.next_beta }} -m "DIVE Beta Version ${{ env.next_beta }}"
 
+            - name: 'Print git remote'
+              run: git remote -v
             - name: 'Push tag'
               run: git push origin tag ${{ env.next_beta }}"
 
