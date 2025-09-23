@@ -3,7 +3,7 @@
  */
 
 import { vi } from 'vitest';
-import { DIVE } from '@shopware-ag/dive';
+import { DIVE, DIVEModel } from '@shopware-ag/dive';
 import { QuickView } from '../QuickView.ts';
 
 vi.mock('@shopware-ag/dive', () => {
@@ -41,10 +41,10 @@ vi.mock('@shopware-ag/dive', () => {
             displayFloor: false,
             lightIntensity: 1,
         },
-        DIVEModel: vi.fn(() => {
-            return {
-                setFromURL: vi.fn(),
-            };
+        DIVEModel: vi.fn(function (this: DIVEModel) {
+            this.placeOnFloor = vi.fn();
+            this.setFromURL = vi.fn(async () => this);
+            return this;
         }),
         DIVESceneLight: vi.fn(() => {
             return {

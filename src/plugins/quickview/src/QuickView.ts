@@ -35,6 +35,7 @@ export const QuickView = async (
     // instantiate model
     const model = await new DIVEModel().setFromURL(uri);
     dive.scene.root.add(model);
+    model.placeOnFloor();
 
     const orbitController = new OrbitController(
         dive.mainView.camera,
