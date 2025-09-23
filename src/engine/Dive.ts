@@ -188,12 +188,14 @@ export class DIVE {
         stop: () => void;
         dispose: () => void;
     } {
-        return Object.assign(this, {
+        return {
+            scene: this.scene,
             camera: this.mainView.camera,
             renderer: this.mainView.renderer,
             setCanvas: (canvas: HTMLCanvasElement) => {
                 this.mainView.setCanvas(canvas);
             },
+            clock: this.clock,
             start: () => {
                 this.start();
             },
@@ -203,7 +205,7 @@ export class DIVE {
             dispose: () => {
                 this.dispose();
             },
-        });
+        };
     }
 
     public get views(): DIVEView[] {
