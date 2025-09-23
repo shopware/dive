@@ -97,16 +97,21 @@ jobs:
               if: steps.yarn-cache.outputs.cache-hit != 'true'
               run: yarn
 
+            - name: Get short-lived token
+              uses: octo-sts/action@6177b4481c00308b3839969c3eca88c96a91775f
+              id: sts
+              with:
+                  scope: shopware/dive
+                  identity: push-trunk # matches push-trunk.sts.yaml
             - name: Register git user
               run: |
-                  git config user.name "GitHub Actions"
-                  git config user.email "actions@github.com"
+                  git config user.name "octo-sts bot"
+                  git config user.email "octo-sts@example"
+                  git remote set-url origin \
+                  https://x-access-token:${{ steps.sts.outputs.token }}@github.com/shopware/dive.git
 
             - name: Build DIVE
               run: yarn build
-
-            - name: 'Add tag'
-              run: git tag -a $(node -p "require('./package.json').version") -m "DIVE Release Version $(node -p "require('./package.json').version")"
 
             - name: Publish DIVE to npm
               uses: JS-DevTools/npm-publish@v3
@@ -114,6 +119,9 @@ jobs:
                   token: ${{ secrets.NPM_TOKEN }}
                   access: 'public'
                   dry-run: false
+
+            - name: 'Add tag'
+              run: git tag -a $(node -p "require('./package.json').version") -m "DIVE Release Version $(node -p "require('./package.json').version")"
 
             - name: 'Automated Version Bump'
               uses: 'phips28/gh-action-bump-version@master'
@@ -128,11 +136,5 @@ jobs:
                   skip-tag: 'true'
                   version-type: 'patch'
 
-            - name: Push to protected branch trunk
-              uses: CasperWA/push-protected@v2
-              with:
-                  token: ${{ secrets.PUSH_TO_PROTECTED_BRANCH }}
-                  branch: trunk
-                  unprotect_reviews: true
-                  tags: true
-                  force: true
+            - name: 'Push version bump'
+              run: git push origin trunk --tags
