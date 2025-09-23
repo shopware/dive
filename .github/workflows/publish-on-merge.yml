@@ -112,6 +112,9 @@ jobs:
                   git remote set-url origin \
                   https://x-access-token:${{ steps.sts.outputs.token }}@github.com/shopware/dive.git
 
+            - name: 'Print git remote'
+              run: git remote -v
+
             - name: Build DIVE
               run: yarn build
 
