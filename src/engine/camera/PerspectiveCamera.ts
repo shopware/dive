@@ -18,7 +18,7 @@ export type DIVEPerspectiveCameraSettings = {
 export const DIVEPerspectiveCameraDefaultSettings: Required<DIVEPerspectiveCameraSettings> =
     {
         fov: 70,
-        near: 0.1,
+        near: 0.001,
         far: 1000,
     };
 
