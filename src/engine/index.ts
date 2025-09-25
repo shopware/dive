@@ -5,3 +5,4 @@ export * from './renderer/Renderer.ts';
 export * from './resize/ResizeManager.ts';
 export * from './scene/Scene.ts';
 export * from './view/View.ts';
+export * from './environment/ImageBasedEnvironment.ts';
