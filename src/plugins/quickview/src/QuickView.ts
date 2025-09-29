@@ -31,7 +31,7 @@ export type QuickView = DIVE & {
  *
  * @param uri - The URI of the 3D model to display in QuickView
  * @param settings - The settings for the QuickView
- * @returns The DIVE instance with the orbit controller - { ...DIVE, orbitController: OrbitController }
+ * @returns The DIVE instance with the orbit controller and hdr environment - { ...DIVE, orbitController: OrbitController, hdr: HDREnvironment }
  */
 export const QuickView = async (
     uri: string,
@@ -62,9 +62,6 @@ export const QuickView = async (
         dive.scene,
         settings?.hdr ?? QuickViewDefaultSettings.hdr,
     );
-    if (!settings?.hdr?.imageUrl) {
-        hdr.setImageUrl('');
-    }
 
-    return Object.assign(dive, { orbitController, hdr: hdr });
+    return Object.assign(dive, { orbitController, hdr });
 };
