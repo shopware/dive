@@ -64,6 +64,16 @@ export type HDREnvironmentOptions = {
     replaceLights?: boolean;
 };
 
+export const HDREnvironmentDefaultOptions: HDREnvironmentOptions = {
+    enabled: false,
+    imageUrl: undefined,
+    useAsBackground: true,
+    globalEnvIntensity: 1,
+    exposure: 1,
+    rotateY: 0,
+    replaceLights: false,
+};
+
 /**
  * Manages an image-based lighting setup with optional Y-rotation.
  *
