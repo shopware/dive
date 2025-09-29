@@ -113,6 +113,7 @@ export class HDREnvironment {
 
     public async setImageUrl(url: string): Promise<void> {
         this.options.imageUrl = url;
+        this.sourceImage = null;
         if (this.options.enabled) {
             await this.enable();
         }
