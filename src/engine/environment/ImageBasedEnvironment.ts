@@ -19,13 +19,48 @@ import {
 } from 'three';
 import { RGBELoader } from 'three/examples/jsm/loaders/RGBELoader.js';
 
-export type IBLEnvironmentOptions = {
+export type HDREnvironmentOptions = {
+    /**
+     * Whether to enable the image-based lighting.
+     *
+     * @default false
+     */
     enabled?: boolean;
-    hdrUrl?: string;
+    /**
+     * The URL of the HDR image.
+     *
+     * @default undefined
+     */
+    imageUrl?: string;
+    /**
+     * Whether to use the HDR image as a background.
+     *
+     * @default false
+     */
     useAsBackground?: boolean;
+    /**
+     * The intensity of the environment lighting.
+     *
+     * @default 1
+     */
     globalEnvIntensity?: number;
+    /**
+     * The exposure of the HDR image.
+     *
+     * @default 1
+     */
     exposure?: number;
-    rotateY?: number; // radians
+    /**
+     * The rotation of the HDR image in radians.
+     *
+     * @default 0
+     */
+    rotateY?: number;
+    /**
+     * Whether to replace the existing lights (can be restored via `restoreLights`).
+     *
+     * @default false
+     */
     replaceLights?: boolean;
 };
 
@@ -36,28 +71,30 @@ export type IBLEnvironmentOptions = {
  * rotated around Y, capturing it into a cubemap with CubeCamera, and then
  * generating a PMREM for scene.environment.
  */
-export class ImageBasedEnvironment {
+export class HDREnvironment {
     private renderer: WebGLRenderer;
     private scene: Scene;
     private pmrem: PMREMGenerator;
     private currentEnvRT: WebGLRenderTarget | null = null;
     private currentBackgroundCube: WebGLCubeRenderTarget | null = null;
-    private sourceHDR: Promise<Texture> | null = null;
+    private sourceImage: Promise<Texture> | null = null;
     private originalLights: { visible: boolean }[] = [];
-    private options: IBLEnvironmentOptions;
+    private options: HDREnvironmentOptions;
 
     constructor(
         renderer: WebGLRenderer,
         scene: Scene,
-        options: IBLEnvironmentOptions = {},
+        options: HDREnvironmentOptions = {},
     ) {
         this.renderer = renderer;
         this.scene = scene;
         this.pmrem = new PMREMGenerator(renderer);
         this.options = options;
 
-        if (this.options.hdrUrl) {
-            this.sourceHDR = new RGBELoader().loadAsync(this.options.hdrUrl);
+        if (this.options.imageUrl) {
+            this.sourceImage = new RGBELoader().loadAsync(
+                this.options.imageUrl,
+            );
         }
 
         if (this.options.enabled) {
@@ -65,33 +102,35 @@ export class ImageBasedEnvironment {
         }
     }
 
-    public async enable(opts?: Partial<IBLEnvironmentOptions>): Promise<void> {
+    public async enable(opts?: Partial<HDREnvironmentOptions>): Promise<void> {
         this.options = { ...this.options, enabled: true, ...opts };
-        if (!this.options.hdrUrl) return;
+        if (!this.options.imageUrl) return;
 
         this.renderer.outputColorSpace = SRGBColorSpace;
         this.renderer.toneMapping = ACESFilmicToneMapping;
         if (this.options.exposure != null)
             this.renderer.toneMappingExposure = this.options.exposure;
 
-        if (!this.sourceHDR) {
-            this.sourceHDR = new RGBELoader().loadAsync(this.options.hdrUrl);
+        if (!this.sourceImage) {
+            this.sourceImage = new RGBELoader().loadAsync(
+                this.options.imageUrl,
+            );
         }
 
-        const hdr = await this.sourceHDR;
+        const image = await this.sourceImage;
         // apply mapping for visual background
-        hdr.mapping = EquirectangularReflectionMapping;
+        image.mapping = EquirectangularReflectionMapping;
 
         // Prepare background if requested (unfiltered for visuals only)
         if (this.options.useAsBackground) {
-            this.scene.background = hdr;
+            this.scene.background = image;
         }
 
         if (this.options.rotateY) {
             await this.applyRotationAndSetEnvironment(this.options.rotateY);
         } else {
             // Create PMREM directly from the equirectangular source for environment lighting
-            const pmremRT = this.pmrem.fromEquirectangular(hdr);
+            const pmremRT = this.pmrem.fromEquirectangular(image);
             this.cleanupEnv();
             this.currentEnvRT = pmremRT;
             this.scene.environment = pmremRT.texture;
@@ -106,8 +145,8 @@ export class ImageBasedEnvironment {
         if (this.options.replaceLights) this.disableExistingLights();
     }
 
-    public async setHDR(url: string): Promise<void> {
-        this.options.hdrUrl = url;
+    public async setImageUrl(url: string): Promise<void> {
+        this.options.imageUrl = url;
         if (this.options.enabled) {
             await this.enable();
         }
@@ -115,7 +154,7 @@ export class ImageBasedEnvironment {
 
     public async setRotationY(radians: number): Promise<void> {
         this.options.rotateY = radians;
-        if (!this.sourceHDR) return;
+        if (!this.sourceImage) return;
         await this.applyRotationAndSetEnvironment(radians);
     }
 
@@ -139,26 +178,26 @@ export class ImageBasedEnvironment {
     public async dispose(): Promise<void> {
         this.disable();
         this.pmrem.dispose();
-        if (this.sourceHDR) {
-            (await this.sourceHDR).dispose();
-            this.sourceHDR = null;
+        if (this.sourceImage) {
+            (await this.sourceImage).dispose();
+            this.sourceImage = null;
         }
     }
 
     private async applyRotationAndSetEnvironment(
         rotateY: number,
     ): Promise<void> {
-        if (!this.sourceHDR) return;
+        if (!this.sourceImage) return;
 
-        const hdr = await this.sourceHDR;
+        const image = await this.sourceImage;
 
         // Build an offscreen sky scene to render the equirect HDR with rotation
         const skyScene = new Scene();
 
         // Use a large inward-facing sphere with equirectangular mapping for correct UVs
         const skyGeo = new SphereGeometry(10, 60, 40);
-        hdr.mapping = EquirectangularReflectionMapping;
-        const skyMat = new MeshBasicMaterial({ map: hdr, side: BackSide });
+        image.mapping = EquirectangularReflectionMapping;
+        const skyMat = new MeshBasicMaterial({ map: image, side: BackSide });
         const skyMesh = new Mesh(skyGeo, skyMat);
         skyMesh.scale.set(1, 1, -1);
         skyMesh.rotation.y = rotateY;

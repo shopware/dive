@@ -1,6 +1,9 @@
-import { DIVESettings, type IBLEnvironmentOptions } from '@shopware-ag/dive';
+import { DIVESettings, type HDREnvironmentOptions } from '@shopware-ag/dive';
 
 export type QuickViewSettings = DIVESettings & {
     lightIntensity: number;
-    hdr: IBLEnvironmentOptions;
+    /**
+     * HDR settings.
+     */
+    hdr: HDREnvironmentOptions;
 };
