@@ -14,6 +14,7 @@ vi.mock('../../renderer/Renderer', () => {
                         height: 100,
                     }),
                 },
+                render: vi.fn(),
                 onResize: vi.fn(),
             };
         }),
@@ -101,8 +102,9 @@ describe('DIVEResizeManager', () => {
         const height = 600;
         callback([{ contentRect: { width, height } }]);
 
-        expect(renderer.onResize).toHaveBeenCalledWith(width, height);
         expect(camera.onResize).toHaveBeenCalledWith(width, height);
+        expect(renderer.onResize).toHaveBeenCalledWith(width, height);
+        expect(renderer.render).toHaveBeenCalled();
     });
 
     it('should not trigger resize if dimensions are the same', () => {
@@ -118,8 +120,9 @@ describe('DIVEResizeManager', () => {
         // Second call with same dimensions
         callback([{ contentRect: { width, height } }]);
 
-        expect(renderer.onResize).toHaveBeenCalledTimes(1);
         expect(camera.onResize).toHaveBeenCalledTimes(1);
+        expect(renderer.onResize).toHaveBeenCalledTimes(1);
+        expect(renderer.render).toHaveBeenCalledTimes(1);
     });
 
     it('should dispose by disconnecting observer', () => {
