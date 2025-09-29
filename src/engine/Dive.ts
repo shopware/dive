@@ -130,16 +130,15 @@ export class DIVE {
         this._clock = new DIVEClock();
 
         // set up scene
-        this._scene = new DIVEScene();
-        this.scene.setBackground(
-            settings?.backgroundColor ?? DIVEDefaultSettings.backgroundColor,
-        );
-        this.scene.grid.setVisibility(
-            settings?.displayGrid ?? DIVEDefaultSettings.displayGrid,
-        );
-        this.scene.root.floor.setVisibility(
-            settings?.displayFloor ?? DIVEDefaultSettings.displayFloor,
-        );
+        this._scene = new DIVEScene({
+            backgroundColor:
+                settings?.backgroundColor ??
+                DIVEDefaultSettings.backgroundColor,
+            displayGrid:
+                settings?.displayGrid ?? DIVEDefaultSettings.displayGrid,
+            displayFloor:
+                settings?.displayFloor ?? DIVEDefaultSettings.displayFloor,
+        });
 
         // set up main view
         const mainView = new DIVEView(

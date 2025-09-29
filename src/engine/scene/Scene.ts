@@ -46,7 +46,7 @@ export class DIVEScene extends Scene {
     constructor(settings?: Partial<DIVESceneSettings>) {
         super();
 
-        this.background = new Color(
+        this.setBackground(
             settings?.backgroundColor ??
                 DIVESceneDefaultSettings.backgroundColor,
         );
@@ -72,8 +72,8 @@ export class DIVEScene extends Scene {
         return this._grid;
     }
 
-    public setBackground(color: ColorRepresentation): void {
-        this.background = new Color(color);
+    public setBackground(value: ColorRepresentation): void {
+        this.background = new Color(value as ColorRepresentation);
     }
 
     public computeSceneBB(): Box3 {
