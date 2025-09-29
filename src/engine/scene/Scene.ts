@@ -16,7 +16,7 @@ export type DIVESceneSettings = {
      */
     displayGrid: boolean;
     /**
-     * Whether to add a grid to the scene.
+     * The background color of the scene.
      *
      * @default #ffffff
      */
