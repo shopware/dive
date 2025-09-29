@@ -52,6 +52,7 @@ const mockScene = {
     grid: {
         setVisibility: vi.fn(),
     },
+    setBackground: vi.fn(),
 };
 
 // Mock the dependencies
