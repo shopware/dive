@@ -547,6 +547,62 @@ export const WebGLRenderer = vi.fn(function (this: any) {
     return this;
 });
 
+// Minimal Texture mock compatible with HDR loader workflow
+export const Texture = vi.fn(function (this: any) {
+    this.mapping = undefined;
+    this.dispose = vi.fn();
+    return this;
+});
+
+// Constants used in HDREnvironment
+export const EquirectangularReflectionMapping = 300; // arbitrary token
+export const SRGBColorSpace = 'srgb';
+export const LinearSRGBColorSpace = 'linear-srgb';
+export const ACESFilmicToneMapping = 'aces';
+export const NoToneMapping = 'none';
+export const HalfFloatType = 'half-float';
+export const BackSide = 'back-side';
+
+// PMREM generator with minimal API
+export const PMREMGenerator = vi.fn(function (this: any) {
+    this.fromEquirectangular = vi.fn(() => {
+        return {
+            texture: { dispose: vi.fn() },
+            dispose: vi.fn(),
+        };
+    });
+    this.fromCubemap = vi.fn((_cubeTex: any) => {
+        return {
+            texture: { dispose: vi.fn() },
+            dispose: vi.fn(),
+        };
+    });
+    this.dispose = vi.fn();
+    return this;
+});
+
+// Cube render target and camera used for rotated capture path
+export const WebGLCubeRenderTarget = vi.fn(function (this: any) {
+    this.texture = {
+        dispose: vi.fn(),
+    };
+    this.dispose = vi.fn();
+    return this;
+});
+
+export const WebGLRenderTarget = vi.fn(function (this: any) {
+    this.texture = {
+        dispose: vi.fn(),
+    };
+    this.dispose = vi.fn();
+    return this;
+});
+
+export const CubeCamera = vi.fn(function (this: any) {
+    this.update = vi.fn();
+    return this;
+});
+
 export const MathUtils = {
     ...THREEMathUtils,
     generateUUID: (): string => {

@@ -17,6 +17,9 @@ vi.mock('@shopware-ag/dive', () => {
                             set: vi.fn(),
                         },
                     },
+                    renderer: {
+                        webglrenderer: vi.fn(),
+                    },
                 },
                 scene: {
                     setBackground: vi.fn(),
@@ -61,6 +64,22 @@ vi.mock('@shopware-ag/dive/orbitcontroller', () => {
                 focusObject: vi.fn(),
             };
         }),
+    };
+});
+
+vi.mock('@shopware-ag/dive/hdr', () => {
+    return {
+        HDREnvironment: vi.fn(() => {
+            return {
+                enable: vi.fn(),
+            };
+        }),
+        HDREnvironmentDefaultSettings: {
+            enabled: false,
+            imageUrl: '',
+            useAsBackground: false,
+            replaceLights: false,
+        },
     };
 });
 
