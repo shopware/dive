@@ -1,6 +1,5 @@
 import {
     ACESFilmicToneMapping,
-    BoxGeometry,
     CubeCamera,
     EquirectangularReflectionMapping,
     Mesh,
@@ -12,6 +11,11 @@ import {
     WebGLCubeRenderTarget,
     WebGLRenderTarget,
     WebGLRenderer,
+    BackSide,
+    SphereGeometry,
+    NoToneMapping,
+    LinearSRGBColorSpace,
+    HalfFloatType,
 } from 'three';
 import { RGBELoader } from 'three/examples/jsm/loaders/RGBELoader.js';
 
@@ -37,7 +41,8 @@ export class ImageBasedEnvironment {
     private scene: Scene;
     private pmrem: PMREMGenerator;
     private currentEnvRT: WebGLRenderTarget | null = null;
-    private sourceHDR: Texture | null = null;
+    private currentBackgroundCube: WebGLCubeRenderTarget | null = null;
+    private sourceHDR: Promise<Texture> | null = null;
     private originalLights: { visible: boolean }[] = [];
     private options: IBLEnvironmentOptions;
 
@@ -50,6 +55,14 @@ export class ImageBasedEnvironment {
         this.scene = scene;
         this.pmrem = new PMREMGenerator(renderer);
         this.options = options;
+
+        if (this.options.hdrUrl) {
+            this.sourceHDR = new RGBELoader().loadAsync(this.options.hdrUrl);
+        }
+
+        if (this.options.enabled) {
+            this.enable();
+        }
     }
 
     public async enable(opts?: Partial<IBLEnvironmentOptions>): Promise<void> {
@@ -61,16 +74,34 @@ export class ImageBasedEnvironment {
         if (this.options.exposure != null)
             this.renderer.toneMappingExposure = this.options.exposure;
 
-        const hdr = await new RGBELoader().loadAsync(this.options.hdrUrl);
-        this.sourceHDR = hdr;
+        if (!this.sourceHDR) {
+            this.sourceHDR = new RGBELoader().loadAsync(this.options.hdrUrl);
+        }
+
+        const hdr = await this.sourceHDR;
+        // apply mapping for visual background
+        hdr.mapping = EquirectangularReflectionMapping;
 
         // Prepare background if requested (unfiltered for visuals only)
         if (this.options.useAsBackground) {
-            hdr.mapping = EquirectangularReflectionMapping;
             this.scene.background = hdr;
         }
 
-        await this.applyRotationAndSetEnvironment(this.options.rotateY ?? 0);
+        if (this.options.rotateY) {
+            await this.applyRotationAndSetEnvironment(this.options.rotateY);
+        } else {
+            // Create PMREM directly from the equirectangular source for environment lighting
+            const pmremRT = this.pmrem.fromEquirectangular(hdr);
+            this.cleanupEnv();
+            this.currentEnvRT = pmremRT;
+            this.scene.environment = pmremRT.texture;
+        }
+
+        // apply per-material intensity
+        this.applyEnvIntensity(
+            this.scene,
+            this.options.globalEnvIntensity ?? 1.0,
+        );
 
         if (this.options.replaceLights) this.disableExistingLights();
     }
@@ -105,11 +136,11 @@ export class ImageBasedEnvironment {
         this.cleanupEnv();
     }
 
-    public dispose(): void {
+    public async dispose(): Promise<void> {
         this.disable();
         this.pmrem.dispose();
         if (this.sourceHDR) {
-            this.sourceHDR.dispose();
+            (await this.sourceHDR).dispose();
             this.sourceHDR = null;
         }
     }
@@ -119,22 +150,34 @@ export class ImageBasedEnvironment {
     ): Promise<void> {
         if (!this.sourceHDR) return;
 
-        // Build a skybox scene to render the equirect HDR with rotation
+        const hdr = await this.sourceHDR;
+
+        // Build an offscreen sky scene to render the equirect HDR with rotation
         const skyScene = new Scene();
 
-        const skyGeo = new BoxGeometry(1, 1, 1);
-        // Inward-facing by flipping side via negative scale
-        const skyMat = new MeshBasicMaterial({ map: this.sourceHDR });
-        const skybox = new Mesh(skyGeo, skyMat);
-        skybox.scale.set(-1, 1, 1);
-        skybox.rotation.y = rotateY;
-        skyScene.add(skybox);
+        // Use a large inward-facing sphere with equirectangular mapping for correct UVs
+        const skyGeo = new SphereGeometry(10, 60, 40);
+        hdr.mapping = EquirectangularReflectionMapping;
+        const skyMat = new MeshBasicMaterial({ map: hdr, side: BackSide });
+        const skyMesh = new Mesh(skyGeo, skyMat);
+        skyMesh.scale.set(1, 1, -1);
+        skyMesh.rotation.y = rotateY;
+        skyScene.add(skyMesh);
 
-        const cubeRT = new WebGLCubeRenderTarget(1024);
+        const oldToneMapping = this.renderer.toneMapping;
+        const oldOutputCS = this.renderer.outputColorSpace;
+        this.renderer.toneMapping = NoToneMapping;
+        this.renderer.outputColorSpace = LinearSRGBColorSpace;
+
+        const cubeRT = new WebGLCubeRenderTarget(1024, { type: HalfFloatType });
         const cubeCamera = new CubeCamera(0.1, 1000, cubeRT);
 
         // Position at origin; IBL is direction-only
         cubeCamera.update(this.renderer, skyScene);
+
+        // restore renderer state
+        this.renderer.toneMapping = oldToneMapping;
+        this.renderer.outputColorSpace = oldOutputCS;
 
         // PMREM from cubemap
         const pmremRT = this.pmrem.fromCubemap(cubeRT.texture);
@@ -143,15 +186,28 @@ export class ImageBasedEnvironment {
         this.currentEnvRT = pmremRT;
         this.scene.environment = pmremRT.texture;
 
+        // keep unfiltered capture as background (matches RGBELoader brightness)
+        if (this.options.useAsBackground) {
+            this.scene.background = cubeRT.texture;
+            // store for cleanup later
+            if (this.currentBackgroundCube) {
+                this.currentBackgroundCube.texture.dispose();
+                this.currentBackgroundCube.dispose();
+            }
+            this.currentBackgroundCube = cubeRT;
+        }
+
         // Apply per-material env intensity
         this.applyEnvIntensity(
             this.scene,
             this.options.globalEnvIntensity ?? 1.0,
         );
 
-        // Cleanup intermediate cubemap
-        cubeRT.texture.dispose();
-        cubeRT.dispose();
+        // Cleanup intermediate cubemap when not used for background
+        if (!this.options.useAsBackground) {
+            cubeRT.texture.dispose();
+            cubeRT.dispose();
+        }
     }
 
     private applyEnvIntensity(root: Scene, intensity: number): void {
@@ -212,6 +268,11 @@ export class ImageBasedEnvironment {
             this.currentEnvRT.texture.dispose();
             this.currentEnvRT.dispose();
             this.currentEnvRT = null;
+        }
+        if (this.currentBackgroundCube) {
+            this.currentBackgroundCube.texture.dispose();
+            this.currentBackgroundCube.dispose();
+            this.currentBackgroundCube = null;
         }
     }
 }
