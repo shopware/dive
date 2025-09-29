@@ -4,7 +4,7 @@ import {
     DIVEModel,
     DIVESceneLight,
     HDREnvironment,
-    HDREnvironmentDefaultOptions,
+    HDREnvironmentDefaultSettings,
 } from '@shopware-ag/dive';
 import { OrbitController } from '@shopware-ag/dive/orbitcontroller';
 import { type QuickViewSettings } from '../types/index.ts';
@@ -12,7 +12,7 @@ import { type QuickViewSettings } from '../types/index.ts';
 export const QuickViewDefaultSettings: Required<QuickViewSettings> = {
     ...DIVEDefaultSettings,
     lightIntensity: 1,
-    hdr: HDREnvironmentDefaultOptions,
+    hdr: HDREnvironmentDefaultSettings,
 };
 
 export type QuickView = DIVE & {

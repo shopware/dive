@@ -19,7 +19,7 @@ import {
 } from 'three';
 import { RGBELoader } from 'three/examples/jsm/loaders/RGBELoader.js';
 
-export type HDREnvironmentOptions = {
+export type HDREnvironmentSettings = {
     /**
      * Whether to enable the image-based lighting.
      *
@@ -64,14 +64,14 @@ export type HDREnvironmentOptions = {
     replaceLights?: boolean;
 };
 
-export const HDREnvironmentDefaultOptions: HDREnvironmentOptions = {
-    enabled: false,
+export const HDREnvironmentDefaultSettings: HDREnvironmentSettings = {
+    enabled: true,
     imageUrl: undefined,
     useAsBackground: true,
     globalEnvIntensity: 1,
     exposure: 1,
     rotateY: 0,
-    replaceLights: false,
+    replaceLights: true,
 };
 
 /**
@@ -89,12 +89,12 @@ export class HDREnvironment {
     private currentBackgroundCube: WebGLCubeRenderTarget | null = null;
     private sourceImage: Promise<Texture> | null = null;
     private originalLights: { visible: boolean }[] = [];
-    private options: HDREnvironmentOptions;
+    private options: HDREnvironmentSettings;
 
     constructor(
         renderer: WebGLRenderer,
         scene: Scene,
-        options: HDREnvironmentOptions = {},
+        options: HDREnvironmentSettings = {},
     ) {
         this.renderer = renderer;
         this.scene = scene;
@@ -112,7 +112,7 @@ export class HDREnvironment {
         }
     }
 
-    public async enable(opts?: Partial<HDREnvironmentOptions>): Promise<void> {
+    public async enable(opts?: Partial<HDREnvironmentSettings>): Promise<void> {
         this.options = { ...this.options, enabled: true, ...opts };
         if (!this.options.imageUrl) return;
 
