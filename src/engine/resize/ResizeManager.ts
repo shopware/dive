@@ -20,10 +20,14 @@ export class DIVEResizeManager {
                 return;
             }
 
-            this._renderer.onResize(width, height);
+            // Update camera first to ensure correct aspect before drawing
             this._camera.onResize(width, height);
+            this._renderer.onResize(width, height);
             this._width = width;
             this._height = height;
+
+            // Draw immediately to avoid a brief transparent frame during rapid resizes
+            this._renderer.render();
         });
 
         this._observeCanvas(this._renderer.canvas);
@@ -33,10 +37,14 @@ export class DIVEResizeManager {
         this._resizeObserver.disconnect();
         this._observeCanvas(canvas);
         const { width, height } = canvas.getBoundingClientRect();
-        this._renderer.onResize(width, height);
+        // Update camera first to ensure correct aspect before drawing
         this._camera.onResize(width, height);
+        this._renderer.onResize(width, height);
         this._width = width;
         this._height = height;
+
+        // Draw immediately to avoid a brief transparent frame
+        this._renderer.render();
     }
 
     public dispose(): void {
