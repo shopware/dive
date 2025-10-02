@@ -20,7 +20,6 @@ import {
     OrbitControllerDefaultSettings,
     OrbitControllerSettings,
 } from '@shopware-ag/dive/orbitcontroller';
-import { OrientationDisplay } from '@shopware-ag/dive/orientationdisplay';
 import { DIVE_ASCII_ART } from './AsciiArt.ts';
 
 declare global {
@@ -119,7 +118,9 @@ export class DIVE {
     private _scene: DIVEScene;
     private _clock: DIVEClock;
 
-    private orientationDisplay: OrientationDisplay | null;
+    private _orientationDisplay:
+        | import('@shopware-ag/dive/orientationdisplay').OrientationDisplay
+        | null = null;
 
     constructor(settings?: Partial<DIVESettings>) {
         this._settings = {
@@ -150,21 +151,21 @@ export class DIVE {
         this._views = [mainView];
         this._mainView = mainView;
 
-        if (this._settings.autoStart) {
-            this.start();
+        if (this._settings.displayAxes) {
+            import('@shopware-ag/dive/orientationdisplay').then(
+                ({ OrientationDisplay }) => {
+                    this._orientationDisplay = new OrientationDisplay(
+                        this.mainView.renderer,
+                        this.scene,
+                        this.mainView.camera,
+                    );
+                    this._clock.addTicker(this._orientationDisplay);
+                },
+            );
         }
 
-        // initialize axis camera
-        if (this._settings.displayAxes) {
-            console.log('displayAxes', this._settings.displayAxes);
-            this.orientationDisplay = new OrientationDisplay(
-                this.mainView.renderer,
-                this.scene,
-                this.mainView.camera,
-            );
-            this.clock.addTicker(this.orientationDisplay);
-        } else {
-            this.orientationDisplay = null;
+        if (this._settings.autoStart) {
+            this.start();
         }
 
         // Load version info
@@ -242,9 +243,9 @@ export class DIVE {
             });
             this._views = [];
 
-            if (this.orientationDisplay) {
-                this._clock.removeTicker(this.orientationDisplay);
-                this.orientationDisplay.dispose();
+            if (this._orientationDisplay) {
+                this._clock.removeTicker(this._orientationDisplay);
+                this._orientationDisplay.dispose();
             }
 
             window.DIVE.instances = window.DIVE.instances.filter(

@@ -39,6 +39,8 @@ export class OrientationDisplayAxes extends Object3D {
         this._axesHelper.add(x);
         this._axesHelper.add(y);
         this._axesHelper.add(z);
+
+        this.add(this._axesHelper);
     }
 
     public setFromCameraMatrix(matrix: Matrix4): void {
