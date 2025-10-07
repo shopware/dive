@@ -137,30 +137,6 @@ vi.mock('../renderer/Renderer.ts', async (importOriginal) => {
 const test_uuid = 'test_uuid';
 vi.spyOn(MathUtils, 'generateUUID').mockReturnValue(test_uuid);
 
-vi.mock('../../modules/ModuleRegistry', () => {
-    return {
-        getModule: vi.fn().mockReturnValue(
-            vi.fn(function (this: any) {
-                this.performAction = vi.fn().mockReturnValue({
-                    position: { x: 0, y: 0, z: 0 },
-                    target: { x: 0, y: 0, z: 0 },
-                });
-                this.subscribe = vi.fn(
-                    (
-                        action: string,
-                        callback: (data: { id: string }) => void,
-                    ) => {
-                        callback({ id: 'incorrect id' });
-                        callback({ id: test_uuid });
-                    },
-                );
-                this.destroyInstance = vi.fn().mockReturnValue(true);
-                return this;
-            }),
-        ),
-    };
-});
-
 vi.mock('@shopware-ag/dive/orbitcontroller', async (importOriginal) => {
     const actual =
         await importOriginal<
@@ -307,7 +283,7 @@ describe('DIVE', () => {
         } as DIVESettings;
 
         const dive = new DIVE(settings);
-        expect(dive['orientationDisplay']).toBeDefined();
+        expect(dive['_orientationDisplay']).toBeDefined();
     });
 
     it('should not initialize axis camera when displayAxes is false', () => {
@@ -316,7 +292,7 @@ describe('DIVE', () => {
         } as DIVESettings;
 
         const dive = new DIVE(settings);
-        expect(dive['orientationDisplay']).toBeNull();
+        expect(dive['_orientationDisplay']).toBeNull();
     });
 
     it('should properly dispose all components', async () => {
@@ -326,9 +302,13 @@ describe('DIVE', () => {
 
         const dive = new DIVE(settings);
 
+        dive['_orientationDisplay'] = {
+            dispose: vi.fn(),
+        } as any;
+
         await dive.dispose();
 
-        expect(dive['orientationDisplay']?.dispose).toHaveBeenCalled();
+        expect(dive['_orientationDisplay']?.dispose).toHaveBeenCalled();
     });
 
     it('should handle dispose when animation system pipeline is not initialized', () => {

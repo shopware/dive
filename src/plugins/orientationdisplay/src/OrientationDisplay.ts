@@ -45,8 +45,8 @@ export class OrientationDisplay implements DIVETicker {
     }
 
     public tick(): void {
-        // save current background and set it to transparent
-        const restoreBackground = this._scene.background?.clone() ?? null;
+        // save current background reference and set it to transparent
+        const restoreBackground = this._scene.background ?? null;
         this._scene.background = null;
 
         // save current viewport and set it to desired size
