@@ -35,16 +35,18 @@ export class OrientationDisplay implements DIVETicker {
             0.1,
             100,
         );
+        this._orthographicCamera.name = 'OrientationDisplayCamera';
         this._orthographicCamera.layers.mask = COORDINATE_LAYER_MASK;
         this._scene.add(this._orthographicCamera);
 
         this._axes = new OrientationDisplayAxes();
+        this._axes.name = 'OrientationDisplayAxes';
         this._scene.add(this._axes);
     }
 
     public tick(): void {
-        // save current background and set it to transparent
-        const restoreBackground = this._scene.background;
+        // save current background reference and set it to transparent
+        const restoreBackground = this._scene.background ?? null;
         this._scene.background = null;
 
         // save current viewport and set it to desired size
