@@ -1,10 +1,10 @@
 on:
   pull_request:
-    types: [opened, edited, synchronize]
+    types: [ opened, edited, synchronize ]
 
 jobs:
   semantic-pr-check:
-    runs-on: runs-on=${{ github.run_id }}/runner=sw-amd64
+    runs-on: ubuntu-latest
 
     steps:
       - name: Validate PR title
@@ -21,4 +21,3 @@ jobs:
             test
             perf
             ci
-
