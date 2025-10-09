@@ -1,0 +1,24 @@
+on:
+  pull_request:
+    types: [opened, edited, synchronize]
+
+jobs:
+  semantic-pr-check:
+    runs-on: runs-on=${{ github.run_id }}/runner=sw-amd64
+
+    steps:
+      - name: Validate PR title
+        uses: amannn/action-semantic-pull-request@v6
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          types: |
+            feat
+            fix
+            docs
+            chore
+            style
+            test
+            perf
+            ci
+
