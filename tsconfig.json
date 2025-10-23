@@ -66,7 +66,7 @@
         "src/**/*",
         "docs/**/*",
         "scripts/**/*.ts",
-        "vite.shared.ts"
+        "vite.config*.ts"
     ],
     "exclude": [
         "node_modules",
