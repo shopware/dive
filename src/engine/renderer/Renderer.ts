@@ -49,7 +49,7 @@ export type DIVERendererSettings = {
     /**
      * Whether to use logarithmic depth buffer
      *
-     * @default false
+     * @default true
      */
     logarithmicDepthBuffer: boolean;
     /**
@@ -75,7 +75,7 @@ export const DIVERendererDefaultSettings: Required<DIVERendererSettings> = {
     precision: 'highp',
     stencil: false,
     depth: true,
-    logarithmicDepthBuffer: false,
+    logarithmicDepthBuffer: true,
     shadows: true,
     shadowQuality: 'high',
 };
