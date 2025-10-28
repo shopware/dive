@@ -6,35 +6,25 @@ import wasm from 'vite-plugin-wasm';
 import tsconfigPaths from 'vite-tsconfig-paths';
 import pkg from './package.json';
 
-// --- Main Vite Export ---
+// --- Development Vite Config ---
 export default defineConfig({
     define: {
         __APP_VERSION__: JSON.stringify(pkg.version),
+        __DEV_MODE__: JSON.stringify(true),
     },
-    test: {
-        globals: true,
-        setupFiles: ['./vitest.setup.ts'],
-        environment: 'jsdom',
-        include: ['src/**/*.test.ts'],
-        coverage: {
-            provider: 'v8',
-            include: ['src/**/*.{ts,js}'],
-            reporter: [
-                'text',
-                'html',
-            ],
-            exclude: [
-                '**/build/**',
-                '**/__mocks__/**',
-                'src/plugins/ar/src/webxr/**', // webxr currently not supported in dive
-                'src/engine/scene/xrroot/**', // webxr currently not supported in dive
-                '**/index.ts', // Exclude all index.ts barrel export files
-            ],
-            thresholds: {
-                lines: 95,
-                branches: 90,
-                functions: 95,
-                statements: 95,
+    build: {
+        // Faster builds for development
+        minify: false,
+        sourcemap: true,
+        // Watch mode is handled by the watch-and-deploy script, not here
+        // Output to the standard build directory
+        outDir: 'build',
+        rollupOptions: {
+            output: {
+                // Keep original file names for easier debugging
+                entryFileNames: '[name].js',
+                chunkFileNames: '[name].js',
+                assetFileNames: '[name].[ext]',
             },
         },
     },
