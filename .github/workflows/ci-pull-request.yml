@@ -165,7 +165,10 @@ jobs:
                     RUN_ID=$(echo $RUNS | jq -r '.id // empty')
 
                     if [ -n "$RUN_ID" ] && [ "$RUN_ID" != "null" ]; then
+                      LOGS_URL="https://github.com/$DEMO_APP_REPO/actions/runs/$RUN_ID"
                       echo "Found workflow run: $RUN_ID"
+                      echo "View logs at: $LOGS_URL"
+                      echo "::notice::E2E Tests started: $LOGS_URL"
                     fi
                   done
 
