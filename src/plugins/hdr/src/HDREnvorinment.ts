@@ -88,9 +88,7 @@ export class HDREnvironment {
         image.mapping = EquirectangularReflectionMapping;
 
         // Prepare background if requested (unfiltered for visuals only)
-        if (this.options.useAsBackground) {
-            this.scene.background = image;
-        }
+        this.scene.background = this.options.useAsBackground ? image : null;
 
         if (this.options.rotateY) {
             await this.applyRotationAndSetEnvironment(this.options.rotateY);

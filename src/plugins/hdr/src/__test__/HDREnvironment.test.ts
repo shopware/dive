@@ -164,7 +164,7 @@ describe('HDREnvironment', () => {
         const texDispose = firstCube.texture.dispose as any;
         const rtDispose = firstCube.dispose as any;
 
-        await env.setRotationY(0.2);
+        await env.enable();
         expect(texDispose).toHaveBeenCalled();
         expect(rtDispose).toHaveBeenCalled();
     });
