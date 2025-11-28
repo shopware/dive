@@ -1,0 +1,155 @@
+name: Dependabot Automation
+
+on:
+    pull_request_target:
+        types: [opened, reopened, synchronize]
+    workflow_dispatch:
+
+permissions:
+    pull-requests: write
+    issues: write
+    contents: read
+
+jobs:
+    dependabot-triage:
+        runs-on: ubuntu-latest
+        if: ${{ github.actor == 'dependabot[bot]' || github.event_name == 'workflow_dispatch' }}
+        steps:
+            - name: Checkout repo
+              uses: actions/checkout@v4
+
+            - name: Resolve PR Info
+              id: pr_info
+              env:
+                  GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+              run: |
+                  if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
+                    echo "Fetching info for manual PR from branch..."
+                    # Get PR associated with the current branch
+                    gh pr view --json id,url > pr_info.json
+                    echo "PR_ID=$(jq -r .id pr_info.json)" >> $GITHUB_ENV
+                    echo "PR_URL=$(jq -r .url pr_info.json)" >> $GITHUB_ENV
+                  else
+                    echo "Using event payload..."
+                    echo "PR_ID=${{ github.event.pull_request.node_id }}" >> $GITHUB_ENV
+                    echo "PR_URL=${{ github.event.pull_request.html_url }}" >> $GITHUB_ENV
+                  fi
+
+            - name: Get project data
+              env:
+                  GH_TOKEN: ${{ secrets.DEPENDABOT_ADD_TO_PROJECT_PAT }}
+                  ORGANIZATION: shopware
+                  PROJECT_NUMBER: 51
+              run: |
+                  gh api graphql -f query='
+                    query($org: String!, $number: Int!) {
+                      organization(login: $org){
+                        projectV2(number: $number) {
+                          id
+                          fields(first:20) {
+                            nodes {
+                              ... on ProjectV2Field {
+                                id
+                                name
+                              }
+                              ... on ProjectV2SingleSelectField {
+                                id
+                                name
+                                options {
+                                  id
+                                  name
+                                }
+                              }
+                              ... on ProjectV2IterationField {
+                                id
+                                name
+                                configuration {
+                                  iterations {
+                                    startDate
+                                    id
+                                    title
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }' -f org=$ORGANIZATION -F number=$PROJECT_NUMBER > project_data.json
+
+                  echo 'PROJECT_ID='$(jq -r '.data.organization.projectV2.id' project_data.json) >> $GITHUB_ENV
+
+                  # Get Status Field ID and the "Ready for Development" Option ID
+                  echo 'STATUS_FIELD_ID='$(jq -r '.data.organization.projectV2.fields.nodes[] | select(.name== "Status") | .id' project_data.json) >> $GITHUB_ENV
+                  echo 'STATUS_OPTION_ID='$(jq -r '.data.organization.projectV2.fields.nodes[] | select(.name== "Status") | .options[] | select(.name=="Ready for Development") | .id' project_data.json) >> $GITHUB_ENV
+
+                  # Get Sprint Field ID and the "current" Sprint ID
+                  # Finding the iteration that contains the current date
+                  echo 'SPRINT_FIELD_ID='$(jq -r '.data.organization.projectV2.fields.nodes[] | select(.name== "Sprint") | .id' project_data.json) >> $GITHUB_ENV
+
+                  CURRENT_DATE=$(date +%Y-%m-%d)
+                  # Filter for the iteration where start date is <= current date, sorting by start date desc to get the latest one
+                  # Note: This is a simplistic logic for "current". Often iteration fields have a "duration" but here we just pick the one that started most recently.
+                  # A more robust way is checking startDate <= now < startDate + duration, but usually selecting the last started one is correct for "current".
+                  # Adjusting jq to find the iteration with startDate <= today and closest to today.
+                  echo 'SPRINT_ITERATION_ID='$(jq -r --arg date "$CURRENT_DATE" '.data.organization.projectV2.fields.nodes[] | select(.name== "Sprint") | .configuration.iterations[] | select(.startDate <= $date) | .id' project_data.json | tail -n 1) >> $GITHUB_ENV
+
+            - name: Add PR to project
+              env:
+                  GH_TOKEN: ${{ secrets.DEPENDABOT_ADD_TO_PROJECT_PAT }}
+              run: |
+                  item_id="$( gh api graphql -f query='
+                    mutation($project:ID!, $pr:ID!) {
+                      addProjectV2ItemById(input: {projectId: $project, contentId: $pr}) {
+                        item {
+                          id
+                        }
+                      }
+                    }' -f project=$PROJECT_ID -f pr=$PR_ID --jq '.data.addProjectV2ItemById.item.id')"
+
+                  echo 'ITEM_ID='$item_id >> $GITHUB_ENV
+
+            - name: Set fields
+              env:
+                  GH_TOKEN: ${{ secrets.DEPENDABOT_ADD_TO_PROJECT_PAT }}
+              run: |
+                  gh api graphql -f query='
+                    mutation (
+                      $project: ID!
+                      $item: ID!
+                      $status_field: ID!
+                      $status_value: String!
+                      $sprint_field: ID!
+                      $sprint_value: String!
+                    ) {
+                      set_status: updateProjectV2ItemFieldValue(input: {
+                        projectId: $project
+                        itemId: $item
+                        fieldId: $status_field
+                        value: {
+                          singleSelectOptionId: $status_value
+                          }
+                      }) {
+                        projectV2Item {
+                          id
+                          }
+                      }
+                      set_sprint: updateProjectV2ItemFieldValue(input: {
+                        projectId: $project
+                        itemId: $item
+                        fieldId: $sprint_field
+                        value: {
+                          iterationId: $sprint_value
+                        }
+                      }) {
+                        projectV2Item {
+                          id
+                        }
+                      }
+                    }' -f project=$PROJECT_ID -f item=$ITEM_ID -f status_field=$STATUS_FIELD_ID -f status_value=$STATUS_OPTION_ID -f sprint_field=$SPRINT_FIELD_ID -f sprint_value=$SPRINT_ITERATION_ID --silent
+
+            - name: Assign Team Reviewer
+              run: |
+                  gh pr edit "$PR_URL" --add-reviewer "shopware/st-kung-fu-coders"
+              env:
+                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
