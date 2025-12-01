@@ -8,6 +8,7 @@ import {
     Scene,
     SRGBColorSpace,
     ACESFilmicToneMapping,
+    Color,
 } from 'three';
 import { HDREnvironment } from '../HDREnvorinment.ts';
 
@@ -205,5 +206,56 @@ describe('HDREnvironment', () => {
         await env.enable();
 
         expect(matObj.material.map.colorSpace).toBe(SRGBColorSpace);
+    });
+
+    it('restores original background when disabled or background option toggled off', async () => {
+        const originalBg = new Color(0xff0000);
+        scene.background = originalBg;
+
+        const env = new HDREnvironment(renderer, scene, {
+            enabled: true,
+            imageUrl: 'hdr.hdr',
+            useAsBackground: true,
+        });
+
+        // 1. Enable -> replaces background
+        await env.enable();
+        expect(scene.background).not.toBe(originalBg);
+        expect(scene.background).toBeDefined(); // Should be the texture
+
+        // 2. Disable -> restores background
+        env.disable();
+        expect(scene.background).toBe(originalBg);
+
+        // 3. Enable again
+        await env.enable();
+        expect(scene.background).not.toBe(originalBg);
+
+        // 4. Toggle useAsBackground off -> restores background
+        await env.enable({ useAsBackground: false });
+        expect(scene.background).toBe(originalBg);
+    });
+
+    it('does not overwrite original background with HDR texture on re-enable', async () => {
+        const originalBg = new Color(0x00ff00);
+        scene.background = originalBg;
+
+        const env = new HDREnvironment(renderer, scene, {
+            enabled: true,
+            imageUrl: 'hdr.hdr',
+            useAsBackground: true,
+        });
+
+        // First enable: saves 0x00ff00 as original
+        await env.enable();
+        const hdrBg = scene.background;
+        expect(hdrBg).not.toBe(originalBg);
+
+        // Second enable: should NOT overwrite original with current (hdrBg)
+        await env.enable();
+
+        // Disable: should restore to 0x00ff00, NOT hdrBg
+        env.disable();
+        expect(scene.background).toBe(originalBg);
     });
 });
