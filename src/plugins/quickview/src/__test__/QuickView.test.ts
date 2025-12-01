@@ -36,6 +36,7 @@ vi.mock('@shopware-ag/dive', () => {
                 clock: {
                     addTicker: vi.fn(),
                 },
+                dispose: vi.fn(),
             };
         }),
         DIVEDefaultSettings: {

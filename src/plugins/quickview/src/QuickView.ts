@@ -58,5 +58,16 @@ export const QuickView = async (
         settings?.hdr ?? QuickViewDefaultSettings.hdr,
     );
 
-    return Object.assign(dive, { orbitController, hdr });
+    const quickView = Object.assign(dive, { orbitController, hdr });
+
+    const originalDispose = dive.dispose.bind(dive);
+    quickView.dispose = async () => {
+        orbitController.dispose();
+        hdr.dispose();
+
+        // dispose dive
+        await originalDispose();
+    };
+
+    return quickView;
 };

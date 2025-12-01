@@ -38,6 +38,9 @@ export const HDREnvironmentDefaultSettings: HDREnvironmentSettings = {
  * generating a PMREM for scene.environment.
  */
 export class HDREnvironment {
+    private originalBackground: typeof Scene.prototype.background = null;
+    private isBackgroundReplaced = false;
+
     private renderer: WebGLRenderer;
     private scene: Scene;
     private pmrem: PMREMGenerator;
@@ -87,8 +90,21 @@ export class HDREnvironment {
         // apply mapping for visual background
         image.mapping = EquirectangularReflectionMapping;
 
-        // Prepare background if requested (unfiltered for visuals only)
-        this.scene.background = this.options.useAsBackground ? image : null;
+        // Handle background logic
+        if (this.options.useAsBackground) {
+            // If we are not yet replacing the background, save the current one
+            if (!this.isBackgroundReplaced) {
+                this.originalBackground = this.scene.background;
+                this.isBackgroundReplaced = true;
+            }
+            this.scene.background = image;
+        } else {
+            // If we were replacing the background, restore the original one
+            if (this.isBackgroundReplaced) {
+                this.scene.background = this.originalBackground;
+                this.isBackgroundReplaced = false;
+            }
+        }
 
         if (this.options.rotateY) {
             await this.applyRotationAndSetEnvironment(this.options.rotateY);
@@ -136,6 +152,12 @@ export class HDREnvironment {
     public disable(): void {
         this.options.enabled = false;
         this.scene.environment = null;
+
+        if (this.isBackgroundReplaced) {
+            this.scene.background = this.originalBackground;
+            this.isBackgroundReplaced = false;
+        }
+
         this.restoreLights();
         this.cleanupEnv();
     }
@@ -199,6 +221,15 @@ export class HDREnvironment {
                 this.currentBackgroundCube.dispose();
             }
             this.currentBackgroundCube = cubeRT;
+        } else {
+            // Cleanup intermediate cubemap when not used for background
+            cubeRT.texture.dispose();
+            cubeRT.dispose();
+
+            if (this.isBackgroundReplaced) {
+                this.scene.background = this.originalBackground;
+                this.isBackgroundReplaced = false;
+            }
         }
 
         // Apply per-material env intensity
@@ -206,12 +237,6 @@ export class HDREnvironment {
             this.scene,
             this.options.globalEnvIntensity ?? 1.0,
         );
-
-        // Cleanup intermediate cubemap when not used for background
-        if (!this.options.useAsBackground) {
-            cubeRT.texture.dispose();
-            cubeRT.dispose();
-        }
     }
 
     private applyEnvIntensity(root: Scene, intensity: number): void {
