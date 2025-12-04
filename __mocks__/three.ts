@@ -341,6 +341,10 @@ export const Mesh = vi.fn(function (this: any) {
 export const Box3 = vi.fn(function (this: any) {
     this.min = new THREEVector3(Infinity, Infinity, Infinity);
     this.max = new THREEVector3(-Infinity, -Infinity, -Infinity);
+    this.clone = vi.fn(() => {
+        return new Box3();
+    });
+    this.applyMatrix4 = vi.fn(() => this);
     this.getCenter = vi.fn(() => {
         return new THREEVector3(0, 0, 0);
     });

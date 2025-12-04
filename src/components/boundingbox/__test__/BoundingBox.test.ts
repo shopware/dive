@@ -8,8 +8,6 @@ import {
     Box3Helper,
     MeshBasicMaterial,
     SphereGeometry,
-    Quaternion,
-    Euler,
 } from 'three';
 
 describe('BoundingBox', () => {
@@ -20,23 +18,6 @@ describe('BoundingBox', () => {
     beforeEach(() => {
         // Reset mocks
         vi.clearAllMocks();
-
-        // Create mock geometry
-        mockGeometry = {
-            clone: vi.fn(() => ({
-                applyMatrix4: vi.fn(),
-                applyQuaternion: vi.fn(),
-                computeBoundingBox: vi.fn(),
-                boundingBox: {
-                    min: new Vector3(-1, -1, -1),
-                    max: new Vector3(1, 1, 1),
-                },
-            })),
-            boundingBox: {
-                min: new Vector3(-1, -1, -1),
-                max: new Vector3(1, 1, 1),
-            },
-        };
 
         // Create mock mesh
         mockMesh = new Mesh(mockGeometry);
