@@ -47,6 +47,7 @@ const colors = {
 
 let isBuilding = false;
 let buildTimeout = null;
+let currentBuildProcess = null;
 let yalcChecked = false; // Track if yalc was already checked
 
 function log(message, color = 'reset') {
@@ -80,7 +81,6 @@ async function buildAndDeploy() {
     }
 
     isBuilding = true;
-    let currentBuildProcess = null;
 
     try {
         log('🔨 Starting build and deploy...', 'blue');
