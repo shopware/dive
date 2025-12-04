@@ -79,4 +79,9 @@ export class DIVEScene extends Scene {
     public computeSceneBB(): Box3 {
         return this._root.computeSceneBB();
     }
+
+    public dispose(): void {
+        this.remove(this._root);
+        this.remove(this._grid);
+    }
 }

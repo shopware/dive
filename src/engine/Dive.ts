@@ -248,6 +248,8 @@ export class DIVE {
                 this._orientationDisplay.dispose();
             }
 
+            this.scene.dispose();
+
             window.DIVE.instances = window.DIVE.instances.filter(
                 (instance) => instance._instanceId !== this._instanceId,
             );
