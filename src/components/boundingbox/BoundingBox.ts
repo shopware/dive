@@ -8,7 +8,6 @@ import {
     MeshBasicMaterial,
     SphereGeometry,
     ColorRepresentation,
-    Quaternion,
 } from 'three';
 import { DIVENode } from '../node/Node.ts';
 
@@ -143,22 +142,19 @@ export class BoundingBox extends DIVENode {
             // Ensure all world matrices are up to date (including children)
             object.updateWorldMatrix(true, true);
             object.traverse((child) => {
-                if ((child as Mesh).isMesh) {
-                    const mesh = child as Mesh;
-                    const geom = mesh.geometry.clone();
-                    // Apply world matrix
-                    geom.applyMatrix4(mesh.matrixWorld);
-                    // Unrotate by inverse world quaternion
-                    const invQuat = mesh
-                        .getWorldQuaternion(new Quaternion())
-                        .invert();
-                    geom.applyQuaternion(invQuat);
-                    // Compute bounding box in this local-aligned space
-                    geom.computeBoundingBox();
-                    if (geom.boundingBox) {
-                        box.union(geom.boundingBox);
-                    }
-                }
+                if (!('isMesh' in child)) return;
+                if (!(child as Mesh).isMesh) return;
+
+                const mesh = child as Mesh;
+                mesh.geometry.computeBoundingBox();
+
+                if (!mesh.geometry.boundingBox) return;
+
+                box.union(
+                    mesh.geometry.boundingBox
+                        .clone()
+                        .applyMatrix4(mesh.matrixWorld),
+                );
             });
         }
 
