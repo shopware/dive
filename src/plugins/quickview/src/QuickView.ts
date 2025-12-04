@@ -5,21 +5,19 @@ import {
     DIVESceneLight,
 } from '@shopware-ag/dive';
 import { OrbitController } from '@shopware-ag/dive/orbitcontroller';
-import {
-    HDREnvironment,
-    HDREnvironmentDefaultSettings,
-} from '@shopware-ag/dive/hdr';
 import { type QuickViewSettings } from '../types/index.ts';
 
-export const QuickViewDefaultSettings: Required<QuickViewSettings> = {
+export const QuickViewDefaultSettings: Omit<
+    Required<QuickViewSettings>,
+    'hdr'
+> = {
     ...DIVEDefaultSettings,
     lightIntensity: 1,
-    hdr: HDREnvironmentDefaultSettings,
 };
 
 export type QuickView = DIVE & {
     orbitController: OrbitController;
-    hdr: HDREnvironment;
+    hdr: import('@shopware-ag/dive/hdr').HDREnvironment;
 };
 
 /**
@@ -52,10 +50,14 @@ export const QuickView = async (
     orbitController.focusObject(model);
     dive.clock.addTicker(orbitController);
 
-    const hdr = new HDREnvironment(
-        dive.mainView.renderer.webglrenderer,
-        dive.scene,
-        settings?.hdr ?? QuickViewDefaultSettings.hdr,
+    const hdr = await import('@shopware-ag/dive/hdr').then(
+        ({ HDREnvironment, HDREnvironmentDefaultSettings }) => {
+            return new HDREnvironment(
+                dive.mainView.renderer.webglrenderer,
+                dive.scene,
+                settings?.hdr ?? HDREnvironmentDefaultSettings,
+            );
+        },
     );
 
     const quickView = Object.assign(dive, { orbitController, hdr });

@@ -10,7 +10,7 @@ export type HDREnvironmentSettings = {
      *
      * @default undefined
      */
-    imageUrl?: string;
+    imageUrl?: string | null;
     /**
      * Whether to use the HDR image as a background image.
      *

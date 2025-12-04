@@ -19,13 +19,14 @@ import {
 } from 'three';
 import { RGBELoader } from 'three/examples/jsm/loaders/RGBELoader.js';
 import { HDREnvironmentSettings } from '../types/index.ts';
+import defaultHdrUrl from '../assets/maps/env/default.hdr?url';
 
 export const HDREnvironmentDefaultSettings: HDREnvironmentSettings = {
     enabled: true,
-    imageUrl: undefined,
-    useAsBackground: true,
-    globalEnvIntensity: 1,
-    exposure: 1,
+    imageUrl: defaultHdrUrl,
+    useAsBackground: false,
+    globalEnvIntensity: 1.0,
+    exposure: 1.0,
     rotateY: 0,
     replaceLights: true,
 };
@@ -60,11 +61,9 @@ export class HDREnvironment {
         this.pmrem = new PMREMGenerator(renderer);
         this.options = options;
 
-        if (this.options.imageUrl) {
-            this.sourceImage = new RGBELoader().loadAsync(
-                this.options.imageUrl,
-            );
-        }
+        this.sourceImage = new RGBELoader().loadAsync(
+            this.options.imageUrl ?? defaultHdrUrl,
+        );
 
         if (this.options.enabled) {
             this.enable();
@@ -72,9 +71,12 @@ export class HDREnvironment {
     }
 
     public async enable(opts?: Partial<HDREnvironmentSettings>): Promise<void> {
-        this.options = { ...this.options, enabled: true, ...opts };
-        if (!this.options.imageUrl) return;
-
+        this.options = {
+            ...HDREnvironmentDefaultSettings,
+            ...this.options,
+            ...opts,
+            enabled: true,
+        };
         this.renderer.outputColorSpace = SRGBColorSpace;
         this.renderer.toneMapping = ACESFilmicToneMapping;
         if (this.options.exposure != null)
@@ -82,7 +84,7 @@ export class HDREnvironment {
 
         if (!this.sourceImage) {
             this.sourceImage = new RGBELoader().loadAsync(
-                this.options.imageUrl,
+                this.options.imageUrl ?? defaultHdrUrl,
             );
         }
 
@@ -125,8 +127,8 @@ export class HDREnvironment {
         if (this.options.replaceLights) this.disableExistingLights();
     }
 
-    public async setImageUrl(url: string): Promise<void> {
-        this.options.imageUrl = url;
+    public async setImageUrl(url: string | null): Promise<void> {
+        this.options.imageUrl = url ?? defaultHdrUrl;
         this.sourceImage = null;
         if (this.options.enabled) {
             await this.enable();
