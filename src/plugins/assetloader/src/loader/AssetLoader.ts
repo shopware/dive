@@ -31,11 +31,28 @@ export class AssetLoader {
         this._usdzLoader = new USDZLoader();
     }
 
-    public async load(uri: string): Promise<Object3D> {
-        const extension = getFileTypeFromUri(uri);
-        if (extension.length === 0) {
-            throw new FileTypeError('No file extension found in URI', '');
+    public async load(uri: string, fileType?: FileType): Promise<Object3D> {
+        let extension: string;
+
+        // use provided file type
+        if (fileType) {
+            extension = fileType;
+        } else {
+            // extract from URI
+            extension = getFileTypeFromUri(uri);
+
+            // content-based detection
+            if (extension.length === 0) {
+                extension = await this._detectFileTypeFromContent(uri);
+                if (extension.length === 0) {
+                    throw new FileTypeError(
+                        'No file extension found in URI',
+                        '',
+                    );
+                }
+            }
         }
+
         if (!isFileTypeSupported(extension)) {
             throw new FileTypeError(
                 `Unsupported file type: ${extension}. Supported types: ${SUPPORTED_FILE_TYPES.join(', ')}`,
@@ -64,6 +81,71 @@ export class AssetLoader {
         const chunk = AssetCache.create(uri);
         const arrayBuffer = await chunk.load();
         return this._parse(arrayBuffer, extension);
+    }
+
+    /**
+     * Detects file type from content (magic bytes)
+     * @param uri - The URI to load and detect
+     * @returns The detected file extension or empty string if detection fails
+     */
+    private async _detectFileTypeFromContent(uri: string): Promise<string> {
+        try {
+            // Check if chunk is already in cache
+            const existingChunk = AssetCache.read(uri);
+            let arrayBuffer: ArrayBuffer;
+
+            if (existingChunk) {
+                if (existingChunk.arrayBuffer) {
+                    arrayBuffer = existingChunk.arrayBuffer;
+                } else {
+                    arrayBuffer = await existingChunk.promise;
+                }
+            } else {
+                // Create a temporary chunk to load the file
+                const chunk = AssetCache.create(uri);
+                arrayBuffer = await chunk.load();
+            }
+
+            const view = new Uint8Array(arrayBuffer);
+
+            // GLB files start with "glTF" (0x676C5446) at offset 0
+            // GLB format indicator is at offset 12 (0 = binary GLB, 1 = JSON GLTF)
+            if (view.length >= 12) {
+                const magic = String.fromCharCode(
+                    view[0],
+                    view[1],
+                    view[2],
+                    view[3],
+                );
+                if (magic === 'glTF') {
+                    const format = view[12];
+                    // Format 0 = GLB (binary), Format 1 = GLTF (JSON)
+                    return format === 0 ? 'glb' : 'gltf';
+                }
+            }
+
+            // USDZ files are ZIP archives (start with PK\x03\x04 or PK\x05\x06)
+            // USDZ is a ZIP file containing USD files
+            if (view.length >= 4) {
+                if (
+                    view[0] === 0x50 && // 'P'
+                    view[1] === 0x4b && // 'K'
+                    (view[2] === 0x03 || view[2] === 0x05) &&
+                    (view[3] === 0x04 || view[3] === 0x06)
+                ) {
+                    // Check if it's likely USDZ by looking for USD-related entries
+                    // This is a simplified check - USDZ files are ZIP archives
+                    // For a more robust check, we could parse the ZIP structure
+                    // but for now, we'll assume ZIP files with these signatures are USDZ
+                    return 'usdz';
+                }
+            }
+
+            return '';
+        } catch (error) {
+            // If detection fails, return empty string
+            return '';
+        }
     }
 
     /**
