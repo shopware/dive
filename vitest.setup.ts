@@ -12,5 +12,14 @@ vi.mock('three/examples/jsm/controls/OrbitControls.js', () => ({
         return this;
     }),
 }));
+vi.mock('three/examples/jsm/loaders/RGBELoader.js', () => ({
+    RGBELoader: vi.fn(function (this: any) {
+        this.loadAsync = vi.fn().mockResolvedValue({
+            mapping: 0,
+            dispose: vi.fn(),
+        });
+        return this;
+    }),
+}));
 vi.mock('three-spritetext');
 vi.mock('@tweenjs/tween.js');

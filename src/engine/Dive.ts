@@ -258,6 +258,9 @@ export class DIVE {
         });
     }
 
+    /**
+     * @deprecated This method will be removed in a future version. To create a new view, use `QuickView` instead.
+     */
     public createView(camera?: DIVEPerspectiveCamera): DIVEView {
         const view = new DIVEView(
             this._scene,
@@ -278,6 +281,9 @@ export class DIVE {
         return view;
     }
 
+    /**
+     * @deprecated This method will be removed in a future version.
+     */
     public disposeView(view: DIVEView): void {
         this._views = this._views.filter((v) => v !== view);
         this._clock.removeTicker(view);

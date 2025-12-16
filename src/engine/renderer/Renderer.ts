@@ -1,11 +1,14 @@
 import {
+    ACESFilmicToneMapping,
     BasicShadowMap,
     PCFShadowMap,
     PCFSoftShadowMap,
+    SRGBColorSpace,
     WebGLRenderer,
 } from 'three';
 import { DIVEScene } from '../scene/Scene.ts';
 import { DIVEPerspectiveCamera } from '../camera/PerspectiveCamera.ts';
+import { DIVEEnvironment } from '../environment/Environment.ts';
 
 export type DIVERendererSettings = {
     /**
@@ -92,6 +95,7 @@ export class DIVERenderer {
     public readonly isDIVERenderer: true = true;
 
     private _webglrenderer: WebGLRenderer;
+    private _environment: DIVEEnvironment;
 
     private _settings: DIVERendererSettings;
 
@@ -106,10 +110,19 @@ export class DIVERenderer {
         };
 
         this._webglrenderer = this._createWebGLRenderer();
+
+        this._environment = new DIVEEnvironment(
+            this._webglrenderer,
+            this._scene,
+        );
     }
 
     public get webglrenderer(): WebGLRenderer {
         return this._webglrenderer;
+    }
+
+    public get environment(): DIVEEnvironment {
+        return this._environment;
     }
 
     public get canvas(): HTMLCanvasElement {
@@ -125,16 +138,19 @@ export class DIVERenderer {
     }
 
     public dispose(): void {
+        this._environment.dispose();
         this._webglrenderer.dispose();
     }
 
     public setCanvas(canvas: HTMLCanvasElement): void {
-        // dispose old renderer
+        // dispose old renderer and hdr environment
         this._webglrenderer.dispose();
 
         // create new renderer with canvas
         this._settings.canvas = canvas;
         this._webglrenderer = this._createWebGLRenderer();
+
+        this._environment.setRenderer(this._webglrenderer);
     }
 
     private _createWebGLRenderer(): WebGLRenderer {
@@ -147,6 +163,11 @@ export class DIVERenderer {
                   ? PCFShadowMap
                   : BasicShadowMap;
         renderer.setPixelRatio(window.devicePixelRatio);
+
+        renderer.outputColorSpace = SRGBColorSpace;
+        renderer.toneMapping = ACESFilmicToneMapping;
+        renderer.toneMappingExposure = 1.0;
+
         return renderer;
     }
 }

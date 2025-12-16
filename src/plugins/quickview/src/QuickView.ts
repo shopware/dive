@@ -1,9 +1,4 @@
-import {
-    DIVE,
-    DIVEDefaultSettings,
-    DIVEModel,
-    DIVESceneLight,
-} from '@shopware-ag/dive';
+import { DIVE, DIVEDefaultSettings, DIVEModel } from '@shopware-ag/dive';
 import { OrbitController } from '@shopware-ag/dive/orbitcontroller';
 import { type QuickViewSettings } from '../types/index.ts';
 
@@ -17,7 +12,6 @@ export const QuickViewDefaultSettings: Omit<
 
 export type QuickView = DIVE & {
     orbitController: OrbitController;
-    hdr: import('@shopware-ag/dive/hdr').HDREnvironment;
 };
 
 /**
@@ -33,11 +27,6 @@ export const QuickView = async (
     const dive = new DIVE(settings);
     dive.mainView.camera.position.set(0, 1, 2);
 
-    // add scene light
-    const light = new DIVESceneLight();
-    light.setIntensity(settings?.lightIntensity ?? 1);
-    dive.scene.root.add(light);
-
     // instantiate model
     const model = await new DIVEModel().setFromURL(uri);
     dive.scene.root.add(model);
@@ -50,22 +39,11 @@ export const QuickView = async (
     orbitController.focusObject(model);
     dive.clock.addTicker(orbitController);
 
-    const hdr = await import('@shopware-ag/dive/hdr').then(
-        ({ HDREnvironment, HDREnvironmentDefaultSettings }) => {
-            return new HDREnvironment(
-                dive.mainView.renderer.webglrenderer,
-                dive.scene,
-                settings?.hdr ?? HDREnvironmentDefaultSettings,
-            );
-        },
-    );
-
-    const quickView = Object.assign(dive, { orbitController, hdr });
+    const quickView = Object.assign(dive, { orbitController });
 
     const originalDispose = dive.dispose.bind(dive);
     quickView.dispose = async () => {
         orbitController.dispose();
-        hdr.dispose();
 
         // dispose dive
         await originalDispose();

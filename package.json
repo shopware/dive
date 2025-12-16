@@ -42,11 +42,6 @@
             "import": "./build/plugins/assetloader/index.mjs",
             "require": "./build/plugins/assetloader/index.cjs"
         },
-        "./hdr": {
-            "types": "./build/plugins/hdr/index.d.ts",
-            "import": "./build/plugins/hdr/index.mjs",
-            "require": "./build/plugins/hdr/index.cjs"
-        },
         "./mediacreator": {
             "types": "./build/plugins/mediacreator/index.d.ts",
             "import": "./build/plugins/mediacreator/index.mjs",
