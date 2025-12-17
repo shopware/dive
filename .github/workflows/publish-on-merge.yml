@@ -80,6 +80,9 @@ jobs:
     publish:
         runs-on: ubuntu-latest
         needs: [eslint, unit, prettier-fix]
+        permissions:
+            contents: write
+            id-token: write
         steps:
             - name: Checkout
               uses: actions/checkout@v4
@@ -87,6 +90,7 @@ jobs:
               uses: actions/setup-node@v3
               with:
                   node-version: '20'
+                  registry-url: 'https://registry.npmjs.org'
             - name: Search for cached dependencies
               uses: actions/cache@v4
               id: yarn-cache
@@ -105,12 +109,10 @@ jobs:
             - name: Build DIVE
               run: yarn build
 
-            - name: Authenticate with npm
-              run: echo "//registry.npmjs.org/:_authToken=${{ secrets.NPM_TOKEN }}" > .npmrc
             - name: Publish DIVE to npm
-              run: npm publish --access public
+              run: npm publish --access public --provenance
               env:
-                  NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+                  NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
             - name: 'Add tag'
               run: git tag -a $(node -p "require('./package.json').version") -m "DIVE Release Version $(node -p "require('./package.json').version")"
