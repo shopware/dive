@@ -105,12 +105,12 @@ jobs:
             - name: Build DIVE
               run: yarn build
 
+            - name: Authenticate with npm
+              run: echo "//registry.npmjs.org/:_authToken=${{ secrets.NPM_TOKEN }}" > .npmrc
             - name: Publish DIVE to npm
-              uses: JS-DevTools/npm-publish@v3
-              with:
-                  token: ${{ secrets.NPM_TOKEN }}
-                  access: 'public'
-                  dry-run: false
+              run: yarn publish --access public
+              env:
+                  NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
 
             - name: 'Add tag'
               run: git tag -a $(node -p "require('./package.json').version") -m "DIVE Release Version $(node -p "require('./package.json').version")"

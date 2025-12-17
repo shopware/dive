@@ -230,9 +230,9 @@ jobs:
               run: yarn
             - name: Build DIVE
               run: yarn build
+            - name: Authenticate with npm
+              run: echo "//registry.npmjs.org/:_authToken=${{ secrets.NPM_TOKEN }}" > .npmrc
             - name: Publish DIVE to npm (dry-run)
-              uses: JS-DevTools/npm-publish@v3
-              with:
-                  token: ${{ secrets.NPM_TOKEN }}
-                  access: 'public'
-                  dry-run: true
+              run: npm publish --access public --dry-run
+              env:
+                  NPM_TOKEN: ${{ secrets.NPM_TOKEN }}

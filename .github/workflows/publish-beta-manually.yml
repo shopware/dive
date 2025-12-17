@@ -139,4 +139,6 @@ jobs:
 
             - name: Publish Beta tag to npm
               run: |
-                  yarn publish --tag beta
+                  run: yarn publish --access public --tag beta
+              env:
+                  NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
