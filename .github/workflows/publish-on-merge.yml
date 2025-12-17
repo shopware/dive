@@ -90,7 +90,6 @@ jobs:
               uses: actions/setup-node@v3
               with:
                   node-version: '20'
-                  registry-url: 'https://registry.npmjs.org'
             - name: Search for cached dependencies
               uses: actions/cache@v4
               id: yarn-cache
@@ -111,8 +110,6 @@ jobs:
 
             - name: Publish DIVE to npm
               run: npm publish --access public --provenance
-              env:
-                  NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
             - name: 'Add tag'
               run: git tag -a $(node -p "require('./package.json').version") -m "DIVE Release Version $(node -p "require('./package.json').version")"
