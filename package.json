@@ -92,7 +92,10 @@
         "3d",
         "typescript"
     ],
-    "repository": "git@github.com:shopware/dive.git",
+    "repository": {
+        "type": "git",
+        "url": "git+ssh://git@github.com/shopware/dive.git"
+    },
     "author": "ffrank <f.frank@shopware.com>",
     "license": "MIT",
     "browserslist": [
