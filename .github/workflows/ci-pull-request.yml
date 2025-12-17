@@ -237,8 +237,5 @@ jobs:
               uses: actions/setup-node@v3
               with:
                   node-version: '20'
-                  registry-url: 'https://registry.npmjs.org'
             - name: Publish DIVE to npm (dry-run)
               run: npm publish --access public --dry-run --provenance
-              env:
-                  NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
