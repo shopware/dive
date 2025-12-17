@@ -1,0 +1,316 @@
+import {
+    CubeCamera,
+    EquirectangularReflectionMapping,
+    Mesh,
+    MeshBasicMaterial,
+    PMREMGenerator,
+    Scene,
+    Texture,
+    WebGLCubeRenderTarget,
+    WebGLRenderTarget,
+    WebGLRenderer,
+    BackSide,
+    SphereGeometry,
+    NoToneMapping,
+    LinearSRGBColorSpace,
+    HalfFloatType,
+} from 'three';
+import { RGBELoader } from 'three/examples/jsm/loaders/RGBELoader.js';
+import defaultEnvUrl from '../../../assets/maps/env/default.hdr?url';
+
+export type DIVEEnvironmentSettings = {
+    /**
+     * Whether to enable the image-based lighting.
+     *
+     * @default true
+     *
+     * @deprecated enabled defaults to true.
+     */
+    enabled: boolean;
+    /**
+     * The URL of the HDR image.
+     *
+     * @default defaultEnvUrl from assets/maps/env/default.hdr
+     */
+    imageUrl: string;
+    /**
+     * Whether to use the HDR image as a background image.
+     *
+     * @default false
+     */
+    useAsBackground: boolean;
+    /**
+     * The intensity of the environment lighting.
+     *
+     * @default 1
+     *
+     * @deprecated envIntensity defaults to 1.0.
+     */
+    globalEnvIntensity: number;
+    /**
+     * The exposure of the HDR image.
+     *
+     * @default 1
+     */
+    exposure: number;
+    /**
+     * The rotation of the HDR image in radians.
+     *
+     * @default 0
+     */
+    rotateY: number;
+    /**
+     * Whether to replace the existing lights (can be restored via `restoreLights`).
+     *
+     * @default false
+     *
+     * @deprecated replaceLights defaults to false. Remove lights manually instead.
+     */
+    replaceLights?: boolean;
+};
+
+export const DIVEEnvironmentDefaultSettings: DIVEEnvironmentSettings = {
+    enabled: true,
+    imageUrl: defaultEnvUrl,
+    useAsBackground: false,
+    rotateY: 0,
+    globalEnvIntensity: 1.0, // deprecated
+    exposure: 1.0, // deprecated
+    replaceLights: false, // deprecated
+};
+
+/**
+ * Manages an image-based lighting setup with optional Y-rotation.
+ *
+ * Rotation is achieved by rendering the equirect HDR to a skybox that is
+ * rotated around Y, capturing it into a cubemap with CubeCamera, and then
+ * generating a PMREM for scene.environment.
+ */
+export class DIVEEnvironment {
+    private originalBackground: typeof Scene.prototype.background;
+
+    private renderer: WebGLRenderer;
+    private scene: Scene;
+    private pmrem: PMREMGenerator;
+    private currentEnvRT: WebGLRenderTarget | null = null;
+    private currentBackgroundCube: WebGLCubeRenderTarget | null = null;
+    private sourceImage: Texture | null = null;
+    private options: DIVEEnvironmentSettings;
+
+    constructor(
+        renderer: WebGLRenderer,
+        scene: Scene,
+        options: Partial<DIVEEnvironmentSettings> = {},
+    ) {
+        this.renderer = renderer;
+        this.scene = scene;
+        this.originalBackground = this.scene.background;
+
+        this.pmrem = new PMREMGenerator(renderer);
+        this.options = {
+            ...DIVEEnvironmentDefaultSettings,
+            ...options,
+        };
+
+        this.loadHDRImage(this.options.imageUrl).then((image) => {
+            this.sourceImage = image;
+            this.update();
+        });
+    }
+
+    /**
+     * Disposes the environment.
+     */
+    public dispose(): void {
+        this.pmrem.dispose();
+        this.sourceImage?.dispose();
+        this.sourceImage = null;
+        this.clearEnvironment();
+    }
+
+    private clearEnvironment(): void {
+        this.scene.environment = null;
+        this.scene.background = this.originalBackground;
+
+        if (this.currentEnvRT) {
+            this.currentEnvRT.texture.dispose();
+            this.currentEnvRT.dispose();
+            this.currentEnvRT = null;
+        }
+        if (this.currentBackgroundCube) {
+            this.currentBackgroundCube.texture.dispose();
+            this.currentBackgroundCube.dispose();
+            this.currentBackgroundCube = null;
+        }
+    }
+
+    /**
+     * Updates the environment.
+     *
+     * - Creates a sky scene with a large inward-facing sphere with equirectangular mapping for correct UVs.
+     * - Renders the equirect HDR to a cubemap with CubeCamera.
+     * - Generates a PMREM from the cubemap.
+     * - Updates the scene environment with the PMREM.
+     * - Handles background image replacement logic.
+     * - Early-returns if the source image is not loaded.
+     */
+    public update(): void {
+        if (!this.sourceImage) {
+            this.clearEnvironment();
+            return;
+        }
+
+        // Build an offscreen sky scene to render the equirect HDR with rotation
+        const skyScene = new Scene();
+
+        // Use a large inward-facing sphere with equirectangular mapping for correct UVs
+        const skyGeo = new SphereGeometry(10, 60, 40);
+        const skyMat = new MeshBasicMaterial({
+            map: this.sourceImage,
+            side: BackSide,
+        });
+        const skyMesh = new Mesh(skyGeo, skyMat);
+        skyMesh.scale.set(1, 1, -1);
+        skyMesh.rotation.y = this.options.rotateY ?? 0;
+        skyScene.add(skyMesh);
+
+        const oldToneMapping = this.renderer.toneMapping;
+        const oldOutputCS = this.renderer.outputColorSpace;
+        this.renderer.toneMapping = NoToneMapping;
+        this.renderer.outputColorSpace = LinearSRGBColorSpace;
+
+        const cubeRT = new WebGLCubeRenderTarget(1024, {
+            type: HalfFloatType,
+        });
+        const cubeCamera = new CubeCamera(0.1, 1000, cubeRT);
+
+        // Position at origin; IBL is direction-only
+        cubeCamera.update(this.renderer, skyScene);
+
+        // restore renderer state
+        this.renderer.toneMapping = oldToneMapping;
+        this.renderer.outputColorSpace = oldOutputCS;
+
+        // PMREM from cubemap
+        const pmremRT = this.pmrem.fromCubemap(cubeRT.texture);
+
+        if (this.currentEnvRT) {
+            this.currentEnvRT.texture.dispose();
+            this.currentEnvRT.dispose();
+            this.currentEnvRT = null;
+        }
+        if (this.currentBackgroundCube) {
+            this.currentBackgroundCube.texture.dispose();
+            this.currentBackgroundCube.dispose();
+            this.currentBackgroundCube = null;
+        }
+
+        this.currentEnvRT = pmremRT;
+        this.scene.environment = pmremRT.texture;
+
+        // keep unfiltered capture as background (matches RGBELoader brightness)
+        if (this.options.useAsBackground) {
+            this.scene.background = cubeRT.texture;
+            this.currentBackgroundCube = cubeRT;
+        } else {
+            this.scene.background = this.originalBackground;
+            // We created a cubeRT but are not using it as background.
+            // We should dispose it if we don't store it in currentBackgroundCube.
+            // But we used it for PMREM. Can we dispose it now?
+            // pmrem.fromCubemap uses it.
+            // If we don't store it, we should dispose it to avoid leak.
+            cubeRT.texture.dispose();
+            cubeRT.dispose();
+        }
+    }
+
+    /**
+     * Sets the renderer and updates the environment. Use this only when rebuilding the webgl renderer.
+     *
+     * @param renderer - The webglrenderer.
+     */
+    public setRenderer(renderer: WebGLRenderer): void {
+        this.renderer = renderer;
+        this.pmrem.dispose();
+        this.pmrem = new PMREMGenerator(renderer);
+        this.update();
+    }
+
+    /**
+     * Sets the URL of the HDR image.
+     *
+     * @param url - The URL of the HDR image. If null, the default environment image will be used.
+     */
+    public async setImageUrl(url: string | null): Promise<void> {
+        this.options.imageUrl = url ?? defaultEnvUrl;
+        this.sourceImage?.dispose();
+        this.sourceImage = null;
+
+        this.sourceImage = await this.loadHDRImage(this.options.imageUrl);
+        this.update();
+    }
+
+    /**
+     * Sets the rotation of the HDR image in radians.
+     *
+     * @param radians - The rotation of the HDR image in radians.
+     */
+    public setRotationY(radians: number): void {
+        this.options.rotateY = radians;
+        this.update();
+    }
+
+    /**
+     * Sets whether to use the HDR image as a background.
+     * @param useAsBackground - Whether to use the HDR image as a background.
+     */
+    public setUseAsBackground(useAsBackground: boolean): void {
+        this.options.useAsBackground = useAsBackground;
+        this.update();
+    }
+
+    /**
+     * Loads equirectangular HDR image from URL.
+     * Sets the mapping to EquirectangularReflectionMapping.
+     *
+     * @param url - The URL of the HDR image.
+     * @returns The loaded equirectangular HDR texture.
+     */
+    private async loadHDRImage(url: string): Promise<Texture> {
+        const image = await new RGBELoader().loadAsync(url);
+        image.mapping = EquirectangularReflectionMapping;
+        return image;
+    }
+
+    /**
+     * @deprecated setGlobalEnvIntensity does nothing.
+     */
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    public setGlobalEnvIntensity(intensity: number): void {
+        console.warn('setGlobalEnvIntensity is deprecated and does nothing.');
+    }
+
+    /**
+     * @deprecated setExposure does nothing.
+     */
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    public setExposure(exposure: number): void {
+        console.warn('setExposure is deprecated and does nothing.');
+    }
+
+    /**
+     * @deprecated disable does nothing. Environment is enabled by default.
+     */
+    public disable(): void {
+        console.warn(
+            'disable is deprecated and does nothing. Environment is enabled by default.',
+        );
+    }
+
+    /**
+     * @deprecated Use update() instead.
+     */
+    public async enable(): Promise<void> {
+        this.update();
+    }
+}

@@ -36,9 +36,6 @@
             "@shopware-ag/dive/assetcache": [
                 "src/plugins/assetcache/index.ts"
             ],
-            "@shopware-ag/dive/hdr": [
-                "src/plugins/hdr/index.ts"
-            ],
             "@shopware-ag/dive/orientationdisplay": [
                 "src/plugins/orientationdisplay/index.ts"
             ],

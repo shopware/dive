@@ -9,3 +9,8 @@ declare module '*.wasm?url' {
     const url: string;
     export default url;
 }
+declare module '*.hdr';
+declare module '*.hdr?url' {
+    const url: string;
+    export default url;
+}

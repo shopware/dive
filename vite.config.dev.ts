@@ -5,6 +5,22 @@ import pluginBuildPlugin from './scripts/build/vite/vite-plugin-exports.ts';
 import wasm from 'vite-plugin-wasm';
 import tsconfigPaths from 'vite-tsconfig-paths';
 import pkg from './package.json';
+import { exec } from 'child_process';
+import type { Plugin } from 'vite';
+
+const yalcPush = (): Plugin => ({
+    name: 'yalc-push',
+    closeBundle() {
+        exec('yalc push --content', (error, stdout, stderr) => {
+            if (error) {
+                console.error(`exec error: ${error}`);
+                return;
+            }
+            console.log(`yalc push: ${stdout}`);
+            if (stderr) console.error(`stderr: ${stderr}`);
+        });
+    },
+});
 
 // --- Development Vite Config ---
 export default defineConfig({
@@ -15,18 +31,9 @@ export default defineConfig({
     build: {
         // Faster builds for development
         minify: false,
-        sourcemap: true,
-        // Watch mode is handled by the watch-and-deploy script, not here
+        sourcemap: 'inline',
         // Output to the standard build directory
         outDir: 'build',
-        rollupOptions: {
-            output: {
-                // Keep original file names for easier debugging
-                entryFileNames: '[name].js',
-                chunkFileNames: '[name].js',
-                assetFileNames: '[name].[ext]',
-            },
-        },
     },
     plugins: [
         // use tsconfig.json to resolve custom paths
@@ -51,5 +58,7 @@ export default defineConfig({
         // build wasm for draco decoder
         // @ts-expect-error - wasm is not typed
         wasm(),
+
+        yalcPush(),
     ],
 } as UserConfigExport);

@@ -42,11 +42,6 @@
             "import": "./build/plugins/assetloader/index.mjs",
             "require": "./build/plugins/assetloader/index.cjs"
         },
-        "./hdr": {
-            "types": "./build/plugins/hdr/index.d.ts",
-            "import": "./build/plugins/hdr/index.mjs",
-            "require": "./build/plugins/hdr/index.cjs"
-        },
         "./mediacreator": {
             "types": "./build/plugins/mediacreator/index.d.ts",
             "import": "./build/plugins/mediacreator/index.mjs",
@@ -145,7 +140,7 @@
     "scripts": {
         "build": "vite build",
         "build:dev": "vite build --config vite.config.dev.ts",
-        "dev": "node scripts/dev/watch-and-deploy.js",
+        "dev": "vite build --watch --config vite.config.dev.ts",
         "lint": "eslint",
         "prettier:check": "prettier --check .",
         "prettier:fix": "prettier --write .",
