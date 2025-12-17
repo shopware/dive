@@ -108,7 +108,7 @@ jobs:
             - name: Authenticate with npm
               run: echo "//registry.npmjs.org/:_authToken=${{ secrets.NPM_TOKEN }}" > .npmrc
             - name: Publish DIVE to npm
-              run: yarn publish --access public
+              run: npm publish --access public
               env:
                   NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
 
