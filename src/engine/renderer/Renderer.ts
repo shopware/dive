@@ -9,6 +9,9 @@ import {
 import { DIVEScene } from '../scene/Scene.ts';
 import { DIVEPerspectiveCamera } from '../camera/PerspectiveCamera.ts';
 import { DIVEEnvironment } from '../environment/Environment.ts';
+import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer.js';
+import { OutputPass } from 'three/examples/jsm/postprocessing/OutputPass.js';
+import { TAARenderPass } from 'three/examples/jsm/postprocessing/TAARenderPass.js';
 
 export type DIVERendererSettings = {
     /**
@@ -72,7 +75,7 @@ export type DIVERendererSettings = {
 
 export const DIVERendererDefaultSettings: Required<DIVERendererSettings> = {
     canvas: undefined,
-    antialias: true,
+    antialias: false,
     alpha: true,
     powerPreference: 'high-performance',
     precision: 'highp',
@@ -95,6 +98,7 @@ export class DIVERenderer {
     public readonly isDIVERenderer: true = true;
 
     private _webglrenderer: WebGLRenderer;
+    private _composer: EffectComposer;
     private _environment: DIVEEnvironment;
 
     private _settings: DIVERendererSettings;
@@ -110,6 +114,8 @@ export class DIVERenderer {
         };
 
         this._webglrenderer = this._createWebGLRenderer();
+
+        this._composer = this._createComposer(this._webglrenderer);
 
         this._environment = new DIVEEnvironment(
             this._webglrenderer,
@@ -130,26 +136,29 @@ export class DIVERenderer {
     }
 
     public render(): void {
-        this._webglrenderer.render(this._scene, this._camera);
+        this._composer.render();
     }
 
     public onResize(width: number, height: number): void {
+        this._composer.setSize(width, height);
         this._webglrenderer.setSize(width, height, false);
     }
 
     public dispose(): void {
         this._environment.dispose();
+        this._composer.dispose();
         this._webglrenderer.dispose();
     }
 
     public setCanvas(canvas: HTMLCanvasElement): void {
         // dispose old renderer and hdr environment
+        this._composer.dispose();
         this._webglrenderer.dispose();
 
         // create new renderer with canvas
         this._settings.canvas = canvas;
         this._webglrenderer = this._createWebGLRenderer();
-
+        this._composer = this._createComposer(this._webglrenderer);
         this._environment.setRenderer(this._webglrenderer);
     }
 
@@ -169,6 +178,22 @@ export class DIVERenderer {
         renderer.toneMappingExposure = 1.0;
 
         return renderer;
+    }
+
+    private _createComposer(renderer: WebGLRenderer): EffectComposer {
+        const composer = new EffectComposer(renderer);
+        composer.setPixelRatio(window.devicePixelRatio);
+
+        // render pass with temporal anti aliasing
+        const renderPass = new TAARenderPass(this._scene, this._camera);
+        renderPass.enabled = true;
+        renderPass.sampleLevel = 3;
+        composer.addPass(renderPass);
+
+        // output pass for color space conversion and tone mapping
+        composer.addPass(new OutputPass());
+
+        return composer;
     }
 }
 
