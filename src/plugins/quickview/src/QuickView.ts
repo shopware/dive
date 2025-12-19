@@ -7,7 +7,6 @@ export const QuickViewDefaultSettings: Omit<
     'hdr'
 > = {
     ...DIVEDefaultSettings,
-    lightIntensity: 1,
 };
 
 export type QuickView = DIVE & {
