@@ -94,7 +94,7 @@ describe('DIVERenderPipeline', () => {
         const height = 600;
         renderer.onResize(width, height);
         const mockInstance = WebGLRenderer.mock.results[0].value;
-        expect(mockInstance.setSize).toHaveBeenCalledWith(width, height, false);
+        expect(mockInstance.setSize).toHaveBeenCalledWith(width, height);
     });
 
     it('should dispose WebGLRenderer', () => {
