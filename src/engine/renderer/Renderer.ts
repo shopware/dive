@@ -1,6 +1,6 @@
 import {
-    ACESFilmicToneMapping,
     BasicShadowMap,
+    LinearToneMapping,
     PCFShadowMap,
     PCFSoftShadowMap,
     SRGBColorSpace,
@@ -134,7 +134,7 @@ export class DIVERenderer {
     }
 
     public onResize(width: number, height: number): void {
-        this._webglrenderer.setSize(width, height, false);
+        this._webglrenderer.setSize(width, height);
     }
 
     public dispose(): void {
@@ -165,7 +165,7 @@ export class DIVERenderer {
         renderer.setPixelRatio(window.devicePixelRatio);
 
         renderer.outputColorSpace = SRGBColorSpace;
-        renderer.toneMapping = ACESFilmicToneMapping;
+        renderer.toneMapping = LinearToneMapping;
         renderer.toneMappingExposure = 1.0;
 
         return renderer;
