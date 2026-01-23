@@ -22,6 +22,7 @@ export default defineConfig({
             reporter: [
                 'text',
                 'html',
+                'json',
             ],
             exclude: [
                 '**/build/**',
