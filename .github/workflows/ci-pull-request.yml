@@ -55,6 +55,7 @@ jobs:
             - name: Unit-Test DIVE (coverage)
               run: yarn coverage
             - name: Upload coverage to Codecov (PR comparison)
+              if: github.actor != 'dependabot[bot]'
               uses: codecov/codecov-action@v5
               with:
                   files: ./coverage/coverage-final.json
