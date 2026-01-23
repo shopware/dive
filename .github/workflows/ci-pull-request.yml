@@ -124,6 +124,7 @@ jobs:
     e2e:
         runs-on: ubuntu-latest
         needs: build
+        if: github.actor != 'dependabot[bot]'
         steps:
             - name: Trigger demo app pipeline and wait for result
               env:
