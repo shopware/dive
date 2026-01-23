@@ -57,9 +57,11 @@ jobs:
             - name: Unit-Test DIVE
               run: yarn coverage
             - name: Upload coverage to Codecov (set new baseline)
-              run: npx codecov -f coverage/coverage-final.json -B
-              env:
-                  CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+              uses: codecov/codecov-action@v5
+              with:
+                  files: ./coverage/coverage-final.json
+                  token: ${{ secrets.CODECOV_TOKEN }}
+                  fail_ci_if_error: true
     prettier-fix:
         runs-on: ubuntu-latest
         needs: install
