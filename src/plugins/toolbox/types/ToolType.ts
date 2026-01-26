@@ -1,1 +1,1 @@
-export type ToolType = 'select' | 'none';
+export type ToolType = 'hover' | 'select' | 'transform' | 'drag';

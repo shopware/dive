@@ -1,7 +1,6 @@
 import { Action } from '../action.ts';
 import { registerAction } from '../../ActionRegistry.ts';
 import { type ActionDependencies } from '../../../types/index.ts';
-import { isSelectTool } from '@shopware-ag/dive/toolbox';
 import { type EntitySchema } from '@shopware-ag/dive';
 
 export const DeselectObjectAction = Action.define<
@@ -19,11 +18,11 @@ export const DeselectObjectAction = Action.define<
 
         if (!('isSelectable' in sceneObject))
             throw new Error('Object is not selectable.');
+
         const instance = await getToolbox();
-        const activeTool = instance.getActiveTool();
-        if (activeTool && isSelectTool(activeTool)) {
-            activeTool.detachGizmo();
-        }
+        // Use SelectionState to deselect
+        // TransformTool will automatically detach gizmo via selection change listener
+        instance.selectionState.deselect();
     },
 });
 

@@ -15,6 +15,10 @@ import {
 } from '@shopware-ag/dive';
 import { type OrbitController } from '@shopware-ag/dive/orbitcontroller';
 
+/**
+ * @deprecated Use DraggableEvent from './drag/DraggableEvent.ts' instead.
+ * This type will be removed in a future version.
+ */
 export type DraggableEvent = {
     dragStart: Vector3;
     dragCurrent: Vector3;
@@ -22,6 +26,15 @@ export type DraggableEvent = {
     dragDelta: Vector3;
 };
 
+/**
+ * @deprecated Use the new Tool interface and individual tools (HoverTool, SelectTool, TransformTool, DragTool) instead.
+ * This class will be removed in a future version.
+ *
+ * The new architecture uses composition over inheritance:
+ * - Tool interface for lightweight event handlers
+ * - Toolbox as event dispatcher supporting multiple active tools
+ * - Individual tools: HoverTool, SelectTool, TransformTool, DragTool
+ */
 /* eslint-disable @typescript-eslint/no-unused-vars */
 export abstract class DIVEBaseTool {
     readonly POINTER_DRAG_THRESHOLD: number = 0.001;

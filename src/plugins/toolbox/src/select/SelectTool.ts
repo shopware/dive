@@ -1,90 +1,80 @@
 import { type Object3D } from 'three';
-import {
-    type DIVEScene,
-    type DIVESelectable,
-    type DIVEMovable,
-    findInterface,
-} from '@shopware-ag/dive';
-import { DIVETransformTool } from '../transform/TransformTool.ts';
-import { type OrbitController } from '@shopware-ag/dive/orbitcontroller';
-import { type DIVEBaseTool } from '../BaseTool.ts';
+import { type DIVESelectable, findInterface } from '@shopware-ag/dive';
+import { type Tool } from '../Tool.ts';
+import { type PointerContext } from '../PointerContext.ts';
+import { type SelectionState } from '../SelectionState.ts';
 
-export const isSelectTool = (tool: DIVEBaseTool): tool is DIVESelectTool => {
-    return (tool as DIVESelectTool).isSelectTool !== undefined;
+/**
+ * Type guard to check if a tool is a SelectTool.
+ */
+export const isSelectTool = (tool: Tool): tool is SelectTool => {
+    return tool.name === 'select';
 };
 
 /**
- * A Tool to select and move objects in the scene.
+ * Tool for selecting objects via click.
  *
- * Objects have to implement the DIVESelectable interface to be selectable and DIVEMovable to be movable.
+ * Only processes objects on PRODUCT_LAYER (models), ignoring UI elements like gizmos.
+ * Uses SelectionState to manage selection and notify other tools (like TransformTool).
  *
  * @module
  */
+export class SelectTool implements Tool {
+    readonly name = 'select';
+    readonly priority = 30;
 
-export class DIVESelectTool extends DIVETransformTool {
-    readonly isSelectTool: boolean = true;
+    private _selectionState: SelectionState;
 
-    constructor(scene: DIVEScene, controller: OrbitController) {
-        super(scene, controller);
-        this.name = 'SelectTool';
+    constructor(selectionState: SelectionState) {
+        this._selectionState = selectionState;
     }
 
-    public activate(): void {}
-
-    public select(selectable: DIVESelectable): void {
-        this.attachGizmo(selectable);
-
-        if (selectable.onSelect) selectable.onSelect();
+    /**
+     * Get the currently selected object.
+     */
+    get selected(): (Object3D & DIVESelectable) | null {
+        return this._selectionState.selected;
     }
 
-    public deselect(selectable: DIVESelectable): void {
-        this.detachGizmo();
+    onActivate(): void {}
 
-        if (selectable.onDeselect) selectable.onDeselect();
-    }
+    onDeactivate(): void {}
 
-    public attachGizmo(selectable: DIVESelectable): void {
-        if ('isMovable' in selectable) {
-            const movable = selectable as Object3D &
-                DIVESelectable &
-                DIVEMovable;
-            this._gizmo.attach(movable);
-            this.setGizmoVisible(movable.visible);
-        }
-    }
-
-    public detachGizmo(): void {
-        this._gizmo.detach();
-    }
-
-    public onClick(e: PointerEvent): void {
-        super.onClick(e);
-
-        const first = this._raycaster
-            .intersectObjects(this._scene.root.children, true)
-            .filter((intersect) => intersect.object.visible)[0];
+    onClick(ctx: PointerContext): void {
+        // Only use modelIntersects (PRODUCT_LAYER), ignore gizmo/UI
+        const intersect = ctx.modelIntersects[0];
         const selectable = findInterface<DIVESelectable>(
-            first?.object,
+            intersect?.object,
             'isSelectable',
         );
 
-        // if nothing is hit
-        if (!first || !selectable) {
-            if (this._gizmo.object) {
-                this.deselect(this._gizmo.object as Object3D & DIVESelectable);
-            }
+        // Case 1: Nothing hit or hit object is not selectable
+        if (!intersect || !selectable) {
+            this._selectionState.deselect();
             return;
         }
 
-        if (this._gizmo.object) {
-            // do not reselect if the same object was clicked
-            if (this._gizmo.object.uuid === selectable.uuid) return;
-
-            // deselect previous object
-            this.deselect(this._gizmo.object as Object3D & DIVESelectable);
+        // Case 2: Same object clicked - do nothing
+        const currentSelection = this._selectionState.selected;
+        if (currentSelection && currentSelection.uuid === selectable.uuid) {
+            return;
         }
 
-        // select clicked object
-        this.select(selectable);
+        // Case 3: New object clicked - select it
+        this._selectionState.select(selectable as Object3D & DIVESelectable);
+    }
+
+    /**
+     * Programmatically select an object.
+     */
+    select(obj: Object3D & DIVESelectable): void {
+        this._selectionState.select(obj);
+    }
+
+    /**
+     * Programmatically deselect the current selection.
+     */
+    deselect(): void {
+        this._selectionState.deselect();
     }
 }

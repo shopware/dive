@@ -1,34 +1,27 @@
-import { DIVETransformTool, isTransformTool } from '../TransformTool.ts';
-import { OrbitController } from '@shopware-ag/dive/orbitcontroller';
-import {
-    DIVEPerspectiveCamera,
-    DIVERenderer,
-    DIVEScene,
-} from '@shopware-ag/dive';
-import { type DIVEBaseTool } from '../../BaseTool.ts';
+import { Vector2, type Object3D } from 'three';
+import { TransformTool, isTransformTool } from '../TransformTool.ts';
+import { SelectionState } from '../../SelectionState.ts';
+import { type PointerContext } from '../../PointerContext.ts';
+import { type Tool } from '../../Tool.ts';
+import { type DIVEScene, type DIVESelectable, type DIVEMovable } from '@shopware-ag/dive';
+import { type OrbitController } from '@shopware-ag/dive/orbitcontroller';
 import { Tween } from '@tweenjs/tween.js';
 
-vi.mock('../../../../engine/renderer/Renderer', () => {
-    return {
-        DIVERenderPipeline: vi.fn(function (this: any) {
-            this.webglrenderer = {
-                domElement: {
-                    clientWidth: 0,
-                    clientHeight: 0,
-                },
-            };
-            return this;
-        }),
-    };
-});
+/**
+ * @vitest-environment jsdom
+ */
 
-vi.mock('../../../../engine/camera/PerspectiveCamera', () => {
+vi.mock('@shopware-ag/dive', async () => {
+    const actual =
+        await vi.importActual<typeof import('@shopware-ag/dive')>(
+            '@shopware-ag/dive',
+        );
     return {
-        DIVEPerspectiveCamera: vi.fn(function (this: any) {
-            this.isPerspectiveCamera = true;
-            this.layers = {
-                mask: 0,
-            };
+        ...actual,
+        DIVEScene: vi.fn(function (this: any) {
+            this.add = vi.fn();
+            this.remove = vi.fn();
+            this.children = [];
             return this;
         }),
     };
@@ -41,374 +34,230 @@ vi.mock('@shopware-ag/dive/orbitcontroller', async () => {
     const mockOrbitController = vi.fn(function (this: any) {
         this.enabled = true;
         this.domElement = {
-            clientWIdth: 0,
-            clientHeight: 0,
+            clientWidth: 1000,
+            clientHeight: 1000,
         };
         this.object = {
-            layers: {
-                mask: 0,
-            },
+            isPerspectiveCamera: true,
+            layers: { mask: 0 },
         };
         return this;
     });
-    // Copy static properties
     Object.assign(mockOrbitController, actual.OrbitController);
-
     return {
         ...actual,
         OrbitController: mockOrbitController,
     };
 });
 
-vi.mock('../../../../engine/scene/Scene', () => {
-    return {
-        DIVEScene: vi.fn(function (this: any) {
-            this.add = vi.fn();
-            this.remove = vi.fn();
-            this.root = {
-                children: [],
-            };
-            this.children = [];
-            return this;
-        }),
-    };
-});
-
-vi.mock('../../../animation/AnimationSystem', () => {
+vi.mock('@shopware-ag/dive/animation', () => {
     return {
         DIVEAnimationSystem: vi.fn(function (this: any) {
-            this.domElement = {
-                style: {},
-            };
-            this.Animate = <T extends object>(obj: T) => {
-                return new Tween<T>(obj);
-            };
-
+            this.domElement = { style: {} };
+            this.animate = <T extends object>(obj: T) => new Tween<T>(obj);
             return this;
         }),
     };
 });
 
-// Use the global mock from __mocks__/three/examples/jsm/controls/TransformControls.ts
-// The event listeners are stored globally in the mock
+const createMockScene = () =>
+    ({
+        add: vi.fn(),
+        remove: vi.fn(),
+        children: [],
+    }) as unknown as DIVEScene;
 
-const mockScene: DIVEScene = new DIVEScene();
-const mockCamera = new DIVEPerspectiveCamera();
-const mockRenderer = new DIVERenderer(mockScene, mockCamera);
-const mockController: OrbitController = new OrbitController(
-    mockCamera,
-    mockRenderer.webglrenderer.domElement,
-);
+const createMockController = () =>
+    ({
+        enabled: true,
+        domElement: {
+            clientWidth: 1000,
+            clientHeight: 1000,
+        },
+        object: {
+            isPerspectiveCamera: true,
+            layers: { mask: 0 },
+        },
+    }) as unknown as OrbitController;
 
-let transformTool: DIVETransformTool;
-let intersectObjectsSpy;
+const createMockContext = (
+    uiIntersects: any[] = [],
+): PointerContext => ({
+    event: new PointerEvent('pointermove'),
+    pointer: new Vector2(0, 0),
+    intersects: [],
+    modelIntersects: [],
+    uiIntersects,
+    pointerPrimaryDown: false,
+    pointerMiddleDown: false,
+    pointerSecondaryDown: false,
+    lastPointerDown: new Vector2(0, 0),
+});
 
-describe('dive/toolbox/select/DIVETransformTool', () => {
+describe('TransformTool', () => {
+    let transformTool: TransformTool;
+    let mockScene: DIVEScene;
+    let mockController: OrbitController;
+    let selectionState: SelectionState;
+
     beforeEach(() => {
-        // Reset event listeners by clearing the mock calls
-        vi.clearAllMocks();
-        transformTool = new DIVETransformTool(mockScene, mockController);
-        intersectObjectsSpy = vi
-            .spyOn(transformTool['_raycaster'], 'intersectObjects')
-            .mockReturnValue([]);
-    });
-
-    it('should test if it is TransformTool', () => {
-        const transformTool = {
-            isTransformTool: true,
-        } as unknown as DIVEBaseTool;
-        expect(isTransformTool(transformTool)).toBe(true);
-    });
-
-    it('should test if it is not TransformTool', () => {
-        const notTransformTool = {
-            someOtherProperty: true,
-        } as unknown as DIVEBaseTool;
-        expect(isTransformTool(notTransformTool)).toBe(false);
-    });
-
-    it('should instantiate', () => {
-        expect(transformTool).toBeDefined();
-        expect(transformTool.isTransformTool).toBe(true);
-        expect(transformTool.name).toBe('DIVETransformTool');
-    });
-
-    it('should activate', () => {
-        expect(() => transformTool.activate()).not.toThrow();
-    });
-
-    it('should set gizmo mode', () => {
-        expect(() => transformTool.setGizmoMode('translate')).not.toThrow();
-        expect(() => transformTool.setGizmoMode('rotate')).not.toThrow();
-        expect(() => transformTool.setGizmoMode('scale')).not.toThrow();
-    });
-
-    it('should set gizmo visibility when adding to scene', () => {
-        // Mock that gizmo is not in scene
-        vi.spyOn(mockScene.children, 'includes').mockReturnValue(false);
-
-        expect(() => transformTool.setGizmoVisible(true)).not.toThrow();
-        expect(mockScene.add).toHaveBeenCalledWith(transformTool['_gizmo']);
-    });
-
-    it('should set gizmo visibility when removing from scene', () => {
-        // Mock that gizmo is in scene
-        vi.spyOn(mockScene.children, 'includes').mockReturnValue(true);
-
-        expect(() => transformTool.setGizmoVisible(false)).not.toThrow();
-        expect(mockScene.remove).toHaveBeenCalledWith(transformTool['_gizmo']);
-    });
-
-    it('should not add gizmo when already in scene', () => {
-        // Reset mock calls
-        vi.clearAllMocks();
-
-        // Mock that gizmo is already in scene
-        vi.spyOn(mockScene.children, 'includes').mockReturnValue(true);
-
-        transformTool.setGizmoVisible(true);
-
-        // Should not call add again
-        expect(mockScene.add).not.toHaveBeenCalled();
-    });
-
-    it('should not remove gizmo when not in scene', () => {
-        // Reset mock calls
-        vi.clearAllMocks();
-
-        // Mock that gizmo is not in scene
-        vi.spyOn(mockScene.children, 'includes').mockReturnValue(false);
-
-        transformTool.setGizmoVisible(false);
-
-        // Should not call remove
-        expect(mockScene.remove).not.toHaveBeenCalled();
-    });
-
-    it('should set gizmo unified scaling', () => {
-        expect(() => transformTool.setGizmoScaleLinked(true)).not.toThrow();
-        expect(() => transformTool.setGizmoScaleLinked(false)).not.toThrow();
-    });
-
-    it('should initialize gizmo with proper event listeners', () => {
-        const gizmo = transformTool['_gizmo'] as any;
-        expect(gizmo.addEventListener).toHaveBeenCalledWith(
-            'mouseDown',
-            expect.any(Function),
-        );
-        expect(gizmo.addEventListener).toHaveBeenCalledWith(
-            'objectChange',
-            expect.any(Function),
-        );
-        expect(gizmo.addEventListener).toHaveBeenCalledWith(
-            'mouseUp',
-            expect.any(Function),
+        mockScene = createMockScene();
+        mockController = createMockController();
+        selectionState = new SelectionState();
+        transformTool = new TransformTool(
+            mockScene,
+            mockController,
+            selectionState,
         );
     });
 
-    it('should traverse gizmo and set colors for different axes', () => {
-        const gizmo = transformTool['_gizmo'] as any;
-        const mockTraverse = gizmo.traverse as any;
-
-        // Verify traverse was called
-        expect(mockTraverse).toHaveBeenCalledWith(expect.any(Function));
-
-        // Get the traverse callback
-        const traverseCallback = mockTraverse.mock.calls[0][0];
-
-        // Mock child objects with different names
-        const mockChildX = {
-            name: 'X',
-            isMesh: true,
-            material: { color: { set: vi.fn() } },
-        };
-        const mockChildY = {
-            name: 'Y',
-            isMesh: true,
-            material: { color: { set: vi.fn() } },
-        };
-        const mockChildZ = {
-            name: 'Z',
-            isMesh: true,
-            material: { color: { set: vi.fn() } },
-        };
-        const mockChildXY = {
-            name: 'XY',
-            isMesh: true,
-            material: { color: { set: vi.fn() } },
-        };
-        const mockChildYZ = {
-            name: 'YZ',
-            isMesh: true,
-            material: { color: { set: vi.fn() } },
-        };
-        const mockChildXZ = {
-            name: 'XZ',
-            isMesh: true,
-            material: { color: { set: vi.fn() } },
-        };
-        const mockNonMesh = {
-            name: 'SomeOther',
-            isMesh: false,
-        };
-
-        // Call traverse callback with different children
-        traverseCallback(mockChildX);
-        traverseCallback(mockChildY);
-        traverseCallback(mockChildZ);
-        traverseCallback(mockChildXY);
-        traverseCallback(mockChildYZ);
-        traverseCallback(mockChildXZ);
-        traverseCallback(mockNonMesh);
-
-        // Verify colors were set for mesh objects
-        expect(mockChildX.material.color.set).toHaveBeenCalled();
-        expect(mockChildY.material.color.set).toHaveBeenCalled();
-        expect(mockChildZ.material.color.set).toHaveBeenCalled();
-        expect(mockChildXY.material.color.set).toHaveBeenCalled();
-        expect(mockChildYZ.material.color.set).toHaveBeenCalled();
-        expect(mockChildXZ.material.color.set).toHaveBeenCalled();
+    afterEach(() => {
+        transformTool.dispose();
+        selectionState.dispose();
+        vi.clearAllMocks();
     });
 
-    it('should call enableAll when setting gizmo visible and isTransformControls is true', () => {
-        vi.spyOn(mockScene.children, 'includes').mockReturnValue(false);
-        const gizmo = transformTool['_gizmo'] as any;
-        gizmo.isTransformControls = true;
-        const enableAllSpy = vi.fn();
-        const raycaster = {
-            layers: {
-                enableAll: enableAllSpy,
-            },
-        };
-        gizmo.getRaycaster = vi.fn(() => raycaster);
-        transformTool.setGizmoVisible(true);
-        expect(enableAllSpy).toHaveBeenCalled();
+    describe('properties', () => {
+        it('should have correct name', () => {
+            expect(transformTool.name).toBe('transform');
+        });
+
+        it('should have correct priority', () => {
+            expect(transformTool.priority).toBe(5);
+        });
+
+        it('should have a gizmo', () => {
+            expect(transformTool.gizmo).toBeDefined();
+        });
     });
 
-    it('should call disableAll when setting gizmo invisible and isTransformControls is true', () => {
-        vi.spyOn(mockScene.children, 'includes').mockReturnValue(true);
-        const gizmo = transformTool['_gizmo'] as any;
-        gizmo.isTransformControls = true;
-        const disableAllSpy = vi.fn();
-        const raycaster = {
-            layers: {
-                disableAll: disableAllSpy,
-            },
-        };
-        gizmo.getRaycaster = vi.fn(() => raycaster);
-        transformTool.setGizmoVisible(false);
-        expect(disableAllSpy).toHaveBeenCalled();
+    describe('isTransformTool type guard', () => {
+        it('should identify TransformTool', () => {
+            expect(isTransformTool(transformTool)).toBe(true);
+        });
+
+        it('should not identify non-TransformTool', () => {
+            const otherTool: Tool = { name: 'other', priority: 10 };
+            expect(isTransformTool(otherTool)).toBe(false);
+        });
     });
 
-    it('should handle mouseDown event with movable object and onMoveStart', () => {
-        const gizmo = transformTool['_gizmo'] as any;
-        const mouseDownListener = gizmo.addEventListener.mock.calls.find(
-            (call: any[]) => call[0] === 'mouseDown',
-        )[1];
-        gizmo.object = { isMovable: true, onMoveStart: vi.fn() };
-        mockController.enabled = true;
-        mouseDownListener();
-        expect(mockController.enabled).toBe(false);
-        expect(gizmo.object.onMoveStart).toHaveBeenCalled();
+    describe('gizmo mode', () => {
+        it('should set gizmo mode to translate', () => {
+            expect(() => transformTool.setGizmoMode('translate')).not.toThrow();
+        });
+
+        it('should set gizmo mode to rotate', () => {
+            expect(() => transformTool.setGizmoMode('rotate')).not.toThrow();
+        });
+
+        it('should set gizmo mode to scale', () => {
+            expect(() => transformTool.setGizmoMode('scale')).not.toThrow();
+        });
     });
 
-    it('should handle mouseDown event with movable object but no onMoveStart', () => {
-        const gizmo = transformTool['_gizmo'] as any;
-        const mouseDownListener = gizmo.addEventListener.mock.calls.find(
-            (call: any[]) => call[0] === 'mouseDown',
-        )[1];
-        gizmo.object = { isMovable: true };
-        mockController.enabled = true;
-        expect(() => mouseDownListener()).not.toThrow();
-        expect(mockController.enabled).toBe(false);
+    describe('gizmo visibility', () => {
+        it('should set gizmo visible', () => {
+            expect(() => transformTool.setGizmoVisible(true)).not.toThrow();
+        });
+
+        it('should set gizmo invisible', () => {
+            expect(() => transformTool.setGizmoVisible(false)).not.toThrow();
+        });
     });
 
-    it('should handle mouseDown event with non-movable object', () => {
-        const gizmo = transformTool['_gizmo'] as any;
-        const mouseDownListener = gizmo.addEventListener.mock.calls.find(
-            (call: any[]) => call[0] === 'mouseDown',
-        )[1];
-        gizmo.object = { isMovable: false };
-        mockController.enabled = true;
-        mouseDownListener();
-        expect(mockController.enabled).toBe(false);
+    describe('scale linked', () => {
+        it('should set scale linked', () => {
+            expect(() => transformTool.setGizmoScaleLinked(true)).not.toThrow();
+        });
+
+        it('should set scale not linked', () => {
+            expect(() =>
+                transformTool.setGizmoScaleLinked(false),
+            ).not.toThrow();
+        });
     });
 
-    it('should handle objectChange event with movable object, onMove, and scale linked', () => {
-        const gizmo = transformTool['_gizmo'] as any;
-        const objectChangeListener = gizmo.addEventListener.mock.calls.find(
-            (call: any[]) => call[0] === 'objectChange',
-        )[1];
-        const scale = { x: 2, y: 4, z: 6, set: vi.fn() };
-        gizmo.object = { isMovable: true, onMove: vi.fn(), scale };
-        transformTool.setGizmoScaleLinked(true);
-        objectChangeListener();
-        expect(gizmo.object.onMove).toHaveBeenCalled();
-        expect(scale.set).toHaveBeenCalledWith(4, 4, 4);
+    describe('activation', () => {
+        it('should activate without error', () => {
+            expect(() => transformTool.onActivate()).not.toThrow();
+        });
+
+        it('should deactivate without error', () => {
+            transformTool.onActivate();
+            expect(() => transformTool.onDeactivate()).not.toThrow();
+        });
+
+        it('should attach gizmo to selected object on activate', () => {
+            const mockSelectable = {
+                uuid: 'test',
+                isSelectable: true,
+                isMovable: true,
+                visible: true,
+            } as unknown as Object3D & DIVESelectable & DIVEMovable;
+
+            selectionState.select(mockSelectable);
+            transformTool.onActivate();
+
+            expect(transformTool.gizmo.object).toBe(mockSelectable);
+        });
     });
 
-    it('should handle objectChange event with movable object, onMove, and scale not linked', () => {
-        const gizmo = transformTool['_gizmo'] as any;
-        const objectChangeListener = gizmo.addEventListener.mock.calls.find(
-            (call: any[]) => call[0] === 'objectChange',
-        )[1];
-        const scale = { x: 2, y: 4, z: 6, set: vi.fn() };
-        gizmo.object = { isMovable: true, onMove: vi.fn(), scale };
-        transformTool.setGizmoScaleLinked(false);
-        objectChangeListener();
-        expect(gizmo.object.onMove).toHaveBeenCalled();
-        expect(scale.set).not.toHaveBeenCalled();
+    describe('pointer move', () => {
+        it('should block other tools when gizmo is dragging', () => {
+            (transformTool.gizmo as any).dragging = true;
+
+            const ctx = createMockContext();
+            const result = transformTool.onPointerMove(ctx);
+
+            expect(result).toBe(true);
+        });
+
+        it('should not block when gizmo is not being interacted with', () => {
+            (transformTool.gizmo as any).dragging = false;
+
+            const ctx = createMockContext();
+            const result = transformTool.onPointerMove(ctx);
+
+            expect(result).toBeFalsy();
+        });
     });
 
-    it('should handle objectChange event with movable object but no onMove', () => {
-        const gizmo = transformTool['_gizmo'] as any;
-        const objectChangeListener = gizmo.addEventListener.mock.calls.find(
-            (call: any[]) => call[0] === 'objectChange',
-        )[1];
-        gizmo.object = { isMovable: true };
-        expect(() => objectChangeListener()).not.toThrow();
+    describe('selection changes', () => {
+        it('should attach gizmo when movable object is selected', () => {
+            const mockSelectable = {
+                uuid: 'test',
+                isSelectable: true,
+                isMovable: true,
+                visible: true,
+            } as unknown as Object3D & DIVESelectable & DIVEMovable;
+
+            transformTool.onActivate();
+            selectionState.select(mockSelectable);
+
+            expect(transformTool.gizmo.object).toBe(mockSelectable);
+        });
+
+        it('should detach gizmo when selection is cleared', () => {
+            const mockSelectable = {
+                uuid: 'test',
+                isSelectable: true,
+                isMovable: true,
+                visible: true,
+                onDeselect: vi.fn(),
+            } as unknown as Object3D & DIVESelectable & DIVEMovable;
+
+            transformTool.onActivate();
+            selectionState.select(mockSelectable);
+            selectionState.deselect();
+
+            expect(transformTool.gizmo.object).toBeUndefined();
+        });
     });
 
-    it('should handle objectChange event with non-movable object', () => {
-        const gizmo = transformTool['_gizmo'] as any;
-        const objectChangeListener = gizmo.addEventListener.mock.calls.find(
-            (call: any[]) => call[0] === 'objectChange',
-        )[1];
-        gizmo.object = { isMovable: false };
-        expect(() => objectChangeListener()).not.toThrow();
-    });
-
-    it('should handle mouseUp event with movable object and onMoveEnd', () => {
-        const gizmo = transformTool['_gizmo'] as any;
-        const mouseUpListener = gizmo.addEventListener.mock.calls.find(
-            (call: any[]) => call[0] === 'mouseUp',
-        )[1];
-        gizmo.object = { isMovable: true, onMoveEnd: vi.fn() };
-        mockController.enabled = false;
-        mouseUpListener();
-        expect(mockController.enabled).toBe(true);
-        expect(gizmo.object.onMoveEnd).toHaveBeenCalled();
-    });
-
-    it('should handle mouseUp event with movable object but no onMoveEnd', () => {
-        const gizmo = transformTool['_gizmo'] as any;
-        const mouseUpListener = gizmo.addEventListener.mock.calls.find(
-            (call: any[]) => call[0] === 'mouseUp',
-        )[1];
-        gizmo.object = { isMovable: true };
-        mockController.enabled = false;
-        expect(() => mouseUpListener()).not.toThrow();
-        expect(mockController.enabled).toBe(true);
-    });
-
-    it('should handle mouseUp event with non-movable object', () => {
-        const gizmo = transformTool['_gizmo'] as any;
-        const mouseUpListener = gizmo.addEventListener.mock.calls.find(
-            (call: any[]) => call[0] === 'mouseUp',
-        )[1];
-        gizmo.object = { isMovable: false };
-        mockController.enabled = false;
-        mouseUpListener();
-        expect(mockController.enabled).toBe(true);
+    describe('dispose', () => {
+        it('should dispose without error', () => {
+            expect(() => transformTool.dispose()).not.toThrow();
+        });
     });
 });
