@@ -1,9 +1,8 @@
+import { type Object3D } from 'three';
 import { Action } from '../action.ts';
 import { registerAction } from '../../ActionRegistry.ts';
 import { type ActionDependencies } from '../../../types/index.ts';
-import { isSelectTool } from '@shopware-ag/dive/toolbox';
-import { type EntitySchema } from '@shopware-ag/dive';
-import { type DIVESelectable } from '@shopware-ag/dive';
+import { type EntitySchema, type DIVESelectable } from '@shopware-ag/dive';
 
 export const SelectObjectAction = Action.define<
     Partial<EntitySchema> & { id: string },
@@ -22,10 +21,11 @@ export const SelectObjectAction = Action.define<
             throw new Error('Object is not selectable.');
 
         const instance = await getToolbox();
-        const activeTool = instance.getActiveTool();
-        if (activeTool && isSelectTool(activeTool)) {
-            activeTool.attachGizmo(sceneObject as DIVESelectable);
-        }
+        // Use SelectionState to select the object
+        // TransformTool will automatically attach gizmo via selection change listener
+        instance.selectionState.select(
+            sceneObject as Object3D & DIVESelectable,
+        );
     },
 });
 

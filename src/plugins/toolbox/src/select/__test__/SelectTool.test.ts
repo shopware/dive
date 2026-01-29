@@ -1,393 +1,192 @@
-import { DIVESelectTool, isSelectTool } from '../SelectTool.ts';
-import { OrbitController } from '@shopware-ag/dive/orbitcontroller';
-import {
-    DIVESelectable,
-    DIVEScene,
-    DIVERenderer,
-    type DIVEPerspectiveCamera,
-    type DIVEMovable,
-} from '@shopware-ag/dive';
-import { type Object3D } from 'three';
-import { type DIVEBaseTool } from '../../BaseTool.ts';
-import { Tween } from '@tweenjs/tween.js';
+import { Vector2, type Object3D } from 'three';
+import { SelectTool } from '../SelectTool.ts';
+import { SelectionState } from '../../SelectionState.ts';
+import { type PointerContext } from '../../PointerContext.ts';
+import { type DIVESelectable } from '@shopware-ag/dive';
 
-vi.mock('@shopware-ag/dive', async () => {
-    const actual =
-        await vi.importActual<typeof import('@shopware-ag/dive')>(
-            '@shopware-ag/dive',
-        );
-    return {
-        ...actual,
-        DIVEScene: vi.fn(function (this: any) {
-            this.add = vi.fn();
-            this.children = [];
-            this.root = {
-                children: [],
-            };
-            return this;
-        }),
-        DIVEPerspectiveCamera: vi.fn(function (this: any) {
-            this.isPerspectiveCamera = true;
-            this.layers = {
-                mask: 0,
-            };
-            return this;
-        }),
-        DIVERenderPipeline: vi.fn(function (this: any) {
-            this.webglrenderer = {
-                domElement: {
-                    clientWidth: 0,
-                    clientHeight: 0,
-                },
-            };
-            return this;
-        }),
-    };
+/**
+ * @vitest-environment jsdom
+ */
+
+// Mock PointerEvent for jsdom
+class MockPointerEvent extends MouseEvent {
+    constructor(type: string, props?: PointerEventInit) {
+        super(type, props);
+    }
+}
+globalThis.PointerEvent = MockPointerEvent as unknown as typeof PointerEvent;
+
+const createMockContext = (modelIntersects: any[] = []): PointerContext => ({
+    event: new PointerEvent('click'),
+    pointer: new Vector2(0, 0),
+    intersects: [],
+    modelIntersects,
+    uiIntersects: [],
+    pointerPrimaryDown: false,
+    pointerMiddleDown: false,
+    pointerSecondaryDown: false,
+    lastPointerDown: new Vector2(0, 0),
 });
 
-vi.mock('@shopware-ag/dive/orbitcontroller', async () => {
-    const actual = await vi.importActual<
-        typeof import('@shopware-ag/dive/orbitcontroller')
-    >('@shopware-ag/dive/orbitcontroller');
-    const mockOrbitController = vi.fn(function (this: any) {
-        this.enabled = true;
-        this.domElement = {
-            clientWidth: 0,
-            clientHeight: 0,
-        };
-        this.object = {
-            layers: {
-                mask: 0,
-            },
-        };
-        return this;
-    });
-    // Copy static properties
-    Object.assign(mockOrbitController, actual.OrbitController);
+describe('SelectTool', () => {
+    let selectTool: SelectTool;
+    let selectionState: SelectionState;
 
-    return {
-        ...actual,
-        OrbitController: mockOrbitController,
-    };
-});
-
-vi.mock('@shopware-ag/dive/animation', () => {
-    return {
-        DIVEAnimationSystem: vi.fn(function (this: any) {
-            this.domElement = {
-                style: {},
-            };
-            this.animate = <T extends object>(obj: T) => {
-                return new Tween<T>(obj);
-            };
-
-            return this;
-        }),
-    };
-});
-
-const mockCamera: DIVEPerspectiveCamera = {} as DIVEPerspectiveCamera;
-const mockScene: DIVEScene = new DIVEScene();
-const mockController: OrbitController = new OrbitController(
-    mockCamera,
-    new DIVERenderer(mockScene, mockCamera).webglrenderer.domElement,
-);
-
-let selectTool: DIVESelectTool;
-let intersectObjectsSpy: any;
-
-describe('dive/toolbox/select/DIVESelectTool', () => {
     beforeEach(() => {
-        selectTool = new DIVESelectTool(mockScene, mockController);
-        intersectObjectsSpy = vi
-            .spyOn(selectTool['_raycaster'], 'intersectObjects')
-            .mockReturnValue([]);
+        selectionState = new SelectionState();
+        selectTool = new SelectTool(selectionState);
     });
 
-    it('should test if it is SelectTool', () => {
-        const selectTool = { isSelectTool: true } as unknown as DIVEBaseTool;
-        expect(isSelectTool(selectTool)).toBeDefined();
+    afterEach(() => {
+        selectionState.dispose();
+        vi.clearAllMocks();
     });
 
-    it('should instantiate', () => {
-        expect(selectTool).toBeDefined();
+    describe('properties', () => {
+        it('should have correct name', () => {
+            expect(selectTool.name).toBe('select');
+        });
+
+        it('should have correct priority', () => {
+            expect(selectTool.priority).toBe(30);
+        });
+
+        it('should have null selected initially', () => {
+            expect(selectTool.selected).toBeNull();
+        });
     });
 
-    it('should activate', () => {
-        expect(() => selectTool.activate()).not.toThrow();
+    describe('click behavior', () => {
+        it('should select object on click', () => {
+            const mockSelectable = {
+                uuid: 'test',
+                isSelectable: true,
+                onSelect: vi.fn(),
+            } as unknown as Object3D & DIVESelectable;
+
+            const ctx = createMockContext([
+                { object: mockSelectable, point: { x: 0, y: 0, z: 0 } },
+            ]);
+
+            selectTool.onClick(ctx);
+
+            expect(mockSelectable.onSelect).toHaveBeenCalled();
+            expect(selectTool.selected).toBe(mockSelectable);
+        });
+
+        it('should deselect when clicking nothing', () => {
+            const mockSelectable = {
+                uuid: 'test',
+                isSelectable: true,
+                onSelect: vi.fn(),
+                onDeselect: vi.fn(),
+            } as unknown as Object3D & DIVESelectable;
+
+            // First select
+            const ctx1 = createMockContext([
+                { object: mockSelectable, point: { x: 0, y: 0, z: 0 } },
+            ]);
+            selectTool.onClick(ctx1);
+
+            // Then click nothing
+            const ctx2 = createMockContext([]);
+            selectTool.onClick(ctx2);
+
+            expect(mockSelectable.onDeselect).toHaveBeenCalled();
+            expect(selectTool.selected).toBeNull();
+        });
+
+        it('should not reselect same object', () => {
+            const mockSelectable = {
+                uuid: 'test',
+                isSelectable: true,
+                onSelect: vi.fn(),
+            } as unknown as Object3D & DIVESelectable;
+
+            const ctx = createMockContext([
+                { object: mockSelectable, point: { x: 0, y: 0, z: 0 } },
+            ]);
+
+            selectTool.onClick(ctx);
+            selectTool.onClick(ctx);
+
+            expect(mockSelectable.onSelect).toHaveBeenCalledTimes(1);
+        });
+
+        it('should switch selection between objects', () => {
+            const mockSelectable1 = {
+                uuid: 'test1',
+                isSelectable: true,
+                onSelect: vi.fn(),
+                onDeselect: vi.fn(),
+            } as unknown as Object3D & DIVESelectable;
+
+            const mockSelectable2 = {
+                uuid: 'test2',
+                isSelectable: true,
+                onSelect: vi.fn(),
+            } as unknown as Object3D & DIVESelectable;
+
+            // Select first
+            const ctx1 = createMockContext([
+                { object: mockSelectable1, point: { x: 0, y: 0, z: 0 } },
+            ]);
+            selectTool.onClick(ctx1);
+
+            // Select second
+            const ctx2 = createMockContext([
+                { object: mockSelectable2, point: { x: 0, y: 0, z: 0 } },
+            ]);
+            selectTool.onClick(ctx2);
+
+            expect(mockSelectable1.onDeselect).toHaveBeenCalled();
+            expect(mockSelectable2.onSelect).toHaveBeenCalled();
+            expect(selectTool.selected).toBe(mockSelectable2);
+        });
+
+        it('should ignore non-selectable objects', () => {
+            const nonSelectable = {
+                uuid: 'test',
+                // No isSelectable property
+            };
+
+            const ctx = createMockContext([
+                { object: nonSelectable, point: { x: 0, y: 0, z: 0 } },
+            ]);
+
+            selectTool.onClick(ctx);
+
+            expect(selectTool.selected).toBeNull();
+        });
     });
 
-    it('should execute onClick without hit', () => {
-        selectTool.attachGizmo({} as unknown as DIVESelectable);
-        expect(() =>
-            selectTool.onClick({ offsetX: 0, offsetY: 0 } as PointerEvent),
-        ).not.toThrow();
-    });
+    describe('programmatic selection', () => {
+        it('should select programmatically', () => {
+            const mockSelectable = {
+                uuid: 'test',
+                isSelectable: true,
+                onSelect: vi.fn(),
+            } as unknown as Object3D & DIVESelectable;
 
-    it('should execute onClick with hit', () => {
-        intersectObjectsSpy.mockReturnValueOnce([
-            {
-                object: {
-                    uuid: 'test',
-                    visible: true,
-                    parent: {
-                        name: 'this is the test scene root!!!',
-                        parent: null,
-                    },
-                },
-            },
-        ]);
+            selectTool.select(mockSelectable);
 
-        expect(() =>
-            selectTool.onClick({ offsetX: 0, offsetY: 0 } as PointerEvent),
-        ).not.toThrow();
-    });
+            expect(mockSelectable.onSelect).toHaveBeenCalled();
+            expect(selectTool.selected).toBe(mockSelectable);
+        });
 
-    it('should execute onClick with same ISelectable hit', () => {
-        const mock_onSelect = vi.fn();
+        it('should deselect programmatically', () => {
+            const mockSelectable = {
+                uuid: 'test',
+                isSelectable: true,
+                onSelect: vi.fn(),
+                onDeselect: vi.fn(),
+            } as unknown as Object3D & DIVESelectable;
 
-        intersectObjectsSpy.mockReturnValueOnce([
-            {
-                object: {
-                    isSelectable: true,
-                    onSelect: mock_onSelect,
-                    visible: true,
-                    parent: {
-                        name: 'this is the test scene root!!!',
-                        parent: null,
-                    },
-                    uuid: 'test0',
-                },
-            },
-        ]);
-        selectTool.attachGizmo({
-            visible: true,
-            isSelectable: true,
-            uuid: 'test0',
-        } as unknown as Object3D & DIVESelectable);
-        expect(() =>
-            selectTool.onClick({ offsetX: 0, offsetY: 0 } as PointerEvent),
-        ).not.toThrow();
-    });
+            selectTool.select(mockSelectable);
+            selectTool.deselect();
 
-    it('should execute onClick with ISelectable hit', () => {
-        const mock_onSelect = vi.fn();
-
-        intersectObjectsSpy.mockReturnValueOnce([
-            {
-                object: {
-                    isSelectable: true,
-                    onSelect: mock_onSelect,
-                    visible: true,
-                    parent: {
-                        name: 'this is the test scene root!!!',
-                        parent: null,
-                    },
-                    uuid: 'test0',
-                },
-            },
-        ]);
-        selectTool.attachGizmo({
-            isSelectable: true,
-            uuid: 'test1',
-        } as unknown as Object3D & DIVESelectable);
-        expect(() =>
-            selectTool.onClick({ offsetX: 0, offsetY: 0 } as PointerEvent),
-        ).not.toThrow();
-    });
-
-    it('should execute onClick with IMovable hit', () => {
-        const mock_onSelect = vi.fn();
-
-        intersectObjectsSpy.mockReturnValueOnce([
-            {
-                object: {
-                    isSelectable: true,
-                    isMovable: true,
-                    onSelect: mock_onSelect,
-                    parent: {
-                        name: 'this is the test scene root!!!',
-                        parent: null,
-                    },
-                },
-            },
-        ]);
-
-        expect(() =>
-            selectTool.onClick({ offsetX: 0, offsetY: 0 } as PointerEvent),
-        ).not.toThrow();
-    });
-
-    it('should Select', () => {
-        const mock_onSelect = vi.fn();
-        expect(() => selectTool.select({ isSelectable: true })).not.toThrow();
-        expect(() =>
-            selectTool.select({
-                isMovable: true,
-                onSelect: mock_onSelect,
-            } as unknown as DIVESelectable),
-        ).not.toThrow();
-        expect(mock_onSelect).toHaveBeenCalledTimes(1);
-    });
-
-    it('should Deselect', () => {
-        const mock_onDeselect = vi.fn();
-        expect(() => selectTool.deselect({ isSelectable: true })).not.toThrow();
-        expect(() =>
-            selectTool.deselect({
-                isMovable: true,
-                onDeselect: mock_onDeselect,
-            } as unknown as DIVESelectable),
-        ).not.toThrow();
-        expect(mock_onDeselect).toHaveBeenCalledTimes(1);
-    });
-
-    it('should set gizmo mode', () => {
-        expect(() => selectTool.setGizmoMode('translate')).not.toThrow();
-    });
-
-    it('should identify as SelectTool', () => {
-        const selectTool = new DIVESelectTool(mockScene, mockController);
-        expect(isSelectTool(selectTool)).toBe(true);
-    });
-
-    it('should not identify non-SelectTool as SelectTool', () => {
-        const nonSelectTool = {} as DIVEBaseTool;
-        expect(isSelectTool(nonSelectTool)).toBe(false);
-    });
-
-    it('should select object with onSelect callback', () => {
-        const selectTool = new DIVESelectTool(mockScene, mockController);
-        const mockSelectable = {
-            onSelect: vi.fn(),
-        } as unknown as DIVESelectable;
-
-        selectTool.select(mockSelectable);
-        expect(mockSelectable.onSelect).toHaveBeenCalled();
-    });
-
-    it('should select object without onSelect callback', () => {
-        const selectTool = new DIVESelectTool(mockScene, mockController);
-        const mockSelectable = {} as unknown as DIVESelectable;
-
-        expect(() => selectTool.select(mockSelectable)).not.toThrow();
-    });
-
-    it('should deselect object with onDeselect callback', () => {
-        const selectTool = new DIVESelectTool(mockScene, mockController);
-        const mockSelectable = {
-            onDeselect: vi.fn(),
-        } as unknown as DIVESelectable;
-
-        selectTool.deselect(mockSelectable);
-        expect(mockSelectable.onDeselect).toHaveBeenCalled();
-    });
-
-    it('should deselect object without onDeselect callback', () => {
-        const selectTool = new DIVESelectTool(mockScene, mockController);
-        const mockSelectable = {} as unknown as DIVESelectable;
-
-        expect(() => selectTool.deselect(mockSelectable)).not.toThrow();
-    });
-
-    it('should attach gizmo to movable object', () => {
-        const selectTool = new DIVESelectTool(mockScene, mockController);
-        const mockMovable = {
-            isMovable: true,
-            visible: true,
-        } as unknown as Object3D & DIVESelectable & DIVEMovable;
-
-        selectTool['_gizmo'] = {
-            attach: vi.fn(),
-        } as any;
-
-        selectTool.attachGizmo(mockMovable);
-        expect(selectTool['_gizmo'].attach).toHaveBeenCalledWith(mockMovable);
-    });
-
-    it('should detach gizmo', () => {
-        const selectTool = new DIVESelectTool(mockScene, mockController);
-        selectTool['_gizmo'] = {
-            detach: vi.fn(),
-        } as any;
-
-        selectTool.detachGizmo();
-        expect(selectTool['_gizmo'].detach).toHaveBeenCalled();
-    });
-
-    it('should handle click with no intersections', () => {
-        const selectTool = new DIVESelectTool(mockScene, mockController);
-        const mockSelectable = {
-            uuid: 'test',
-            onDeselect: vi.fn(),
-            isSelectable: true,
-        } as unknown as Object3D & DIVESelectable;
-
-        selectTool['_gizmo'] = {
-            object: mockSelectable,
-            detach: vi.fn(),
-        } as any;
-
-        vi.spyOn(selectTool['_raycaster'], 'intersectObjects').mockReturnValue(
-            [],
-        );
-
-        selectTool.onClick({} as PointerEvent);
-        expect(mockSelectable.onDeselect).toHaveBeenCalled();
-    });
-
-    it('should handle click on same object', () => {
-        const selectTool = new DIVESelectTool(mockScene, mockController);
-        const mockSelectable = {
-            uuid: 'test',
-            isSelectable: true,
-            visible: true,
-        } as unknown as Object3D & DIVESelectable;
-
-        selectTool['_gizmo'] = {
-            object: mockSelectable,
-        } as any;
-
-        vi.spyOn(selectTool['_raycaster'], 'intersectObjects').mockReturnValue([
-            {
-                object: mockSelectable,
-            } as any,
-        ]);
-
-        selectTool.onClick({} as PointerEvent);
-        // No deselect should happen
-        expect(selectTool['_gizmo'].object).toBe(mockSelectable);
-    });
-
-    it('should handle click on different object', () => {
-        const selectTool = new DIVESelectTool(mockScene, mockController);
-        const oldSelectable = {
-            uuid: 'old',
-            isSelectable: true,
-            visible: true,
-            onDeselect: vi.fn(),
-        } as unknown as Object3D & DIVESelectable;
-
-        const newSelectable = {
-            uuid: 'new',
-            isSelectable: true,
-            visible: true,
-            onSelect: vi.fn(),
-        } as unknown as Object3D & DIVESelectable;
-
-        selectTool['_gizmo'] = {
-            object: oldSelectable,
-            detach: vi.fn(),
-        } as any;
-
-        vi.spyOn(selectTool['_raycaster'], 'intersectObjects').mockReturnValue([
-            {
-                object: newSelectable,
-            } as any,
-        ]);
-
-        selectTool.onClick({} as PointerEvent);
-        expect(oldSelectable.onDeselect).toHaveBeenCalled();
-        expect(newSelectable.onSelect).toHaveBeenCalled();
+            expect(mockSelectable.onDeselect).toHaveBeenCalled();
+            expect(selectTool.selected).toBeNull();
+        });
     });
 });

@@ -6,7 +6,7 @@ import {
     DIVESceneObject,
     type EntitySchema,
 } from '@shopware-ag/dive';
-import { type DIVESelectTool } from '@shopware-ag/dive/toolbox';
+import { type Toolbox, type SelectionState } from '@shopware-ag/dive/toolbox';
 
 const mockSceneObject = {
     attach: vi.fn(),
@@ -21,18 +21,17 @@ const mockEngine = {
     },
 } as unknown as DIVE;
 
-const mockDetachGizmo = vi.fn();
-const mockSelectTool = {
-    isSelectTool: true,
-    detachGizmo: mockDetachGizmo,
-} as unknown as DIVESelectTool;
+const mockSelectionState = {
+    select: vi.fn(),
+    deselect: vi.fn(),
+} as unknown as SelectionState;
 
-const mockGetActiveTool = vi.fn().mockReturnValue(mockSelectTool);
 const mockGetToolbox = vi.fn().mockResolvedValue({
-    getActiveTool: mockGetActiveTool,
-});
+    selectionState: mockSelectionState,
+} as unknown as Toolbox);
 
 const mockRegistered = new Map<string, EntitySchema>();
+
 describe('DeselectObjectAction', () => {
     beforeEach(() => {
         mockRegistered.clear();
@@ -72,7 +71,7 @@ describe('DeselectObjectAction', () => {
         await action.execute();
 
         // Assert
-        expect(mockSelectTool.detachGizmo).toHaveBeenCalled();
+        expect(mockSelectionState.deselect).toHaveBeenCalled();
     });
 
     it('should return false if object does not exist', async () => {
@@ -168,43 +167,5 @@ describe('DeselectObjectAction', () => {
         await expect(action.execute()).rejects.toThrow(
             'Object is not selectable.',
         );
-    });
-
-    it('should not throw if no select tool is active', async () => {
-        mockGetActiveTool.mockReturnValueOnce(null);
-
-        // Arrange
-        const testObject: EntitySchema = {
-            id: 'test-object',
-            name: 'Test Object',
-            entityType: 'primitive',
-            visible: true,
-            parentId: null,
-            position: { x: 0, y: 0, z: 0 },
-            rotation: { x: 0, y: 0, z: 0 },
-            scale: { x: 1, y: 1, z: 1 },
-            geometry: {
-                name: 'cube',
-                width: 1,
-                height: 1,
-                depth: 1,
-            },
-        } as unknown as EntitySchema;
-
-        mockRegistered.set(testObject.id, testObject);
-
-        // Act
-        const action = new DeselectObjectAction(
-            { id: 'test-object' },
-            {
-                engine: mockEngine,
-                getToolbox: mockGetToolbox,
-                registered: mockRegistered,
-            },
-        );
-        await action.execute();
-
-        // Assert
-        expect(mockDetachGizmo).not.toHaveBeenCalled();
     });
 });

@@ -1,103 +1,190 @@
 import { TransformControls } from 'three/examples/jsm/controls/TransformControls.js';
-import { DIVEBaseTool } from '../BaseTool.ts';
+import { type Object3D, type Mesh, type MeshBasicMaterial } from 'three';
 import {
-    DIVEGizmo,
     AxesColorBlue,
     AxesColorGreen,
     AxesColorRed,
     type DIVEMovable,
     type DIVEScene,
+    type DIVESelectable,
     implementsInterface,
 } from '@shopware-ag/dive';
-import { OrbitController } from '@shopware-ag/dive/orbitcontroller';
-import { type Mesh, type MeshBasicMaterial } from 'three';
+import { type OrbitController } from '@shopware-ag/dive/orbitcontroller';
+import { type Tool } from '../Tool.ts';
+import { type PointerContext } from '../PointerContext.ts';
+import { type SelectionState } from '../SelectionState.ts';
 
-export const isTransformTool = (
-    tool: DIVEBaseTool,
-): tool is DIVETransformTool => {
-    return (tool as DIVETransformTool).isTransformTool !== undefined;
+/**
+ * Type guard to check if a tool is a TransformTool.
+ */
+export const isTransformTool = (tool: Tool): tool is TransformTool => {
+    return tool.name === 'transform';
 };
 
 /**
- * A Tool to select and move objects in the scene.
+ * Tool for transforming objects with a gizmo.
  *
- * Objects have to implement the DIVESelectable interface to be selectable and DIVEMovable to be movable.
+ * Manages TransformControls gizmo and reacts to selection changes.
+ * Has highest priority to block model-hover when gizmo is being interacted with.
  *
  * @module
  */
+export class TransformTool implements Tool {
+    readonly name = 'transform';
+    readonly priority = 5;
 
-export class DIVETransformTool extends DIVEBaseTool {
-    readonly isTransformTool: boolean = true;
+    private _scene: DIVEScene;
+    private _controller: OrbitController;
+    private _selectionState: SelectionState;
+    private _gizmo: TransformControls;
+    private _scaleLinked: boolean = false;
+    private _gizmoVisible: boolean = true;
 
-    private _scaleLinked: boolean;
+    private _selectionChangeHandler: (
+        selected: (Object3D & DIVESelectable) | null,
+    ) => void;
 
-    protected _gizmo: TransformControls | DIVEGizmo;
+    constructor(
+        scene: DIVEScene,
+        controller: OrbitController,
+        selectionState: SelectionState,
+    ) {
+        this._scene = scene;
+        this._controller = controller;
+        this._selectionState = selectionState;
 
-    constructor(scene: DIVEScene, controller: OrbitController) {
-        super(scene, controller);
-        this.name = 'DIVETransformTool';
-
-        this._scaleLinked = false;
-
-        this._gizmo = this.initGizmo() as TransformControls;
-
+        this._gizmo = this.initGizmo();
         this._scene.add(this._gizmo);
+
+        // Bind selection change handler
+        this._selectionChangeHandler = this.onSelectionChange.bind(this);
     }
 
-    public activate(): void {}
-
-    public setGizmoMode(mode: 'translate' | 'rotate' | 'scale'): void {
-        this._gizmo.mode = mode;
+    /**
+     * Get the TransformControls gizmo.
+     */
+    public get gizmo(): TransformControls {
+        return this._gizmo;
     }
 
-    public setGizmoVisible(visible: boolean): void {
-        const contains = this._scene.children.includes(this._gizmo);
-        if (visible && !contains) {
-            this._scene.add(this._gizmo);
-            if ('isTransformControls' in this._gizmo) {
-                (this._gizmo as TransformControls)
-                    .getRaycaster()
-                    .layers.enableAll();
-            }
-        } else if (!visible && contains) {
-            this._scene.remove(this._gizmo);
-            if ('isTransformControls' in this._gizmo) {
-                (this._gizmo as TransformControls)
-                    .getRaycaster()
-                    .layers.disableAll();
+    /**
+     * Whether a drag operation is currently in progress.
+     */
+    public get isDragging(): boolean {
+        return this._gizmo.dragging;
+    }
+
+    public onActivate(): void {
+        this._selectionState.onChange(this._selectionChangeHandler);
+
+        // Sync with current selection
+        const current = this._selectionState.selected;
+        if (current) {
+            this.attachGizmo(current);
+        }
+    }
+
+    public onDeactivate(): void {
+        this._selectionState.offChange(this._selectionChangeHandler);
+        this._gizmo.detach();
+    }
+
+    public onPointerMove(ctx: PointerContext): boolean | void {
+        // Check if gizmo is being dragged - if so, block other tools
+        if (this._gizmo.dragging) {
+            return true;
+        }
+
+        // Check if pointer is over gizmo UI elements
+        if (ctx.uiIntersects.length > 0) {
+            const isGizmoHit = ctx.uiIntersects.some((i) =>
+                this.isGizmoChild(i.object),
+            );
+            if (isGizmoHit) {
+                return true; // Block model hover when hovering gizmo
             }
         }
     }
 
+    /**
+     * Set the gizmo transformation mode.
+     */
+    public setGizmoMode(mode: 'translate' | 'rotate' | 'scale'): void {
+        this._gizmo.mode = mode;
+    }
+
+    /**
+     * Set whether the gizmo is visible.
+     */
+    public setGizmoVisible(visible: boolean): void {
+        this._gizmoVisible = visible;
+
+        const contains = this._scene.children.includes(this._gizmo);
+        if (visible && !contains) {
+            this._scene.add(this._gizmo);
+            this._gizmo.getRaycaster().layers.enableAll();
+        } else if (!visible && contains) {
+            this._scene.remove(this._gizmo);
+            this._gizmo.getRaycaster().layers.disableAll();
+        }
+    }
+
+    /**
+     * Set whether scale operations are linked (uniform scaling).
+     */
     public setGizmoScaleLinked(linked: boolean): void {
         this._scaleLinked = linked;
     }
 
-    // only used for optimizing pointer events with DIVEGizmo
-    // public onPointerDown(e: PointerEvent): void {
-    //     super.onPointerDown(e);
+    /**
+     * Dispose of the tool and clean up resources.
+     */
+    public dispose(): void {
+        this._selectionState.offChange(this._selectionChangeHandler);
+        this._gizmo.detach();
+        this._scene.remove(this._gizmo);
+        this._gizmo.dispose();
+    }
 
-    //     if (this._hovered) {
-    //         this._dragRaycastOnObjects = (
-    //             this._gizmo as DIVEGizmo
-    //         ).gizmoPlane?.children;
-    //     }
-    // }
+    // ============ Private Methods ============
 
-    // only used for optimizing pointer events with DIVEGizmo
-    // protected raycast(): Intersection[] {
-    //     return super.raycast((this._gizmo as DIVEGizmo).gizmoNode.children);
-    // }
+    private onSelectionChange(
+        selected: (Object3D & DIVESelectable) | null,
+    ): void {
+        if (
+            selected &&
+            implementsInterface<DIVEMovable>(selected, 'isMovable')
+        ) {
+            this.attachGizmo(selected);
+        } else {
+            this._gizmo.detach();
+        }
+    }
 
-    private initGizmo(): TransformControls | DIVEGizmo {
+    private attachGizmo(obj: Object3D & DIVESelectable): void {
+        if (implementsInterface<DIVEMovable>(obj, 'isMovable')) {
+            this._gizmo.attach(obj);
+            this.setGizmoVisible(obj.visible && this._gizmoVisible);
+        }
+    }
+
+    private isGizmoChild(obj: Object3D): boolean {
+        let current: Object3D | null = obj;
+        while (current) {
+            if (current === this._gizmo) return true;
+            current = current.parent;
+        }
+        return false;
+    }
+
+    private initGizmo(): TransformControls {
         const g = new TransformControls(
-            // this._controller,
             this._controller.object,
             this._controller.domElement,
         );
-        // g.debug = true;
         g.mode = 'translate';
 
+        // Apply custom colors to gizmo axes
         g.traverse((child) => {
             if (!('isMesh' in child)) return;
 
@@ -123,38 +210,36 @@ export class DIVETransformTool extends DIVEBaseTool {
             }
         });
 
-        // happens when pointerDown event is called on gizmo
+        // Gizmo drag start - disable orbit controls
         g.addEventListener('mouseDown', () => {
             this._controller.enabled = false;
 
             if (!implementsInterface<DIVEMovable>(g.object, 'isMovable'))
                 return;
-            if (!g.object.onMoveStart) return;
-            g.object.onMoveStart();
+            g.object.onMoveStart?.();
         });
 
-        // happens when pointerMove event is called on gizmo
+        // Gizmo dragging - notify object
         g.addEventListener('objectChange', () => {
             if (!implementsInterface<DIVEMovable>(g.object, 'isMovable'))
                 return;
-            if (!g.object.onMove) return;
-            g.object.onMove();
+            g.object.onMove?.();
 
-            if (this._scaleLinked) {
+            // Apply linked scale if enabled
+            if (this._scaleLinked && g.object) {
                 const scale = g.object.scale;
                 const averageScale = (scale.x + scale.y + scale.z) / 3;
                 g.object.scale.set(averageScale, averageScale, averageScale);
             }
         });
 
-        // happens when pointerUp event is called on gizmo
+        // Gizmo drag end - re-enable orbit controls
         g.addEventListener('mouseUp', () => {
             this._controller.enabled = true;
 
             if (!implementsInterface<DIVEMovable>(g.object, 'isMovable'))
                 return;
-            if (!g.object.onMoveEnd) return;
-            g.object.onMoveEnd();
+            g.object.onMoveEnd?.();
         });
 
         return g;

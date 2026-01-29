@@ -6,7 +6,7 @@ import {
 } from '@shopware-ag/dive';
 import { SelectObjectAction } from '../selectobject.ts';
 import { Object3D } from 'three';
-import { DIVESelectTool, Toolbox } from '@shopware-ag/dive/toolbox';
+import { Toolbox, SelectionState } from '@shopware-ag/dive/toolbox';
 
 const mockSceneObject = {
     attach: vi.fn(),
@@ -21,15 +21,14 @@ const mockEngine = {
     },
 } as unknown as DIVE;
 
-const mockSelectTool = {
-    isSelectTool: true,
-    attachGizmo: vi.fn().mockImplementation(() => {}),
-} as unknown as DIVESelectTool;
+const mockSelectionState = {
+    select: vi.fn(),
+    deselect: vi.fn(),
+} as unknown as SelectionState;
 
-const mockGetActiveTool = vi.fn().mockReturnValue(mockSelectTool);
 const mockGetToolbox = () => {
     return Promise.resolve({
-        getActiveTool: mockGetActiveTool,
+        selectionState: mockSelectionState,
     } as unknown as Toolbox);
 };
 
@@ -74,9 +73,7 @@ describe('SelectObjectAction', () => {
         await action.execute();
 
         // Assert
-        expect(mockSelectTool.attachGizmo).toHaveBeenCalledWith(
-            mockSceneObject,
-        );
+        expect(mockSelectionState.select).toHaveBeenCalledWith(mockSceneObject);
     });
 
     it('should return false if object does not exist', async () => {
@@ -168,42 +165,5 @@ describe('SelectObjectAction', () => {
         await expect(action.execute()).rejects.toThrow(
             'Object is not selectable.',
         );
-    });
-
-    it('should not throw if no select tool is active', () => {
-        // Arrange
-        const testObject: EntitySchema = {
-            id: 'test-object',
-            name: 'Test Object',
-            entityType: 'primitive',
-            visible: true,
-            parentId: null,
-            position: { x: 0, y: 0, z: 0 },
-            rotation: { x: 0, y: 0, z: 0 },
-            scale: { x: 1, y: 1, z: 1 },
-            geometry: {
-                name: 'cube',
-                width: 1,
-                height: 1,
-                depth: 1,
-            },
-        };
-
-        mockRegistered.set(testObject.id, testObject);
-        mockGetActiveTool.mockReturnValueOnce(null);
-
-        // Act
-        const action = new SelectObjectAction(
-            { id: 'test-object' },
-            {
-                engine: mockEngine,
-                getToolbox: mockGetToolbox,
-                registered: mockRegistered,
-            },
-        );
-        action.execute();
-
-        // Assert
-        expect(mockSelectTool.attachGizmo).not.toHaveBeenCalled();
     });
 });
