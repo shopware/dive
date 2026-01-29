@@ -28,7 +28,7 @@ export class SelectionState {
      * Select an object. Deselects any previously selected object.
      * Calls onSelect on the new object and onDeselect on the previous.
      */
-    select(obj: Object3D & DIVESelectable): void {
+    public select(obj: Object3D & DIVESelectable): void {
         if (this._selected === obj) return;
 
         // Deselect previous
@@ -47,7 +47,7 @@ export class SelectionState {
      * Deselect the currently selected object.
      * Calls onDeselect on the object.
      */
-    deselect(): void {
+    public deselect(): void {
         if (!this._selected) return;
 
         this._selected.onDeselect?.();
@@ -59,21 +59,21 @@ export class SelectionState {
     /**
      * Register a callback to be notified when selection changes.
      */
-    onChange(callback: SelectionChangeCallback): void {
+    public onChange(callback: SelectionChangeCallback): void {
         this._listeners.add(callback);
     }
 
     /**
      * Unregister a previously registered callback.
      */
-    offChange(callback: SelectionChangeCallback): void {
+    public offChange(callback: SelectionChangeCallback): void {
         this._listeners.delete(callback);
     }
 
     /**
      * Dispose of the selection state and clear all listeners.
      */
-    dispose(): void {
+    public dispose(): void {
         this._selected = null;
         this._listeners.clear();
     }

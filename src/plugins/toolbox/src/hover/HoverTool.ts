@@ -20,15 +20,15 @@ export class HoverTool implements Tool {
     /**
      * Currently hovered object, or null if nothing is hovered.
      */
-    get hovered(): (Object3D & DIVEHoverable) | null {
+    public get hovered(): (Object3D & DIVEHoverable) | null {
         return this._hovered;
     }
 
-    onActivate(): void {
+    public onActivate(): void {
         this._hovered = null;
     }
 
-    onDeactivate(): void {
+    public onDeactivate(): void {
         // Clear hover state on deactivation
         if (this._hovered) {
             this._hovered.onPointerLeave?.();
@@ -36,7 +36,7 @@ export class HoverTool implements Tool {
         }
     }
 
-    onPointerMove(ctx: PointerContext): void {
+    public onPointerMove(ctx: PointerContext): void {
         // Only use modelIntersects (PRODUCT_LAYER), ignore gizmo/UI
         const intersect = ctx.modelIntersects[0];
         const hoverable = findInterface<DIVEHoverable>(

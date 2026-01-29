@@ -32,15 +32,15 @@ export class SelectTool implements Tool {
     /**
      * Get the currently selected object.
      */
-    get selected(): (Object3D & DIVESelectable) | null {
+    public get selected(): (Object3D & DIVESelectable) | null {
         return this._selectionState.selected;
     }
 
-    onActivate(): void {}
+    public onActivate(): void {}
 
-    onDeactivate(): void {}
+    public onDeactivate(): void {}
 
-    onClick(ctx: PointerContext): void {
+    public onClick(ctx: PointerContext): void {
         // Only use modelIntersects (PRODUCT_LAYER), ignore gizmo/UI
         const intersect = ctx.modelIntersects[0];
         const selectable = findInterface<DIVESelectable>(
@@ -67,14 +67,14 @@ export class SelectTool implements Tool {
     /**
      * Programmatically select an object.
      */
-    select(obj: Object3D & DIVESelectable): void {
+    public select(obj: Object3D & DIVESelectable): void {
         this._selectionState.select(obj);
     }
 
     /**
      * Programmatically deselect the current selection.
      */
-    deselect(): void {
+    public deselect(): void {
         this._selectionState.deselect();
     }
 }

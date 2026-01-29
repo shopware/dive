@@ -1,9 +1,4 @@
-import {
-    type Object3D,
-    type Intersection,
-    Raycaster,
-    Vector3,
-} from 'three';
+import { type Object3D, type Intersection, Raycaster, Vector3 } from 'three';
 import { type DIVEDraggable, findInterface } from '@shopware-ag/dive';
 import { type OrbitController } from '@shopware-ag/dive/orbitcontroller';
 import { type Tool } from '../Tool.ts';
@@ -85,10 +80,7 @@ export class DragTool implements Tool {
         if (!this._draggable) return;
 
         // Update raycaster from context
-        this._raycaster.setFromCamera(
-            ctx.pointer,
-            this._controller.object,
-        );
+        this._raycaster.setFromCamera(ctx.pointer, this._controller.object);
 
         // Check if we should start dragging
         if (!this._dragging) {
@@ -107,10 +99,7 @@ export class DragTool implements Tool {
     onPointerUp(ctx: PointerContext): void {
         if (this._dragging) {
             // Update raycaster for final position
-            this._raycaster.setFromCamera(
-                ctx.pointer,
-                this._controller.object,
-            );
+            this._raycaster.setFromCamera(ctx.pointer, this._controller.object);
             this.endDrag();
         }
         this._draggable = null;

@@ -113,7 +113,7 @@ export class Toolbox {
     /**
      * Enable a tool by type.
      */
-    enableTool(type: ToolType): void {
+    public enableTool(type: ToolType): void {
         const tool = this._tools.get(type);
         if (!tool) return;
 
@@ -127,7 +127,7 @@ export class Toolbox {
     /**
      * Disable an active tool by type.
      */
-    disableTool(type: ToolType): void {
+    public disableTool(type: ToolType): void {
         const tool = this._activeTools.get(type);
         if (!tool) return;
 
@@ -139,28 +139,28 @@ export class Toolbox {
     /**
      * Check if a tool is currently enabled.
      */
-    isToolEnabled(type: ToolType): boolean {
+    public isToolEnabled(type: ToolType): boolean {
         return this._activeTools.has(type);
     }
 
     /**
      * Get a tool by type.
      */
-    getTool<T extends ToolType>(type: T): ToolTypeMap[T] {
+    public getTool<T extends ToolType>(type: T): ToolTypeMap[T] {
         return this._tools.get(type) as ToolTypeMap[T];
     }
 
     /**
      * Get all currently active tools.
      */
-    getActiveTools(): Tool[] {
+    public getActiveTools(): Tool[] {
         return [...this._sortedActiveTools];
     }
 
     /**
      * Dispose of the toolbox and clean up resources.
      */
-    dispose(): void {
+    public dispose(): void {
         // Deactivate all tools
         for (const tool of this._activeTools.values()) {
             tool.onDeactivate?.();
@@ -337,7 +337,7 @@ export class Toolbox {
      * @deprecated Use enableTool/disableTool instead.
      * Enable or disable a tool by type.
      */
-    useTool(tool: ToolType): void {
+    public useTool(tool: ToolType): void {
         // Enable all standard tools for the given type
         const allTools: ToolType[] = [
             'hover',
@@ -357,7 +357,7 @@ export class Toolbox {
      * @deprecated Use getActiveTools instead.
      * Get the first active tool (for legacy compatibility).
      */
-    getActiveTool(): Tool | null {
+    public getActiveTool(): Tool | null {
         return this._sortedActiveTools[0] || null;
     }
 }

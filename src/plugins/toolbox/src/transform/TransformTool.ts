@@ -63,18 +63,18 @@ export class TransformTool implements Tool {
     /**
      * Get the TransformControls gizmo.
      */
-    get gizmo(): TransformControls {
+    public get gizmo(): TransformControls {
         return this._gizmo;
     }
 
     /**
      * Whether a drag operation is currently in progress.
      */
-    get isDragging(): boolean {
+    public get isDragging(): boolean {
         return this._gizmo.dragging;
     }
 
-    onActivate(): void {
+    public onActivate(): void {
         this._selectionState.onChange(this._selectionChangeHandler);
 
         // Sync with current selection
@@ -84,12 +84,12 @@ export class TransformTool implements Tool {
         }
     }
 
-    onDeactivate(): void {
+    public onDeactivate(): void {
         this._selectionState.offChange(this._selectionChangeHandler);
         this._gizmo.detach();
     }
 
-    onPointerMove(ctx: PointerContext): boolean | void {
+    public onPointerMove(ctx: PointerContext): boolean | void {
         // Check if gizmo is being dragged - if so, block other tools
         if (this._gizmo.dragging) {
             return true;
@@ -109,14 +109,14 @@ export class TransformTool implements Tool {
     /**
      * Set the gizmo transformation mode.
      */
-    setGizmoMode(mode: 'translate' | 'rotate' | 'scale'): void {
+    public setGizmoMode(mode: 'translate' | 'rotate' | 'scale'): void {
         this._gizmo.mode = mode;
     }
 
     /**
      * Set whether the gizmo is visible.
      */
-    setGizmoVisible(visible: boolean): void {
+    public setGizmoVisible(visible: boolean): void {
         this._gizmoVisible = visible;
 
         const contains = this._scene.children.includes(this._gizmo);
@@ -132,14 +132,14 @@ export class TransformTool implements Tool {
     /**
      * Set whether scale operations are linked (uniform scaling).
      */
-    setGizmoScaleLinked(linked: boolean): void {
+    public setGizmoScaleLinked(linked: boolean): void {
         this._scaleLinked = linked;
     }
 
     /**
      * Dispose of the tool and clean up resources.
      */
-    dispose(): void {
+    public dispose(): void {
         this._selectionState.offChange(this._selectionChangeHandler);
         this._gizmo.detach();
         this._scene.remove(this._gizmo);
