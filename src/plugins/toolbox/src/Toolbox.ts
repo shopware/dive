@@ -8,7 +8,7 @@ import { type OrbitController } from '@shopware-ag/dive/orbitcontroller';
 import { type Tool } from './Tool.ts';
 import { type PointerContext, type WheelContext } from './PointerContext.ts';
 import { SelectionState } from './SelectionState.ts';
-import { type ToolType } from '../types/index.ts';
+import { type ToolType, type ToolTypeMap } from '../types/index.ts';
 import { HoverTool } from './hover/HoverTool.ts';
 import { SelectTool } from './select/SelectTool.ts';
 import { TransformTool } from './transform/TransformTool.ts';
@@ -146,8 +146,8 @@ export class Toolbox {
     /**
      * Get a tool by type.
      */
-    getTool<T extends Tool>(type: ToolType): T {
-        return this._tools.get(type) as T;
+    getTool<T extends ToolType>(type: T): ToolTypeMap[T] {
+        return this._tools.get(type) as ToolTypeMap[T];
     }
 
     /**
@@ -329,35 +329,6 @@ export class Toolbox {
             this._lastPointerDown.distanceTo(this._pointer) >
             POINTER_DRAG_THRESHOLD
         );
-    }
-
-    // ============ Convenience Methods for TransformTool ============
-
-    /**
-     * Set the gizmo transformation mode.
-     * Convenience method that delegates to TransformTool.
-     */
-    setGizmoMode(mode: 'translate' | 'rotate' | 'scale'): void {
-        const transformTool = this.getTool<TransformTool>('transform');
-        transformTool.setGizmoMode(mode);
-    }
-
-    /**
-     * Set the gizmo visibility.
-     * Convenience method that delegates to TransformTool.
-     */
-    setGizmoVisible(visible: boolean): void {
-        const transformTool = this.getTool<TransformTool>('transform');
-        transformTool.setGizmoVisible(visible);
-    }
-
-    /**
-     * Set whether scale operations are linked (uniform scaling).
-     * Convenience method that delegates to TransformTool.
-     */
-    setGizmoScaleLinked(linked: boolean): void {
-        const transformTool = this.getTool<TransformTool>('transform');
-        transformTool.setGizmoScaleLinked(linked);
     }
 
     // ============ Legacy API Compatibility ============

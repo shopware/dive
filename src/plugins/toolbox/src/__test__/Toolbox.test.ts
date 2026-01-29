@@ -187,28 +187,6 @@ describe('Toolbox', () => {
         });
     });
 
-    describe('convenience methods', () => {
-        it('should set gizmo mode', () => {
-            const transformTool = toolbox.getTool('transform') as any;
-            toolbox.setGizmoMode('rotate');
-            expect(transformTool.setGizmoMode).toHaveBeenCalledWith('rotate');
-        });
-
-        it('should set gizmo visible', () => {
-            const transformTool = toolbox.getTool('transform') as any;
-            toolbox.setGizmoVisible(false);
-            expect(transformTool.setGizmoVisible).toHaveBeenCalledWith(false);
-        });
-
-        it('should set gizmo scale linked', () => {
-            const transformTool = toolbox.getTool('transform') as any;
-            toolbox.setGizmoScaleLinked(true);
-            expect(transformTool.setGizmoScaleLinked).toHaveBeenCalledWith(
-                true,
-            );
-        });
-    });
-
     describe('dispose', () => {
         it('should deactivate all tools on dispose', () => {
             const hoverTool = toolbox.getTool('hover');
