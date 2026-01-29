@@ -8,6 +8,14 @@ import { type OrbitController } from '@shopware-ag/dive/orbitcontroller';
  * @vitest-environment jsdom
  */
 
+// Mock PointerEvent for jsdom
+class MockPointerEvent extends MouseEvent {
+    constructor(type: string, props?: PointerEventInit) {
+        super(type, props);
+    }
+}
+globalThis.PointerEvent = MockPointerEvent as unknown as typeof PointerEvent;
+
 const createMockController = () =>
     ({
         domElement: {
@@ -76,8 +84,12 @@ describe('DragTool', () => {
 
             const ctx = createMockContext({
                 intersects: [
-                    { object: mockDraggable, point: new Vector3(0, 0, 0) } as any,
+                    {
+                        object: mockDraggable,
+                        point: new Vector3(0, 0, 0),
+                    } as any,
                 ],
+                pointerPrimaryDown: true,
             });
 
             dragTool.onPointerDown(ctx);
@@ -95,7 +107,10 @@ describe('DragTool', () => {
             // Set draggable but don't have pointer down
             const ctx = createMockContext({
                 intersects: [
-                    { object: mockDraggable, point: new Vector3(0, 0, 0) } as any,
+                    {
+                        object: mockDraggable,
+                        point: new Vector3(0, 0, 0),
+                    } as any,
                 ],
                 pointerPrimaryDown: false,
             });
@@ -155,8 +170,12 @@ describe('DragTool', () => {
 
             const ctx = createMockContext({
                 intersects: [
-                    { object: mockDraggable, point: new Vector3(0, 0, 0) } as any,
+                    {
+                        object: mockDraggable,
+                        point: new Vector3(0, 0, 0),
+                    } as any,
                 ],
+                pointerPrimaryDown: true,
             });
 
             dragTool.onPointerDown(ctx);
@@ -164,6 +183,264 @@ describe('DragTool', () => {
 
             dragTool.onPointerUp(ctx);
             expect(dragTool.draggable).toBeNull();
+        });
+
+        it('should end drag and call onDragEnd on pointer up while dragging', () => {
+            const mockDraggable = {
+                uuid: 'test',
+                isDraggable: true,
+                onDragStart: vi.fn(),
+                onDrag: vi.fn(),
+                onDragEnd: vi.fn(),
+            } as unknown as Object3D & DIVEDraggable;
+
+            // Setup drag state manually
+            (dragTool as any)._dragging = true;
+            (dragTool as any)._draggable = mockDraggable;
+
+            const ctx = createMockContext({
+                pointer: new Vector2(0.5, 0.5),
+            });
+
+            dragTool.onPointerUp(ctx);
+
+            expect(mockDraggable.onDragEnd).toHaveBeenCalled();
+            expect(dragTool.isDragging).toBe(false);
+            expect(mockController.enabled).toBe(true);
+        });
+    });
+
+    describe('drag operations', () => {
+        it('should call onDrag during drag', () => {
+            const mockDraggable = {
+                uuid: 'test',
+                isDraggable: true,
+                onDragStart: vi.fn(),
+                onDrag: vi.fn(),
+            } as unknown as Object3D & DIVEDraggable;
+
+            // Setup drag state
+            (dragTool as any)._dragging = true;
+            (dragTool as any)._draggable = mockDraggable;
+
+            const ctx = createMockContext({
+                pointer: new Vector2(0.2, 0.2),
+                intersects: [
+                    {
+                        object: mockDraggable,
+                        point: new Vector3(2, 0, 0),
+                    } as any,
+                ],
+                pointerPrimaryDown: true,
+            });
+
+            const result = dragTool.onPointerMove(ctx);
+
+            expect(mockDraggable.onDrag).toHaveBeenCalled();
+            expect(result).toBe(true); // Should block other tools
+        });
+
+        it('should not start drag if no intersect found', () => {
+            const mockDraggable = {
+                uuid: 'test',
+                isDraggable: true,
+                onDragStart: vi.fn(),
+            } as unknown as Object3D & DIVEDraggable;
+
+            // Set up draggable
+            (dragTool as any)._draggable = mockDraggable;
+
+            const ctx = createMockContext({
+                pointer: new Vector2(0.1, 0.1),
+                intersects: [], // No intersect
+                pointerPrimaryDown: true,
+                lastPointerDown: new Vector2(0, 0),
+            });
+
+            dragTool.onPointerMove(ctx);
+
+            expect(dragTool.isDragging).toBe(false);
+            expect(mockDraggable.onDragStart).not.toHaveBeenCalled();
+        });
+
+        it('should not update drag if no intersect during drag', () => {
+            const mockDraggable = {
+                uuid: 'test',
+                isDraggable: true,
+                onDrag: vi.fn(),
+            } as unknown as Object3D & DIVEDraggable;
+
+            // Setup drag state
+            (dragTool as any)._dragging = true;
+            (dragTool as any)._draggable = mockDraggable;
+
+            const ctx = createMockContext({
+                pointer: new Vector2(0.2, 0.2),
+                intersects: [], // No intersect
+                pointerPrimaryDown: true,
+            });
+
+            dragTool.onPointerMove(ctx);
+
+            expect(mockDraggable.onDrag).not.toHaveBeenCalled();
+        });
+
+        it('should return early from onPointerMove if draggable is null', () => {
+            const ctx = createMockContext({
+                pointerPrimaryDown: true,
+            });
+
+            const result = dragTool.onPointerMove(ctx);
+
+            expect(result).toBeUndefined();
+        });
+
+        it('should return early from onPointerMove if pointer not down', () => {
+            const ctx = createMockContext({
+                pointerPrimaryDown: false,
+            });
+
+            const result = dragTool.onPointerMove(ctx);
+
+            expect(result).toBeUndefined();
+        });
+
+        it('should check distance threshold before starting drag', () => {
+            const mockDraggable = {
+                uuid: 'test',
+                isDraggable: true,
+                onDragStart: vi.fn(),
+            } as unknown as Object3D & DIVEDraggable;
+
+            // Set up draggable
+            (dragTool as any)._draggable = mockDraggable;
+
+            // Move with distance below threshold (0.001)
+            const ctx = createMockContext({
+                pointer: new Vector2(0.0001, 0.0001),
+                intersects: [
+                    {
+                        object: mockDraggable,
+                        point: new Vector3(1, 0, 0),
+                    } as any,
+                ],
+                pointerPrimaryDown: true,
+                lastPointerDown: new Vector2(0, 0), // Distance ~0.00014 < 0.001
+            });
+
+            dragTool.onPointerMove(ctx);
+
+            // Should not start drag yet - below threshold
+            expect(dragTool.isDragging).toBe(false);
+        });
+
+        it('should call startDrag internal method', () => {
+            const mockDraggable = {
+                uuid: 'test',
+                isDraggable: true,
+                onDragStart: vi.fn(),
+            } as unknown as Object3D & DIVEDraggable;
+
+            // Directly call startDrag to test the method
+            (dragTool as any)._draggable = mockDraggable;
+
+            const ctx = createMockContext({
+                intersects: [
+                    {
+                        object: mockDraggable,
+                        point: new Vector3(1, 2, 3),
+                    } as any,
+                ],
+            });
+
+            (dragTool as any).startDrag(ctx);
+
+            expect(dragTool.isDragging).toBe(true);
+            expect(mockDraggable.onDragStart).toHaveBeenCalled();
+            expect(mockController.enabled).toBe(false);
+        });
+
+        it('should call updateDrag internal method', () => {
+            const mockDraggable = {
+                uuid: 'test',
+                isDraggable: true,
+                onDrag: vi.fn(),
+            } as unknown as Object3D & DIVEDraggable;
+
+            // Setup drag state
+            (dragTool as any)._dragging = true;
+            (dragTool as any)._draggable = mockDraggable;
+
+            const ctx = createMockContext({
+                intersects: [
+                    {
+                        object: mockDraggable,
+                        point: new Vector3(2, 3, 4),
+                    } as any,
+                ],
+            });
+
+            (dragTool as any).updateDrag(ctx);
+
+            expect(mockDraggable.onDrag).toHaveBeenCalled();
+        });
+
+        it('should call endDrag internal method', () => {
+            const mockDraggable = {
+                uuid: 'test',
+                isDraggable: true,
+                onDragEnd: vi.fn(),
+            } as unknown as Object3D & DIVEDraggable;
+
+            // Setup drag state
+            (dragTool as any)._dragging = true;
+            (dragTool as any)._draggable = mockDraggable;
+            mockController.enabled = false;
+
+            (dragTool as any).endDrag();
+
+            expect(mockDraggable.onDragEnd).toHaveBeenCalled();
+            expect(dragTool.isDragging).toBe(false);
+            expect(mockController.enabled).toBe(true);
+        });
+
+        it('should use custom raycast targets in getDragIntersect', () => {
+            const mockFloor = {
+                uuid: 'floor',
+                isMesh: true,
+            } as unknown as Object3D;
+
+            const mockDraggable = {
+                uuid: 'test',
+                isDraggable: true,
+                onDrag: vi.fn(),
+            } as unknown as Object3D & DIVEDraggable;
+
+            // Set custom raycast targets
+            dragTool.setDragRaycastTargets([mockFloor]);
+
+            // Setup drag state and mock raycaster
+            (dragTool as any)._dragging = true;
+            (dragTool as any)._draggable = mockDraggable;
+            (dragTool as any)._raycaster = {
+                setFromCamera: vi.fn(),
+                intersectObjects: vi.fn(() => [
+                    { object: mockFloor, point: new Vector3(1, 0, 0) },
+                ]),
+            };
+
+            const ctx = createMockContext({
+                pointer: new Vector2(0.2, 0.2),
+                intersects: [], // Empty - should use custom targets instead
+                pointerPrimaryDown: true,
+            });
+
+            dragTool.onPointerMove(ctx);
+
+            expect(
+                (dragTool as any)._raycaster.intersectObjects,
+            ).toHaveBeenCalledWith([mockFloor], true);
+            expect(mockDraggable.onDrag).toHaveBeenCalled();
         });
     });
 });

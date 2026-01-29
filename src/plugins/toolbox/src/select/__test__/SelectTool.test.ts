@@ -8,9 +8,15 @@ import { type DIVESelectable } from '@shopware-ag/dive';
  * @vitest-environment jsdom
  */
 
-const createMockContext = (
-    modelIntersects: any[] = [],
-): PointerContext => ({
+// Mock PointerEvent for jsdom
+class MockPointerEvent extends MouseEvent {
+    constructor(type: string, props?: PointerEventInit) {
+        super(type, props);
+    }
+}
+globalThis.PointerEvent = MockPointerEvent as unknown as typeof PointerEvent;
+
+const createMockContext = (modelIntersects: any[] = []): PointerContext => ({
     event: new PointerEvent('click'),
     pointer: new Vector2(0, 0),
     intersects: [],
