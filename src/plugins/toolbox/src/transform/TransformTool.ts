@@ -67,6 +67,13 @@ export class TransformTool implements Tool {
         return this._gizmo;
     }
 
+    /**
+     * Whether a drag operation is currently in progress.
+     */
+    get isDragging(): boolean {
+        return this._gizmo.dragging;
+    }
+
     onActivate(): void {
         this._selectionState.onChange(this._selectionChangeHandler);
 
@@ -83,9 +90,9 @@ export class TransformTool implements Tool {
     }
 
     onPointerMove(ctx: PointerContext): boolean | void {
-        // Check if gizmo is being hovered - if so, block model hover
+        // Check if gizmo is being dragged - if so, block other tools
         if (this._gizmo.dragging) {
-            return true; // Block other tools while dragging gizmo
+            return true;
         }
 
         // Check if pointer is over gizmo UI elements
@@ -144,7 +151,10 @@ export class TransformTool implements Tool {
     private onSelectionChange(
         selected: (Object3D & DIVESelectable) | null,
     ): void {
-        if (selected && implementsInterface<DIVEMovable>(selected, 'isMovable')) {
+        if (
+            selected &&
+            implementsInterface<DIVEMovable>(selected, 'isMovable')
+        ) {
             this.attachGizmo(selected);
         } else {
             this._gizmo.detach();

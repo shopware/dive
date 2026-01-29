@@ -315,12 +315,12 @@ export abstract class DIVEBaseTool {
     public onWheel(e: WheelEvent): void {}
 
     protected raycast(objects?: Object3D[]): Intersection[] {
-
         const sceneObjects = objects || this._scene.children;
-        const filteredObjects = sceneObjects.filter((i) => i.visible && 'isMesh' in i && i.isMesh);
+        const filteredObjects = sceneObjects.filter(
+            (i) => i.visible && 'isMesh' in i && i.isMesh,
+        );
 
-        return this._raycaster
-            .intersectObjects(filteredObjects, true)
+        return this._raycaster.intersectObjects(filteredObjects, true);
     }
 
     private pointerWasDragged(): boolean {

@@ -7,6 +7,22 @@ import { type OrbitController } from '@shopware-ag/dive/orbitcontroller';
  * @vitest-environment jsdom
  */
 
+vi.mock('three', async () => {
+    const actual = await vi.importActual<typeof import('three')>('three');
+    return {
+        ...actual,
+        Layers: vi.fn().mockImplementation(() => ({
+            mask: 0,
+            set: vi.fn(),
+        })),
+        Raycaster: vi.fn().mockImplementation(() => ({
+            layers: { mask: 0 },
+            setFromCamera: vi.fn(),
+            intersectObjects: vi.fn(() => []),
+        })),
+    };
+});
+
 vi.mock('../hover/HoverTool.ts', () => ({
     HoverTool: vi.fn().mockImplementation(() => ({
         name: 'hover',

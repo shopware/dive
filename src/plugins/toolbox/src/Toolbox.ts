@@ -1,5 +1,9 @@
 import { Raycaster, Vector2, type Intersection, Layers } from 'three';
-import { type DIVEScene, PRODUCT_LAYER_MASK, UI_LAYER_MASK } from '@shopware-ag/dive';
+import {
+    type DIVEScene,
+    PRODUCT_LAYER_MASK,
+    UI_LAYER_MASK,
+} from '@shopware-ag/dive';
 import { type OrbitController } from '@shopware-ag/dive/orbitcontroller';
 import { type Tool } from './Tool.ts';
 import { type PointerContext, type WheelContext } from './PointerContext.ts';
@@ -75,10 +79,22 @@ export class Toolbox {
 
         // Create and register all tools
         this._tools = new Map<ToolType, Tool>([
-            ['hover', new HoverTool()],
-            ['select', new SelectTool(this._selectionState)],
-            ['transform', new TransformTool(scene, controller, this._selectionState)],
-            ['drag', new DragTool(controller)],
+            [
+                'hover',
+                new HoverTool(),
+            ],
+            [
+                'select',
+                new SelectTool(this._selectionState),
+            ],
+            [
+                'transform',
+                new TransformTool(scene, controller, this._selectionState),
+            ],
+            [
+                'drag',
+                new DragTool(controller),
+            ],
         ]);
 
         // Bind event handlers
@@ -352,7 +368,12 @@ export class Toolbox {
      */
     useTool(tool: ToolType): void {
         // Enable all standard tools for the given type
-        const allTools: ToolType[] = ['hover', 'select', 'transform', 'drag'];
+        const allTools: ToolType[] = [
+            'hover',
+            'select',
+            'transform',
+            'drag',
+        ];
 
         for (const t of allTools) {
             if (t === tool || tool === 'select') {
