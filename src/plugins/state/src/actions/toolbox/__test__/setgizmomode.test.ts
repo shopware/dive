@@ -2,7 +2,9 @@ import { SetGizmoModeAction } from '../setgizmomode.ts';
 
 const mockSetGizmoMode = vi.fn();
 const mockGetToolbox = vi.fn().mockResolvedValue({
-    setGizmoMode: mockSetGizmoMode,
+    getTool: vi.fn().mockReturnValue({
+        setGizmoMode: mockSetGizmoMode,
+    }),
 });
 
 describe('SetGizmoModeAction', () => {

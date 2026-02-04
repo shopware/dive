@@ -2,7 +2,9 @@ import { SetGizmoScaleLinkedAction } from '../setgizmoscalelinked.ts';
 
 const mockSetGizmoScaleLinked = vi.fn();
 const mockGetToolbox = vi.fn().mockResolvedValue({
-    setGizmoScaleLinked: mockSetGizmoScaleLinked,
+    getTool: vi.fn().mockReturnValue({
+        setGizmoScaleLinked: mockSetGizmoScaleLinked,
+    }),
 });
 
 describe('SetGizmoScaleLinkedAction', () => {

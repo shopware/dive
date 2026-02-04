@@ -10,7 +10,7 @@ export const SetGizmoModeAction = Action.define<
     description: "Sets the gizmo's mode.",
     execute: async (payload, { getToolbox }) => {
         const instance = await getToolbox();
-        instance.setGizmoMode(payload.mode);
+        instance.getTool('transform').setGizmoMode(payload.mode);
     },
 });
 

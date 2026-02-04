@@ -10,7 +10,7 @@ export const SetGizmoScaleLinkedAction = Action.define<
     description: "Sets the gizmo's unified scale mode.",
     execute: async (payload, { getToolbox }) => {
         const instance = await getToolbox();
-        instance.setGizmoScaleLinked(payload);
+        instance.getTool('transform').setGizmoScaleLinked(payload);
     },
 });
 
