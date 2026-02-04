@@ -10,6 +10,7 @@ import pkg from './package.json';
 export default defineConfig({
     define: {
         __APP_VERSION__: JSON.stringify(pkg.version),
+        __DEV_MODE__: JSON.stringify(false),
     },
     test: {
         globals: true,

@@ -169,7 +169,9 @@ export class DIVE {
         }
 
         // Load version info
-        console.log(`DIVE ${__APP_VERSION__} initialized successfully!`);
+        console.log(
+            `DIVE ${__APP_VERSION__}${__DEV_MODE__ ? '[DEV]' : ''} initialized successfully!`,
+        );
         console.log(DIVE_ASCII_ART);
 
         window.DIVE.instances.push(this);
