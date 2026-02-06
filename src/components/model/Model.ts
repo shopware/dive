@@ -34,6 +34,8 @@ export class DIVEModel extends DIVENode {
         super();
 
         this.name = 'DIVEModel';
+
+        this.userData.isDIVEModel = true;
     }
 
     private _assetLoader:
@@ -68,10 +70,14 @@ export class DIVEModel extends DIVENode {
         this.clear();
         this._boundingBox.makeEmpty();
 
-        this._gltf = gltf;
-        this._gltf.name = 'GLTF';
+        let root: Object3D | null = null;
 
-        this._gltf.traverse((child) => {
+        gltf.traverse((child) => {
+            // check if we have a semantic root already
+            if (!root && child.userData.isDIVEModel) {
+                root = child;
+            }
+
             child.castShadow = true;
             child.receiveShadow = true;
 
@@ -92,7 +98,15 @@ export class DIVEModel extends DIVENode {
             }
         });
 
-        this.add(this._gltf);
+        if (!root) {
+            root = gltf;
+        }
+
+        this.position.copy(root.position);
+        this.quaternion.copy(root.quaternion);
+        this.scale.copy(root.scale);
+
+        this.add(...root.children);
 
         return this;
     }
