@@ -18,7 +18,7 @@ export type DIVESceneSettings = {
     /**
      * The background color of the scene.
      *
-     * @default #ffffff
+     * @default transparent
      */
     backgroundColor: ColorRepresentation;
 };
@@ -26,7 +26,7 @@ export type DIVESceneSettings = {
 export const DIVESceneDefaultSettings: Required<DIVESceneSettings> = {
     displayFloor: false,
     displayGrid: false,
-    backgroundColor: '#ffffff',
+    backgroundColor: 'transparent',
 };
 
 /**
@@ -73,7 +73,13 @@ export class DIVEScene extends Scene {
     }
 
     public setBackground(value: ColorRepresentation): void {
-        this.background = new Color(value as ColorRepresentation);
+        if (value === 'transparent') {
+            this.background = null;
+        } else if (typeof value === 'string' || typeof value === 'number') {
+            this.background = new Color(value);
+        } else {
+            this.background = value;
+        }
     }
 
     public computeSceneBB(): Box3 {
