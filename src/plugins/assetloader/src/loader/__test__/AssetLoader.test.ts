@@ -27,6 +27,13 @@ vi.mock('../../draco/DracoLoader.ts', () => ({
     })),
 }));
 
+const mockStepParse = vi.fn();
+vi.mock('../STEPLoader.ts', () => ({
+    STEPLoader: vi.fn().mockImplementation(() => ({
+        parse: mockStepParse,
+    })),
+}));
+
 // Mock AssetCache
 vi.mock('@shopware-ag/dive/assetcache', () => ({
     AssetCache: {
@@ -307,6 +314,7 @@ describe('AssetLoader', () => {
                 scene: new Group(),
             } as GLTF);
             mockParseUSDZ.mockResolvedValue(new Group());
+            mockStepParse.mockResolvedValue(new Group());
         });
 
         it('should support .glb files', async () => {
@@ -322,6 +330,23 @@ describe('AssetLoader', () => {
         it('should support .usdz files', async () => {
             await loader.load('model.usdz');
             expect(MockedAssetCache.create).toHaveBeenCalledWith('model.usdz');
+        });
+
+        it('should support .step and .stp files', async () => {
+            mockStepParse.mockResolvedValue(new Group());
+            await loader.load('model.step');
+            expect(MockedAssetCache.create).toHaveBeenCalledWith('model.step');
+            expect(mockStepParse).toHaveBeenCalled();
+            await loader.load('model.stp');
+            expect(MockedAssetCache.create).toHaveBeenCalledWith('model.stp');
+        });
+
+        it('should support .iges and .igs files', async () => {
+            mockStepParse.mockResolvedValue(new Group());
+            await loader.load('model.iges');
+            expect(MockedAssetCache.create).toHaveBeenCalledWith('model.iges');
+            await loader.load('model.igs');
+            expect(MockedAssetCache.create).toHaveBeenCalledWith('model.igs');
         });
     });
 

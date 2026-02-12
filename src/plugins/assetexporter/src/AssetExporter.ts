@@ -17,10 +17,15 @@ export type USDZExporterOptions = THREEUSDZExporterOptions & {
 export type GLTFExporterOptions = THREEGLTFExporterOptions;
 
 // Map file types to their corresponding exporter options
+// CAD formats (step, stp, iges, igs) are import-only - export throws FileTypeError
 export type FileTypeToExporterOptions = {
     glb: GLTFExporterOptions;
     gltf: GLTFExporterOptions;
     usdz: USDZExporterOptions;
+    step: undefined;
+    stp: undefined;
+    iges: undefined;
+    igs: undefined;
 };
 
 export class AssetExporter {
