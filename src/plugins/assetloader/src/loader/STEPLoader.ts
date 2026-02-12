@@ -6,6 +6,7 @@ import {
     MeshStandardMaterial,
     Object3D,
 } from 'three';
+import { STEPWorker } from '../step/worker/StepWorker.js';
 
 /**
  * OCCT import result structure from occt-import-js.
@@ -36,113 +37,98 @@ interface OcctImportResult {
 }
 
 /**
- * Schema name mappings for STEP files.
- * OCCT's parser expects full MIM schema names; many exporters use short names.
+ * Lazily load occt-import-js assets for the worker.
  */
-const STEP_SCHEMA_NORMALIZATIONS: Array<[RegExp, string]> = [
-    // AP203: CONFIG_CONTROL_DESIGN → full MIM name (CATIA, older exporters)
-    [
-        /'CONFIG_CONTROL_DESIGN'\s*\)/g,
-        "'AP203_CONFIGURATION_CONTROLLED_3D_DESIGN_OF_MECHANICAL_PARTS_AND_ASSEMBLIES_MIM_LF')",
-    ],
-    // AP242: strip schema version block that some parsers reject (FreeCAD, etc.)
-    [
-        /'AP242_MANAGED_MODEL_BASED_3D_ENGINEERING_MIM_LF\.\s*\{[\s\S]*?\}\s*'/g,
-        "'AP242_MANAGED_MODEL_BASED_3D_ENGINEERING_MIM_LF'",
-    ],
-];
+const STEP_LOADER_REGISTRY = {
+    LOAD_OCCT_JS: async () =>
+        (await import('occt-import-js/dist/occt-import-js.js?raw')).default,
+    LOAD_OCCT_WASM_URL: async () =>
+        (await import('occt-import-js/dist/occt-import-js.wasm?url')).default,
+};
 
 /**
  * Loader for STEP, STP, IGES, and IGS CAD files using occt-import-js.
+ * Parsing runs in a blob-URL Web Worker (same pattern as DracoLoader).
  * Converts OpenCASCADE output to Three.js Object3D hierarchy.
  */
 export class STEPLoader {
-    private _occt: {
-        ReadStepFile: (content: Uint8Array, params: null) => OcctImportResult;
-        ReadIgesFile: (content: Uint8Array, params: null) => OcctImportResult;
-    } | null = null;
+    private _workerPending: Promise<Worker> | null = null;
+    private _worker: Worker | null = null;
+    private _nextId = 0;
+    private _pending = new Map<
+        number,
+        { resolve: (r: Object3D) => void; reject: (e: Error) => void }
+    >();
 
-    private async _getOcct(): Promise<{
-        ReadStepFile: (content: Uint8Array, params: null) => OcctImportResult;
-        ReadIgesFile: (content: Uint8Array, params: null) => OcctImportResult;
-    }> {
-        if (!this._occt) {
+    /**
+     * Create (or return existing) blob-URL worker.
+     * Loads occt-import-js JS as raw text, concatenates with STEPWorker
+     * function body, and creates a classic (non-module) worker.
+     */
+    private _getWorker(): Promise<Worker> {
+        if (this._workerPending) return this._workerPending;
+
+        this._workerPending = (async () => {
             const [
-                occtImportJsModule,
+                occtJs,
                 wasmUrl,
             ] = await Promise.all([
-                import('occt-import-js'),
-                import('occt-import-js/dist/occt-import-js.wasm?url'),
+                STEP_LOADER_REGISTRY.LOAD_OCCT_JS(),
+                STEP_LOADER_REGISTRY.LOAD_OCCT_WASM_URL(),
             ]);
-            const occtImportJs = occtImportJsModule.default as (opts?: {
-                locateFile?: (path: string) => string;
-            }) => Promise<{
-                ReadStepFile: (
-                    content: Uint8Array,
-                    params: null,
-                ) => OcctImportResult;
-                ReadIgesFile: (
-                    content: Uint8Array,
-                    params: null,
-                ) => OcctImportResult;
-            }>;
-            this._occt = await occtImportJs({
-                locateFile: () => wasmUrl.default,
-            });
-        }
-        return this._occt;
-    }
 
-    /**
-     * Parse STEP file. Applies schema normalization first for broader format support,
-     * then retries with original if normalized parse fails (for edge cases).
-     */
-    private _parseStepWithFallback(
-        occt: {
-            ReadStepFile: (
-                content: Uint8Array,
-                params: null,
-            ) => OcctImportResult;
-        },
-        fileBuffer: Uint8Array,
-    ): OcctImportResult {
-        const normalized = this._normalizeStepSchema(fileBuffer);
-        let result: OcctImportResult;
-        try {
-            result = occt.ReadStepFile(normalized, null);
-            if (result.success && result.root) {
-                return result;
-            }
-        } catch {
-            // Normalized parse threw; try original as fallback
-        }
-        try {
-            result = occt.ReadStepFile(fileBuffer, null);
-        } catch {
-            result = {
-                success: false,
-                root: { meshes: [], children: [] },
-                meshes: [],
+            // Extract function body from STEPWorker (same as DracoWorker pattern)
+            const fn = STEPWorker.toString();
+            const body = [
+                '/* occt-import-js */',
+                occtJs,
+                '',
+                '/* step worker */',
+                fn.substring(fn.indexOf('{') + 1, fn.lastIndexOf('}')),
+            ].join('\n');
+
+            const blobUrl = URL.createObjectURL(new Blob([body]));
+            const worker = new Worker(blobUrl);
+
+            // Resolve WASM URL to absolute so fetch() works from blob: origin
+            const absoluteWasmUrl = new URL(wasmUrl, window.location.href).href;
+
+            // Send init message with WASM URL
+            worker.postMessage({ type: 'init', wasmUrl: absoluteWasmUrl });
+
+            worker.onmessage = (e: MessageEvent) => {
+                const { type, id, result, error } = e.data;
+                const pending = this._pending.get(id);
+                if (!pending) return;
+                this._pending.delete(id);
+                if (type === 'result') {
+                    try {
+                        pending.resolve(this._buildScene(result));
+                    } catch (err) {
+                        pending.reject(
+                            err instanceof Error ? err : new Error(String(err)),
+                        );
+                    }
+                } else {
+                    pending.reject(new Error(error ?? 'Worker error'));
+                }
             };
-        }
-        return result;
-    }
 
-    /**
-     * Normalize STEP FILE_SCHEMA names for broader format compatibility.
-     * OCCT expects full MIM names; many CAD exporters use short or versioned names.
-     */
-    private _normalizeStepSchema(buffer: Uint8Array): Uint8Array {
-        const decoder = new TextDecoder('utf-8', { fatal: false });
-        const encoder = new TextEncoder();
-        let text = decoder.decode(buffer);
-        for (const [
-            pattern,
-            replacement,
-        ] of STEP_SCHEMA_NORMALIZATIONS) {
-            text = text.replace(pattern, replacement);
-        }
-        return new Uint8Array(encoder.encode(text));
+            worker.onerror = (e) => {
+                for (const [
+                    ,
+                    { reject },
+                ] of this._pending) {
+                    reject(new Error(e.message ?? 'Worker error'));
+                }
+                this._pending.clear();
+            };
+
+            this._worker = worker;
+            return worker;
+        })();
+
+        return this._workerPending;
     }
 
     /**
@@ -152,21 +138,33 @@ export class STEPLoader {
         arrayBuffer: ArrayBuffer,
         fileType: 'step' | 'stp' | 'iges' | 'igs',
     ): Promise<Object3D> {
-        const occt = await this._getOcct();
-        const fileBuffer = new Uint8Array(arrayBuffer);
+        const id = this._nextId++;
+        const worker = await this._getWorker();
+        return new Promise<Object3D>((resolve, reject) => {
+            this._pending.set(id, { resolve, reject });
+            worker.postMessage(
+                { type: 'parse', id, buffer: arrayBuffer, fileType },
+                [arrayBuffer],
+            );
+        });
+    }
 
-        let result: OcctImportResult;
-        if (fileType === 'step' || fileType === 'stp') {
-            result = this._parseStepWithFallback(occt, fileBuffer);
-        } else {
-            result = occt.ReadIgesFile(fileBuffer, null);
+    /**
+     * Dispose the worker. Call when the loader is no longer needed.
+     */
+    public dispose(): void {
+        if (this._worker) {
+            for (const [
+                ,
+                { reject },
+            ] of this._pending) {
+                reject(new Error('STEPLoader disposed'));
+            }
+            this._pending.clear();
+            this._worker.terminate();
+            this._worker = null;
+            this._workerPending = null;
         }
-
-        if (!result.success || !result.root) {
-            throw new Error('Failed to parse CAD file');
-        }
-
-        return this._buildScene(result);
     }
 
     private _buildScene(result: OcctImportResult): Object3D {
@@ -175,11 +173,7 @@ export class STEPLoader {
 
         this._buildNode(result.root, result.meshes, root);
 
-        // STEP/OpenCASCADE uses Z-up (CAD convention); Three.js uses Y-up.
-        // Rotate -90° around X to convert: (x,y,z) → (x,z,-y)
         root.rotation.x = -Math.PI / 2;
-
-        // Orient so the model's side faces the camera (default view) instead of the back
         root.rotation.z = Math.PI / 2;
 
         return root;
