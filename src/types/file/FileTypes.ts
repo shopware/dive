@@ -11,6 +11,22 @@ export const FILE_TYPES = {
         key: 'usdz' as const,
         extension: 'usdz',
     },
+    step: {
+        key: 'step' as const,
+        extension: 'step',
+    },
+    stp: {
+        key: 'stp' as const,
+        extension: 'stp',
+    },
+    iges: {
+        key: 'iges' as const,
+        extension: 'iges',
+    },
+    igs: {
+        key: 'igs' as const,
+        extension: 'igs',
+    },
 } as const;
 
 export type FileType = keyof typeof FILE_TYPES;
