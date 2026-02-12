@@ -14,3 +14,12 @@ declare module '*.hdr?url' {
     const url: string;
     export default url;
 }
+
+declare module 'occt-import-js' {
+    const occtImportJs: () => Promise<{
+        ReadStepFile: (content: Uint8Array, params: null) => unknown;
+        ReadIgesFile: (content: Uint8Array, params: null) => unknown;
+        ReadBrepFile: (content: Uint8Array, params: null) => unknown;
+    }>;
+    export default occtImportJs;
+}
