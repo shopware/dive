@@ -10,11 +10,13 @@ import {
     isFileTypeSupported,
 } from '@shopware-ag/dive';
 import { DracoLoader } from '../draco/DracoLoader.ts';
+import { STEPLoader } from '../step/STEPLoader.ts';
 import { AssetCache } from '@shopware-ag/dive/assetcache';
 
 export class AssetLoader {
     private _gltfLoader: GLTFLoader;
     private _usdzLoader: USDZLoader;
+    private _stepLoader: STEPLoader;
 
     constructor() {
         // create draco loader
@@ -29,6 +31,9 @@ export class AssetLoader {
 
         // create usdz loader
         this._usdzLoader = new USDZLoader();
+
+        // create step/iges loader (CAD formats)
+        this._stepLoader = new STEPLoader();
     }
 
     public async load(uri: string, fileType?: FileType): Promise<Object3D> {
@@ -141,6 +146,22 @@ export class AssetLoader {
                 }
             }
 
+            // STEP files (ISO 10303-21) are ASCII text starting with "ISO-10303-21;"
+            if (view.length >= 20) {
+                const stepHeader = new TextDecoder('ascii').decode(
+                    view.subarray(0, 20),
+                );
+                if (stepHeader.startsWith('ISO-10303-21')) {
+                    return 'step';
+                }
+            }
+
+            // IGES files are 80-char lines with section marker at position 73
+            if (view.length >= 80 && view[72] === 0x53) {
+                // 'S' = Start section
+                return 'iges';
+            }
+
             return '';
         } catch (error) {
             // If detection fails, return empty string
@@ -169,7 +190,21 @@ export class AssetLoader {
                     return gltf.scene;
                 }
                 case 'usdz': {
-                    return await this._usdzLoader.parse(arrayBuffer);
+                    return this._usdzLoader.parse(arrayBuffer);
+                }
+                case 'step':
+                case 'stp': {
+                    return await this._stepLoader.parseAsync(
+                        arrayBuffer,
+                        type as 'step' | 'stp',
+                    );
+                }
+                case 'iges':
+                case 'igs': {
+                    return await this._stepLoader.parseAsync(
+                        arrayBuffer,
+                        type as 'iges' | 'igs',
+                    );
                 }
             }
         } catch (error) {

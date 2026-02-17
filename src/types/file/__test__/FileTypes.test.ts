@@ -28,13 +28,45 @@ describe('FileTypes', () => {
             });
         });
 
-        it('should have exactly 3 file types', () => {
+        it('should contain step file type definition', () => {
+            expect(FILE_TYPES.step).toEqual({
+                key: 'step',
+                extension: 'step',
+            });
+        });
+
+        it('should contain stp file type definition', () => {
+            expect(FILE_TYPES.stp).toEqual({
+                key: 'stp',
+                extension: 'stp',
+            });
+        });
+
+        it('should contain iges file type definition', () => {
+            expect(FILE_TYPES.iges).toEqual({
+                key: 'iges',
+                extension: 'iges',
+            });
+        });
+
+        it('should contain igs file type definition', () => {
+            expect(FILE_TYPES.igs).toEqual({
+                key: 'igs',
+                extension: 'igs',
+            });
+        });
+
+        it('should have exactly 7 file types', () => {
             const keys = Object.keys(FILE_TYPES);
-            expect(keys).toHaveLength(3);
+            expect(keys).toHaveLength(7);
             expect(keys).toEqual([
                 'glb',
                 'gltf',
                 'usdz',
+                'step',
+                'stp',
+                'iges',
+                'igs',
             ]);
         });
 
@@ -78,8 +110,18 @@ describe('FileTypes', () => {
             expect(SUPPORTED_FILE_TYPES).toContain('usdz');
         });
 
-        it('should have exactly 3 supported file types', () => {
-            expect(SUPPORTED_FILE_TYPES).toHaveLength(3);
+        it('should contain step and stp extensions', () => {
+            expect(SUPPORTED_FILE_TYPES).toContain('step');
+            expect(SUPPORTED_FILE_TYPES).toContain('stp');
+        });
+
+        it('should contain iges and igs extensions', () => {
+            expect(SUPPORTED_FILE_TYPES).toContain('iges');
+            expect(SUPPORTED_FILE_TYPES).toContain('igs');
+        });
+
+        it('should have exactly 7 supported file types', () => {
+            expect(SUPPORTED_FILE_TYPES).toHaveLength(7);
         });
 
         it('should be a readonly array', () => {
@@ -101,6 +143,10 @@ describe('FileTypes', () => {
                 'glb',
                 'gltf',
                 'usdz',
+                'step',
+                'stp',
+                'iges',
+                'igs',
             ];
 
             validFileTypes.forEach((fileType) => {
@@ -132,6 +178,10 @@ describe('FileTypes', () => {
                 { filename: 'model.glb', shouldBeSupported: true },
                 { filename: 'scene.gltf', shouldBeSupported: true },
                 { filename: 'asset.usdz', shouldBeSupported: true },
+                { filename: 'part.step', shouldBeSupported: true },
+                { filename: 'part.stp', shouldBeSupported: true },
+                { filename: 'part.iges', shouldBeSupported: true },
+                { filename: 'part.igs', shouldBeSupported: true },
                 { filename: 'texture.jpg', shouldBeSupported: false },
                 { filename: 'data.json', shouldBeSupported: false },
             ];

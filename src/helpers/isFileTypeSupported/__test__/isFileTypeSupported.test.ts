@@ -1,10 +1,14 @@
-import { isFileTypeSupported } from '../isFileTypeSupported';
+import { isFileTypeSupported } from '../isFileTypeSupported.ts';
 
 describe('isFileTypeSupported', () => {
     it('should return true for supported file types', () => {
         expect(isFileTypeSupported('glb')).toBe(true);
         expect(isFileTypeSupported('gltf')).toBe(true);
         expect(isFileTypeSupported('usdz')).toBe(true);
+        expect(isFileTypeSupported('step')).toBe(true);
+        expect(isFileTypeSupported('stp')).toBe(true);
+        expect(isFileTypeSupported('iges')).toBe(true);
+        expect(isFileTypeSupported('igs')).toBe(true);
     });
 
     it('should return false for unsupported file types', () => {
@@ -18,5 +22,9 @@ describe('isFileTypeSupported', () => {
         expect(isFileTypeSupported('GLB')).toBe(true);
         expect(isFileTypeSupported('GlTf')).toBe(true);
         expect(isFileTypeSupported('USDZ')).toBe(true);
+        expect(isFileTypeSupported('STEP')).toBe(true);
+        expect(isFileTypeSupported('STP')).toBe(true);
+        expect(isFileTypeSupported('IGES')).toBe(true);
+        expect(isFileTypeSupported('IGS')).toBe(true);
     });
 });

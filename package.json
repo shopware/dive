@@ -105,7 +105,8 @@
         "three": "^0.163.0",
         "@tweenjs/tween.js": "^23.1.1",
         "three-spritetext": "^1.8.2",
-        "lodash": "^4.17.21"
+        "lodash": "^4.17.21",
+        "occt-import-js": "^0.0.23"
     },
     "devDependencies": {
         "@eslint/js": "^9.1.1",

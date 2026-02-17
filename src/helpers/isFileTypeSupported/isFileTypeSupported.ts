@@ -1,4 +1,4 @@
-import { FileType } from '../../types/file/index.ts';
+import { FILE_TYPES, type FileType } from '../../types/file/index.ts';
 
 /**
  * Checks if a file extension is supported
@@ -6,5 +6,5 @@ import { FileType } from '../../types/file/index.ts';
  * @returns True if the extension is supported, false otherwise
  */
 export function isFileTypeSupported(extension: string): extension is FileType {
-    return extension.toLowerCase() in { glb: true, gltf: true, usdz: true };
+    return extension.toLowerCase() in FILE_TYPES;
 }
