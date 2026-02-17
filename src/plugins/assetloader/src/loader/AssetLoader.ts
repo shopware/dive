@@ -190,18 +190,18 @@ export class AssetLoader {
                     return gltf.scene;
                 }
                 case 'usdz': {
-                    return await this._usdzLoader.parse(arrayBuffer);
+                    return this._usdzLoader.parse(arrayBuffer);
                 }
                 case 'step':
                 case 'stp': {
-                    return await this._stepLoader.parse(
+                    return await this._stepLoader.parseAsync(
                         arrayBuffer,
                         type as 'step' | 'stp',
                     );
                 }
                 case 'iges':
                 case 'igs': {
-                    return await this._stepLoader.parse(
+                    return await this._stepLoader.parseAsync(
                         arrayBuffer,
                         type as 'iges' | 'igs',
                     );

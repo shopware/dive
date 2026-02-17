@@ -134,7 +134,7 @@ export class STEPLoader {
     /**
      * Parse STEP or IGES file content and return a Three.js Object3D
      */
-    public async parse(
+    public async parseAsync(
         arrayBuffer: ArrayBuffer,
         fileType: 'step' | 'stp' | 'iges' | 'igs',
     ): Promise<Object3D> {
