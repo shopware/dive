@@ -37,13 +37,37 @@ describe('STEPWorker', () => {
         mockOcct.ReadStepFile.mockReturnValue({
             success: true,
             root: { name: 'Model', meshes: [0], children: [] },
-            meshes: [{ attributes: { position: { array: [0, 0, 0] } } }],
+            meshes: [
+                {
+                    attributes: {
+                        position: {
+                            array: [
+                                0,
+                                0,
+                                0,
+                            ],
+                        },
+                    },
+                },
+            ],
         });
 
         mockOcct.ReadIgesFile.mockReturnValue({
             success: true,
             root: { name: 'Model', meshes: [0], children: [] },
-            meshes: [{ attributes: { position: { array: [0, 0, 0] } } }],
+            meshes: [
+                {
+                    attributes: {
+                        position: {
+                            array: [
+                                0,
+                                0,
+                                0,
+                            ],
+                        },
+                    },
+                },
+            ],
         });
 
         // Initialize the worker
@@ -152,7 +176,19 @@ describe('STEPWorker', () => {
             const expectedResult = {
                 success: true,
                 root: { name: 'CAD', meshes: [0], children: [] },
-                meshes: [{ attributes: { position: { array: [1, 2, 3] } } }],
+                meshes: [
+                    {
+                        attributes: {
+                            position: {
+                                array: [
+                                    1,
+                                    2,
+                                    3,
+                                ],
+                            },
+                        },
+                    },
+                ],
             };
             mockOcct.ReadStepFile.mockReturnValue(expectedResult);
 
@@ -350,18 +386,20 @@ describe('STEPWorker', () => {
         });
 
         it('should fall back to original buffer when normalized parse fails', async () => {
-            const stepContent = "ISO-10303-21;\nDATA;\nENDSEC;";
+            const stepContent = 'ISO-10303-21;\nDATA;\nENDSEC;';
             const encoder = new TextEncoder();
             const buffer = encoder.encode(stepContent).buffer;
 
             // First call (normalized) fails, second call (original) succeeds
-            mockOcct.ReadStepFile
-                .mockReturnValueOnce({ success: false, root: null, meshes: [] })
-                .mockReturnValueOnce({
-                    success: true,
-                    root: { name: 'Fallback', meshes: [], children: [] },
-                    meshes: [],
-                });
+            mockOcct.ReadStepFile.mockReturnValueOnce({
+                success: false,
+                root: null,
+                meshes: [],
+            }).mockReturnValueOnce({
+                success: true,
+                root: { name: 'Fallback', meshes: [], children: [] },
+                meshes: [],
+            });
 
             const message = {
                 data: {
@@ -389,20 +427,18 @@ describe('STEPWorker', () => {
         });
 
         it('should fall back to original when normalized parse throws', async () => {
-            const stepContent = "ISO-10303-21;\nDATA;";
+            const stepContent = 'ISO-10303-21;\nDATA;';
             const encoder = new TextEncoder();
             const buffer = encoder.encode(stepContent).buffer;
 
             // First call throws, second succeeds
-            mockOcct.ReadStepFile
-                .mockImplementationOnce(() => {
-                    throw new Error('Normalized parse error');
-                })
-                .mockReturnValueOnce({
-                    success: true,
-                    root: { name: 'OK', meshes: [], children: [] },
-                    meshes: [],
-                });
+            mockOcct.ReadStepFile.mockImplementationOnce(() => {
+                throw new Error('Normalized parse error');
+            }).mockReturnValueOnce({
+                success: true,
+                root: { name: 'OK', meshes: [], children: [] },
+                meshes: [],
+            });
 
             const message = {
                 data: {
@@ -426,7 +462,7 @@ describe('STEPWorker', () => {
         });
 
         it('should return failure result when both normalized and original throw', async () => {
-            const stepContent = "ISO-10303-21;\nDATA;";
+            const stepContent = 'ISO-10303-21;\nDATA;';
             const encoder = new TextEncoder();
             const buffer = encoder.encode(stepContent).buffer;
 
@@ -593,7 +629,11 @@ describe('STEPWorker', () => {
 
     describe('buffer handling', () => {
         it('should convert ArrayBuffer to Uint8Array for STEP parsing', async () => {
-            const data = new Uint8Array([73, 83, 79]); // "ISO"
+            const data = new Uint8Array([
+                73,
+                83,
+                79,
+            ]); // "ISO"
             const buffer = data.buffer;
 
             const message = {
