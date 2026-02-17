@@ -10,7 +10,7 @@ import {
     isFileTypeSupported,
 } from '@shopware-ag/dive';
 import { DracoLoader } from '../draco/DracoLoader.ts';
-import { STEPLoader } from './STEPLoader.ts';
+import { STEPLoader } from '../step/STEPLoader.ts';
 import { AssetCache } from '@shopware-ag/dive/assetcache';
 
 export class AssetLoader {

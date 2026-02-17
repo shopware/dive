@@ -142,10 +142,10 @@ export class STEPLoader {
         const worker = await this._getWorker();
         return new Promise<Object3D>((resolve, reject) => {
             this._pending.set(id, { resolve, reject });
-            worker.postMessage(
-                { type: 'parse', id, buffer: arrayBuffer, fileType },
-                [arrayBuffer],
-            );
+            const copy = arrayBuffer.slice(0);
+            worker.postMessage({ type: 'parse', id, buffer: copy, fileType }, [
+                copy,
+            ]);
         });
     }
 
