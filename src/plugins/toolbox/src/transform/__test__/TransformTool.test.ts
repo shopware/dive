@@ -15,6 +15,10 @@ import { Tween } from '@tweenjs/tween.js';
  * @vitest-environment jsdom
  */
 
+vi.mock('three', async (importOriginal) => {
+    return await importOriginal();
+});
+
 // Mock PointerEvent for jsdom
 class MockPointerEvent extends MouseEvent {
     constructor(type: string, props?: PointerEventInit) {
@@ -684,6 +688,134 @@ describe('TransformTool', () => {
             triggerGizmoEvent('mouseUp');
             // Should not throw - early return happens
             expect(mockController.enabled).toBe(true);
+        });
+    });
+
+    describe('event dispatching', () => {
+        const createMovableAndSelect = () => {
+            const mockMovable = {
+                uuid: 'test',
+                isSelectable: true,
+                isMovable: true,
+                visible: true,
+                scale: { x: 1, y: 1, z: 1, set: vi.fn() },
+                onMove: vi.fn(),
+            } as unknown as Object3D & DIVESelectable & DIVEMovable;
+
+            transformTool.onActivate();
+            selectionState.select(mockMovable);
+            return mockMovable;
+        };
+
+        it('should dispatch object-change on objectChange', () => {
+            const mockMovable = createMovableAndSelect();
+            const listener = vi.fn();
+            transformTool.addEventListener('object-change', listener);
+
+            triggerGizmoEvent('objectChange');
+
+            expect(listener).toHaveBeenCalledTimes(1);
+            expect(listener).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    type: 'object-change',
+                    object: mockMovable,
+                }),
+            );
+        });
+
+        it('should dispatch object-position-change when mode is translate', () => {
+            const mockMovable = createMovableAndSelect();
+            transformTool.setGizmoMode('translate');
+            const listener = vi.fn();
+            transformTool.addEventListener('object-position-change', listener);
+
+            triggerGizmoEvent('objectChange');
+
+            expect(listener).toHaveBeenCalledTimes(1);
+            expect(listener).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    type: 'object-position-change',
+                    object: mockMovable,
+                }),
+            );
+        });
+
+        it('should dispatch object-rotation-change when mode is rotate', () => {
+            const mockMovable = createMovableAndSelect();
+            transformTool.setGizmoMode('rotate');
+            const listener = vi.fn();
+            transformTool.addEventListener('object-rotation-change', listener);
+
+            triggerGizmoEvent('objectChange');
+
+            expect(listener).toHaveBeenCalledTimes(1);
+            expect(listener).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    type: 'object-rotation-change',
+                    object: mockMovable,
+                }),
+            );
+        });
+
+        it('should dispatch object-scale-change when mode is scale', () => {
+            const mockMovable = createMovableAndSelect();
+            transformTool.setGizmoMode('scale');
+            const listener = vi.fn();
+            transformTool.addEventListener('object-scale-change', listener);
+
+            triggerGizmoEvent('objectChange');
+
+            expect(listener).toHaveBeenCalledTimes(1);
+            expect(listener).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    type: 'object-scale-change',
+                    object: mockMovable,
+                }),
+            );
+        });
+
+        it('should not dispatch mode-specific event for other modes', () => {
+            createMovableAndSelect();
+            transformTool.setGizmoMode('translate');
+
+            const rotationListener = vi.fn();
+            const scaleListener = vi.fn();
+            transformTool.addEventListener(
+                'object-rotation-change',
+                rotationListener,
+            );
+            transformTool.addEventListener(
+                'object-scale-change',
+                scaleListener,
+            );
+
+            triggerGizmoEvent('objectChange');
+
+            expect(rotationListener).not.toHaveBeenCalled();
+            expect(scaleListener).not.toHaveBeenCalled();
+        });
+
+        it('should stop receiving events after removeEventListener', () => {
+            createMovableAndSelect();
+            const listener = vi.fn();
+            transformTool.addEventListener('object-change', listener);
+
+            triggerGizmoEvent('objectChange');
+            expect(listener).toHaveBeenCalledTimes(1);
+
+            transformTool.removeEventListener('object-change', listener);
+
+            triggerGizmoEvent('objectChange');
+            expect(listener).toHaveBeenCalledTimes(1);
+        });
+
+        it('should not dispatch events when object is not movable', () => {
+            const changeListener = vi.fn();
+            transformTool.addEventListener('object-change', changeListener);
+
+            triggerGizmoEvent('objectChange');
+
+            expect(changeListener).not.toHaveBeenCalled();
         });
     });
 
