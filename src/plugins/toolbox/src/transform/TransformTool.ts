@@ -1,5 +1,10 @@
 import { TransformControls } from 'three/examples/jsm/controls/TransformControls.js';
-import { type Object3D, type Mesh, type MeshBasicMaterial } from 'three';
+import {
+    type Object3D,
+    type Mesh,
+    type MeshBasicMaterial,
+    EventDispatcher,
+} from 'three';
 import {
     AxesColorBlue,
     AxesColorGreen,
@@ -21,6 +26,13 @@ export const isTransformTool = (tool: Tool): tool is TransformTool => {
     return tool.name === 'transform';
 };
 
+type TransformToolEvents = {
+    'object-change': { object: Object3D & DIVEMovable };
+    'object-position-change': { object: Object3D & DIVEMovable };
+    'object-rotation-change': { object: Object3D & DIVEMovable };
+    'object-scale-change': { object: Object3D & DIVEMovable };
+};
+
 /**
  * Tool for transforming objects with a gizmo.
  *
@@ -29,7 +41,10 @@ export const isTransformTool = (tool: Tool): tool is TransformTool => {
  *
  * @module
  */
-export class TransformTool implements Tool {
+export class TransformTool
+    extends EventDispatcher<TransformToolEvents>
+    implements Tool
+{
     readonly name = 'transform';
     readonly priority = 5;
 
@@ -49,6 +64,8 @@ export class TransformTool implements Tool {
         controller: OrbitController,
         selectionState: SelectionState,
     ) {
+        super();
+
         this._scene = scene;
         this._controller = controller;
         this._selectionState = selectionState;
@@ -230,6 +247,32 @@ export class TransformTool implements Tool {
                 const scale = g.object.scale;
                 const averageScale = (scale.x + scale.y + scale.z) / 3;
                 g.object.scale.set(averageScale, averageScale, averageScale);
+            }
+
+            this.dispatchEvent({
+                type: 'object-change',
+                object: g.object,
+            });
+
+            switch (g.mode) {
+                case 'translate':
+                    this.dispatchEvent({
+                        type: 'object-position-change',
+                        object: g.object,
+                    });
+                    break;
+                case 'rotate':
+                    this.dispatchEvent({
+                        type: 'object-rotation-change',
+                        object: g.object,
+                    });
+                    break;
+                case 'scale':
+                    this.dispatchEvent({
+                        type: 'object-scale-change',
+                        object: g.object,
+                    });
+                    break;
             }
         });
 
