@@ -8,7 +8,7 @@
         "generate": "node --loader ts-node/esm generate-modules-docs.ts"
     },
     "dependencies": {
-        "glob": "^10.5.0"
+        "glob": "^13.0.6"
     },
     "devDependencies": {
         "@types/glob": "^8.1.0",
