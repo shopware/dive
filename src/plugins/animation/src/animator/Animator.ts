@@ -1,64 +1,34 @@
 import { MathUtils } from 'three';
-import { EventDispatcher, Event } from 'three/src/core/EventDispatcher.js';
-import { TAnimatorParameters } from '../types/AnimatorParameters.ts';
+import { EventDispatcher } from 'three/src/core/EventDispatcher.js';
+import { TAnimatorEventMap, TAnimatorLoopMode, TAnimatorState } from '../types/AnimatorTypes.ts';
 
-type TAnimatorEventMap = {
-    play: Event;
-    // pause: Event;
-    // resume: Event;
-    stop: Event;
-};
-
-export class Animator<
-    T extends object,
-> extends EventDispatcher<TAnimatorEventMap> {
+/**
+ * Abstract base class for all animation types.
+ *
+ * Provides a unified interface for controlling animations,
+ * regardless of the underlying implementation (Tween or AnimationClip).
+ *
+ * @module
+ */
+export abstract class Animator extends EventDispatcher<TAnimatorEventMap> {
     private _uuid: string = MathUtils.generateUUID();
-    private _playing: boolean = false;
-    private _stopped: boolean = false;
-    private _completed: boolean = false;
-
-    constructor(
-        readonly object: T,
-        readonly to: T,
-        readonly duration: number,
-        readonly options?: TAnimatorParameters<T>,
-    ) {
-        super();
-    }
 
     public get uuid(): string {
         return this._uuid;
     }
 
-    public get playing(): boolean {
-        return this._playing;
-    }
+    abstract get state(): TAnimatorState;
+    abstract get duration(): number;
+    abstract get loop(): TAnimatorLoopMode;
+    abstract set loop(value: TAnimatorLoopMode);
+    abstract get time(): number;
+    abstract set time(value: number);
 
-    public get stopped(): boolean {
-        return this._stopped;
-    }
+    abstract play(): this;
+    abstract pause(): this;
+    abstract resume(): this;
+    abstract stop(): this;
 
-    public get completed(): boolean {
-        return this._completed;
-    }
-
-    public dispose(): void {
-        this._playing = false;
-        this._stopped = false;
-        this._completed = false;
-    }
-
-    public play(): this {
-        this._playing = true;
-        this._stopped = false;
-        this.dispatchEvent({ type: 'play', target: this });
-        return this;
-    }
-
-    public stop(): this {
-        this._playing = false;
-        this._stopped = true;
-        this.dispatchEvent({ type: 'stop', target: this });
-        return this;
-    }
+    abstract update(deltaTime: number): void;
+    abstract dispose(): void;
 }

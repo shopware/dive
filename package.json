@@ -1,6 +1,6 @@
 {
     "name": "@shopware-ag/dive",
-    "version": "2.2.35",
+    "version": "2.3.0",
     "description": "Shopware Spatial Framework",
     "type": "module",
     "main": "build/dive.cjs",
@@ -103,7 +103,7 @@
     ],
     "dependencies": {
         "three": "^0.163.0",
-        "@tweenjs/tween.js": "^23.1.1",
+        "@tweenjs/tween.js": "^25.0.0",
         "three-spritetext": "^1.8.2",
         "lodash": "^4.17.21",
         "occt-import-js": "^0.0.23"

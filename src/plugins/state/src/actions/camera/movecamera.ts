@@ -49,9 +49,8 @@ export const MoveCameraAction = Action.define<
             position = payload.position;
             target = payload.target;
         }
-        // controller.MoveTo(position, target, payload.duration, payload.locked);
 
-        const animatorArray = await getAnimationSystem().then(
+        const animator = await getAnimationSystem().then(
             (animationSystem) => {
                 if (!engine.clock.hasTicker(animationSystem)) {
                     engine.clock.addTicker(animationSystem);
@@ -59,38 +58,33 @@ export const MoveCameraAction = Action.define<
 
                 controller.enabled = true;
 
-                const animatorPosition = animationSystem
-                    .animate(
-                        controller.object.position,
-                        position,
-                        payload.duration,
+                return animationSystem.animate(
+                    [
                         {
-                            easing: animationSystem.TWEEN.Easing.Quadratic.Out,
+                            object: controller.object.position,
+                            to: position,
                         },
-                    )
-                    .play();
-
-                const animatorTarget = animationSystem
-                    .animate(controller.target, target, payload.duration, {
-                        easing: animationSystem.TWEEN.Easing.Quadratic.Out,
+                        {
+                            object: controller.target,
+                            to: target,
+                        },
+                    ],
+                    payload.duration,
+                    {
+                        easing: animationSystem.Easing.Quadratic.Out,
                         onUpdate: () => {
                             controller.object.lookAt(controller.target);
                         },
                         onComplete: () => {
                             controller.enabled = !payload.locked;
                         },
-                    })
-                    .play();
-
-                return [
-                    animatorPosition,
-                    animatorTarget,
-                ];
+                    },
+                );
             },
         );
 
         return {
-            stop: () => animatorArray.forEach((animator) => animator.stop()),
+            stop: () => animator.stop(),
         };
     },
 });

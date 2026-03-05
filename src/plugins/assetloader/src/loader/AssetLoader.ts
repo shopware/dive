@@ -1,6 +1,6 @@
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { USDZLoader } from 'three/examples/jsm/loaders/USDZLoader.js';
-import { Object3D } from 'three';
+import { AnimationClip, Object3D } from 'three';
 import {
     type FileType,
     SUPPORTED_FILE_TYPES,
@@ -12,6 +12,11 @@ import {
 import { DracoLoader } from '../draco/DracoLoader.ts';
 import { STEPLoader } from '../step/STEPLoader.ts';
 import { AssetCache } from '@shopware-ag/dive/assetcache';
+
+export type AssetResult = {
+    scene: Object3D;
+    animations: AnimationClip[];
+};
 
 export class AssetLoader {
     private _gltfLoader: GLTFLoader;
@@ -36,7 +41,7 @@ export class AssetLoader {
         this._stepLoader = new STEPLoader();
     }
 
-    public async load(uri: string, fileType?: FileType): Promise<Object3D> {
+    public async load(uri: string, fileType?: FileType): Promise<AssetResult> {
         let extension: string;
 
         // use provided file type
@@ -178,7 +183,7 @@ export class AssetLoader {
     private async _parse(
         arrayBuffer: ArrayBuffer,
         type: FileType,
-    ): Promise<Object3D> {
+    ): Promise<AssetResult> {
         try {
             switch (type as FileType) {
                 case 'glb':
@@ -187,24 +192,36 @@ export class AssetLoader {
                         arrayBuffer,
                         '',
                     );
-                    return gltf.scene;
+                    return {
+                        scene: gltf.scene,
+                        animations: gltf.animations,
+                    };
                 }
                 case 'usdz': {
-                    return this._usdzLoader.parse(arrayBuffer);
+                    return {
+                        scene: this._usdzLoader.parse(arrayBuffer),
+                        animations: [],
+                    };
                 }
                 case 'step':
                 case 'stp': {
-                    return await this._stepLoader.parseAsync(
-                        arrayBuffer,
-                        type as 'step' | 'stp',
-                    );
+                    return {
+                        scene: await this._stepLoader.parseAsync(
+                            arrayBuffer,
+                            type as 'step' | 'stp',
+                        ),
+                        animations: [],
+                    };
                 }
                 case 'iges':
                 case 'igs': {
-                    return await this._stepLoader.parseAsync(
-                        arrayBuffer,
-                        type as 'iges' | 'igs',
-                    );
+                    return {
+                        scene: await this._stepLoader.parseAsync(
+                            arrayBuffer,
+                            type as 'iges' | 'igs',
+                        ),
+                        animations: [],
+                    };
                 }
             }
         } catch (error) {

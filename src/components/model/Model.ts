@@ -1,4 +1,5 @@
 import {
+    AnimationClip,
     Box3,
     Mesh,
     MeshStandardMaterial,
@@ -26,6 +27,7 @@ export class DIVEModel extends DIVENode {
     readonly isDIVEModel: true = true;
 
     protected _gltf: Object3D | null = null;
+    private _animationClips: AnimationClip[] = [];
 
     protected _mesh: Mesh | null = null;
     protected _material: MeshStandardMaterial | null = null;
@@ -53,10 +55,18 @@ export class DIVEModel extends DIVENode {
         return this._assetLoader;
     }
 
+    public get animationClips(): readonly AnimationClip[] {
+        return this._animationClips;
+    }
+
+    public get hasAnimations(): boolean {
+        return this._animationClips.length > 0;
+    }
+
     public async setFromURL(url: string): Promise<this> {
         const assetLoader = await this._getAssetLoader();
-        const gltf = await assetLoader.load(url);
-        this.setFromGLTF(gltf);
+        const { scene, animations } = await assetLoader.load(url);
+        this.setFromGLTF(scene, animations);
         import('@shopware-ag/dive/state').then(({ State }) => {
             State.get(this.userData.id!)?.performAction('MODEL_LOADED', {
                 id: this.userData.id!,
@@ -66,9 +76,10 @@ export class DIVEModel extends DIVENode {
         return this;
     }
 
-    public setFromGLTF(gltf: Object3D): this {
+    public setFromGLTF(gltf: Object3D, animations?: AnimationClip[]): this {
         this.clear();
         this._boundingBox.makeEmpty();
+        this._animationClips = animations ?? [];
 
         let root: Object3D | null = null;
 

@@ -1,85 +1,74 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-import * as TWEEN from '@tweenjs/tween.js';
-import { MathUtils } from 'three';
+import { Easing as TWEENEasing } from '@tweenjs/tween.js';
+import { AnimationClip, MathUtils, Object3D } from 'three';
 import { DIVETicker } from '@shopware-ag/dive';
 import { Animator } from '../animator/Animator.ts';
-import { TAnimatorParameters } from '../types/AnimatorParameters.ts';
+import {
+    TargetAnimator,
+    TargetAnimatorOptions,
+    AnimationTarget,
+} from '../animator/TargetAnimator.ts';
+import { ClipAnimator } from '../animator/ClipAnimator.ts';
 
-type CallbackTuple<T> = {
-    onUpdate: (object: T, elapsed: number) => void;
-    onComplete: (object: T) => void;
-};
-
+/**
+ * Central animation system that manages all animators (tween-based and clip-based).
+ *
+ * Implements DIVETicker so it can be registered with DIVEClock for per-frame updates.
+ *
+ * @module
+ */
 export class AnimationSystem implements DIVETicker {
     public uuid: string = MathUtils.generateUUID();
+    public readonly Easing = TWEENEasing;
 
-    public TWEEN: typeof TWEEN = TWEEN;
-
-    private _callbackMap: Map<string, CallbackTuple<any>> = new Map();
-    private _tweens: Map<string, TWEEN.Tween<any>> = new Map();
+    private _animators: Map<string, Animator> = new Map();
 
     /**
-     * Creates a new animator and registers it.
-     * @param object - The object to animate.
-     * @param to - The target value.
-     * @param duration - The duration of the animation in milliseconds.
-     * @param options - The options for the animation.
-     * @returns The animator.
+     * Convenience shorthand: creates a TargetAnimator and immediately starts playback.
      */
-    public animate<T extends object>(
-        object: T,
-        to: T,
+    public animate(
+        targets: AnimationTarget | AnimationTarget[],
         duration: number,
-        options?: TAnimatorParameters<T>,
-    ): Animator<T> {
-        const animator = new Animator(object, to, duration, options);
-        this._callbackMap.set(animator.uuid, {
-            onUpdate: animator.options?.onUpdate ?? (() => {}),
-            onComplete: animator.options?.onComplete ?? (() => {}),
-        });
+        options?: TargetAnimatorOptions,
+    ): TargetAnimator {
+        return this.fromTargets(targets, duration, options).play();
+    }
 
-        this._createTween(animator);
+    public fromTargets(
+        targets: AnimationTarget | AnimationTarget[],
+        duration: number,
+        options?: TargetAnimatorOptions,
+    ): TargetAnimator {
+        const animator = new TargetAnimator(targets, duration, options);
+        this._animators.set(animator.uuid, animator);
+        return animator;
+    }
+
+    public fromClips(root: Object3D, clips: AnimationClip[]): ClipAnimator {
+        const animator = new ClipAnimator(root, clips);
+        this._animators.set(animator.uuid, animator);
         return animator;
     }
 
     public remove(uuid: string): void {
-        if (!this._callbackMap.has(uuid)) {
+        const animator = this._animators.get(uuid);
+        if (!animator) {
             console.warn(`Animator with uuid ${uuid} not found`);
             return;
         }
-
-        this._callbackMap.delete(uuid);
-        this._tweens.delete(uuid);
+        animator.dispose();
+        this._animators.delete(uuid);
     }
 
     public dispose(): void {
-        this._callbackMap.clear();
-        this._tweens.clear();
+        for (const animator of this._animators.values()) {
+            animator.dispose();
+        }
+        this._animators.clear();
     }
 
-    public tick(): void {
-        this.TWEEN.update();
-    }
-
-    private _createTween<T extends object>(animator: Animator<T>): void {
-        const tween = new this.TWEEN.Tween<T>(animator.object)
-            .to(animator.to, animator.duration)
-            .easing(animator.options?.easing ?? this.TWEEN.Easing.Quadratic.Out)
-            .onUpdate((object, elapsed) => {
-                this._callbackMap.get(animator.uuid)?.onUpdate(object, elapsed);
-            })
-            .onComplete((object) => {
-                this._callbackMap.get(animator.uuid)?.onComplete(object);
-            });
-
-        animator.addEventListener('play', () => {
-            tween.start();
-        });
-
-        animator.addEventListener('stop', () => {
-            tween.stop();
-        });
-
-        this._tweens.set(animator.uuid, tween);
+    public tick(deltaTime: number): void {
+        for (const animator of this._animators.values()) {
+            animator.update(deltaTime);
+        }
     }
 }

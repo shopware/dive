@@ -4,6 +4,8 @@ import { Group } from 'three';
 import { FileTypeError, NetworkError, ParseError } from '@shopware-ag/dive';
 import { AssetCache } from '@shopware-ag/dive/assetcache';
 
+vi.mock('three');
+
 // Mock the Three.js loaders
 const mockParseAsyncGLTF = vi.fn();
 vi.mock('three/examples/jsm/loaders/GLTFLoader', () => ({
@@ -85,7 +87,7 @@ describe('AssetLoader', () => {
                 mockArrayBuffer,
                 '',
             );
-            expect(result).toBe(mockResult);
+            expect(result.scene).toBe(mockResult);
         });
 
         it('should return cached promise if chunk exists but no arrayBuffer yet', async () => {
@@ -106,7 +108,7 @@ describe('AssetLoader', () => {
                 mockArrayBuffer,
                 '',
             );
-            expect(result).toBe(mockResult);
+            expect(result.scene).toBe(mockResult);
         });
 
         it('should create new chunk if not cached', async () => {
@@ -125,7 +127,7 @@ describe('AssetLoader', () => {
                 mockArrayBuffer,
                 '',
             );
-            expect(result).toBe(mockResult);
+            expect(result.scene).toBe(mockResult);
         });
     });
 
@@ -180,7 +182,7 @@ describe('AssetLoader', () => {
                 mockArrayBuffer,
                 '',
             );
-            expect(result).toBe(mockScene);
+            expect(result.scene).toBe(mockScene);
         });
 
         it('should parse GLTF files correctly', async () => {
@@ -197,7 +199,7 @@ describe('AssetLoader', () => {
                 mockArrayBuffer,
                 '',
             );
-            expect(result).toBe(mockScene);
+            expect(result.scene).toBe(mockScene);
         });
 
         it('should throw ParseError when GLTF parsing fails', async () => {
@@ -231,7 +233,7 @@ describe('AssetLoader', () => {
         it('should parse USDZ files correctly', async () => {
             const mockObject = new Group();
             const mockArrayBuffer = new ArrayBuffer(1024);
-            mockParseUSDZ.mockResolvedValue(mockObject);
+            mockParseUSDZ.mockReturnValue(mockObject);
             mockChunk.load.mockResolvedValue(mockArrayBuffer);
 
             const result = await loader.load('model.usdz');
@@ -239,7 +241,8 @@ describe('AssetLoader', () => {
             expect(MockedAssetCache.create).toHaveBeenCalledWith('model.usdz');
             expect(mockChunk.load).toHaveBeenCalled();
             expect(mockParseUSDZ).toHaveBeenCalledWith(mockArrayBuffer);
-            expect(result).toBe(mockObject);
+            expect(result.scene).toBe(mockObject);
+            expect(result.animations).toEqual([]);
         });
 
         it('should throw ParseError when USDZ parsing fails', async () => {
@@ -273,7 +276,7 @@ describe('AssetLoader', () => {
                 mockArrayBuffer,
                 '',
             );
-            expect(result).toBe(mockScene);
+            expect(result.scene).toBe(mockScene);
         });
 
         it('should handle complete loading flow for USDZ', async () => {
@@ -283,7 +286,7 @@ describe('AssetLoader', () => {
 
             MockedAssetCache.read.mockReturnValue(null);
             mockChunk.load.mockResolvedValue(mockArrayBuffer);
-            mockParseUSDZ.mockResolvedValue(mockObject);
+            mockParseUSDZ.mockReturnValue(mockObject);
 
             const result = await loader.load(uri);
 
@@ -291,7 +294,8 @@ describe('AssetLoader', () => {
             expect(MockedAssetCache.create).toHaveBeenCalledWith(uri);
             expect(mockChunk.load).toHaveBeenCalled();
             expect(mockParseUSDZ).toHaveBeenCalledWith(mockArrayBuffer);
-            expect(result).toBe(mockObject);
+            expect(result.scene).toBe(mockObject);
+            expect(result.animations).toEqual([]);
         });
 
         it('should propagate errors from chunk.load()', async () => {
