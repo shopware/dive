@@ -22,6 +22,19 @@ export class AnimationSystem implements DIVETicker {
 
     private _animators: Map<string, Animator> = new Map();
 
+    public dispose(): void {
+        for (const animator of this._animators.values()) {
+            animator.dispose();
+        }
+        this._animators.clear();
+    }
+
+    public tick(deltaTime: number): void {
+        for (const animator of this._animators.values()) {
+            animator.update(deltaTime);
+        }
+    }
+
     /**
      * Convenience shorthand: creates a TargetAnimator and immediately starts playback.
      */
@@ -66,18 +79,5 @@ export class AnimationSystem implements DIVETicker {
         }
         animator.dispose();
         this._animators.delete(uuid);
-    }
-
-    public dispose(): void {
-        for (const animator of this._animators.values()) {
-            animator.dispose();
-        }
-        this._animators.clear();
-    }
-
-    public tick(deltaTime: number): void {
-        for (const animator of this._animators.values()) {
-            animator.update(deltaTime);
-        }
     }
 }
