@@ -1,4 +1,4 @@
-import { Object3D } from 'three';
+import { Object3D, Mesh } from 'three';
 import { GLTFExporter } from 'three/examples/jsm/exporters/GLTFExporter.js';
 import type { GLTFExporterOptions as THREEGLTFExporterOptions } from 'three/examples/jsm/exporters/GLTFExporter.js';
 import { USDZExporter } from 'three/examples/jsm/exporters/USDZExporter.js';
@@ -42,6 +42,9 @@ export class AssetExporter {
         type: T,
         options?: FileTypeToExporterOptions[T],
     ): Promise<ArrayBuffer> {
+        // ensure normals are computed before export
+        this._computeNormals(object);
+
         switch (type) {
             case 'glb': {
                 return this._exportGlb(object, options);
@@ -63,6 +66,10 @@ export class AssetExporter {
     ): Promise<ArrayBuffer> {
         try {
             const result = await this._gltfExporter.parseAsync(object, {
+                animations:
+                    object.animations.length > 0
+                        ? object.animations
+                        : undefined,
                 ...options,
                 binary: true,
             });
@@ -84,6 +91,10 @@ export class AssetExporter {
     ): Promise<ArrayBuffer> {
         try {
             const json = await this._gltfExporter.parseAsync(object, {
+                animations:
+                    object.animations.length > 0
+                        ? object.animations
+                        : undefined,
                 ...options,
                 binary: false,
             });
@@ -112,5 +123,15 @@ export class AssetExporter {
             }
             throw new ParseError('Failed to export USDZ', error);
         }
+    }
+
+    private _computeNormals(object: Object3D): void {
+        object.traverse((child) => {
+            if (child instanceof Mesh && child.geometry) {
+                if (!child.geometry.getAttribute('normal')) {
+                    child.geometry.computeVertexNormals();
+                }
+            }
+        });
     }
 }

@@ -1,5 +1,4 @@
 import {
-    AnimationClip,
     Box3,
     Mesh,
     MeshStandardMaterial,
@@ -56,8 +55,8 @@ export class DIVEModel extends DIVENode {
 
     public async setFromURL(url: string): Promise<this> {
         const assetLoader = await this._getAssetLoader();
-        const { scene, animations } = await assetLoader.load(url);
-        this.setFromGLTF(scene, animations);
+        const scene = await assetLoader.load(url);
+        this.setFromGLTF(scene);
         import('@shopware-ag/dive/state').then(({ State }) => {
             State.get(this.userData.id!)?.performAction('MODEL_LOADED', {
                 id: this.userData.id!,
@@ -67,7 +66,7 @@ export class DIVEModel extends DIVENode {
         return this;
     }
 
-    public setFromGLTF(gltf: Object3D, animations?: AnimationClip[]): this {
+    public setFromGLTF(gltf: Object3D): this {
         this.clear();
         this._boundingBox.makeEmpty();
 
@@ -108,8 +107,6 @@ export class DIVEModel extends DIVENode {
         this.scale.copy(root.scale);
 
         this.add(...root.children);
-
-        this.animations = animations ?? [];
 
         return this;
     }
