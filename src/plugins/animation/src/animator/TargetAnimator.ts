@@ -27,10 +27,12 @@ export type TargetAnimatorOptions = {
 export class TargetAnimator extends Animator {
     private _group: Group = new Group();
     private _tweens: Tween<any>[] = [];
+    private _snapshots: { object: any; values: Record<string, any> }[] = [];
     private _state: TAnimatorState = 'idle';
     private _duration: number;
     private _loop: TAnimatorLoopMode = 'once';
     private _options?: TargetAnimatorOptions;
+    private _completedCount: number = 0;
 
     constructor(
         targets: AnimationTarget | AnimationTarget[],
@@ -44,11 +46,18 @@ export class TargetAnimator extends Animator {
         const targetsArray = Array.isArray(targets) ? targets : [targets];
 
         for (const target of targetsArray) {
+            const snapshot: Record<string, any> = {};
+            for (const key of Object.keys(target.to)) {
+                snapshot[key] = target.object[key];
+            }
+            this._snapshots.push({ object: target.object, values: snapshot });
+
             const tween = new Tween(target.object, this._group)
                 .to(target.to, duration)
                 .easing(options?.easing ?? Easing.Quadratic.Out)
                 .onComplete(() => {
-                    if (this._group.allStopped()) {
+                    this._completedCount++;
+                    if (this._completedCount >= this._tweens.length) {
                         this._state = 'idle';
                         this._options?.onComplete?.();
                         this.dispatchEvent({ type: 'complete', target: this });
@@ -88,7 +97,10 @@ export class TargetAnimator extends Animator {
     }
 
     public play(): this {
+        this._tweens.forEach((t) => t.stop());
         this._state = 'playing';
+        this._completedCount = 0;
+        this._restoreSnapshots();
         this._tweens.forEach((t) => t.start());
         this.dispatchEvent({ type: 'play', target: this });
         return this;
@@ -111,6 +123,7 @@ export class TargetAnimator extends Animator {
     public stop(): this {
         this._state = 'idle';
         this._tweens.forEach((t) => t.stop());
+        this._restoreSnapshots();
         this.dispatchEvent({ type: 'stop', target: this });
         return this;
     }
@@ -122,6 +135,14 @@ export class TargetAnimator extends Animator {
 
         if (this._state === 'playing') {
             this._options?.onUpdate?.();
+        }
+    }
+
+    private _restoreSnapshots(): void {
+        for (const { object, values } of this._snapshots) {
+            for (const key of Object.keys(values)) {
+                object[key] = values[key];
+            }
         }
     }
 
