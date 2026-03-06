@@ -1,13 +1,13 @@
 import { Easing as TWEENEasing } from '@tweenjs/tween.js';
 import { AnimationClip, MathUtils, Object3D } from 'three';
 import { DIVETicker } from '@shopware-ag/dive';
-import { Animator } from '../animator/Animator.ts';
-import {
-    TargetAnimator,
-    TargetAnimatorOptions,
-    AnimationTarget,
-} from '../animator/TargetAnimator.ts';
-import { ClipAnimator } from '../animator/ClipAnimator.ts';
+
+type Animator = import('../animator/Animator.ts').Animator;
+type ClipAnimator = import('../animator/ClipAnimator.ts').ClipAnimator;
+type TargetAnimator = import('../animator/TargetAnimator.ts').TargetAnimator;
+type TargetAnimatorOptions =
+    import('../animator/TargetAnimator.ts').TargetAnimatorOptions;
+type AnimationTarget = import('../animator/TargetAnimator.ts').AnimationTarget;
 
 /**
  * Central animation system that manages all animators (tween-based and clip-based).
@@ -25,25 +25,34 @@ export class AnimationSystem implements DIVETicker {
     /**
      * Convenience shorthand: creates a TargetAnimator and immediately starts playback.
      */
-    public animate(
+    public async animate(
         targets: AnimationTarget | AnimationTarget[],
         duration: number,
         options?: TargetAnimatorOptions,
-    ): TargetAnimator {
-        return this.fromTargets(targets, duration, options).play();
+    ): Promise<TargetAnimator> {
+        const animator = await this.fromTargets(targets, duration, options);
+        animator.play();
+        return animator;
     }
 
-    public fromTargets(
+    public async fromTargets(
         targets: AnimationTarget | AnimationTarget[],
         duration: number,
         options?: TargetAnimatorOptions,
-    ): TargetAnimator {
+    ): Promise<TargetAnimator> {
+        const { TargetAnimator } = await import(
+            '../animator/TargetAnimator.ts'
+        );
         const animator = new TargetAnimator(targets, duration, options);
         this._animators.set(animator.uuid, animator);
         return animator;
     }
 
-    public fromClips(root: Object3D, clips: AnimationClip[]): ClipAnimator {
+    public async fromClips(
+        root: Object3D,
+        clips: AnimationClip[],
+    ): Promise<ClipAnimator> {
+        const { ClipAnimator } = await import('../animator/ClipAnimator.ts');
         const animator = new ClipAnimator(root, clips);
         this._animators.set(animator.uuid, animator);
         return animator;
