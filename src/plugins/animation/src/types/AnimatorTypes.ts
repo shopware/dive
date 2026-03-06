@@ -7,6 +7,7 @@ export type TAnimatorEventMap = {
     pause: Event;
     resume: Event;
     stop: Event;
+    update: Event;
     complete: Event;
 };
 

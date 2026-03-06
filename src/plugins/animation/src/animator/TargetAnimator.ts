@@ -55,6 +55,10 @@ export class TargetAnimator extends Animator {
             const tween = new Tween(target.object, this._group)
                 .to(target.to, duration)
                 .easing(options?.easing ?? Easing.Quadratic.Out)
+                .onUpdate(() => {
+                    this._options?.onUpdate?.();
+                    this.dispatchEvent({ type: 'update', target: this });
+                })
                 .onComplete(() => {
                     this._completedCount++;
                     if (this._completedCount >= this._tweens.length) {
@@ -132,10 +136,6 @@ export class TargetAnimator extends Animator {
         if (this._state === 'idle') return;
 
         this._group.update();
-
-        if (this._state === 'playing') {
-            this._options?.onUpdate?.();
-        }
     }
 
     private _restoreSnapshots(): void {
