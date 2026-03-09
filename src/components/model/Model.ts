@@ -55,8 +55,8 @@ export class DIVEModel extends DIVENode {
 
     public async setFromURL(url: string): Promise<this> {
         const assetLoader = await this._getAssetLoader();
-        const scene = await assetLoader.load(url);
-        this.setFromGLTF(scene);
+        const gltf = await assetLoader.load(url);
+        this.setFromGLTF(gltf);
         import('@shopware-ag/dive/state').then(({ State }) => {
             State.get(this.userData.id!)?.performAction('MODEL_LOADED', {
                 id: this.userData.id!,
