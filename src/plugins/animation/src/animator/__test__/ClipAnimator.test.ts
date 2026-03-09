@@ -222,6 +222,15 @@ describe('ClipAnimator', () => {
             const action = mixer._actions[0];
             expect(action.loop).not.toBe(0);
         });
+
+        it('should apply pingpong loop constant to current action', () => {
+            animator.play('Walk');
+            animator.loop = 'pingpong';
+
+            const mixer = (animator as any)._mixer;
+            const action = mixer._actions[0];
+            expect(action.loop).not.toBe(0);
+        });
     });
 
     describe('Events', () => {
