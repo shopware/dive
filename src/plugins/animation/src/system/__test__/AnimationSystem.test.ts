@@ -99,8 +99,8 @@ describe('AnimationSystem', () => {
     });
 
     describe('fromTargets()', () => {
-        it('should create a TargetAnimator', () => {
-            const animator = animationSystem.fromTargets(
+        it('should create a TargetAnimator', async () => {
+            const animator = await animationSystem.fromTargets(
                 [{ object: { x: 0 }, to: { x: 100 } }],
                 1000,
             );
@@ -109,8 +109,8 @@ describe('AnimationSystem', () => {
             expect(animator.state).toBe('idle');
         });
 
-        it('should register the animator internally', () => {
-            const animator = animationSystem.fromTargets(
+        it('should register the animator internally', async () => {
+            const animator = await animationSystem.fromTargets(
                 [{ object: { x: 0 }, to: { x: 100 } }],
                 1000,
             );
@@ -119,8 +119,8 @@ describe('AnimationSystem', () => {
             ).toBeTruthy();
         });
 
-        it('should accept multiple targets', () => {
-            const animator = animationSystem.fromTargets(
+        it('should accept multiple targets', async () => {
+            const animator = await animationSystem.fromTargets(
                 [
                     { object: { x: 0 }, to: { x: 100 } },
                     { object: { y: 0 }, to: { y: 200 } },
@@ -130,16 +130,16 @@ describe('AnimationSystem', () => {
             expect(animator).toBeDefined();
         });
 
-        it('should accept a single target without array', () => {
-            const animator = animationSystem.fromTargets(
+        it('should accept a single target without array', async () => {
+            const animator = await animationSystem.fromTargets(
                 { object: { x: 0 }, to: { x: 100 } },
                 1000,
             );
             expect(animator).toBeDefined();
         });
 
-        it('should accept options with easing', () => {
-            const animator = animationSystem.fromTargets(
+        it('should accept options with easing', async () => {
+            const animator = await animationSystem.fromTargets(
                 [{ object: { x: 0 }, to: { x: 100 } }],
                 1000,
                 { easing: animationSystem.Easing.Quadratic.Out },
@@ -149,8 +149,8 @@ describe('AnimationSystem', () => {
     });
 
     describe('animate()', () => {
-        it('should create and auto-play a TargetAnimator', () => {
-            const animator = animationSystem.animate(
+        it('should create and auto-play a TargetAnimator', async () => {
+            const animator = await animationSystem.animate(
                 [{ object: { x: 0 }, to: { x: 100 } }],
                 1000,
             );
@@ -158,8 +158,8 @@ describe('AnimationSystem', () => {
             expect(animator.state).toBe('playing');
         });
 
-        it('should register the animator internally', () => {
-            const animator = animationSystem.animate(
+        it('should register the animator internally', async () => {
+            const animator = await animationSystem.animate(
                 [{ object: { x: 0 }, to: { x: 100 } }],
                 1000,
             );
@@ -170,22 +170,22 @@ describe('AnimationSystem', () => {
     });
 
     describe('ClipAnimator Creation', () => {
-        it('should create a ClipAnimator via fromClips()', () => {
+        it('should create a ClipAnimator via fromClips()', async () => {
             const root = {};
             const clip = { name: 'test', duration: 1 };
 
-            const animator = animationSystem.fromClips(root as any, [
+            const animator = await animationSystem.fromClips(root as any, [
                 clip as any,
             ]);
             expect(animator).toBeDefined();
             expect(animator.clipNames).toEqual(['test']);
         });
 
-        it('should register the clip animator internally', () => {
+        it('should register the clip animator internally', async () => {
             const root = {};
             const clip = { name: 'test', duration: 1 };
 
-            const animator = animationSystem.fromClips(root as any, [
+            const animator = await animationSystem.fromClips(root as any, [
                 clip as any,
             ]);
             expect(
@@ -195,8 +195,8 @@ describe('AnimationSystem', () => {
     });
 
     describe('Remove', () => {
-        it('should remove an animator', () => {
-            const animator = animationSystem.fromTargets(
+        it('should remove an animator', async () => {
+            const animator = await animationSystem.fromTargets(
                 [{ object: { x: 0 }, to: { x: 100 } }],
                 1000,
             );
@@ -223,8 +223,8 @@ describe('AnimationSystem', () => {
     });
 
     describe('Tick', () => {
-        it('should call update on all registered animators', () => {
-            const animator = animationSystem.fromTargets(
+        it('should call update on all registered animators', async () => {
+            const animator = await animationSystem.fromTargets(
                 [{ object: { x: 0 }, to: { x: 100 } }],
                 1000,
             );
@@ -236,15 +236,15 @@ describe('AnimationSystem', () => {
             expect(updateSpy).toHaveBeenCalledWith(0.016);
         });
 
-        it('should call update on both tween and clip animators', () => {
-            const tweenAnimator = animationSystem.fromTargets(
+        it('should call update on both tween and clip animators', async () => {
+            const tweenAnimator = await animationSystem.fromTargets(
                 [{ object: { x: 0 }, to: { x: 100 } }],
                 1000,
             );
 
             const root = {};
             const clip = { name: 'test', duration: 1 };
-            const clipAnimator = animationSystem.fromClips(root as any, [
+            const clipAnimator = await animationSystem.fromClips(root as any, [
                 clip as any,
             ]);
 
@@ -259,12 +259,12 @@ describe('AnimationSystem', () => {
     });
 
     describe('Dispose', () => {
-        it('should clear all animators', () => {
-            animationSystem.fromTargets(
+        it('should clear all animators', async () => {
+            await animationSystem.fromTargets(
                 [{ object: { x: 0 }, to: { x: 100 } }],
                 1000,
             );
-            animationSystem.fromTargets(
+            await animationSystem.fromTargets(
                 [{ object: { y: 0 }, to: { y: 200 } }],
                 500,
             );

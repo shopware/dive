@@ -5,8 +5,8 @@ vi.mock('@tweenjs/tween.js', () => {
         private _object: any;
         private _to: any;
         private _group: any;
-        private _onUpdateCb: any;
-        private _onCompleteCb: any;
+        public _onUpdateCb: any;
+        public _onCompleteCb: any;
         private _repeat = 0;
         constructor(object: any, group: any) {
             this._object = object;
@@ -215,10 +215,78 @@ describe('TargetAnimator', () => {
         });
     });
 
+    describe('Time', () => {
+        it('should return time from first tween', () => {
+            expect(animator.time).toBe(0);
+        });
+
+        it('should be a no-op on set (seeking not supported)', () => {
+            animator.time = 500;
+            expect(animator.time).toBe(0);
+        });
+    });
+
     describe('Update', () => {
         it('should not throw on update', () => {
             animator.play();
             expect(() => animator.update(0.016)).not.toThrow();
+        });
+
+        it('should skip group update when idle', () => {
+            expect(() => animator.update(0.016)).not.toThrow();
+        });
+    });
+
+    describe('Callbacks', () => {
+        it('should call onUpdate callback and dispatch update event', () => {
+            const onUpdate = vi.fn();
+            const updateListener = vi.fn();
+            const anim = new TargetAnimator(targets, 1000, { onUpdate });
+            anim.addEventListener('update', updateListener);
+            anim.play();
+
+            const tweens = (anim as any)._tweens;
+            tweens[0]._onUpdateCb();
+
+            expect(onUpdate).toHaveBeenCalledTimes(1);
+            expect(updateListener).toHaveBeenCalledTimes(1);
+            anim.dispose();
+        });
+
+        it('should call onComplete callback and dispatch complete event when all tweens finish', () => {
+            const onComplete = vi.fn();
+            const completeListener = vi.fn();
+            const anim = new TargetAnimator(targets, 1000, { onComplete });
+            anim.addEventListener('complete', completeListener);
+            anim.play();
+
+            const tweens = (anim as any)._tweens;
+            tweens[0]._onCompleteCb();
+
+            expect(anim.state).toBe('idle');
+            expect(onComplete).toHaveBeenCalledTimes(1);
+            expect(completeListener).toHaveBeenCalledTimes(1);
+            anim.dispose();
+        });
+
+        it('should not complete until all tweens finish with multiple targets', () => {
+            const onComplete = vi.fn();
+            const multiTargets: AnimationTarget[] = [
+                { object: { x: 0 }, to: { x: 100 } },
+                { object: { y: 0 }, to: { y: 200 } },
+            ];
+            const anim = new TargetAnimator(multiTargets, 1000, { onComplete });
+            anim.play();
+
+            const tweens = (anim as any)._tweens;
+            tweens[0]._onCompleteCb();
+            expect(anim.state).toBe('playing');
+            expect(onComplete).not.toHaveBeenCalled();
+
+            tweens[1]._onCompleteCb();
+            expect(anim.state).toBe('idle');
+            expect(onComplete).toHaveBeenCalledTimes(1);
+            anim.dispose();
         });
     });
 

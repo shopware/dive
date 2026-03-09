@@ -77,7 +77,7 @@ describe('AssetLoader', () => {
                 promise: Promise.resolve(mockArrayBuffer),
             };
             MockedAssetCache.read.mockReturnValue(cachedChunk as any);
-            mockParseAsyncGLTF.mockResolvedValue({ scene: mockResult } as GLTF);
+            mockParseAsyncGLTF.mockResolvedValue({ scene: mockResult, animations: [] } as GLTF);
 
             const result = await loader.load('model.glb');
 
@@ -87,7 +87,7 @@ describe('AssetLoader', () => {
                 mockArrayBuffer,
                 '',
             );
-            expect(result.scene).toBe(mockResult);
+            expect(result).toBe(mockResult);
         });
 
         it('should return cached promise if chunk exists but no arrayBuffer yet', async () => {
@@ -98,7 +98,7 @@ describe('AssetLoader', () => {
                 promise: Promise.resolve(mockArrayBuffer),
             };
             MockedAssetCache.read.mockReturnValue(cachedChunk as any);
-            mockParseAsyncGLTF.mockResolvedValue({ scene: mockResult } as GLTF);
+            mockParseAsyncGLTF.mockResolvedValue({ scene: mockResult, animations: [] } as GLTF);
 
             const result = await loader.load('model.glb');
 
@@ -108,7 +108,7 @@ describe('AssetLoader', () => {
                 mockArrayBuffer,
                 '',
             );
-            expect(result.scene).toBe(mockResult);
+            expect(result).toBe(mockResult);
         });
 
         it('should create new chunk if not cached', async () => {
@@ -116,7 +116,7 @@ describe('AssetLoader', () => {
             const mockResult = new Group();
             MockedAssetCache.read.mockReturnValue(null);
             mockChunk.load.mockResolvedValue(mockArrayBuffer);
-            mockParseAsyncGLTF.mockResolvedValue({ scene: mockResult } as GLTF);
+            mockParseAsyncGLTF.mockResolvedValue({ scene: mockResult, animations: [] } as GLTF);
 
             const result = await loader.load('model.glb');
 
@@ -127,7 +127,7 @@ describe('AssetLoader', () => {
                 mockArrayBuffer,
                 '',
             );
-            expect(result.scene).toBe(mockResult);
+            expect(result).toBe(mockResult);
         });
     });
 
@@ -171,7 +171,7 @@ describe('AssetLoader', () => {
         it('should parse GLB files correctly', async () => {
             const mockScene = new Group();
             const mockArrayBuffer = new ArrayBuffer(1024);
-            mockParseAsyncGLTF.mockResolvedValue({ scene: mockScene } as GLTF);
+            mockParseAsyncGLTF.mockResolvedValue({ scene: mockScene, animations: [] } as GLTF);
             mockChunk.load.mockResolvedValue(mockArrayBuffer);
 
             const result = await loader.load('model.glb');
@@ -182,13 +182,13 @@ describe('AssetLoader', () => {
                 mockArrayBuffer,
                 '',
             );
-            expect(result.scene).toBe(mockScene);
+            expect(result).toBe(mockScene);
         });
 
         it('should parse GLTF files correctly', async () => {
             const mockScene = new Group();
             const mockArrayBuffer = new ArrayBuffer(1024);
-            mockParseAsyncGLTF.mockResolvedValue({ scene: mockScene } as GLTF);
+            mockParseAsyncGLTF.mockResolvedValue({ scene: mockScene, animations: [] } as GLTF);
             mockChunk.load.mockResolvedValue(mockArrayBuffer);
 
             const result = await loader.load('model.gltf');
@@ -199,7 +199,7 @@ describe('AssetLoader', () => {
                 mockArrayBuffer,
                 '',
             );
-            expect(result.scene).toBe(mockScene);
+            expect(result).toBe(mockScene);
         });
 
         it('should throw ParseError when GLTF parsing fails', async () => {
@@ -241,7 +241,7 @@ describe('AssetLoader', () => {
             expect(MockedAssetCache.create).toHaveBeenCalledWith('model.usdz');
             expect(mockChunk.load).toHaveBeenCalled();
             expect(mockParseUSDZ).toHaveBeenCalledWith(mockArrayBuffer);
-            expect(result.scene).toBe(mockObject);
+            expect(result).toBe(mockObject);
             expect(result.animations).toEqual([]);
         });
 
@@ -265,7 +265,7 @@ describe('AssetLoader', () => {
 
             MockedAssetCache.read.mockReturnValue(null);
             mockChunk.load.mockResolvedValue(mockArrayBuffer);
-            mockParseAsyncGLTF.mockResolvedValue({ scene: mockScene } as GLTF);
+            mockParseAsyncGLTF.mockResolvedValue({ scene: mockScene, animations: [] } as GLTF);
 
             const result = await loader.load(uri);
 
@@ -276,7 +276,7 @@ describe('AssetLoader', () => {
                 mockArrayBuffer,
                 '',
             );
-            expect(result.scene).toBe(mockScene);
+            expect(result).toBe(mockScene);
         });
 
         it('should handle complete loading flow for USDZ', async () => {
@@ -294,7 +294,7 @@ describe('AssetLoader', () => {
             expect(MockedAssetCache.create).toHaveBeenCalledWith(uri);
             expect(mockChunk.load).toHaveBeenCalled();
             expect(mockParseUSDZ).toHaveBeenCalledWith(mockArrayBuffer);
-            expect(result.scene).toBe(mockObject);
+            expect(result).toBe(mockObject);
             expect(result.animations).toEqual([]);
         });
 

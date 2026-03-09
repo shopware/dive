@@ -47,6 +47,7 @@ describe('AssetExporter', () => {
 
         exporter = new AssetExporter();
         mockObject = new Object3D();
+        mockObject.animations = [];
     });
 
     describe('export', () => {

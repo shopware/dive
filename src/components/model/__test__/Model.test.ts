@@ -503,7 +503,7 @@ describe('dive/model/DIVEModel', () => {
 
         const mockGltf = new Object3D();
         mockGltf.children.push(new Mesh());
-        mockLoad.mockResolvedValue({ scene: mockGltf, animations: [] });
+        mockLoad.mockResolvedValue(mockGltf);
 
         model.userData.id = 'test-id';
 
@@ -523,7 +523,7 @@ describe('dive/model/DIVEModel', () => {
 
     it('should reuse existing asset loader on subsequent calls', async () => {
         const mockGltf = new Object3D();
-        mockLoad.mockResolvedValue({ scene: mockGltf, animations: [] });
+        mockLoad.mockResolvedValue(mockGltf);
 
         model.userData.id = 'test-id';
 

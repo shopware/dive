@@ -115,6 +115,19 @@ describe('ClipAnimator', () => {
             expect(animator.currentClipName).toBe('Idle');
         });
 
+        it('should crossfade when switching between clips', () => {
+            animator.play('Walk');
+            animator.play('Idle');
+
+            const mixer = (animator as any)._mixer;
+            const walkAction = mixer._actions[0];
+            const idleAction = mixer._actions[1];
+
+            expect(walkAction.fadeOut).toHaveBeenCalledWith(0.3);
+            expect(idleAction.reset).toHaveBeenCalled();
+            expect(idleAction.fadeIn).toHaveBeenCalledWith(0.3);
+        });
+
         it('should return this when clip not found', () => {
             const result = animator.play('NonExistent');
             expect(result).toBe(animator);
@@ -159,6 +172,30 @@ describe('ClipAnimator', () => {
         });
     });
 
+    describe('Time', () => {
+        it('should return 0 when no clip is playing', () => {
+            expect(animator.time).toBe(0);
+        });
+
+        it('should return action time when playing', () => {
+            animator.play('Walk');
+            const mixer = (animator as any)._mixer;
+            mixer._actions[0].time = 1.5;
+            expect(animator.time).toBe(1.5);
+        });
+
+        it('should set action time when playing', () => {
+            animator.play('Walk');
+            animator.time = 0.8;
+            const mixer = (animator as any)._mixer;
+            expect(mixer._actions[0].time).toBe(0.8);
+        });
+
+        it('should be a no-op when setting time with no current action', () => {
+            expect(() => { animator.time = 0.5; }).not.toThrow();
+        });
+    });
+
     describe('Loop', () => {
         it('should set loop modes', () => {
             animator.loop = 'repeat';
@@ -169,6 +206,15 @@ describe('ClipAnimator', () => {
 
             animator.loop = 'once';
             expect(animator.loop).toBe('once');
+        });
+
+        it('should apply loop constant to current action when playing', () => {
+            animator.play('Walk');
+            animator.loop = 'repeat';
+
+            const mixer = (animator as any)._mixer;
+            const action = mixer._actions[0];
+            expect(action.loop).not.toBe(0);
         });
     });
 
@@ -202,6 +248,21 @@ describe('ClipAnimator', () => {
             animator.addEventListener('stop', listener);
             animator.play();
             animator.stop();
+            expect(listener).toHaveBeenCalledTimes(1);
+        });
+
+        it('should dispatch complete event when mixer finishes', () => {
+            const listener = vi.fn();
+            animator.addEventListener('complete', listener);
+            animator.play('Walk');
+
+            const mixer = (animator as any)._mixer;
+            const finishedCb = mixer._listeners['finished'];
+            expect(finishedCb).toBeDefined();
+
+            finishedCb();
+
+            expect(animator.state).toBe('idle');
             expect(listener).toHaveBeenCalledTimes(1);
         });
     });
