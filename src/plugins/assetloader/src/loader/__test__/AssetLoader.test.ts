@@ -77,7 +77,7 @@ describe('AssetLoader', () => {
                 promise: Promise.resolve(mockArrayBuffer),
             };
             MockedAssetCache.read.mockReturnValue(cachedChunk as any);
-            mockParseAsyncGLTF.mockResolvedValue({ scene: mockResult, animations: [] } as GLTF);
+            mockParseAsyncGLTF.mockResolvedValue(mockResult);
 
             const result = await loader.load('model.glb');
 
@@ -98,7 +98,7 @@ describe('AssetLoader', () => {
                 promise: Promise.resolve(mockArrayBuffer),
             };
             MockedAssetCache.read.mockReturnValue(cachedChunk as any);
-            mockParseAsyncGLTF.mockResolvedValue({ scene: mockResult, animations: [] } as GLTF);
+            mockParseAsyncGLTF.mockResolvedValue(mockResult);
 
             const result = await loader.load('model.glb');
 
@@ -116,7 +116,7 @@ describe('AssetLoader', () => {
             const mockResult = new Group();
             MockedAssetCache.read.mockReturnValue(null);
             mockChunk.load.mockResolvedValue(mockArrayBuffer);
-            mockParseAsyncGLTF.mockResolvedValue({ scene: mockResult, animations: [] } as GLTF);
+            mockParseAsyncGLTF.mockResolvedValue(mockResult);
 
             const result = await loader.load('model.glb');
 
@@ -171,7 +171,7 @@ describe('AssetLoader', () => {
         it('should parse GLB files correctly', async () => {
             const mockScene = new Group();
             const mockArrayBuffer = new ArrayBuffer(1024);
-            mockParseAsyncGLTF.mockResolvedValue({ scene: mockScene, animations: [] } as GLTF);
+            mockParseAsyncGLTF.mockResolvedValue(mockScene);
             mockChunk.load.mockResolvedValue(mockArrayBuffer);
 
             const result = await loader.load('model.glb');
@@ -188,7 +188,7 @@ describe('AssetLoader', () => {
         it('should parse GLTF files correctly', async () => {
             const mockScene = new Group();
             const mockArrayBuffer = new ArrayBuffer(1024);
-            mockParseAsyncGLTF.mockResolvedValue({ scene: mockScene, animations: [] } as GLTF);
+            mockParseAsyncGLTF.mockResolvedValue(mockScene);
             mockChunk.load.mockResolvedValue(mockArrayBuffer);
 
             const result = await loader.load('model.gltf');
@@ -265,7 +265,7 @@ describe('AssetLoader', () => {
 
             MockedAssetCache.read.mockReturnValue(null);
             mockChunk.load.mockResolvedValue(mockArrayBuffer);
-            mockParseAsyncGLTF.mockResolvedValue({ scene: mockScene, animations: [] } as GLTF);
+            mockParseAsyncGLTF.mockResolvedValue(mockScene);
 
             const result = await loader.load(uri);
 
