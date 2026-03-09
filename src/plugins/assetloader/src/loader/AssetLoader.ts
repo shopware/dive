@@ -1,5 +1,6 @@
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { USDZLoader } from 'three/examples/jsm/loaders/USDZLoader.js';
+import { type Object3D } from 'three';
 import {
     type FileType,
     SUPPORTED_FILE_TYPES,
@@ -11,7 +12,6 @@ import {
 import { DracoLoader } from '../draco/DracoLoader.ts';
 import { STEPLoader } from '../step/STEPLoader.ts';
 import { AssetCache } from '@shopware-ag/dive/assetcache';
-import { Object3D } from 'three';
 
 export class AssetLoader {
     private _gltfLoader: GLTFLoader;
