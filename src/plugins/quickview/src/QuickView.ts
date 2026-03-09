@@ -11,6 +11,7 @@ export const QuickViewDefaultSettings: Omit<
 
 export type QuickView = DIVE & {
     orbitController: OrbitController;
+    model: DIVEModel;
 };
 
 /**
@@ -38,7 +39,7 @@ export const QuickView = async (
     orbitController.focusObject(model);
     dive.clock.addTicker(orbitController);
 
-    const quickView = Object.assign(dive, { orbitController });
+    const quickView = Object.assign(dive, { orbitController, model });
 
     const originalDispose = dive.dispose.bind(dive);
     quickView.dispose = async () => {

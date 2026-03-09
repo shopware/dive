@@ -1,5 +1,5 @@
 import { AssetExporter } from '../AssetExporter.ts';
-import { Object3D } from 'three';
+import { Object3D, Mesh } from 'three';
 import { FileTypeError, ParseError } from '@shopware-ag/dive';
 
 // Mock TextEncoder
@@ -47,6 +47,7 @@ describe('AssetExporter', () => {
 
         exporter = new AssetExporter();
         mockObject = new Object3D();
+        mockObject.animations = [];
     });
 
     describe('export', () => {
@@ -140,6 +141,22 @@ describe('AssetExporter', () => {
             await expect(result).rejects.toBe(originalError);
             expect(mockGltfParseAsync).toHaveBeenCalled();
         });
+
+        it('should pass animations when object has animations', async () => {
+            const clip = { name: 'test', duration: 1, tracks: [] };
+            mockObject.animations = [clip as any];
+            mockGltfParseAsync.mockResolvedValue(mockArrayBuffer);
+
+            await exporter.export(mockObject, 'glb');
+
+            expect(mockGltfParseAsync).toHaveBeenCalledWith(
+                mockObject,
+                expect.objectContaining({
+                    animations: [clip],
+                    binary: true,
+                }),
+            );
+        });
     });
 
     describe('_exportGltf', () => {
@@ -189,6 +206,22 @@ describe('AssetExporter', () => {
             await expect(result).rejects.toBe(originalError);
             expect(mockGltfParseAsync).toHaveBeenCalled();
         });
+
+        it('should pass animations when object has animations', async () => {
+            const clip = { name: 'test', duration: 1, tracks: [] };
+            mockObject.animations = [clip as any];
+            mockGltfParseAsync.mockResolvedValue(mockJson);
+
+            await exporter.export(mockObject, 'gltf');
+
+            expect(mockGltfParseAsync).toHaveBeenCalledWith(
+                mockObject,
+                expect.objectContaining({
+                    animations: [clip],
+                    binary: false,
+                }),
+            );
+        });
     });
 
     describe('_exportUsdz', () => {
@@ -233,6 +266,34 @@ describe('AssetExporter', () => {
 
             await expect(result).rejects.toBe(originalError);
             expect(mockUsdzParse).toHaveBeenCalled();
+        });
+    });
+
+    describe('_computeNormals', () => {
+        it('should compute vertex normals for meshes without normals', async () => {
+            const computeVertexNormals = vi.fn();
+            const mesh = new Mesh();
+            mesh.geometry.getAttribute = vi.fn().mockReturnValue(null);
+            mesh.geometry.computeVertexNormals = computeVertexNormals;
+            mockObject.add(mesh);
+
+            mockGltfParseAsync.mockResolvedValue(mockArrayBuffer);
+            await exporter.export(mockObject, 'glb');
+
+            expect(computeVertexNormals).toHaveBeenCalled();
+        });
+
+        it('should skip meshes that already have normals', async () => {
+            const computeVertexNormals = vi.fn();
+            const mesh = new Mesh();
+            mesh.geometry.getAttribute = vi.fn().mockReturnValue({ count: 3 });
+            mesh.geometry.computeVertexNormals = computeVertexNormals;
+            mockObject.add(mesh);
+
+            mockGltfParseAsync.mockResolvedValue(mockArrayBuffer);
+            await exporter.export(mockObject, 'glb');
+
+            expect(computeVertexNormals).not.toHaveBeenCalled();
         });
     });
 });

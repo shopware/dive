@@ -4,19 +4,21 @@ import { OrbitController } from '@shopware-ag/dive/orbitcontroller';
 import { Vector3 } from 'three';
 import { DIVE } from '@shopware-ag/dive';
 
+vi.mock('three');
+
 const mockStop = vi.fn();
-const mockAnimate = vi.fn().mockReturnValue({
-    play: vi.fn(),
+const mockPlay = vi.fn().mockReturnThis();
+const mockAnimator = {
+    play: mockPlay,
     stop: mockStop,
-});
+};
+const mockAnimate = vi.fn().mockReturnValue(mockAnimator);
 
 const mockGetAnimationSystem = vi.fn().mockResolvedValue({
     animate: mockAnimate,
-    TWEEN: {
-        Easing: {
-            Quadratic: {
-                Out: vi.fn(),
-            },
+    Easing: {
+        Quadratic: {
+            Out: vi.fn(),
         },
     },
 });
@@ -40,6 +42,7 @@ const mockController = {
 describe('MoveCameraAction', () => {
     beforeEach(() => {
         vi.clearAllMocks();
+        mockAnimate.mockReturnValue(mockAnimator);
     });
 
     describe('Direct Position Movement', () => {
@@ -63,33 +66,28 @@ describe('MoveCameraAction', () => {
 
             const result = await action.execute();
 
-            // Verify animation system initialization
             expect(mockGetAnimationSystem).toHaveBeenCalled();
             expect(mockEngine.clock.addTicker).toHaveBeenCalled();
 
-            // Verify animator creation for position
-            expect(mockAnimate).toHaveBeenNthCalledWith(
-                1,
-                mockController.object.position,
-                expect.objectContaining({ x: 1, y: 1, z: 1 }),
-                1000,
-                expect.objectContaining({ easing: expect.any(Function) }),
-            );
-
-            // Verify animator creation for target
-            expect(mockAnimate).toHaveBeenNthCalledWith(
-                2,
-                mockController.target,
-                expect.objectContaining({ x: 0, y: 0, z: 0 }),
+            expect(mockAnimate).toHaveBeenCalledWith(
+                expect.arrayContaining([
+                    expect.objectContaining({
+                        object: mockController.object.position,
+                        to: expect.objectContaining({ x: 1, y: 1, z: 1 }),
+                    }),
+                    expect.objectContaining({
+                        object: mockController.target,
+                        to: expect.objectContaining({ x: 0, y: 0, z: 0 }),
+                    }),
+                ]),
                 1000,
                 expect.objectContaining({
                     easing: expect.any(Function),
-                    onComplete: expect.any(Function),
                     onUpdate: expect.any(Function),
+                    onComplete: expect.any(Function),
                 }),
             );
 
-            // Verify stop function
             expect(result.stop).toBeDefined();
             expect(typeof result.stop).toBe('function');
         });
@@ -114,11 +112,9 @@ describe('MoveCameraAction', () => {
 
             await action.execute();
 
-            // Get the onComplete callback from the second animator call
-            const onCompleteCallback = mockAnimate.mock.calls[1][3].onComplete;
+            const onCompleteCallback = mockAnimate.mock.calls[0][2].onComplete;
             onCompleteCallback();
 
-            // Verify controller is enabled when unlocked
             expect(mockController.enabled).toBe(true);
         });
     });
@@ -156,28 +152,22 @@ describe('MoveCameraAction', () => {
 
             const result = await action.execute();
 
-            // Verify animator creation with POV values
-            expect(mockAnimate).toHaveBeenNthCalledWith(
-                1,
-                mockController.object.position,
-                expect.objectContaining({ x: 1, y: 1, z: 1 }),
-                1000,
-                expect.objectContaining({ easing: expect.any(Function) }),
-            );
-
-            expect(mockAnimate).toHaveBeenNthCalledWith(
-                2,
-                mockController.target,
-                expect.objectContaining({ x: 0, y: 0, z: 0 }),
+            expect(mockAnimate).toHaveBeenCalledWith(
+                expect.arrayContaining([
+                    expect.objectContaining({
+                        object: mockController.object.position,
+                    }),
+                    expect.objectContaining({
+                        object: mockController.target,
+                    }),
+                ]),
                 1000,
                 expect.objectContaining({
                     easing: expect.any(Function),
                     onComplete: expect.any(Function),
-                    onUpdate: expect.any(Function),
                 }),
             );
 
-            // Verify stop function
             expect(result.stop).toBeDefined();
             expect(typeof result.stop).toBe('function');
         });
@@ -259,11 +249,9 @@ describe('MoveCameraAction', () => {
 
             await action.execute();
 
-            // Get the onUpdate callback from the second animator call
-            const onUpdateCallback = mockAnimate.mock.calls[1][3].onUpdate;
-            onUpdateCallback();
+            const options = mockAnimate.mock.calls[0][2];
+            options.onUpdate();
 
-            // Verify lookAt was called
             expect(mockController.object.lookAt).toHaveBeenCalledWith(
                 mockController.target,
             );
@@ -271,13 +259,6 @@ describe('MoveCameraAction', () => {
 
         it('should handle animation stop', async () => {
             const mockRegistered = new Map<string, EntitySchema>();
-            const mockAnimators = [
-                { play: vi.fn().mockReturnThis(), stop: mockStop },
-                { play: vi.fn().mockReturnThis(), stop: mockStop },
-            ];
-            mockAnimate
-                .mockReturnValueOnce(mockAnimators[0])
-                .mockReturnValueOnce(mockAnimators[1]);
 
             const action = new MoveCameraAction(
                 {
@@ -299,8 +280,7 @@ describe('MoveCameraAction', () => {
             expect(result.stop).toBeDefined();
             result.stop();
 
-            // Verify both animators were stopped
-            expect(mockStop).toHaveBeenCalledTimes(2);
+            expect(mockStop).toHaveBeenCalledTimes(1);
         });
     });
 });

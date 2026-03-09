@@ -1,69 +1,107 @@
 import { AnimationSystem } from '../AnimationSystem.ts';
-import { Tween as TweenJsTween, Easing, update } from '@tweenjs/tween.js';
-import type { TAnimatorParameters } from '../../types/AnimatorParameters.ts';
 
-vi.mock('@tweenjs/tween.js', async () => {
-    const actual = (await vi.importActual('@tweenjs/tween.js')) as any;
+vi.mock('@tweenjs/tween.js', () => {
+    class MockTween {
+        private _group: any;
+        constructor(object: any, group: any) {
+            this._group = group;
+            if (group && group.add) group.add(this);
+        }
+        to() {
+            return this;
+        }
+        easing() {
+            return this;
+        }
+        onUpdate() {
+            return this;
+        }
+        onComplete() {
+            return this;
+        }
+        start() {
+            return this;
+        }
+        stop() {
+            return this;
+        }
+        pause() {
+            return this;
+        }
+        resume() {
+            return this;
+        }
+        repeat() {
+            return this;
+        }
+        getDuration() {
+            return 0;
+        }
+    }
+
+    class MockGroup {
+        private _tweens: any[] = [];
+        add(tween: any) {
+            this._tweens.push(tween);
+        }
+        remove(tween: any) {
+            this._tweens = this._tweens.filter((t) => t !== tween);
+        }
+        removeAll() {
+            this._tweens = [];
+        }
+        getAll() {
+            return [...this._tweens];
+        }
+        update() {
+            return true;
+        }
+        allStopped() {
+            return true;
+        }
+    }
+
     return {
-        ...actual,
-        Tween: vi.fn(),
-        update: vi.fn(),
+        Tween: MockTween,
+        Group: MockGroup,
+        Easing: {
+            Quadratic: { Out: (k: number) => k * (2 - k) },
+            Linear: { None: (k: number) => k },
+        },
     };
 });
 
-vi.mock('../animator/Animator.ts', () => ({
-    Animator: vi.fn().mockImplementation((object, to, duration, options) => {
-        return {
-            uuid: 'mock-animator-uuid',
-            object,
-            to,
-            duration,
-            options,
-            addEventListener: vi.fn(),
-            play: vi.fn(),
-            stop: vi.fn(),
-        };
-    }),
-}));
-
-describe('dive/animation/DIVEAnimationSystem', () => {
-    let animationSystem: AnimationSystem;
-    let mockTween: TweenJsTween<any> & {
-        updateCallback: (object: any, elapsed: number) => void;
-        completeCallback: (object: any) => void;
+vi.mock('three', async (importOriginal) => {
+    const actual = (await importOriginal()) as any;
+    return {
+        ...actual,
+        AnimationMixer: vi.fn().mockImplementation(function (this: any) {
+            this.clipAction = vi.fn().mockImplementation((clip: any) => ({
+                clampWhenFinished: false,
+                loop: 0,
+                paused: false,
+                time: 0,
+                play: vi.fn().mockReturnThis(),
+                stop: vi.fn().mockReturnThis(),
+                reset: vi.fn().mockReturnThis(),
+                fadeIn: vi.fn().mockReturnThis(),
+                fadeOut: vi.fn().mockReturnThis(),
+                getClip: vi.fn().mockReturnValue(clip),
+            }));
+            this.stopAllAction = vi.fn();
+            this.uncacheRoot = vi.fn();
+            this.getRoot = vi.fn();
+            this.update = vi.fn();
+            this.addEventListener = vi.fn();
+            return this;
+        }),
     };
+});
+
+describe('AnimationSystem', () => {
+    let animationSystem: AnimationSystem;
 
     beforeEach(() => {
-        vi.clearAllMocks();
-
-        mockTween = {
-            to: vi.fn().mockReturnThis(),
-            easing: vi.fn().mockReturnThis(),
-            onUpdate: vi
-                .fn()
-                .mockImplementation(
-                    (cb: (object: any, elapsed: number) => void) => {
-                        (mockTween as any).updateCallback = cb;
-                        return mockTween;
-                    },
-                ),
-            onComplete: vi
-                .fn()
-                .mockImplementation((cb: (object: any) => void) => {
-                    (mockTween as any).completeCallback = cb;
-                    return mockTween;
-                }),
-            start: vi.fn(),
-            stop: vi.fn(),
-            updateCallback: vi.fn(),
-            completeCallback: vi.fn(),
-        } as unknown as TweenJsTween<any> & {
-            updateCallback: (object: any, elapsed: number) => void;
-            completeCallback: (object: any) => void;
-        };
-
-        vi.mocked(TweenJsTween).mockImplementation(() => mockTween);
-
         animationSystem = new AnimationSystem();
     });
 
@@ -73,262 +111,197 @@ describe('dive/animation/DIVEAnimationSystem', () => {
 
     describe('Instance Management', () => {
         it('should create instance', () => {
-            const instance1 = new AnimationSystem();
-            expect(instance1).toBeDefined();
+            expect(animationSystem).toBeDefined();
         });
 
         it('should have a unique uuid', () => {
-            const uuid = animationSystem.uuid;
-            expect(uuid).toBeDefined();
-            expect(typeof uuid).toBe('string');
+            expect(animationSystem.uuid).toBeDefined();
+            expect(typeof animationSystem.uuid).toBe('string');
+        });
+
+        it('should expose Easing', () => {
+            expect(animationSystem.Easing).toBeDefined();
+            expect(animationSystem.Easing.Quadratic.Out).toBeDefined();
+            expect(typeof animationSystem.Easing.Quadratic.Out).toBe(
+                'function',
+            );
         });
     });
 
-    describe('Animator Creation', () => {
-        it('should create an animator', () => {
-            const object = { x: 0 };
-            const to = { x: 100 };
-            const duration = 1000;
-            const options: TAnimatorParameters<typeof object> = {
-                easing: Easing.Quadratic.Out,
-                onUpdate: vi.fn(),
-                onComplete: vi.fn(),
-            };
+    describe('fromTargets()', () => {
+        it('should create a TargetAnimator', async () => {
+            const animator = await animationSystem.fromTargets(
+                [{ object: { x: 0 }, to: { x: 100 } }],
+                1000,
+            );
+            expect(animator).toBeDefined();
+            expect(animator.uuid).toBeDefined();
+            expect(animator.state).toBe('idle');
+        });
 
-            const animator = animationSystem.animate(
-                object,
-                to,
-                duration,
-                options,
+        it('should register the animator internally', async () => {
+            const animator = await animationSystem.fromTargets(
+                [{ object: { x: 0 }, to: { x: 100 } }],
+                1000,
+            );
+            expect(
+                animationSystem['_animators'].has(animator.uuid),
+            ).toBeTruthy();
+        });
+
+        it('should accept multiple targets', async () => {
+            const animator = await animationSystem.fromTargets(
+                [
+                    { object: { x: 0 }, to: { x: 100 } },
+                    { object: { y: 0 }, to: { y: 200 } },
+                ],
+                1000,
             );
             expect(animator).toBeDefined();
         });
 
-        it('should use default easing when not provided', () => {
-            const object = { x: 0 };
-            const to = { x: 100 };
-            const duration = 1000;
-
-            const animator = animationSystem.animate(object, to, duration);
-
-            expect(mockTween.easing).toHaveBeenCalledWith(Easing.Quadratic.Out);
+        it('should accept a single target without array', async () => {
+            const animator = await animationSystem.fromTargets(
+                { object: { x: 0 }, to: { x: 100 } },
+                1000,
+            );
+            expect(animator).toBeDefined();
         });
 
-        it('should register animator callbacks', () => {
-            const object = { x: 0 };
-            const to = { x: 100 };
-            const duration = 1000;
-            const animator = animationSystem.animate(object, to, duration);
+        it('should accept options with easing', async () => {
+            const animator = await animationSystem.fromTargets(
+                [{ object: { x: 0 }, to: { x: 100 } }],
+                1000,
+                { easing: animationSystem.Easing.Quadratic.Out },
+            );
+            expect(animator).toBeDefined();
+        });
+    });
 
+    describe('animate()', () => {
+        it('should create and auto-play a TargetAnimator', async () => {
+            const animator = await animationSystem.animate(
+                [{ object: { x: 0 }, to: { x: 100 } }],
+                1000,
+            );
+            expect(animator).toBeDefined();
+            expect(animator.state).toBe('playing');
+        });
+
+        it('should register the animator internally', async () => {
+            const animator = await animationSystem.animate(
+                [{ object: { x: 0 }, to: { x: 100 } }],
+                1000,
+            );
             expect(
-                animationSystem['_callbackMap'].has(animator.uuid),
+                animationSystem['_animators'].has(animator.uuid),
             ).toBeTruthy();
-            expect(animationSystem['_tweens'].has(animator.uuid)).toBeTruthy();
         });
     });
 
-    describe('Animation Control', () => {
-        it('should create a basic tween', () => {
-            const target = { x: 0 };
-            const tween = animationSystem.animate(target, target, 1000);
-            expect(TweenJsTween).toHaveBeenCalledWith(target);
+    describe('ClipAnimator Creation', () => {
+        it('should create a ClipAnimator via fromClips()', async () => {
+            const root = {};
+            const clip = { name: 'test', duration: 1 };
+
+            const animator = await animationSystem.fromClips(root as any, [
+                clip as any,
+            ]);
+            expect(animator).toBeDefined();
+            expect(animator.clipNames).toEqual(['test']);
         });
 
-        it('should create tweens for different object types', () => {
-            const numberTarget = { value: 0 };
-            const vectorTarget = { x: 0, y: 0, z: 0 };
-            const colorTarget = { r: 0, g: 0, b: 0 };
+        it('should register the clip animator internally', async () => {
+            const root = {};
+            const clip = { name: 'test', duration: 1 };
 
-            const numberTween = animationSystem.animate(
-                numberTarget,
-                numberTarget,
-                1000,
-            );
-            const vectorTween = animationSystem.animate(
-                vectorTarget,
-                vectorTarget,
-                1000,
-            );
-            const colorTween = animationSystem.animate(
-                colorTarget,
-                colorTarget,
-                1000,
-            );
-
-            expect(TweenJsTween).toHaveBeenCalledWith(numberTarget);
-            expect(TweenJsTween).toHaveBeenCalledWith(vectorTarget);
-            expect(TweenJsTween).toHaveBeenCalledWith(colorTarget);
-        });
-
-        it('should handle tick updates with active tweens', () => {
-            const object = { x: 0 };
-            const to = { x: 100 };
-            const duration = 1000;
-            const animator = animationSystem.animate(object, to, duration);
-
-            // Verify tween is in the map
-            expect(animationSystem['_tweens'].size).toBe(1);
-
-            // Call tick
-            animationSystem.tick();
-
-            // updateTween from @tweenjs/tween.js should be called
-            expect(update).toHaveBeenCalled();
+            const animator = await animationSystem.fromClips(root as any, [
+                clip as any,
+            ]);
+            expect(
+                animationSystem['_animators'].has(animator.uuid),
+            ).toBeTruthy();
         });
     });
 
-    describe('Callback Management', () => {
-        it('should remove callbacks and tweens', () => {
-            const object = { x: 0 };
-            const to = { x: 100 };
-            const duration = 1000;
-            const animator = animationSystem.animate(object, to, duration);
+    describe('Remove', () => {
+        it('should remove an animator', async () => {
+            const animator = await animationSystem.fromTargets(
+                [{ object: { x: 0 }, to: { x: 100 } }],
+                1000,
+            );
             const uuid = animator.uuid;
 
             animationSystem.remove(uuid);
-            expect(animationSystem['_callbackMap'].has(uuid)).toBeFalsy();
-            expect(animationSystem['_tweens'].has(uuid)).toBeFalsy();
+            expect(animationSystem['_animators'].has(uuid)).toBeFalsy();
         });
 
         it('should warn when removing non-existent animator', () => {
             const consoleSpy = vi
                 .spyOn(console, 'warn')
-                .mockImplementation((message: string) => {});
-            const nonExistentUuid = 'non-existent-uuid';
+                .mockImplementation(() => {});
 
-            animationSystem.remove(nonExistentUuid);
+            animationSystem.remove('non-existent-uuid');
             expect(consoleSpy).toHaveBeenCalledWith(
-                `Animator with uuid ${nonExistentUuid} not found`,
+                'Animator with uuid non-existent-uuid not found',
             );
+
+            consoleSpy.mockRestore();
         });
     });
 
-    describe('Disposal', () => {
-        it('should have a dispose method', () => {
-            const object = { x: 0 };
-            const to = { x: 100 };
-            const duration = 1000;
-            const animator = animationSystem.animate(object, to, duration);
+    describe('Tick', () => {
+        it('should call update on all registered animators', async () => {
+            const animator = await animationSystem.fromTargets(
+                [{ object: { x: 0 }, to: { x: 100 } }],
+                1000,
+            );
 
-            // Add some data to the maps
-            expect(animationSystem['_callbackMap'].size).toBe(1);
-            expect(animationSystem['_tweens'].size).toBe(1);
+            const updateSpy = vi.spyOn(animator, 'update');
 
-            // Call dispose
+            animationSystem.tick(0.016);
+
+            expect(updateSpy).toHaveBeenCalledWith(0.016);
+        });
+
+        it('should call update on both tween and clip animators', async () => {
+            const tweenAnimator = await animationSystem.fromTargets(
+                [{ object: { x: 0 }, to: { x: 100 } }],
+                1000,
+            );
+
+            const root = {};
+            const clip = { name: 'test', duration: 1 };
+            const clipAnimator = await animationSystem.fromClips(root as any, [
+                clip as any,
+            ]);
+
+            const tweenUpdateSpy = vi.spyOn(tweenAnimator, 'update');
+            const clipUpdateSpy = vi.spyOn(clipAnimator, 'update');
+
+            animationSystem.tick(0.016);
+
+            expect(tweenUpdateSpy).toHaveBeenCalledWith(0.016);
+            expect(clipUpdateSpy).toHaveBeenCalledWith(0.016);
+        });
+    });
+
+    describe('Dispose', () => {
+        it('should clear all animators', async () => {
+            await animationSystem.fromTargets(
+                [{ object: { x: 0 }, to: { x: 100 } }],
+                1000,
+            );
+            await animationSystem.fromTargets(
+                [{ object: { y: 0 }, to: { y: 200 } }],
+                500,
+            );
+
+            expect(animationSystem['_animators'].size).toBe(2);
+
             animationSystem.dispose();
 
-            // Verify maps are cleared
-            expect(animationSystem['_callbackMap'].size).toBe(0);
-            expect(animationSystem['_tweens'].size).toBe(0);
-        });
-    });
-
-    describe('Event Handling', () => {
-        it('should handle play event', () => {
-            const object = { x: 0 };
-            const to = { x: 100 };
-            const duration = 1000;
-
-            const animator = animationSystem.animate(object, to, duration);
-            animator.play();
-
-            expect(mockTween.start).toHaveBeenCalled();
-        });
-
-        it('should handle stop event', () => {
-            const object = { x: 0 };
-            const to = { x: 100 };
-            const duration = 1000;
-
-            const animator = animationSystem.animate(object, to, duration);
-            animator.stop();
-
-            expect(mockTween.stop).toHaveBeenCalled();
-        });
-
-        it('should call update and complete callbacks', () => {
-            const object = { x: 0 };
-            const to = { x: 100 };
-            const duration = 1000;
-            const onUpdate = vi.fn();
-            const onComplete = vi.fn();
-            const options: TAnimatorParameters<typeof object> = {
-                onUpdate,
-                onComplete,
-            };
-
-            const animator = animationSystem.animate(
-                object,
-                to,
-                duration,
-                options,
-            );
-
-            // Get the callback tuple from the map
-            const callbackTuple = animationSystem['_callbackMap'].get(
-                animator.uuid,
-            );
-            expect(callbackTuple).toBeDefined();
-
-            // Get the update and complete callbacks from the mock tween
-            const updateCallback = vi.mocked(mockTween.onUpdate).mock
-                .calls[0][0];
-            const completeCallback = vi.mocked(mockTween.onComplete).mock
-                .calls[0][0];
-
-            // Trigger the callbacks
-            updateCallback!(object, 0.5);
-            expect(onUpdate).toHaveBeenCalledWith(object, 0.5);
-
-            completeCallback!(object);
-            expect(onComplete).toHaveBeenCalledWith(object);
-        });
-
-        it('should handle missing callbacks gracefully', () => {
-            const object = { x: 0 };
-            const to = { x: 100 };
-            const duration = 1000;
-            const animator = animationSystem.animate(object, to, duration);
-
-            // Get the update and complete callbacks from the mock tween
-            const updateCallback = vi.mocked(mockTween.onUpdate).mock
-                .calls[0][0];
-            const completeCallback = vi.mocked(mockTween.onComplete).mock
-                .calls[0][0];
-
-            // Remove the animator from the callback map to test edge case
-            animationSystem['_callbackMap'].delete(animator.uuid);
-
-            // Should not throw when callbacks are missing
-            expect(() => updateCallback!(object, 0.5)).not.toThrow();
-            expect(() => completeCallback!(object)).not.toThrow();
-        });
-
-        it('should create default empty callbacks when none provided', () => {
-            const object = { x: 0 };
-            const to = { x: 100 };
-            const duration = 1000;
-            const animator = animationSystem.animate(object, to, duration);
-
-            // Get the callback tuple from the map
-            const callbackTuple = animationSystem['_callbackMap'].get(
-                animator.uuid,
-            );
-            expect(callbackTuple).toBeDefined();
-
-            // Get the update and complete callbacks from the mock tween
-            const updateCallback = vi.mocked(mockTween.onUpdate).mock
-                .calls[0][0];
-            const completeCallback = vi.mocked(mockTween.onComplete).mock
-                .calls[0][0];
-
-            // Should not throw when calling the default callbacks
-            expect(() => updateCallback!(object, 0.5)).not.toThrow();
-            expect(() => completeCallback!(object)).not.toThrow();
-
-            // The default callbacks should be empty functions
-            expect(typeof callbackTuple?.onUpdate).toBe('function');
-            expect(typeof callbackTuple?.onComplete).toBe('function');
+            expect(animationSystem['_animators'].size).toBe(0);
         });
     });
 });

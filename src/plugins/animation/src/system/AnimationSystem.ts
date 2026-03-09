@@ -1,85 +1,137 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-import * as TWEEN from '@tweenjs/tween.js';
-import { MathUtils } from 'three';
+import { Easing as TWEENEasing } from '@tweenjs/tween.js';
+import { AnimationClip, MathUtils, Object3D } from 'three';
 import { DIVETicker } from '@shopware-ag/dive';
-import { Animator } from '../animator/Animator.ts';
-import { TAnimatorParameters } from '../types/AnimatorParameters.ts';
 
-type CallbackTuple<T> = {
-    onUpdate: (object: T, elapsed: number) => void;
-    onComplete: (object: T) => void;
-};
+type Animator = import('../animator/Animator.ts').Animator;
+type ClipAnimator = import('../animator/ClipAnimator.ts').ClipAnimator;
+type TargetAnimator = import('../animator/TargetAnimator.ts').TargetAnimator;
+type TargetAnimatorOptions =
+    import('../animator/TargetAnimator.ts').TargetAnimatorOptions;
+type AnimationTarget = import('../animator/TargetAnimator.ts').AnimationTarget;
 
+/**
+ * Central animation system that manages all animators (target-based and clip-based).
+ *
+ * Create "to-target" animators with `fromTargets()` and "animation-clip" animators with `fromClips()`.
+ *
+ * Implements DIVETicker so it can be registered with DIVEClock for per-frame updates.
+ *
+ * @module
+ */
 export class AnimationSystem implements DIVETicker {
     public uuid: string = MathUtils.generateUUID();
+    public readonly Easing = TWEENEasing;
 
-    public TWEEN: typeof TWEEN = TWEEN;
+    private _animators: Map<string, Animator> = new Map();
 
-    private _callbackMap: Map<string, CallbackTuple<any>> = new Map();
-    private _tweens: Map<string, TWEEN.Tween<any>> = new Map();
+    public dispose(): void {
+        for (const animator of this._animators.values()) {
+            animator.dispose();
+        }
+        this._animators.clear();
+    }
+
+    public tick(deltaTime: number): void {
+        for (const animator of this._animators.values()) {
+            animator.update(deltaTime);
+        }
+    }
 
     /**
-     * Creates a new animator and registers it.
-     * @param object - The object to animate.
-     * @param to - The target value.
-     * @param duration - The duration of the animation in milliseconds.
-     * @param options - The options for the animation.
-     * @returns The animator.
+     * @deprecated Use `fromTargets()` instead.
+     * @note This method also calls .play() on the animator automatically. This has been removed in fromTargets(). You have to call .play() independently after creating the animator.
      */
-    public animate<T extends object>(
-        object: T,
-        to: T,
+    public async animate(
+        targets: AnimationTarget | AnimationTarget[],
         duration: number,
-        options?: TAnimatorParameters<T>,
-    ): Animator<T> {
-        const animator = new Animator(object, to, duration, options);
-        this._callbackMap.set(animator.uuid, {
-            onUpdate: animator.options?.onUpdate ?? (() => {}),
-            onComplete: animator.options?.onComplete ?? (() => {}),
-        });
-
-        this._createTween(animator);
+        options?: TargetAnimatorOptions,
+    ): Promise<TargetAnimator> {
+        const animator = await this.fromTargets(targets, duration, options);
+        animator.play();
         return animator;
     }
 
+    /**
+     * Creates a TargetAnimator and returns it asynchronously.
+     *
+     * @example
+     * // Animate a single target (e.g. position).
+     * const animator = await animationSystem.fromTargets(
+     *     { position: { x: 0, y: 0, z: 0 }, to: { x: 10, y: 10, z: 10 } },
+     *     1000,
+     * );
+     * // animate the target
+     * animator.play();
+     *
+     * @example
+     * // Animate multiple targets (e.g. position and rotation) at once using an array.
+     * const animator = await animationSystem.fromTargets(
+     *     [
+     *         { position: { x: 0, y: 0, z: 0 }, to: { x: 10, y: 10, z: 10 } },
+     *         { rotation: { x: 0, y: 0, z: 0 }, to: { x: 0, y: Math.PI / 2, z: 0 } },
+     *     ],
+     *     1000,
+     * );
+     * // animate all targets in the array at once
+     * animator.play();
+     * @param targets - The targets to animate.
+     * @param duration - The duration of the animation in milliseconds.
+     * @param options - The options for the animation.
+     * @returns Promise<TargetAnimator>.
+     */
+    public async fromTargets(
+        targets: AnimationTarget | AnimationTarget[],
+        duration: number,
+        options?: TargetAnimatorOptions,
+    ): Promise<TargetAnimator> {
+        const { TargetAnimator } = await import(
+            '../animator/TargetAnimator.ts'
+        );
+        const animator = new TargetAnimator(targets, duration, options);
+        this._animators.set(animator.uuid, animator);
+        return animator;
+    }
+
+    /**
+     * Creates a ClipAnimator and returns it asynchronously.
+     *
+     * @example
+     * // Animate a single clip (e.g. a single animation) at once.
+     * const animator = await animationSystem.fromClips(
+     *     model,
+     *     model.animations,
+     * );
+     * // plays first clip by default
+     * animator.play();
+     * // plays plays "Idle" clip by name
+     * animator.play("Idle");
+     *
+     * @param root - The root object to animate.
+     * @param clips - The animation clips to animate.
+     * @returns Promise<ClipAnimator>.
+     */
+    public async fromClips(
+        root: Object3D,
+        clips: AnimationClip[],
+    ): Promise<ClipAnimator> {
+        const { ClipAnimator } = await import('../animator/ClipAnimator.ts');
+        const animator = new ClipAnimator(root, clips);
+        this._animators.set(animator.uuid, animator);
+        return animator;
+    }
+
+    /**
+     * Removes an animator from the system.
+     *
+     * @param uuid - The UUID of the animator to remove.
+     */
     public remove(uuid: string): void {
-        if (!this._callbackMap.has(uuid)) {
+        const animator = this._animators.get(uuid);
+        if (!animator) {
             console.warn(`Animator with uuid ${uuid} not found`);
             return;
         }
-
-        this._callbackMap.delete(uuid);
-        this._tweens.delete(uuid);
-    }
-
-    public dispose(): void {
-        this._callbackMap.clear();
-        this._tweens.clear();
-    }
-
-    public tick(): void {
-        this.TWEEN.update();
-    }
-
-    private _createTween<T extends object>(animator: Animator<T>): void {
-        const tween = new this.TWEEN.Tween<T>(animator.object)
-            .to(animator.to, animator.duration)
-            .easing(animator.options?.easing ?? this.TWEEN.Easing.Quadratic.Out)
-            .onUpdate((object, elapsed) => {
-                this._callbackMap.get(animator.uuid)?.onUpdate(object, elapsed);
-            })
-            .onComplete((object) => {
-                this._callbackMap.get(animator.uuid)?.onComplete(object);
-            });
-
-        animator.addEventListener('play', () => {
-            tween.start();
-        });
-
-        animator.addEventListener('stop', () => {
-            tween.stop();
-        });
-
-        this._tweens.set(animator.uuid, tween);
+        animator.dispose();
+        this._animators.delete(uuid);
     }
 }

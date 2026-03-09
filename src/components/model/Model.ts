@@ -108,6 +108,8 @@ export class DIVEModel extends DIVENode {
 
         this.add(...root.children);
 
+        this.animations = gltf.animations;
+
         return this;
     }
 

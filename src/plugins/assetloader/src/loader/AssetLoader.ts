@@ -1,6 +1,6 @@
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { USDZLoader } from 'three/examples/jsm/loaders/USDZLoader.js';
-import { Object3D } from 'three';
+import { type Object3D } from 'three';
 import {
     type FileType,
     SUPPORTED_FILE_TYPES,
@@ -187,24 +187,31 @@ export class AssetLoader {
                         arrayBuffer,
                         '',
                     );
+                    gltf.scene.animations = gltf.animations;
                     return gltf.scene;
                 }
                 case 'usdz': {
-                    return this._usdzLoader.parse(arrayBuffer);
+                    const usdz = this._usdzLoader.parse(arrayBuffer);
+                    usdz.animations = [];
+                    return usdz;
                 }
                 case 'step':
                 case 'stp': {
-                    return await this._stepLoader.parseAsync(
+                    const stp = await this._stepLoader.parseAsync(
                         arrayBuffer,
                         type as 'step' | 'stp',
                     );
+                    stp.animations = [];
+                    return stp;
                 }
                 case 'iges':
                 case 'igs': {
-                    return await this._stepLoader.parseAsync(
+                    const iges = await this._stepLoader.parseAsync(
                         arrayBuffer,
                         type as 'iges' | 'igs',
                     );
+                    iges.animations = [];
+                    return iges;
                 }
             }
         } catch (error) {
