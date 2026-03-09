@@ -36,7 +36,7 @@ export class AnimationSystem implements DIVETicker {
     }
 
     /**
-     * Convenience shorthand: creates a TargetAnimator and immediately starts playback.
+     * @deprecated Use `fromTargets()` instead.
      */
     public async animate(
         targets: AnimationTarget | AnimationTarget[],
