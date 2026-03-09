@@ -10,7 +10,9 @@ type TargetAnimatorOptions =
 type AnimationTarget = import('../animator/TargetAnimator.ts').AnimationTarget;
 
 /**
- * Central animation system that manages all animators (tween-based and clip-based).
+ * Central animation system that manages all animators (target-based and clip-based).
+ *
+ * Create "to-target" animators with `fromTargets()` and "animation-clip" animators with `fromClips()`.
  *
  * Implements DIVETicker so it can be registered with DIVEClock for per-frame updates.
  *
@@ -37,6 +39,7 @@ export class AnimationSystem implements DIVETicker {
 
     /**
      * @deprecated Use `fromTargets()` instead.
+     * @note This method also calls .play() on the animator automatically. This has been removed in fromTargets(). You have to call .play() independently after creating the animator.
      */
     public async animate(
         targets: AnimationTarget | AnimationTarget[],
@@ -48,6 +51,34 @@ export class AnimationSystem implements DIVETicker {
         return animator;
     }
 
+    /**
+     * Creates a TargetAnimator and returns it asynchronously.
+     *
+     * @example
+     * // Animate a single target (e.g. position).
+     * const animator = await animationSystem.fromTargets(
+     *     { position: { x: 0, y: 0, z: 0 }, to: { x: 10, y: 10, z: 10 } },
+     *     1000,
+     * );
+     * // animate the target
+     * animator.play();
+     *
+     * @example
+     * // Animate multiple targets (e.g. position and rotation) at once using an array.
+     * const animator = await animationSystem.fromTargets(
+     *     [
+     *         { position: { x: 0, y: 0, z: 0 }, to: { x: 10, y: 10, z: 10 } },
+     *         { rotation: { x: 0, y: 0, z: 0 }, to: { x: 0, y: Math.PI / 2, z: 0 } },
+     *     ],
+     *     1000,
+     * );
+     * // animate all targets in the array at once
+     * animator.play();
+     * @param targets - The targets to animate.
+     * @param duration - The duration of the animation in milliseconds.
+     * @param options - The options for the animation.
+     * @returns Promise<TargetAnimator>.
+     */
     public async fromTargets(
         targets: AnimationTarget | AnimationTarget[],
         duration: number,
@@ -61,6 +92,24 @@ export class AnimationSystem implements DIVETicker {
         return animator;
     }
 
+    /**
+     * Creates a ClipAnimator and returns it asynchronously.
+     *
+     * @example
+     * // Animate a single clip (e.g. a single animation) at once.
+     * const animator = await animationSystem.fromClips(
+     *     model,
+     *     model.animations,
+     * );
+     * // plays first clip by default
+     * animator.play();
+     * // plays plays "Idle" clip by name
+     * animator.play("Idle");
+     *
+     * @param root - The root object to animate.
+     * @param clips - The animation clips to animate.
+     * @returns Promise<ClipAnimator>.
+     */
     public async fromClips(
         root: Object3D,
         clips: AnimationClip[],
@@ -71,6 +120,11 @@ export class AnimationSystem implements DIVETicker {
         return animator;
     }
 
+    /**
+     * Removes an animator from the system.
+     *
+     * @param uuid - The UUID of the animator to remove.
+     */
     public remove(uuid: string): void {
         const animator = this._animators.get(uuid);
         if (!animator) {

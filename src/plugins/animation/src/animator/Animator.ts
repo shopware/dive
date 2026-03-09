@@ -1,6 +1,10 @@
 import { MathUtils } from 'three';
 import { EventDispatcher } from 'three/src/core/EventDispatcher.js';
-import { TAnimatorEventMap, TAnimatorLoopMode, TAnimatorState } from '../types/AnimatorTypes.ts';
+import {
+    TAnimatorEventMap,
+    TAnimatorLoopMode,
+    TAnimatorState,
+} from '../types/AnimatorTypes.ts';
 
 /**
  * Abstract base class for all animation types.
@@ -17,18 +21,18 @@ export abstract class Animator extends EventDispatcher<TAnimatorEventMap> {
         return this._uuid;
     }
 
-    abstract get state(): TAnimatorState;
-    abstract get duration(): number;
-    abstract get loop(): TAnimatorLoopMode;
-    abstract set loop(value: TAnimatorLoopMode);
-    abstract get time(): number;
-    abstract set time(value: number);
+    public abstract get state(): TAnimatorState;
+    public abstract get duration(): number;
+    public abstract get loop(): TAnimatorLoopMode;
+    public abstract set loop(value: TAnimatorLoopMode);
+    public abstract get time(): number;
+    public abstract set time(value: number);
 
-    abstract play(): this;
-    abstract pause(): this;
-    abstract resume(): this;
-    abstract stop(): this;
+    public abstract play(): this;
+    public abstract pause(): this;
+    public abstract resume(): this;
+    public abstract stop(): this;
 
-    abstract update(deltaTime: number): void;
-    abstract dispose(): void;
+    public abstract update(deltaTime: number): void;
+    public abstract dispose(): void;
 }
