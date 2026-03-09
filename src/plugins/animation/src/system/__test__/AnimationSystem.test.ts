@@ -7,28 +7,58 @@ vi.mock('@tweenjs/tween.js', () => {
             this._group = group;
             if (group && group.add) group.add(this);
         }
-        to() { return this; }
-        easing() { return this; }
-        onUpdate() { return this; }
-        onComplete() { return this; }
-        start() { return this; }
-        stop() { return this; }
-        pause() { return this; }
-        resume() { return this; }
-        repeat() { return this; }
-        getDuration() { return 0; }
+        to() {
+            return this;
+        }
+        easing() {
+            return this;
+        }
+        onUpdate() {
+            return this;
+        }
+        onComplete() {
+            return this;
+        }
+        start() {
+            return this;
+        }
+        stop() {
+            return this;
+        }
+        pause() {
+            return this;
+        }
+        resume() {
+            return this;
+        }
+        repeat() {
+            return this;
+        }
+        getDuration() {
+            return 0;
+        }
     }
 
     class MockGroup {
         private _tweens: any[] = [];
-        add(tween: any) { this._tweens.push(tween); }
+        add(tween: any) {
+            this._tweens.push(tween);
+        }
         remove(tween: any) {
             this._tweens = this._tweens.filter((t) => t !== tween);
         }
-        removeAll() { this._tweens = []; }
-        getAll() { return [...this._tweens]; }
-        update() { return true; }
-        allStopped() { return true; }
+        removeAll() {
+            this._tweens = [];
+        }
+        getAll() {
+            return [...this._tweens];
+        }
+        update() {
+            return true;
+        }
+        allStopped() {
+            return true;
+        }
     }
 
     return {
@@ -203,9 +233,7 @@ describe('AnimationSystem', () => {
             const uuid = animator.uuid;
 
             animationSystem.remove(uuid);
-            expect(
-                animationSystem['_animators'].has(uuid),
-            ).toBeFalsy();
+            expect(animationSystem['_animators'].has(uuid)).toBeFalsy();
         });
 
         it('should warn when removing non-existent animator', () => {

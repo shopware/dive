@@ -112,8 +112,7 @@ describe('MoveCameraAction', () => {
 
             await action.execute();
 
-            const onCompleteCallback =
-                mockAnimate.mock.calls[0][2].onComplete;
+            const onCompleteCallback = mockAnimate.mock.calls[0][2].onComplete;
             onCompleteCallback();
 
             expect(mockController.enabled).toBe(true);

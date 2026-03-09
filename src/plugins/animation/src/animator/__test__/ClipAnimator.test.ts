@@ -27,12 +27,12 @@ vi.mock('three', async (importOriginal) => {
             this.uncacheRoot = vi.fn();
             this.getRoot = vi.fn();
             this.update = vi.fn();
-            this.addEventListener = vi.fn().mockImplementation(
-                (type: string, cb: any) => {
+            this.addEventListener = vi
+                .fn()
+                .mockImplementation((type: string, cb: any) => {
                     if (!this._listeners) this._listeners = {};
                     this._listeners[type] = cb;
-                },
-            );
+                });
             return this;
         }),
         AnimationClip: vi.fn().mockImplementation(function (
@@ -94,7 +94,11 @@ describe('ClipAnimator', () => {
 
     describe('Clip Names', () => {
         it('should return all clip names', () => {
-            expect(animator.clipNames).toEqual(['Walk', 'Idle', 'Jump']);
+            expect(animator.clipNames).toEqual([
+                'Walk',
+                'Idle',
+                'Jump',
+            ]);
         });
 
         it('should return null for currentClipName when idle', () => {
@@ -192,7 +196,9 @@ describe('ClipAnimator', () => {
         });
 
         it('should be a no-op when setting time with no current action', () => {
-            expect(() => { animator.time = 0.5; }).not.toThrow();
+            expect(() => {
+                animator.time = 0.5;
+            }).not.toThrow();
         });
     });
 

@@ -50,38 +50,36 @@ export const MoveCameraAction = Action.define<
             target = payload.target;
         }
 
-        const animator = await getAnimationSystem().then(
-            (animationSystem) => {
-                if (!engine.clock.hasTicker(animationSystem)) {
-                    engine.clock.addTicker(animationSystem);
-                }
+        const animator = await getAnimationSystem().then((animationSystem) => {
+            if (!engine.clock.hasTicker(animationSystem)) {
+                engine.clock.addTicker(animationSystem);
+            }
 
-                controller.enabled = true;
+            controller.enabled = true;
 
-                return animationSystem.animate(
-                    [
-                        {
-                            object: controller.object.position,
-                            to: position,
-                        },
-                        {
-                            object: controller.target,
-                            to: target,
-                        },
-                    ],
-                    payload.duration,
+            return animationSystem.animate(
+                [
                     {
-                        easing: animationSystem.Easing.Quadratic.Out,
-                        onUpdate: () => {
-                            controller.object.lookAt(controller.target);
-                        },
-                        onComplete: () => {
-                            controller.enabled = !payload.locked;
-                        },
+                        object: controller.object.position,
+                        to: position,
                     },
-                );
-            },
-        );
+                    {
+                        object: controller.target,
+                        to: target,
+                    },
+                ],
+                payload.duration,
+                {
+                    easing: animationSystem.Easing.Quadratic.Out,
+                    onUpdate: () => {
+                        controller.object.lookAt(controller.target);
+                    },
+                    onComplete: () => {
+                        controller.enabled = !payload.locked;
+                    },
+                },
+            );
+        });
 
         return {
             stop: () => animator.stop(),

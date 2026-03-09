@@ -60,11 +60,16 @@ export class ClipAnimator extends Animator {
         }
     }
 
-    private _resolveLoopConstant(mode: TAnimatorLoopMode): typeof LoopOnce | typeof LoopRepeat | typeof LoopPingPong {
+    private _resolveLoopConstant(
+        mode: TAnimatorLoopMode,
+    ): typeof LoopOnce | typeof LoopRepeat | typeof LoopPingPong {
         switch (mode) {
-            case 'repeat': return LoopRepeat;
-            case 'pingpong': return LoopPingPong;
-            default: return LoopOnce;
+            case 'repeat':
+                return LoopRepeat;
+            case 'pingpong':
+                return LoopPingPong;
+            default:
+                return LoopOnce;
         }
     }
 
@@ -88,8 +93,7 @@ export class ClipAnimator extends Animator {
     }
 
     public play(clipName?: string): this {
-        const name =
-            clipName ?? this._actions.keys().next().value ?? undefined;
+        const name = clipName ?? this._actions.keys().next().value ?? undefined;
         if (name === undefined) return this;
 
         const action = this._actions.get(name);
