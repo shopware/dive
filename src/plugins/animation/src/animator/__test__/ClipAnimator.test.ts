@@ -157,6 +157,24 @@ describe('ClipAnimator', () => {
             expect(animator.currentClipName).toBeNull();
         });
 
+        it('should reset action when replaying after once-mode completion', () => {
+            animator.loop = 'once';
+            animator.play('Walk');
+
+            const mixer = (animator as any)._mixer;
+            const walkAction = mixer._actions[0];
+
+            const finishedCb = mixer._listeners['finished'];
+            finishedCb();
+            expect(animator.state).toBe('idle');
+
+            walkAction.reset.mockClear();
+            animator.play('Walk');
+
+            expect(walkAction.reset).toHaveBeenCalled();
+            expect(animator.state).toBe('playing');
+        });
+
         it('should return this for chaining', () => {
             expect(animator.play()).toBe(animator);
             expect(animator.pause()).toBe(animator);

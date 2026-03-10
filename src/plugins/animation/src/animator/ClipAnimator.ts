@@ -99,9 +99,14 @@ export class ClipAnimator extends Animator {
         const action = this._actions.get(name);
         if (!action) return this;
 
+        // case switch animation
         if (this._currentAction && this._currentAction !== action) {
             this._currentAction.fadeOut(0.3);
             action.reset().fadeIn(0.3);
+        }
+        // case start animation after it stopped (e.g. in loop mode "once" or after a pause)
+        else if (this._state === 'idle') {
+            action.reset();
         }
 
         action.loop = this._resolveLoopConstant(this._loop);
