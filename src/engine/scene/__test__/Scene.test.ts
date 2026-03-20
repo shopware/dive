@@ -93,6 +93,8 @@ describe('DIVEScene', () => {
             expect(DIVESceneDefaultSettings).toEqual({
                 displayFloor: false,
                 displayGrid: false,
+                gridSize: 1,
+                gridMajorLineEvery: 5,
                 backgroundColor: 'transparent',
             });
         });

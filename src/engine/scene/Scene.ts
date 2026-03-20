@@ -16,6 +16,18 @@ export type DIVESceneSettings = {
      */
     displayGrid: boolean;
     /**
+     * Distance between minor grid lines in meters.
+     *
+     * @default 1
+     */
+    gridSize: number;
+    /**
+     * Draw a thicker major line every N cells.
+     *
+     * @default 5
+     */
+    gridMajorLineEvery: number;
+    /**
      * The background color of the scene.
      *
      * @default transparent
@@ -26,6 +38,8 @@ export type DIVESceneSettings = {
 export const DIVESceneDefaultSettings: Required<DIVESceneSettings> = {
     displayFloor: false,
     displayGrid: false,
+    gridSize: 1,
+    gridMajorLineEvery: 5,
     backgroundColor: 'transparent',
 };
 
@@ -57,7 +71,13 @@ export class DIVEScene extends Scene {
         );
         this.add(this._root);
 
-        this._grid = new DIVEGrid();
+        this._grid = new DIVEGrid({
+            gridSize:
+                settings?.gridSize ?? DIVESceneDefaultSettings.gridSize,
+            majorLineEvery:
+                settings?.gridMajorLineEvery ??
+                DIVESceneDefaultSettings.gridMajorLineEvery,
+        });
         this._grid.setVisibility(
             settings?.displayGrid ?? DIVESceneDefaultSettings.displayGrid,
         );
