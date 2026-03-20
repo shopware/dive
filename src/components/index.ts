@@ -6,5 +6,6 @@ export * from './light/index.ts';
 export * from './model/Model.ts';
 export * from './node/Node.ts';
 export * from './primitive/Primitive.ts';
+export * from './primitive/DIVEInstancedPrimitive.ts';
 export * from './root/Root.ts';
 export * from './boundingbox/BoundingBox.ts';

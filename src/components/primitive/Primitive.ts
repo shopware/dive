@@ -52,7 +52,7 @@ export class DIVEPrimitive extends DIVEModel {
         this._boundingBox.setFromObject(this._mesh);
     }
 
-    private assembleGeometry(geometry: GeometrySchema): BufferGeometry | null {
+    protected assembleGeometry(geometry: GeometrySchema): BufferGeometry | null {
         // reset material to smooth shading
         this._material.flatShading = false;
 
