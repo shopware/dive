@@ -85,7 +85,7 @@ jobs:
         needs: [eslint, unit, prettier-fix]
         permissions:
             id-token: write
-            contents: read
+            contents: write
         steps:
             - name: Checkout
               uses: actions/checkout@v4
