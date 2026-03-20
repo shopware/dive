@@ -1,4 +1,9 @@
 import { vi, describe, it, expect, beforeEach, afterEach } from 'vitest';
+
+vi.mock('three', async (importOriginal) => {
+    const actual = await importOriginal<typeof import('three')>();
+    return { ...actual };
+});
 import { DIVEView } from '../View.ts';
 import { DIVEScene } from '../../scene/Scene.ts';
 import { DIVEPerspectiveCamera } from '../../camera/PerspectiveCamera.ts';

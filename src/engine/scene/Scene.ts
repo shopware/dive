@@ -72,8 +72,7 @@ export class DIVEScene extends Scene {
         this.add(this._root);
 
         this._grid = new DIVEGrid({
-            gridSize:
-                settings?.gridSize ?? DIVESceneDefaultSettings.gridSize,
+            gridSize: settings?.gridSize ?? DIVESceneDefaultSettings.gridSize,
             majorLineEvery:
                 settings?.gridMajorLineEvery ??
                 DIVESceneDefaultSettings.gridMajorLineEvery,
