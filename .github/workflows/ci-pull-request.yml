@@ -236,8 +236,4 @@ jobs:
             - name: Build DIVE
               run: yarn build
             - name: Publish DIVE to npm (dry-run)
-              uses: JS-DevTools/npm-publish@v3
-              with:
-                  token: ${{ secrets.NPM_TOKEN }}
-                  access: 'public'
-                  dry-run: true
+              run: npm publish --dry-run --access public
