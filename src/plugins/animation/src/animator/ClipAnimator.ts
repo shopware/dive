@@ -111,8 +111,9 @@ export class ClipAnimator extends Animator {
 
         action.loop = this._resolveLoopConstant(this._loop);
         action.play();
-        this._currentAction = action;
         this._state = 'playing';
+        this._currentAction = action;
+        this._currentAction.paused = false;
         this.dispatchEvent({ type: 'play', target: this });
         return this;
     }
