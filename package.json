@@ -62,6 +62,11 @@
             "import": "./build/plugins/quickview/index.mjs",
             "require": "./build/plugins/quickview/index.cjs"
         },
+        "./shader": {
+            "types": "./build/plugins/shader/index.d.ts",
+            "import": "./build/plugins/shader/index.mjs",
+            "require": "./build/plugins/shader/index.cjs"
+        },
         "./state": {
             "types": "./build/plugins/state/index.d.ts",
             "import": "./build/plugins/state/index.mjs",
