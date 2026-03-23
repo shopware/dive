@@ -6,6 +6,13 @@ import { AssetCache } from '@shopware-ag/dive/assetcache';
 
 vi.mock('three');
 
+vi.mock('@shopware-ag/dive/shader', () => ({
+    DIVEShaderLib: {
+        grid: { uniforms: {}, vertexShader: '', fragmentShader: '' },
+    },
+    DIVEShaderMaterial: vi.fn(),
+}));
+
 // Mock the Three.js loaders
 const mockParseAsyncGLTF = vi.fn();
 vi.mock('three/examples/jsm/loaders/GLTFLoader', () => ({

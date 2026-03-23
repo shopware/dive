@@ -1,3 +1,10 @@
+vi.mock('@shopware-ag/dive/shader', () => ({
+    DIVEShaderLib: {
+        grid: { uniforms: {}, vertexShader: '', fragmentShader: '' },
+    },
+    DIVEShaderMaterial: vi.fn(),
+}));
+
 import { Matrix4, Vector4, Color, Material } from 'three';
 import { OrientationDisplay } from '../OrientationDisplay.ts';
 import {

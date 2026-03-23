@@ -1,3 +1,10 @@
+vi.mock('@shopware-ag/dive/shader', () => ({
+    DIVEShaderLib: {
+        grid: { uniforms: {}, vertexShader: '', fragmentShader: '' },
+    },
+    DIVEShaderMaterial: vi.fn(),
+}));
+
 import { Object3D, type Vector3Like } from 'three';
 import { State } from '@shopware-ag/dive/state';
 import { type DIVENode } from '../../node/Node.ts';
