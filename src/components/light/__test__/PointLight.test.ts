@@ -1,3 +1,10 @@
+vi.mock('@shopware-ag/dive/shader', () => ({
+    DIVEShaderLib: {
+        grid: { uniforms: {}, vertexShader: '', fragmentShader: '' },
+    },
+    DIVEShaderMaterial: vi.fn(),
+}));
+
 import { DIVEPointLight } from '../PointLight.ts';
 import { State } from '@shopware-ag/dive/state';
 import { type Color, type PointLight } from 'three';

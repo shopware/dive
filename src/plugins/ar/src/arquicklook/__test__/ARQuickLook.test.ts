@@ -1,3 +1,10 @@
+vi.mock('@shopware-ag/dive/shader', () => ({
+    DIVEShaderLib: {
+        grid: { uniforms: {}, vertexShader: '', fragmentShader: '' },
+    },
+    DIVEShaderMaterial: vi.fn(),
+}));
+
 import { Object3D } from 'three';
 import { type ARSystemOptions } from '../../ARSystem.ts';
 import { ARQuickLook } from '../ARQuickLook.ts';

@@ -7,21 +7,60 @@ import { DIVEScene } from '../../scene/Scene.ts';
 import { DIVEPerspectiveCamera } from '../../camera/PerspectiveCamera.ts';
 import { vi } from 'vitest';
 import { WebGLRenderer as WebGLRendererOriginal } from 'three';
+
+vi.mock('three', async (importOriginal) => {
+    const actual = await importOriginal<typeof import('three')>();
+    return {
+        ...actual,
+        WebGLRenderer: vi.fn(function (this: {
+            domElement: {
+                clientWidth: number;
+                clientHeight: number;
+                style: { position: string };
+                parentElement: typeof this.domElement;
+            };
+            setSize: ReturnType<typeof vi.fn>;
+            render: ReturnType<typeof vi.fn>;
+            compile: ReturnType<typeof vi.fn>;
+            dispose: ReturnType<typeof vi.fn>;
+            setPixelRatio: ReturnType<typeof vi.fn>;
+            setAnimationLoop: ReturnType<typeof vi.fn>;
+            shadowMap: { enabled: boolean; type: number };
+            debug: { checkShaderErrors: boolean };
+        }) {
+            const dom = {
+                clientWidth: 800,
+                clientHeight: 600,
+                style: { position: 'absolute' },
+            } as typeof this.domElement;
+            dom.parentElement = dom;
+            this.domElement = dom;
+            this.setSize = vi.fn();
+            this.setPixelRatio = vi.fn();
+            this.render = vi.fn();
+            this.compile = vi.fn();
+            this.setAnimationLoop = vi.fn();
+            this.shadowMap = { enabled: false, type: 0 };
+            this.debug = { checkShaderErrors: true };
+            this.dispose = vi.fn();
+            return this;
+        }),
+    };
+});
+
+vi.mock('../../environment/Environment.ts', () => ({
+    DIVEEnvironment: vi.fn(function (this: {
+        dispose: ReturnType<typeof vi.fn>;
+        setRenderer: ReturnType<typeof vi.fn>;
+    }) {
+        this.dispose = vi.fn();
+        this.setRenderer = vi.fn();
+        return this;
+    }),
+}));
+
 // cast to any so we can call .mock on the mocked WebGLRenderer
 const WebGLRenderer = WebGLRendererOriginal as any;
-
-// vi.mock('three', async (importOriginal) => {
-//     const actual = await importOriginal<typeof import('three')>();
-//     return {
-//         ...actual,
-//         WebGLRenderer: vi.fn().mockImplementation(() => ({
-//             setSize: vi.fn(),
-//             render: vi.fn(),
-//             domElement: document.createElement('canvas'),
-//             dispose: vi.fn(),
-//         })),
-//     };
-// });
 
 describe('DIVERenderPipeline', () => {
     let renderer: DIVERenderer;

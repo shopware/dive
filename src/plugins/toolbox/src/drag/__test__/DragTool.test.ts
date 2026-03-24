@@ -1,3 +1,10 @@
+vi.mock('@shopware-ag/dive/shader', () => ({
+    DIVEShaderLib: {
+        grid: { uniforms: {}, vertexShader: '', fragmentShader: '' },
+    },
+    DIVEShaderMaterial: vi.fn(),
+}));
+
 import { Vector2, Vector3, type Object3D } from 'three';
 import { DragTool } from '../DragTool.ts';
 import { type PointerContext } from '../../PointerContext.ts';

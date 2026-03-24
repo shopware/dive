@@ -6,6 +6,13 @@ import { DIVE } from '@shopware-ag/dive';
 
 vi.mock('three');
 
+vi.mock('@shopware-ag/dive/shader', () => ({
+    DIVEShaderLib: {
+        grid: { uniforms: {}, vertexShader: '', fragmentShader: '' },
+    },
+    DIVEShaderMaterial: vi.fn(),
+}));
+
 const mockStop = vi.fn();
 const mockPlay = vi.fn().mockReturnThis();
 const mockAnimator = {

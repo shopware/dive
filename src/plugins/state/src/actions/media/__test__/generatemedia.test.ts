@@ -1,3 +1,10 @@
+vi.mock('@shopware-ag/dive/shader', () => ({
+    DIVEShaderLib: {
+        grid: { uniforms: {}, vertexShader: '', fragmentShader: '' },
+    },
+    DIVEShaderMaterial: vi.fn(),
+}));
+
 import { GenerateMediaAction } from '../generatemedia.ts';
 import { type EntitySchema } from '@shopware-ag/dive';
 import { Vector3 } from 'three';

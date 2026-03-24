@@ -1,3 +1,8 @@
+vi.mock('three', async (importOriginal) => {
+    const actual = await importOriginal<typeof import('three')>();
+    return { ...actual };
+});
+
 import { State } from '../State.ts';
 import {
     DIVE,
@@ -179,11 +184,6 @@ vi.mock(
         };
     },
 );
-vi.mock('../../../engine/scene/Scene.ts', () => ({
-    DIVEScene: vi.fn().mockImplementation(() => ({
-        uuid: 'mock-scene-uuid',
-    })),
-}));
 describe('modules/state/State', () => {
     let state: State;
     let mockDive: DIVE;

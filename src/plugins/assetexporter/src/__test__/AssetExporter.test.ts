@@ -1,3 +1,10 @@
+vi.mock('@shopware-ag/dive/shader', () => ({
+    DIVEShaderLib: {
+        grid: { uniforms: {}, vertexShader: '', fragmentShader: '' },
+    },
+    DIVEShaderMaterial: vi.fn(),
+}));
+
 import { AssetExporter } from '../AssetExporter.ts';
 import { Object3D, Mesh } from 'three';
 import { FileTypeError, ParseError } from '@shopware-ag/dive';

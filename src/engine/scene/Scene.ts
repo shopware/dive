@@ -16,6 +16,18 @@ export type DIVESceneSettings = {
      */
     displayGrid: boolean;
     /**
+     * Distance between minor grid lines in meters.
+     *
+     * @default 1
+     */
+    gridSize: number;
+    /**
+     * Draw a thicker major line every N cells.
+     *
+     * @default 5
+     */
+    gridMajorLineEvery: number;
+    /**
      * The background color of the scene.
      *
      * @default transparent
@@ -26,6 +38,8 @@ export type DIVESceneSettings = {
 export const DIVESceneDefaultSettings: Required<DIVESceneSettings> = {
     displayFloor: false,
     displayGrid: false,
+    gridSize: 1,
+    gridMajorLineEvery: 5,
     backgroundColor: 'transparent',
 };
 
@@ -40,28 +54,30 @@ export const DIVESceneDefaultSettings: Required<DIVESceneSettings> = {
 export class DIVEScene extends Scene {
     public readonly isDIVEScene: true = true;
 
+    private _settings: DIVESceneSettings;
+
     private _root: DIVERoot;
-    private _grid: DIVEGrid;
+    private _grid: DIVEGrid | null = null;
 
     constructor(settings?: Partial<DIVESceneSettings>) {
         super();
 
-        this.setBackground(
-            settings?.backgroundColor ??
-                DIVESceneDefaultSettings.backgroundColor,
-        );
+        this._settings = { ...DIVESceneDefaultSettings, ...(settings ?? {}) };
+
+        this.setBackground(this._settings.backgroundColor);
 
         this._root = new DIVERoot();
-        this._root.floor.setVisibility(
-            settings?.displayFloor ?? DIVESceneDefaultSettings.displayFloor,
-        );
+        this._root.floor.setVisibility(this._settings.displayFloor);
         this.add(this._root);
 
-        this._grid = new DIVEGrid();
-        this._grid.setVisibility(
-            settings?.displayGrid ?? DIVESceneDefaultSettings.displayGrid,
-        );
-        this.add(this._grid);
+        if (this._settings.displayGrid) {
+            this._grid = new DIVEGrid({
+                gridSize: this._settings.gridSize,
+                majorLineEvery: this._settings.gridMajorLineEvery,
+            });
+            this._grid.setVisibility(this._settings.displayGrid);
+            this.add(this._grid);
+        }
     }
 
     public get root(): DIVERoot {
@@ -69,6 +85,16 @@ export class DIVEScene extends Scene {
     }
 
     public get grid(): DIVEGrid {
+        if (!this._grid) {
+            this._grid = new DIVEGrid({
+                gridSize: this._settings.gridSize,
+                majorLineEvery: this._settings.gridMajorLineEvery,
+            });
+
+            this._grid.setVisibility(this._settings.displayGrid);
+            this.add(this._grid);
+        }
+
         return this._grid;
     }
 
@@ -88,6 +114,9 @@ export class DIVEScene extends Scene {
 
     public dispose(): void {
         this.remove(this._root);
-        this.remove(this._grid);
+
+        if (this._grid) {
+            this.remove(this._grid);
+        }
     }
 }

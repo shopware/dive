@@ -15,6 +15,10 @@ declare module '*.hdr?url' {
     export default url;
 }
 
+declare module '*.glsl?raw' {
+    export default glsl as string;
+}
+
 declare module 'occt-import-js' {
     const occtImportJs: () => Promise<{
         ReadStepFile: (content: Uint8Array, params: null) => unknown;
