@@ -87,7 +87,9 @@ describe('DIVEScene', () => {
 
         it('should not create the grid by default', () => {
             expect(scene.children).not.toContainEqual(
-                expect.objectContaining({ setVisibility: expect.any(Function) }),
+                expect.objectContaining({
+                    setVisibility: expect.any(Function),
+                }),
             );
         });
 
