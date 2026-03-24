@@ -85,8 +85,10 @@ describe('DIVEScene', () => {
             expect(mock_FloorSetVisibility).toHaveBeenCalledWith(false);
         });
 
-        it('should hide the grid by default', () => {
-            expect(mock_GridSetVisibility).toHaveBeenCalledWith(false);
+        it('should not create the grid by default', () => {
+            expect(scene.children).not.toContainEqual(
+                expect.objectContaining({ setVisibility: expect.any(Function) }),
+            );
         });
 
         it('should have correct default settings exported', () => {
@@ -145,8 +147,8 @@ describe('DIVEScene', () => {
             const customScene = new DIVEScene({ displayFloor: true });
             // floor is explicitly set
             expect(mock_FloorSetVisibility).toHaveBeenCalledWith(true);
-            // grid falls back to default (false)
-            expect(mock_GridSetVisibility).toHaveBeenCalledWith(false);
+            // grid is not created when displayGrid defaults to false
+            expect(mock_GridSetVisibility).not.toHaveBeenCalled();
             // background falls back to default (transparent -> null)
             expect(customScene.background).toBeNull();
         });
