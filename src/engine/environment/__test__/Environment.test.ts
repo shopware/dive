@@ -6,8 +6,58 @@ import { vi, describe, it, expect, beforeEach } from 'vitest';
 import { WebGLRenderer, Scene, Color } from 'three';
 import { DIVEEnvironment } from '../Environment.ts';
 
-vi.mock('three');
-vi.mock('three/examples/jsm/loaders/RGBELoader.js');
+vi.mock('three', async () => {
+    const actual = await vi.importActual<typeof import('three')>('three');
+
+    const WebGLRenderer = vi.fn(function (this: any) {
+        this.toneMapping = actual.NoToneMapping;
+        this.outputColorSpace = actual.LinearSRGBColorSpace;
+        return this;
+    });
+
+    const WebGLCubeRenderTarget = vi.fn(function (this: any) {
+        this.texture = {
+            dispose: vi.fn(),
+        };
+        this.dispose = vi.fn();
+        return this;
+    });
+
+    const CubeCamera = vi.fn(function (this: any) {
+        this.update = vi.fn();
+        return this;
+    });
+
+    const PMREMGenerator = vi.fn(function (this: any) {
+        this.dispose = vi.fn();
+        this.fromCubemap = vi.fn(() => ({
+            texture: {
+                dispose: vi.fn(),
+            },
+            dispose: vi.fn(),
+        }));
+        return this;
+    });
+
+    return {
+        ...actual,
+        WebGLRenderer,
+        WebGLCubeRenderTarget,
+        CubeCamera,
+        PMREMGenerator,
+    };
+});
+
+vi.mock('three/examples/jsm/loaders/RGBELoader.js', () => ({
+    RGBELoader: vi.fn(function (this: any) {
+        this.loadAsync = vi.fn(async () => ({
+            mapping: undefined,
+            dispose: vi.fn(),
+            colorSpace: 'srgb',
+        }));
+        return this;
+    }),
+}));
 
 const waitForAsync = () => new Promise((resolve) => setTimeout(resolve, 0));
 

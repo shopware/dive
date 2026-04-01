@@ -1,6 +1,18 @@
 import degToRad from '../degToRad';
 import { MathUtils } from 'three';
 
+vi.mock('three', async () => {
+    const actual = await vi.importActual<typeof import('three')>('three');
+
+    return {
+        ...actual,
+        MathUtils: {
+            ...actual.MathUtils,
+            degToRad: vi.fn(),
+        },
+    };
+});
+
 // Type assertion for the mocked MathUtils.degToRad
 const mockedDegToRad = MathUtils.degToRad as vi.Mock;
 

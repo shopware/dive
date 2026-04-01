@@ -16,38 +16,59 @@ vi.mock('@shopware-ag/dive/orbitcontroller', () => ({
 }));
 
 // Mock the gizmo components
-vi.mock('../translate/TranslateGizmo', () => ({
-    DIVETranslateGizmo: vi.fn().mockImplementation(() => ({
-        debug: false,
-        reset: vi.fn(),
-        add: vi.fn(),
-    })),
-}));
+vi.mock('../translate/TranslateGizmo', async () => {
+    const { Object3D } = await vi.importActual<typeof import('three')>('three');
 
-vi.mock('../rotate/RotateGizmo', () => ({
-    DIVERotateGizmo: vi.fn().mockImplementation(() => ({
-        debug: false,
-        reset: vi.fn(),
-        add: vi.fn(),
-    })),
-}));
+    return {
+        DIVETranslateGizmo: vi.fn().mockImplementation(() =>
+            Object.assign(new Object3D(), {
+                debug: false,
+                reset: vi.fn(),
+            }),
+        ),
+    };
+});
 
-vi.mock('../scale/ScaleGizmo', () => ({
-    DIVEScaleGizmo: vi.fn().mockImplementation(() => ({
-        debug: false,
-        reset: vi.fn(),
-        update: vi.fn(),
-        add: vi.fn(),
-    })),
-}));
+vi.mock('../rotate/RotateGizmo', async () => {
+    const { Object3D } = await vi.importActual<typeof import('three')>('three');
 
-vi.mock('../plane/GizmoPlane', () => ({
-    DIVEGizmoPlane: vi.fn().mockImplementation(() => ({
-        visible: false,
-        clear: vi.fn(),
-        assemble: vi.fn(),
-    })),
-}));
+    return {
+        DIVERotateGizmo: vi.fn().mockImplementation(() =>
+            Object.assign(new Object3D(), {
+                debug: false,
+                reset: vi.fn(),
+            }),
+        ),
+    };
+});
+
+vi.mock('../scale/ScaleGizmo', async () => {
+    const { Object3D } = await vi.importActual<typeof import('three')>('three');
+
+    return {
+        DIVEScaleGizmo: vi.fn().mockImplementation(() =>
+            Object.assign(new Object3D(), {
+                debug: false,
+                reset: vi.fn(),
+                update: vi.fn(),
+            }),
+        ),
+    };
+});
+
+vi.mock('../plane/GizmoPlane', async () => {
+    const { Object3D } = await vi.importActual<typeof import('three')>('three');
+
+    return {
+        DIVEGizmoPlane: vi.fn().mockImplementation(() =>
+            Object.assign(new Object3D(), {
+                visible: false,
+                clear: vi.fn(),
+                assemble: vi.fn(),
+            }),
+        ),
+    };
+});
 
 describe('DIVEGizmo', () => {
     let gizmo: DIVEGizmo;
@@ -58,15 +79,7 @@ describe('DIVEGizmo', () => {
         mockController = new OrbitController();
         gizmo = new DIVEGizmo(mockController);
 
-        mockObject = {
-            position: new Vector3(),
-            rotation: new Euler(),
-            scale: new Vector3(),
-            clear: vi.fn(),
-            add: vi.fn(),
-            remove: vi.fn(),
-            children: [],
-        } as unknown as Object3D & DIVESelectable;
+        mockObject = new Object3D() as Object3D & DIVESelectable;
     });
 
     describe('constructor', () => {

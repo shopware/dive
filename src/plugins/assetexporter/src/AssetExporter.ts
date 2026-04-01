@@ -115,7 +115,7 @@ export class AssetExporter {
         options?: USDZExporterOptions,
     ): Promise<ArrayBuffer> {
         try {
-            const result = await this._usdzExporter.parse(object, options);
+            const result = await this._usdzExporter.parseAsync(object, options);
             return result.buffer as ArrayBuffer;
         } catch (error) {
             if (error instanceof ParseError) {

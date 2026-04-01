@@ -5,6 +5,18 @@ vi.mock('@shopware-ag/dive/shader', () => ({
     DIVEShaderMaterial: vi.fn(),
 }));
 
+vi.mock('three-spritetext', async () => {
+    const { Object3D } = await vi.importActual<typeof import('three')>('three');
+
+    return {
+        default: vi.fn(function (this: any) {
+            const sprite = new Object3D();
+            sprite.layers.mask = 0;
+            return sprite;
+        }),
+    };
+});
+
 import { Matrix4 } from 'three';
 import { OrientationDisplayAxes } from '../Axes.ts';
 

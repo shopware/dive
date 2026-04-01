@@ -30,6 +30,12 @@ let node: DIVENode;
 describe('dive/node/DIVENode', () => {
     beforeEach(() => {
         node = new DIVENode();
+        vi.spyOn(node, 'getWorldPosition').mockImplementation(
+            (target?: Vector3) => {
+                if (target) return target.copy(node.position);
+                return node.position.clone();
+            },
+        );
     });
 
     afterEach(() => {

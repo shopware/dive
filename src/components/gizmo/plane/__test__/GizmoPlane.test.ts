@@ -2,7 +2,6 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { DIVEGizmoPlane } from '../GizmoPlane.ts';
 import { DIVEGizmoMode, DIVEGizmoAxis } from '../../Gizmo.ts';
 
-vi.mock('three'); // Use the global __mocks__/three.ts
 vi.mock('../../../constants/VisibilityLayerMask', () => ({ UI_LAYER_MASK: 1 }));
 
 describe('DIVEGizmoPlane', () => {

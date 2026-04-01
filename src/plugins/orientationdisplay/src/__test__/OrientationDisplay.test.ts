@@ -14,7 +14,23 @@ import {
     DIVEPerspectiveCamera,
 } from '@shopware-ag/dive';
 
-vi.mock('three-spritetext');
+vi.mock('three-spritetext', async () => {
+    const { Object3D } = await vi.importActual<typeof import('three')>('three');
+
+    class MockSpriteText extends Object3D {
+        constructor(
+            _text: string,
+            _textHeight?: number,
+            _color?: string | number,
+        ) {
+            super();
+        }
+    }
+
+    return {
+        default: MockSpriteText,
+    };
+});
 
 const mockScene = {
     add: vi.fn(),

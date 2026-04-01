@@ -1,10 +1,10 @@
 import { AssetLoader } from '../AssetLoader.ts';
 import { GLTF } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { Group } from 'three';
-import { FileTypeError, NetworkError, ParseError } from '@shopware-ag/dive';
 import { AssetCache } from '@shopware-ag/dive/assetcache';
-
-vi.mock('three');
+import { FileTypeError } from '../../../../../error/file-type/file-type-error.ts';
+import { NetworkError } from '../../../../../error/network/network-error.ts';
+import { ParseError } from '../../../../../error/parse/parse-error.ts';
 
 vi.mock('@shopware-ag/dive/shader', () => ({
     DIVEShaderLib: {
@@ -15,7 +15,7 @@ vi.mock('@shopware-ag/dive/shader', () => ({
 
 // Mock the Three.js loaders
 const mockParseAsyncGLTF = vi.fn();
-vi.mock('three/examples/jsm/loaders/GLTFLoader', () => ({
+vi.mock('three/examples/jsm/loaders/GLTFLoader.js', () => ({
     GLTFLoader: vi.fn().mockImplementation(() => ({
         parseAsync: mockParseAsyncGLTF,
         setDRACOLoader: vi.fn(),
@@ -23,7 +23,7 @@ vi.mock('three/examples/jsm/loaders/GLTFLoader', () => ({
 }));
 
 const mockParseUSDZ = vi.fn();
-vi.mock('three/examples/jsm/loaders/USDZLoader', () => ({
+vi.mock('three/examples/jsm/loaders/USDZLoader.js', () => ({
     USDZLoader: vi.fn().mockImplementation(() => ({
         parse: mockParseUSDZ,
     })),
