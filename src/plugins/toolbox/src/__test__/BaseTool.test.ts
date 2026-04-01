@@ -5,6 +5,24 @@ vi.mock('@shopware-ag/dive/shader', () => ({
     DIVEShaderMaterial: vi.fn(),
 }));
 
+const RaycasterIntersectObjectMock = vi.fn(() => []);
+
+vi.mock('three', async () => {
+    const actual = await vi.importActual<typeof import('three')>('three');
+
+    const Raycaster = vi.fn(function (this: any) {
+        this.layers = { mask: 0 };
+        this.setFromCamera = vi.fn(() => this);
+        this.intersectObjects = RaycasterIntersectObjectMock;
+        return this;
+    });
+
+    return {
+        ...actual,
+        Raycaster,
+    };
+});
+
 import { DIVEBaseTool } from '../BaseTool.ts';
 import {
     Camera,
@@ -19,7 +37,6 @@ import {
     type DIVEDraggable,
 } from '@shopware-ag/dive';
 import { OrbitController } from '@shopware-ag/dive/orbitcontroller';
-import { RaycasterIntersectObjectMock } from '../../../../../__mocks__/three.ts';
 
 /**
  * @jest-environment jsdom

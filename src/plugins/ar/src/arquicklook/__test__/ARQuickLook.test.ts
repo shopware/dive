@@ -1,10 +1,3 @@
-vi.mock('@shopware-ag/dive/shader', () => ({
-    DIVEShaderLib: {
-        grid: { uniforms: {}, vertexShader: '', fragmentShader: '' },
-    },
-    DIVEShaderMaterial: vi.fn(),
-}));
-
 import { Object3D } from 'three';
 import { type ARSystemOptions } from '../../ARSystem.ts';
 import { ARQuickLook } from '../ARQuickLook.ts';
@@ -16,29 +9,17 @@ import {
     ARQuickLookUnknownError,
 } from '../../error/ar-errors.ts';
 
-vi.mock('../../../../engine/scene/Scene', () => {
-    return {
-        DIVEScene: vi.fn(function (this: any) {
-            this.add = vi.fn();
-            this.children = [];
-            this.root = {
-                children: [],
-            };
-            this.traverse = vi.fn((callback) => {
-                this.root.children.forEach((child: Object3D) => {
-                    callback(child);
-                });
-            });
-            return this;
-        }),
-    };
-});
-
 // Mock the dependencies
 const mockConvert = vi.fn().mockReturnThis();
 const mockTo = vi.fn().mockResolvedValue(new ArrayBuffer(0));
 
 vi.mock('@shopware-ag/dive/systeminfo');
+vi.mock('@shopware-ag/dive/assetloader', () => ({
+    AssetLoader: vi.fn(),
+}));
+vi.mock('@shopware-ag/dive/assetexporter', () => ({
+    AssetExporter: vi.fn(),
+}));
 vi.mock('@shopware-ag/dive/assetconverter', () => ({
     AssetConverter: vi.fn().mockImplementation(() => ({
         convert: mockConvert,
@@ -61,19 +42,10 @@ document.createElement = vi.fn().mockReturnValue({
 
 describe('ARQuickLook', () => {
     let mockOptions: ARSystemOptions;
-    let mockModels: Object3D[];
     let quickLook: ARQuickLook;
     const mockUri = 'https://example.com/model.glb';
 
     beforeEach(() => {
-        mockModels = [
-            new Object3D(),
-            new Object3D(),
-            new Object3D(),
-        ];
-        mockModels[1].userData = {
-            uri: 'https://example.com',
-        };
         mockOptions = {
             arPlacement: 'horizontal',
             arScale: 'auto',

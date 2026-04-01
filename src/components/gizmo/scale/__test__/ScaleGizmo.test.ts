@@ -15,21 +15,30 @@ vi.mock('@shopware-ag/dive/orbitcontroller', () => ({
 }));
 
 // Mock the ScaleHandle
-vi.mock('../../handles/ScaleHandle', () => ({
-    DIVEScaleHandle: vi
-        .fn()
-        .mockImplementation((axis, length, direction, color) => ({
-            axis,
-            length,
-            direction,
-            color,
-            highlight: false,
-            forwardVector: new Vector3(direction.x, direction.y, direction.z),
-            reset: vi.fn(),
-            update: vi.fn(),
-            parent: null,
-        })),
-}));
+vi.mock('../../handles/ScaleHandle', async () => {
+    const { Object3D } = await vi.importActual<typeof import('three')>('three');
+
+    return {
+        DIVEScaleHandle: vi
+            .fn()
+            .mockImplementation((axis, length, direction, color) =>
+                Object.assign(new Object3D(), {
+                    axis,
+                    length,
+                    direction,
+                    color,
+                    highlight: false,
+                    forwardVector: new Vector3(
+                        direction.x,
+                        direction.y,
+                        direction.z,
+                    ),
+                    reset: vi.fn(),
+                    update: vi.fn(),
+                }),
+            ),
+    };
+});
 
 // Mock the main Gizmo
 vi.mock('../../Gizmo', () => ({

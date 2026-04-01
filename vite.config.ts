@@ -14,7 +14,6 @@ export default defineConfig({
     },
     test: {
         globals: true,
-        setupFiles: ['./vitest.setup.ts'],
         environment: 'jsdom',
         include: ['src/**/*.test.ts'],
         coverage: {
@@ -27,7 +26,6 @@ export default defineConfig({
             ],
             exclude: [
                 '**/build/**',
-                '**/__mocks__/**',
                 'src/plugins/ar/src/webxr/**', // webxr currently not supported in dive
                 'src/engine/scene/xrroot/**', // webxr currently not supported in dive
                 '**/index.ts', // Exclude all index.ts barrel export files

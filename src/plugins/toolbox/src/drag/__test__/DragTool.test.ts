@@ -5,6 +5,21 @@ vi.mock('@shopware-ag/dive/shader', () => ({
     DIVEShaderMaterial: vi.fn(),
 }));
 
+vi.mock('three', async () => {
+    const actual = await vi.importActual<typeof import('three')>('three');
+
+    const Raycaster = vi.fn(function (this: any) {
+        this.setFromCamera = vi.fn(() => this);
+        this.intersectObjects = vi.fn(() => []);
+        return this;
+    });
+
+    return {
+        ...actual,
+        Raycaster,
+    };
+});
+
 import { Vector2, Vector3, type Object3D } from 'three';
 import { DragTool } from '../DragTool.ts';
 import { type PointerContext } from '../../PointerContext.ts';

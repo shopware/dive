@@ -11,6 +11,72 @@ import {
 } from '@shopware-ag/dive';
 import { Object3D, Vector3, Box3 } from 'three';
 
+vi.mock('three', async () => {
+    const actual = await vi.importActual<typeof import('three')>('three');
+
+    const Object3D = vi.fn(function (this: any) {
+        this.isObject3D = true;
+        this.children = [];
+        this.parent = null;
+        this.name = '';
+        this.userData = {};
+        this.visible = true;
+        this.layers = { mask: 0 };
+        this.position = new actual.Vector3();
+        this.rotation = new actual.Euler();
+        this.quaternion = new actual.Quaternion();
+        this.scale = new actual.Vector3(1, 1, 1);
+        this.add = vi.fn((...objects: any[]) => {
+            objects.forEach((object) => {
+                this.children.push(object);
+                if (object && typeof object === 'object') {
+                    object.parent = this;
+                }
+            });
+            return this;
+        });
+        this.attach = vi.fn((object: any) => {
+            this.children.push(object);
+            if (object && typeof object === 'object') {
+                object.parent = this;
+            }
+            return this;
+        });
+        this.remove = vi.fn((object: any) => {
+            this.children = this.children.filter(
+                (child: any) => child !== object,
+            );
+            if (object && typeof object === 'object') {
+                object.parent = null;
+            }
+            return this;
+        });
+        this.removeFromParent = vi.fn(() => {
+            this.parent?.remove?.(this);
+        });
+        this.dispatchEvent = vi.fn();
+        this.updateWorldMatrix = vi.fn();
+        this.applyMatrix4 = vi.fn();
+        this.worldToLocal = vi.fn((vector: any) => vector);
+        this.traverse = vi.fn((callback: (object: any) => void) => {
+            callback(this);
+            this.children.forEach((child: any) => {
+                if (child?.traverse && child !== this) {
+                    child.traverse(callback);
+                } else {
+                    callback(child);
+                }
+            });
+        });
+        return this;
+    });
+
+    return {
+        ...actual,
+        Object3D,
+    };
+});
+
 vi.mock('../../../modules/ModuleRegistry', () => ({
     getModule: vi.fn((moduleName: string) => {
         if (moduleName === 'State') {

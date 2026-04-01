@@ -37,6 +37,7 @@ vi.mock('@shopware-ag/dive', () => {
         DIVEPerspectiveCamera: vi.fn(function (this: any) {
             this.isPerspectiveCamera = true;
             this.position = new Vector3(0, 2, 2);
+            this.up = new Vector3(0, 1, 0);
             this.lookAt = vi.fn();
             this.quaternion = new Quaternion();
             this.zoom = 1;
@@ -467,6 +468,7 @@ describe('modules/controller/orbit/OrbitController', () => {
     describe('Event Handling', () => {
         it('should dispatch change event on update', () => {
             const spy = vi.spyOn(controller, 'dispatchEvent');
+            controller.target.x += 1;
             controller.update();
             expect(spy).toHaveBeenCalledWith({ type: 'change' });
         });
@@ -2737,7 +2739,7 @@ describe('modules/controller/orbit/OrbitController', () => {
 
         it('should handle panLeft with zero distance', () => {
             const initialPanOffset = (controller as any).panOffset.clone();
-            (controller as any).panLeft(0, controller.object.matrix);
+            (controller as any).panLeft(0, new Matrix4().identity());
             // Check that the pan offset hasn't changed
             expect((controller as any).panOffset.x).toBe(initialPanOffset.x);
             expect((controller as any).panOffset.y).toBe(initialPanOffset.y);
@@ -2758,12 +2760,13 @@ describe('modules/controller/orbit/OrbitController', () => {
         it('should handle multiple event dispatches', () => {
             const spy = vi.spyOn(controller, 'dispatchEvent');
 
+            controller.autoRotate = true;
             controller.update();
             controller.saveState();
             controller.reset();
             controller.dispose();
 
-            expect(spy).toHaveBeenCalledTimes(4);
+            expect(spy).toHaveBeenCalledTimes(3);
         });
 
         it('should handle event dispatching with custom events', () => {

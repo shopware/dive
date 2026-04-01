@@ -7,6 +7,7 @@ import {
     Vector3,
     Box3Helper,
     MeshBasicMaterial,
+    BoxGeometry,
     SphereGeometry,
 } from 'three';
 
@@ -16,8 +17,9 @@ describe('BoundingBox', () => {
     let mockGeometry: any;
 
     beforeEach(() => {
-        // Reset mocks
-        vi.clearAllMocks();
+        vi.restoreAllMocks();
+
+        mockGeometry = new BoxGeometry(1, 2, 3);
 
         // Create mock mesh
         mockMesh = new Mesh(mockGeometry);
@@ -56,18 +58,17 @@ describe('BoundingBox', () => {
         it('should create a BoundingBox with custom wireframe color', () => {
             const customColor = 0xff0000;
             const boundingBox = new BoundingBox(mockObject, false, customColor);
+            const boxHelper = boundingBox.children[0] as Box3Helper;
+            const sphereHelper = boundingBox.children[1] as Mesh;
+            const sphereMaterial = sphereHelper.material as MeshBasicMaterial;
 
             expect(boundingBox).toBeDefined();
-            expect(Box3Helper).toHaveBeenCalledWith(
-                expect.any(Box3),
+            expect(boxHelper).toBeInstanceOf(Box3Helper);
+            expect((boxHelper.material as any).color.getHex()).toBe(
                 customColor,
             );
-            expect(MeshBasicMaterial).toHaveBeenCalledWith(
-                expect.objectContaining({
-                    color: customColor,
-                    wireframe: true,
-                }),
-            );
+            expect(sphereMaterial.color.getHex()).toBe(customColor);
+            expect(sphereMaterial.wireframe).toBe(true);
         });
 
         it('should create a BoundingBox with oriented bounding box by default', () => {
@@ -80,11 +81,12 @@ describe('BoundingBox', () => {
         it('should handle complex objects with multiple meshes', () => {
             const childMesh = new Mesh(mockGeometry);
             mockObject.add(childMesh);
+            const traverseSpy = vi.spyOn(mockObject, 'traverse');
 
             const boundingBox = new BoundingBox(mockObject);
 
             expect(boundingBox).toBeDefined();
-            expect(mockObject.traverse).toHaveBeenCalled();
+            expect(traverseSpy).toHaveBeenCalled();
         });
 
         it('should copy object rotation to maintain orientation', () => {
@@ -99,24 +101,23 @@ describe('BoundingBox', () => {
 
         it('should create box helper with correct visibility', () => {
             const boundingBox = new BoundingBox(mockObject);
+            const boxHelper = boundingBox.children[0] as Box3Helper;
 
             // Box helper should be created but initially invisible
-            expect(Box3Helper).toHaveBeenCalled();
-            // Check that the box helper is added to children
+            expect(boxHelper).toBeInstanceOf(Box3Helper);
+            expect(boxHelper.visible).toBe(false);
             expect(boundingBox.children.length).toBeGreaterThan(0);
         });
 
         it('should create sphere helper with correct visibility', () => {
             const boundingBox = new BoundingBox(mockObject);
+            const sphereHelper = boundingBox.children[1] as Mesh;
+            const sphereMaterial = sphereHelper.material as MeshBasicMaterial;
 
             // Sphere helper should be created but initially invisible
-            expect(SphereGeometry).toHaveBeenCalled();
-            expect(MeshBasicMaterial).toHaveBeenCalledWith(
-                expect.objectContaining({
-                    wireframe: true,
-                }),
-            );
-            // Check that the sphere helper is added to children
+            expect(sphereHelper.geometry).toBeInstanceOf(SphereGeometry);
+            expect(sphereMaterial.wireframe).toBe(true);
+            expect(sphereHelper.visible).toBe(false);
             expect(boundingBox.children.length).toBeGreaterThan(0);
         });
 
@@ -174,96 +175,94 @@ describe('BoundingBox', () => {
 
     describe('setBoxHelperVisible', () => {
         let boundingBox: BoundingBox;
+        let boxHelper: Box3Helper;
 
         beforeEach(() => {
             boundingBox = new BoundingBox(mockObject);
+            boxHelper = boundingBox.children[0] as Box3Helper;
         });
 
         it('should show box helper when set to true', () => {
             boundingBox.setBoxHelperVisible(true);
 
-            // The setBoxHelperVisible method should be called
-            // We can't easily test the internal helper visibility due to mocking
-            expect(boundingBox).toBeDefined();
+            expect(boxHelper.visible).toBe(true);
         });
 
         it('should hide box helper when set to false', () => {
+            boundingBox.setBoxHelperVisible(true);
             boundingBox.setBoxHelperVisible(false);
 
-            // The setBoxHelperVisible method should be called
-            // We can't easily test the internal helper visibility due to mocking
-            expect(boundingBox).toBeDefined();
+            expect(boxHelper.visible).toBe(false);
         });
 
         it('should toggle box helper visibility', () => {
             boundingBox.setBoxHelperVisible(true);
-            expect(boundingBox).toBeDefined();
+            expect(boxHelper.visible).toBe(true);
 
             boundingBox.setBoxHelperVisible(false);
-            expect(boundingBox).toBeDefined();
+            expect(boxHelper.visible).toBe(false);
         });
     });
 
     describe('setSphereHelperVisible', () => {
         let boundingBox: BoundingBox;
+        let sphereHelper: Mesh;
 
         beforeEach(() => {
             boundingBox = new BoundingBox(mockObject);
+            sphereHelper = boundingBox.children[1] as Mesh;
         });
 
         it('should show sphere helper when set to true', () => {
             boundingBox.setSphereHelperVisible(true);
 
-            // The setSphereHelperVisible method should be called
-            // We can't easily test the internal helper visibility due to mocking
-            expect(boundingBox).toBeDefined();
+            expect(sphereHelper.visible).toBe(true);
         });
 
         it('should hide sphere helper when set to false', () => {
+            boundingBox.setSphereHelperVisible(true);
             boundingBox.setSphereHelperVisible(false);
 
-            // The setSphereHelperVisible method should be called
-            // We can't easily test the internal helper visibility due to mocking
-            expect(boundingBox).toBeDefined();
+            expect(sphereHelper.visible).toBe(false);
         });
 
         it('should toggle sphere helper visibility', () => {
             boundingBox.setSphereHelperVisible(true);
-            expect(boundingBox).toBeDefined();
+            expect(sphereHelper.visible).toBe(true);
 
             boundingBox.setSphereHelperVisible(false);
-            expect(boundingBox).toBeDefined();
+            expect(sphereHelper.visible).toBe(false);
         });
     });
 
     describe('axis-aligned vs oriented bounding box', () => {
         it('should use setFromObject for axis-aligned bounding box', () => {
+            const setFromObjectSpy = vi.spyOn(Box3.prototype, 'setFromObject');
             const boundingBox = new BoundingBox(mockObject, true);
 
             expect(boundingBox).toBeDefined();
-            // The Box3.setFromObject method should be called for axis-aligned
-            expect(boundingBox.box.setFromObject).toHaveBeenCalledWith(
-                mockObject,
-            );
+            expect(setFromObjectSpy).toHaveBeenCalledWith(mockObject);
         });
 
         it('should use traverse and geometry manipulation for oriented bounding box', () => {
+            const traverseSpy = vi.spyOn(mockObject, 'traverse');
+            const updateWorldMatrixSpy = vi.spyOn(
+                mockObject,
+                'updateWorldMatrix',
+            );
             const boundingBox = new BoundingBox(mockObject, false);
 
             expect(boundingBox).toBeDefined();
-            expect(mockObject.traverse).toHaveBeenCalled();
-            expect(mockObject.updateWorldMatrix).toHaveBeenCalledWith(
-                true,
-                true,
-            );
+            expect(traverseSpy).toHaveBeenCalled();
+            expect(updateWorldMatrixSpy).toHaveBeenCalledWith(true, true);
         });
 
         it('should handle geometry cloning and transformation for oriented bounding box', () => {
+            const traverseSpy = vi.spyOn(mockObject, 'traverse');
             const boundingBox = new BoundingBox(mockObject, false);
 
             expect(boundingBox).toBeDefined();
-            // The traverse method should be called for oriented bounding box
-            expect(mockObject.traverse).toHaveBeenCalled();
+            expect(traverseSpy).toHaveBeenCalled();
         });
     });
 
@@ -277,7 +276,11 @@ describe('BoundingBox', () => {
         });
 
         it('should handle objects with null geometry', () => {
-            const nullGeometryMesh = new Mesh(null as any);
+            const nullGeometryMesh = new Mesh(new BoxGeometry(1, 1, 1));
+            nullGeometryMesh.geometry = {
+                computeBoundingBox: vi.fn(),
+                boundingBox: null,
+            } as any;
             const boundingBox = new BoundingBox(nullGeometryMesh);
 
             expect(boundingBox).toBeDefined();
@@ -285,18 +288,11 @@ describe('BoundingBox', () => {
         });
 
         it('should handle objects with undefined bounding box', () => {
-            const mockGeometryWithoutBoundingBox = {
-                clone: vi.fn(() => ({
-                    applyMatrix4: vi.fn(),
-                    applyQuaternion: vi.fn(),
-                    computeBoundingBox: vi.fn(),
-                    boundingBox: null,
-                })),
+            const meshWithoutBoundingBox = new Mesh(new BoxGeometry(1, 1, 1));
+            meshWithoutBoundingBox.geometry = {
+                computeBoundingBox: vi.fn(),
+                boundingBox: undefined,
             } as any;
-
-            const meshWithoutBoundingBox = new Mesh(
-                mockGeometryWithoutBoundingBox,
-            );
             const boundingBox = new BoundingBox(meshWithoutBoundingBox);
 
             expect(boundingBox).toBeDefined();
@@ -305,19 +301,24 @@ describe('BoundingBox', () => {
 
         it('should handle color representation as string', () => {
             const boundingBox = new BoundingBox(mockObject, false, '#ff0000');
+            const boxHelper = boundingBox.children[0] as Box3Helper;
+            const sphereHelper = boundingBox.children[1] as Mesh;
+            const sphereMaterial = sphereHelper.material as MeshBasicMaterial;
 
             expect(boundingBox).toBeDefined();
-            expect(Box3Helper).toHaveBeenCalledWith(
-                expect.any(Box3),
-                '#ff0000',
-            );
+            expect((boxHelper.material as any).color.getHex()).toBe(0xff0000);
+            expect(sphereMaterial.color.getHex()).toBe(0xff0000);
         });
 
         it('should handle color representation as number', () => {
             const boundingBox = new BoundingBox(mockObject, false, 0xff0000);
+            const boxHelper = boundingBox.children[0] as Box3Helper;
+            const sphereHelper = boundingBox.children[1] as Mesh;
+            const sphereMaterial = sphereHelper.material as MeshBasicMaterial;
 
             expect(boundingBox).toBeDefined();
-            expect(Box3Helper).toHaveBeenCalledWith(expect.any(Box3), 0xff0000);
+            expect((boxHelper.material as any).color.getHex()).toBe(0xff0000);
+            expect(sphereMaterial.color.getHex()).toBe(0xff0000);
         });
     });
 

@@ -1,6 +1,88 @@
 import { BufferGeometry, Color, Group, MeshStandardMaterial } from 'three';
 import { STEPLoader } from '../STEPLoader.ts';
 
+vi.mock('three', async () => {
+    const actual = await vi.importActual<typeof import('three')>('three');
+
+    const Object3D = vi.fn(function (this: any) {
+        this.children = [];
+        this.name = '';
+        this.rotation = { x: 0, y: 0, z: 0 };
+        this.add = vi.fn((obj: any) => {
+            this.children.push(obj);
+            return this;
+        });
+        return this;
+    });
+
+    const Group = vi.fn(function (this: any) {
+        Object.assign(this, new (Object3D as any)());
+        this.isGroup = true;
+        return this;
+    });
+
+    const Color = vi.fn(function (this: any, r = 1, g = 1, b = 1) {
+        this.r = r;
+        this.g = g;
+        this.b = b;
+        return this;
+    });
+
+    const BufferAttribute = vi.fn(function (
+        this: any,
+        array: ArrayLike<number>,
+        itemSize: number,
+    ) {
+        this.array = array;
+        this.itemSize = itemSize;
+        return this;
+    });
+
+    const BufferGeometry = vi.fn(function (this: any) {
+        this.attributes = {};
+        this.index = null;
+        this.setAttribute = vi.fn((name: string, attribute: any) => {
+            this.attributes[name] = attribute;
+            return this;
+        });
+        this.setIndex = vi.fn((attribute: any) => {
+            this.index = attribute;
+            return this;
+        });
+        this.computeVertexNormals = vi.fn();
+        return this;
+    });
+
+    const MeshStandardMaterial = vi.fn(function (
+        this: any,
+        options: Record<string, unknown> = {},
+    ) {
+        Object.assign(this, options);
+        this.color = new (Color as any)();
+        return this;
+    });
+
+    const Mesh = vi.fn(function (this: any, geometry: any, material: any) {
+        Object.assign(this, new (Object3D as any)());
+        this.geometry = geometry;
+        this.material = material;
+        this.castShadow = false;
+        this.receiveShadow = false;
+        return this;
+    });
+
+    return {
+        ...actual,
+        Object3D,
+        Group,
+        Color,
+        BufferAttribute,
+        BufferGeometry,
+        MeshStandardMaterial,
+        Mesh,
+    };
+});
+
 // Group needs add/children/name/rotation so _buildScene / _buildNode work.
 vi.mocked(Group).mockImplementation(function (this: any) {
     this.isGroup = true;

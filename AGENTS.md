@@ -10,9 +10,15 @@
 
 - Monorepo using yarn as package manager
 - Testing framework: vitest with coverage via `yarn coverage`
-- Three.js is globally mocked via `__mocks__/three.ts` and `vitest.setup.ts` (`vi.mock('three')`)
-- When a test file provides its own `vi.mock('three', factory)`, it overrides the global mock entirely (the `__mocks__/three.ts` is not used)
+- Global Vitest setup mocks were removed; tests now mock dependencies locally per file
+- Shared test mock modules like `src/test/mocks/three.ts` and `src/test/mocks/three-spritetext.ts` were removed; tests should inline only the mocks they actually need
+- Old global-mock cleanup can leave behind no-op local shims like `vi.mock('three', () => importActual('three'))`; remove them when a test does not override Three behavior
+- Local mocks for `three/examples/jsm/*` should use the exact runtime specifier including the `.js` suffix when the source import does
+- `ARQuickLook` tests must mock `@shopware-ag/dive/assetloader` and `@shopware-ag/dive/assetexporter` in addition to `AssetConverter`, because `new AssetLoader()` and `new AssetExporter()` are evaluated before the mocked `AssetConverter` constructor runs
+- `DIVEGizmo` tests should mock child gizmo classes as real `Object3D` instances with spied methods to avoid `THREE.Object3D.add` warnings from plain-object stand-ins
+- `DIVEPrimitive` tests are more stable with real `Box3` plus per-test spies on `Box3.prototype`/`Raycaster`, instead of mocking the full `three` module surface
 - Plugins live in `src/plugins/<name>/` and are auto-discovered by looking for `index.ts` in subdirectories
 - Plugins are exported as subpath exports: `@shopware-ag/dive/<plugin-name>` (e.g. `@shopware-ag/dive/shader`, `@shopware-ag/dive/state`)
 - The shader plugin (`src/plugins/shader/`) exports `DIVEShaderMaterial` (extends three.js `ShaderMaterial`) and `DIVEShaderLib`
 - `DIVEGrid` component uses the shader plugin; it is imported transitively via `Scene` → `Grid` → `@shopware-ag/dive/shader`
+- Demo fixture `/Users/f.frank/Public/Repos/dive-demo/public/model_reverse_animation_order_long_name_blank_name.glb` is used for animation edge cases; it contains a blank clip name, an overlong clip name, and a `Walk` clip that now hard-fails loading via an invalid animation accessor reference

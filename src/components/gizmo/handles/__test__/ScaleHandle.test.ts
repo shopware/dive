@@ -5,7 +5,6 @@ import { DraggableEvent } from '@shopware-ag/dive/toolbox';
 import { Vector3 } from 'three';
 import { vi } from 'vitest';
 
-vi.mock('three'); // Use the global __mocks__/three.ts
 vi.mock('../../../constants/VisibilityLayerMask', () => ({ UI_LAYER_MASK: 1 }));
 vi.mock('../../scale/ScaleGizmo', () => ({
     DIVEScaleGizmo: vi.fn().mockImplementation(() => ({

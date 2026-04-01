@@ -1,13 +1,6 @@
-vi.mock('@shopware-ag/dive/shader', () => ({
-    DIVEShaderLib: {
-        grid: { uniforms: {}, vertexShader: '', fragmentShader: '' },
-    },
-    DIVEShaderMaterial: vi.fn(),
-}));
-
 import { AssetExporter } from '../AssetExporter.ts';
 import { Object3D, Mesh } from 'three';
-import { FileTypeError, ParseError } from '@shopware-ag/dive';
+import { ParseError } from '../../../../error/parse/parse-error.ts';
 
 // Mock TextEncoder
 class MockTextEncoder {
@@ -23,9 +16,9 @@ global.TextEncoder = MockTextEncoder as any;
 
 // Mock the Three.js exporters
 const mockGltfParseAsync = vi.fn();
-const mockUsdzParse = vi.fn();
+const mockUsdzParseAsync = vi.fn();
 
-vi.mock('three/examples/jsm/exporters/GLTFExporter', () => {
+vi.mock('three/examples/jsm/exporters/GLTFExporter.js', () => {
     return {
         GLTFExporter: vi.fn().mockImplementation(() => ({
             parseAsync: mockGltfParseAsync,
@@ -33,10 +26,10 @@ vi.mock('three/examples/jsm/exporters/GLTFExporter', () => {
     };
 });
 
-vi.mock('three/examples/jsm/exporters/USDZExporter', () => {
+vi.mock('three/examples/jsm/exporters/USDZExporter.js', () => {
     return {
         USDZExporter: vi.fn().mockImplementation(() => ({
-            parse: mockUsdzParse,
+            parseAsync: mockUsdzParseAsync,
         })),
     };
 });
@@ -50,7 +43,7 @@ describe('AssetExporter', () => {
     beforeEach(() => {
         // Reset all mocks
         mockGltfParseAsync.mockReset();
-        mockUsdzParse.mockReset();
+        mockUsdzParseAsync.mockReset();
 
         exporter = new AssetExporter();
         mockObject = new Object3D();
@@ -58,23 +51,6 @@ describe('AssetExporter', () => {
     });
 
     describe('export', () => {
-        it('should throw FileTypeError for unsupported file type', async () => {
-            // Mock the export method to simulate the switch default case
-            const originalExport = exporter.export;
-            exporter.export = vi.fn().mockImplementation(async (obj, type) => {
-                // Simulate the switch-case default behavior
-                throw new FileTypeError(`Unsupported file type: ${type}`, type);
-            }) as any;
-
-            // Use a valid string but it will be caught by our mock
-            await expect(
-                exporter.export(mockObject, 'glb' as any),
-            ).rejects.toThrow(FileTypeError);
-
-            // Restore original method
-            exporter.export = originalExport;
-        });
-
         it('should directly test the default case in the switch statement', async () => {
             // We need to bypass TypeScript's type checking to test this case
             // Create a subclass that allows us to call export with any string
@@ -233,25 +209,32 @@ describe('AssetExporter', () => {
 
     describe('_exportUsdz', () => {
         it('should export object as USDZ', async () => {
-            mockUsdzParse.mockResolvedValue(new Uint8Array(mockArrayBuffer));
+            mockUsdzParseAsync.mockResolvedValue(
+                new Uint8Array(mockArrayBuffer),
+            );
 
             const result = await exporter.export(mockObject, 'usdz');
 
-            expect(mockUsdzParse).toHaveBeenCalledWith(mockObject, undefined);
+            expect(mockUsdzParseAsync).toHaveBeenCalledWith(
+                mockObject,
+                undefined,
+            );
             expect(result).toBeInstanceOf(ArrayBuffer);
         });
 
         it('should handle export errors', async () => {
-            mockUsdzParse.mockRejectedValue(new Error('Export failed'));
+            mockUsdzParseAsync.mockRejectedValue(new Error('Export failed'));
 
             await expect(exporter.export(mockObject, 'usdz')).rejects.toThrow(
                 ParseError,
             );
-            expect(mockUsdzParse).toHaveBeenCalled();
+            expect(mockUsdzParseAsync).toHaveBeenCalled();
         });
 
         it('should pass AR options to exporter', async () => {
-            mockUsdzParse.mockResolvedValue(new Uint8Array(mockArrayBuffer));
+            mockUsdzParseAsync.mockResolvedValue(
+                new Uint8Array(mockArrayBuffer),
+            );
 
             const options = {
                 ar: {
@@ -262,17 +245,20 @@ describe('AssetExporter', () => {
 
             await exporter.export(mockObject, 'usdz', options);
 
-            expect(mockUsdzParse).toHaveBeenCalledWith(mockObject, options);
+            expect(mockUsdzParseAsync).toHaveBeenCalledWith(
+                mockObject,
+                options,
+            );
         });
 
         it('should re-throw ParseError if already a ParseError', async () => {
             const originalError = new ParseError('Original error');
-            mockUsdzParse.mockRejectedValue(originalError);
+            mockUsdzParseAsync.mockRejectedValue(originalError);
 
             const result = exporter.export(mockObject, 'usdz');
 
             await expect(result).rejects.toBe(originalError);
-            expect(mockUsdzParse).toHaveBeenCalled();
+            expect(mockUsdzParseAsync).toHaveBeenCalled();
         });
     });
 

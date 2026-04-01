@@ -4,8 +4,6 @@ import { OrbitController } from '@shopware-ag/dive/orbitcontroller';
 import { Vector3 } from 'three';
 import { DIVE } from '@shopware-ag/dive';
 
-vi.mock('three');
-
 vi.mock('@shopware-ag/dive/shader', () => ({
     DIVEShaderLib: {
         grid: { uniforms: {}, vertexShader: '', fragmentShader: '' },
