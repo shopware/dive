@@ -114,8 +114,11 @@ export class DIVEEnvironment {
 
         this.loadHDRImage(this.options.imageUrl).then((image) => {
             this.sourceImage = image;
-            this.update();
         });
+    }
+
+    public init(): void {
+        this.update();
     }
 
     /**
