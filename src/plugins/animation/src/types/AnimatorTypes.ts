@@ -1,4 +1,4 @@
-import { Event } from 'three/src/core/EventDispatcher.js';
+import { Event } from 'three/webgpu';
 
 export type TAnimatorState = 'idle' | 'playing' | 'paused';
 

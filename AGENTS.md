@@ -49,3 +49,5 @@
 - Deprecated `BaseTool` coverage was removed entirely; if `src/plugins/toolbox/src/BaseTool.ts` is gone in a future major, delete the legacy suite instead of recreating the class for tests
 - `MediaCreator` screenshot generation is async under WebGPU and uses `RenderTarget` plus `readRenderTargetPixelsAsync`; it no longer swaps `renderer.domElement`
 - `DIVEXRLightRoot` currently guards `XREstimatedLight` off under WebGPU and falls back to the existing scene light until a dedicated WebGPU-compatible light-estimation path exists
+- Library builds must externalize `three` with a pattern that also matches subpaths like `three/webgpu`, `three/tsl`, and `three/examples/jsm/*`; externalizing only bare `three` bundles a second Three runtime into `build/` and triggers `THREE.WARNING: Multiple instances of Three.js being imported.` in consumers
+- State action migrations must use `AnimationSystem.fromTargets(...).play()` and `Toolbox.enableTool()`; lingering `animate()` or `useTool()` calls can still let `yarn build` exit 0 while `vite-plugin-dts` reports TS2339 API drift

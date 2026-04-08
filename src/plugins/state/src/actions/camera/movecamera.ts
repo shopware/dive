@@ -27,6 +27,7 @@ export const MoveCameraAction = Action.define<
         payload,
         { controller, registered, getAnimationSystem, engine },
     ) => {
+        const animationSystem = await getAnimationSystem();
         let position = { x: 0, y: 0, z: 0 };
         let target = { x: 0, y: 0, z: 0 };
         if ('id' in payload) {
@@ -50,36 +51,36 @@ export const MoveCameraAction = Action.define<
             target = payload.target;
         }
 
-        const animator = await getAnimationSystem().then((animationSystem) => {
-            if (!engine.clock.hasTicker(animationSystem)) {
-                engine.clock.addTicker(animationSystem);
-            }
+        if (!engine.clock.hasTicker(animationSystem)) {
+            engine.clock.addTicker(animationSystem);
+        }
 
-            controller.enabled = true;
+        controller.enabled = true;
 
-            return animationSystem.animate(
-                [
-                    {
-                        object: controller.object.position,
-                        to: position,
-                    },
-                    {
-                        object: controller.target,
-                        to: target,
-                    },
-                ],
-                payload.duration,
+        const animator = await animationSystem.fromTargets(
+            [
                 {
-                    easing: animationSystem.Easing.Quadratic.Out,
-                    onUpdate: () => {
-                        controller.object.lookAt(controller.target);
-                    },
-                    onComplete: () => {
-                        controller.enabled = !payload.locked;
-                    },
+                    object: controller.object.position,
+                    to: position,
                 },
-            );
-        });
+                {
+                    object: controller.target,
+                    to: target,
+                },
+            ],
+            payload.duration,
+            {
+                easing: animationSystem.Easing.Quadratic.Out,
+                onUpdate: () => {
+                    controller.object.lookAt(controller.target);
+                },
+                onComplete: () => {
+                    controller.enabled = !payload.locked;
+                },
+            },
+        );
+
+        animator.play();
 
         return {
             stop: () => animator.stop(),

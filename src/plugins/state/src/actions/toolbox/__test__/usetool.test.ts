@@ -1,8 +1,8 @@
 import { UseToolAction } from '../usetool.ts';
 
-const mockUseTool = vi.fn();
+const mockEnableTool = vi.fn();
 const mockGetToolbox = vi.fn().mockResolvedValue({
-    useTool: mockUseTool,
+    enableTool: mockEnableTool,
 });
 
 describe('UseToolAction', () => {
@@ -18,6 +18,6 @@ describe('UseToolAction', () => {
         await action.execute();
 
         // Verify results
-        expect(mockUseTool).toHaveBeenCalledWith('select');
+        expect(mockEnableTool).toHaveBeenCalledWith('select');
     });
 });

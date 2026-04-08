@@ -5,7 +5,7 @@ import {
     Mesh,
     type Texture,
     type MeshStandardMaterial,
-} from 'three';
+} from 'three/webgpu';
 import { type State } from '@shopware-ag/dive/state';
 import { DIVEScene } from 'src/engine/scene/Scene.ts';
 import { GeometrySchema } from 'src/types/schema/GeometrySchema.ts';
