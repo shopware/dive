@@ -8,6 +8,9 @@ import { MathUtils } from 'three/webgpu';
 import { DIVEClock } from '../clock/Clock.ts';
 import { DIVERenderer } from '../renderer/Renderer.ts';
 import { DIVEScene } from '../scene/Scene.ts';
+
+const waitForAsync = () => new Promise((resolve) => setTimeout(resolve, 0));
+
 // Mock ResizeObserver
 class MockResizeObserver {
     observe() {}
@@ -17,6 +20,10 @@ class MockResizeObserver {
 global.ResizeObserver = MockResizeObserver as any;
 
 vi.mock('@shopware-ag/dive/shader', () => ({
+    GridNode: vi.fn(function (this: any, uniforms) {
+        this.uniforms = uniforms;
+        return this;
+    }),
     DIVEShaderLib: {
         grid: { uniforms: {}, vertexShader: '', fragmentShader: '' },
     },
@@ -32,22 +39,35 @@ vi.mock('../view/View.ts', async (importOriginal) => {
     return {
         ...actual,
         DIVEView: vi.fn(function (this: any) {
+            const renderer = {
+                initialized: false,
+                canvas: {
+                    parentElement: document.createElement('div'),
+                    getBoundingClientRect: vi.fn().mockReturnValue({
+                        width: 100,
+                        height: 100,
+                    }),
+                },
+                init: vi.fn(() => {
+                    renderer.initialized = true;
+                    return Promise.resolve();
+                }),
+                dispose: vi.fn(),
+                onResize: vi.fn(),
+                render: vi.fn(),
+                setCanvas: vi.fn(),
+            };
             this.dispose = vi.fn();
             this.onResize = vi.fn();
             this.tick = vi.fn();
             this.setCanvas = vi.fn();
+            this.renderer = renderer;
             this.camera = {
                 position: {
                     set: vi.fn(),
                 },
             };
-            this.canvas = {
-                parentElement: document.createElement('div'),
-                getBoundingClientRect: vi.fn().mockReturnValue({
-                    width: 100,
-                    height: 100,
-                }),
-            };
+            this.canvas = renderer.canvas;
             return this;
         }),
     };
@@ -284,12 +304,13 @@ describe('DIVE', () => {
         expect(() => dive.mainView.onResize(800, 600)).not.toThrow();
     });
 
-    it('should initialize with axis camera when displayAxes is true', () => {
+    it('should initialize with axis camera when displayAxes is true', async () => {
         const settings = {
             displayAxes: true,
         } as DIVESettings;
 
         const dive = new DIVE(settings);
+        await waitForAsync();
         expect(dive['_orientationDisplay']).toBeDefined();
     });
 

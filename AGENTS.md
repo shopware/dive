@@ -29,4 +29,9 @@
 - `DIVEGrid` owns its `MeshBasicNodeMaterial` setup and creates its grid uniform nodes locally; `GridNode` only provides the TSL output-node implementation
 - `DIVEGrid` component uses the shader plugin; it is imported transitively via `Scene` → `Grid` → `@shopware-ag/dive/shader`
 - Shader plugin public docs must describe the new node-based API: `GridNode` plus `GridNodeUniforms`; legacy `DIVEShaderLib`/`DIVEShaderMaterial` docs are outdated
+- Tests that mock `@shopware-ag/dive/shader` must provide a `GridNode` constructor stub after the shader plugin migration; legacy `DIVEShaderLib`-only mocks break transitive imports
+- `DIVEGrid` tests or other `MeshBasicNodeMaterial` mocks must preserve the constructor `outputNode` param because production code passes `new GridNode(uniforms)` directly into material creation
+- `DIVEEnvironment` no longer applies HDR state from the constructor alone; tests should wait for the async HDR load and call `env.init()` before asserting environment/background updates
+- `DIVE` tests must mock `mainView.renderer.initialized` and `mainView.renderer.init()` because `DIVE.start()` now guards rendering via renderer initialization
+- `DIVERenderer` tests must mock `three/webgpu` `WebGPURenderer`; old `three` `WebGLRenderer` expectations are outdated
 - Demo fixture `/Users/f.frank/Public/Repos/dive-demo/public/model_reverse_animation_order_long_name_blank_name.glb` is used for animation edge cases; it contains a blank clip name, an overlong clip name, and a `Walk` clip that now hard-fails loading via an invalid animation accessor reference

@@ -5,6 +5,10 @@ import { FileTypeError, NetworkError, ParseError } from '@shopware-ag/dive';
 import { AssetCache } from '@shopware-ag/dive/assetcache';
 
 vi.mock('@shopware-ag/dive/shader', () => ({
+    GridNode: vi.fn(function (this: any, uniforms) {
+        this.uniforms = uniforms;
+        return this;
+    }),
     DIVEShaderLib: {
         grid: { uniforms: {}, vertexShader: '', fragmentShader: '' },
     },
@@ -23,7 +27,7 @@ vi.mock('three/examples/jsm/loaders/GLTFLoader.js', () => ({
 const mockParseUSD = vi.fn();
 vi.mock('three/examples/jsm/loaders/USDLoader.js', () => ({
     USDLoader: vi.fn().mockImplementation(() => ({
-        parseAsync: mockParseUSD,
+        parse: mockParseUSD,
     })),
 }));
 

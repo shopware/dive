@@ -5,6 +5,10 @@ import { Vector3 } from 'three/webgpu';
 import { DIVE } from '@shopware-ag/dive';
 
 vi.mock('@shopware-ag/dive/shader', () => ({
+    GridNode: vi.fn(function (this: any, uniforms) {
+        this.uniforms = uniforms;
+        return this;
+    }),
     DIVEShaderLib: {
         grid: { uniforms: {}, vertexShader: '', fragmentShader: '' },
     },

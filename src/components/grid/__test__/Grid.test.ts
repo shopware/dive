@@ -1,8 +1,11 @@
 vi.mock('@shopware-ag/dive/shader', () => {
+    const GridNode = vi.fn(function (this: any, uniforms) {
+        this.uniforms = uniforms;
+        return this;
+    });
+
     return {
-        DIVEShaderLib: {
-            grid: vi.fn((uniforms) => ({ uniforms })),
-        },
+        GridNode,
     };
 });
 
@@ -99,6 +102,7 @@ vi.mock('three/webgpu', () => {
             this.transparent = params.transparent ?? false;
             this.depthWrite = params.depthWrite ?? true;
             this.side = params.side ?? 0;
+            this.outputNode = params.outputNode ?? null;
         }
 
         dispose = vi.fn();
@@ -141,7 +145,7 @@ vi.mock('three/tsl', () => ({
     uniform: vi.fn((value) => ({ value })),
 }));
 
-import { DIVEShaderLib } from '@shopware-ag/dive/shader';
+import { GridNode } from '@shopware-ag/dive/shader';
 import { DIVEGrid } from '../Grid.ts';
 import { HELPER_LAYER_MASK } from '../../../constants/VisibilityLayerMask.ts';
 import { Mesh, MeshBasicNodeMaterial, PerspectiveCamera } from 'three/webgpu';
@@ -163,7 +167,7 @@ describe('dive/grid/DIVEGrid', () => {
         expect(mesh.material).toBeInstanceOf(MeshBasicNodeMaterial as any);
         expect((mesh.material as any).depthWrite).toBe(false);
         expect((mesh.material as any).transparent).toBe(true);
-        expect(DIVEShaderLib.grid).toHaveBeenCalledTimes(1);
+        expect(GridNode).toHaveBeenCalledTimes(1);
         expect(mesh.layers.mask).toBe(HELPER_LAYER_MASK);
         expect(mesh.frustumCulled).toBe(false);
     });

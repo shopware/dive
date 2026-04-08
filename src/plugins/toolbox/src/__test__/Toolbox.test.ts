@@ -23,6 +23,17 @@ class MockPointerEvent extends MouseEvent {
 }
 globalThis.PointerEvent = MockPointerEvent as unknown as typeof PointerEvent;
 
+vi.mock('@shopware-ag/dive/shader', () => ({
+    GridNode: vi.fn(function (this: any, uniforms) {
+        this.uniforms = uniforms;
+        return this;
+    }),
+    DIVEShaderLib: {
+        grid: { uniforms: {}, vertexShader: '', fragmentShader: '' },
+    },
+    DIVEShaderMaterial: vi.fn(),
+}));
+
 vi.mock('three/webgpu', async () => {
     const actual = await vi.importActual<typeof import('three')>('three');
     return {

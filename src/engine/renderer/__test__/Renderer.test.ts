@@ -2,81 +2,84 @@
  * @jest-environment jsdom
  */
 
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import {
+    BasicShadowMap,
+    LinearToneMapping,
+    PCFShadowMap,
+    PCFSoftShadowMap,
+    SRGBColorSpace,
+    WebGPURenderer as WebGPURendererOriginal,
+} from 'three/webgpu';
+import { DIVEEnvironment } from '../../environment/Environment.ts';
 import { DIVERenderer, DIVERendererDefaultSettings } from '../Renderer.ts';
-import { DIVEScene } from '../../scene/Scene.ts';
-import { DIVEPerspectiveCamera } from '../../camera/PerspectiveCamera.ts';
-import { vi } from 'vitest';
-import { WebGLRenderer as WebGLRendererOriginal } from 'three';
 
-vi.mock('three', async (importOriginal) => {
-    const actual = await importOriginal<typeof import('three')>();
+vi.mock('three/webgpu', async (importOriginal) => {
+    const actual = await importOriginal<typeof import('three/webgpu')>();
+
     return {
         ...actual,
-        WebGLRenderer: vi.fn(function (this: {
-            domElement: {
-                clientWidth: number;
-                clientHeight: number;
-                style: { position: string };
-                parentElement: typeof this.domElement;
-            };
-            setSize: ReturnType<typeof vi.fn>;
-            render: ReturnType<typeof vi.fn>;
-            compile: ReturnType<typeof vi.fn>;
-            dispose: ReturnType<typeof vi.fn>;
-            setPixelRatio: ReturnType<typeof vi.fn>;
-            setAnimationLoop: ReturnType<typeof vi.fn>;
-            shadowMap: { enabled: boolean; type: number };
-            debug: { checkShaderErrors: boolean };
-        }) {
-            const dom = {
-                clientWidth: 800,
-                clientHeight: 600,
-                style: { position: 'absolute' },
-            } as typeof this.domElement;
-            dom.parentElement = dom;
-            this.domElement = dom;
+        WebGPURenderer: vi.fn(function (this: any, settings: any = {}) {
+            const domElement =
+                settings.canvas ??
+                ({
+                    clientWidth: 800,
+                    clientHeight: 600,
+                    style: { position: 'absolute' },
+                } as HTMLCanvasElement);
+
+            if (!settings.canvas) {
+                (domElement as any).parentElement = domElement;
+            }
+
+            this.domElement = domElement;
+            this.settings = settings;
+            this.initialized = false;
             this.setSize = vi.fn();
             this.setPixelRatio = vi.fn();
             this.render = vi.fn();
-            this.compile = vi.fn();
-            this.setAnimationLoop = vi.fn();
-            this.shadowMap = { enabled: false, type: 0 };
-            this.debug = { checkShaderErrors: true };
             this.dispose = vi.fn();
+            this.init = vi.fn(async () => {
+                this.initialized = true;
+            });
+            this.shadowMap = { enabled: false, type: 0 };
+            this.outputColorSpace = actual.LinearSRGBColorSpace;
+            this.toneMapping = actual.NoToneMapping;
+            this.toneMappingExposure = 0;
             return this;
         }),
     };
 });
 
 vi.mock('../../environment/Environment.ts', () => ({
-    DIVEEnvironment: vi.fn(function (this: {
-        dispose: ReturnType<typeof vi.fn>;
-        setRenderer: ReturnType<typeof vi.fn>;
-    }) {
+    DIVEEnvironment: vi.fn(function (this: any) {
         this.dispose = vi.fn();
         this.setRenderer = vi.fn();
+        this.init = vi.fn();
         return this;
     }),
 }));
 
-// cast to any so we can call .mock on the mocked WebGLRenderer
-const WebGLRenderer = WebGLRendererOriginal as any;
+const WebGPURenderer = WebGPURendererOriginal as any;
+const MockedDIVEEnvironment = DIVEEnvironment as any;
 
 describe('DIVERenderPipeline', () => {
     let renderer: DIVERenderer;
-    let scene: DIVEScene;
-    let camera: DIVEPerspectiveCamera;
+    let scene: any;
+    let camera: any;
 
     beforeEach(() => {
         vi.clearAllMocks();
-        scene = new DIVEScene();
-        camera = new DIVEPerspectiveCamera();
+        scene = { isScene: true };
+        camera = { isCamera: true };
         renderer = new DIVERenderer(scene, camera);
     });
 
     it('should instantiate with default settings', () => {
+        const instance = WebGPURenderer.mock.results[0].value;
+
         expect(renderer).toBeDefined();
-        expect(WebGLRenderer).toHaveBeenCalledWith(
+        expect(WebGPURenderer).toHaveBeenCalledWith(
             expect.objectContaining({
                 antialias: DIVERendererDefaultSettings.antialias,
                 alpha: DIVERendererDefaultSettings.alpha,
@@ -86,8 +89,18 @@ describe('DIVERenderPipeline', () => {
                 depth: DIVERendererDefaultSettings.depth,
                 logarithmicDepthBuffer:
                     DIVERendererDefaultSettings.logarithmicDepthBuffer,
+                shadows: DIVERendererDefaultSettings.shadows,
+                shadowQuality: DIVERendererDefaultSettings.shadowQuality,
             }),
         );
+        expect(instance.shadowMap.enabled).toBe(true);
+        expect(instance.shadowMap.type).toBe(PCFSoftShadowMap);
+        expect(instance.setPixelRatio).toHaveBeenCalledWith(
+            window.devicePixelRatio,
+        );
+        expect(instance.outputColorSpace).toBe(SRGBColorSpace);
+        expect(instance.toneMapping).toBe(LinearToneMapping);
+        expect(MockedDIVEEnvironment).toHaveBeenCalledWith(instance, scene);
     });
 
     it('should instantiate with custom settings', () => {
@@ -98,47 +111,91 @@ describe('DIVERenderPipeline', () => {
             precision: 'mediump' as const,
             stencil: true,
             depth: false,
-            logarithmicDepthBuffer: true,
+            logarithmicDepthBuffer: false,
+            shadows: false,
+            shadowQuality: 'low' as const,
         };
+
         renderer = new DIVERenderer(scene, camera, customSettings);
-        expect(WebGLRenderer).toHaveBeenCalledWith(
+        const instance = WebGPURenderer.mock.results.at(-1)?.value;
+
+        expect(WebGPURenderer).toHaveBeenLastCalledWith(
             expect.objectContaining(customSettings),
         );
+        expect(instance.shadowMap.enabled).toBe(false);
+        expect(instance.shadowMap.type).toBe(BasicShadowMap);
     });
 
-    it('should provide access to domElement', () => {
-        expect(renderer.webglrenderer.domElement).toBeDefined();
+    it('should expose the current renderer and canvas', () => {
+        const instance = WebGPURenderer.mock.results[0].value;
+
+        expect(renderer.webgpurenderer).toBe(instance);
+        expect(renderer.canvas).toBe(instance.domElement);
     });
 
-    it('should set domElement', () => {
-        const newCanvas = document.createElement('canvas');
-        renderer.webglrenderer.domElement = newCanvas;
-        const mockInstance = WebGLRenderer.mock.results[0].value;
-        expect(mockInstance.domElement).toBe(newCanvas);
+    it('should initialize renderer and environment', async () => {
+        const instance = WebGPURenderer.mock.results[0].value;
+        const environment = MockedDIVEEnvironment.mock.results[0].value;
+
+        await renderer.init();
+
+        expect(instance.init).toHaveBeenCalled();
+        expect(environment.init).toHaveBeenCalled();
+        expect(renderer.initialized).toBe(true);
     });
 
-    it('should provide access to webglrenderer', () => {
-        const mockInstance = WebGLRenderer.mock.results[0].value;
-        expect(renderer.webglrenderer).toBe(mockInstance);
-    });
+    it('should render only after initialization', () => {
+        const instance = WebGPURenderer.mock.results[0].value;
 
-    it('should render scene and camera', () => {
         renderer.render();
-        const mockInstance = WebGLRenderer.mock.results[0].value;
-        expect(mockInstance.render).toHaveBeenCalledWith(scene, camera);
+        expect(instance.render).not.toHaveBeenCalled();
+
+        instance.initialized = true;
+        renderer.render();
+        expect(instance.render).toHaveBeenCalledWith(scene, camera);
     });
 
     it('should handle resize', () => {
-        const width = 800;
-        const height = 600;
-        renderer.onResize(width, height);
-        const mockInstance = WebGLRenderer.mock.results[0].value;
-        expect(mockInstance.setSize).toHaveBeenCalledWith(width, height);
+        const instance = WebGPURenderer.mock.results[0].value;
+
+        renderer.onResize(800, 600);
+
+        expect(instance.setSize).toHaveBeenCalledWith(800, 600);
     });
 
-    it('should dispose WebGLRenderer', () => {
+    it('should recreate the renderer when setting a canvas', () => {
+        const firstInstance = WebGPURenderer.mock.results[0].value;
+        const environment = MockedDIVEEnvironment.mock.results[0].value;
+        const newCanvas = document.createElement('canvas');
+
+        renderer.setCanvas(newCanvas);
+
+        const secondInstance = WebGPURenderer.mock.results.at(-1)?.value;
+        expect(firstInstance.dispose).toHaveBeenCalled();
+        expect(WebGPURenderer).toHaveBeenLastCalledWith(
+            expect.objectContaining({ canvas: newCanvas }),
+        );
+        expect(environment.setRenderer).toHaveBeenCalledWith(secondInstance);
+        expect(renderer.canvas).toBe(secondInstance.domElement);
+    });
+
+    it('should dispose environment and renderer', () => {
+        const instance = WebGPURenderer.mock.results[0].value;
+        const environment = MockedDIVEEnvironment.mock.results[0].value;
+
         renderer.dispose();
-        const mockInstance = WebGLRenderer.mock.results[0].value;
-        expect(mockInstance.dispose).toHaveBeenCalled();
+
+        expect(environment.dispose).toHaveBeenCalled();
+        expect(instance.dispose).toHaveBeenCalled();
+    });
+
+    it('should map medium shadow quality to PCFShadowMap', () => {
+        renderer = new DIVERenderer(scene, camera, {
+            shadowQuality: 'medium',
+        });
+
+        const instance = WebGPURenderer.mock.results.at(-1)?.value;
+
+        expect(instance.shadowMap.type).toBe(PCFShadowMap);
     });
 });
