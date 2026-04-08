@@ -125,6 +125,7 @@ vi.mock('three/examples/jsm/controls/TransformControls.js', () => {
             instance.object = undefined;
         });
         instance.dispose = vi.fn();
+        instance.getHelper = vi.fn(() => instance);
 
         instance.traverse = vi.fn((callback: (obj: Object3D) => void) => {
             callback(instance);

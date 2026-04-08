@@ -52,6 +52,7 @@ export class TransformTool
     private _controller: OrbitController;
     private _selectionState: SelectionState;
     private _gizmo: TransformControls;
+    private _gizmoHelper: Object3D;
     private _scaleLinked: boolean = false;
     private _gizmoVisible: boolean = true;
 
@@ -71,7 +72,8 @@ export class TransformTool
         this._selectionState = selectionState;
 
         this._gizmo = this.initGizmo();
-        this._scene.add(this._gizmo);
+        this._gizmoHelper = this._gizmo.getHelper() as unknown as Object3D;
+        this._scene.add(this._gizmoHelper);
 
         // Bind selection change handler
         this._selectionChangeHandler = this.onSelectionChange.bind(this);
@@ -136,12 +138,12 @@ export class TransformTool
     public setGizmoVisible(visible: boolean): void {
         this._gizmoVisible = visible;
 
-        const contains = this._scene.children.includes(this._gizmo);
+        const contains = this._scene.children.includes(this._gizmoHelper);
         if (visible && !contains) {
-            this._scene.add(this._gizmo);
+            this._scene.add(this._gizmoHelper);
             this._gizmo.getRaycaster().layers.enableAll();
         } else if (!visible && contains) {
-            this._scene.remove(this._gizmo);
+            this._scene.remove(this._gizmoHelper);
             this._gizmo.getRaycaster().layers.disableAll();
         }
     }
@@ -159,7 +161,7 @@ export class TransformTool
     public dispose(): void {
         this._selectionState.offChange(this._selectionChangeHandler);
         this._gizmo.detach();
-        this._scene.remove(this._gizmo);
+        this._scene.remove(this._gizmoHelper);
         this._gizmo.dispose();
     }
 
@@ -188,7 +190,7 @@ export class TransformTool
     private isGizmoChild(obj: Object3D): boolean {
         let current: Object3D | null = obj;
         while (current) {
-            if (current === this._gizmo) return true;
+            if (current === this._gizmoHelper) return true;
             current = current.parent;
         }
         return false;
@@ -202,7 +204,8 @@ export class TransformTool
         g.mode = 'translate';
 
         // Apply custom colors to gizmo axes
-        g.traverse((child) => {
+        const helper = g.getHelper() as unknown as Object3D;
+        helper.traverse((child: Object3D) => {
             if (!('isMesh' in child)) return;
 
             const material = (child as Mesh).material as MeshBasicMaterial;

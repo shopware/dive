@@ -21,7 +21,7 @@ export class DIVEWebXR {
     private static _session: XRSession | null = null;
     private static _referenceSpaceType: XRReferenceSpaceType = 'local';
     private static _overlay: Overlay | null = null;
-    private static _options = {
+    private static _options: XRSessionInit = {
         requiredFeatures: [
             'local',
             'hit-test',
@@ -34,7 +34,7 @@ export class DIVEWebXR {
         ],
         depthSensing: {
             usagePreference: ['gpu-optimized'],
-            dataFormatPreference: [],
+            dataFormatPreference: [] as XRDepthDataFormat[],
         },
         domOverlay: { root: {} as HTMLElement },
     };
