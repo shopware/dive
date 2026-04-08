@@ -41,9 +41,7 @@ const mockState = vi.hoisted(() => {
                     depth - 1,
                 ),
             ),
-            length: vi.fn(() =>
-                createMockNode(`${label}.length()`, depth - 1),
-            ),
+            length: vi.fn(() => createMockNode(`${label}.length()`, depth - 1)),
             lessThan: vi.fn((value: unknown) =>
                 createMockNode(
                     `${label}.lessThan(${describeNode(value)})`,
@@ -79,10 +77,14 @@ const mockState = vi.hoisted(() => {
             createMockNode(`fwidth(${describeNode(value)})`),
         ),
         max: vi.fn((left: unknown, right: unknown) =>
-            createMockNode(`max(${describeNode(left)}, ${describeNode(right)})`),
+            createMockNode(
+                `max(${describeNode(left)}, ${describeNode(right)})`,
+            ),
         ),
         min: vi.fn((left: unknown, right: unknown) =>
-            createMockNode(`min(${describeNode(left)}, ${describeNode(right)})`),
+            createMockNode(
+                `min(${describeNode(left)}, ${describeNode(right)})`,
+            ),
         ),
         mix: vi.fn((colorA: unknown, colorB: unknown, factor: unknown) =>
             createMockNode(
@@ -95,10 +97,14 @@ const mockState = vi.hoisted(() => {
             ),
         ),
         step: vi.fn((edge: unknown, value: unknown) =>
-            createMockNode(`step(${describeNode(edge)}, ${describeNode(value)})`),
+            createMockNode(
+                `step(${describeNode(edge)}, ${describeNode(value)})`,
+            ),
         ),
         vec4: vi.fn((color: unknown, alpha: unknown) =>
-            createMockNode(`vec4(${describeNode(color)}, ${describeNode(alpha)})`),
+            createMockNode(
+                `vec4(${describeNode(color)}, ${describeNode(alpha)})`,
+            ),
         ),
         positionWorld: createMockNode('positionWorld'),
         cameraPosition: createMockNode('cameraPosition'),
@@ -186,8 +192,8 @@ describe('shader/GridNode', () => {
                 .results[0].value,
         );
 
-        const alpha = mockState.max.mock.results[0].value.mul.mock.results[0]
-            .value;
+        const alpha =
+            mockState.max.mock.results[0].value.mul.mock.results[0].value;
         const discardThreshold = mockState.float.mock.results.find(
             (_result, index) => mockState.float.mock.calls[index][0] === 0.001,
         )?.value;
