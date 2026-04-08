@@ -1,4 +1,4 @@
-import { MathUtils } from 'three';
+import { MathUtils } from 'three/webgpu';
 import { DIVETicker } from '../clock/Clock.ts';
 import { DIVEPerspectiveCamera } from '../camera/PerspectiveCamera.ts';
 import { DIVERenderer } from '../renderer/Renderer.ts';

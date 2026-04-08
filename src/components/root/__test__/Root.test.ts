@@ -9,10 +9,11 @@ import {
     EntityTypeSchema,
     GeometryTypeSchema,
 } from '@shopware-ag/dive';
-import { Object3D, Vector3, Box3 } from 'three';
+import { Object3D, Vector3, Box3 } from 'three/webgpu';
 
-vi.mock('three', async () => {
-    const actual = await vi.importActual<typeof import('three')>('three');
+vi.mock('three/webgpu', async () => {
+    const actual =
+        await vi.importActual<typeof import('three/webgpu')>('three/webgpu');
 
     const Object3D = vi.fn(function (this: any) {
         this.isObject3D = true;

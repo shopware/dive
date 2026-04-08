@@ -1,4 +1,3 @@
-import { Group } from 'three';
 import { AssetCache } from '../AssetCache.ts';
 import { Chunk } from '../../chunk/Chunk.ts';
 

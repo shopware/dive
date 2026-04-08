@@ -4,7 +4,7 @@ import { OrbitController } from '@shopware-ag/dive/orbitcontroller';
 import { DIVEAxisHandle } from '../../handles/AxisHandle.ts';
 import { DIVEGizmo } from '../../Gizmo.ts';
 import { DraggableEvent } from '@shopware-ag/dive/toolbox';
-import { Vector3 } from 'three';
+import { Vector3 } from 'three/webgpu';
 
 // Mock the OrbitController
 vi.mock('@shopware-ag/dive/orbitcontroller', () => ({

@@ -1,4 +1,4 @@
-import { MathUtils } from 'three';
+import { MathUtils } from 'three/webgpu';
 
 // type imports
 import { type EntitySchema, type DIVE } from '@shopware-ag/dive';

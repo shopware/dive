@@ -4,7 +4,7 @@ import {
     type Mesh,
     type MeshBasicMaterial,
     EventDispatcher,
-} from 'three';
+} from 'three/webgpu';
 import {
     AxesColorBlue,
     AxesColorGreen,

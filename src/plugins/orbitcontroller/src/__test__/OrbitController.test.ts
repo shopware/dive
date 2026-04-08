@@ -14,7 +14,7 @@ import {
     OrthographicCamera,
     Matrix4,
     TOUCH,
-} from 'three';
+} from 'three/webgpu';
 
 // Add a real canvas for the controls domElement
 const canvas = document.createElement('canvas');

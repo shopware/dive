@@ -8,7 +8,7 @@ import {
     MeshBasicMaterial,
     SphereGeometry,
     ColorRepresentation,
-} from 'three';
+} from 'three/webgpu';
 import { DIVENode } from '../node/Node.ts';
 
 /**

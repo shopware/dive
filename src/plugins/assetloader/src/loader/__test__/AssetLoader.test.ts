@@ -1,10 +1,8 @@
 import { AssetLoader } from '../AssetLoader.ts';
 import { GLTF } from 'three/examples/jsm/loaders/GLTFLoader.js';
-import { Group } from 'three';
+import { Group } from 'three/webgpu';
+import { FileTypeError, NetworkError, ParseError } from '@shopware-ag/dive';
 import { AssetCache } from '@shopware-ag/dive/assetcache';
-import { FileTypeError } from '../../../../../error/file-type/file-type-error.ts';
-import { NetworkError } from '../../../../../error/network/network-error.ts';
-import { ParseError } from '../../../../../error/parse/parse-error.ts';
 
 vi.mock('@shopware-ag/dive/shader', () => ({
     DIVEShaderLib: {

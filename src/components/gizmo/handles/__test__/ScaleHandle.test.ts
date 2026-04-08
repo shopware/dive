@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach } from 'vitest';
 import { DIVEScaleHandle } from '../ScaleHandle.ts';
 import { DIVEScaleGizmo } from '../../scale/ScaleGizmo.ts';
 import { DraggableEvent } from '@shopware-ag/dive/toolbox';
-import { Vector3 } from 'three';
+import { Vector3 } from 'three/webgpu';
 import { vi } from 'vitest';
 
 vi.mock('../../../constants/VisibilityLayerMask', () => ({ UI_LAYER_MASK: 1 }));

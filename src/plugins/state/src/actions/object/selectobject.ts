@@ -1,4 +1,4 @@
-import { type Object3D } from 'three';
+import { type Object3D } from 'three/webgpu';
 import { Action } from '../action.ts';
 import { registerAction } from '../../ActionRegistry.ts';
 import { type ActionDependencies } from '../../../types/index.ts';

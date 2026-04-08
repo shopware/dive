@@ -5,7 +5,7 @@ vi.mock('@shopware-ag/dive/shader', () => ({
     DIVEShaderMaterial: vi.fn(),
 }));
 
-import { Vector2 } from 'three';
+import { Vector2 } from 'three/webgpu';
 import { HoverTool } from '../HoverTool.ts';
 import { type PointerContext } from '../../PointerContext.ts';
 import { type DIVEHoverable } from '@shopware-ag/dive';

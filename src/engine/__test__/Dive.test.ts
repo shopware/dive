@@ -4,7 +4,7 @@
 
 import { vi } from 'vitest';
 import { DIVE, DIVESettings } from '../Dive.ts';
-import { MathUtils } from 'three';
+import { MathUtils } from 'three/webgpu';
 import { DIVEClock } from '../clock/Clock.ts';
 import { DIVERenderer } from '../renderer/Renderer.ts';
 import { DIVEScene } from '../scene/Scene.ts';

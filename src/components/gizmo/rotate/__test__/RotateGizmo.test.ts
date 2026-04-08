@@ -4,7 +4,7 @@ import { OrbitController } from '@shopware-ag/dive/orbitcontroller';
 import { DIVERadialHandle } from '../../handles/RadialHandle.ts';
 import { DIVEGizmo } from '../../Gizmo.ts';
 import { DraggableEvent } from '@shopware-ag/dive/toolbox';
-import { Vector3, Euler } from 'three';
+import { Vector3, Euler } from 'three/webgpu';
 import { DIVEMath } from '../../../../helpers/math/index.ts';
 
 // Mock the OrbitController

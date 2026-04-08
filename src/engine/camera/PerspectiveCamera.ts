@@ -1,4 +1,4 @@
-import { PerspectiveCamera } from 'three';
+import { PerspectiveCamera } from 'three/webgpu';
 import {
     DEFAULT_LAYER_MASK,
     HELPER_LAYER_MASK,

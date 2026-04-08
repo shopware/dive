@@ -71,7 +71,7 @@ vi.mock('@tweenjs/tween.js', () => {
     };
 });
 
-vi.mock('three', async (importOriginal) => {
+vi.mock('three/webgpu', async (importOriginal) => {
     const actual = (await importOriginal()) as any;
     return {
         ...actual,

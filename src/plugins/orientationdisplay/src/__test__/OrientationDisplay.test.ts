@@ -5,7 +5,7 @@ vi.mock('@shopware-ag/dive/shader', () => ({
     DIVEShaderMaterial: vi.fn(),
 }));
 
-import { Matrix4, Vector4, Color, Material } from 'three';
+import { Matrix4, Vector4, Color, Material } from 'three/webgpu';
 import { OrientationDisplay } from '../OrientationDisplay.ts';
 import {
     DIVERenderer,

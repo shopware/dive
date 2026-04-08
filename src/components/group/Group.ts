@@ -5,7 +5,7 @@ import {
     Vector3,
     Vector3Like,
     Object3D,
-} from 'three';
+} from 'three/webgpu';
 import { DIVENode } from '../node/Node.ts';
 import { type DIVESceneObject } from '../../types/index.ts';
 

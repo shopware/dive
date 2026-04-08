@@ -1,7 +1,7 @@
 import { DIVE, DIVEScene } from '@shopware-ag/dive';
 import { OrbitController } from '@shopware-ag/dive/orbitcontroller';
 import { ComputeEncompassingViewAction } from '../computeencompassingview.ts';
-import { Vector3 } from 'three';
+import { Vector3 } from 'three/webgpu';
 
 vi.mock('../../../../../../components/boundingbox/BoundingBox.ts', () => ({
     BoundingBox: vi.fn(),

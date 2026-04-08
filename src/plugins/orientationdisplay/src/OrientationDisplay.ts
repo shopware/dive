@@ -1,4 +1,4 @@
-import { MathUtils, Vector4 } from 'three';
+import { MathUtils, Vector4, OrthographicCamera } from 'three/webgpu';
 import {
     type DIVERenderer,
     DIVETicker,
@@ -7,7 +7,6 @@ import {
     COORDINATE_LAYER_MASK,
 } from '@shopware-ag/dive';
 import { OrientationDisplayAxes } from './axes/Axes.ts';
-import { OrthographicCamera } from 'three';
 
 /**
  * Shows the scene axes in the bottom left corner of the screen.

@@ -9,7 +9,7 @@ import {
     MeshBasicMaterial,
     BoxGeometry,
     SphereGeometry,
-} from 'three';
+} from 'three/webgpu';
 
 describe('BoundingBox', () => {
     let mockObject: Object3D;

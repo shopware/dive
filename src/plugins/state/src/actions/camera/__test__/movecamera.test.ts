@@ -1,7 +1,7 @@
 import { MoveCameraAction } from '../movecamera.ts';
 import { EntitySchema } from '@shopware-ag/dive';
 import { OrbitController } from '@shopware-ag/dive/orbitcontroller';
-import { Vector3 } from 'three';
+import { Vector3 } from 'three/webgpu';
 import { DIVE } from '@shopware-ag/dive';
 
 vi.mock('@shopware-ag/dive/shader', () => ({

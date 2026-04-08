@@ -6,7 +6,7 @@ vi.mock('@shopware-ag/dive/shader', () => ({
 }));
 
 import { State } from '@shopware-ag/dive/state';
-import { type Color } from 'three';
+import { type Color } from 'three/webgpu';
 import { DIVESceneLight } from '../SceneLight.ts';
 
 vi.mock('../../../modules/state/State', () => {

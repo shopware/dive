@@ -1,6 +1,6 @@
 import { XREstimatedLight } from 'three/examples/jsm/webxr/XREstimatedLight.ts';
 import { type DIVERenderer } from '../../../renderer/Renderer.ts';
-import { Object3D } from 'three';
+import { Object3D } from 'three/webgpu';
 import { type DIVEScene } from '../../Scene.ts';
 import { PRODUCT_LAYER_MASK } from '../../../../constants/VisibilityLayerMask.ts';
 import { DIVERoot } from '../../../../components/root/Root.ts';

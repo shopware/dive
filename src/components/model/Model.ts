@@ -5,7 +5,7 @@ import {
     Object3D,
     Raycaster,
     Vector3,
-} from 'three';
+} from 'three/webgpu';
 import { PRODUCT_LAYER_MASK } from '../../constants/VisibilityLayerMask.ts';
 import { findSceneRecursive } from '../../helpers/findSceneRecursive/findSceneRecursive.ts';
 import { DIVENode } from '../node/Node.ts';

@@ -1,4 +1,4 @@
-import { MathUtils } from 'three';
+import { MathUtils } from 'three/webgpu';
 import { DIVEClock } from './clock/Clock.ts';
 import { DIVEView } from './view/View.ts';
 import {

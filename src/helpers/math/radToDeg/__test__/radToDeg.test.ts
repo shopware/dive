@@ -1,8 +1,9 @@
 import radToDeg from '../radToDeg';
-import { MathUtils } from 'three';
+import { MathUtils } from 'three/webgpu';
 
-vi.mock('three', async () => {
-    const actual = await vi.importActual<typeof import('three')>('three');
+vi.mock('three/webgpu', async () => {
+    const actual =
+        await vi.importActual<typeof import('three/webgpu')>('three/webgpu');
 
     return {
         ...actual,
@@ -14,7 +15,7 @@ vi.mock('three', async () => {
 });
 
 // Type assertion for the mocked MathUtils.radToDeg
-const mockedRadToDeg = MathUtils.radToDeg as vi.Mock;
+const mockedRadToDeg = vi.mocked(MathUtils.radToDeg);
 
 /**
  * Test Suite for radToDeg Function

@@ -12,7 +12,7 @@ import { GeometrySchema } from 'src/types/schema/GeometrySchema.ts';
 import { MaterialSchema } from 'src/types/schema/MaterialSchema.ts';
 import { GeometryTypeSchema } from 'src/types/schema/GeometryTypeSchema.ts';
 
-const RaycasterIntersectObjectMock = vi.fn(() => []);
+const RaycasterIntersectObjectMock = vi.fn().mockReturnValue([]);
 
 vi.mock('three', async () => {
     const actual = await vi.importActual<typeof import('three')>('three');

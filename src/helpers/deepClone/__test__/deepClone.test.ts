@@ -1,6 +1,6 @@
 import { describe, it, expect, vi } from 'vitest';
 import { deepClone } from '../deepClone.ts';
-import { Object3D } from 'three';
+import { Object3D } from 'three/webgpu';
 
 describe('deepClone', () => {
     describe('primitive types', () => {

@@ -1,4 +1,4 @@
-import { MathUtils } from 'three';
+import { MathUtils } from 'three/webgpu';
 import { EventDispatcher } from 'three/src/core/EventDispatcher.js';
 import {
     TAnimatorEventMap,

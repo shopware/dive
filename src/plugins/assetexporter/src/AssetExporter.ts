@@ -1,4 +1,4 @@
-import { Object3D, Mesh } from 'three';
+import { Object3D, Mesh } from 'three/webgpu';
 import { GLTFExporter } from 'three/examples/jsm/exporters/GLTFExporter.js';
 import type { GLTFExporterOptions as THREEGLTFExporterOptions } from 'three/examples/jsm/exporters/GLTFExporter.js';
 import { USDZExporter } from 'three/examples/jsm/exporters/USDZExporter.js';

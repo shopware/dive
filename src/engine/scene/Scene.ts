@@ -1,4 +1,9 @@
-import { Color, Scene, type Box3, type ColorRepresentation } from 'three';
+import {
+    Color,
+    Scene,
+    type Box3,
+    type ColorRepresentation,
+} from 'three/webgpu';
 import { DIVERoot } from '../../components/root/Root.ts';
 import { DIVEGrid } from '../../components/grid/Grid.ts';
 

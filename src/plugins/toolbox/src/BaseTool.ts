@@ -4,7 +4,7 @@ import {
     Raycaster,
     Vector2,
     Vector3,
-} from 'three';
+} from 'three/webgpu';
 import {
     DIVEScene,
     DIVEDraggable,

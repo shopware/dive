@@ -1,8 +1,14 @@
-import { BufferGeometry, Color, Group, MeshStandardMaterial } from 'three';
+import {
+    BufferGeometry,
+    Color,
+    Group,
+    MeshStandardMaterial,
+} from 'three/webgpu';
 import { STEPLoader } from '../STEPLoader.ts';
 
-vi.mock('three', async () => {
-    const actual = await vi.importActual<typeof import('three')>('three');
+vi.mock('three/webgpu', async () => {
+    const actual =
+        await vi.importActual<typeof import('three/webgpu')>('three/webgpu');
 
     const Object3D = vi.fn(function (this: any) {
         this.children = [];

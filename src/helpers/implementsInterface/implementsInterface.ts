@@ -1,4 +1,4 @@
-import { type Object3D } from 'three';
+import { type Object3D } from 'three/webgpu';
 
 export function implementsInterface<T>(
     object: Object3D | null | undefined,

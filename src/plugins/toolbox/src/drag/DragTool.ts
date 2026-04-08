@@ -1,4 +1,9 @@
-import { type Object3D, type Intersection, Raycaster, Vector3 } from 'three';
+import {
+    type Object3D,
+    type Intersection,
+    Raycaster,
+    Vector3,
+} from 'three/webgpu';
 import { type DIVEDraggable, findInterface } from '@shopware-ag/dive';
 import { type OrbitController } from '@shopware-ag/dive/orbitcontroller';
 import { type Tool } from '../Tool.ts';

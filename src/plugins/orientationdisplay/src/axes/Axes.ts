@@ -7,7 +7,7 @@ import {
     AxesColorRedLetter,
     COORDINATE_LAYER_MASK,
 } from '@shopware-ag/dive';
-import { AxesHelper, Color, Material, Matrix4, Object3D } from 'three';
+import { AxesHelper, Color, Material, Matrix4, Object3D } from 'three/webgpu';
 import SpriteText from 'three-spritetext';
 
 export class OrientationDisplayAxes extends Object3D {

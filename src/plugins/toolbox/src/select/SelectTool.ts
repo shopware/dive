@@ -1,4 +1,4 @@
-import { type Object3D } from 'three';
+import { type Object3D } from 'three/webgpu';
 import { type DIVESelectable, findInterface } from '@shopware-ag/dive';
 import { type Tool } from '../Tool.ts';
 import { type PointerContext } from '../PointerContext.ts';

@@ -4,7 +4,7 @@
  * @module
  */
 
-import { type Intersection } from 'three';
+import { type Intersection } from 'three/webgpu';
 
 export interface DIVEHoverable {
     isHoverable: true;

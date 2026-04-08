@@ -2,7 +2,7 @@ import { vi, describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { DIVEAxisHandle } from '../AxisHandle.ts';
 import { DIVETranslateGizmo } from '../../translate/TranslateGizmo.ts';
 import { DraggableEvent } from '@shopware-ag/dive/toolbox';
-import { Vector3, Color } from 'three';
+import { Vector3, Color } from 'three/webgpu';
 
 // Mock the TranslateGizmo
 vi.mock('../../translate/TranslateGizmo', () => ({

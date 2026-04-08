@@ -5,7 +5,7 @@ import {
     Mesh,
     MeshStandardMaterial,
     Object3D,
-} from 'three';
+} from 'three/webgpu';
 import { STEPWorker } from '../step/worker/StepWorker.js';
 
 /**

@@ -5,7 +5,7 @@ import {
     type EntitySchema,
 } from '@shopware-ag/dive';
 import { SelectObjectAction } from '../selectobject.ts';
-import { Object3D } from 'three';
+import { Object3D } from 'three/webgpu';
 import { Toolbox, SelectionState } from '@shopware-ag/dive/toolbox';
 
 const mockSceneObject = {

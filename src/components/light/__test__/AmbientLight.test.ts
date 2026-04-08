@@ -1,4 +1,4 @@
-import { type AmbientLight, type Color } from 'three';
+import { type AmbientLight, type Color } from 'three/webgpu';
 import { DIVEAmbientLight } from '../AmbientLight.ts';
 
 describe('dive/light/DIVEAmbientLight', () => {

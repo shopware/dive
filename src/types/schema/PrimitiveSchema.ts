@@ -1,4 +1,4 @@
-import { type Vector3Like } from 'three';
+import { type Vector3Like } from 'three/webgpu';
 import { type BaseEntitySchema } from './BaseEntitySchema.ts';
 import { type GeometrySchema } from './GeometrySchema.ts';
 import { type MaterialSchema } from './MaterialSchema.ts';

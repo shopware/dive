@@ -1,5 +1,5 @@
 import { Easing as TWEENEasing } from '@tweenjs/tween.js';
-import { AnimationClip, MathUtils, Object3D } from 'three';
+import { AnimationClip, MathUtils, Object3D } from 'three/webgpu';
 import { DIVETicker } from '@shopware-ag/dive';
 
 type Animator = import('../animator/Animator.ts').Animator;

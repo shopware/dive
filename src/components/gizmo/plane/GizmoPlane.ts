@@ -1,4 +1,4 @@
-import { Mesh, MeshBasicMaterial, Object3D, PlaneGeometry } from 'three';
+import { Mesh, MeshBasicMaterial, Object3D, PlaneGeometry } from 'three/webgpu';
 import { UI_LAYER_MASK } from '../../../constants/VisibilityLayerMask.ts';
 import { DIVEGizmoAxis, DIVEGizmoMode } from '../Gizmo.ts';
 

@@ -1,4 +1,3 @@
-import { Object3D } from 'three';
 import { type ARSystemOptions } from '../../ARSystem.ts';
 import { ARQuickLook } from '../ARQuickLook.ts';
 import { AssetConverter } from '@shopware-ag/dive/assetconverter';
@@ -25,6 +24,12 @@ vi.mock('@shopware-ag/dive/assetconverter', () => ({
         convert: mockConvert,
         to: mockTo,
     })),
+}));
+vi.mock('@shopware-ag/dive/shader', () => ({
+    DIVEShaderLib: {
+        grid: { uniforms: {}, vertexShader: '', fragmentShader: '' },
+    },
+    DIVEShaderMaterial: vi.fn(),
 }));
 
 // Mock URL.createObjectURL

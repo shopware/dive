@@ -1,6 +1,6 @@
 import { AssetExporter } from '../AssetExporter.ts';
-import { Object3D, Mesh } from 'three';
-import { ParseError } from '../../../../error/parse/parse-error.ts';
+import { Object3D, Mesh } from 'three/webgpu';
+import { ParseError } from '@shopware-ag/dive';
 
 // Mock TextEncoder
 class MockTextEncoder {

@@ -1,6 +1,6 @@
 import { Action } from '../action.ts';
 import { registerAction } from '../../ActionRegistry.ts';
-import { type Vector3Like } from 'three';
+import { type Vector3Like } from 'three/webgpu';
 import { type ActionDependencies } from '../../../types/index.ts';
 import { BoundingBox } from '../../../../../components/boundingbox/BoundingBox.ts';
 

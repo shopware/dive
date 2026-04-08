@@ -1,7 +1,7 @@
 import { AssetConverter } from '../AssetConverter.ts';
 import { AssetLoader } from '@shopware-ag/dive/assetloader';
 import { AssetExporter } from '@shopware-ag/dive/assetexporter';
-import { Object3D } from 'three';
+import { Object3D } from 'three/webgpu';
 
 const mockLoaderLoad = vi.fn();
 vi.mock('@shopware-ag/dive/assetloader', () => {

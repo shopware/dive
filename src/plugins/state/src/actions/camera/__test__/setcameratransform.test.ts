@@ -1,6 +1,6 @@
 import { SetCameraTransformAction } from '../setcameratransform.ts';
 import { OrbitController } from '@shopware-ag/dive/orbitcontroller';
-import { Vector3 } from 'three';
+import { Vector3 } from 'three/webgpu';
 
 describe('SetCameraTransformAction', () => {
     it('should set camera transform', async () => {

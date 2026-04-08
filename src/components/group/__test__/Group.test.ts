@@ -5,7 +5,7 @@ vi.mock('@shopware-ag/dive/shader', () => ({
     DIVEShaderMaterial: vi.fn(),
 }));
 
-import { Object3D, type Vector3Like } from 'three';
+import { Object3D, type Vector3Like } from 'three/webgpu';
 import { State } from '@shopware-ag/dive/state';
 import { type DIVENode } from '../../node/Node.ts';
 import { DIVEGroup } from '../Group.ts';

@@ -1,4 +1,4 @@
-import { Raycaster, Vector2, type Intersection, Layers } from 'three';
+import { Raycaster, Vector2, type Intersection, Layers } from 'three/webgpu';
 import {
     type DIVEScene,
     PRODUCT_LAYER_MASK,

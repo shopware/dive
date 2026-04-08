@@ -1,4 +1,4 @@
-import { Box3, Color, Object3D } from 'three';
+import { Box3, Color, Object3D } from 'three/webgpu';
 import { DIVEAmbientLight } from '../light/AmbientLight.ts';
 import { DIVEPointLight } from '../light/PointLight.ts';
 import { DIVESceneLight } from '../light/SceneLight.ts';

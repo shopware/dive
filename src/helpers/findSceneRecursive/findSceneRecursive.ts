@@ -1,4 +1,4 @@
-import { type Object3D } from 'three';
+import { type Object3D } from 'three/webgpu';
 import { type DIVEScene } from '../../engine/scene/Scene.ts';
 
 /**

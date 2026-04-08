@@ -1,6 +1,6 @@
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { USDZLoader } from 'three/examples/jsm/loaders/USDZLoader.js';
-import { type Object3D } from 'three';
+import { type Object3D } from 'three/webgpu';
 import {
     type FileType,
     SUPPORTED_FILE_TYPES,

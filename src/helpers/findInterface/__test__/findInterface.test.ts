@@ -1,4 +1,4 @@
-import { Object3D } from 'three';
+import { Object3D } from 'three/webgpu';
 import { findInterface } from '../findInterface.ts';
 
 describe('dive/helper/findInterface', () => {

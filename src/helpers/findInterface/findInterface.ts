@@ -1,5 +1,5 @@
 import { implementsInterface } from '../implementsInterface/implementsInterface.ts';
-import { type Object3D } from 'three';
+import { type Object3D } from 'three/webgpu';
 
 export function findInterface<T>(
     object: Object3D | null | undefined,

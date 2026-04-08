@@ -1,4 +1,4 @@
-import { type Intersection, type Vector2 } from 'three';
+import { type Intersection, type Vector2 } from 'three/webgpu';
 
 /**
  * Context object passed to tools on pointer events.

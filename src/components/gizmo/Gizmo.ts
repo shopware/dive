@@ -1,4 +1,4 @@
-import { Euler, Object3D, Vector3 } from 'three';
+import { Euler, Object3D, Vector3 } from 'three/webgpu';
 import { DIVERotateGizmo } from './rotate/RotateGizmo.ts';
 import { DIVETranslateGizmo } from './translate/TranslateGizmo.ts';
 import { OrbitController } from '@shopware-ag/dive/orbitcontroller';

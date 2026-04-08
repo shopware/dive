@@ -12,7 +12,7 @@ import {
     Vector2,
     Vector3,
     Vector3Like,
-} from 'three';
+} from 'three/webgpu';
 import {
     DIVEPerspectiveCamera,
     DIVETicker,

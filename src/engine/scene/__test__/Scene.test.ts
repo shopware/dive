@@ -1,4 +1,4 @@
-import { Color } from 'three';
+import { Color } from 'three/webgpu';
 import { DIVEScene, DIVESceneDefaultSettings } from '../Scene.ts';
 
 const mock_GetSceneObject = vi.fn();

@@ -7,8 +7,9 @@ vi.mock('@shopware-ag/dive/shader', () => ({
 
 const RaycasterIntersectObjectMock = vi.fn(() => []);
 
-vi.mock('three', async () => {
-    const actual = await vi.importActual<typeof import('three')>('three');
+vi.mock('three/webgpu', async () => {
+    const actual =
+        await vi.importActual<typeof import('three/webgpu')>('three/webgpu');
 
     const Raycaster = vi.fn(function (this: any) {
         this.layers = { mask: 0 };
@@ -30,7 +31,7 @@ import {
     Vector3,
     type Intersection,
     type Object3D,
-} from 'three';
+} from 'three/webgpu';
 import {
     DIVEScene,
     type DIVEHoverable,

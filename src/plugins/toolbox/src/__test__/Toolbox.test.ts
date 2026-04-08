@@ -23,7 +23,7 @@ class MockPointerEvent extends MouseEvent {
 }
 globalThis.PointerEvent = MockPointerEvent as unknown as typeof PointerEvent;
 
-vi.mock('three', async () => {
+vi.mock('three/webgpu', async () => {
     const actual = await vi.importActual<typeof import('three')>('three');
     return {
         ...actual,

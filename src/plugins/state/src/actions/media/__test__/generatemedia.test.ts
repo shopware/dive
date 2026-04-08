@@ -7,7 +7,7 @@ vi.mock('@shopware-ag/dive/shader', () => ({
 
 import { GenerateMediaAction } from '../generatemedia.ts';
 import { type EntitySchema } from '@shopware-ag/dive';
-import { Vector3 } from 'three';
+import { Vector3 } from 'three/webgpu';
 import {
     type MediaGenerationById,
     type MediaGenerationByPosition,

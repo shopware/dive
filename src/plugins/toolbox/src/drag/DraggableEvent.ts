@@ -1,4 +1,4 @@
-import { type Vector3 } from 'three';
+import { type Vector3 } from 'three/webgpu';
 
 /**
  * Event data passed to DIVEDraggable callbacks during drag operations.
