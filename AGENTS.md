@@ -24,6 +24,9 @@
 - `DIVERoot` POV update/delete coverage requires manually seeding a matching `Object3D` in tests because `addSceneObject` intentionally skips creating POV scene nodes
 - Plugins live in `src/plugins/<name>/` and are auto-discovered by looking for `index.ts` in subdirectories
 - Plugins are exported as subpath exports: `@shopware-ag/dive/<plugin-name>` (e.g. `@shopware-ag/dive/shader`, `@shopware-ag/dive/state`)
-- The shader plugin (`src/plugins/shader/`) exports `DIVEShaderMaterial` (extends three.js `ShaderMaterial`) and `DIVEShaderLib`
+- The shader plugin (`src/plugins/shader/`) now exposes node-based building blocks like `GridNode` and `GridNodeUniforms`; legacy `DIVEShaderLib`/`DIVEShaderMaterial` shader-lib wrappers are being removed
+- `DIVEGrid` custom shader code must use TSL/node materials for WebGPU; plain `ShaderMaterial` triggers `THREE.NodeMaterial: Material "ShaderMaterial" is not compatible`
+- `DIVEGrid` owns its `MeshBasicNodeMaterial` setup and creates its grid uniform nodes locally; `GridNode` only provides the TSL output-node implementation
 - `DIVEGrid` component uses the shader plugin; it is imported transitively via `Scene` → `Grid` → `@shopware-ag/dive/shader`
+- Shader plugin public docs must describe the new node-based API: `GridNode` plus `GridNodeUniforms`; legacy `DIVEShaderLib`/`DIVEShaderMaterial` docs are outdated
 - Demo fixture `/Users/f.frank/Public/Repos/dive-demo/public/model_reverse_animation_order_long_name_blank_name.glb` is used for animation edge cases; it contains a blank clip name, an overlong clip name, and a `Walk` clip that now hard-fails loading via an invalid animation accessor reference

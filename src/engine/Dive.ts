@@ -231,6 +231,9 @@ export class DIVE {
     }
 
     public start(): void {
+        if (!this.mainView.renderer.initialized) {
+            this.mainView.renderer.init();
+        }
         this._clock.start();
     }
 

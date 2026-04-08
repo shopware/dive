@@ -129,6 +129,10 @@ export class DIVERenderer {
         return this._webgpurenderer.domElement;
     }
 
+    public get initialized(): boolean {
+        return this._webgpurenderer.initialized;
+    }
+
     public async init(): Promise<void> {
         await this._webgpurenderer.init();
         this._environment.init();
@@ -161,11 +165,6 @@ export class DIVERenderer {
     }
 
     private _createWebGPURenderer(): WebGPURenderer {
-        // reset GL state
-        const gl = this._settings.canvas?.getContext('webgl2');
-        gl?.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, false);
-        gl?.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, false);
-
         // create new renderer
         const renderer = new WebGPURenderer(this._settings);
         renderer.shadowMap.enabled = this._settings.shadows;

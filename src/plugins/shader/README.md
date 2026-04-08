@@ -1,36 +1,46 @@
 
 # Shader
-DIVEShaderLib is a shared shader library. It contains all shaders from the three.js library as well as custom shaders defined in the DIVE shader plugin.
+The shader plugin provides reusable TSL node building blocks for WebGPU materials.
 
-## Features:
-- DIVEShaderMaterial wrapper class for correct types
-- define custom shaders in the DIVE shader plugin
-- access and extend from outside the DIVE package for runtime
-- reuse default shaders from three.js
+## Features
+- exports node classes instead of legacy shader-lib objects
+- callers own `NodeMaterial` creation and uniform defaults
+- runtime updates happen on caller-owned `UniformNode`s
 
 ## Usage
 ```ts
-import { Color } from 'three';
-import { DIVEShaderMaterial, DIVEShaderLib, type GridShader } from '@shopware-ag/dive/shader';
+import { GridNode, type GridNodeUniforms } from '@shopware-ag/dive/shader';
+import { Color, DoubleSide, MeshBasicNodeMaterial } from 'three/webgpu';
+import { uniform } from 'three/tsl';
 
-// create DIVEShaderMaterial with custom uniforms
-const gridMaterial = new DIVEShaderMaterial<GridShader>({
-    ...DIVEShaderLib.grid,
-    uniforms: {
-        uGridSize: { value: 10 },
-        uMajorLineEvery: { value: 2 },
-        uMinorLineColor: { value: new Color('green') },
-        uMajorLineColor: { value: new Color('red') },
-        uFadeDistance: { value: 25 },
-    },
+const uniforms: GridNodeUniforms = {
+    uGridSize: uniform(10),
+    uMajorLineEvery: uniform(2),
+    uMinorLineColor: uniform(new Color('green')),
+    uMajorLineColor: uniform(new Color('red')),
+    uFadeDistance: uniform(25),
+};
+
+const material = new MeshBasicNodeMaterial({
+    transparent: true,
+    depthWrite: false,
+    side: DoubleSide,
+    outputNode: new GridNode(uniforms),
 });
+```
 
-// change uniform in runtime
+## Runtime Updates
+Update the same uniform nodes after material creation to change the shader at runtime.
+
+```ts
+uniforms.uGridSize.value = 12;
+uniforms.uMajorLineEvery.value = 4;
+
 window.addEventListener('keydown', (event: KeyboardEvent) => {
-    if(event.key === 'ArrowUp') {
-        gridMaterial.uniforms.uGridSize.value += 1;
-    } else if(event.key === 'ArrowDown') {
-        gridMaterial.uniforms.uGridSize.value -= 1;
+    if (event.key === 'ArrowUp') {
+        uniforms.uGridSize.value += 1;
+    } else if (event.key === 'ArrowDown') {
+        uniforms.uGridSize.value -= 1;
     }
 });
 ```
