@@ -37,8 +37,12 @@
 - `GridNode` returns the final `vec4(...)` TSL node from its constructor while still naming the underlying base `Node` instance `GridNode`
 - In `GridNode` tests, keep a raw mock-uniform object separate from the `GridNodeUniforms` cast; casting too early hides Vitest `.mock` metadata from TypeScript
 - `DIVEEnvironment` no longer applies HDR state from the constructor alone; tests should wait for the async HDR load and call `env.init()` before asserting environment/background updates
+- `DIVEEnvironment` concurrent-load cleanup is best covered by spying on the private `loadHDRImage` method and resolving overlapping promises out of order; stale textures should be disposed
 - `DIVE` tests must mock `mainView.renderer.initialized` and `mainView.renderer.init()` because `DIVE.start()` now guards rendering via renderer initialization
+- `DIVE` deprecated coverage paths live behind `DIVE.QuickView()` and the `engine.start`/`engine.startAsync`/`engine.stop`/`engine.dispose` wrapper closures; mock `@shopware-ag/dive/quickview` explicitly when exercising them
 - `DIVERenderer` tests must mock `three/webgpu` `WebGPURenderer`; old `three` `WebGLRenderer` expectations are outdated
+- `DIVERenderer` stale-init behavior after `setCanvas()` is best tested with a deferred first `init()` promise; the old renderer must not trigger a second environment init after the swap
+- `MediaCreator` fallback coverage is easiest by overriding test canvas `width`/`height` to `undefined` and `writable: true`, then letting `drawCanvas()` fall back through `clientWidth` to the renderer canvas dimensions
 - Demo fixture `/Users/f.frank/Public/Repos/dive-demo/public/model_reverse_animation_order_long_name_blank_name.glb` is used for animation edge cases; it contains a blank clip name, an overlong clip name, and a `Walk` clip that now hard-fails loading via an invalid animation accessor reference
 - `yarn build` can still exit successfully while `vite-plugin-dts` reports TypeScript API migration errors, so WebGPU refactors need explicit grep/type-review and not just a green build exit code
 - `DIVE.start()` is now a fire-and-forget wrapper around `startAsync()`, so tests that need renderer readiness should await `startAsync()` or a microtask before asserting downstream effects

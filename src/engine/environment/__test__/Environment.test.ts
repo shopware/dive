@@ -61,6 +61,17 @@ vi.mock('three/examples/jsm/loaders/HDRLoader.js', () => ({
 }));
 
 const CubeRenderTarget = CubeRenderTargetOriginal as any;
+const createDeferred = <T>() => {
+    let resolve!: (value: T) => void;
+    const promise = new Promise<T>((resolver) => {
+        resolve = resolver;
+    });
+
+    return {
+        promise,
+        resolve,
+    };
+};
 
 describe('HDREnvironment', () => {
     let renderer: any;
@@ -78,6 +89,29 @@ describe('HDREnvironment', () => {
         await env.init();
 
         expect(scene.environment).toBeDefined();
+    });
+
+    it('reuses the in-flight init promise when init is called twice', async () => {
+        const env = new DIVEEnvironment(renderer, scene, {
+            imageUrl: 'hdr.hdr',
+        });
+        const updateSpy = vi.spyOn(env, 'update');
+        const deferred = createDeferred<void>();
+
+        (env as any)._loadPromise = deferred.promise;
+
+        const firstInit = env.init();
+        const secondInit = env.init();
+
+        expect(updateSpy).not.toHaveBeenCalled();
+
+        deferred.resolve();
+        await Promise.all([
+            firstInit,
+            secondInit,
+        ]);
+
+        expect(updateSpy).toHaveBeenCalledTimes(1);
     });
 
     it('enables IBL with equirect source and sets background', async () => {
@@ -112,6 +146,19 @@ describe('HDREnvironment', () => {
         await env.setImageUrl('later.hdr');
 
         expect(scene.environment).toBeDefined();
+    });
+
+    it('does not update during init when the renderer is not initialized', async () => {
+        const uninitializedRenderer = new WebGPURenderer();
+        uninitializedRenderer.initialized = false;
+        const env = new DIVEEnvironment(uninitializedRenderer, scene, {
+            imageUrl: 'hdr.hdr',
+        });
+        const updateSpy = vi.spyOn(env, 'update');
+
+        await env.init();
+
+        expect(updateSpy).not.toHaveBeenCalled();
     });
 
     it('disposes resources and clears source image', async () => {
@@ -194,6 +241,25 @@ describe('HDREnvironment', () => {
         expect(created.dispose).toHaveBeenCalled();
     });
 
+    it('clears the environment when the source image is missing', async () => {
+        const originalBg = new Color(0x123456);
+        scene.background = originalBg;
+
+        const env = new DIVEEnvironment(renderer, scene, {
+            imageUrl: 'hdr.hdr',
+            useAsBackground: true,
+        });
+
+        await env.init();
+
+        (env as any).sourceImage = null;
+        env.update();
+
+        expect(scene.environment).toBeNull();
+        expect(scene.background).toBe(originalBg);
+        expect((env as any).currentBackgroundCube).toBeNull();
+    });
+
     it('restores original background when background option toggled off', async () => {
         const originalBg = new Color(0xff0000);
         scene.background = originalBg;
@@ -249,6 +315,55 @@ describe('HDREnvironment', () => {
         expect((env as any).renderer).toBe(newRenderer);
         expect(pmremDisposeSpy).toHaveBeenCalled();
         expect(scene.environment).toBeDefined();
+    });
+
+    it('falls back to the default HDR URL when setting a null image URL', async () => {
+        const env = new DIVEEnvironment(renderer, scene, {
+            imageUrl: 'hdr.hdr',
+        });
+        const updateSpy = vi.spyOn(env, 'update');
+
+        await env.init();
+        await env.setImageUrl(null);
+
+        expect((env as any).options.imageUrl).toBeTruthy();
+        expect(updateSpy).toHaveBeenCalled();
+    });
+
+    it('disposes stale source images when a newer HDR load replaces them', async () => {
+        const env = new DIVEEnvironment(renderer, scene, {
+            imageUrl: 'hdr.hdr',
+        });
+        const firstTexture = {
+            mapping: undefined,
+            dispose: vi.fn(),
+        } as any;
+        const secondTexture = {
+            mapping: undefined,
+            dispose: vi.fn(),
+        } as any;
+        const firstLoad = createDeferred<any>();
+        const secondLoad = createDeferred<any>();
+
+        await env.init();
+
+        vi.spyOn(env as any, 'loadHDRImage')
+            .mockImplementationOnce(() => firstLoad.promise)
+            .mockImplementationOnce(() => secondLoad.promise);
+
+        const firstUpdate = env.setImageUrl('first.hdr');
+        const secondUpdate = env.setImageUrl('second.hdr');
+
+        firstLoad.resolve(firstTexture);
+        await Promise.resolve();
+        secondLoad.resolve(secondTexture);
+        await Promise.all([
+            firstUpdate,
+            secondUpdate,
+        ]);
+
+        expect(firstTexture.dispose).toHaveBeenCalledTimes(1);
+        expect((env as any).sourceImage).toBe(secondTexture);
     });
 
     it('deprecated methods do not throw', () => {

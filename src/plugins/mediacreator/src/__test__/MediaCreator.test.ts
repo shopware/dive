@@ -237,4 +237,94 @@ describe('MediaCreator', () => {
         expect(mockSetRenderTarget).toHaveBeenCalled();
         expect(mockPutImageData).toHaveBeenCalledTimes(1);
     });
+
+    it('should restore the requested resolution when the renderer canvas has no client size', async () => {
+        Object.defineProperty(mockRenderer.canvas, 'clientWidth', {
+            configurable: true,
+            value: 0,
+        });
+        Object.defineProperty(mockRenderer.canvas, 'clientHeight', {
+            configurable: true,
+            value: 0,
+        });
+
+        await mediaCreator.generateMedia({
+            position: { x: 1, y: 2, z: 3 },
+            target: { x: 4, y: 5, z: 6 },
+            resolution: {
+                width: 16,
+                height: 9,
+            },
+        });
+
+        expect(mockOrbitController.object.onResize).toHaveBeenNthCalledWith(
+            1,
+            16,
+            9,
+        );
+        expect(mockOrbitController.object.onResize).toHaveBeenLastCalledWith(
+            16,
+            9,
+        );
+    });
+
+    it('should fall back to the renderer canvas size when no resolution is provided', async () => {
+        const canvas = createMockCanvas();
+
+        Object.defineProperty(canvas, 'width', {
+            configurable: true,
+            value: undefined,
+            writable: true,
+        });
+        Object.defineProperty(canvas, 'height', {
+            configurable: true,
+            value: undefined,
+            writable: true,
+        });
+        Object.defineProperty(canvas, 'clientWidth', {
+            configurable: true,
+            value: undefined,
+        });
+        Object.defineProperty(canvas, 'clientHeight', {
+            configurable: true,
+            value: undefined,
+        });
+        Object.defineProperty(mockRenderer.canvas, 'clientWidth', {
+            configurable: true,
+            value: 321,
+        });
+        Object.defineProperty(mockRenderer.canvas, 'clientHeight', {
+            configurable: true,
+            value: 123,
+        });
+
+        const result = await mediaCreator.drawCanvas(canvas);
+
+        expect(result.width).toBe(321);
+        expect(result.height).toBe(123);
+        expect(mockReadRenderTargetPixelsAsync).toHaveBeenCalledWith(
+            expect.anything(),
+            0,
+            0,
+            321,
+            123,
+        );
+    });
+
+    it('should throw when the output canvas has no 2D context', async () => {
+        const canvas = createMockCanvas();
+        Object.defineProperty(canvas, 'getContext', {
+            configurable: true,
+            value: vi.fn(() => null),
+        });
+
+        await expect(
+            mediaCreator.drawCanvas(canvas, {
+                width: 1,
+                height: 1,
+            }),
+        ).rejects.toThrow(
+            'MediaCreator.drawCanvas: 2D canvas context is not available.',
+        );
+    });
 });

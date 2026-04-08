@@ -8,6 +8,7 @@ import { MathUtils } from 'three/webgpu';
 import { DIVEClock } from '../clock/Clock.ts';
 import { DIVERenderer } from '../renderer/Renderer.ts';
 import { DIVEScene } from '../scene/Scene.ts';
+import { QuickView } from '@shopware-ag/dive/quickview';
 
 const waitForAsync = () => new Promise((resolve) => setTimeout(resolve, 0));
 
@@ -199,6 +200,15 @@ vi.mock('@shopware-ag/dive/orientationdisplay', () => {
     };
 });
 
+vi.mock('@shopware-ag/dive/quickview', () => {
+    return {
+        QuickView: vi.fn(async (uri: string, settings?: unknown) => ({
+            uri,
+            settings,
+        })),
+    };
+});
+
 vi.mock('../../components/model/Model', () => {
     return {
         DIVEModel: vi.fn(function (this: any) {
@@ -233,6 +243,18 @@ describe('DIVE', () => {
     it('should instantiate', () => {
         const dive = new DIVE();
         expect(dive).toBeDefined();
+    });
+
+    it('should proxy the deprecated static QuickView helper', async () => {
+        const settings = { cameraDistance: 10 };
+
+        const result = await DIVE.QuickView('model.glb', settings as any);
+
+        expect(QuickView).toHaveBeenCalledWith('model.glb', settings);
+        expect(result).toEqual({
+            uri: 'model.glb',
+            settings,
+        });
     });
 
     it('should instantiate in development DIVE_NODE_ENV', () => {
@@ -370,12 +392,51 @@ describe('DIVE', () => {
         expect(dive.mainView.setCanvas).toHaveBeenCalledWith(canvas);
     });
 
+    it('should expose deprecated engine wrapper methods', async () => {
+        const dive = new DIVE({
+            autoStart: false,
+        });
+        const startSpy = vi.spyOn(dive, 'start');
+        const startAsyncSpy = vi.spyOn(dive, 'startAsync');
+        const stopSpy = vi.spyOn(dive, 'stop');
+        const disposeSpy = vi.spyOn(dive, 'dispose');
+
+        dive.engine.start();
+        await dive.engine.startAsync();
+        dive.engine.stop();
+        await dive.engine.dispose();
+
+        expect(startSpy).toHaveBeenCalledTimes(1);
+        expect(startAsyncSpy).toHaveBeenCalledTimes(2);
+        expect(stopSpy).toHaveBeenCalledTimes(1);
+        expect(disposeSpy).toHaveBeenCalledTimes(1);
+    });
+
     it('should start the clock', () => {
         const dive = new DIVE();
         dive.start();
         return waitForAsync().then(() => {
             expect(dive.clock.start).toHaveBeenCalled();
         });
+    });
+
+    it('should log renderer initialization failures from start', async () => {
+        const error = new Error('renderer failed');
+        const errorSpy = vi
+            .spyOn(console, 'error')
+            .mockImplementation(() => {});
+        const dive = new DIVE({
+            autoStart: false,
+        });
+
+        dive.mainView.renderer.init.mockRejectedValueOnce(error);
+        dive.start();
+        await waitForAsync();
+
+        expect(errorSpy).toHaveBeenCalledWith(
+            'DIVE.start: Failed to initialize the WebGPU renderer.',
+            error,
+        );
     });
 
     it('should expose an explicit async start path', async () => {
