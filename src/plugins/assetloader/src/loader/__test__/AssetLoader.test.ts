@@ -4,17 +4,6 @@ import { Group } from 'three/webgpu';
 import { FileTypeError, NetworkError, ParseError } from '@shopware-ag/dive';
 import { AssetCache } from '@shopware-ag/dive/assetcache';
 
-vi.mock('@shopware-ag/dive/shader', () => ({
-    GridNode: vi.fn(function (this: any, uniforms) {
-        this.uniforms = uniforms;
-        return this;
-    }),
-    DIVEShaderLib: {
-        grid: { uniforms: {}, vertexShader: '', fragmentShader: '' },
-    },
-    DIVEShaderMaterial: vi.fn(),
-}));
-
 // Mock the Three.js loaders
 const mockParseAsyncGLTF = vi.fn();
 vi.mock('three/examples/jsm/loaders/GLTFLoader.js', () => ({

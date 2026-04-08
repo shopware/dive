@@ -1,14 +1,3 @@
-vi.mock('@shopware-ag/dive/shader', () => ({
-    GridNode: vi.fn(function (this: any, uniforms) {
-        this.uniforms = uniforms;
-        return this;
-    }),
-    DIVEShaderLib: {
-        grid: { uniforms: {}, vertexShader: '', fragmentShader: '' },
-    },
-    DIVEShaderMaterial: vi.fn(),
-}));
-
 import { Chunk } from '../Chunk.ts';
 import { FileContentError, NetworkError } from '@shopware-ag/dive';
 

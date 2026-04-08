@@ -1,14 +1,3 @@
-vi.mock('@shopware-ag/dive/shader', () => ({
-    GridNode: vi.fn(function (this: any, uniforms) {
-        this.uniforms = uniforms;
-        return this;
-    }),
-    DIVEShaderLib: {
-        grid: { uniforms: {}, vertexShader: '', fragmentShader: '' },
-    },
-    DIVEShaderMaterial: vi.fn(),
-}));
-
 import { Vector2 } from 'three/webgpu';
 import { HoverTool } from '../HoverTool.ts';
 import { type PointerContext } from '../../PointerContext.ts';

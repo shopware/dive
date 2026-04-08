@@ -25,16 +25,6 @@ vi.mock('@shopware-ag/dive/assetconverter', () => ({
         to: mockTo,
     })),
 }));
-vi.mock('@shopware-ag/dive/shader', () => ({
-    GridNode: vi.fn(function (this: any, uniforms) {
-        this.uniforms = uniforms;
-        return this;
-    }),
-    DIVEShaderLib: {
-        grid: { uniforms: {}, vertexShader: '', fragmentShader: '' },
-    },
-    DIVEShaderMaterial: vi.fn(),
-}));
 
 // Mock URL.createObjectURL
 URL.createObjectURL = vi.fn(() => 'blob:http://localhost:8080/');

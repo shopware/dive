@@ -1,14 +1,3 @@
-vi.mock('@shopware-ag/dive/shader', () => ({
-    GridNode: vi.fn(function (this: any, uniforms) {
-        this.uniforms = uniforms;
-        return this;
-    }),
-    DIVEShaderLib: {
-        grid: { uniforms: {}, vertexShader: '', fragmentShader: '' },
-    },
-    DIVEShaderMaterial: vi.fn(),
-}));
-
 import { ModelLoadedAction } from '../modelloaded.ts';
 import { type EntitySchema, type ModelSchema } from '@shopware-ag/dive';
 

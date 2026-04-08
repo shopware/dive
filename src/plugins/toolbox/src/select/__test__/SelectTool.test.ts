@@ -1,14 +1,3 @@
-vi.mock('@shopware-ag/dive/shader', () => ({
-    GridNode: vi.fn(function (this: any, uniforms) {
-        this.uniforms = uniforms;
-        return this;
-    }),
-    DIVEShaderLib: {
-        grid: { uniforms: {}, vertexShader: '', fragmentShader: '' },
-    },
-    DIVEShaderMaterial: vi.fn(),
-}));
-
 import { Vector2, type Object3D } from 'three/webgpu';
 import { SelectTool } from '../SelectTool.ts';
 import { SelectionState } from '../../SelectionState.ts';

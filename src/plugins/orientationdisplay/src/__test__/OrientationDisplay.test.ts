@@ -1,14 +1,3 @@
-vi.mock('@shopware-ag/dive/shader', () => ({
-    GridNode: vi.fn(function (this: any, uniforms) {
-        this.uniforms = uniforms;
-        return this;
-    }),
-    DIVEShaderLib: {
-        grid: { uniforms: {}, vertexShader: '', fragmentShader: '' },
-    },
-    DIVEShaderMaterial: vi.fn(),
-}));
-
 import { Matrix4, Vector4, Color, Material } from 'three/webgpu';
 import { OrientationDisplay } from '../OrientationDisplay.ts';
 import {

@@ -30,6 +30,8 @@
 - `DIVEGrid` component uses the shader plugin; it is imported transitively via `Scene` → `Grid` → `@shopware-ag/dive/shader`
 - Shader plugin public docs must describe the new node-based API: `GridNode` plus `GridNodeUniforms`; legacy `DIVEShaderLib`/`DIVEShaderMaterial` docs are outdated
 - Tests that mock `@shopware-ag/dive/shader` must provide a `GridNode` constructor stub after the shader plugin migration; legacy `DIVEShaderLib`-only mocks break transitive imports
+- Most tests do not need to mock `@shopware-ag/dive/shader` at all; after the WebGPU migration the only current direct need is `src/components/grid/__test__/Grid.test.ts`, which asserts `DIVEGrid` constructs `GridNode`
+- When partially mocking `three/webgpu`, base the mock on `importOriginal<typeof import('three/webgpu')>()`; using `vi.importActual('three')` drops WebGPU-only exports like `Node` and breaks transitive shader imports
 - `DIVEGrid` tests or other `MeshBasicNodeMaterial` mocks must preserve the constructor `outputNode` param because production code passes `new GridNode(uniforms)` directly into material creation
 - `GridNode` unit tests are best written with local `three/tsl` and `three/webgpu` mocks plus `vi.hoisted(...)`; plain top-level mock helpers break because `vi.mock(...)` factories are hoisted
 - `GridNode` returns the final `vec4(...)` TSL node from its constructor while still naming the underlying base `Node` instance `GridNode`

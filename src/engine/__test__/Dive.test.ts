@@ -19,17 +19,6 @@ class MockResizeObserver {
 }
 global.ResizeObserver = MockResizeObserver as any;
 
-vi.mock('@shopware-ag/dive/shader', () => ({
-    GridNode: vi.fn(function (this: any, uniforms) {
-        this.uniforms = uniforms;
-        return this;
-    }),
-    DIVEShaderLib: {
-        grid: { uniforms: {}, vertexShader: '', fragmentShader: '' },
-    },
-    DIVEShaderMaterial: vi.fn(),
-}));
-
 vi.mock('../../components/boundingbox/BoundingBox.ts', () => ({
     BoundingBox: vi.fn(),
 }));
