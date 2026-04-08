@@ -437,39 +437,6 @@ describe('Toolbox', () => {
         });
     });
 
-    describe('legacy API', () => {
-        it('should enable tools via useTool', () => {
-            toolbox.useTool('hover');
-
-            expect(toolbox.isToolEnabled('hover')).toBe(true);
-        });
-
-        it('should enable all tools when useTool is called with select', () => {
-            toolbox.useTool('select');
-
-            expect(toolbox.isToolEnabled('hover')).toBe(true);
-            expect(toolbox.isToolEnabled('select')).toBe(true);
-            expect(toolbox.isToolEnabled('transform')).toBe(true);
-            expect(toolbox.isToolEnabled('drag')).toBe(true);
-        });
-
-        it('should return first active tool via getActiveTool', () => {
-            toolbox.enableTool('hover');
-            toolbox.enableTool('transform');
-
-            const activeTool = toolbox.getActiveTool();
-
-            // transform has higher priority (5 vs 20)
-            expect(activeTool?.name).toBe('transform');
-        });
-
-        it('should return null from getActiveTool when no tools active', () => {
-            const activeTool = toolbox.getActiveTool();
-
-            expect(activeTool).toBeNull();
-        });
-    });
-
     describe('edge cases', () => {
         it('should not fail when disabling non-active tool', () => {
             expect(() => toolbox.disableTool('hover')).not.toThrow();

@@ -130,7 +130,6 @@ describe('DIVERenderPipeline', () => {
         const instance = WebGPURenderer.mock.results[0].value;
 
         expect(renderer.webgpurenderer).toBe(instance);
-        expect(renderer.webglrenderer).toBe(instance);
         expect(renderer.canvas).toBe(instance.domElement);
     });
 

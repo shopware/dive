@@ -12,7 +12,6 @@ import {
     DIVEPerspectiveCameraSettings,
 } from './camera/PerspectiveCamera.ts';
 import {
-    DIVERenderer,
     DIVERendererDefaultSettings,
     DIVERendererSettings,
 } from './renderer/Renderer.ts';
@@ -95,20 +94,6 @@ export const DIVEDefaultSettings: Required<DIVESettings> = {
  */
 
 export class DIVE {
-    /**
-     * @deprecated This static method will be removed in a future version. Please use `import { QuickView, QuickViewSettings, QuickViewDefaultSettings } from '@shopware-ag/dive/quickview'` instead.
-     */
-    public static async QuickView(
-        uri: string,
-        settings?: Partial<
-            import('@shopware-ag/dive/quickview').QuickViewSettings
-        >,
-    ): Promise<import('@shopware-ag/dive/quickview').QuickView> {
-        return import('@shopware-ag/dive/quickview').then(({ QuickView }) =>
-            QuickView(uri, settings),
-        );
-    }
-
     // descriptive members
     private _instanceId: string = MathUtils.generateUUID();
     private _settings: DIVESettings;
@@ -177,43 +162,6 @@ export class DIVE {
         window.DIVE.instances.push(this);
     }
 
-    /**
-     * @deprecated This property will be removed in a future version. Please use properties on the DIVE instance and mainView directly.
-     */
-    public get engine(): {
-        scene: DIVEScene;
-        camera: DIVEPerspectiveCamera;
-        renderer: DIVERenderer;
-        setCanvas: (canvas: HTMLCanvasElement) => void;
-        clock: DIVEClock;
-        start: () => void;
-        startAsync: () => Promise<void>;
-        stop: () => void;
-        dispose: () => void;
-    } {
-        return {
-            scene: this.scene,
-            camera: this.mainView.camera,
-            renderer: this.mainView.renderer,
-            setCanvas: (canvas: HTMLCanvasElement) => {
-                this.mainView.setCanvas(canvas);
-            },
-            clock: this.clock,
-            start: () => {
-                this.start();
-            },
-            startAsync: () => {
-                return this.startAsync();
-            },
-            stop: () => {
-                this.stop();
-            },
-            dispose: () => {
-                this.dispose();
-            },
-        };
-    }
-
     public get views(): DIVEView[] {
         return this._views;
     }
@@ -275,46 +223,4 @@ export class DIVE {
             resolve();
         });
     }
-
-    /**
-     * @deprecated This method will be removed in a future version. To create a new view, use `QuickView` instead.
-     */
-    public createView(camera?: DIVEPerspectiveCamera): DIVEView {
-        const view = new DIVEView(
-            this._scene,
-            camera ?? new DIVEPerspectiveCamera(),
-            {
-                ...this._settings,
-                canvas: undefined, // instantiate new canvas for created view
-            },
-        );
-
-        this._views.push(view);
-        this._clock.addTicker(view);
-
-        if (this._views.length === 1) {
-            this._mainView = view;
-        }
-
-        return view;
-    }
-
-    /**
-     * @deprecated This method will be removed in a future version.
-     */
-    public disposeView(view: DIVEView): void {
-        this._views = this._views.filter((v) => v !== view);
-        this._clock.removeTicker(view);
-
-        if (this._mainView === view) {
-            this._mainView = this._views[0];
-        }
-
-        view.dispose();
-    }
 }
-
-/**
- * @deprecated Use `import { DIVE } from '@shopware-ag/dive'` instead.
- */
-export const DIVEEngine = DIVE;

@@ -5,10 +5,6 @@
 import { vi } from 'vitest';
 import { DIVE, DIVESettings } from '../Dive.ts';
 import { MathUtils } from 'three/webgpu';
-import { DIVEClock } from '../clock/Clock.ts';
-import { DIVERenderer } from '../renderer/Renderer.ts';
-import { DIVEScene } from '../scene/Scene.ts';
-import { QuickView } from '@shopware-ag/dive/quickview';
 
 const waitForAsync = () => new Promise((resolve) => setTimeout(resolve, 0));
 
@@ -200,15 +196,6 @@ vi.mock('@shopware-ag/dive/orientationdisplay', () => {
     };
 });
 
-vi.mock('@shopware-ag/dive/quickview', () => {
-    return {
-        QuickView: vi.fn(async (uri: string, settings?: unknown) => ({
-            uri,
-            settings,
-        })),
-    };
-});
-
 vi.mock('../../components/model/Model', () => {
     return {
         DIVEModel: vi.fn(function (this: any) {
@@ -243,18 +230,6 @@ describe('DIVE', () => {
     it('should instantiate', () => {
         const dive = new DIVE();
         expect(dive).toBeDefined();
-    });
-
-    it('should proxy the deprecated static QuickView helper', async () => {
-        const settings = { cameraDistance: 10 };
-
-        const result = await DIVE.QuickView('model.glb', settings as any);
-
-        expect(QuickView).toHaveBeenCalledWith('model.glb', settings);
-        expect(result).toEqual({
-            uri: 'model.glb',
-            settings,
-        });
     });
 
     it('should instantiate in development DIVE_NODE_ENV', () => {
@@ -365,53 +340,6 @@ describe('DIVE', () => {
         expect(window.DIVE.instances).toContain(dive);
     });
 
-    it('should create a new view', () => {
-        const dive = new DIVE();
-        const view = dive.createView();
-        expect(view).toBeDefined();
-        expect(dive.views).toContain(view);
-    });
-
-    it('should dispose a view', () => {
-        const dive = new DIVE();
-        const view = dive.createView();
-        dive.disposeView(view);
-        expect(dive.views).not.toContain(view);
-    });
-
-    it('should get the engine', () => {
-        const dive = new DIVE();
-        const engine = dive.engine;
-        expect(engine).toBeDefined();
-    });
-
-    it('should set the canvas', () => {
-        const dive = new DIVE();
-        const canvas = document.createElement('canvas');
-        dive.engine.setCanvas(canvas);
-        expect(dive.mainView.setCanvas).toHaveBeenCalledWith(canvas);
-    });
-
-    it('should expose deprecated engine wrapper methods', async () => {
-        const dive = new DIVE({
-            autoStart: false,
-        });
-        const startSpy = vi.spyOn(dive, 'start');
-        const startAsyncSpy = vi.spyOn(dive, 'startAsync');
-        const stopSpy = vi.spyOn(dive, 'stop');
-        const disposeSpy = vi.spyOn(dive, 'dispose');
-
-        dive.engine.start();
-        await dive.engine.startAsync();
-        dive.engine.stop();
-        await dive.engine.dispose();
-
-        expect(startSpy).toHaveBeenCalledTimes(1);
-        expect(startAsyncSpy).toHaveBeenCalledTimes(2);
-        expect(stopSpy).toHaveBeenCalledTimes(1);
-        expect(disposeSpy).toHaveBeenCalledTimes(1);
-    });
-
     it('should start the clock', () => {
         const dive = new DIVE();
         dive.start();
@@ -454,35 +382,6 @@ describe('DIVE', () => {
         const dive = new DIVE();
         dive.stop();
         expect(dive.clock.stop).toHaveBeenCalled();
-    });
-
-    it('should set a new mainView when the current one is disposed', () => {
-        const dive = new DIVE();
-        const firstMainView = dive.mainView;
-        const newView = dive.createView();
-
-        dive.disposeView(firstMainView);
-
-        expect(dive.mainView).toBe(newView);
-        expect(dive.views).not.toContain(firstMainView);
-    });
-
-    it('should handle disposing the only view', () => {
-        const dive = new DIVE();
-        const onlyView = dive.mainView;
-
-        dive.disposeView(onlyView);
-
-        expect(dive.mainView).toBeUndefined();
-        expect(dive.views.length).toBe(0);
-    });
-
-    it('should set mainView when creating a view after all views were disposed', async () => {
-        const dive = new DIVE();
-        await dive.dispose();
-
-        const view = dive.createView();
-        expect(dive.mainView).toBe(view);
     });
 
     it('should get the canvas', () => {

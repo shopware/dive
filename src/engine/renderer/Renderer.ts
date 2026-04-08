@@ -122,13 +122,6 @@ export class DIVERenderer {
         return this._webgpurenderer;
     }
 
-    /**
-     * @deprecated Use `webgpurenderer` instead.
-     */
-    public get webglrenderer(): WebGPURenderer {
-        return this._webgpurenderer;
-    }
-
     public get environment(): DIVEEnvironment {
         return this._environment;
     }
@@ -222,8 +215,3 @@ export class DIVERenderer {
         return renderer;
     }
 }
-
-/**
- * @deprecated Use `import { DIVERenderer } from '@shopware-ag/dive'` instead.
- */
-export const DIVERenderPipeline = DIVERenderer;

@@ -365,28 +365,4 @@ describe('HDREnvironment', () => {
         expect(firstTexture.dispose).toHaveBeenCalledTimes(1);
         expect((env as any).sourceImage).toBe(secondTexture);
     });
-
-    it('deprecated methods do not throw', () => {
-        const env = new DIVEEnvironment(renderer, scene);
-        const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
-
-        expect(() => env.setGlobalEnvIntensity(1)).not.toThrow();
-        expect(warnSpy).toHaveBeenCalledWith(
-            expect.stringContaining('deprecated'),
-        );
-
-        expect(() => env.setExposure(1)).not.toThrow();
-        expect(warnSpy).toHaveBeenCalledWith(
-            expect.stringContaining('deprecated'),
-        );
-
-        expect(() => env.disable()).not.toThrow();
-        expect(warnSpy).toHaveBeenCalledWith(
-            expect.stringContaining('deprecated'),
-        );
-
-        expect(async () => await env.enable()).not.toThrow();
-
-        warnSpy.mockRestore();
-    });
 });

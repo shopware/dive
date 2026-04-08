@@ -23,8 +23,6 @@ export type DIVEEnvironmentSettings = {
      * Whether to enable the image-based lighting.
      *
      * @default true
-     *
-     * @deprecated enabled defaults to true.
      */
     enabled: boolean;
     /**
@@ -43,8 +41,6 @@ export type DIVEEnvironmentSettings = {
      * The intensity of the environment lighting.
      *
      * @default 1
-     *
-     * @deprecated envIntensity defaults to 1.0.
      */
     globalEnvIntensity: number;
     /**
@@ -63,8 +59,6 @@ export type DIVEEnvironmentSettings = {
      * Whether to replace the existing lights (can be restored via `restoreLights`).
      *
      * @default false
-     *
-     * @deprecated replaceLights defaults to false. Remove lights manually instead.
      */
     replaceLights?: boolean;
 };
@@ -310,38 +304,6 @@ export class DIVEEnvironment {
         const image = await new HDRLoader().loadAsync(url);
         image.mapping = EquirectangularReflectionMapping;
         return image;
-    }
-
-    /**
-     * @deprecated setGlobalEnvIntensity does nothing.
-     */
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    public setGlobalEnvIntensity(intensity: number): void {
-        console.warn('setGlobalEnvIntensity is deprecated and does nothing.');
-    }
-
-    /**
-     * @deprecated setExposure does nothing.
-     */
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    public setExposure(exposure: number): void {
-        console.warn('setExposure is deprecated and does nothing.');
-    }
-
-    /**
-     * @deprecated disable does nothing. Environment is enabled by default.
-     */
-    public disable(): void {
-        console.warn(
-            'disable is deprecated and does nothing. Environment is enabled by default.',
-        );
-    }
-
-    /**
-     * @deprecated Use update() instead.
-     */
-    public async enable(): Promise<void> {
-        await this.init();
     }
 
     private async _loadSourceImage(url: string): Promise<void> {

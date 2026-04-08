@@ -38,20 +38,6 @@ export class AnimationSystem implements DIVETicker {
     }
 
     /**
-     * @deprecated Use `fromTargets()` instead.
-     * @note This method also calls .play() on the animator automatically. This has been removed in fromTargets(). You have to call .play() independently after creating the animator.
-     */
-    public async animate(
-        targets: AnimationTarget | AnimationTarget[],
-        duration: number,
-        options?: TargetAnimatorOptions,
-    ): Promise<TargetAnimator> {
-        const animator = await this.fromTargets(targets, duration, options);
-        animator.play();
-        return animator;
-    }
-
-    /**
      * Creates a TargetAnimator and returns it asynchronously.
      *
      * @example
