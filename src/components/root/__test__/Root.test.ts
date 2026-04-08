@@ -753,6 +753,29 @@ describe('components/root/DIVERoot', () => {
                 'DIVERoot.addSceneObject: Unknown entity type: unknown',
             );
         });
+
+        it('should warn and return the existing object when adding a duplicate id', () => {
+            const modelData: ModelSchema = {
+                id: 'model-duplicate',
+                entityType: 'model',
+                name: 'Test Model',
+                visible: true,
+                uri: 'test.glb',
+                position: { x: 1, y: 2, z: 3 },
+                rotation: { x: 0, y: 0, z: 0 },
+                scale: { x: 1, y: 1, z: 1 },
+                loaded: false,
+            };
+
+            const root = new DIVERoot();
+            const firstObject = root.addSceneObject(modelData);
+            const duplicateObject = root.addSceneObject(modelData);
+
+            expect(duplicateObject).toBe(firstObject);
+            expect(spyConsoleWarn).toHaveBeenCalledWith(
+                'DIVERoot.addSceneObject: Scene object with id model-duplicate already exists',
+            );
+        });
     });
 
     describe('updateSceneObject', () => {
@@ -906,6 +929,25 @@ describe('components/root/DIVERoot', () => {
             );
         });
 
+        it('should no-op when updating a found POV object', () => {
+            const povData = {
+                id: 'pov-1',
+                entityType: 'pov' as EntityTypeSchema,
+                name: 'Test POV',
+                visible: true,
+            };
+
+            const root = new DIVERoot();
+            const povObject = new Object3D();
+            povObject.userData.id = povData.id;
+            root.add(povObject);
+
+            root.updateSceneObject(povData);
+
+            expect(spyConsoleWarn).not.toHaveBeenCalled();
+            expect(root.getSceneObject(povData)).toBe(povObject);
+        });
+
         it('should warn for unknown entity type in update', () => {
             const unknownData = {
                 id: 'unknown',
@@ -918,6 +960,23 @@ describe('components/root/DIVERoot', () => {
             expect(spyConsoleWarn).toHaveBeenCalled();
             expect(spyConsoleWarn).toHaveBeenCalledWith(
                 'DIVERoot.updateSceneObject: Scene object with id unknown does not exist',
+            );
+        });
+
+        it('should throw for unknown entity type when the object exists', () => {
+            const unknownData = {
+                id: 'unknown',
+                entityType: 'unknown' as EntityTypeSchema,
+                name: 'Unknown',
+            };
+
+            const root = new DIVERoot();
+            const existingObject = new Object3D();
+            existingObject.userData.id = unknownData.id;
+            root.add(existingObject);
+
+            expect(() => root.updateSceneObject(unknownData)).toThrow(
+                'DIVERoot.updateSceneObject: Unknown entity type: unknown',
             );
         });
     });
@@ -981,6 +1040,27 @@ describe('components/root/DIVERoot', () => {
             expect(spyConsoleWarn).toHaveBeenCalledWith(
                 'DIVERoot.deleteSceneObject: Object with id pov-1 not found',
             );
+        });
+
+        it('should no-op when deleting a found POV object', () => {
+            const povData: PovSchema = {
+                id: 'pov-1',
+                entityType: 'pov',
+                name: 'Test POV',
+                visible: true,
+                position: { x: 1, y: 2, z: 3 },
+                target: { x: 0, y: 0, z: 0 },
+            };
+
+            const root = new DIVERoot();
+            const povObject = new Object3D();
+            povObject.userData.id = povData.id;
+            root.add(povObject);
+
+            root.deleteSceneObject(povData);
+
+            expect(spyConsoleWarn).not.toHaveBeenCalled();
+            expect(root.getSceneObject(povData)).toBe(povObject);
         });
 
         it('should warn for unknown entity type in deletion', () => {
@@ -1646,6 +1726,25 @@ describe('components/root/DIVERoot', () => {
             const root = new DIVERoot();
             root['_detachTransformControls'](mockObject);
             expect(mockTransformControls.detach).toHaveBeenCalled();
+        });
+
+        it('should detach controls from transform control helper roots', () => {
+            const mockObject = new Object3D();
+            const detach = vi.fn();
+            const mockHelperRoot = Object.assign(new Object3D(), {
+                isTransformControlsRoot: true,
+                controls: {
+                    detach,
+                },
+            });
+
+            const mockScene = new Object3D();
+            mockScene.children = [mockHelperRoot];
+            mockObject.parent = mockScene;
+
+            const root = new DIVERoot();
+            root['_detachTransformControls'](mockObject);
+            expect(detach).toHaveBeenCalled();
         });
 
         it('should handle object without transform controls', () => {
