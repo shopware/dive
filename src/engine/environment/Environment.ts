@@ -6,16 +6,16 @@ import {
     PMREMGenerator,
     Scene,
     Texture,
-    WebGLCubeRenderTarget,
-    WebGLRenderTarget,
-    WebGLRenderer,
+    CubeRenderTarget,
+    RenderTarget,
+    WebGPURenderer,
     BackSide,
     SphereGeometry,
     NoToneMapping,
     LinearSRGBColorSpace,
     HalfFloatType,
-} from 'three';
-import { RGBELoader } from 'three/examples/jsm/loaders/RGBELoader.js';
+} from 'three/webgpu';
+import { HDRLoader } from 'three/examples/jsm/loaders/HDRLoader.js';
 import defaultEnvUrl from '../../../assets/maps/env/default.hdr?url';
 
 export type DIVEEnvironmentSettings = {
@@ -89,16 +89,16 @@ export const DIVEEnvironmentDefaultSettings: DIVEEnvironmentSettings = {
 export class DIVEEnvironment {
     private originalBackground: typeof Scene.prototype.background;
 
-    private renderer: WebGLRenderer;
+    private renderer: WebGPURenderer;
     private scene: Scene;
     private pmrem: PMREMGenerator;
-    private currentEnvRT: WebGLRenderTarget | null = null;
-    private currentBackgroundCube: WebGLCubeRenderTarget | null = null;
+    private currentEnvRT: RenderTarget | null = null;
+    private currentBackgroundCube: CubeRenderTarget | null = null;
     private sourceImage: Texture | null = null;
     private options: DIVEEnvironmentSettings;
 
     constructor(
-        renderer: WebGLRenderer,
+        renderer: WebGPURenderer,
         scene: Scene,
         options: Partial<DIVEEnvironmentSettings> = {},
     ) {
@@ -179,7 +179,7 @@ export class DIVEEnvironment {
         this.renderer.toneMapping = NoToneMapping;
         this.renderer.outputColorSpace = LinearSRGBColorSpace;
 
-        const cubeRT = new WebGLCubeRenderTarget(1024, {
+        const cubeRT = new CubeRenderTarget(1024, {
             type: HalfFloatType,
         });
         const cubeCamera = new CubeCamera(0.1, 1000, cubeRT);
@@ -208,7 +208,7 @@ export class DIVEEnvironment {
         this.currentEnvRT = pmremRT;
         this.scene.environment = pmremRT.texture;
 
-        // keep unfiltered capture as background (matches RGBELoader brightness)
+        // keep unfiltered capture as background (matches HDRLoader brightness)
         if (this.options.useAsBackground) {
             this.scene.background = cubeRT.texture;
             this.currentBackgroundCube = cubeRT;
@@ -229,7 +229,7 @@ export class DIVEEnvironment {
      *
      * @param renderer - The webglrenderer.
      */
-    public setRenderer(renderer: WebGLRenderer): void {
+    public setRenderer(renderer: WebGPURenderer): void {
         this.renderer = renderer;
         this.pmrem.dispose();
         this.pmrem = new PMREMGenerator(renderer);
@@ -277,7 +277,7 @@ export class DIVEEnvironment {
      * @returns The loaded equirectangular HDR texture.
      */
     private async loadHDRImage(url: string): Promise<Texture> {
-        const image = await new RGBELoader().loadAsync(url);
+        const image = await new HDRLoader().loadAsync(url);
         image.mapping = EquirectangularReflectionMapping;
         return image;
     }

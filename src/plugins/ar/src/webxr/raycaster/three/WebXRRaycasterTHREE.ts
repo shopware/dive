@@ -3,7 +3,7 @@ import {
     type Mesh,
     Raycaster,
     type XRTargetRaySpace,
-} from 'three';
+} from 'three/webgpu';
 import { type DIVERenderer } from '../../../../../../engine/renderer/Renderer.ts';
 import { type DIVEScene } from '../../../../../../engine/scene/Scene.ts';
 import { type DIVEHitResult } from '../WebXRRaycaster.ts';
@@ -21,7 +21,7 @@ export class DIVEWebXRRaycasterTHREE {
         this._renderer = renderer;
         this._scene = scene;
 
-        this._controller = this._renderer.webglrenderer.xr.getController(0);
+        this._controller = this._renderer.webgpurenderer.xr.getController(0);
     }
 
     public async init(): Promise<this> {

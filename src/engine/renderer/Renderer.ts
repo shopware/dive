@@ -4,8 +4,8 @@ import {
     PCFShadowMap,
     PCFSoftShadowMap,
     SRGBColorSpace,
-    WebGLRenderer,
-} from 'three';
+    WebGPURenderer,
+} from 'three/webgpu';
 import { DIVEScene } from '../scene/Scene.ts';
 import { DIVEPerspectiveCamera } from '../camera/PerspectiveCamera.ts';
 import { DIVEEnvironment } from '../environment/Environment.ts';
@@ -94,7 +94,7 @@ export const DIVERendererDefaultSettings: Required<DIVERendererSettings> = {
 export class DIVERenderer {
     public readonly isDIVERenderer: true = true;
 
-    private _webglrenderer: WebGLRenderer;
+    private _webgpurenderer: WebGPURenderer;
     private _environment: DIVEEnvironment;
 
     private _settings: DIVERendererSettings;
@@ -109,16 +109,16 @@ export class DIVERenderer {
             ...(settings ?? {}),
         };
 
-        this._webglrenderer = this._createWebGLRenderer();
+        this._webgpurenderer = this._createWebGPURenderer();
 
         this._environment = new DIVEEnvironment(
-            this._webglrenderer,
+            this._webgpurenderer,
             this._scene,
         );
     }
 
-    public get webglrenderer(): WebGLRenderer {
-        return this._webglrenderer;
+    public get webgpurenderer(): WebGPURenderer {
+        return this._webgpurenderer;
     }
 
     public get environment(): DIVEEnvironment {
@@ -126,41 +126,48 @@ export class DIVERenderer {
     }
 
     public get canvas(): HTMLCanvasElement {
-        return this._webglrenderer.domElement;
+        return this._webgpurenderer.domElement;
+    }
+
+    public async init(): Promise<void> {
+        await this._webgpurenderer.init();
+        this._environment.init();
     }
 
     public render(): void {
-        this._webglrenderer.render(this._scene, this._camera);
+        if (!this._webgpurenderer.initialized) return;
+
+        this._webgpurenderer.render(this._scene, this._camera);
     }
 
     public onResize(width: number, height: number): void {
-        this._webglrenderer.setSize(width, height);
+        this._webgpurenderer.setSize(width, height);
     }
 
     public dispose(): void {
         this._environment.dispose();
-        this._webglrenderer.dispose();
+        this._webgpurenderer.dispose();
     }
 
     public setCanvas(canvas: HTMLCanvasElement): void {
         // dispose old renderer and hdr environment
-        this._webglrenderer.dispose();
+        this._webgpurenderer.dispose();
 
         // create new renderer with canvas
         this._settings.canvas = canvas;
-        this._webglrenderer = this._createWebGLRenderer();
+        this._webgpurenderer = this._createWebGPURenderer();
 
-        this._environment.setRenderer(this._webglrenderer);
+        this._environment.setRenderer(this._webgpurenderer);
     }
 
-    private _createWebGLRenderer(): WebGLRenderer {
+    private _createWebGPURenderer(): WebGPURenderer {
         // reset GL state
         const gl = this._settings.canvas?.getContext('webgl2');
         gl?.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, false);
         gl?.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, false);
 
         // create new renderer
-        const renderer = new WebGLRenderer(this._settings);
+        const renderer = new WebGPURenderer(this._settings);
         renderer.shadowMap.enabled = this._settings.shadows;
         renderer.shadowMap.type =
             this._settings.shadowQuality === 'high'

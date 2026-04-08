@@ -3,7 +3,7 @@
  */
 
 import { vi, describe, it, expect, beforeEach } from 'vitest';
-import { WebGLRenderer, Scene, Color } from 'three';
+import { WebGPURenderer, Scene, Color } from 'three/webgpu';
 import { DIVEEnvironment } from '../Environment.ts';
 
 vi.mock('three', async () => {
@@ -48,8 +48,8 @@ vi.mock('three', async () => {
     };
 });
 
-vi.mock('three/examples/jsm/loaders/RGBELoader.js', () => ({
-    RGBELoader: vi.fn(function (this: any) {
+vi.mock('three/examples/jsm/loaders/HDRLoader.js', () => ({
+    HDRLoader: vi.fn(function (this: any) {
         this.loadAsync = vi.fn(async () => ({
             mapping: undefined,
             dispose: vi.fn(),
@@ -66,7 +66,7 @@ describe('HDREnvironment', () => {
     let scene: any;
 
     beforeEach(() => {
-        renderer = new WebGLRenderer();
+        renderer = new WebGPURenderer();
         scene = new Scene();
     });
 
@@ -229,7 +229,7 @@ describe('HDREnvironment', () => {
         });
         await waitForAsync();
 
-        const newRenderer = new WebGLRenderer();
+        const newRenderer = new WebGPURenderer();
         const pmremDisposeSpy = vi.spyOn((env as any).pmrem, 'dispose');
 
         env.setRenderer(newRenderer);

@@ -1,5 +1,5 @@
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
-import { USDZLoader } from 'three/examples/jsm/loaders/USDZLoader.js';
+import { USDLoader } from 'three/examples/jsm/loaders/USDLoader.js';
 import { type Object3D } from 'three/webgpu';
 import {
     type FileType,
@@ -15,7 +15,7 @@ import { AssetCache } from '@shopware-ag/dive/assetcache';
 
 export class AssetLoader {
     private _gltfLoader: GLTFLoader;
-    private _usdzLoader: USDZLoader;
+    private _usdLoader: USDLoader;
     private _stepLoader: STEPLoader;
 
     constructor() {
@@ -30,7 +30,7 @@ export class AssetLoader {
         this._gltfLoader.setDRACOLoader(dracoLoader);
 
         // create usdz loader
-        this._usdzLoader = new USDZLoader();
+        this._usdLoader = new USDLoader();
 
         // create step/iges loader (CAD formats)
         this._stepLoader = new STEPLoader();
@@ -191,7 +191,7 @@ export class AssetLoader {
                     return gltf.scene;
                 }
                 case 'usdz': {
-                    const usdz = this._usdzLoader.parse(arrayBuffer);
+                    const usdz = this._usdLoader.parse(arrayBuffer);
                     usdz.animations = [];
                     return usdz;
                 }

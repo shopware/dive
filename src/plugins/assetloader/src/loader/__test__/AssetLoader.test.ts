@@ -20,10 +20,10 @@ vi.mock('three/examples/jsm/loaders/GLTFLoader.js', () => ({
     })),
 }));
 
-const mockParseUSDZ = vi.fn();
-vi.mock('three/examples/jsm/loaders/USDZLoader.js', () => ({
-    USDZLoader: vi.fn().mockImplementation(() => ({
-        parse: mockParseUSDZ,
+const mockParseUSD = vi.fn();
+vi.mock('three/examples/jsm/loaders/USDLoader.js', () => ({
+    USDLoader: vi.fn().mockImplementation(() => ({
+        parseAsync: mockParseUSD,
     })),
 }));
 
@@ -253,27 +253,27 @@ describe('AssetLoader', () => {
         it('should parse USDZ files correctly', async () => {
             const mockObject = new Group();
             const mockArrayBuffer = new ArrayBuffer(1024);
-            mockParseUSDZ.mockReturnValue(mockObject);
+            mockParseUSD.mockReturnValue(mockObject);
             mockChunk.load.mockResolvedValue(mockArrayBuffer);
 
             const result = await loader.load('model.usdz');
 
             expect(MockedAssetCache.create).toHaveBeenCalledWith('model.usdz');
             expect(mockChunk.load).toHaveBeenCalled();
-            expect(mockParseUSDZ).toHaveBeenCalledWith(mockArrayBuffer);
+            expect(mockParseUSD).toHaveBeenCalledWith(mockArrayBuffer);
             expect(result).toBe(mockObject);
             expect(result.animations).toEqual([]);
         });
 
         it('should throw ParseError when USDZ parsing fails', async () => {
             const mockArrayBuffer = new ArrayBuffer(1024);
-            mockParseUSDZ.mockImplementation(() => {
+            mockParseUSD.mockImplementation(() => {
                 throw new Error('Invalid USDZ');
             });
             mockChunk.load.mockResolvedValue(mockArrayBuffer);
 
             await expect(loader.load('model.usdz')).rejects.toThrow(ParseError);
-            expect(mockParseUSDZ).toHaveBeenCalledWith(mockArrayBuffer);
+            expect(mockParseUSD).toHaveBeenCalledWith(mockArrayBuffer);
         });
     });
 
@@ -309,14 +309,14 @@ describe('AssetLoader', () => {
 
             MockedAssetCache.read.mockReturnValue(null);
             mockChunk.load.mockResolvedValue(mockArrayBuffer);
-            mockParseUSDZ.mockReturnValue(mockObject);
+            mockParseUSD.mockReturnValue(mockObject);
 
             const result = await loader.load(uri);
 
             expect(MockedAssetCache.read).toHaveBeenCalledWith(uri);
             expect(MockedAssetCache.create).toHaveBeenCalledWith(uri);
             expect(mockChunk.load).toHaveBeenCalled();
-            expect(mockParseUSDZ).toHaveBeenCalledWith(mockArrayBuffer);
+            expect(mockParseUSD).toHaveBeenCalledWith(mockArrayBuffer);
             expect(result).toBe(mockObject);
             expect(result.animations).toEqual([]);
         });
@@ -340,7 +340,7 @@ describe('AssetLoader', () => {
             mockParseAsyncGLTF.mockResolvedValue({
                 scene: new Group(),
             } as GLTF);
-            mockParseUSDZ.mockResolvedValue(new Group());
+            mockParseUSD.mockResolvedValue(new Group());
             mockStepParseAsync.mockResolvedValue(new Group());
         });
 

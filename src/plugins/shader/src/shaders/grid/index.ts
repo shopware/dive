@@ -1,4 +1,4 @@
-import { Color, type IUniform, type ShaderLibShader } from 'three';
+import { Color, type IUniform, type ShaderLibShader } from 'three/webgpu';
 import vertexShader from './vertex.glsl?raw';
 import fragmentShader from './fragment.glsl?raw';
 

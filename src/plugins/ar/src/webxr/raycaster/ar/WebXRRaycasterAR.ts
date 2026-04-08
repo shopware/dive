@@ -1,4 +1,4 @@
-import { Matrix4, Vector3 } from 'three';
+import { Matrix4, Vector3 } from 'three/webgpu';
 import { type DIVERenderer } from '../../../../../../engine/renderer/Renderer.ts';
 import { type DIVEHitResult } from '../WebXRRaycaster.ts';
 
@@ -56,7 +56,7 @@ export class DIVEWebXRRaycasterAR {
             profile: 'generic-touchscreen',
         });
         this._referenceSpaceBuffer =
-            this._renderer.webglrenderer.xr.getReferenceSpace();
+            this._renderer.webgpurenderer.xr.getReferenceSpace();
         this._requesting = false;
 
         if (!this._transientHitTestSource) {

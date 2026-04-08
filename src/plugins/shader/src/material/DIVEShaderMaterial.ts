@@ -1,5 +1,5 @@
 import { type ShaderLibShader } from 'three/src/renderers/shaders/ShaderLib.js';
-import { ShaderMaterial } from 'three';
+import { ShaderMaterial } from 'three/webgpu';
 
 export class DIVEShaderMaterial<
     TShader extends ShaderLibShader,
