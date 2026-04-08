@@ -373,6 +373,19 @@ describe('DIVE', () => {
     it('should start the clock', () => {
         const dive = new DIVE();
         dive.start();
+        return waitForAsync().then(() => {
+            expect(dive.clock.start).toHaveBeenCalled();
+        });
+    });
+
+    it('should expose an explicit async start path', async () => {
+        const dive = new DIVE({
+            autoStart: false,
+        });
+
+        await dive.startAsync();
+
+        expect(dive.mainView.renderer.init).toHaveBeenCalled();
         expect(dive.clock.start).toHaveBeenCalled();
     });
 

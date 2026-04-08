@@ -49,22 +49,22 @@ export class OrientationDisplay implements DIVETicker {
         this._scene.background = null;
 
         // save current viewport and set it to desired size
-        this._renderer.webglrenderer.getViewport(this._restoreViewport);
-        this._renderer.webglrenderer.setViewport(0, 0, 150, 150);
-        this._renderer.webglrenderer.autoClear = false;
+        this._renderer.webgpurenderer.getViewport(this._restoreViewport);
+        this._renderer.webgpurenderer.setViewport(0, 0, 150, 150);
+        this._renderer.webgpurenderer.autoClear = false;
 
         // set axes rotation to camera rotation
         this._axes.setFromCameraMatrix(this._camera.matrix);
 
         // render scene to orthographic camera
-        this._renderer.webglrenderer.render(
+        this._renderer.webgpurenderer.render(
             this._scene,
             this._orthographicCamera,
         );
 
         // restore viewport and background
-        this._renderer.webglrenderer.setViewport(this._restoreViewport);
-        this._renderer.webglrenderer.autoClear = true;
+        this._renderer.webgpurenderer.setViewport(this._restoreViewport);
+        this._renderer.webgpurenderer.autoClear = true;
         this._scene.background = restoreBackground;
     }
 

@@ -96,6 +96,11 @@ export class DIVEEnvironment {
     private currentBackgroundCube: CubeRenderTarget | null = null;
     private sourceImage: Texture | null = null;
     private options: DIVEEnvironmentSettings;
+    private _loadPromise: Promise<void>;
+    private _initPromise: Promise<void> | null = null;
+    private _sourceImageLoadId = 0;
+    private _initRequested = false;
+    private _disposed = false;
 
     constructor(
         renderer: WebGPURenderer,
@@ -112,19 +117,34 @@ export class DIVEEnvironment {
             ...options,
         };
 
-        this.loadHDRImage(this.options.imageUrl).then((image) => {
-            this.sourceImage = image;
-        });
+        this._loadPromise = this._loadSourceImage(this.options.imageUrl);
     }
 
-    public init(): void {
-        this.update();
+    public async init(): Promise<void> {
+        this._initRequested = true;
+
+        if (this._initPromise) {
+            return this._initPromise;
+        }
+
+        this._initPromise = (async () => {
+            await this._loadPromise;
+
+            if (this._disposed || !this.renderer.initialized) return;
+
+            this.update();
+        })().finally(() => {
+            this._initPromise = null;
+        });
+
+        return this._initPromise;
     }
 
     /**
      * Disposes the environment.
      */
     public dispose(): void {
+        this._disposed = true;
         this.pmrem.dispose();
         this.sourceImage?.dispose();
         this.sourceImage = null;
@@ -158,6 +178,8 @@ export class DIVEEnvironment {
      * - Early-returns if the source image is not loaded.
      */
     public update(): void {
+        if (!this.renderer.initialized) return;
+
         if (!this.sourceImage) {
             this.clearEnvironment();
             return;
@@ -228,15 +250,18 @@ export class DIVEEnvironment {
     }
 
     /**
-     * Sets the renderer and updates the environment. Use this only when rebuilding the webgl renderer.
+     * Sets the renderer and rebinds the PMREM generator. Use this only when rebuilding the renderer.
      *
-     * @param renderer - The webglrenderer.
+     * @param renderer - The renderer.
      */
     public setRenderer(renderer: WebGPURenderer): void {
         this.renderer = renderer;
         this.pmrem.dispose();
         this.pmrem = new PMREMGenerator(renderer);
-        this.update();
+
+        if (this._initRequested && renderer.initialized) {
+            this.update();
+        }
     }
 
     /**
@@ -246,11 +271,13 @@ export class DIVEEnvironment {
      */
     public async setImageUrl(url: string | null): Promise<void> {
         this.options.imageUrl = url ?? defaultEnvUrl;
-        this.sourceImage?.dispose();
-        this.sourceImage = null;
 
-        this.sourceImage = await this.loadHDRImage(this.options.imageUrl);
-        this.update();
+        this._loadPromise = this._loadSourceImage(this.options.imageUrl);
+        await this._loadPromise;
+
+        if (this._initRequested && this.renderer.initialized) {
+            this.update();
+        }
     }
 
     /**
@@ -314,6 +341,19 @@ export class DIVEEnvironment {
      * @deprecated Use update() instead.
      */
     public async enable(): Promise<void> {
-        this.update();
+        await this.init();
+    }
+
+    private async _loadSourceImage(url: string): Promise<void> {
+        const loadId = ++this._sourceImageLoadId;
+        const image = await this.loadHDRImage(url);
+
+        if (this._disposed || loadId !== this._sourceImageLoadId) {
+            image.dispose();
+            return;
+        }
+
+        this.sourceImage?.dispose();
+        this.sourceImage = image;
     }
 }

@@ -55,7 +55,7 @@ vi.mock('../../environment/Environment.ts', () => ({
     DIVEEnvironment: vi.fn(function (this: any) {
         this.dispose = vi.fn();
         this.setRenderer = vi.fn();
-        this.init = vi.fn();
+        this.init = vi.fn(async () => {});
         return this;
     }),
 }));
@@ -130,6 +130,7 @@ describe('DIVERenderPipeline', () => {
         const instance = WebGPURenderer.mock.results[0].value;
 
         expect(renderer.webgpurenderer).toBe(instance);
+        expect(renderer.webglrenderer).toBe(instance);
         expect(renderer.canvas).toBe(instance.domElement);
     });
 
@@ -177,6 +178,18 @@ describe('DIVERenderPipeline', () => {
         );
         expect(environment.setRenderer).toHaveBeenCalledWith(secondInstance);
         expect(renderer.canvas).toBe(secondInstance.domElement);
+    });
+
+    it('should reinitialize after canvas swap when the previous renderer was active', () => {
+        const firstInstance = WebGPURenderer.mock.results[0].value;
+        const newCanvas = document.createElement('canvas');
+
+        firstInstance.initialized = true;
+
+        renderer.setCanvas(newCanvas);
+
+        const secondInstance = WebGPURenderer.mock.results.at(-1)?.value;
+        expect(secondInstance.init).toHaveBeenCalled();
     });
 
     it('should dispose environment and renderer', () => {

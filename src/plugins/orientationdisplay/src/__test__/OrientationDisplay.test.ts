@@ -37,7 +37,7 @@ const mockCamera = {
 
 const mockRenderer = {
     render: vi.fn(),
-    webglrenderer: {
+    webgpurenderer: {
         getViewport: vi.fn().mockReturnValue(new Vector4(0, 0, 800, 600)),
         setViewport: vi.fn(),
         render: vi.fn(),
@@ -50,7 +50,7 @@ describe('OrientationDisplay', () => {
 
     beforeEach(() => {
         vi.clearAllMocks();
-        mockRenderer.webglrenderer.autoClear = true;
+        mockRenderer.webgpurenderer.autoClear = true;
         orientationDisplay = new OrientationDisplay(
             mockRenderer,
             mockScene,
@@ -103,22 +103,19 @@ describe('OrientationDisplay', () => {
 
             orientationDisplay.tick();
 
-            expect(mockRenderer.webglrenderer.getViewport).toHaveBeenCalledWith(
-                orientationDisplay['_restoreViewport'],
-            );
-            expect(mockRenderer.webglrenderer.setViewport).toHaveBeenCalledWith(
-                0,
-                0,
-                150,
-                150,
-            );
-            expect(mockRenderer.webglrenderer.render).toHaveBeenCalledWith(
+            expect(
+                mockRenderer.webgpurenderer.getViewport,
+            ).toHaveBeenCalledWith(orientationDisplay['_restoreViewport']);
+            expect(
+                mockRenderer.webgpurenderer.setViewport,
+            ).toHaveBeenCalledWith(0, 0, 150, 150);
+            expect(mockRenderer.webgpurenderer.render).toHaveBeenCalledWith(
                 mockScene,
                 orientationDisplay['_orthographicCamera'],
             );
-            expect(mockRenderer.webglrenderer.setViewport).toHaveBeenCalledWith(
-                orientationDisplay['_restoreViewport'],
-            );
+            expect(
+                mockRenderer.webgpurenderer.setViewport,
+            ).toHaveBeenCalledWith(orientationDisplay['_restoreViewport']);
             expect(mockScene.background).toBe(originalBackground);
         });
 
@@ -146,7 +143,7 @@ describe('OrientationDisplay', () => {
         it('should manage autoClear property correctly', () => {
             orientationDisplay.tick();
 
-            expect(mockRenderer.webglrenderer.autoClear).toBe(true);
+            expect(mockRenderer.webgpurenderer.autoClear).toBe(true);
         });
     });
 });

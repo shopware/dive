@@ -40,3 +40,8 @@
 - `DIVE` tests must mock `mainView.renderer.initialized` and `mainView.renderer.init()` because `DIVE.start()` now guards rendering via renderer initialization
 - `DIVERenderer` tests must mock `three/webgpu` `WebGPURenderer`; old `three` `WebGLRenderer` expectations are outdated
 - Demo fixture `/Users/f.frank/Public/Repos/dive-demo/public/model_reverse_animation_order_long_name_blank_name.glb` is used for animation edge cases; it contains a blank clip name, an overlong clip name, and a `Walk` clip that now hard-fails loading via an invalid animation accessor reference
+- `yarn build` can still exit successfully while `vite-plugin-dts` reports TypeScript API migration errors, so WebGPU refactors need explicit grep/type-review and not just a green build exit code
+- `DIVE.start()` is now a fire-and-forget wrapper around `startAsync()`, so tests that need renderer readiness should await `startAsync()` or a microtask before asserting downstream effects
+- `DIVERenderer` keeps a temporary deprecated `webglrenderer` alias for compatibility, but internal runtime code should use `webgpurenderer`
+- `MediaCreator` screenshot generation is async under WebGPU and uses `RenderTarget` plus `readRenderTargetPixelsAsync`; it no longer swaps `renderer.domElement`
+- `DIVEXRLightRoot` currently guards `XREstimatedLight` off under WebGPU and falls back to the existing scene light until a dedicated WebGPU-compatible light-estimation path exists

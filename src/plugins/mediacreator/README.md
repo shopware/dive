@@ -13,10 +13,12 @@ import { MediaCreator } from '@shopware-ag/dive/mediacreator';
 const mediaCreator = new MediaCreator(renderer, scene, controller);
 
 // Generate a screenshot
-const screenshot = await mediaCreator.generateMedia(
-    { x: 0, y: 0, z: 0 }, // camera position
-    { x: 0, y: 0, z: 0 }, // camera target
-    1920, // width
-    1080  // height
-);
+const screenshot = await mediaCreator.generateMedia({
+    position: { x: 0, y: 0, z: 0 },
+    target: { x: 0, y: 0, z: 0 },
+    resolution: {
+        width: 1920,
+        height: 1080,
+    },
+});
 ```

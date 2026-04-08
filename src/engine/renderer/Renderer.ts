@@ -96,6 +96,7 @@ export class DIVERenderer {
 
     private _webgpurenderer: WebGPURenderer;
     private _environment: DIVEEnvironment;
+    private _initPromise: Promise<void> | null = null;
 
     private _settings: DIVERendererSettings;
 
@@ -121,6 +122,13 @@ export class DIVERenderer {
         return this._webgpurenderer;
     }
 
+    /**
+     * @deprecated Use `webgpurenderer` instead.
+     */
+    public get webglrenderer(): WebGPURenderer {
+        return this._webgpurenderer;
+    }
+
     public get environment(): DIVEEnvironment {
         return this._environment;
     }
@@ -134,8 +142,31 @@ export class DIVERenderer {
     }
 
     public async init(): Promise<void> {
-        await this._webgpurenderer.init();
-        this._environment.init();
+        if (this._webgpurenderer.initialized) {
+            await this._environment.init();
+            return;
+        }
+
+        if (this._initPromise) {
+            return this._initPromise;
+        }
+
+        const renderer = this._webgpurenderer;
+        this._initPromise = (async () => {
+            await renderer.init();
+
+            if (renderer !== this._webgpurenderer) {
+                return;
+            }
+
+            await this._environment.init();
+        })().finally(() => {
+            if (renderer === this._webgpurenderer) {
+                this._initPromise = null;
+            }
+        });
+
+        return this._initPromise;
     }
 
     public render(): void {
@@ -154,14 +185,22 @@ export class DIVERenderer {
     }
 
     public setCanvas(canvas: HTMLCanvasElement): void {
+        const shouldReinitialize =
+            this._webgpurenderer.initialized || this._initPromise !== null;
+
         // dispose old renderer and hdr environment
         this._webgpurenderer.dispose();
+        this._initPromise = null;
 
         // create new renderer with canvas
         this._settings.canvas = canvas;
         this._webgpurenderer = this._createWebGPURenderer();
 
         this._environment.setRenderer(this._webgpurenderer);
+
+        if (shouldReinitialize) {
+            void this.init();
+        }
     }
 
     private _createWebGPURenderer(): WebGPURenderer {

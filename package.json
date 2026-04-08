@@ -1,6 +1,6 @@
 {
     "name": "@shopware-ag/dive",
-    "version": "2.3.9",
+    "version": "3.0.0",
     "description": "Shopware Spatial Framework",
     "type": "module",
     "main": "build/dive.cjs",
@@ -153,10 +153,11 @@
         "lint": "eslint",
         "prettier:check": "prettier --check .",
         "prettier:fix": "prettier --write .",
+        "typecheck": "tsc --noEmit --project tsconfig.json",
         "unit": "vitest --run",
         "coverage": "vitest --coverage --run",
         "docs": "yarn docs:actions",
         "docs:actions": "tsx docs/generators/generate-actions-docs.ts",
-        "ci": "yarn && yarn lint && yarn prettier:check && yarn coverage && yarn build"
+        "ci": "yarn && yarn lint && yarn prettier:check && yarn typecheck && yarn coverage && yarn build"
     }
 }

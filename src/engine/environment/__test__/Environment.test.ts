@@ -60,7 +60,6 @@ vi.mock('three/examples/jsm/loaders/HDRLoader.js', () => ({
     }),
 }));
 
-const waitForAsync = () => new Promise((resolve) => setTimeout(resolve, 0));
 const CubeRenderTarget = CubeRenderTargetOriginal as any;
 
 describe('HDREnvironment', () => {
@@ -76,8 +75,7 @@ describe('HDREnvironment', () => {
     it('loads default image when no imageUrl provided', async () => {
         const env = new DIVEEnvironment(renderer, scene, { enabled: true });
 
-        await waitForAsync();
-        env.init();
+        await env.init();
 
         expect(scene.environment).toBeDefined();
     });
@@ -88,8 +86,7 @@ describe('HDREnvironment', () => {
             useAsBackground: true,
         });
 
-        await waitForAsync();
-        env.init();
+        await env.init();
 
         expect(scene.background).toBeDefined();
         expect(scene.environment).toBeDefined();
@@ -102,8 +99,7 @@ describe('HDREnvironment', () => {
             useAsBackground: true,
         });
 
-        await waitForAsync();
-        env.init();
+        await env.init();
 
         expect(scene.environment).toBeDefined();
         expect(scene.background).toBeDefined();
@@ -112,7 +108,7 @@ describe('HDREnvironment', () => {
     it('can set image URL after construction and initialize again', async () => {
         const env = new DIVEEnvironment(renderer, scene, { enabled: true });
 
-        await waitForAsync();
+        await env.init();
         await env.setImageUrl('later.hdr');
 
         expect(scene.environment).toBeDefined();
@@ -123,8 +119,7 @@ describe('HDREnvironment', () => {
             imageUrl: 'hdr.hdr',
         });
 
-        await waitForAsync();
-        env.init();
+        await env.init();
         env.dispose();
 
         expect(scene.environment).toBeNull();
@@ -136,8 +131,7 @@ describe('HDREnvironment', () => {
             useAsBackground: true,
         });
 
-        await waitForAsync();
-        env.init();
+        await env.init();
 
         expect((env as any).currentBackgroundCube).toBeDefined();
 
@@ -152,8 +146,7 @@ describe('HDREnvironment', () => {
             imageUrl: 'hdr.hdr',
         });
 
-        await waitForAsync();
-        env.init();
+        await env.init();
 
         const spy = vi.spyOn(env, 'update');
         env.setRotationY(1.23);
@@ -169,8 +162,7 @@ describe('HDREnvironment', () => {
             useAsBackground: true,
         });
 
-        await waitForAsync();
-        env.init();
+        await env.init();
 
         const firstCube = (env as any).currentBackgroundCube;
         expect(firstCube).toBeDefined();
@@ -191,8 +183,7 @@ describe('HDREnvironment', () => {
             useAsBackground: false,
         });
 
-        await waitForAsync();
-        env.init();
+        await env.init();
 
         const baseLen = CubeRenderTarget.mock.instances.length;
 
@@ -212,8 +203,7 @@ describe('HDREnvironment', () => {
             useAsBackground: true,
         });
 
-        await waitForAsync();
-        env.init();
+        await env.init();
 
         expect(scene.background).not.toBe(originalBg);
         expect(scene.background).toBeDefined();
@@ -232,8 +222,7 @@ describe('HDREnvironment', () => {
             useAsBackground: true,
         });
 
-        await waitForAsync();
-        env.init();
+        await env.init();
 
         const hdrBg = scene.background;
         expect(hdrBg).not.toBe(originalBg);
@@ -250,8 +239,7 @@ describe('HDREnvironment', () => {
             imageUrl: 'hdr.hdr',
         });
 
-        await waitForAsync();
-        env.init();
+        await env.init();
 
         const newRenderer = new WebGPURenderer();
         const pmremDisposeSpy = vi.spyOn((env as any).pmrem, 'dispose');

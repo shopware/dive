@@ -187,6 +187,7 @@ export class DIVE {
         setCanvas: (canvas: HTMLCanvasElement) => void;
         clock: DIVEClock;
         start: () => void;
+        startAsync: () => Promise<void>;
         stop: () => void;
         dispose: () => void;
     } {
@@ -200,6 +201,9 @@ export class DIVE {
             clock: this.clock,
             start: () => {
                 this.start();
+            },
+            startAsync: () => {
+                return this.startAsync();
             },
             stop: () => {
                 this.stop();
@@ -231,8 +235,17 @@ export class DIVE {
     }
 
     public start(): void {
+        void this.startAsync().catch((error) => {
+            console.error(
+                'DIVE.start: Failed to initialize the WebGPU renderer.',
+                error,
+            );
+        });
+    }
+
+    public async startAsync(): Promise<void> {
         if (!this.mainView.renderer.initialized) {
-            this.mainView.renderer.init();
+            await this.mainView.renderer.init();
         }
         this._clock.start();
     }
