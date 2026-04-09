@@ -178,11 +178,10 @@ export class DIVERenderer {
     }
 
     public setCanvas(canvas: HTMLCanvasElement): void {
+        const previousRenderer = this._webgpurenderer;
         const shouldReinitialize =
-            this._webgpurenderer.initialized || this._initPromise !== null;
+            previousRenderer.initialized || this._initPromise !== null;
 
-        // dispose old renderer and hdr environment
-        this._webgpurenderer.dispose();
         this._initPromise = null;
 
         // create new renderer with canvas
@@ -190,6 +189,7 @@ export class DIVERenderer {
         this._webgpurenderer = this._createWebGPURenderer();
 
         this._environment.setRenderer(this._webgpurenderer);
+        previousRenderer.dispose();
 
         if (shouldReinitialize) {
             void this.init();

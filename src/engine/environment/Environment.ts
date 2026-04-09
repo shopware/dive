@@ -249,8 +249,8 @@ export class DIVEEnvironment {
      * @param renderer - The renderer.
      */
     public setRenderer(renderer: WebGPURenderer): void {
-        this.renderer = renderer;
         this.pmrem.dispose();
+        this.renderer = renderer;
         this.pmrem = new PMREMGenerator(renderer);
 
         if (this._initRequested && renderer.initialized) {

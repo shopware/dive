@@ -227,6 +227,20 @@ describe('DIVERenderPipeline', () => {
         expect(renderer.canvas).toBe(secondInstance.domElement);
     });
 
+    it('should swap the environment to the new renderer before disposing the previous renderer', () => {
+        const firstInstance = WebGPURenderer.mock.results[0].value;
+        const environment = MockedDIVEEnvironment.mock.results[0].value;
+        const newCanvas = document.createElement('canvas');
+
+        renderer.setCanvas(newCanvas);
+
+        expect(environment.setRenderer).toHaveBeenCalledTimes(1);
+        expect(firstInstance.dispose).toHaveBeenCalledTimes(1);
+        expect(
+            environment.setRenderer.mock.invocationCallOrder[0],
+        ).toBeLessThan(firstInstance.dispose.mock.invocationCallOrder[0]);
+    });
+
     it('should reinitialize after canvas swap when the previous renderer was active', () => {
         const firstInstance = WebGPURenderer.mock.results[0].value;
         const newCanvas = document.createElement('canvas');
