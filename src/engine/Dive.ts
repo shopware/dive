@@ -97,6 +97,7 @@ export class DIVE {
     // descriptive members
     private _instanceId: string = MathUtils.generateUUID();
     private _settings: DIVESettings;
+    private _disposed: boolean = false;
 
     private _views: DIVEView[];
     private _mainView: DIVEView;
@@ -139,6 +140,10 @@ export class DIVE {
         if (this._settings.displayAxes) {
             import('@shopware-ag/dive/orientationdisplay').then(
                 ({ OrientationDisplay }) => {
+                    if (this._disposed) {
+                        return;
+                    }
+
                     this._orientationDisplay = new OrientationDisplay(
                         this.mainView.renderer,
                         this.scene,
@@ -183,6 +188,10 @@ export class DIVE {
     }
 
     public start(): void {
+        if (this._disposed) {
+            return;
+        }
+
         void this.startAsync().catch((error) => {
             console.error(
                 'DIVE.start: Failed to initialize the WebGPU renderer.',
@@ -192,9 +201,18 @@ export class DIVE {
     }
 
     public async startAsync(): Promise<void> {
+        if (this._disposed) {
+            return;
+        }
+
         if (!this.mainView.renderer.initialized) {
             await this.mainView.renderer.init();
         }
+
+        if (this._disposed) {
+            return;
+        }
+
         this._clock.start();
     }
 
@@ -203,15 +221,19 @@ export class DIVE {
     }
 
     public async dispose(): Promise<void> {
+        this._disposed = true;
+
         return new Promise((resolve) => {
+            this._clock.dispose();
+
             this._views.forEach((view) => {
                 view.dispose();
             });
             this._views = [];
 
             if (this._orientationDisplay) {
-                this._clock.removeTicker(this._orientationDisplay);
                 this._orientationDisplay.dispose();
+                this._orientationDisplay = null;
             }
 
             this.scene.dispose();

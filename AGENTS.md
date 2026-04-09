@@ -43,9 +43,12 @@
 - `DIVERenderer` tests must mock `three/webgpu` `WebGPURenderer`; old `three` `WebGLRenderer` expectations are outdated
 - `DIVERenderer` stale-init behavior after `setCanvas()` is best tested with a deferred first `init()` promise; the old renderer must not trigger a second environment init after the swap
 - `MediaCreator` fallback coverage is easiest by overriding test canvas `width`/`height` to `undefined` and `writable: true`, then letting `drawCanvas()` fall back through `clientWidth` to the renderer canvas dimensions
+- `MediaCreator.drawCanvas()` must restore the previous WebGPU render target and camera layer mask before awaiting `readRenderTargetPixelsAsync()`; otherwise the live `View.tick()` render can keep drawing into the offscreen target and trigger `WebGPUTextureUtils: Texture already initialized.`
 - Demo fixture `/Users/f.frank/Public/Repos/dive-demo/public/model_reverse_animation_order_long_name_blank_name.glb` is used for animation edge cases; it contains a blank clip name, an overlong clip name, and a `Walk` clip that now hard-fails loading via an invalid animation accessor reference
 - `yarn build` can still exit successfully while `vite-plugin-dts` reports TypeScript API migration errors, so WebGPU refactors need explicit grep/type-review and not just a green build exit code
 - `DIVE.start()` is now a fire-and-forget wrapper around `startAsync()`, so tests that need renderer readiness should await `startAsync()` or a microtask before asserting downstream effects
+- `DIVE.dispose()` must dispose the `DIVEClock` before tearing down views/renderers, and `startAsync()` must bail out after late renderer init if the instance was disposed; otherwise demo route switches can leave stale RAF ticks calling `DIVEView.tick()` on dead WebGPU renderers
+- Demo views in `/Users/f.frank/Public/Repos/dive-demo/src/views/` that create `QuickView` instances must dispose them in `onUnmounted`; missing route-leave cleanup leaves old WebGPU render loops alive across example switches
 - Deprecated `BaseTool` coverage was removed entirely; if `src/plugins/toolbox/src/BaseTool.ts` is gone in a future major, delete the legacy suite instead of recreating the class for tests
 - `MediaCreator` screenshot generation is async under WebGPU and uses `RenderTarget` plus `readRenderTargetPixelsAsync`; it no longer swaps `renderer.domElement`
 - `DIVEXRLightRoot` currently guards `XREstimatedLight` off under WebGPU and falls back to the existing scene light until a dedicated WebGPU-compatible light-estimation path exists

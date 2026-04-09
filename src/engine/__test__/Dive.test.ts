@@ -316,13 +316,15 @@ describe('DIVE', () => {
 
         const dive = new DIVE(settings);
 
-        dive['_orientationDisplay'] = {
+        const orientationDisplay = {
             dispose: vi.fn(),
         } as any;
+        dive['_orientationDisplay'] = orientationDisplay;
 
         await dive.dispose();
 
-        expect(dive['_orientationDisplay']?.dispose).toHaveBeenCalled();
+        expect(orientationDisplay.dispose).toHaveBeenCalled();
+        expect(dive.clock.dispose).toHaveBeenCalled();
     });
 
     it('should handle dispose when animation system pipeline is not initialized', () => {
@@ -382,6 +384,28 @@ describe('DIVE', () => {
         const dive = new DIVE();
         dive.stop();
         expect(dive.clock.stop).toHaveBeenCalled();
+    });
+
+    it('should not start the clock after dispose when renderer init resolves late', async () => {
+        const dive = new DIVE({
+            autoStart: false,
+        });
+        let resolveInit: (() => void) | undefined;
+
+        dive.mainView.renderer.init.mockImplementationOnce(
+            () =>
+                new Promise<void>((resolve) => {
+                    resolveInit = resolve;
+                }),
+        );
+
+        const pendingStart = dive.startAsync();
+        await dive.dispose();
+
+        resolveInit?.();
+        await pendingStart;
+
+        expect(dive.clock.start).not.toHaveBeenCalled();
     });
 
     it('should get the canvas', () => {
