@@ -13,12 +13,45 @@
 - Global Vitest setup mocks were removed; tests now mock dependencies locally per file
 - Shared test mock modules like `src/test/mocks/three.ts` and `src/test/mocks/three-spritetext.ts` were removed; tests should inline only the mocks they actually need
 - Old global-mock cleanup can leave behind no-op local shims like `vi.mock('three', () => importActual('three'))`; remove them when a test does not override Three behavior
+- After the WebGPU import migration, tests must mock `three/webgpu` when the production module imports from `three/webgpu`; mocking `three` does not affect those modules
+- `TransformTool` must add and traverse `TransformControls.getHelper()`, not the `TransformControls` instance itself, because current Three typings and runtime treat the control as non-`Object3D`
 - Local mocks for `three/examples/jsm/*` should use the exact runtime specifier including the `.js` suffix when the source import does
 - `ARQuickLook` tests must mock `@shopware-ag/dive/assetloader` and `@shopware-ag/dive/assetexporter` in addition to `AssetConverter`, because `new AssetLoader()` and `new AssetExporter()` are evaluated before the mocked `AssetConverter` constructor runs
 - `DIVEGizmo` tests should mock child gizmo classes as real `Object3D` instances with spied methods to avoid `THREE.Object3D.add` warnings from plain-object stand-ins
 - `DIVEPrimitive` tests are more stable with real `Box3` plus per-test spies on `Box3.prototype`/`Raycaster`, instead of mocking the full `three` module surface
+- `OrientationDisplayAxes` tests should locally stub `three-spritetext` because jsdom does not implement the canvas text context that the real package needs
+- `DIVERoot` should detach both legacy scene-level `TransformControls` objects and modern `TransformControlsRoot.controls` helper roots when cleaning up transform controls
+- `DIVERoot` POV update/delete coverage requires manually seeding a matching `Object3D` in tests because `addSceneObject` intentionally skips creating POV scene nodes
 - Plugins live in `src/plugins/<name>/` and are auto-discovered by looking for `index.ts` in subdirectories
 - Plugins are exported as subpath exports: `@shopware-ag/dive/<plugin-name>` (e.g. `@shopware-ag/dive/shader`, `@shopware-ag/dive/state`)
-- The shader plugin (`src/plugins/shader/`) exports `DIVEShaderMaterial` (extends three.js `ShaderMaterial`) and `DIVEShaderLib`
+- The shader plugin (`src/plugins/shader/`) now exposes node-based building blocks like `GridNode` and `GridNodeUniforms`; legacy `DIVEShaderLib`/`DIVEShaderMaterial` shader-lib wrappers are being removed
+- `DIVEGrid` custom shader code must use TSL/node materials for WebGPU; plain `ShaderMaterial` triggers `THREE.NodeMaterial: Material "ShaderMaterial" is not compatible`
+- `DIVEGrid` owns its `MeshBasicNodeMaterial` setup and creates its grid uniform nodes locally; `GridNode` only provides the TSL output-node implementation
 - `DIVEGrid` component uses the shader plugin; it is imported transitively via `Scene` → `Grid` → `@shopware-ag/dive/shader`
+- Shader plugin public docs must describe the new node-based API: `GridNode` plus `GridNodeUniforms`; legacy `DIVEShaderLib`/`DIVEShaderMaterial` docs are outdated
+- Tests that mock `@shopware-ag/dive/shader` must provide a `GridNode` constructor stub after the shader plugin migration; legacy `DIVEShaderLib`-only mocks break transitive imports
+- Most tests do not need to mock `@shopware-ag/dive/shader` at all; after the WebGPU migration the only current direct need is `src/components/grid/__test__/Grid.test.ts`, which asserts `DIVEGrid` constructs `GridNode`
+- When partially mocking `three/webgpu`, base the mock on `importOriginal<typeof import('three/webgpu')>()`; using `vi.importActual('three')` drops WebGPU-only exports like `Node` and breaks transitive shader imports
+- `DIVEGrid` tests or other `MeshBasicNodeMaterial` mocks must preserve the constructor `outputNode` param because production code passes `new GridNode(uniforms)` directly into material creation
+- `GridNode` unit tests are best written with local `three/tsl` and `three/webgpu` mocks plus `vi.hoisted(...)`; plain top-level mock helpers break because `vi.mock(...)` factories are hoisted
+- `GridNode` returns the final `vec4(...)` TSL node from its constructor while still naming the underlying base `Node` instance `GridNode`
+- In `GridNode` tests, keep a raw mock-uniform object separate from the `GridNodeUniforms` cast; casting too early hides Vitest `.mock` metadata from TypeScript
+- `DIVEEnvironment` no longer applies HDR state from the constructor alone; tests should wait for the async HDR load and call `env.init()` before asserting environment/background updates
+- `DIVEEnvironment` concurrent-load cleanup is best covered by spying on the private `loadHDRImage` method and resolving overlapping promises out of order; stale textures should be disposed
+- `DIVE` tests must mock `mainView.renderer.initialized` and `mainView.renderer.init()` because `DIVE.start()` now guards rendering via renderer initialization
+- On the v3 branch, deprecated compatibility APIs should not be kept alive just to satisfy tests; remove the matching legacy test coverage instead of restoring `DIVE.QuickView()`, `engine`, `createView()`, `disposeView()`, `AnimationSystem.animate()`, `Toolbox.useTool()`, `Toolbox.getActiveTool()`, or old environment no-op methods
+- `DIVERenderer` tests must mock `three/webgpu` `WebGPURenderer`; old `three` `WebGLRenderer` expectations are outdated
+- `DIVERenderer` stale-init behavior after `setCanvas()` is best tested with a deferred first `init()` promise; the old renderer must not trigger a second environment init after the swap
+- `MediaCreator` fallback coverage is easiest by overriding test canvas `width`/`height` to `undefined` and `writable: true`, then letting `drawCanvas()` fall back through `clientWidth` to the renderer canvas dimensions
+- `MediaCreator.drawCanvas()` must restore the previous WebGPU render target and camera layer mask before awaiting `readRenderTargetPixelsAsync()`; otherwise the live `View.tick()` render can keep drawing into the offscreen target and trigger `WebGPUTextureUtils: Texture already initialized.`
 - Demo fixture `/Users/f.frank/Public/Repos/dive-demo/public/model_reverse_animation_order_long_name_blank_name.glb` is used for animation edge cases; it contains a blank clip name, an overlong clip name, and a `Walk` clip that now hard-fails loading via an invalid animation accessor reference
+- `yarn build` can still exit successfully while `vite-plugin-dts` reports TypeScript API migration errors, so WebGPU refactors need explicit grep/type-review and not just a green build exit code
+- `DIVE.start()` is now a fire-and-forget wrapper around `startAsync()`, so tests that need renderer readiness should await `startAsync()` or a microtask before asserting downstream effects
+- `DIVE.dispose()` must dispose the `DIVEClock` before tearing down views/renderers, and `startAsync()` must bail out after late renderer init if the instance was disposed; otherwise demo route switches can leave stale RAF ticks calling `DIVEView.tick()` on dead WebGPU renderers
+- Demo views in `/Users/f.frank/Public/Repos/dive-demo/src/views/` that create `QuickView` instances must dispose them in `onUnmounted`; missing route-leave cleanup leaves old WebGPU render loops alive across example switches
+- Deprecated `BaseTool` coverage was removed entirely; if `src/plugins/toolbox/src/BaseTool.ts` is gone in a future major, delete the legacy suite instead of recreating the class for tests
+- `MediaCreator` screenshot generation is async under WebGPU and uses `RenderTarget` plus `readRenderTargetPixelsAsync`; it no longer swaps `renderer.domElement`
+- `DIVEXRLightRoot` currently guards `XREstimatedLight` off under WebGPU and falls back to the existing scene light until a dedicated WebGPU-compatible light-estimation path exists
+- Library builds must externalize `three` with a pattern that also matches subpaths like `three/webgpu`, `three/tsl`, and `three/examples/jsm/*`; externalizing only bare `three` bundles a second Three runtime into `build/` and triggers `THREE.WARNING: Multiple instances of Three.js being imported.` in consumers
+- State action migrations must use `AnimationSystem.fromTargets(...).play()` and `Toolbox.enableTool()`; lingering `animate()` or `useTool()` calls can still let `yarn build` exit 0 while `vite-plugin-dts` reports TS2339 API drift
+- When swapping canvases under WebGPU, `DIVEEnvironment.setRenderer()` must run before disposing the previous `WebGPURenderer`; disposing the old renderer first can crash `PMREMGenerator.dispose()` inside Three's `NodeManager.delete` with `usedTimes` access errors

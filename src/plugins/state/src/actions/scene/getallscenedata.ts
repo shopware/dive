@@ -2,7 +2,7 @@ import { Action } from '../action.ts';
 import { registerAction } from '../../ActionRegistry.ts';
 import { type ActionDependencies } from '../../../types/index.ts';
 import { type StateSceneData } from '../../../types/StateSceneData.ts';
-import { Color, MeshStandardMaterial } from 'three';
+import { Color, MeshStandardMaterial } from 'three/webgpu';
 import {
     GroupSchema,
     LightSchema,

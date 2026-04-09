@@ -5,7 +5,7 @@ import {
     DIVESceneObject,
     type EntitySchema,
 } from '@shopware-ag/dive';
-import { Object3D } from 'three';
+import { Object3D } from 'three/webgpu';
 
 describe('SetParentAction', () => {
     // Mock dependencies

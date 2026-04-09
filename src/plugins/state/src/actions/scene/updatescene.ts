@@ -1,7 +1,7 @@
 import { Action } from '../action.ts';
 import { registerAction } from '../../ActionRegistry.ts';
 import { ActionDependencies } from '../../../types/index.ts';
-import { Color, MeshStandardMaterial } from 'three';
+import { Color, MeshStandardMaterial } from 'three/webgpu';
 
 export const UpdateSceneAction = Action.define<
     Partial<{

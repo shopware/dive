@@ -1,4 +1,4 @@
-import { Vector2, type Object3D } from 'three';
+import { Vector2, type Object3D } from 'three/webgpu';
 import { TransformTool, isTransformTool } from '../TransformTool.ts';
 import { SelectionState } from '../../SelectionState.ts';
 import { type PointerContext } from '../../PointerContext.ts';
@@ -14,10 +14,6 @@ import { Tween } from '@tweenjs/tween.js';
 /**
  * @vitest-environment jsdom
  */
-
-vi.mock('three', async (importOriginal) => {
-    return await importOriginal();
-});
 
 // Mock PointerEvent for jsdom
 class MockPointerEvent extends MouseEvent {
@@ -129,6 +125,7 @@ vi.mock('three/examples/jsm/controls/TransformControls.js', () => {
             instance.object = undefined;
         });
         instance.dispose = vi.fn();
+        instance.getHelper = vi.fn(() => instance);
 
         instance.traverse = vi.fn((callback: (obj: Object3D) => void) => {
             callback(instance);

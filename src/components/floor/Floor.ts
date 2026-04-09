@@ -5,7 +5,7 @@ import {
     Mesh,
     MeshStandardMaterial,
     PlaneGeometry,
-} from 'three';
+} from 'three/webgpu';
 import { PRODUCT_LAYER_MASK } from '../../constants/VisibilityLayerMask.ts';
 
 /**

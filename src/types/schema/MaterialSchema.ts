@@ -1,4 +1,4 @@
-import { type Texture } from 'three';
+import { type Texture } from 'three/webgpu';
 
 export type MaterialSchema = {
     vertexColors: boolean;

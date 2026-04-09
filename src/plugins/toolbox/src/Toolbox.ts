@@ -1,4 +1,4 @@
-import { Raycaster, Vector2, type Intersection, Layers } from 'three';
+import { Raycaster, Vector2, type Intersection, Layers } from 'three/webgpu';
 import {
     type DIVEScene,
     PRODUCT_LAYER_MASK,
@@ -329,35 +329,5 @@ export class Toolbox {
             this._lastPointerDown.distanceTo(this._pointer) >
             POINTER_DRAG_THRESHOLD
         );
-    }
-
-    // ============ Legacy API Compatibility ============
-
-    /**
-     * @deprecated Use enableTool/disableTool instead.
-     * Enable or disable a tool by type.
-     */
-    public useTool(tool: ToolType): void {
-        // Enable all standard tools for the given type
-        const allTools: ToolType[] = [
-            'hover',
-            'select',
-            'transform',
-            'drag',
-        ];
-
-        for (const t of allTools) {
-            if (t === tool || tool === 'select') {
-                this.enableTool(t);
-            }
-        }
-    }
-
-    /**
-     * @deprecated Use getActiveTools instead.
-     * Get the first active tool (for legacy compatibility).
-     */
-    public getActiveTool(): Tool | null {
-        return this._sortedActiveTools[0] || null;
     }
 }

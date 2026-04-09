@@ -1,4 +1,4 @@
-import { Matrix4, Mesh, Vector3 } from 'three';
+import { Matrix4, Mesh, Vector3 } from 'three/webgpu';
 import { DIVERenderer } from '../../../../../engine/renderer/Renderer.ts';
 import { DIVEWebXRRaycasterAR } from './ar/WebXRRaycasterAR.ts';
 import { DIVEWebXRRaycasterTHREE } from './three/WebXRRaycasterTHREE.ts';

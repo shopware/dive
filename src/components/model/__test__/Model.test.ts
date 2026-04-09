@@ -7,7 +7,7 @@ import {
     MeshStandardMaterial,
     type Texture,
     Object3D,
-} from 'three';
+} from 'three/webgpu';
 import { DIVENode } from '../../node/Node.ts';
 import { type MaterialSchema } from '../../../types/schema/MaterialSchema.ts';
 import { BoundingBox } from '../../boundingbox/BoundingBox.ts';
@@ -19,7 +19,7 @@ import { BoundingBox } from '../../boundingbox/BoundingBox.ts';
 // Mock for Raycaster.intersectObjects - exposed for test assertions
 const RaycasterIntersectObjectMock = vi.fn().mockReturnValue([]);
 
-vi.mock('three', async (importOriginal) => {
+vi.mock('three/webgpu', async (importOriginal) => {
     const actual = await importOriginal<typeof import('three')>();
 
     // Vector3 mock with essential methods

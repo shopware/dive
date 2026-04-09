@@ -1,24 +1,18 @@
-vi.mock('@shopware-ag/dive/shader', () => ({
-    DIVEShaderLib: {
-        grid: { uniforms: {}, vertexShader: '', fragmentShader: '' },
-    },
-    DIVEShaderMaterial: vi.fn(),
-}));
+import { Matrix4 } from 'three/webgpu';
+import { OrientationDisplayAxes } from '../Axes.ts';
 
 vi.mock('three-spritetext', async () => {
-    const { Object3D } = await vi.importActual<typeof import('three')>('three');
+    const actual =
+        await vi.importActual<typeof import('three/webgpu')>('three/webgpu');
 
     return {
-        default: vi.fn(function (this: any) {
-            const sprite = new Object3D();
-            sprite.layers.mask = 0;
-            return sprite;
-        }),
+        default: vi.fn((text: string, textHeight: number, color: unknown) =>
+            Object.assign(new actual.Object3D(), {
+                userData: { text, textHeight, color },
+            }),
+        ),
     };
 });
-
-import { Matrix4 } from 'three';
-import { OrientationDisplayAxes } from '../Axes.ts';
 
 describe('OrientationDisplayAxes', () => {
     it('should construct without errors', () => {

@@ -1,4 +1,4 @@
-import { Vector3 } from 'three';
+import { Vector3 } from 'three/webgpu';
 
 /**
  * Calculate the signed angle between two vectors. Only works when the vectors are on the same plane.

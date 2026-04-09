@@ -1,13 +1,6 @@
-vi.mock('@shopware-ag/dive/shader', () => ({
-    DIVEShaderLib: {
-        grid: { uniforms: {}, vertexShader: '', fragmentShader: '' },
-    },
-    DIVEShaderMaterial: vi.fn(),
-}));
-
 import { DIVENode } from '../Node.ts';
 import { State } from '@shopware-ag/dive/state';
-import { Vector3 } from 'three';
+import { Vector3 } from 'three/webgpu';
 
 vi.mock('../../../modules/state/State', () => {
     return {

@@ -1,4 +1,4 @@
-import { Box3, Object3D, Vector3, type Vector3Like } from 'three';
+import { Box3, Object3D, Vector3, type Vector3Like } from 'three/webgpu';
 import { PRODUCT_LAYER_MASK } from '../../constants/VisibilityLayerMask.ts';
 
 import { DIVEMovable } from '../../interfaces/Movable.ts';

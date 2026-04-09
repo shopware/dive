@@ -4,8 +4,8 @@ import {
     Object3D,
     Quaternion,
     Vector3,
-    WebXRArrayCamera,
-} from 'three';
+    ArrayCamera,
+} from 'three/webgpu';
 import { DIVERenderer } from '../../../../../engine/renderer/Renderer.ts';
 import { DIVEScene } from '../../../../../engine/scene/Scene.ts';
 import { DIVEWebXRCrosshair } from '../crosshair/WebXRCrosshair.ts';
@@ -36,7 +36,7 @@ export class DIVEWebXRController extends Object3D {
     // controller members
     private _touchscreenControls: DIVEWebXRTouchscreenControls;
     private _handNodeInitialPosition = new Vector3();
-    private _xrCamera: WebXRArrayCamera;
+    private _xrCamera: ArrayCamera;
     private _placed: boolean = false;
 
     // grabbing
@@ -72,7 +72,7 @@ export class DIVEWebXRController extends Object3D {
         this._crosshair = new DIVEWebXRCrosshair();
         this._crosshair.visible = false;
 
-        this._xrCamera = this._renderer.webglrenderer.xr.getCamera();
+        this._xrCamera = this._renderer.webgpurenderer.xr.getCamera();
 
         // this._scene.XRRoot.XRHandNode.position.set(0, -0.05, -0.25);
         // this._handNodeInitialPosition =

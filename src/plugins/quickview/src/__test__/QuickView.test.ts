@@ -17,9 +17,7 @@ vi.mock('@shopware-ag/dive', () => {
                             set: vi.fn(),
                         },
                     },
-                    renderer: {
-                        webglrenderer: vi.fn(),
-                    },
+                    renderer: {},
                 },
                 scene: {
                     setBackground: vi.fn(),

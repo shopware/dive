@@ -1,5 +1,1 @@
-export * from './shaders/DIVEShaderLib.ts';
-export * from './material/DIVEShaderMaterial.ts';
-
-// DIVE shader types
-export type { GridShader } from './shaders/grid/index.ts';
+export { GridNode, type GridNodeUniforms } from './shaders/GridNode.ts';

@@ -1,4 +1,4 @@
-import { Matrix4, Quaternion, Vector3 } from 'three';
+import { Matrix4, Quaternion, Vector3 } from 'three/webgpu';
 import { DIVERenderer } from '../../../../../engine/renderer/Renderer.ts';
 
 export class DIVEWebXROrigin {
@@ -154,7 +154,7 @@ export class DIVEWebXROrigin {
         if (this._hitTestResultBuffer.length > 0) {
             // hit found
             this._referenceSpaceBuffer =
-                this._renderer.webglrenderer.xr.getReferenceSpace();
+                this._renderer.webgpurenderer.xr.getReferenceSpace();
 
             // if there is no reference space, hit will be counted as lost for this frame
             if (!this._referenceSpaceBuffer) {

@@ -1,4 +1,4 @@
-import { MathUtils } from 'three';
+import { MathUtils } from 'three/webgpu';
 import { DIVEClock } from './clock/Clock.ts';
 import { DIVEView } from './view/View.ts';
 import {
@@ -12,7 +12,6 @@ import {
     DIVEPerspectiveCameraSettings,
 } from './camera/PerspectiveCamera.ts';
 import {
-    DIVERenderer,
     DIVERendererDefaultSettings,
     DIVERendererSettings,
 } from './renderer/Renderer.ts';
@@ -95,23 +94,10 @@ export const DIVEDefaultSettings: Required<DIVESettings> = {
  */
 
 export class DIVE {
-    /**
-     * @deprecated This static method will be removed in a future version. Please use `import { QuickView, QuickViewSettings, QuickViewDefaultSettings } from '@shopware-ag/dive/quickview'` instead.
-     */
-    public static async QuickView(
-        uri: string,
-        settings?: Partial<
-            import('@shopware-ag/dive/quickview').QuickViewSettings
-        >,
-    ): Promise<import('@shopware-ag/dive/quickview').QuickView> {
-        return import('@shopware-ag/dive/quickview').then(({ QuickView }) =>
-            QuickView(uri, settings),
-        );
-    }
-
     // descriptive members
     private _instanceId: string = MathUtils.generateUUID();
     private _settings: DIVESettings;
+    private _disposed: boolean = false;
 
     private _views: DIVEView[];
     private _mainView: DIVEView;
@@ -154,6 +140,10 @@ export class DIVE {
         if (this._settings.displayAxes) {
             import('@shopware-ag/dive/orientationdisplay').then(
                 ({ OrientationDisplay }) => {
+                    if (this._disposed) {
+                        return;
+                    }
+
                     this._orientationDisplay = new OrientationDisplay(
                         this.mainView.renderer,
                         this.scene,
@@ -177,39 +167,6 @@ export class DIVE {
         window.DIVE.instances.push(this);
     }
 
-    /**
-     * @deprecated This property will be removed in a future version. Please use properties on the DIVE instance and mainView directly.
-     */
-    public get engine(): {
-        scene: DIVEScene;
-        camera: DIVEPerspectiveCamera;
-        renderer: DIVERenderer;
-        setCanvas: (canvas: HTMLCanvasElement) => void;
-        clock: DIVEClock;
-        start: () => void;
-        stop: () => void;
-        dispose: () => void;
-    } {
-        return {
-            scene: this.scene,
-            camera: this.mainView.camera,
-            renderer: this.mainView.renderer,
-            setCanvas: (canvas: HTMLCanvasElement) => {
-                this.mainView.setCanvas(canvas);
-            },
-            clock: this.clock,
-            start: () => {
-                this.start();
-            },
-            stop: () => {
-                this.stop();
-            },
-            dispose: () => {
-                this.dispose();
-            },
-        };
-    }
-
     public get views(): DIVEView[] {
         return this._views;
     }
@@ -231,6 +188,31 @@ export class DIVE {
     }
 
     public start(): void {
+        if (this._disposed) {
+            return;
+        }
+
+        void this.startAsync().catch((error) => {
+            console.error(
+                'DIVE.start: Failed to initialize the WebGPU renderer.',
+                error,
+            );
+        });
+    }
+
+    public async startAsync(): Promise<void> {
+        if (this._disposed) {
+            return;
+        }
+
+        if (!this.mainView.renderer.initialized) {
+            await this.mainView.renderer.init();
+        }
+
+        if (this._disposed) {
+            return;
+        }
+
         this._clock.start();
     }
 
@@ -239,15 +221,19 @@ export class DIVE {
     }
 
     public async dispose(): Promise<void> {
+        this._disposed = true;
+
         return new Promise((resolve) => {
+            this._clock.dispose();
+
             this._views.forEach((view) => {
                 view.dispose();
             });
             this._views = [];
 
             if (this._orientationDisplay) {
-                this._clock.removeTicker(this._orientationDisplay);
                 this._orientationDisplay.dispose();
+                this._orientationDisplay = null;
             }
 
             this.scene.dispose();
@@ -259,46 +245,4 @@ export class DIVE {
             resolve();
         });
     }
-
-    /**
-     * @deprecated This method will be removed in a future version. To create a new view, use `QuickView` instead.
-     */
-    public createView(camera?: DIVEPerspectiveCamera): DIVEView {
-        const view = new DIVEView(
-            this._scene,
-            camera ?? new DIVEPerspectiveCamera(),
-            {
-                ...this._settings,
-                canvas: undefined, // instantiate new canvas for created view
-            },
-        );
-
-        this._views.push(view);
-        this._clock.addTicker(view);
-
-        if (this._views.length === 1) {
-            this._mainView = view;
-        }
-
-        return view;
-    }
-
-    /**
-     * @deprecated This method will be removed in a future version.
-     */
-    public disposeView(view: DIVEView): void {
-        this._views = this._views.filter((v) => v !== view);
-        this._clock.removeTicker(view);
-
-        if (this._mainView === view) {
-            this._mainView = this._views[0];
-        }
-
-        view.dispose();
-    }
 }
-
-/**
- * @deprecated Use `import { DIVE } from '@shopware-ag/dive'` instead.
- */
-export const DIVEEngine = DIVE;

@@ -1,7 +1,7 @@
 import { Action } from '../action.ts';
 import { registerAction } from '../../ActionRegistry.ts';
 import { type ActionDependencies } from '../../../types/index.ts';
-import { type Vector3Like } from 'three';
+import { type Vector3Like } from 'three/webgpu';
 
 export const SetCameraTransformAction = Action.define<
     {

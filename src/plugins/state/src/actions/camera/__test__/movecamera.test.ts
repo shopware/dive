@@ -1,15 +1,8 @@
 import { MoveCameraAction } from '../movecamera.ts';
 import { EntitySchema } from '@shopware-ag/dive';
 import { OrbitController } from '@shopware-ag/dive/orbitcontroller';
-import { Vector3 } from 'three';
+import { Vector3 } from 'three/webgpu';
 import { DIVE } from '@shopware-ag/dive';
-
-vi.mock('@shopware-ag/dive/shader', () => ({
-    DIVEShaderLib: {
-        grid: { uniforms: {}, vertexShader: '', fragmentShader: '' },
-    },
-    DIVEShaderMaterial: vi.fn(),
-}));
 
 const mockStop = vi.fn();
 const mockPlay = vi.fn().mockReturnThis();
@@ -17,10 +10,10 @@ const mockAnimator = {
     play: mockPlay,
     stop: mockStop,
 };
-const mockAnimate = vi.fn().mockReturnValue(mockAnimator);
+const mockFromTargets = vi.fn().mockResolvedValue(mockAnimator);
 
 const mockGetAnimationSystem = vi.fn().mockResolvedValue({
-    animate: mockAnimate,
+    fromTargets: mockFromTargets,
     Easing: {
         Quadratic: {
             Out: vi.fn(),
@@ -47,7 +40,7 @@ const mockController = {
 describe('MoveCameraAction', () => {
     beforeEach(() => {
         vi.clearAllMocks();
-        mockAnimate.mockReturnValue(mockAnimator);
+        mockFromTargets.mockResolvedValue(mockAnimator);
     });
 
     describe('Direct Position Movement', () => {
@@ -74,7 +67,7 @@ describe('MoveCameraAction', () => {
             expect(mockGetAnimationSystem).toHaveBeenCalled();
             expect(mockEngine.clock.addTicker).toHaveBeenCalled();
 
-            expect(mockAnimate).toHaveBeenCalledWith(
+            expect(mockFromTargets).toHaveBeenCalledWith(
                 expect.arrayContaining([
                     expect.objectContaining({
                         object: mockController.object.position,
@@ -92,6 +85,7 @@ describe('MoveCameraAction', () => {
                     onComplete: expect.any(Function),
                 }),
             );
+            expect(mockPlay).toHaveBeenCalledTimes(1);
 
             expect(result.stop).toBeDefined();
             expect(typeof result.stop).toBe('function');
@@ -117,7 +111,8 @@ describe('MoveCameraAction', () => {
 
             await action.execute();
 
-            const onCompleteCallback = mockAnimate.mock.calls[0][2].onComplete;
+            const onCompleteCallback =
+                mockFromTargets.mock.calls[0][2].onComplete;
             onCompleteCallback();
 
             expect(mockController.enabled).toBe(true);
@@ -157,7 +152,7 @@ describe('MoveCameraAction', () => {
 
             const result = await action.execute();
 
-            expect(mockAnimate).toHaveBeenCalledWith(
+            expect(mockFromTargets).toHaveBeenCalledWith(
                 expect.arrayContaining([
                     expect.objectContaining({
                         object: mockController.object.position,
@@ -254,7 +249,7 @@ describe('MoveCameraAction', () => {
 
             await action.execute();
 
-            const options = mockAnimate.mock.calls[0][2];
+            const options = mockFromTargets.mock.calls[0][2];
             options.onUpdate();
 
             expect(mockController.object.lookAt).toHaveBeenCalledWith(

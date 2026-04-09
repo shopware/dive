@@ -1,4 +1,4 @@
-import { Vector3 } from 'three';
+import { Vector3 } from 'three/webgpu';
 import { OrbitController } from '@shopware-ag/dive/orbitcontroller';
 import { type DIVERenderer, type DIVEScene, DIVE } from '@shopware-ag/dive';
 import { Overlay } from './overlay/Overlay.ts';
@@ -21,7 +21,7 @@ export class DIVEWebXR {
     private static _session: XRSession | null = null;
     private static _referenceSpaceType: XRReferenceSpaceType = 'local';
     private static _overlay: Overlay | null = null;
-    private static _options = {
+    private static _options: XRSessionInit = {
         requiredFeatures: [
             'local',
             'hit-test',
@@ -34,7 +34,7 @@ export class DIVEWebXR {
         ],
         depthSensing: {
             usagePreference: ['gpu-optimized'],
-            dataFormatPreference: [],
+            dataFormatPreference: [] as XRDepthDataFormat[],
         },
         domOverlay: { root: {} as HTMLElement },
     };
@@ -59,7 +59,7 @@ export class DIVEWebXR {
         }
 
         // setup current instance
-        this._renderer.webglrenderer.xr.enabled = true;
+        this._renderer.webgpurenderer.xr.enabled = true;
         // this._scene.InitXR(renderer);
 
         // creating overlay
@@ -80,10 +80,10 @@ export class DIVEWebXR {
         });
 
         // build up session
-        this._renderer.webglrenderer.xr.setReferenceSpaceType(
+        this._renderer.webgpurenderer.xr.setReferenceSpaceType(
             this._referenceSpaceType,
         );
-        await this._renderer.webglrenderer.xr.setSession(session);
+        await this._renderer.webgpurenderer.xr.setSession(session);
         DIVEWebXR._overlay.element.style.display = '';
         this._session = session;
 
@@ -147,11 +147,11 @@ export class DIVEWebXR {
         }
 
         // disable XR on renderer to restore canvas rendering
-        this._renderer.webglrenderer.xr.enabled = false;
+        this._renderer.webgpurenderer.xr.enabled = false;
 
         // resize renderer
         const canvasWrapper =
-            this._renderer.webglrenderer.domElement.parentElement;
+            this._renderer.webgpurenderer.domElement.parentElement;
         if (canvasWrapper) {
             const { clientWidth, clientHeight } = canvasWrapper;
             this._renderer.onResize(clientWidth, clientHeight);

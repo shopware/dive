@@ -1,4 +1,4 @@
-import { Object3D, Mesh } from 'three';
+import { Object3D, Mesh } from 'three/webgpu';
 import { GLTFExporter } from 'three/examples/jsm/exporters/GLTFExporter.js';
 import type { GLTFExporterOptions as THREEGLTFExporterOptions } from 'three/examples/jsm/exporters/GLTFExporter.js';
 import { USDZExporter } from 'three/examples/jsm/exporters/USDZExporter.js';
@@ -91,10 +91,7 @@ export class AssetExporter {
     ): Promise<ArrayBuffer> {
         try {
             const json = await this._gltfExporter.parseAsync(object, {
-                animations:
-                    object.animations.length > 0
-                        ? object.animations
-                        : undefined,
+                animations: object.animations || [],
                 ...options,
                 binary: false,
             });

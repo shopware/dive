@@ -1,6 +1,6 @@
 import { ClipAnimator } from '../ClipAnimator.ts';
 
-vi.mock('three', async (importOriginal) => {
+vi.mock('three/webgpu', async (importOriginal) => {
     const actual = (await importOriginal()) as any;
     return {
         ...actual,

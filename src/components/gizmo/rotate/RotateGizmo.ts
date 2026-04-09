@@ -1,4 +1,4 @@
-import { Euler, Object3D, Vector3 } from 'three';
+import { Euler, Object3D, Vector3 } from 'three/webgpu';
 import {
     AxesColorBlue,
     AxesColorGreen,

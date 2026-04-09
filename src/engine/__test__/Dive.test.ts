@@ -4,10 +4,10 @@
 
 import { vi } from 'vitest';
 import { DIVE, DIVESettings } from '../Dive.ts';
-import { MathUtils } from 'three';
-import { DIVEClock } from '../clock/Clock.ts';
-import { DIVERenderer } from '../renderer/Renderer.ts';
-import { DIVEScene } from '../scene/Scene.ts';
+import { MathUtils } from 'three/webgpu';
+
+const waitForAsync = () => new Promise((resolve) => setTimeout(resolve, 0));
+
 // Mock ResizeObserver
 class MockResizeObserver {
     observe() {}
@@ -15,13 +15,6 @@ class MockResizeObserver {
     disconnect() {}
 }
 global.ResizeObserver = MockResizeObserver as any;
-
-vi.mock('@shopware-ag/dive/shader', () => ({
-    DIVEShaderLib: {
-        grid: { uniforms: {}, vertexShader: '', fragmentShader: '' },
-    },
-    DIVEShaderMaterial: vi.fn(),
-}));
 
 vi.mock('../../components/boundingbox/BoundingBox.ts', () => ({
     BoundingBox: vi.fn(),
@@ -32,22 +25,35 @@ vi.mock('../view/View.ts', async (importOriginal) => {
     return {
         ...actual,
         DIVEView: vi.fn(function (this: any) {
+            const renderer = {
+                initialized: false,
+                canvas: {
+                    parentElement: document.createElement('div'),
+                    getBoundingClientRect: vi.fn().mockReturnValue({
+                        width: 100,
+                        height: 100,
+                    }),
+                },
+                init: vi.fn(() => {
+                    renderer.initialized = true;
+                    return Promise.resolve();
+                }),
+                dispose: vi.fn(),
+                onResize: vi.fn(),
+                render: vi.fn(),
+                setCanvas: vi.fn(),
+            };
             this.dispose = vi.fn();
             this.onResize = vi.fn();
             this.tick = vi.fn();
             this.setCanvas = vi.fn();
+            this.renderer = renderer;
             this.camera = {
                 position: {
                     set: vi.fn(),
                 },
             };
-            this.canvas = {
-                parentElement: document.createElement('div'),
-                getBoundingClientRect: vi.fn().mockReturnValue({
-                    width: 100,
-                    height: 100,
-                }),
-            };
+            this.canvas = renderer.canvas;
             return this;
         }),
     };
@@ -284,12 +290,13 @@ describe('DIVE', () => {
         expect(() => dive.mainView.onResize(800, 600)).not.toThrow();
     });
 
-    it('should initialize with axis camera when displayAxes is true', () => {
+    it('should initialize with axis camera when displayAxes is true', async () => {
         const settings = {
             displayAxes: true,
         } as DIVESettings;
 
         const dive = new DIVE(settings);
+        await waitForAsync();
         expect(dive['_orientationDisplay']).toBeDefined();
     });
 
@@ -309,13 +316,15 @@ describe('DIVE', () => {
 
         const dive = new DIVE(settings);
 
-        dive['_orientationDisplay'] = {
+        const orientationDisplay = {
             dispose: vi.fn(),
         } as any;
+        dive['_orientationDisplay'] = orientationDisplay;
 
         await dive.dispose();
 
-        expect(dive['_orientationDisplay']?.dispose).toHaveBeenCalled();
+        expect(orientationDisplay.dispose).toHaveBeenCalled();
+        expect(dive.clock.dispose).toHaveBeenCalled();
     });
 
     it('should handle dispose when animation system pipeline is not initialized', () => {
@@ -333,36 +342,41 @@ describe('DIVE', () => {
         expect(window.DIVE.instances).toContain(dive);
     });
 
-    it('should create a new view', () => {
-        const dive = new DIVE();
-        const view = dive.createView();
-        expect(view).toBeDefined();
-        expect(dive.views).toContain(view);
-    });
-
-    it('should dispose a view', () => {
-        const dive = new DIVE();
-        const view = dive.createView();
-        dive.disposeView(view);
-        expect(dive.views).not.toContain(view);
-    });
-
-    it('should get the engine', () => {
-        const dive = new DIVE();
-        const engine = dive.engine;
-        expect(engine).toBeDefined();
-    });
-
-    it('should set the canvas', () => {
-        const dive = new DIVE();
-        const canvas = document.createElement('canvas');
-        dive.engine.setCanvas(canvas);
-        expect(dive.mainView.setCanvas).toHaveBeenCalledWith(canvas);
-    });
-
     it('should start the clock', () => {
         const dive = new DIVE();
         dive.start();
+        return waitForAsync().then(() => {
+            expect(dive.clock.start).toHaveBeenCalled();
+        });
+    });
+
+    it('should log renderer initialization failures from start', async () => {
+        const error = new Error('renderer failed');
+        const errorSpy = vi
+            .spyOn(console, 'error')
+            .mockImplementation(() => {});
+        const dive = new DIVE({
+            autoStart: false,
+        });
+
+        dive.mainView.renderer.init.mockRejectedValueOnce(error);
+        dive.start();
+        await waitForAsync();
+
+        expect(errorSpy).toHaveBeenCalledWith(
+            'DIVE.start: Failed to initialize the WebGPU renderer.',
+            error,
+        );
+    });
+
+    it('should expose an explicit async start path', async () => {
+        const dive = new DIVE({
+            autoStart: false,
+        });
+
+        await dive.startAsync();
+
+        expect(dive.mainView.renderer.init).toHaveBeenCalled();
         expect(dive.clock.start).toHaveBeenCalled();
     });
 
@@ -372,33 +386,26 @@ describe('DIVE', () => {
         expect(dive.clock.stop).toHaveBeenCalled();
     });
 
-    it('should set a new mainView when the current one is disposed', () => {
-        const dive = new DIVE();
-        const firstMainView = dive.mainView;
-        const newView = dive.createView();
+    it('should not start the clock after dispose when renderer init resolves late', async () => {
+        const dive = new DIVE({
+            autoStart: false,
+        });
+        let resolveInit: (() => void) | undefined;
 
-        dive.disposeView(firstMainView);
+        dive.mainView.renderer.init.mockImplementationOnce(
+            () =>
+                new Promise<void>((resolve) => {
+                    resolveInit = resolve;
+                }),
+        );
 
-        expect(dive.mainView).toBe(newView);
-        expect(dive.views).not.toContain(firstMainView);
-    });
-
-    it('should handle disposing the only view', () => {
-        const dive = new DIVE();
-        const onlyView = dive.mainView;
-
-        dive.disposeView(onlyView);
-
-        expect(dive.mainView).toBeUndefined();
-        expect(dive.views.length).toBe(0);
-    });
-
-    it('should set mainView when creating a view after all views were disposed', async () => {
-        const dive = new DIVE();
+        const pendingStart = dive.startAsync();
         await dive.dispose();
 
-        const view = dive.createView();
-        expect(dive.mainView).toBe(view);
+        resolveInit?.();
+        await pendingStart;
+
+        expect(dive.clock.start).not.toHaveBeenCalled();
     });
 
     it('should get the canvas', () => {

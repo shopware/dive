@@ -10,6 +10,12 @@ interface pluginRegistration {
     buildPath: string; // Path in the build output
 }
 
+const externalDependencies = [
+    /^three(?:\/.*)?$/,
+    '@tweenjs/tween.js',
+    'three-spritetext',
+];
+
 // Function to update package.json exports
 function updatePackageJsonExports(registrations: pluginRegistration[]): void {
     const packageJsonPath = pathResolve(process.cwd(), 'package.json');
@@ -142,11 +148,7 @@ export default function pluginBuildPlugin(): Plugin {
                                 exports: 'named',
                             },
                         ],
-                        external: [
-                            'three',
-                            '@tweenjs/tween.js',
-                            'three-spritetext',
-                        ],
+                        external: externalDependencies,
                     },
                 },
             };

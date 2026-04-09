@@ -1,4 +1,3 @@
-import { Object3D } from 'three';
 import { type ARSystemOptions } from '../../ARSystem.ts';
 import { ARQuickLook } from '../ARQuickLook.ts';
 import { AssetConverter } from '@shopware-ag/dive/assetconverter';

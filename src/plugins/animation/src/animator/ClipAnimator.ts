@@ -6,7 +6,7 @@ import {
     LoopRepeat,
     LoopPingPong,
     Object3D,
-} from 'three';
+} from 'three/webgpu';
 import { Animator } from './Animator.ts';
 import { TAnimatorLoopMode, TAnimatorState } from '../types/AnimatorTypes.ts';
 

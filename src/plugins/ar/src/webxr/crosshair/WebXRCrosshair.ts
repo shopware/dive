@@ -1,4 +1,4 @@
-import { Mesh, MeshBasicMaterial, Object3D, RingGeometry } from 'three';
+import { Mesh, MeshBasicMaterial, Object3D, RingGeometry } from 'three/webgpu';
 
 export class DIVEWebXRCrosshair extends Object3D {
     public set mesh(mesh: Mesh | undefined) {

@@ -71,7 +71,7 @@ vi.mock('@tweenjs/tween.js', () => {
     };
 });
 
-vi.mock('three', async (importOriginal) => {
+vi.mock('three/webgpu', async (importOriginal) => {
     const actual = (await importOriginal()) as any;
     return {
         ...actual,
@@ -175,27 +175,6 @@ describe('AnimationSystem', () => {
                 { easing: animationSystem.Easing.Quadratic.Out },
             );
             expect(animator).toBeDefined();
-        });
-    });
-
-    describe('animate()', () => {
-        it('should create and auto-play a TargetAnimator', async () => {
-            const animator = await animationSystem.animate(
-                [{ object: { x: 0 }, to: { x: 100 } }],
-                1000,
-            );
-            expect(animator).toBeDefined();
-            expect(animator.state).toBe('playing');
-        });
-
-        it('should register the animator internally', async () => {
-            const animator = await animationSystem.animate(
-                [{ object: { x: 0 }, to: { x: 100 } }],
-                1000,
-            );
-            expect(
-                animationSystem['_animators'].has(animator.uuid),
-            ).toBeTruthy();
         });
     });
 

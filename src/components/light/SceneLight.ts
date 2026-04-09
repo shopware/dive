@@ -1,6 +1,11 @@
 import { DIVESelectable } from '@shopware-ag/dive';
 import { PRODUCT_LAYER_MASK } from '../../constants/VisibilityLayerMask.ts';
-import { Color, DirectionalLight, HemisphereLight, Object3D } from 'three';
+import {
+    Color,
+    DirectionalLight,
+    HemisphereLight,
+    Object3D,
+} from 'three/webgpu';
 
 /**
  * A complex scene light.

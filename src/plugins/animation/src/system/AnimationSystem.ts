@@ -1,5 +1,5 @@
 import { Easing as TWEENEasing } from '@tweenjs/tween.js';
-import { AnimationClip, MathUtils, Object3D } from 'three';
+import { AnimationClip, MathUtils, Object3D } from 'three/webgpu';
 import { DIVETicker } from '@shopware-ag/dive';
 
 type Animator = import('../animator/Animator.ts').Animator;
@@ -35,20 +35,6 @@ export class AnimationSystem implements DIVETicker {
         for (const animator of this._animators.values()) {
             animator.update(deltaTime);
         }
-    }
-
-    /**
-     * @deprecated Use `fromTargets()` instead.
-     * @note This method also calls .play() on the animator automatically. This has been removed in fromTargets(). You have to call .play() independently after creating the animator.
-     */
-    public async animate(
-        targets: AnimationTarget | AnimationTarget[],
-        duration: number,
-        options?: TargetAnimatorOptions,
-    ): Promise<TargetAnimator> {
-        const animator = await this.fromTargets(targets, duration, options);
-        animator.play();
-        return animator;
     }
 
     /**

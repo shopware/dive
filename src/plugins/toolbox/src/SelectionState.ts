@@ -1,4 +1,4 @@
-import { type Object3D } from 'three';
+import { type Object3D } from 'three/webgpu';
 import { type DIVESelectable } from '@shopware-ag/dive';
 
 type SelectionChangeCallback = (

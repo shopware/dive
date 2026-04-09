@@ -1,4 +1,4 @@
-import { Object3D } from 'three';
+import { Object3D } from 'three/webgpu';
 import { implementsInterface } from '../implementsInterface.ts';
 
 describe('dive/helper/implementsInterface', () => {

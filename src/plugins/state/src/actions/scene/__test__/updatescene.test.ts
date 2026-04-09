@@ -1,6 +1,6 @@
 import { UpdateSceneAction } from '../updatescene.ts';
 import { DIVE, DIVEScene } from '@shopware-ag/dive';
-import { Color, MeshStandardMaterial } from 'three';
+import { Color, MeshStandardMaterial } from 'three/webgpu';
 
 describe('UpdateSceneAction', () => {
     it('should update scene properties', async () => {

@@ -1,5 +1,5 @@
-import { MathUtils } from 'three';
-import { EventDispatcher } from 'three/src/core/EventDispatcher.js';
+import { MathUtils } from 'three/webgpu';
+import { EventDispatcher } from 'three/webgpu';
 import {
     TAnimatorEventMap,
     TAnimatorLoopMode,

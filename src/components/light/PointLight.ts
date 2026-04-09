@@ -6,7 +6,7 @@ import {
     Mesh,
     FrontSide,
     Object3D,
-} from 'three';
+} from 'three/webgpu';
 import {
     PRODUCT_LAYER_MASK,
     UI_LAYER_MASK,

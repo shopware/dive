@@ -6,7 +6,7 @@ import {
     Object3D,
     TorusGeometry,
     Vector3,
-} from 'three';
+} from 'three/webgpu';
 import { UI_LAYER_MASK } from '../../../constants/VisibilityLayerMask.ts';
 import { DIVEHoverable } from '../../../interfaces/Hoverable.ts';
 import { DraggableEvent } from '@shopware-ag/dive/toolbox';

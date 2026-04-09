@@ -1,27 +1,31 @@
-vi.mock('three', () => {
+vi.mock('@shopware-ag/dive/shader', () => {
+    const GridNode = vi.fn(function (this: any, uniforms) {
+        this.uniforms = uniforms;
+        return this;
+    });
+
+    return {
+        GridNode,
+    };
+});
+
+vi.mock('three/webgpu', () => {
     class MockVector3 {
         x: number;
         y: number;
         z: number;
+
         constructor(x = 0, y = 0, z = 0) {
             this.x = x;
             this.y = y;
             this.z = z;
         }
+
         set(x: number, y: number, z: number) {
             this.x = x;
             this.y = y;
             this.z = z;
             return this;
-        }
-        copy(v: MockVector3) {
-            this.x = v.x;
-            this.y = v.y;
-            this.z = v.z;
-            return this;
-        }
-        clone() {
-            return new MockVector3(this.x, this.y, this.z);
         }
     }
 
@@ -29,8 +33,6 @@ vi.mock('three', () => {
         x = 0;
         y = 0;
         z = 0;
-        set = vi.fn();
-        copy = vi.fn();
     }
 
     class MockQuaternion {
@@ -38,7 +40,6 @@ vi.mock('three', () => {
         y = 0;
         z = 0;
         w = 1;
-        set = vi.fn();
     }
 
     class MockObject3D {
@@ -62,12 +63,14 @@ vi.mock('three', () => {
             this.children.push(child);
             return this;
         }
+
         remove(child: MockObject3D) {
-            const idx = this.children.indexOf(child);
-            if (idx !== -1) this.children.splice(idx, 1);
+            const index = this.children.indexOf(child);
+            if (index !== -1) this.children.splice(index, 1);
             child.parent = null;
             return this;
         }
+
         dispatchEvent = vi.fn();
         updateMatrixWorld = vi.fn();
     }
@@ -77,43 +80,39 @@ vi.mock('three', () => {
         dispose = vi.fn();
     }
 
-    class MockShaderMaterial {
-        uniforms: Record<string, { value: any }>;
-        vertexShader: string;
-        fragmentShader: string;
-        transparent: boolean;
-        depthTest: boolean;
-        depthWrite: boolean;
-        side: number;
-
-        constructor(params: any = {}) {
-            this.uniforms = params.uniforms ?? {};
-            this.vertexShader = params.vertexShader ?? '';
-            this.fragmentShader = params.fragmentShader ?? '';
-            this.transparent = params.transparent ?? false;
-            this.depthTest = params.depthTest ?? true;
-            this.depthWrite = params.depthWrite ?? true;
-            this.side = params.side ?? 0;
-        }
-        dispose = vi.fn();
-    }
-
     class MockMesh extends MockObject3D {
         isMesh = true;
         geometry: MockPlaneGeometry;
-        material: MockShaderMaterial;
+        material: any;
 
         constructor(geometry?: any, material?: any) {
             super();
             this.geometry = geometry ?? new MockPlaneGeometry();
-            this.material = material ?? new MockShaderMaterial();
+            this.material = material;
         }
+    }
+
+    class MockMeshBasicNodeMaterial {
+        outputNode: unknown = null;
+        transparent: boolean;
+        depthWrite: boolean;
+        side: number;
+
+        constructor(params: any = {}) {
+            this.transparent = params.transparent ?? false;
+            this.depthWrite = params.depthWrite ?? true;
+            this.side = params.side ?? 0;
+            this.outputNode = params.outputNode ?? null;
+        }
+
+        dispose = vi.fn();
     }
 
     class MockColor {
         r = 0;
         g = 0;
         b = 0;
+
         constructor(color?: string | number) {
             if (typeof color === 'string') {
                 const hex = color.replace('#', '');
@@ -134,17 +133,22 @@ vi.mock('three', () => {
     return {
         Object3D: MockObject3D,
         Mesh: MockMesh,
+        MeshBasicNodeMaterial: MockMeshBasicNodeMaterial,
         PlaneGeometry: MockPlaneGeometry,
-        ShaderMaterial: MockShaderMaterial,
         Color: MockColor,
         PerspectiveCamera: MockPerspectiveCamera,
         DoubleSide: 2,
     };
 });
 
+vi.mock('three/tsl', () => ({
+    uniform: vi.fn((value) => ({ value })),
+}));
+
+import { GridNode } from '@shopware-ag/dive/shader';
 import { DIVEGrid } from '../Grid.ts';
 import { HELPER_LAYER_MASK } from '../../../constants/VisibilityLayerMask.ts';
-import { Mesh, ShaderMaterial, PerspectiveCamera } from 'three';
+import { Mesh, MeshBasicNodeMaterial, PerspectiveCamera } from 'three/webgpu';
 
 let grid: DIVEGrid;
 
@@ -160,9 +164,10 @@ describe('dive/grid/DIVEGrid', () => {
 
         const mesh = grid.children[0] as Mesh;
         expect(mesh).toBeInstanceOf(Mesh);
-        expect(mesh.material).toBeInstanceOf(ShaderMaterial);
-        expect((mesh.material as ShaderMaterial).depthWrite).toBe(false);
-        expect((mesh.material as ShaderMaterial).transparent).toBe(true);
+        expect(mesh.material).toBeInstanceOf(MeshBasicNodeMaterial as any);
+        expect((mesh.material as any).depthWrite).toBe(false);
+        expect((mesh.material as any).transparent).toBe(true);
+        expect(GridNode).toHaveBeenCalledTimes(1);
         expect(mesh.layers.mask).toBe(HELPER_LAYER_MASK);
         expect(mesh.frustumCulled).toBe(false);
     });
@@ -170,9 +175,9 @@ describe('dive/grid/DIVEGrid', () => {
     it('should accept custom settings', () => {
         const customGrid = new DIVEGrid({ gridSize: 2, majorLineEvery: 10 });
         const mesh = customGrid.children[0] as Mesh;
-        const material = mesh.material as ShaderMaterial;
-        expect(material.uniforms.uGridSize.value).toBe(2);
-        expect(material.uniforms.uMajorLineEvery.value).toBe(10);
+        const uniforms = (mesh.material as any).outputNode.uniforms;
+        expect(uniforms.uGridSize.value).toBe(2);
+        expect(uniforms.uMajorLineEvery.value).toBe(10);
     });
 
     it('should set visibility', () => {
@@ -185,15 +190,15 @@ describe('dive/grid/DIVEGrid', () => {
     it('should update grid size via setter', () => {
         grid.setGridSize(3);
         const mesh = grid.children[0] as Mesh;
-        const material = mesh.material as ShaderMaterial;
-        expect(material.uniforms.uGridSize.value).toBe(3);
+        const uniforms = (mesh.material as any).outputNode.uniforms;
+        expect(uniforms.uGridSize.value).toBe(3);
     });
 
     it('should update major line interval via setter', () => {
         grid.setMajorLineEvery(10);
         const mesh = grid.children[0] as Mesh;
-        const material = mesh.material as ShaderMaterial;
-        expect(material.uniforms.uMajorLineEvery.value).toBe(10);
+        const uniforms = (mesh.material as any).outputNode.uniforms;
+        expect(uniforms.uMajorLineEvery.value).toBe(10);
     });
 
     it('should snap position to camera in onBeforeRender', () => {
@@ -236,10 +241,7 @@ describe('dive/grid/DIVEGrid', () => {
     it('should dispose geometry and material', () => {
         const mesh = grid.children[0] as Mesh;
         const geometryDispose = vi.spyOn(mesh.geometry, 'dispose');
-        const materialDispose = vi.spyOn(
-            mesh.material as ShaderMaterial,
-            'dispose',
-        );
+        const materialDispose = vi.spyOn(mesh.material as any, 'dispose');
 
         grid.dispose();
 

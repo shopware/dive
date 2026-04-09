@@ -1,6 +1,6 @@
 import { vi, describe, it, expect, beforeEach, afterEach } from 'vitest';
 
-vi.mock('three', async (importOriginal) => {
+vi.mock('three/webgpu', async (importOriginal) => {
     const actual = await importOriginal<typeof import('three')>();
     return { ...actual };
 });

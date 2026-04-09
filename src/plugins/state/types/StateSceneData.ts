@@ -1,4 +1,4 @@
-import type { Vector3Like } from 'three';
+import type { Vector3Like } from 'three/webgpu';
 import type {
     GroupSchema,
     LightSchema,

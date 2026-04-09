@@ -1,4 +1,4 @@
-import { Vector3 } from 'three';
+import { Vector3 } from 'three/webgpu';
 import signedAngleTo from '../signedAngleTo';
 
 describe('dive/math/signedAngleTo', () => {

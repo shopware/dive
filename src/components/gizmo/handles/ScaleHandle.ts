@@ -7,7 +7,7 @@ import {
     MeshBasicMaterial,
     Object3D,
     Vector3,
-} from 'three';
+} from 'three/webgpu';
 import { UI_LAYER_MASK } from '../../../constants/VisibilityLayerMask.ts';
 import { DIVEHoverable } from '../../../interfaces/Hoverable.ts';
 import { DIVEScaleGizmo } from '../scale/ScaleGizmo.ts';

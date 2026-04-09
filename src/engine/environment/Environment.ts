@@ -6,16 +6,16 @@ import {
     PMREMGenerator,
     Scene,
     Texture,
-    WebGLCubeRenderTarget,
-    WebGLRenderTarget,
-    WebGLRenderer,
+    CubeRenderTarget,
+    RenderTarget,
+    WebGPURenderer,
     BackSide,
     SphereGeometry,
     NoToneMapping,
     LinearSRGBColorSpace,
     HalfFloatType,
-} from 'three';
-import { RGBELoader } from 'three/examples/jsm/loaders/RGBELoader.js';
+} from 'three/webgpu';
+import { HDRLoader } from 'three/examples/jsm/loaders/HDRLoader.js';
 import defaultEnvUrl from '../../../assets/maps/env/default.hdr?url';
 
 export type DIVEEnvironmentSettings = {
@@ -23,8 +23,6 @@ export type DIVEEnvironmentSettings = {
      * Whether to enable the image-based lighting.
      *
      * @default true
-     *
-     * @deprecated enabled defaults to true.
      */
     enabled: boolean;
     /**
@@ -43,8 +41,6 @@ export type DIVEEnvironmentSettings = {
      * The intensity of the environment lighting.
      *
      * @default 1
-     *
-     * @deprecated envIntensity defaults to 1.0.
      */
     globalEnvIntensity: number;
     /**
@@ -63,8 +59,6 @@ export type DIVEEnvironmentSettings = {
      * Whether to replace the existing lights (can be restored via `restoreLights`).
      *
      * @default false
-     *
-     * @deprecated replaceLights defaults to false. Remove lights manually instead.
      */
     replaceLights?: boolean;
 };
@@ -89,16 +83,21 @@ export const DIVEEnvironmentDefaultSettings: DIVEEnvironmentSettings = {
 export class DIVEEnvironment {
     private originalBackground: typeof Scene.prototype.background;
 
-    private renderer: WebGLRenderer;
+    private renderer: WebGPURenderer;
     private scene: Scene;
     private pmrem: PMREMGenerator;
-    private currentEnvRT: WebGLRenderTarget | null = null;
-    private currentBackgroundCube: WebGLCubeRenderTarget | null = null;
+    private currentEnvRT: RenderTarget | null = null;
+    private currentBackgroundCube: CubeRenderTarget | null = null;
     private sourceImage: Texture | null = null;
     private options: DIVEEnvironmentSettings;
+    private _loadPromise: Promise<void>;
+    private _initPromise: Promise<void> | null = null;
+    private _sourceImageLoadId = 0;
+    private _initRequested = false;
+    private _disposed = false;
 
     constructor(
-        renderer: WebGLRenderer,
+        renderer: WebGPURenderer,
         scene: Scene,
         options: Partial<DIVEEnvironmentSettings> = {},
     ) {
@@ -112,16 +111,34 @@ export class DIVEEnvironment {
             ...options,
         };
 
-        this.loadHDRImage(this.options.imageUrl).then((image) => {
-            this.sourceImage = image;
+        this._loadPromise = this._loadSourceImage(this.options.imageUrl);
+    }
+
+    public async init(): Promise<void> {
+        this._initRequested = true;
+
+        if (this._initPromise) {
+            return this._initPromise;
+        }
+
+        this._initPromise = (async () => {
+            await this._loadPromise;
+
+            if (this._disposed || !this.renderer.initialized) return;
+
             this.update();
+        })().finally(() => {
+            this._initPromise = null;
         });
+
+        return this._initPromise;
     }
 
     /**
      * Disposes the environment.
      */
     public dispose(): void {
+        this._disposed = true;
         this.pmrem.dispose();
         this.sourceImage?.dispose();
         this.sourceImage = null;
@@ -155,6 +172,8 @@ export class DIVEEnvironment {
      * - Early-returns if the source image is not loaded.
      */
     public update(): void {
+        if (!this.renderer.initialized) return;
+
         if (!this.sourceImage) {
             this.clearEnvironment();
             return;
@@ -179,7 +198,7 @@ export class DIVEEnvironment {
         this.renderer.toneMapping = NoToneMapping;
         this.renderer.outputColorSpace = LinearSRGBColorSpace;
 
-        const cubeRT = new WebGLCubeRenderTarget(1024, {
+        const cubeRT = new CubeRenderTarget(1024, {
             type: HalfFloatType,
         });
         const cubeCamera = new CubeCamera(0.1, 1000, cubeRT);
@@ -208,7 +227,7 @@ export class DIVEEnvironment {
         this.currentEnvRT = pmremRT;
         this.scene.environment = pmremRT.texture;
 
-        // keep unfiltered capture as background (matches RGBELoader brightness)
+        // keep unfiltered capture as background (matches HDRLoader brightness)
         if (this.options.useAsBackground) {
             this.scene.background = cubeRT.texture;
             this.currentBackgroundCube = cubeRT;
@@ -225,15 +244,18 @@ export class DIVEEnvironment {
     }
 
     /**
-     * Sets the renderer and updates the environment. Use this only when rebuilding the webgl renderer.
+     * Sets the renderer and rebinds the PMREM generator. Use this only when rebuilding the renderer.
      *
-     * @param renderer - The webglrenderer.
+     * @param renderer - The renderer.
      */
-    public setRenderer(renderer: WebGLRenderer): void {
-        this.renderer = renderer;
+    public setRenderer(renderer: WebGPURenderer): void {
         this.pmrem.dispose();
+        this.renderer = renderer;
         this.pmrem = new PMREMGenerator(renderer);
-        this.update();
+
+        if (this._initRequested && renderer.initialized) {
+            this.update();
+        }
     }
 
     /**
@@ -243,11 +265,13 @@ export class DIVEEnvironment {
      */
     public async setImageUrl(url: string | null): Promise<void> {
         this.options.imageUrl = url ?? defaultEnvUrl;
-        this.sourceImage?.dispose();
-        this.sourceImage = null;
 
-        this.sourceImage = await this.loadHDRImage(this.options.imageUrl);
-        this.update();
+        this._loadPromise = this._loadSourceImage(this.options.imageUrl);
+        await this._loadPromise;
+
+        if (this._initRequested && this.renderer.initialized) {
+            this.update();
+        }
     }
 
     /**
@@ -277,40 +301,21 @@ export class DIVEEnvironment {
      * @returns The loaded equirectangular HDR texture.
      */
     private async loadHDRImage(url: string): Promise<Texture> {
-        const image = await new RGBELoader().loadAsync(url);
+        const image = await new HDRLoader().loadAsync(url);
         image.mapping = EquirectangularReflectionMapping;
         return image;
     }
 
-    /**
-     * @deprecated setGlobalEnvIntensity does nothing.
-     */
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    public setGlobalEnvIntensity(intensity: number): void {
-        console.warn('setGlobalEnvIntensity is deprecated and does nothing.');
-    }
+    private async _loadSourceImage(url: string): Promise<void> {
+        const loadId = ++this._sourceImageLoadId;
+        const image = await this.loadHDRImage(url);
 
-    /**
-     * @deprecated setExposure does nothing.
-     */
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    public setExposure(exposure: number): void {
-        console.warn('setExposure is deprecated and does nothing.');
-    }
+        if (this._disposed || loadId !== this._sourceImageLoadId) {
+            image.dispose();
+            return;
+        }
 
-    /**
-     * @deprecated disable does nothing. Environment is enabled by default.
-     */
-    public disable(): void {
-        console.warn(
-            'disable is deprecated and does nothing. Environment is enabled by default.',
-        );
-    }
-
-    /**
-     * @deprecated Use update() instead.
-     */
-    public async enable(): Promise<void> {
-        this.update();
+        this.sourceImage?.dispose();
+        this.sourceImage = image;
     }
 }

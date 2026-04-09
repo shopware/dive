@@ -1,26 +1,4 @@
-vi.mock('@shopware-ag/dive/shader', () => ({
-    DIVEShaderLib: {
-        grid: { uniforms: {}, vertexShader: '', fragmentShader: '' },
-    },
-    DIVEShaderMaterial: vi.fn(),
-}));
-
-vi.mock('three', async () => {
-    const actual = await vi.importActual<typeof import('three')>('three');
-
-    const Raycaster = vi.fn(function (this: any) {
-        this.setFromCamera = vi.fn(() => this);
-        this.intersectObjects = vi.fn(() => []);
-        return this;
-    });
-
-    return {
-        ...actual,
-        Raycaster,
-    };
-});
-
-import { Vector2, Vector3, type Object3D } from 'three';
+import { Vector2, Vector3, type Object3D } from 'three/webgpu';
 import { DragTool } from '../DragTool.ts';
 import { type PointerContext } from '../../PointerContext.ts';
 import { type DIVEDraggable } from '@shopware-ag/dive';
@@ -29,6 +7,25 @@ import { type OrbitController } from '@shopware-ag/dive/orbitcontroller';
 /**
  * @vitest-environment jsdom
  */
+
+const RaycasterIntersectObjectMock = vi.fn(() => []);
+
+vi.mock('three/webgpu', async () => {
+    const actual =
+        await vi.importActual<typeof import('three/webgpu')>('three/webgpu');
+
+    const Raycaster = vi.fn(function (this: any) {
+        this.layers = { mask: 0 };
+        this.setFromCamera = vi.fn(() => this);
+        this.intersectObjects = RaycasterIntersectObjectMock;
+        return this;
+    });
+
+    return {
+        ...actual,
+        Raycaster,
+    };
+});
 
 // Mock PointerEvent for jsdom
 class MockPointerEvent extends MouseEvent {
@@ -77,6 +74,7 @@ describe('DragTool', () => {
 
     afterEach(() => {
         vi.clearAllMocks();
+        RaycasterIntersectObjectMock.mockReset();
     });
 
     describe('properties', () => {

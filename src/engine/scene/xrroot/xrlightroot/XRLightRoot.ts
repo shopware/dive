@@ -1,8 +1,6 @@
 import { XREstimatedLight } from 'three/examples/jsm/webxr/XREstimatedLight.ts';
-import { type DIVERenderer } from '../../../renderer/Renderer.ts';
-import { Object3D } from 'three';
+import { Object3D } from 'three/webgpu';
 import { type DIVEScene } from '../../Scene.ts';
-import { PRODUCT_LAYER_MASK } from '../../../../constants/VisibilityLayerMask.ts';
 import { DIVERoot } from '../../../../components/root/Root.ts';
 
 export class DIVEXRLightRoot extends Object3D {
@@ -10,6 +8,7 @@ export class DIVEXRLightRoot extends Object3D {
 
     private _xrLight: XREstimatedLight | null;
     private _lightRoot: DIVERoot;
+    private _warnedUnsupported = false;
 
     constructor(scene: DIVEScene) {
         super();
@@ -35,19 +34,13 @@ export class DIVEXRLightRoot extends Object3D {
         this.add(this._lightRoot);
     }
 
-    public initLightEstimation(renderer: DIVERenderer): void {
-        if (!this._xrLight) {
-            this._xrLight = new XREstimatedLight(renderer.webglrenderer, true);
-            this._xrLight.layers.mask = PRODUCT_LAYER_MASK;
-            this.add(this._xrLight);
+    public initLightEstimation(): void {
+        if (!this._warnedUnsupported) {
+            console.warn(
+                'DIVEXRLightRoot.initLightEstimation: XREstimatedLight is not supported with WebGPURenderer yet. Falling back to the scene light.',
+            );
+            this._warnedUnsupported = true;
         }
-
-        this._xrLight.addEventListener('estimationstart', () => {
-            this.onEstimationStart();
-        });
-        this._xrLight.addEventListener('estimationend', () => {
-            this.onEstimationEnd();
-        });
     }
 
     public disposeLightEstimation(): void {

@@ -11,9 +11,6 @@ export * from './src/transform/TransformTool.ts';
 export * from './src/drag/DragTool.ts';
 export * from './src/drag/DraggableEvent.ts';
 
-// Legacy exports (deprecated) - exclude DraggableEvent to avoid conflict
-export { DIVEBaseTool } from './src/BaseTool.ts';
-
 // Legacy aliases
 export { SelectTool as DIVESelectTool } from './src/select/SelectTool.ts';
 export { TransformTool as DIVETransformTool } from './src/transform/TransformTool.ts';

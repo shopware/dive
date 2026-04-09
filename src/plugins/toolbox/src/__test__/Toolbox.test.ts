@@ -23,8 +23,8 @@ class MockPointerEvent extends MouseEvent {
 }
 globalThis.PointerEvent = MockPointerEvent as unknown as typeof PointerEvent;
 
-vi.mock('three', async () => {
-    const actual = await vi.importActual<typeof import('three')>('three');
+vi.mock('three/webgpu', async (importOriginal) => {
+    const actual = await importOriginal<typeof import('three/webgpu')>();
     return {
         ...actual,
         Layers: vi.fn().mockImplementation(() => ({
@@ -434,39 +434,6 @@ describe('Toolbox', () => {
 
             expect(hoverTool).toBeDefined();
             expect(hoverTool.name).toBe('hover');
-        });
-    });
-
-    describe('legacy API', () => {
-        it('should enable tools via useTool', () => {
-            toolbox.useTool('hover');
-
-            expect(toolbox.isToolEnabled('hover')).toBe(true);
-        });
-
-        it('should enable all tools when useTool is called with select', () => {
-            toolbox.useTool('select');
-
-            expect(toolbox.isToolEnabled('hover')).toBe(true);
-            expect(toolbox.isToolEnabled('select')).toBe(true);
-            expect(toolbox.isToolEnabled('transform')).toBe(true);
-            expect(toolbox.isToolEnabled('drag')).toBe(true);
-        });
-
-        it('should return first active tool via getActiveTool', () => {
-            toolbox.enableTool('hover');
-            toolbox.enableTool('transform');
-
-            const activeTool = toolbox.getActiveTool();
-
-            // transform has higher priority (5 vs 20)
-            expect(activeTool?.name).toBe('transform');
-        });
-
-        it('should return null from getActiveTool when no tools active', () => {
-            const activeTool = toolbox.getActiveTool();
-
-            expect(activeTool).toBeNull();
         });
     });
 

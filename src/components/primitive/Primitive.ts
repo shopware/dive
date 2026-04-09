@@ -7,7 +7,7 @@ import {
     Mesh,
     MeshStandardMaterial,
     SphereGeometry,
-} from 'three';
+} from 'three/webgpu';
 import { PRODUCT_LAYER_MASK } from '../../constants/VisibilityLayerMask.ts';
 import { DIVEModel } from '../model/Model.ts';
 import { type GeometrySchema } from '../../types/index.ts';

@@ -1,5 +1,4 @@
-import { Vector3Like } from 'three';
-import { QuaternionLike } from 'three';
+import { Vector3Like, QuaternionLike } from 'three/webgpu';
 
 export type OrbitControllerState = {
     target: Vector3Like;

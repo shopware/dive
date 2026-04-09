@@ -9,7 +9,7 @@ import {
     type PrimitiveSchema,
 } from '@shopware-ag/dive';
 import { OrbitController } from '@shopware-ag/dive/orbitcontroller';
-import { Color, MeshStandardMaterial, Vector3 } from 'three';
+import { Color, MeshStandardMaterial, Vector3 } from 'three/webgpu';
 
 describe('GetAllSceneDataAction', () => {
     it('should get all scene data', async () => {

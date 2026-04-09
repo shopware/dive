@@ -1,4 +1,4 @@
-import { Box3, Color, Object3D } from 'three';
+import { Box3, Color, Object3D } from 'three/webgpu';
 import { DIVEAmbientLight } from '../light/AmbientLight.ts';
 import { DIVEPointLight } from '../light/PointLight.ts';
 import { DIVESceneLight } from '../light/SceneLight.ts';
@@ -6,7 +6,7 @@ import { DIVEModel } from '../model/Model.ts';
 import { DIVEPrimitive } from '../primitive/Primitive.ts';
 
 import { type DIVEScene } from '../../engine/scene/Scene.ts';
-import { type TransformControls } from 'three/examples/jsm/controls/TransformControls.ts';
+import { type TransformControls } from 'three/examples/jsm/controls/TransformControls.js';
 import {
     LightSchema,
     ModelSchema,
@@ -354,10 +354,26 @@ export class DIVERoot extends Object3D {
 
     private _detachTransformControls(object: Object3D): void {
         // this is only neccessary due to using the old TransformControls instead of the new DIVEGizmo
-        this._findScene(object).children.find((object) => {
-            if ('isTransformControls' in object) {
-                (object as TransformControls).detach();
+        this._findScene(object).children.find((sceneChild) => {
+            const helperRoot = sceneChild as Object3D & {
+                isTransformControlsRoot?: boolean;
+                controls?: TransformControls;
+            };
+            if (helperRoot.isTransformControlsRoot && helperRoot.controls) {
+                helperRoot.controls.detach();
+                return true;
             }
+
+            const controls = sceneChild as Object3D & {
+                isTransformControls?: boolean;
+                detach?: () => void;
+            };
+            if (controls.isTransformControls && controls.detach) {
+                controls.detach();
+                return true;
+            }
+
+            return false;
         });
     }
 

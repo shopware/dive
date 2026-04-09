@@ -1,8 +1,4 @@
-import {
-    DIVEShaderLib,
-    DIVEShaderMaterial,
-    GridShader,
-} from '@shopware-ag/dive/shader';
+import { GridNode, type GridNodeUniforms } from '@shopware-ag/dive/shader';
 import {
     GRID_MINOR_LINE_COLOR,
     GRID_MAJOR_LINE_COLOR,
@@ -12,10 +8,11 @@ import {
     Color,
     DoubleSide,
     Mesh,
+    MeshBasicNodeMaterial,
     Object3D,
     PlaneGeometry,
-    ShaderMaterial,
-} from 'three';
+} from 'three/webgpu';
+import { uniform } from 'three/tsl';
 
 const PLANE_SIZE = 50;
 const GRID_SIZE = 1;
@@ -35,7 +32,8 @@ export interface DIVEGridSettings {
  */
 export class DIVEGrid extends Object3D {
     private _mesh: Mesh;
-    private _material: ShaderMaterial;
+    private _material: MeshBasicNodeMaterial;
+    private _uniforms: GridNodeUniforms;
     private _gridSize: number;
 
     constructor(settings?: DIVEGridSettings) {
@@ -48,18 +46,19 @@ export class DIVEGrid extends Object3D {
         const geometry = new PlaneGeometry(PLANE_SIZE, PLANE_SIZE);
         geometry.rotateX(-Math.PI / 2);
 
-        this._material = new DIVEShaderMaterial<GridShader>({
-            ...DIVEShaderLib.grid,
-            uniforms: {
-                uGridSize: { value: this._gridSize },
-                uMajorLineEvery: { value: majorLineEvery },
-                uMinorLineColor: { value: new Color(GRID_MINOR_LINE_COLOR) },
-                uMajorLineColor: { value: new Color(GRID_MAJOR_LINE_COLOR) },
-                uFadeDistance: { value: PLANE_SIZE / 2 },
-            },
+        this._uniforms = {
+            uGridSize: uniform(this._gridSize),
+            uMajorLineEvery: uniform(majorLineEvery),
+            uMinorLineColor: uniform(new Color(GRID_MINOR_LINE_COLOR)),
+            uMajorLineColor: uniform(new Color(GRID_MAJOR_LINE_COLOR)),
+            uFadeDistance: uniform(PLANE_SIZE / 2),
+        };
+
+        this._material = new MeshBasicNodeMaterial({
             transparent: true,
             depthWrite: false,
             side: DoubleSide,
+            outputNode: new GridNode(this._uniforms),
         });
 
         this._mesh = new Mesh(geometry, this._material);
@@ -83,11 +82,11 @@ export class DIVEGrid extends Object3D {
 
     public setGridSize(size: number): void {
         this._gridSize = size;
-        this._material.uniforms.uGridSize.value = size;
+        this._uniforms.uGridSize.value = size;
     }
 
     public setMajorLineEvery(n: number): void {
-        this._material.uniforms.uMajorLineEvery.value = n;
+        this._uniforms.uMajorLineEvery.value = n;
     }
 
     public dispose(): void {

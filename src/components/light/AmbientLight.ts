@@ -1,4 +1,4 @@
-import { AmbientLight, Color, Object3D } from 'three';
+import { AmbientLight, Color, Object3D } from 'three/webgpu';
 import { PRODUCT_LAYER_MASK } from '../../constants/VisibilityLayerMask.ts';
 import { DIVESelectable } from '@shopware-ag/dive';
 

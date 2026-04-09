@@ -1,4 +1,4 @@
-vi.mock('three', async (importOriginal) => {
+vi.mock('three/webgpu', async (importOriginal) => {
     const actual = await importOriginal<typeof import('three')>();
     return { ...actual };
 });
@@ -15,7 +15,7 @@ import { Toolbox } from '@shopware-ag/dive/toolbox';
 import { getActionClass } from '../ActionRegistry.ts';
 import { Action } from '../actions/action.ts';
 import { type ActionDependencies } from '../../types/index.ts';
-import { type Vector3Like } from 'three';
+import { type Vector3Like } from 'three/webgpu';
 
 // Extend the global ActionTypes interface for our tests
 declare global {
