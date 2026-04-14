@@ -35,10 +35,17 @@ const mockCamera = {
     matrix: new Matrix4(),
 } as unknown as DIVEPerspectiveCamera;
 
+const mockCanvas = document.createElement('canvas');
+Object.defineProperty(mockCanvas, 'clientHeight', {
+    value: 600,
+    configurable: true,
+});
+
 const mockRenderer = {
     render: vi.fn(),
+    canvas: mockCanvas,
     webgpurenderer: {
-        getViewport: vi.fn().mockReturnValue(new Vector4(0, 0, 800, 600)),
+        getViewport: vi.fn((viewport: Vector4) => viewport.set(0, 0, 800, 600)),
         setViewport: vi.fn(),
         render: vi.fn(),
         autoClear: true,
@@ -108,7 +115,7 @@ describe('OrientationDisplay', () => {
             ).toHaveBeenCalledWith(orientationDisplay['_restoreViewport']);
             expect(
                 mockRenderer.webgpurenderer.setViewport,
-            ).toHaveBeenCalledWith(0, 0, 150, 150);
+            ).toHaveBeenCalledWith(0, 450, 150, 150);
             expect(mockRenderer.webgpurenderer.render).toHaveBeenCalledWith(
                 mockScene,
                 orientationDisplay['_orthographicCamera'],
@@ -140,10 +147,23 @@ describe('OrientationDisplay', () => {
             );
         });
 
-        it('should manage autoClear property correctly', () => {
+        it('should restore the previous autoClear property', () => {
+            mockRenderer.webgpurenderer.autoClear = false;
+
             orientationDisplay.tick();
 
-            expect(mockRenderer.webgpurenderer.autoClear).toBe(true);
+            expect(mockRenderer.webgpurenderer.autoClear).toBe(false);
+        });
+
+        it('should fall back to the stored viewport height when canvas height is unavailable', () => {
+            mockRenderer.webgpurenderer.domElement =
+                undefined as unknown as HTMLCanvasElement;
+
+            orientationDisplay.tick();
+
+            expect(
+                mockRenderer.webgpurenderer.setViewport,
+            ).toHaveBeenCalledWith(0, 450, 150, 150);
         });
     });
 });
