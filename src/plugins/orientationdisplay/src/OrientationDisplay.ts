@@ -50,7 +50,13 @@ export class OrientationDisplay implements DIVETicker {
 
         // save current viewport and set it to desired size
         this._renderer.webgpurenderer.getViewport(this._restoreViewport);
-        this._renderer.webgpurenderer.setViewport(0, 0, 150, 150);
+
+        this._renderer.webgpurenderer.setViewport(
+            0,
+            this._renderer.webgpurenderer.domElement.clientHeight - 150,
+            150,
+            150,
+        );
         this._renderer.webgpurenderer.autoClear = false;
 
         // set axes rotation to camera rotation
