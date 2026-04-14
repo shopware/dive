@@ -46,14 +46,18 @@ export class OrientationDisplay implements DIVETicker {
     public tick(): void {
         // save current background reference and set it to transparent
         const restoreBackground = this._scene.background ?? null;
+        const restoreAutoClear = this._renderer.webgpurenderer.autoClear;
         this._scene.background = null;
 
         // save current viewport and set it to desired size
         this._renderer.webgpurenderer.getViewport(this._restoreViewport);
+        const canvasHeight =
+            this._renderer.webgpurenderer.domElement?.clientHeight ??
+            this._restoreViewport.w;
 
         this._renderer.webgpurenderer.setViewport(
             0,
-            this._renderer.webgpurenderer.domElement.clientHeight - 150,
+            Math.max(0, canvasHeight - 150),
             150,
             150,
         );
@@ -70,7 +74,7 @@ export class OrientationDisplay implements DIVETicker {
 
         // restore viewport and background
         this._renderer.webgpurenderer.setViewport(this._restoreViewport);
-        this._renderer.webgpurenderer.autoClear = true;
+        this._renderer.webgpurenderer.autoClear = restoreAutoClear;
         this._scene.background = restoreBackground;
     }
 
