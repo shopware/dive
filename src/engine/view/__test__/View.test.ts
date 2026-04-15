@@ -9,7 +9,10 @@ import { DIVEView } from '../View.ts';
 import { DIVEScene } from '../../scene/Scene.ts';
 import { DIVEPerspectiveCamera } from '../../camera/PerspectiveCamera.ts';
 import { DIVERenderer } from '../../renderer/Renderer.ts';
-import { DIVECanvasLifecycleManager } from '../../resize/CanvasLifecycleManager.ts';
+import {
+    DIVECanvasLifecycleManager,
+    type DIVECanvasLayout,
+} from '../../resize/CanvasLifecycleManager.ts';
 
 const mockRenderer = {
     initialized: false,
@@ -31,11 +34,15 @@ const mockRenderer = {
 const mockCanvasLifecycleManager = {
     dispose: vi.fn(),
     setCanvas: vi.fn(),
-    waitForRenderableCanvas: vi.fn(async () => ({
+    waitForRenderableCanvas: vi.fn<
+        (canvas?: HTMLCanvasElement) => Promise<DIVECanvasLayout | null>
+    >(async () => ({
         width: 800,
         height: 600,
     })),
 };
+let lifecycleResizeHandler: ((width: number, height: number) => void) | null =
+    null;
 
 const mockCamera = {
     onResize: vi.fn(),
@@ -79,6 +86,7 @@ describe('DIVEView', () => {
 
     beforeEach(() => {
         vi.clearAllMocks();
+        lifecycleResizeHandler = null;
         mockRenderer.initialized = false;
         mockRenderer.usesExternalCanvas = false;
         mockRenderer.init.mockImplementation(async () => {
@@ -91,7 +99,10 @@ describe('DIVEView', () => {
 
         vi.mocked(DIVERenderer).mockImplementation(() => mockRenderer as any);
         vi.mocked(DIVECanvasLifecycleManager).mockImplementation(
-            () => mockCanvasLifecycleManager as any,
+            (_canvas, onResize) => {
+                lifecycleResizeHandler = onResize;
+                return mockCanvasLifecycleManager as any;
+            },
         );
         vi.mocked(DIVEPerspectiveCamera).mockImplementation(
             () => mockCamera as any,
@@ -127,6 +138,14 @@ describe('DIVEView', () => {
 
         it('should initialize with paused state as false', () => {
             expect(view['_paused']).toBe(false);
+        });
+
+        it('should route lifecycle resize events through onResize and render', () => {
+            lifecycleResizeHandler?.(640, 480);
+
+            expect(mockRenderer.onResize).toHaveBeenCalledWith(640, 480);
+            expect(mockCamera.onResize).toHaveBeenCalledWith(640, 480);
+            expect(mockRenderer.render).toHaveBeenCalledTimes(1);
         });
     });
 
@@ -209,6 +228,28 @@ describe('DIVEView', () => {
             await view.init();
 
             expect(mockRenderer.init).toHaveBeenCalledTimes(1);
+        });
+
+        it('should abort completion when the view is disposed while renderer.init is pending', async () => {
+            let resolveInit: (() => void) | undefined;
+
+            mockRenderer.init.mockImplementation(
+                () =>
+                    new Promise<void>((resolve) => {
+                        resolveInit = () => {
+                            mockRenderer.initialized = true;
+                            resolve();
+                        };
+                    }),
+            );
+
+            const initPromise = view.init();
+            view.dispose();
+
+            resolveInit?.();
+            await initPromise;
+
+            expect(view['_initPromise']).toBeNull();
         });
     });
 

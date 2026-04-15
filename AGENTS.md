@@ -65,3 +65,7 @@
 - `DIVERenderer` no longer owns DOM/canvas readiness logic; it only initializes WebGPU/environment state, swaps canvases, and handles render/resize calls
 - The old `DIVEResizeManager` compatibility layer has been removed entirely on v3; canvas ownership now lives directly between `DIVEView` and `DIVECanvasLifecycleManager`
 - `DIVEView.setCanvas()` must not force an immediate `onResize()` on the swapped canvas; the `DIVECanvasLifecycleManager` is the single source of truth for resize propagation
+- `DIVECanvasLifecycleManager` coverage is easiest to raise by testing constructor observation and wait-time observation separately; the wait path creates its own `ResizeObserver`, so tests should store all observer callbacks instead of only the first one
+- `DIVEView` invalidation branches after async init are best covered by disposing the view while `renderer.init()` is still pending and by invoking the `DIVECanvasLifecycleManager` resize callback directly to assert the `onResize` + immediate render path
+- `DIVECanvasLifecycleManager` async wait-path coverage is most stable with a manually queued `requestAnimationFrame` stub instead of fake timers; the "loses renderability between frames" case needs one flushed frame for the initial immediate check and a second queued frame after `dispose()` to resolve the follow-up wait promise
+- In `View.test.ts`, the `waitForRenderableCanvas` mock should be explicitly typed as `Promise<DIVECanvasLayout | null>`; otherwise the stale `null` path triggers a TypeScript error on `mockResolvedValue(null)`

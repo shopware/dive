@@ -116,10 +116,6 @@ export class DIVECanvasLifecycleManager {
             let rafId: number | null = null;
 
             const finish = (layout: DIVECanvasLayout | null): void => {
-                if (settled) {
-                    return;
-                }
-
                 settled = true;
                 resizeObserver.disconnect();
 
