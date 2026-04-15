@@ -3,6 +3,6 @@ export * from './camera/PerspectiveCamera.ts';
 export * from './clock/Clock.ts';
 export * from './renderer/Renderer.ts';
 export * from './environment/Environment.ts';
-export * from './resize/CanvasLifecycleManager.ts';
+export * from './canvas/CanvasLifecycleManager.ts';
 export * from './scene/Scene.ts';
 export * from './view/View.ts';

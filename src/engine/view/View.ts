@@ -2,7 +2,7 @@ import { MathUtils } from 'three/webgpu';
 import { DIVETicker } from '../clock/Clock.ts';
 import { DIVEPerspectiveCamera } from '../camera/PerspectiveCamera.ts';
 import { DIVERenderer } from '../renderer/Renderer.ts';
-import { DIVECanvasLifecycleManager } from '../resize/CanvasLifecycleManager.ts';
+import { DIVECanvasLifecycleManager } from '../canvas/CanvasLifecycleManager.ts';
 import { DIVEScene } from '../scene/Scene.ts';
 import { DIVERendererSettings } from '../renderer/Renderer.ts';
 

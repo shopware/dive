@@ -12,7 +12,7 @@ import { DIVERenderer } from '../../renderer/Renderer.ts';
 import {
     DIVECanvasLifecycleManager,
     type DIVECanvasLayout,
-} from '../../resize/CanvasLifecycleManager.ts';
+} from '../../canvas/CanvasLifecycleManager.ts';
 
 const mockRenderer = {
     initialized: false,
