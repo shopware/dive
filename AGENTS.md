@@ -72,6 +72,7 @@
 - `DIVEView.setCanvas()` must not force an immediate `onResize()` on the swapped canvas; the `DIVECanvasLifecycleManager` is the single source of truth for resize propagation
 - `DIVECanvasLifecycleManager.setCanvas()` must reset its cached width/height so an equally sized replacement canvas still emits the initial resize sync for the new renderer/camera pair
 - In `DIVECanvasLifecycleManager`, keep raw measurement in `_getCanvasLayout()`; the readiness-gated direct-layout reuse now lives inline in `waitForRenderableCanvas()` because it only has one caller
+- `DIVEView` should pass a named `_handleCanvasResize` callback into `DIVECanvasLifecycleManager` instead of an inline lambda, so the renderer/camera resize orchestration stays explicit while the CLM remains decoupled
 - `DIVEView` invalidation branches after async init are best covered by disposing the view while `renderer.init()` is still pending and by invoking the `DIVECanvasLifecycleManager` resize callback directly to assert the `onResize` + immediate render path
 - `DIVECanvasLifecycleManager` coverage is easiest to keep at 100% with fake timers around the shared 16ms bootstrap poll, plus a few explicit private-path tests for aborted waiter signals and direct-layout fallbacks after bootstrap
 - In `View.test.ts`, the `waitForRenderableCanvas` mock should be explicitly typed as `Promise<DIVECanvasLayout | null>`; otherwise the stale `null` path triggers a TypeScript error on `mockResolvedValue(null)`

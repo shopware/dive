@@ -31,10 +31,7 @@ export class DIVEView implements DIVETicker {
 
         this._canvasLifecycleManager = new DIVECanvasLifecycleManager(
             this._renderer.canvas,
-            (width, height) => {
-                this.onResize(width, height);
-                this._renderer.render();
-            },
+            this._handleCanvasResize,
         );
     }
 
@@ -140,4 +137,9 @@ export class DIVEView implements DIVETicker {
         this._initAbortController?.abort();
         this._initAbortController = null;
     }
+
+    private _handleCanvasResize = (width: number, height: number): void => {
+        this.onResize(width, height);
+        this._renderer.render();
+    };
 }
