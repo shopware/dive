@@ -34,15 +34,15 @@ vi.mock('../view/View.ts', async (importOriginal) => {
                         height: 100,
                     }),
                 },
-                init: vi.fn(() => {
-                    renderer.initialized = true;
-                    return Promise.resolve();
-                }),
                 dispose: vi.fn(),
                 onResize: vi.fn(),
                 render: vi.fn(),
                 setCanvas: vi.fn(),
             };
+            this.init = vi.fn(() => {
+                renderer.initialized = true;
+                return Promise.resolve();
+            });
             this.dispose = vi.fn();
             this.onResize = vi.fn();
             this.tick = vi.fn();
@@ -359,7 +359,7 @@ describe('DIVE', () => {
             autoStart: false,
         });
 
-        dive.mainView.renderer.init.mockRejectedValueOnce(error);
+        dive.mainView.init.mockRejectedValueOnce(error);
         dive.start();
         await waitForAsync();
 
@@ -376,7 +376,7 @@ describe('DIVE', () => {
 
         await dive.startAsync();
 
-        expect(dive.mainView.renderer.init).toHaveBeenCalled();
+        expect(dive.mainView.init).toHaveBeenCalled();
         expect(dive.clock.start).toHaveBeenCalled();
     });
 
@@ -392,7 +392,7 @@ describe('DIVE', () => {
         });
         let resolveInit: (() => void) | undefined;
 
-        dive.mainView.renderer.init.mockImplementationOnce(
+        dive.mainView.init.mockImplementationOnce(
             () =>
                 new Promise<void>((resolve) => {
                     resolveInit = resolve;

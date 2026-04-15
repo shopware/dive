@@ -206,7 +206,7 @@ export class DIVE {
         }
 
         if (!this.mainView.renderer.initialized) {
-            await this.mainView.renderer.init();
+            await this.mainView.init();
         }
 
         if (this._disposed) {

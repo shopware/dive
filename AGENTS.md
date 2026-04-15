@@ -60,6 +60,8 @@
 - The `dive-demo` orientation display example now uses a single `QuickView` canvas with `displayAxes: true`; the previous side-by-side comparison against a manually wired `OrientationDisplay` plugin is no longer the expected snapshot shape
 - `dive-demo` views that gate UI interactivity on `QuickView` readiness, such as `DiveSwitchCanvas` and `DiveTargetAnimation`, need to wait for a non-zero canvas layout plus a small initial delay before constructing `QuickView`; on CI `Linux + xvfb + llvmpipe`, starting too early leaves control buttons permanently disabled
 - In `dive-demo`, replacing the fixed QuickView startup sleep with a shared layout-driven wait helper (`ResizeObserver` plus animation-frame verification) keeps the initial load stable, but canvas-switch flows still need to yield one DOM frame after committing the active-panel state before calling `mainView.setCanvas(...)`
-- `DIVERenderer.init()` should wait for a user-supplied canvas to be connected and have a stable non-zero layout before calling `WebGPURenderer.init()`; auto-created internal canvases still initialize immediately
-- `DIVEResizeManager` must treat `0x0` canvas sizes as a tracked but non-renderable state: update cached width/height, but do not call camera/renderer resize until a non-zero layout arrives
-- `DIVEView.setCanvas()` should delegate resize synchronization to `DIVEResizeManager` and must not force an immediate `onResize()` on the swapped canvas
+- `DIVECanvasLifecycleManager` in `src/engine/resize/` now owns canvas parent observation, non-zero size readiness, and renderable-canvas waiting via `ResizeObserver` plus animation-frame verification
+- `DIVEView.init()` is now the engine-level entry point for external-canvas readiness; it waits on `DIVECanvasLifecycleManager` before calling `DIVERenderer.init()` and reuses the same path after canvas swaps
+- `DIVERenderer` no longer owns DOM/canvas readiness logic; it only initializes WebGPU/environment state, swaps canvases, and handles render/resize calls
+- The old `DIVEResizeManager` compatibility layer has been removed entirely on v3; canvas ownership now lives directly between `DIVEView` and `DIVECanvasLifecycleManager`
+- `DIVEView.setCanvas()` must not force an immediate `onResize()` on the swapped canvas; the `DIVECanvasLifecycleManager` is the single source of truth for resize propagation

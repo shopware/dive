@@ -83,35 +83,6 @@ export const DIVERendererDefaultSettings: Required<DIVERendererSettings> = {
     shadowQuality: 'high',
 };
 
-type CanvasLayout = {
-    width: number;
-    height: number;
-};
-
-const nextFrame = (): Promise<void> =>
-    new Promise((resolve) => requestAnimationFrame(() => resolve()));
-
-const getCanvasLayout = (canvas: HTMLCanvasElement): CanvasLayout => {
-    const rect = canvas.getBoundingClientRect?.() ?? {
-        width: 0,
-        height: 0,
-    };
-
-    return {
-        width: Math.max(rect.width, canvas.clientWidth),
-        height: Math.max(rect.height, canvas.clientHeight),
-    };
-};
-
-const isRenderableCanvas = (canvas: HTMLCanvasElement): boolean => {
-    if (!canvas.isConnected) {
-        return false;
-    }
-
-    const { width, height } = getCanvasLayout(canvas);
-    return width >= 1 && height >= 1;
-};
-
 /**
  * A changed version of the WebGLRenderer.
  *
@@ -163,6 +134,10 @@ export class DIVERenderer {
         return this._webgpurenderer.initialized;
     }
 
+    public get usesExternalCanvas(): boolean {
+        return this._settings.canvas !== undefined;
+    }
+
     public async init(): Promise<void> {
         if (this._webgpurenderer.initialized) {
             await this._environment.init();
@@ -175,16 +150,6 @@ export class DIVERenderer {
 
         const renderer = this._webgpurenderer;
         this._initPromise = (async () => {
-            const canvasLayout = await this._waitForRenderableCanvas(renderer);
-
-            if (renderer !== this._webgpurenderer) {
-                return;
-            }
-
-            if (canvasLayout) {
-                renderer.setSize(canvasLayout.width, canvasLayout.height);
-            }
-
             await renderer.init();
 
             if (renderer !== this._webgpurenderer) {
@@ -218,8 +183,6 @@ export class DIVERenderer {
 
     public setCanvas(canvas: HTMLCanvasElement): void {
         const previousRenderer = this._webgpurenderer;
-        const shouldReinitialize =
-            previousRenderer.initialized || this._initPromise !== null;
 
         this._initPromise = null;
 
@@ -229,10 +192,6 @@ export class DIVERenderer {
 
         this._environment.setRenderer(this._webgpurenderer);
         previousRenderer.dispose();
-
-        if (shouldReinitialize) {
-            void this.init();
-        }
     }
 
     private _createWebGPURenderer(): WebGPURenderer {
@@ -252,106 +211,5 @@ export class DIVERenderer {
         renderer.toneMappingExposure = 1.0;
 
         return renderer;
-    }
-
-    private async _waitForRenderableCanvas(
-        renderer: WebGPURenderer,
-    ): Promise<CanvasLayout | null> {
-        if (this._settings.canvas === undefined) {
-            return getCanvasLayout(renderer.domElement);
-        }
-
-        const canvas = renderer.domElement;
-
-        const getStableLayout = async (): Promise<CanvasLayout | null> => {
-            if (
-                renderer !== this._webgpurenderer ||
-                !isRenderableCanvas(canvas)
-            ) {
-                return null;
-            }
-
-            await nextFrame();
-
-            if (
-                renderer !== this._webgpurenderer ||
-                !isRenderableCanvas(canvas)
-            ) {
-                return null;
-            }
-
-            return getCanvasLayout(canvas);
-        };
-
-        const immediateLayout = await getStableLayout();
-
-        if (immediateLayout) {
-            return immediateLayout;
-        }
-
-        return new Promise((resolve) => {
-            let settled = false;
-            let verifyScheduled = false;
-            let rafId: number | null = null;
-
-            const finish = (layout: CanvasLayout | null): void => {
-                if (settled) {
-                    return;
-                }
-
-                settled = true;
-                resizeObserver.disconnect();
-
-                if (rafId !== null) {
-                    cancelAnimationFrame(rafId);
-                }
-
-                resolve(layout);
-            };
-
-            const verify = async (): Promise<void> => {
-                if (settled || verifyScheduled) {
-                    return;
-                }
-
-                verifyScheduled = true;
-
-                try {
-                    if (renderer !== this._webgpurenderer) {
-                        finish(null);
-                        return;
-                    }
-
-                    const stableLayout = await getStableLayout();
-
-                    if (stableLayout) {
-                        finish(stableLayout);
-                    }
-                } finally {
-                    verifyScheduled = false;
-                }
-            };
-
-            const resizeObserver = new ResizeObserver(() => {
-                void verify();
-            });
-
-            resizeObserver.observe(canvas);
-
-            if (canvas.parentElement) {
-                resizeObserver.observe(canvas.parentElement);
-            }
-
-            const tick = (): void => {
-                if (settled) {
-                    return;
-                }
-
-                void verify();
-                rafId = requestAnimationFrame(tick);
-            };
-
-            tick();
-        });
     }
 }

@@ -63,80 +63,16 @@ vi.mock('../../environment/Environment.ts', () => ({
 const WebGPURenderer = WebGPURendererOriginal as any;
 const MockedDIVEEnvironment = DIVEEnvironment as any;
 
-const setCanvasLayout = (
-    canvas: HTMLCanvasElement,
-    width: number,
-    height: number,
-): void => {
-    Object.defineProperty(canvas, 'clientWidth', {
-        value: width,
-        configurable: true,
-    });
-    Object.defineProperty(canvas, 'clientHeight', {
-        value: height,
-        configurable: true,
-    });
-    canvas.getBoundingClientRect = vi.fn(() => ({
-        width,
-        height,
-        top: 0,
-        left: 0,
-        right: width,
-        bottom: height,
-        x: 0,
-        y: 0,
-        toJSON: () => ({}),
-    })) as any;
-};
-
-const attachCanvas = (canvas: HTMLCanvasElement): HTMLCanvasElement => {
-    document.body.appendChild(canvas);
-    return canvas;
-};
-
 describe('DIVERenderPipeline', () => {
     let renderer: DIVERenderer;
     let scene: any;
     let camera: any;
-    let resizeObserverCallback:
-        | ((entries: ResizeObserverEntry[]) => void)
-        | undefined;
-    let mockObserve: ReturnType<typeof vi.fn>;
-    let mockDisconnect: ReturnType<typeof vi.fn>;
 
     beforeEach(() => {
         vi.clearAllMocks();
         scene = { isScene: true };
         camera = { isCamera: true };
-        mockObserve = vi.fn();
-        mockDisconnect = vi.fn();
-        resizeObserverCallback = undefined;
-        vi.stubGlobal(
-            'ResizeObserver',
-            vi.fn().mockImplementation((callback) => {
-                resizeObserverCallback = callback;
-                return {
-                    observe: mockObserve,
-                    disconnect: mockDisconnect,
-                };
-            }),
-        );
-        vi.stubGlobal(
-            'requestAnimationFrame',
-            vi.fn((callback: FrameRequestCallback) =>
-                setTimeout(() => callback(performance.now()), 0),
-            ),
-        );
-        vi.stubGlobal(
-            'cancelAnimationFrame',
-            vi.fn((id: number) => clearTimeout(id)),
-        );
         renderer = new DIVERenderer(scene, camera);
-    });
-
-    afterEach(() => {
-        vi.unstubAllGlobals();
-        document.body.innerHTML = '';
     });
 
     it('should instantiate with default settings', () => {
@@ -165,6 +101,7 @@ describe('DIVERenderPipeline', () => {
         expect(instance.outputColorSpace).toBe(SRGBColorSpace);
         expect(instance.toneMapping).toBe(LinearToneMapping);
         expect(MockedDIVEEnvironment).toHaveBeenCalledWith(instance, scene);
+        expect(renderer.usesExternalCanvas).toBe(false);
     });
 
     it('should instantiate with custom settings', () => {
@@ -188,6 +125,14 @@ describe('DIVERenderPipeline', () => {
         );
         expect(instance.shadowMap.enabled).toBe(false);
         expect(instance.shadowMap.type).toBe(BasicShadowMap);
+    });
+
+    it('should mark supplied canvases as external', () => {
+        const canvas = document.createElement('canvas');
+
+        renderer = new DIVERenderer(scene, camera, { canvas });
+
+        expect(renderer.usesExternalCanvas).toBe(true);
     });
 
     it('should expose the current renderer and canvas', () => {
@@ -244,16 +189,13 @@ describe('DIVERenderPipeline', () => {
         const firstInit = renderer.init();
         const secondInit = renderer.init();
 
-        await new Promise((resolve) => setTimeout(resolve, 0));
+        await Promise.resolve();
 
         expect(instance.init).toHaveBeenCalledTimes(1);
         expect(environment.init).not.toHaveBeenCalled();
 
         resolveInit?.();
-        await Promise.all([
-            firstInit,
-            secondInit,
-        ]);
+        await Promise.all([firstInit, secondInit]);
 
         expect(environment.init).toHaveBeenCalledTimes(1);
     });
@@ -291,6 +233,7 @@ describe('DIVERenderPipeline', () => {
         );
         expect(environment.setRenderer).toHaveBeenCalledWith(secondInstance);
         expect(renderer.canvas).toBe(secondInstance.domElement);
+        expect(renderer.usesExternalCanvas).toBe(true);
     });
 
     it('should swap the environment to the new renderer before disposing the previous renderer', () => {
@@ -307,25 +250,21 @@ describe('DIVERenderPipeline', () => {
         ).toBeLessThan(firstInstance.dispose.mock.invocationCallOrder[0]);
     });
 
-    it('should reinitialize after canvas swap when the previous renderer was active', async () => {
+    it('should not auto reinitialize after a canvas swap', () => {
         const firstInstance = WebGPURenderer.mock.results[0].value;
-        const newCanvas = attachCanvas(document.createElement('canvas'));
-        setCanvasLayout(newCanvas, 1920, 1080);
+        const newCanvas = document.createElement('canvas');
 
         firstInstance.initialized = true;
-
         renderer.setCanvas(newCanvas);
 
         const secondInstance = WebGPURenderer.mock.results.at(-1)?.value;
-        await new Promise((resolve) => setTimeout(resolve, 0));
-        expect(secondInstance.init).toHaveBeenCalled();
+
+        expect(secondInstance.init).not.toHaveBeenCalled();
     });
 
     it('should ignore stale init completions after a canvas swap', async () => {
         const firstInstance = WebGPURenderer.mock.results[0].value;
         const environment = MockedDIVEEnvironment.mock.results[0].value;
-        const newCanvas = attachCanvas(document.createElement('canvas'));
-        setCanvasLayout(newCanvas, 1920, 1080);
         let resolveFirstInit: (() => void) | undefined;
 
         firstInstance.init = vi.fn(
@@ -339,69 +278,12 @@ describe('DIVERenderPipeline', () => {
         );
 
         const pendingInit = renderer.init();
-        renderer.setCanvas(newCanvas);
-
-        const secondInstance = WebGPURenderer.mock.results.at(-1)?.value;
-        await new Promise((resolve) => setTimeout(resolve, 0));
-        expect(secondInstance.init).toHaveBeenCalledTimes(1);
-
-        await new Promise((resolve) => setTimeout(resolve, 0));
-        expect(environment.init).toHaveBeenCalledTimes(1);
+        renderer.setCanvas(document.createElement('canvas'));
 
         resolveFirstInit?.();
         await pendingInit;
 
-        expect(environment.init).toHaveBeenCalledTimes(1);
-    });
-
-    it('should wait for a supplied canvas to receive layout before initializing', async () => {
-        const canvas = attachCanvas(document.createElement('canvas'));
-        let width = 0;
-        let height = 0;
-
-        Object.defineProperty(canvas, 'clientWidth', {
-            get: () => width,
-            configurable: true,
-        });
-        Object.defineProperty(canvas, 'clientHeight', {
-            get: () => height,
-            configurable: true,
-        });
-        canvas.getBoundingClientRect = vi.fn(() => ({
-            width,
-            height,
-            top: 0,
-            left: 0,
-            right: width,
-            bottom: height,
-            x: 0,
-            y: 0,
-            toJSON: () => ({}),
-        })) as any;
-
-        renderer = new DIVERenderer(scene, camera, { canvas });
-        const instance = WebGPURenderer.mock.results.at(-1)?.value;
-        const initPromise = renderer.init();
-
-        expect(instance.init).not.toHaveBeenCalled();
-
-        width = 800;
-        height = 600;
-        resizeObserverCallback?.([
-            {
-                contentRect: {
-                    width,
-                    height,
-                },
-            } as ResizeObserverEntry,
-        ]);
-
-        await initPromise;
-
-        expect(instance.init).toHaveBeenCalledTimes(1);
-        expect(instance.setSize).toHaveBeenCalledWith(800, 600);
-        expect(mockObserve).toHaveBeenCalled();
-        expect(mockDisconnect).toHaveBeenCalled();
+        expect(environment.init).not.toHaveBeenCalled();
     });
 
     it('should dispose environment and renderer', () => {

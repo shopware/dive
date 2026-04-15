@@ -2,7 +2,7 @@ import { MathUtils } from 'three/webgpu';
 import { DIVETicker } from '../clock/Clock.ts';
 import { DIVEPerspectiveCamera } from '../camera/PerspectiveCamera.ts';
 import { DIVERenderer } from '../renderer/Renderer.ts';
-import { DIVEResizeManager } from '../resize/ResizeManager.ts';
+import { DIVECanvasLifecycleManager } from '../resize/CanvasLifecycleManager.ts';
 import { DIVEScene } from '../scene/Scene.ts';
 import { DIVERendererSettings } from '../renderer/Renderer.ts';
 
@@ -14,7 +14,9 @@ export class DIVEView implements DIVETicker {
     private _paused: boolean = false;
 
     private _renderer: DIVERenderer;
-    private _resizeManager: DIVEResizeManager;
+    private _canvasLifecycleManager: DIVECanvasLifecycleManager;
+    private _initPromise: Promise<void> | null = null;
+    private _initVersion: number = 0;
 
     constructor(
         private _scene: DIVEScene,
@@ -27,9 +29,12 @@ export class DIVEView implements DIVETicker {
             this._settings,
         );
 
-        this._resizeManager = new DIVEResizeManager(
-            this._renderer,
-            this._camera,
+        this._canvasLifecycleManager = new DIVECanvasLifecycleManager(
+            this._renderer.canvas,
+            (width, height) => {
+                this.onResize(width, height);
+                this._renderer.render();
+            },
         );
     }
 
@@ -50,8 +55,57 @@ export class DIVEView implements DIVETicker {
         this._renderer.render();
     }
 
+    public async init(): Promise<void> {
+        if (this._renderer.initialized) {
+            await this._renderer.init();
+            return;
+        }
+
+        if (this._initPromise) {
+            return this._initPromise;
+        }
+
+        const initVersion = ++this._initVersion;
+        const renderer = this._renderer;
+        const canvas = renderer.canvas;
+
+        this._initPromise = (async () => {
+            if (renderer.usesExternalCanvas) {
+                const stableLayout =
+                    await this._canvasLifecycleManager.waitForRenderableCanvas(
+                        canvas,
+                    );
+
+                if (
+                    stableLayout === null ||
+                    initVersion !== this._initVersion ||
+                    renderer !== this._renderer
+                ) {
+                    return;
+                }
+            }
+
+            await renderer.init();
+
+            if (
+                initVersion !== this._initVersion ||
+                renderer !== this._renderer
+            ) {
+                return;
+            }
+        })().finally(() => {
+            if (initVersion === this._initVersion) {
+                this._initPromise = null;
+            }
+        });
+
+        return this._initPromise;
+    }
+
     public dispose(): void {
-        this._resizeManager.dispose();
+        this._initVersion += 1;
+        this._initPromise = null;
+        this._canvasLifecycleManager.dispose();
         this._renderer.dispose();
     }
 
@@ -61,8 +115,17 @@ export class DIVEView implements DIVETicker {
     }
 
     public setCanvas(canvas: HTMLCanvasElement): void {
+        const shouldReinitialize =
+            this._renderer.initialized || this._initPromise !== null;
+
+        this._initVersion += 1;
+        this._initPromise = null;
         this._renderer.setCanvas(canvas);
-        this._resizeManager.setCanvas(canvas);
+        this._canvasLifecycleManager.setCanvas(canvas);
+
+        if (shouldReinitialize) {
+            void this.init();
+        }
     }
 
     // TODO: add methods to individually pause and resume the view

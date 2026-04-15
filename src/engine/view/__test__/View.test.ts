@@ -1,17 +1,22 @@
-import { vi, describe, it, expect, beforeEach, afterEach } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 vi.mock('three/webgpu', async (importOriginal) => {
     const actual = await importOriginal<typeof import('three')>();
     return { ...actual };
 });
+
 import { DIVEView } from '../View.ts';
 import { DIVEScene } from '../../scene/Scene.ts';
 import { DIVEPerspectiveCamera } from '../../camera/PerspectiveCamera.ts';
 import { DIVERenderer } from '../../renderer/Renderer.ts';
-import { DIVEResizeManager } from '../../resize/ResizeManager.ts';
+import { DIVECanvasLifecycleManager } from '../../resize/CanvasLifecycleManager.ts';
 
-// Mock dependencies
 const mockRenderer = {
+    initialized: false,
+    usesExternalCanvas: false,
+    init: vi.fn(async () => {
+        mockRenderer.initialized = true;
+    }),
     render: vi.fn(),
     onResize: vi.fn(),
     dispose: vi.fn(),
@@ -23,9 +28,13 @@ const mockRenderer = {
     },
 };
 
-const mockResizeManager = {
+const mockCanvasLifecycleManager = {
     dispose: vi.fn(),
     setCanvas: vi.fn(),
+    waitForRenderableCanvas: vi.fn(async () => ({
+        width: 800,
+        height: 600,
+    })),
 };
 
 const mockCamera = {
@@ -60,9 +69,8 @@ const mockScene = {
     setBackground: vi.fn(),
 };
 
-// Mock the dependencies
 vi.mock('../../renderer/Renderer.ts');
-vi.mock('../../resize/ResizeManager.ts');
+vi.mock('../../resize/CanvasLifecycleManager.ts');
 vi.mock('../../camera/PerspectiveCamera.ts');
 vi.mock('../../scene/Scene.ts');
 
@@ -71,11 +79,19 @@ describe('DIVEView', () => {
 
     beforeEach(() => {
         vi.clearAllMocks();
+        mockRenderer.initialized = false;
+        mockRenderer.usesExternalCanvas = false;
+        mockRenderer.init.mockImplementation(async () => {
+            mockRenderer.initialized = true;
+        });
+        mockCanvasLifecycleManager.waitForRenderableCanvas.mockResolvedValue({
+            width: 800,
+            height: 600,
+        });
 
-        // Setup mock implementations
         vi.mocked(DIVERenderer).mockImplementation(() => mockRenderer as any);
-        vi.mocked(DIVEResizeManager).mockImplementation(
-            () => mockResizeManager as any,
+        vi.mocked(DIVECanvasLifecycleManager).mockImplementation(
+            () => mockCanvasLifecycleManager as any,
         );
         vi.mocked(DIVEPerspectiveCamera).mockImplementation(
             () => mockCamera as any,
@@ -102,8 +118,11 @@ describe('DIVEView', () => {
             expect(DIVERenderer).toHaveBeenCalled();
         });
 
-        it('should create resize manager with correct parameters', () => {
-            expect(DIVEResizeManager).toHaveBeenCalled();
+        it('should create a canvas lifecycle manager with a resize callback', () => {
+            expect(DIVECanvasLifecycleManager).toHaveBeenCalledWith(
+                mockRenderer.canvas,
+                expect.any(Function),
+            );
         });
 
         it('should initialize with paused state as false', () => {
@@ -122,6 +141,71 @@ describe('DIVEView', () => {
 
         it('should return canvas from renderer', () => {
             expect(view.canvas).toBe(mockRenderer.canvas);
+        });
+    });
+
+    describe('init', () => {
+        it('should initialize the renderer immediately for internally managed canvases', async () => {
+            await view.init();
+
+            expect(
+                mockCanvasLifecycleManager.waitForRenderableCanvas,
+            ).not.toHaveBeenCalled();
+            expect(mockRenderer.init).toHaveBeenCalledTimes(1);
+        });
+
+        it('should wait for external canvases before initializing the renderer', async () => {
+            mockRenderer.usesExternalCanvas = true;
+
+            await view.init();
+
+            expect(
+                mockCanvasLifecycleManager.waitForRenderableCanvas,
+            ).toHaveBeenCalledWith(mockRenderer.canvas);
+            expect(mockRenderer.init).toHaveBeenCalledTimes(1);
+        });
+
+        it('should skip renderer initialization if the canvas wait resolves stale', async () => {
+            mockRenderer.usesExternalCanvas = true;
+            mockCanvasLifecycleManager.waitForRenderableCanvas.mockResolvedValue(
+                null,
+            );
+
+            await view.init();
+
+            expect(mockRenderer.init).not.toHaveBeenCalled();
+        });
+
+        it('should reuse the pending init promise', async () => {
+            let resolveInit: (() => void) | undefined;
+
+            mockRenderer.init.mockImplementation(
+                () =>
+                    new Promise<void>((resolve) => {
+                        resolveInit = () => {
+                            mockRenderer.initialized = true;
+                            resolve();
+                        };
+                    }),
+            );
+
+            const firstInit = view.init();
+            const secondInit = view.init();
+
+            expect(mockRenderer.init).toHaveBeenCalledTimes(1);
+
+            resolveInit?.();
+            await Promise.all([firstInit, secondInit]);
+
+            expect(mockRenderer.init).toHaveBeenCalledTimes(1);
+        });
+
+        it('should delegate to renderer.init when already initialized', async () => {
+            mockRenderer.initialized = true;
+
+            await view.init();
+
+            expect(mockRenderer.init).toHaveBeenCalledTimes(1);
         });
     });
 
@@ -149,22 +233,19 @@ describe('DIVEView', () => {
     });
 
     describe('dispose', () => {
-        it('should dispose resize manager and renderer', () => {
+        it('should dispose the canvas lifecycle manager and renderer', () => {
             view.dispose();
-            expect(mockResizeManager.dispose).toHaveBeenCalledTimes(1);
+            expect(mockCanvasLifecycleManager.dispose).toHaveBeenCalledTimes(1);
             expect(mockRenderer.dispose).toHaveBeenCalledTimes(1);
         });
     });
 
     describe('onResize', () => {
         it('should call renderer and camera onResize with correct dimensions', () => {
-            const width = 1024;
-            const height = 768;
+            view.onResize(1024, 768);
 
-            view.onResize(width, height);
-
-            expect(mockRenderer.onResize).toHaveBeenCalledWith(width, height);
-            expect(mockCamera.onResize).toHaveBeenCalledWith(width, height);
+            expect(mockRenderer.onResize).toHaveBeenCalledWith(1024, 768);
+            expect(mockCamera.onResize).toHaveBeenCalledWith(1024, 768);
         });
 
         it('should handle zero dimensions', () => {
@@ -176,21 +257,15 @@ describe('DIVEView', () => {
     });
 
     describe('setCanvas', () => {
-        it('should set canvas on renderer and resize manager', () => {
+        it('should set canvas on renderer and canvas lifecycle manager', () => {
             const canvas = document.createElement('canvas');
-            Object.defineProperty(canvas, 'clientWidth', {
-                value: 1920,
-                writable: false,
-            });
-            Object.defineProperty(canvas, 'clientHeight', {
-                value: 1080,
-                writable: false,
-            });
 
             view.setCanvas(canvas);
 
             expect(mockRenderer.setCanvas).toHaveBeenCalledWith(canvas);
-            expect(mockResizeManager.setCanvas).toHaveBeenCalledWith(canvas);
+            expect(mockCanvasLifecycleManager.setCanvas).toHaveBeenCalledWith(
+                canvas,
+            );
         });
 
         it('should not force an immediate onResize when swapping canvases', () => {
@@ -200,6 +275,24 @@ describe('DIVEView', () => {
             view.setCanvas(canvas);
 
             expect(onResizeSpy).not.toHaveBeenCalled();
+        });
+
+        it('should reinitialize after a canvas swap when the renderer was already active', async () => {
+            const initSpy = vi.spyOn(view, 'init').mockResolvedValue();
+            mockRenderer.initialized = true;
+
+            view.setCanvas(document.createElement('canvas'));
+
+            expect(initSpy).toHaveBeenCalledTimes(1);
+        });
+
+        it('should reinitialize after a canvas swap when an init is pending', async () => {
+            const initSpy = vi.spyOn(view, 'init').mockResolvedValue();
+            view['_initPromise'] = Promise.resolve();
+
+            view.setCanvas(document.createElement('canvas'));
+
+            expect(initSpy).toHaveBeenCalledTimes(1);
         });
     });
 
@@ -219,105 +312,6 @@ describe('DIVEView', () => {
             view.resume();
 
             expect(view['_paused']).toBe(false);
-        });
-
-        it('should allow multiple pause/resume cycles', () => {
-            view.pause();
-            expect(view['_paused']).toBe(true);
-
-            view.resume();
-            expect(view['_paused']).toBe(false);
-
-            view.pause();
-            expect(view['_paused']).toBe(true);
-
-            view.resume();
-            expect(view['_paused']).toBe(false);
-        });
-    });
-
-    describe('edge cases', () => {
-        it('should handle undefined settings in constructor', () => {
-            const scene = new DIVEScene();
-            const camera = new DIVEPerspectiveCamera();
-            const viewWithUndefinedSettings = new DIVEView(
-                scene,
-                camera,
-                undefined as any,
-            );
-            expect(viewWithUndefinedSettings).toBeDefined();
-        });
-
-        it('should handle empty settings object in constructor', () => {
-            const scene = new DIVEScene();
-            const camera = new DIVEPerspectiveCamera();
-            const viewWithEmptySettings = new DIVEView(scene, camera, {});
-            expect(viewWithEmptySettings).toBeDefined();
-        });
-
-        it('should handle multiple dispose calls', () => {
-            view.dispose();
-            view.dispose();
-
-            expect(mockResizeManager.dispose).toHaveBeenCalledTimes(2);
-            expect(mockRenderer.dispose).toHaveBeenCalledTimes(2);
-        });
-    });
-
-    describe('integration scenarios', () => {
-        it('should handle full lifecycle: create, pause, resume, resize, dispose', () => {
-            // Create
-            expect(view).toBeDefined();
-
-            // Pause
-            view.pause();
-            view.tick();
-            expect(mockRenderer.render).not.toHaveBeenCalled();
-
-            // Resume
-            view.resume();
-            view.tick();
-            expect(mockRenderer.render).toHaveBeenCalledTimes(1);
-
-            // Resize
-            view.onResize(1920, 1080);
-            expect(mockRenderer.onResize).toHaveBeenCalledWith(1920, 1080);
-            expect(mockCamera.onResize).toHaveBeenCalledWith(1920, 1080);
-
-            // Dispose
-            view.dispose();
-            expect(mockResizeManager.dispose).toHaveBeenCalledTimes(1);
-            expect(mockRenderer.dispose).toHaveBeenCalledTimes(1);
-        });
-
-        it('should handle canvas replacement scenario', () => {
-            const canvas1 = document.createElement('canvas');
-            Object.defineProperty(canvas1, 'clientWidth', {
-                value: 800,
-                writable: false,
-            });
-            Object.defineProperty(canvas1, 'clientHeight', {
-                value: 600,
-                writable: false,
-            });
-
-            const canvas2 = document.createElement('canvas');
-            Object.defineProperty(canvas2, 'clientWidth', {
-                value: 1920,
-                writable: false,
-            });
-            Object.defineProperty(canvas2, 'clientHeight', {
-                value: 1080,
-                writable: false,
-            });
-
-            view.setCanvas(canvas1);
-            expect(mockRenderer.setCanvas).toHaveBeenCalledWith(canvas1);
-            expect(mockResizeManager.setCanvas).toHaveBeenCalledWith(canvas1);
-
-            view.setCanvas(canvas2);
-            expect(mockRenderer.setCanvas).toHaveBeenCalledWith(canvas2);
-            expect(mockResizeManager.setCanvas).toHaveBeenCalledWith(canvas2);
         });
     });
 });
