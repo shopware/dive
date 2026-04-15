@@ -295,6 +295,25 @@ describe('DIVECanvasLifecycleManager', () => {
         await expect(manager.waitForRenderableCanvas(canvas)).resolves.toBeNull();
     });
 
+    it('resolves waiting with null when the abort signal fires', async () => {
+        const parent = document.createElement('div');
+        document.body.appendChild(parent);
+        const canvas = createCanvas(0, 0, parent);
+        const abortController = new AbortController();
+
+        parent.appendChild(canvas);
+        manager = new DIVECanvasLifecycleManager(canvas, onResize);
+
+        const waitPromise = manager.waitForRenderableCanvas(
+            canvas,
+            abortController.signal,
+        );
+
+        abortController.abort();
+
+        await expect(waitPromise).resolves.toBeNull();
+    });
+
     it('ignores zero-sized updates after a renderable canvas was already measured', () => {
         const canvas = createCanvas(800, 600);
 

@@ -16,7 +16,7 @@ export class DIVEView implements DIVETicker {
     private _renderer: DIVERenderer;
     private _canvasLifecycleManager: DIVECanvasLifecycleManager;
     private _initPromise: Promise<void> | null = null;
-    private _initVersion: number = 0;
+    private _initAbortController: AbortController | null = null;
 
     constructor(
         private _scene: DIVEScene,
@@ -61,19 +61,22 @@ export class DIVEView implements DIVETicker {
         }
 
         if (!this._initPromise) {
-            const initVersion = ++this._initVersion;
             const renderer = this._renderer;
             const canvas = renderer.canvas;
+            const abortController = new AbortController();
+
+            this._initAbortController = abortController;
 
             this._initPromise = (async () => {
                 const stableLayout =
                     await this._canvasLifecycleManager.waitForRenderableCanvas(
                         canvas,
+                        abortController.signal,
                     );
 
                 if (
                     stableLayout === null ||
-                    initVersion !== this._initVersion ||
+                    abortController.signal.aborted ||
                     renderer !== this._renderer
                 ) {
                     return;
@@ -82,13 +85,14 @@ export class DIVEView implements DIVETicker {
                 await renderer.init();
 
                 if (
-                    initVersion !== this._initVersion ||
+                    abortController.signal.aborted ||
                     renderer !== this._renderer
                 ) {
                     return;
                 }
             })().finally(() => {
-                if (initVersion === this._initVersion) {
+                if (this._initAbortController === abortController) {
+                    this._initAbortController = null;
                     this._initPromise = null;
                 }
             });
@@ -98,7 +102,7 @@ export class DIVEView implements DIVETicker {
     }
 
     public dispose(): void {
-        this._initVersion += 1;
+        this._abortInit();
         this._initPromise = null;
         this._canvasLifecycleManager.dispose();
         this._renderer.dispose();
@@ -113,7 +117,7 @@ export class DIVEView implements DIVETicker {
         const shouldReinitialize =
             this._renderer.initialized || this._initPromise !== null;
 
-        this._initVersion += 1;
+        this._abortInit();
         this._initPromise = null;
         this._renderer.setCanvas(canvas);
         this._canvasLifecycleManager.setCanvas(canvas);
@@ -130,5 +134,10 @@ export class DIVEView implements DIVETicker {
 
     public resume(): void {
         this._paused = false;
+    }
+
+    private _abortInit(): void {
+        this._initAbortController?.abort();
+        this._initAbortController = null;
     }
 }

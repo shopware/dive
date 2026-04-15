@@ -34,7 +34,10 @@ const mockCanvasLifecycleManager = {
     dispose: vi.fn(),
     setCanvas: vi.fn(),
     waitForRenderableCanvas: vi.fn<
-        (canvas?: HTMLCanvasElement) => Promise<DIVECanvasLayout | null>
+        (
+            canvas?: HTMLCanvasElement,
+            signal?: AbortSignal,
+        ) => Promise<DIVECanvasLayout | null>
     >(async () => ({
         width: 800,
         height: 600,
@@ -167,7 +170,10 @@ describe('DIVEView', () => {
 
             expect(
                 mockCanvasLifecycleManager.waitForRenderableCanvas,
-            ).toHaveBeenCalledWith(mockRenderer.canvas);
+            ).toHaveBeenCalledWith(
+                mockRenderer.canvas,
+                expect.any(AbortSignal),
+            );
             expect(mockRenderer.init).toHaveBeenCalledTimes(1);
         });
 
@@ -237,6 +243,22 @@ describe('DIVEView', () => {
             await initPromise;
 
             expect(view['_initPromise']).toBeNull();
+        });
+
+        it('should abort the pending canvas wait when the view is disposed', async () => {
+            let capturedSignal: AbortSignal | undefined;
+
+            mockCanvasLifecycleManager.waitForRenderableCanvas.mockImplementation(
+                async (_canvas, signal) => {
+                    capturedSignal = signal;
+                    return await new Promise<DIVECanvasLayout | null>(() => {});
+                },
+            );
+
+            void view.init();
+            view.dispose();
+
+            expect(capturedSignal?.aborted).toBe(true);
         });
 
         it('should abort completion when renderer.init invalidates the view before it resolves', async () => {
@@ -335,6 +357,25 @@ describe('DIVEView', () => {
             view.setCanvas(document.createElement('canvas'));
 
             expect(initSpy).toHaveBeenCalledTimes(1);
+        });
+
+        it('should abort the pending canvas wait when swapping canvases', async () => {
+            const capturedSignals: AbortSignal[] = [];
+
+            mockCanvasLifecycleManager.waitForRenderableCanvas.mockImplementation(
+                async (_canvas, signal) => {
+                    if (signal) {
+                        capturedSignals.push(signal);
+                    }
+
+                    return await new Promise<DIVECanvasLayout | null>(() => {});
+                },
+            );
+
+            void view.init();
+            view.setCanvas(document.createElement('canvas'));
+
+            expect(capturedSignals[0]?.aborted).toBe(true);
         });
     });
 

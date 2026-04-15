@@ -42,9 +42,14 @@ export class DIVECanvasLifecycleManager {
 
     public async waitForRenderableCanvas(
         canvas: HTMLCanvasElement = this._canvas,
+        signal?: AbortSignal,
     ): Promise<DIVECanvasLayout | null> {
         const getStableLayout = async (): Promise<DIVECanvasLayout | null> => {
-            if (this._disposed || canvas !== this._canvas) {
+            if (
+                this._disposed ||
+                signal?.aborted ||
+                canvas !== this._canvas
+            ) {
                 return null;
             }
 
@@ -60,12 +65,13 @@ export class DIVECanvasLifecycleManager {
                 return null;
             }
 
-            await this._nextFrame();
+            await this._nextFrame(signal);
 
             const stableLayout = this._getCanvasLayout(canvas);
 
             if (
                 this._disposed ||
+                signal?.aborted ||
                 canvas !== this._canvas ||
                 !canvas.isConnected ||
                 !this._hasRenderableSize(stableLayout.width, stableLayout.height)
@@ -87,8 +93,17 @@ export class DIVECanvasLifecycleManager {
             let verifyScheduled = false;
             let observedParent: HTMLElement | null = null;
             let rafId: number | null = null;
+            let removeAbortListener: (() => void) | null = null;
+            const resizeObserver = new ResizeObserver(() => {
+                observeParent();
+                void verify();
+            });
 
             const finish = (layout: DIVECanvasLayout | null): void => {
+                if (settled) {
+                    return;
+                }
+
                 settled = true;
                 resizeObserver.disconnect();
 
@@ -96,6 +111,7 @@ export class DIVECanvasLifecycleManager {
                     cancelAnimationFrame(rafId);
                 }
 
+                removeAbortListener?.();
                 resolve(layout);
             };
 
@@ -119,7 +135,11 @@ export class DIVECanvasLifecycleManager {
                 verifyScheduled = true;
 
                 try {
-                    if (this._disposed || canvas !== this._canvas) {
+                    if (
+                        this._disposed ||
+                        signal?.aborted ||
+                        canvas !== this._canvas
+                    ) {
                         finish(null);
                         return;
                     }
@@ -136,9 +156,13 @@ export class DIVECanvasLifecycleManager {
                 }
             };
 
-            const resizeObserver = new ResizeObserver(() => {
-                observeParent();
-                void verify();
+            if (signal?.aborted) {
+                finish(null);
+                return;
+            }
+
+            removeAbortListener = this._observeAbort(signal, () => {
+                finish(null);
             });
 
             resizeObserver.observe(canvas);
@@ -215,10 +239,24 @@ export class DIVECanvasLifecycleManager {
         return width >= 1 && height >= 1;
     }
 
-    private _nextFrame(): Promise<void> {
-        return new Promise((resolve) =>
-            requestAnimationFrame(() => resolve()),
-        );
+    private _nextFrame(signal?: AbortSignal): Promise<void> {
+        return new Promise((resolve) => {
+            if (signal?.aborted) {
+                resolve();
+                return;
+            }
+
+            let rafId = 0;
+            const removeAbortListener = this._observeAbort(signal, () => {
+                cancelAnimationFrame(rafId);
+                resolve();
+            });
+
+            rafId = requestAnimationFrame(() => {
+                removeAbortListener?.();
+                resolve();
+            });
+        });
     }
 
     private _getCanvasLayout(canvas: HTMLCanvasElement): DIVECanvasLayout {
@@ -242,5 +280,20 @@ export class DIVECanvasLifecycleManager {
                 observeParent(canvas.parentElement);
             }
         }, 16);
+    }
+
+    private _observeAbort(
+        signal: AbortSignal | undefined,
+        onAbort: () => void,
+    ): (() => void) | null {
+        if (!signal) {
+            return null;
+        }
+
+        signal.addEventListener('abort', onAbort, { once: true });
+
+        return () => {
+            signal.removeEventListener('abort', onAbort);
+        };
     }
 }
