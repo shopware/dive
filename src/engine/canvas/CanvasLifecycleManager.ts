@@ -45,11 +45,7 @@ export class DIVECanvasLifecycleManager {
         signal?: AbortSignal,
     ): Promise<DIVECanvasLayout | null> {
         const getStableLayout = async (): Promise<DIVECanvasLayout | null> => {
-            if (
-                this._disposed ||
-                signal?.aborted ||
-                canvas !== this._canvas
-            ) {
+            if (this._disposed || signal?.aborted || canvas !== this._canvas) {
                 return null;
             }
 
@@ -74,7 +70,10 @@ export class DIVECanvasLifecycleManager {
                 signal?.aborted ||
                 canvas !== this._canvas ||
                 !canvas.isConnected ||
-                !this._hasRenderableSize(stableLayout.width, stableLayout.height)
+                !this._hasRenderableSize(
+                    stableLayout.width,
+                    stableLayout.height,
+                )
             ) {
                 return null;
             }

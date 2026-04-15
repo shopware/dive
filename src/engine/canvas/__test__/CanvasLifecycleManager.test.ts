@@ -292,7 +292,9 @@ describe('DIVECanvasLifecycleManager', () => {
         manager = new DIVECanvasLifecycleManager(canvas, onResize);
         manager.dispose();
 
-        await expect(manager.waitForRenderableCanvas(canvas)).resolves.toBeNull();
+        await expect(
+            manager.waitForRenderableCanvas(canvas),
+        ).resolves.toBeNull();
     });
 
     it('resolves waiting with null when the abort signal fires', async () => {
