@@ -131,7 +131,10 @@ export class DIVECanvasLifecycleManager {
             };
 
             const observeParent = (): void => {
-                if (!canvas.parentElement || observedParent === canvas.parentElement) {
+                if (
+                    !canvas.parentElement ||
+                    observedParent === canvas.parentElement
+                ) {
                     return;
                 }
 

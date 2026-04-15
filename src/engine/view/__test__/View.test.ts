@@ -195,7 +195,10 @@ describe('DIVEView', () => {
             expect(mockRenderer.init).toHaveBeenCalledTimes(1);
 
             resolveInit?.();
-            await Promise.all([firstInit, secondInit]);
+            await Promise.all([
+                firstInit,
+                secondInit,
+            ]);
 
             expect(mockRenderer.init).toHaveBeenCalledTimes(1);
         });
