@@ -26,15 +26,14 @@ describe('DIVECanvasLifecycleManager', () => {
     const createResizeEntry = (
         width: number,
         height: number,
-    ): ResizeObserverEntry[] =>
-        [
-            {
-                contentRect: {
-                    width,
-                    height,
-                },
-            } as ResizeObserverEntry,
-        ];
+    ): ResizeObserverEntry[] => [
+        {
+            contentRect: {
+                width,
+                height,
+            },
+        } as ResizeObserverEntry,
+    ];
 
     const createCanvas = (
         width: number,
@@ -170,7 +169,10 @@ describe('DIVECanvasLifecycleManager', () => {
         expect(mockObserve).toHaveBeenCalledWith(canvas);
         expect(mockObserve).toHaveBeenCalledWith(state.parent);
         expect(onResize).toHaveBeenCalledWith(1024, 768);
-        await expect(waitPromise).resolves.toEqual({ width: 1024, height: 768 });
+        await expect(waitPromise).resolves.toEqual({
+            width: 1024,
+            height: 768,
+        });
     });
 
     it('clears pending stabilization when a renderable layout drops back to zero', async () => {
@@ -312,11 +314,15 @@ describe('DIVECanvasLifecycleManager', () => {
         await expect(
             manager.waitForRenderableCanvas(first.canvas, aborted.signal),
         ).resolves.toBeNull();
-        await expect(manager.waitForRenderableCanvas(second.canvas)).resolves.toBeNull();
+        await expect(
+            manager.waitForRenderableCanvas(second.canvas),
+        ).resolves.toBeNull();
 
         manager.dispose();
 
-        await expect(manager.waitForRenderableCanvas(first.canvas)).resolves.toBeNull();
+        await expect(
+            manager.waitForRenderableCanvas(first.canvas),
+        ).resolves.toBeNull();
     });
 
     it('aborts an individual waiter without stopping the shared bootstrap', async () => {
@@ -386,7 +392,9 @@ describe('DIVECanvasLifecycleManager', () => {
 
         (manager as any)._bootstrapPromise = Promise.resolve(null);
 
-        await expect(manager.waitForRenderableCanvas(canvas)).resolves.toBeNull();
+        await expect(
+            manager.waitForRenderableCanvas(canvas),
+        ).resolves.toBeNull();
     });
 
     it('returns null from the private wait path when the provided signal is already aborted during an active bootstrap', async () => {
@@ -417,7 +425,9 @@ describe('DIVECanvasLifecycleManager', () => {
             },
         } as AbortSignal;
 
-        await expect(manager.waitForRenderableCanvas(canvas, signal)).resolves.toBeNull();
+        await expect(
+            manager.waitForRenderableCanvas(canvas, signal),
+        ).resolves.toBeNull();
 
         manager.dispose();
         await expect(pendingBootstrap).resolves.toBeNull();
@@ -454,7 +464,9 @@ describe('DIVECanvasLifecycleManager', () => {
         await expect(secondWait).resolves.toEqual({ width: 800, height: 600 });
 
         manager.dispose();
-        await expect(manager.waitForRenderableCanvas(canvas)).resolves.toBeNull();
+        await expect(
+            manager.waitForRenderableCanvas(canvas),
+        ).resolves.toBeNull();
         expect(setIntervalSpy).toHaveBeenCalledTimes(1);
     });
 
@@ -492,6 +504,8 @@ describe('DIVECanvasLifecycleManager', () => {
             configurable: true,
         });
 
-        await expect(manager.waitForRenderableCanvas(canvas)).resolves.toBeNull();
+        await expect(
+            manager.waitForRenderableCanvas(canvas),
+        ).resolves.toBeNull();
     });
 });
