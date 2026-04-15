@@ -136,7 +136,7 @@ export class DIVERenderer {
 
     public async init(): Promise<void> {
         if (this._webgpurenderer.initialized) {
-            return await this._environment.init();
+            return this._environment.init();
         }
 
         if (!this._initPromise) {
@@ -156,7 +156,7 @@ export class DIVERenderer {
             });
         }
 
-        return await this._initPromise;
+        return this._initPromise;
     }
 
     public render(): void {

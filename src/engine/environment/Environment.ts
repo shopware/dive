@@ -129,7 +129,7 @@ export class DIVEEnvironment {
             });
         }
 
-        return await this._initPromise;
+        return this._initPromise;
     }
 
     /**

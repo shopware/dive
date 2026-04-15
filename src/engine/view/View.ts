@@ -57,7 +57,7 @@ export class DIVEView implements DIVETicker {
 
     public async init(): Promise<void> {
         if (this._renderer.initialized) {
-            return await this._renderer.init();
+            return this._renderer.init();
         }
 
         if (!this._initPromise) {
@@ -98,7 +98,7 @@ export class DIVEView implements DIVETicker {
             });
         }
 
-        return await this._initPromise;
+        return this._initPromise;
     }
 
     public dispose(): void {
