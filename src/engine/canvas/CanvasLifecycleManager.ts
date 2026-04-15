@@ -13,8 +13,13 @@ export class DIVECanvasLifecycleManager {
     private _height: number = 0;
     private _canvas: HTMLCanvasElement;
     private _disposed: boolean = false;
-    private _parentObservationInterval: ReturnType<typeof setInterval> | null =
-        null;
+    private _bootstrapInterval: ReturnType<typeof setInterval> | null = null;
+    private _observedParent: HTMLElement | null = null;
+    private _pendingStableLayout: DIVECanvasLayout | null = null;
+    private _bootstrapPromise: Promise<DIVECanvasLayout | null> | null = null;
+    private _resolveBootstrap:
+        | ((layout: DIVECanvasLayout | null) => void)
+        | null = null;
 
     constructor(
         canvas: HTMLCanvasElement,
@@ -27,192 +32,126 @@ export class DIVECanvasLifecycleManager {
             const { width, height } = entry.contentRect;
             this._applyResize(width, height);
         });
-
-        this._observeCanvas();
-        this._syncCanvasSize();
     }
 
     public setCanvas(canvas: HTMLCanvasElement): void {
         this._canvas = canvas;
-        this._disconnectParentObservation();
+        this._width = 0;
+        this._height = 0;
         this._resizeObserver.disconnect();
-        this._observeCanvas();
-        this._syncCanvasSize();
+        this._observedParent = null;
+        this._pendingStableLayout = null;
+        this._completeBootstrap(null);
     }
 
     public async waitForRenderableCanvas(
         canvas: HTMLCanvasElement = this._canvas,
         signal?: AbortSignal,
     ): Promise<DIVECanvasLayout | null> {
-        const getStableLayout = async (): Promise<DIVECanvasLayout | null> => {
-            if (this._disposed || signal?.aborted || canvas !== this._canvas) {
-                return null;
-            }
-
-            const directLayout = this._getCanvasLayout(canvas);
-
-            if (
-                this._hasRenderableSize(directLayout.width, directLayout.height)
-            ) {
-                return directLayout;
-            }
-
-            if (!canvas.isConnected) {
-                return null;
-            }
-
-            await this._nextFrame(signal);
-
-            const stableLayout = this._getCanvasLayout(canvas);
-
-            if (
-                this._disposed ||
-                signal?.aborted ||
-                canvas !== this._canvas ||
-                !canvas.isConnected ||
-                !this._hasRenderableSize(
-                    stableLayout.width,
-                    stableLayout.height,
-                )
-            ) {
-                return null;
-            }
-
-            return stableLayout;
-        };
-
-        const immediateLayout = await getStableLayout();
-
-        if (immediateLayout) {
-            return immediateLayout;
+        if (this._disposed || signal?.aborted || canvas !== this._canvas) {
+            return null;
         }
 
-        return new Promise((resolve) => {
-            let settled = false;
-            let verifyScheduled = false;
-            let observedParent: HTMLElement | null = null;
-            let rafId: number | null = null;
-            let removeAbortListener: (() => void) | null = null;
-            const resizeObserver = new ResizeObserver(() => {
-                observeParent();
-                void verify();
-            });
+        if (
+            !this._bootstrapPromise &&
+            canvas === this._canvas &&
+            canvas.parentElement !== null &&
+            this._observedParent === canvas.parentElement
+        ) {
+            const layout = this._getCanvasLayout(canvas);
 
-            const finish = (layout: DIVECanvasLayout | null): void => {
-                settled = true;
-                resizeObserver.disconnect();
-
-                if (rafId !== null) {
-                    cancelAnimationFrame(rafId);
-                }
-
-                removeAbortListener?.();
-                resolve(layout);
-            };
-
-            const observeParent = (): void => {
-                if (
-                    !canvas.parentElement ||
-                    observedParent === canvas.parentElement
-                ) {
-                    return;
-                }
-
-                observedParent = canvas.parentElement;
-                resizeObserver.observe(observedParent);
-            };
-
-            const verify = async (): Promise<void> => {
-                if (settled || verifyScheduled) {
-                    return;
-                }
-
-                verifyScheduled = true;
-
-                try {
-                    if (
-                        this._disposed ||
-                        signal?.aborted ||
-                        canvas !== this._canvas
-                    ) {
-                        finish(null);
-                        return;
-                    }
-
-                    observeParent();
-
-                    const stableLayout = await getStableLayout();
-
-                    if (stableLayout) {
-                        finish(stableLayout);
-                    }
-                } finally {
-                    verifyScheduled = false;
-                }
-            };
-
-            if (signal?.aborted) {
-                finish(null);
-                return;
+            if (this._hasRenderableSize(layout.width, layout.height)) {
+                return layout;
             }
+        }
 
-            removeAbortListener = this._observeAbort(signal, () => {
-                finish(null);
+        if (!this._bootstrapPromise) {
+            this._bootstrapPromise = new Promise((resolve) => {
+                this._resolveBootstrap = resolve;
             });
 
-            resizeObserver.observe(canvas);
-            observeParent();
-
-            const tick = (): void => {
-                if (settled) {
+            this._bootstrapInterval = setInterval(() => {
+                if (this._disposed) {
+                    this._completeBootstrap(null);
                     return;
                 }
 
-                observeParent();
-                void verify();
-                rafId = requestAnimationFrame(tick);
+                const currentCanvas = this._canvas;
+                const parent = currentCanvas.parentElement;
+
+                if (!parent) {
+                    this._observedParent = null;
+                    this._pendingStableLayout = null;
+                    return;
+                }
+
+                if (parent !== this._observedParent) {
+                    this._observedParent = parent;
+                    this._pendingStableLayout = null;
+                }
+
+                const layout = this._getCanvasLayout(currentCanvas);
+
+                if (!this._hasRenderableSize(layout.width, layout.height)) {
+                    this._pendingStableLayout = null;
+                    return;
+                }
+
+                if (
+                    this._pendingStableLayout === null ||
+                    this._pendingStableLayout.width !== layout.width ||
+                    this._pendingStableLayout.height !== layout.height
+                ) {
+                    this._pendingStableLayout = layout;
+                    return;
+                }
+
+                this._resizeObserver.observe(currentCanvas);
+                this._resizeObserver.observe(parent);
+                this._applyResize(layout.width, layout.height);
+                this._completeBootstrap(layout);
+            }, 16);
+        }
+
+        const bootstrapPromise = this._bootstrapPromise!;
+
+        if (!signal) {
+            return await bootstrapPromise;
+        }
+
+        if (signal.aborted) {
+            return null;
+        }
+
+        return await new Promise((resolve) => {
+            const onAbort = (): void => {
+                signal.removeEventListener('abort', onAbort);
+                resolve(null);
             };
 
-            tick();
+            signal.addEventListener('abort', onAbort, { once: true });
+
+            void bootstrapPromise.then((layout) => {
+                signal.removeEventListener('abort', onAbort);
+
+                if (
+                    this._disposed ||
+                    signal.aborted ||
+                    canvas !== this._canvas
+                ) {
+                    resolve(null);
+                    return;
+                }
+
+                resolve(layout);
+            });
         });
     }
 
     public dispose(): void {
         this._disposed = true;
-        this._disconnectParentObservation();
+        this._completeBootstrap(null);
         this._resizeObserver.disconnect();
-    }
-
-    private _observeCanvas(): void {
-        const canvas = this._canvas;
-
-        if (canvas.parentElement) {
-            this._resizeObserver.observe(canvas.parentElement);
-            return;
-        }
-
-        this._parentObservationInterval = this._nextParentObservationInterval(
-            canvas,
-            (parent) => {
-                this._resizeObserver.observe(parent);
-                this._disconnectParentObservation();
-            },
-        );
-    }
-
-    private _disconnectParentObservation(): void {
-        if (this._parentObservationInterval === null) {
-            return;
-        }
-
-        clearInterval(this._parentObservationInterval);
-        this._parentObservationInterval = null;
-    }
-
-    private _syncCanvasSize(): void {
-        const canvas = this._canvas;
-        const { width, height } = this._getCanvasLayout(canvas);
-        this._applyResize(width, height);
     }
 
     private _applyResize(width: number, height: number): void {
@@ -234,26 +173,6 @@ export class DIVECanvasLifecycleManager {
         return width >= 1 && height >= 1;
     }
 
-    private _nextFrame(signal?: AbortSignal): Promise<void> {
-        return new Promise((resolve) => {
-            if (signal?.aborted) {
-                resolve();
-                return;
-            }
-
-            let rafId = 0;
-            const removeAbortListener = this._observeAbort(signal, () => {
-                cancelAnimationFrame(rafId);
-                resolve();
-            });
-
-            rafId = requestAnimationFrame(() => {
-                removeAbortListener?.();
-                resolve();
-            });
-        });
-    }
-
     private _getCanvasLayout(canvas: HTMLCanvasElement): DIVECanvasLayout {
         const rect = canvas.getBoundingClientRect?.() ?? {
             width: 0,
@@ -266,29 +185,19 @@ export class DIVECanvasLifecycleManager {
         };
     }
 
-    private _nextParentObservationInterval(
-        canvas: HTMLCanvasElement,
-        observeParent: (parent: HTMLElement) => void,
-    ): ReturnType<typeof setInterval> {
-        return setInterval(() => {
-            if (canvas.parentElement) {
-                observeParent(canvas.parentElement);
-            }
-        }, 16);
-    }
-
-    private _observeAbort(
-        signal: AbortSignal | undefined,
-        onAbort: () => void,
-    ): (() => void) | null {
-        if (!signal) {
-            return null;
+    private _completeBootstrap(layout: DIVECanvasLayout | null): void {
+        if (this._bootstrapInterval !== null) {
+            clearInterval(this._bootstrapInterval);
+            this._bootstrapInterval = null;
         }
 
-        signal.addEventListener('abort', onAbort, { once: true });
+        this._pendingStableLayout = null;
 
-        return () => {
-            signal.removeEventListener('abort', onAbort);
-        };
+        const resolveBootstrap = this._resolveBootstrap;
+
+        this._resolveBootstrap = null;
+        this._bootstrapPromise = null;
+
+        resolveBootstrap?.(layout);
     }
 }
