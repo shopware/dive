@@ -83,6 +83,9 @@ describe('DIVEResizeManager', () => {
         });
 
         resizeManager = new DIVEResizeManager(renderer, camera);
+        vi.mocked(renderer.onResize).mockClear();
+        vi.mocked(renderer.render).mockClear();
+        vi.mocked(camera.onResize).mockClear();
     });
 
     it('should instantiate with components', () => {
@@ -95,7 +98,6 @@ describe('DIVEResizeManager', () => {
     });
 
     it('should handle resize events', () => {
-        const resizeObserver = mockResizeObserver.mock.instances[0];
         const callback = mockResizeObserver.mock.calls[0][0];
 
         const width = 800;
@@ -108,7 +110,6 @@ describe('DIVEResizeManager', () => {
     });
 
     it('should not trigger resize if dimensions are the same', () => {
-        const resizeObserver = mockResizeObserver.mock.instances[0];
         const callback = mockResizeObserver.mock.calls[0][0];
 
         const width = 800;
@@ -168,5 +169,32 @@ describe('DIVEResizeManager', () => {
 
         // Cleanup
         vi.useRealTimers();
+    });
+
+    it('should skip immediate resize when the canvas has no layout yet', () => {
+        const zeroCanvas = document.createElement('canvas');
+
+        Object.defineProperty(zeroCanvas, 'clientWidth', {
+            value: 0,
+            configurable: true,
+        });
+        Object.defineProperty(zeroCanvas, 'clientHeight', {
+            value: 0,
+            configurable: true,
+        });
+        zeroCanvas.getBoundingClientRect = vi.fn(() => ({
+            width: 0,
+            height: 0,
+        })) as any;
+        Object.defineProperty(zeroCanvas, 'parentElement', {
+            value: document.createElement('div'),
+            writable: true,
+        });
+
+        resizeManager.setCanvas(zeroCanvas);
+
+        expect(camera.onResize).not.toHaveBeenCalled();
+        expect(renderer.onResize).not.toHaveBeenCalled();
+        expect(renderer.render).not.toHaveBeenCalled();
     });
 });

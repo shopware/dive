@@ -193,26 +193,13 @@ describe('DIVEView', () => {
             expect(mockResizeManager.setCanvas).toHaveBeenCalledWith(canvas);
         });
 
-        it('should call onResize with canvas dimensions', () => {
+        it('should not force an immediate onResize when swapping canvases', () => {
             const canvas = document.createElement('canvas');
-            Object.defineProperty(canvas, 'clientWidth', {
-                value: 1920,
-                writable: false,
-            });
-            Object.defineProperty(canvas, 'clientHeight', {
-                value: 1080,
-                writable: false,
-            });
-
-            // Update the mock renderer's canvas dimensions to match the test canvas
-            mockRenderer.canvas.clientWidth = 1920;
-            mockRenderer.canvas.clientHeight = 1080;
-
             const onResizeSpy = vi.spyOn(view, 'onResize');
 
             view.setCanvas(canvas);
 
-            expect(onResizeSpy).toHaveBeenCalledWith(1920, 1080);
+            expect(onResizeSpy).not.toHaveBeenCalled();
         });
     });
 

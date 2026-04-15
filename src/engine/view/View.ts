@@ -63,10 +63,6 @@ export class DIVEView implements DIVETicker {
     public setCanvas(canvas: HTMLCanvasElement): void {
         this._renderer.setCanvas(canvas);
         this._resizeManager.setCanvas(canvas);
-        this.onResize(
-            this._renderer.canvas.clientWidth,
-            this._renderer.canvas.clientHeight,
-        );
     }
 
     // TODO: add methods to individually pause and resume the view
