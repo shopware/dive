@@ -57,47 +57,44 @@ export class DIVEView implements DIVETicker {
 
     public async init(): Promise<void> {
         if (this._renderer.initialized) {
-            await this._renderer.init();
-            return;
+            return await this._renderer.init();
         }
 
-        if (this._initPromise) {
-            return this._initPromise;
+        if (!this._initPromise) {
+            const initVersion = ++this._initVersion;
+            const renderer = this._renderer;
+            const canvas = renderer.canvas;
+
+            this._initPromise = (async () => {
+                const stableLayout =
+                    await this._canvasLifecycleManager.waitForRenderableCanvas(
+                        canvas,
+                    );
+
+                if (
+                    stableLayout === null ||
+                    initVersion !== this._initVersion ||
+                    renderer !== this._renderer
+                ) {
+                    return;
+                }
+
+                await renderer.init();
+
+                if (
+                    initVersion !== this._initVersion ||
+                    renderer !== this._renderer
+                ) {
+                    return;
+                }
+            })().finally(() => {
+                if (initVersion === this._initVersion) {
+                    this._initPromise = null;
+                }
+            });
         }
 
-        const initVersion = ++this._initVersion;
-        const renderer = this._renderer;
-        const canvas = renderer.canvas;
-
-        this._initPromise = (async () => {
-            const stableLayout =
-                await this._canvasLifecycleManager.waitForRenderableCanvas(
-                    canvas,
-                );
-
-            if (
-                stableLayout === null ||
-                initVersion !== this._initVersion ||
-                renderer !== this._renderer
-            ) {
-                return;
-            }
-
-            await renderer.init();
-
-            if (
-                initVersion !== this._initVersion ||
-                renderer !== this._renderer
-            ) {
-                return;
-            }
-        })().finally(() => {
-            if (initVersion === this._initVersion) {
-                this._initPromise = null;
-            }
-        });
-
-        return this._initPromise;
+        return await this._initPromise;
     }
 
     public dispose(): void {

@@ -136,30 +136,27 @@ export class DIVERenderer {
 
     public async init(): Promise<void> {
         if (this._webgpurenderer.initialized) {
-            await this._environment.init();
-            return;
+            return await this._environment.init();
         }
 
-        if (this._initPromise) {
-            return this._initPromise;
+        if (!this._initPromise) {
+            const renderer = this._webgpurenderer;
+            this._initPromise = (async () => {
+                await renderer.init();
+
+                if (renderer !== this._webgpurenderer) {
+                    return;
+                }
+
+                await this._environment.init();
+            })().finally(() => {
+                if (renderer === this._webgpurenderer) {
+                    this._initPromise = null;
+                }
+            });
         }
 
-        const renderer = this._webgpurenderer;
-        this._initPromise = (async () => {
-            await renderer.init();
-
-            if (renderer !== this._webgpurenderer) {
-                return;
-            }
-
-            await this._environment.init();
-        })().finally(() => {
-            if (renderer === this._webgpurenderer) {
-                this._initPromise = null;
-            }
-        });
-
-        return this._initPromise;
+        return await this._initPromise;
     }
 
     public render(): void {

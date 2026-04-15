@@ -63,6 +63,7 @@
 - `DIVECanvasLifecycleManager` in `src/engine/canvas/` now owns canvas parent observation, non-zero size readiness, and renderable-canvas waiting via `ResizeObserver` plus animation-frame verification
 - `DIVECanvasLifecycleManager.waitForRenderableCanvas()` now has a direct non-zero-size fast path and an inline second-frame stability check, so `DIVEView.init()` can always route every canvas through the same lifecycle check before calling `DIVERenderer.init()`
 - `DIVECanvasLifecycleManager` keeps its layout/readiness helpers as private member methods instead of top-level module helpers, so the canvas lifecycle logic stays co-located inside the class
+- `DIVEView.init()`, `DIVERenderer.init()`, and `DIVEEnvironment.init()` should stay `async` and explicitly `await` their cached `_initPromise` values; this repo prefers the consistent async method shape over collapsing those branches to direct promise returns
 - `DIVERenderer` no longer owns DOM/canvas readiness logic; it only initializes WebGPU/environment state, swaps canvases, and handles render/resize calls
 - The old `DIVEResizeManager` compatibility layer has been removed entirely on v3; canvas ownership now lives directly between `DIVEView` and `DIVECanvasLifecycleManager`
 - `DIVEView.setCanvas()` must not force an immediate `onResize()` on the swapped canvas; the `DIVECanvasLifecycleManager` is the single source of truth for resize propagation

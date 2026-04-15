@@ -117,21 +117,19 @@ export class DIVEEnvironment {
     public async init(): Promise<void> {
         this._initRequested = true;
 
-        if (this._initPromise) {
-            return this._initPromise;
+        if (!this._initPromise) {
+            this._initPromise = (async () => {
+                await this._loadPromise;
+
+                if (this._disposed || !this.renderer.initialized) return;
+
+                this.update();
+            })().finally(() => {
+                this._initPromise = null;
+            });
         }
 
-        this._initPromise = (async () => {
-            await this._loadPromise;
-
-            if (this._disposed || !this.renderer.initialized) return;
-
-            this.update();
-        })().finally(() => {
-            this._initPromise = null;
-        });
-
-        return this._initPromise;
+        return await this._initPromise;
     }
 
     /**
