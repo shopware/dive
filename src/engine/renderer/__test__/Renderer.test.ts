@@ -101,7 +101,6 @@ describe('DIVERenderPipeline', () => {
         expect(instance.outputColorSpace).toBe(SRGBColorSpace);
         expect(instance.toneMapping).toBe(LinearToneMapping);
         expect(MockedDIVEEnvironment).toHaveBeenCalledWith(instance, scene);
-        expect(renderer.usesExternalCanvas).toBe(false);
     });
 
     it('should instantiate with custom settings', () => {
@@ -127,12 +126,14 @@ describe('DIVERenderPipeline', () => {
         expect(instance.shadowMap.type).toBe(BasicShadowMap);
     });
 
-    it('should mark supplied canvases as external', () => {
+    it('should create a renderer with a supplied canvas', () => {
         const canvas = document.createElement('canvas');
 
         renderer = new DIVERenderer(scene, camera, { canvas });
 
-        expect(renderer.usesExternalCanvas).toBe(true);
+        expect(WebGPURenderer).toHaveBeenLastCalledWith(
+            expect.objectContaining({ canvas }),
+        );
     });
 
     it('should expose the current renderer and canvas', () => {
@@ -236,7 +237,6 @@ describe('DIVERenderPipeline', () => {
         );
         expect(environment.setRenderer).toHaveBeenCalledWith(secondInstance);
         expect(renderer.canvas).toBe(secondInstance.domElement);
-        expect(renderer.usesExternalCanvas).toBe(true);
     });
 
     it('should swap the environment to the new renderer before disposing the previous renderer', () => {

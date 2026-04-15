@@ -75,6 +75,16 @@ describe('DIVECanvasLifecycleManager', () => {
             'cancelAnimationFrame',
             vi.fn((id: number) => clearTimeout(id)),
         );
+        vi.stubGlobal(
+            'setInterval',
+            globalThis.window?.setInterval?.bind(globalThis.window) ??
+                globalThis.setInterval,
+        );
+        vi.stubGlobal(
+            'clearInterval',
+            globalThis.window?.clearInterval?.bind(globalThis.window) ??
+                globalThis.clearInterval,
+        );
     });
 
     afterEach(() => {
@@ -243,34 +253,12 @@ describe('DIVECanvasLifecycleManager', () => {
         await expect(waitPromise).resolves.toEqual({ width: 800, height: 600 });
     });
 
-    it('resolves with null when a canvas loses renderability before the stability frame', async () => {
+    it('returns the direct layout immediately once the canvas is already renderable', async () => {
         const parent = document.createElement('div');
         document.body.appendChild(parent);
         const canvas = createCanvas(800, 600, parent);
         const queuedAnimationFrames: FrameRequestCallback[] = [];
         parent.appendChild(canvas);
-        let width = 800;
-        let height = 600;
-
-        Object.defineProperty(canvas, 'clientWidth', {
-            get: () => width,
-            configurable: true,
-        });
-        Object.defineProperty(canvas, 'clientHeight', {
-            get: () => height,
-            configurable: true,
-        });
-        canvas.getBoundingClientRect = vi.fn(() => ({
-            width,
-            height,
-            top: 0,
-            left: 0,
-            right: width,
-            bottom: height,
-            x: 0,
-            y: 0,
-            toJSON: () => ({}),
-        })) as any;
         vi.stubGlobal(
             'requestAnimationFrame',
             vi.fn((callback: FrameRequestCallback) => {
@@ -282,18 +270,8 @@ describe('DIVECanvasLifecycleManager', () => {
         manager = new DIVECanvasLifecycleManager(canvas, onResize);
         const waitPromise = manager.waitForRenderableCanvas(canvas);
 
-        width = 0;
-        height = 0;
-
-        const initialFrame = queuedAnimationFrames.shift();
-        initialFrame?.(performance.now());
-        manager.dispose();
-
-        for (const callback of queuedAnimationFrames.splice(0)) {
-            callback(performance.now());
-        }
-
-        await expect(waitPromise).resolves.toBeNull();
+        await expect(waitPromise).resolves.toEqual({ width: 800, height: 600 });
+        expect(queuedAnimationFrames).toHaveLength(0);
     });
 
     it('resolves with null when waiting on a canvas that gets replaced', async () => {
@@ -306,6 +284,15 @@ describe('DIVECanvasLifecycleManager', () => {
         manager.setCanvas(secondCanvas);
 
         await expect(waitPromise).resolves.toBeNull();
+    });
+
+    it('resolves immediately with null when waiting after dispose', async () => {
+        const canvas = createCanvas(0, 0);
+
+        manager = new DIVECanvasLifecycleManager(canvas, onResize);
+        manager.dispose();
+
+        await expect(manager.waitForRenderableCanvas(canvas)).resolves.toBeNull();
     });
 
     it('ignores zero-sized updates after a renderable canvas was already measured', () => {
@@ -326,7 +313,25 @@ describe('DIVECanvasLifecycleManager', () => {
         expect(onResize).toHaveBeenCalledTimes(1);
     });
 
-    it('resolves when waiting on an already renderable canvas', async () => {
+    it('keeps waiting on a detached zero-sized canvas until it is disposed', async () => {
+        const canvas = createCanvas(0, 0, null);
+        const queuedAnimationFrames: FrameRequestCallback[] = [];
+        vi.stubGlobal(
+            'requestAnimationFrame',
+            vi.fn((callback: FrameRequestCallback) => {
+                queuedAnimationFrames.push(callback);
+                return queuedAnimationFrames.length;
+            }),
+        );
+
+        manager = new DIVECanvasLifecycleManager(canvas, onResize);
+        const waitPromise = manager.waitForRenderableCanvas();
+        manager.dispose();
+
+        await expect(waitPromise).resolves.toBeNull();
+    });
+
+    it('resolves immediately for a canvas with a usable layout', async () => {
         const parent = document.createElement('div');
         document.body.appendChild(parent);
         const canvas = createCanvas(800, 600, parent);
@@ -341,16 +346,11 @@ describe('DIVECanvasLifecycleManager', () => {
         );
 
         manager = new DIVECanvasLifecycleManager(canvas, onResize);
-        const waitPromise = manager.waitForRenderableCanvas();
-
-        for (const callback of queuedAnimationFrames.splice(0)) {
-            callback(performance.now());
-        }
-
-        await expect(waitPromise).resolves.toEqual({
+        await expect(manager.waitForRenderableCanvas()).resolves.toEqual({
             width: 800,
             height: 600,
         });
+        expect(queuedAnimationFrames).toHaveLength(0);
     });
 
     it('resolves waiting with null after dispose', async () => {
@@ -373,6 +373,34 @@ describe('DIVECanvasLifecycleManager', () => {
         ]);
 
         await expect(waitPromise).resolves.toBeNull();
+    });
+
+    it('handles a canvas detaching between wait verification frames', async () => {
+        vi.useFakeTimers();
+        const parent = document.createElement('div');
+        document.body.appendChild(parent);
+        const canvas = createCanvas(0, 0, parent);
+
+        parent.appendChild(canvas);
+
+        manager = new DIVECanvasLifecycleManager(canvas, onResize);
+        const waitPromise = manager.waitForRenderableCanvas(canvas);
+
+        Object.defineProperty(canvas, 'parentElement', {
+            value: null,
+            writable: true,
+        });
+        Object.defineProperty(canvas, 'isConnected', {
+            value: false,
+            configurable: true,
+        });
+
+        await vi.advanceTimersByTimeAsync(0);
+        manager.dispose();
+        await vi.advanceTimersByTimeAsync(16);
+
+        await expect(waitPromise).resolves.toBeNull();
+        vi.useRealTimers();
     });
 
     it('ignores concurrent wait verifications while one verification is already pending', async () => {
@@ -415,16 +443,36 @@ describe('DIVECanvasLifecycleManager', () => {
 
         manager = new DIVECanvasLifecycleManager(canvas, onResize);
         const waitPromise = manager.waitForRenderableCanvas(canvas);
-        await Promise.resolve();
-        await Promise.resolve();
+        const initialFrame = queuedAnimationFrames.shift();
+        initialFrame?.(performance.now());
+        for (let attempt = 0; attempt < 5; attempt += 1) {
+            if (resizeObserverCallbacks.length >= 2) {
+                break;
+            }
+
+            await Promise.resolve();
+        }
+
         expect(resizeObserverCallbacks).toHaveLength(2);
         const waitObserver = resizeObserverCallbacks.at(-1);
+
+        const baselineQueuedFrames = queuedAnimationFrames.length;
+
+        waitObserver?.([
+            {
+                contentRect: {
+                    width,
+                    height,
+                },
+            } as ResizeObserverEntry,
+        ]);
+        await Promise.resolve();
+
+        expect(queuedAnimationFrames).toHaveLength(baselineQueuedFrames);
 
         width = 800;
         height = 600;
 
-        expect(queuedAnimationFrames).toHaveLength(1);
-
         waitObserver?.([
             {
                 contentRect: {
@@ -435,19 +483,7 @@ describe('DIVECanvasLifecycleManager', () => {
         ]);
         await Promise.resolve();
 
-        expect(queuedAnimationFrames).toHaveLength(2);
-
-        waitObserver?.([
-            {
-                contentRect: {
-                    width,
-                    height,
-                },
-            } as ResizeObserverEntry,
-        ]);
-        await Promise.resolve();
-
-        expect(queuedAnimationFrames).toHaveLength(2);
+        expect(queuedAnimationFrames).toHaveLength(baselineQueuedFrames);
 
         for (const callback of queuedAnimationFrames.splice(0)) {
             callback(performance.now());

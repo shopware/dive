@@ -134,10 +134,6 @@ export class DIVERenderer {
         return this._webgpurenderer.initialized;
     }
 
-    public get usesExternalCanvas(): boolean {
-        return this._settings.canvas !== undefined;
-    }
-
     public async init(): Promise<void> {
         if (this._webgpurenderer.initialized) {
             await this._environment.init();

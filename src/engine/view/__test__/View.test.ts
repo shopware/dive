@@ -16,7 +16,6 @@ import {
 
 const mockRenderer = {
     initialized: false,
-    usesExternalCanvas: false,
     init: vi.fn(async () => {
         mockRenderer.initialized = true;
     }),
@@ -77,7 +76,7 @@ const mockScene = {
 };
 
 vi.mock('../../renderer/Renderer.ts');
-vi.mock('../../resize/CanvasLifecycleManager.ts');
+vi.mock('../../canvas/CanvasLifecycleManager.ts');
 vi.mock('../../camera/PerspectiveCamera.ts');
 vi.mock('../../scene/Scene.ts');
 
@@ -88,7 +87,6 @@ describe('DIVEView', () => {
         vi.clearAllMocks();
         lifecycleResizeHandler = null;
         mockRenderer.initialized = false;
-        mockRenderer.usesExternalCanvas = false;
         mockRenderer.init.mockImplementation(async () => {
             mockRenderer.initialized = true;
         });
@@ -164,18 +162,7 @@ describe('DIVEView', () => {
     });
 
     describe('init', () => {
-        it('should initialize the renderer immediately for internally managed canvases', async () => {
-            await view.init();
-
-            expect(
-                mockCanvasLifecycleManager.waitForRenderableCanvas,
-            ).not.toHaveBeenCalled();
-            expect(mockRenderer.init).toHaveBeenCalledTimes(1);
-        });
-
-        it('should wait for external canvases before initializing the renderer', async () => {
-            mockRenderer.usesExternalCanvas = true;
-
+        it('should wait for the canvas before initializing the renderer', async () => {
             await view.init();
 
             expect(
@@ -185,7 +172,6 @@ describe('DIVEView', () => {
         });
 
         it('should skip renderer initialization if the canvas wait resolves stale', async () => {
-            mockRenderer.usesExternalCanvas = true;
             mockCanvasLifecycleManager.waitForRenderableCanvas.mockResolvedValue(
                 null,
             );
@@ -210,6 +196,7 @@ describe('DIVEView', () => {
 
             const firstInit = view.init();
             const secondInit = view.init();
+            await Promise.resolve();
 
             expect(mockRenderer.init).toHaveBeenCalledTimes(1);
 
@@ -248,6 +235,17 @@ describe('DIVEView', () => {
 
             resolveInit?.();
             await initPromise;
+
+            expect(view['_initPromise']).toBeNull();
+        });
+
+        it('should abort completion when renderer.init invalidates the view before it resolves', async () => {
+            mockRenderer.init.mockImplementation(async () => {
+                mockRenderer.initialized = true;
+                view.dispose();
+            });
+
+            await view.init();
 
             expect(view['_initPromise']).toBeNull();
         });

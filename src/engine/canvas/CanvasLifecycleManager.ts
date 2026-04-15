@@ -5,44 +5,6 @@ export type DIVECanvasLayout = {
     height: number;
 };
 
-const hasRenderableSize = (width: number, height: number): boolean =>
-    width >= 1 && height >= 1;
-
-const nextFrame = (): Promise<void> =>
-    new Promise((resolve) => requestAnimationFrame(() => resolve()));
-
-const getCanvasLayout = (canvas: HTMLCanvasElement): DIVECanvasLayout => {
-    const rect = canvas.getBoundingClientRect?.() ?? {
-        width: 0,
-        height: 0,
-    };
-
-    return {
-        width: Math.max(rect.width, canvas.clientWidth),
-        height: Math.max(rect.height, canvas.clientHeight),
-    };
-};
-
-const isRenderableCanvas = (canvas: HTMLCanvasElement): boolean => {
-    if (!canvas.isConnected) {
-        return false;
-    }
-
-    const { width, height } = getCanvasLayout(canvas);
-
-    return hasRenderableSize(width, height);
-};
-
-const nextParentObservationInterval = (
-    canvas: HTMLCanvasElement,
-    observeParent: (parent: HTMLElement) => void,
-): ReturnType<typeof setInterval> =>
-    setInterval(() => {
-        if (canvas.parentElement) {
-            observeParent(canvas.parentElement);
-        }
-    }, 16);
-
 export class DIVECanvasLifecycleManager {
     public readonly isDIVECanvasLifecycleManager: true = true;
 
@@ -82,25 +44,36 @@ export class DIVECanvasLifecycleManager {
         canvas: HTMLCanvasElement = this._canvas,
     ): Promise<DIVECanvasLayout | null> {
         const getStableLayout = async (): Promise<DIVECanvasLayout | null> => {
+            if (this._disposed || canvas !== this._canvas) {
+                return null;
+            }
+
+            const directLayout = this._getCanvasLayout(canvas);
+
+            if (
+                this._hasRenderableSize(directLayout.width, directLayout.height)
+            ) {
+                return directLayout;
+            }
+
+            if (!canvas.isConnected) {
+                return null;
+            }
+
+            await this._nextFrame();
+
+            const stableLayout = this._getCanvasLayout(canvas);
+
             if (
                 this._disposed ||
                 canvas !== this._canvas ||
-                !isRenderableCanvas(canvas)
+                !canvas.isConnected ||
+                !this._hasRenderableSize(stableLayout.width, stableLayout.height)
             ) {
                 return null;
             }
 
-            await nextFrame();
-
-            if (
-                this._disposed ||
-                canvas !== this._canvas ||
-                !isRenderableCanvas(canvas)
-            ) {
-                return null;
-            }
-
-            return getCanvasLayout(canvas);
+            return stableLayout;
         };
 
         const immediateLayout = await getStableLayout();
@@ -199,7 +172,7 @@ export class DIVECanvasLifecycleManager {
             return;
         }
 
-        this._parentObservationInterval = nextParentObservationInterval(
+        this._parentObservationInterval = this._nextParentObservationInterval(
             canvas,
             (parent) => {
                 this._resizeObserver.observe(parent);
@@ -219,7 +192,7 @@ export class DIVECanvasLifecycleManager {
 
     private _syncCanvasSize(): void {
         const canvas = this._canvas;
-        const { width, height } = getCanvasLayout(canvas);
+        const { width, height } = this._getCanvasLayout(canvas);
         this._applyResize(width, height);
     }
 
@@ -231,10 +204,43 @@ export class DIVECanvasLifecycleManager {
         this._width = width;
         this._height = height;
 
-        if (!hasRenderableSize(width, height)) {
+        if (!this._hasRenderableSize(width, height)) {
             return;
         }
 
         this._onResize(width, height);
+    }
+
+    private _hasRenderableSize(width: number, height: number): boolean {
+        return width >= 1 && height >= 1;
+    }
+
+    private _nextFrame(): Promise<void> {
+        return new Promise((resolve) =>
+            requestAnimationFrame(() => resolve()),
+        );
+    }
+
+    private _getCanvasLayout(canvas: HTMLCanvasElement): DIVECanvasLayout {
+        const rect = canvas.getBoundingClientRect?.() ?? {
+            width: 0,
+            height: 0,
+        };
+
+        return {
+            width: Math.max(rect.width, canvas.clientWidth),
+            height: Math.max(rect.height, canvas.clientHeight),
+        };
+    }
+
+    private _nextParentObservationInterval(
+        canvas: HTMLCanvasElement,
+        observeParent: (parent: HTMLElement) => void,
+    ): ReturnType<typeof setInterval> {
+        return setInterval(() => {
+            if (canvas.parentElement) {
+                observeParent(canvas.parentElement);
+            }
+        }, 16);
     }
 }

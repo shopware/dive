@@ -70,19 +70,17 @@ export class DIVEView implements DIVETicker {
         const canvas = renderer.canvas;
 
         this._initPromise = (async () => {
-            if (renderer.usesExternalCanvas) {
-                const stableLayout =
-                    await this._canvasLifecycleManager.waitForRenderableCanvas(
-                        canvas,
-                    );
+            const stableLayout =
+                await this._canvasLifecycleManager.waitForRenderableCanvas(
+                    canvas,
+                );
 
-                if (
-                    stableLayout === null ||
-                    initVersion !== this._initVersion ||
-                    renderer !== this._renderer
-                ) {
-                    return;
-                }
+            if (
+                stableLayout === null ||
+                initVersion !== this._initVersion ||
+                renderer !== this._renderer
+            ) {
+                return;
             }
 
             await renderer.init();
