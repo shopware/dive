@@ -348,7 +348,9 @@ describe('DIVECanvasLifecycleManager', () => {
 
         manager = new DIVECanvasLifecycleManager(canvas, onResize);
 
-        await expect(manager.waitForRenderableCanvas(canvas, signal)).resolves.toBeNull();
+        await expect(
+            manager.waitForRenderableCanvas(canvas, signal),
+        ).resolves.toBeNull();
         expect(queuedAnimationFrames).toHaveLength(0);
     });
 
@@ -379,10 +381,16 @@ describe('DIVECanvasLifecycleManager', () => {
         const queuedAnimationFrames: FrameRequestCallback[] = [];
         let abortListener: (() => void) | undefined;
         const originalAddEventListener =
-            abortController.signal.addEventListener.bind(abortController.signal);
+            abortController.signal.addEventListener.bind(
+                abortController.signal,
+            );
 
         vi.spyOn(abortController.signal, 'addEventListener').mockImplementation(
-            ((type: string, listener: EventListenerOrEventListenerObject, options?: AddEventListenerOptions) => {
+            ((
+                type: string,
+                listener: EventListenerOrEventListenerObject,
+                options?: AddEventListenerOptions,
+            ) => {
                 abortListener = listener as () => void;
                 return originalAddEventListener(
                     type,
