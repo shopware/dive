@@ -297,6 +297,61 @@ describe('DIVECanvasLifecycleManager', () => {
         ).resolves.toBeNull();
     });
 
+    it('resolves with null when the signal is already aborted before the stability frame wait starts', async () => {
+        const parent = document.createElement('div');
+        document.body.appendChild(parent);
+        const canvas = createCanvas(0, 0, parent);
+        const abortController = new AbortController();
+        const queuedAnimationFrames: FrameRequestCallback[] = [];
+
+        parent.appendChild(canvas);
+        vi.stubGlobal(
+            'requestAnimationFrame',
+            vi.fn((callback: FrameRequestCallback) => {
+                queuedAnimationFrames.push(callback);
+                return queuedAnimationFrames.length;
+            }),
+        );
+
+        abortController.abort();
+        manager = new DIVECanvasLifecycleManager(canvas, onResize);
+
+        await expect(
+            manager.waitForRenderableCanvas(canvas, abortController.signal),
+        ).resolves.toBeNull();
+        expect(queuedAnimationFrames).toHaveLength(0);
+    });
+
+    it('resolves with null when the signal flips to aborted exactly before the next frame helper runs', async () => {
+        const parent = document.createElement('div');
+        document.body.appendChild(parent);
+        const canvas = createCanvas(0, 0, parent);
+        const queuedAnimationFrames: FrameRequestCallback[] = [];
+        let abortedReads = 0;
+        const signal = {
+            get aborted() {
+                abortedReads += 1;
+                return abortedReads >= 2;
+            },
+            addEventListener: vi.fn(),
+            removeEventListener: vi.fn(),
+        } as unknown as AbortSignal;
+
+        parent.appendChild(canvas);
+        vi.stubGlobal(
+            'requestAnimationFrame',
+            vi.fn((callback: FrameRequestCallback) => {
+                queuedAnimationFrames.push(callback);
+                return queuedAnimationFrames.length;
+            }),
+        );
+
+        manager = new DIVECanvasLifecycleManager(canvas, onResize);
+
+        await expect(manager.waitForRenderableCanvas(canvas, signal)).resolves.toBeNull();
+        expect(queuedAnimationFrames).toHaveLength(0);
+    });
+
     it('resolves waiting with null when the abort signal fires', async () => {
         const parent = document.createElement('div');
         document.body.appendChild(parent);
@@ -314,6 +369,101 @@ describe('DIVECanvasLifecycleManager', () => {
         abortController.abort();
 
         await expect(waitPromise).resolves.toBeNull();
+    });
+
+    it('aborts through the outer wait listener after registration and ignores a later second finish attempt', async () => {
+        const parent = document.createElement('div');
+        document.body.appendChild(parent);
+        const canvas = createCanvas(0, 0, parent);
+        const abortController = new AbortController();
+        const queuedAnimationFrames: FrameRequestCallback[] = [];
+        let abortListener: (() => void) | undefined;
+        const originalAddEventListener =
+            abortController.signal.addEventListener.bind(abortController.signal);
+
+        vi.spyOn(abortController.signal, 'addEventListener').mockImplementation(
+            ((type: string, listener: EventListenerOrEventListenerObject, options?: AddEventListenerOptions) => {
+                abortListener = listener as () => void;
+                return originalAddEventListener(
+                    type,
+                    listener as EventListener,
+                    options,
+                );
+            }) as typeof abortController.signal.addEventListener,
+        );
+
+        parent.appendChild(canvas);
+        vi.stubGlobal(
+            'requestAnimationFrame',
+            vi.fn((callback: FrameRequestCallback) => {
+                queuedAnimationFrames.push(callback);
+                return queuedAnimationFrames.length;
+            }),
+        );
+
+        manager = new DIVECanvasLifecycleManager(canvas, onResize);
+        const waitPromise = manager.waitForRenderableCanvas(
+            canvas,
+            abortController.signal,
+        );
+
+        const initialFrame = queuedAnimationFrames.shift();
+        initialFrame?.(performance.now());
+
+        for (let attempt = 0; attempt < 5; attempt += 1) {
+            if (resizeObserverCallbacks.length >= 2) {
+                break;
+            }
+
+            await Promise.resolve();
+        }
+
+        expect(abortListener).toBeDefined();
+        abortController.abort();
+        abortListener?.();
+
+        await expect(waitPromise).resolves.toBeNull();
+    });
+
+    it('removes abort listeners again after a non-aborted stability frame', async () => {
+        const parent = document.createElement('div');
+        document.body.appendChild(parent);
+        const canvas = createCanvas(0, 0, parent);
+        const abortController = new AbortController();
+        const removeEventListenerSpy = vi.spyOn(
+            abortController.signal,
+            'removeEventListener',
+        );
+        const queuedAnimationFrames: FrameRequestCallback[] = [];
+
+        parent.appendChild(canvas);
+        vi.stubGlobal(
+            'requestAnimationFrame',
+            vi.fn((callback: FrameRequestCallback) => {
+                queuedAnimationFrames.push(callback);
+                return queuedAnimationFrames.length;
+            }),
+        );
+
+        manager = new DIVECanvasLifecycleManager(canvas, onResize);
+        const waitPromise = manager.waitForRenderableCanvas(
+            canvas,
+            abortController.signal,
+        );
+
+        const initialFrame = queuedAnimationFrames.shift();
+        initialFrame?.(performance.now());
+        await Promise.resolve();
+
+        manager.dispose();
+        const tickFrame = queuedAnimationFrames.shift();
+        tickFrame?.(performance.now());
+
+        await expect(waitPromise).resolves.toBeNull();
+        expect(removeEventListenerSpy).toHaveBeenCalledWith(
+            'abort',
+            expect.any(Function),
+        );
     });
 
     it('ignores zero-sized updates after a renderable canvas was already measured', () => {

@@ -67,6 +67,8 @@
 - `DIVECanvasLifecycleManager.waitForRenderableCanvas()` can take an optional `AbortSignal`; aborting must resolve the wait with `null`, disconnect observers, and cancel any scheduled animation frame without touching the top-level resize observer
 - `DIVEView` now uses an internal `AbortController` to invalidate pending init work on `dispose()` and `setCanvas()`; even with abort support, `renderer !== this._renderer` remains as the stale-renderer guard after awaited renderer initialization
 - In the `DIVECanvasLifecycleManager` abort path, keep the local wait-time `ResizeObserver` as a `const` and register the abort listener only after that observer exists; otherwise an early abort can hit a temporal-dead-zone bug during `finish()`
+- Full CLM abort coverage needs two separate tests: one where `signal.aborted` becomes true exactly when `_nextFrame(signal)` starts, and one where the outer wait listener aborts only after the second `ResizeObserver` has been registered
+- The local `finish()` helper inside `DIVECanvasLifecycleManager.waitForRenderableCanvas()` does not need a separate `settled` early-return guard; duplicate promise resolution is already harmless and removing that branch keeps both code and coverage simpler
 - `DIVERenderer` no longer owns DOM/canvas readiness logic; it only initializes WebGPU/environment state, swaps canvases, and handles render/resize calls
 - The old `DIVEResizeManager` compatibility layer has been removed entirely on v3; canvas ownership now lives directly between `DIVEView` and `DIVECanvasLifecycleManager`
 - `DIVEView.setCanvas()` must not force an immediate `onResize()` on the swapped canvas; the `DIVECanvasLifecycleManager` is the single source of truth for resize propagation

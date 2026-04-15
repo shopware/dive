@@ -99,10 +99,6 @@ export class DIVECanvasLifecycleManager {
             });
 
             const finish = (layout: DIVECanvasLayout | null): void => {
-                if (settled) {
-                    return;
-                }
-
                 settled = true;
                 resizeObserver.disconnect();
 
