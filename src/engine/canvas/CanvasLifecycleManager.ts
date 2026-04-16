@@ -16,8 +16,9 @@ export class DIVECanvasLifecycleManager {
     private _isCanvasHealthy: boolean = false;
     private _observedParent: HTMLElement | null = null;
     private _pendingStableLayout: DIVECanvasLayout | null = null;
-    private _bootstrapPromise: Promise<DIVECanvasLayout | null> | null = null;
-    private _resolveBootstrap:
+    private _healthyCanvasPromise: Promise<DIVECanvasLayout | null> | null =
+        null;
+    private _resolveHealthyCanvas:
         | ((layout: DIVECanvasLayout | null) => void)
         | null = null;
 
@@ -31,7 +32,7 @@ export class DIVECanvasLifecycleManager {
             const entry = entries[0];
             const { width, height } = entry.contentRect;
 
-            if (!this._hasRenderableSize(width, height)) {
+            if (!this._hasHealthySize(width, height)) {
                 this._width = width;
                 this._height = height;
                 this._invalidateCanvasHealth();
@@ -61,7 +62,7 @@ export class DIVECanvasLifecycleManager {
         this._resolvePendingWaiters(null);
     }
 
-    public async waitForRenderableCanvas(
+    public async waitForHealthyCanvas(
         canvas: HTMLCanvasElement = this._canvas,
         signal?: AbortSignal,
     ): Promise<DIVECanvasLayout | null> {
@@ -73,7 +74,7 @@ export class DIVECanvasLifecycleManager {
             this._isCanvasHealthy &&
             canvas.parentElement !== null &&
             canvas.parentElement === this._observedParent &&
-            this._hasRenderableSize(this._width, this._height)
+            this._hasHealthySize(this._width, this._height)
         ) {
             return {
                 width: this._width,
@@ -81,16 +82,16 @@ export class DIVECanvasLifecycleManager {
             };
         }
 
-        if (!this._bootstrapPromise) {
-            this._bootstrapPromise = new Promise((resolve) => {
-                this._resolveBootstrap = resolve;
+        if (!this._healthyCanvasPromise) {
+            this._healthyCanvasPromise = new Promise((resolve) => {
+                this._resolveHealthyCanvas = resolve;
             });
         }
 
-        const bootstrapPromise = this._bootstrapPromise;
+        const healthyCanvasPromise = this._healthyCanvasPromise;
 
         if (!signal) {
-            return await bootstrapPromise;
+            return await healthyCanvasPromise;
         }
 
         return await new Promise((resolve) => {
@@ -101,7 +102,7 @@ export class DIVECanvasLifecycleManager {
 
             signal.addEventListener('abort', onAbort, { once: true });
 
-            void bootstrapPromise.then((layout) => {
+            void healthyCanvasPromise.then((layout) => {
                 signal.removeEventListener('abort', onAbort);
 
                 if (
@@ -132,7 +133,7 @@ export class DIVECanvasLifecycleManager {
         if (this._isCanvasHealthy) {
             if (
                 parent === this._observedParent &&
-                this._hasRenderableSize(this._width, this._height)
+                this._hasHealthySize(this._width, this._height)
             ) {
                 return;
             }
@@ -151,7 +152,7 @@ export class DIVECanvasLifecycleManager {
 
         const layout = this._getCanvasLayout(canvas);
 
-        if (!this._hasRenderableSize(layout.width, layout.height)) {
+        if (!this._hasHealthySize(layout.width, layout.height)) {
             this._pendingStableLayout = null;
             return;
         }
@@ -181,7 +182,7 @@ export class DIVECanvasLifecycleManager {
         this._onResize(width, height);
     }
 
-    private _hasRenderableSize(width: number, height: number): boolean {
+    private _hasHealthySize(width: number, height: number): boolean {
         return width >= 1 && height >= 1;
     }
 
@@ -207,11 +208,11 @@ export class DIVECanvasLifecycleManager {
     private _resolvePendingWaiters(layout: DIVECanvasLayout | null): void {
         this._pendingStableLayout = null;
 
-        const resolveBootstrap = this._resolveBootstrap;
+        const resolveHealthyCanvas = this._resolveHealthyCanvas;
 
-        this._resolveBootstrap = null;
-        this._bootstrapPromise = null;
+        this._resolveHealthyCanvas = null;
+        this._healthyCanvasPromise = null;
 
-        resolveBootstrap?.(layout);
+        resolveHealthyCanvas?.(layout);
     }
 }

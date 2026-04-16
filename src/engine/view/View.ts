@@ -70,7 +70,7 @@ export class DIVEView implements DIVETicker {
 
             this._initPromise = (async () => {
                 const stableLayout =
-                    await this._canvasLifecycleManager.waitForRenderableCanvas(
+                    await this._canvasLifecycleManager.waitForHealthyCanvas(
                         canvas,
                         abortController.signal,
                     );

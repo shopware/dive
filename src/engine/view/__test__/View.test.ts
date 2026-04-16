@@ -35,7 +35,7 @@ const mockCanvasLifecycleManager = {
     dispose: vi.fn(),
     setCanvas: vi.fn(),
     tick: vi.fn(),
-    waitForRenderableCanvas: vi.fn<
+    waitForHealthyCanvas: vi.fn<
         (
             canvas?: HTMLCanvasElement,
             signal?: AbortSignal,
@@ -95,7 +95,7 @@ describe('DIVEView', () => {
         mockRenderer.init.mockImplementation(async () => {
             mockRenderer.initialized = true;
         });
-        mockCanvasLifecycleManager.waitForRenderableCanvas.mockResolvedValue({
+        mockCanvasLifecycleManager.waitForHealthyCanvas.mockResolvedValue({
             width: 800,
             height: 600,
         });
@@ -171,7 +171,7 @@ describe('DIVEView', () => {
             await view.init();
 
             expect(
-                mockCanvasLifecycleManager.waitForRenderableCanvas,
+                mockCanvasLifecycleManager.waitForHealthyCanvas,
             ).toHaveBeenCalledWith(
                 mockRenderer.canvas,
                 expect.any(AbortSignal),
@@ -180,7 +180,7 @@ describe('DIVEView', () => {
         });
 
         it('should skip renderer initialization if the canvas wait resolves stale', async () => {
-            mockCanvasLifecycleManager.waitForRenderableCanvas.mockResolvedValue(
+            mockCanvasLifecycleManager.waitForHealthyCanvas.mockResolvedValue(
                 null,
             );
 
@@ -250,7 +250,7 @@ describe('DIVEView', () => {
         it('should abort the pending canvas wait when the view is disposed', async () => {
             let capturedSignal: AbortSignal | undefined;
 
-            mockCanvasLifecycleManager.waitForRenderableCanvas.mockImplementation(
+            mockCanvasLifecycleManager.waitForHealthyCanvas.mockImplementation(
                 async (_canvas, signal) => {
                     capturedSignal = signal;
                     return await new Promise<DIVECanvasLayout | null>(() => {});
@@ -368,7 +368,7 @@ describe('DIVEView', () => {
         it('should abort the pending canvas wait when swapping canvases', async () => {
             const capturedSignals: AbortSignal[] = [];
 
-            mockCanvasLifecycleManager.waitForRenderableCanvas.mockImplementation(
+            mockCanvasLifecycleManager.waitForHealthyCanvas.mockImplementation(
                 async (_canvas, signal) => {
                     if (signal) {
                         capturedSignals.push(signal);
