@@ -13,7 +13,7 @@ export class DIVECanvasLifecycleManager {
     private _height: number = 0;
     private _canvas: HTMLCanvasElement;
     private _disposed: boolean = false;
-    private _bootstrapInterval: ReturnType<typeof setInterval> | null = null;
+    private _isCanvasHealthy: boolean = false;
     private _observedParent: HTMLElement | null = null;
     private _pendingStableLayout: DIVECanvasLayout | null = null;
     private _bootstrapPromise: Promise<DIVECanvasLayout | null> | null = null;
@@ -30,8 +30,24 @@ export class DIVECanvasLifecycleManager {
         this._resizeObserver = new ResizeObserver((entries) => {
             const entry = entries[0];
             const { width, height } = entry.contentRect;
+
+            if (!this._hasRenderableSize(width, height)) {
+                this._width = width;
+                this._height = height;
+                this._invalidateCanvasHealth();
+                return;
+            }
+
             this._applyResize(width, height);
         });
+    }
+
+    public tick(): void {
+        if (this._disposed) {
+            return;
+        }
+
+        this._checkCanvasHealth();
     }
 
     public setCanvas(canvas: HTMLCanvasElement): void {
@@ -39,9 +55,10 @@ export class DIVECanvasLifecycleManager {
         this._width = 0;
         this._height = 0;
         this._resizeObserver.disconnect();
+        this._isCanvasHealthy = false;
         this._observedParent = null;
         this._pendingStableLayout = null;
-        this._completeBootstrap(null);
+        this._resolvePendingWaiters(null);
     }
 
     public async waitForRenderableCanvas(
@@ -53,74 +70,27 @@ export class DIVECanvasLifecycleManager {
         }
 
         if (
-            !this._bootstrapPromise &&
-            canvas === this._canvas &&
+            this._isCanvasHealthy &&
             canvas.parentElement !== null &&
-            this._observedParent === canvas.parentElement
+            canvas.parentElement === this._observedParent &&
+            this._hasRenderableSize(this._width, this._height)
         ) {
-            const layout = this._getCanvasLayout(canvas);
-
-            if (this._hasRenderableSize(layout.width, layout.height)) {
-                return layout;
-            }
+            return {
+                width: this._width,
+                height: this._height,
+            };
         }
 
         if (!this._bootstrapPromise) {
             this._bootstrapPromise = new Promise((resolve) => {
                 this._resolveBootstrap = resolve;
             });
-
-            this._bootstrapInterval = setInterval(() => {
-                if (this._disposed) {
-                    this._completeBootstrap(null);
-                    return;
-                }
-
-                const currentCanvas = this._canvas;
-                const parent = currentCanvas.parentElement;
-
-                if (!parent) {
-                    this._observedParent = null;
-                    this._pendingStableLayout = null;
-                    return;
-                }
-
-                if (parent !== this._observedParent) {
-                    this._observedParent = parent;
-                    this._pendingStableLayout = null;
-                }
-
-                const layout = this._getCanvasLayout(currentCanvas);
-
-                if (!this._hasRenderableSize(layout.width, layout.height)) {
-                    this._pendingStableLayout = null;
-                    return;
-                }
-
-                if (
-                    this._pendingStableLayout === null ||
-                    this._pendingStableLayout.width !== layout.width ||
-                    this._pendingStableLayout.height !== layout.height
-                ) {
-                    this._pendingStableLayout = layout;
-                    return;
-                }
-
-                this._resizeObserver.observe(currentCanvas);
-                this._resizeObserver.observe(parent);
-                this._applyResize(layout.width, layout.height);
-                this._completeBootstrap(layout);
-            }, 16);
         }
 
-        const bootstrapPromise = this._bootstrapPromise!;
+        const bootstrapPromise = this._bootstrapPromise;
 
         if (!signal) {
             return await bootstrapPromise;
-        }
-
-        if (signal.aborted) {
-            return null;
         }
 
         return await new Promise((resolve) => {
@@ -150,8 +120,55 @@ export class DIVECanvasLifecycleManager {
 
     public dispose(): void {
         this._disposed = true;
-        this._completeBootstrap(null);
+        this._isCanvasHealthy = false;
+        this._resolvePendingWaiters(null);
         this._resizeObserver.disconnect();
+    }
+
+    private _checkCanvasHealth(): void {
+        const canvas = this._canvas;
+        const parent = canvas.parentElement;
+
+        if (this._isCanvasHealthy) {
+            if (
+                parent === this._observedParent &&
+                this._hasRenderableSize(this._width, this._height)
+            ) {
+                return;
+            }
+
+            this._invalidateCanvasHealth();
+        }
+
+        if (!parent) {
+            return;
+        }
+
+        if (parent !== this._observedParent) {
+            this._observedParent = parent;
+            this._pendingStableLayout = null;
+        }
+
+        const layout = this._getCanvasLayout(canvas);
+
+        if (!this._hasRenderableSize(layout.width, layout.height)) {
+            this._pendingStableLayout = null;
+            return;
+        }
+
+        if (
+            this._pendingStableLayout === null ||
+            this._pendingStableLayout.width !== layout.width ||
+            this._pendingStableLayout.height !== layout.height
+        ) {
+            this._pendingStableLayout = layout;
+            return;
+        }
+
+        this._resizeObserver.observe(canvas);
+        this._applyResize(layout.width, layout.height);
+        this._isCanvasHealthy = true;
+        this._resolvePendingWaiters(layout);
     }
 
     private _applyResize(width: number, height: number): void {
@@ -161,11 +178,6 @@ export class DIVECanvasLifecycleManager {
 
         this._width = width;
         this._height = height;
-
-        if (!this._hasRenderableSize(width, height)) {
-            return;
-        }
-
         this._onResize(width, height);
     }
 
@@ -185,12 +197,14 @@ export class DIVECanvasLifecycleManager {
         };
     }
 
-    private _completeBootstrap(layout: DIVECanvasLayout | null): void {
-        if (this._bootstrapInterval !== null) {
-            clearInterval(this._bootstrapInterval);
-            this._bootstrapInterval = null;
-        }
+    private _invalidateCanvasHealth(): void {
+        this._isCanvasHealthy = false;
+        this._observedParent = null;
+        this._pendingStableLayout = null;
+        this._resizeObserver.disconnect();
+    }
 
+    private _resolvePendingWaiters(layout: DIVECanvasLayout | null): void {
         this._pendingStableLayout = null;
 
         const resolveBootstrap = this._resolveBootstrap;

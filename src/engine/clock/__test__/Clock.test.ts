@@ -1,18 +1,21 @@
 import { DIVEClock, DIVETicker } from '../Clock.ts';
 
-vi.useFakeTimers();
-
 describe('DIVEClock', () => {
     let clock: DIVEClock;
     let mockTicker: DIVETicker;
 
     beforeEach(() => {
+        vi.useFakeTimers();
         vi.clearAllMocks();
         clock = new DIVEClock();
         mockTicker = {
             uuid: 'test-uuid',
             tick: vi.fn(),
         };
+    });
+
+    afterEach(() => {
+        vi.useRealTimers();
     });
 
     it('should instantiate', () => {
@@ -39,6 +42,59 @@ describe('DIVEClock', () => {
 
         clock.stop();
         expect(clock['_isRunning']).toBe(false);
+    });
+
+    it('should tick multiple registered tickers even if one no-ops internally', () => {
+        let canvasIsValid = true;
+        const noOpTicker: DIVETicker = {
+            uuid: 'noop-ticker',
+            tick: vi.fn(() => {
+                if (canvasIsValid) {
+                    return;
+                }
+            }),
+        };
+        const activeTicker: DIVETicker = {
+            uuid: 'active-ticker',
+            tick: vi.fn(),
+        };
+
+        clock.addTicker(noOpTicker);
+        clock.addTicker(activeTicker);
+        clock.start();
+
+        vi.advanceTimersByTime(16);
+
+        expect(noOpTicker.tick).toHaveBeenCalledTimes(1);
+        expect(activeTicker.tick).toHaveBeenCalledTimes(1);
+
+        canvasIsValid = false;
+        vi.advanceTimersByTime(16);
+
+        expect(noOpTicker.tick).toHaveBeenCalledTimes(2);
+        expect(activeTicker.tick).toHaveBeenCalledTimes(2);
+    });
+
+    it('should stop ticking a removed ticker during runtime', () => {
+        const removableTicker: DIVETicker = {
+            uuid: 'removable-ticker',
+            tick: vi.fn(),
+        };
+        const persistentTicker: DIVETicker = {
+            uuid: 'persistent-ticker',
+            tick: vi.fn(),
+        };
+
+        clock.addTicker(removableTicker);
+        clock.addTicker(persistentTicker);
+        clock.start();
+
+        vi.advanceTimersByTime(16);
+        clock.removeTicker(removableTicker);
+        vi.advanceTimersByTime(16);
+
+        expect(removableTicker.tick).toHaveBeenCalledTimes(1);
+        expect(persistentTicker.tick).toHaveBeenCalledTimes(2);
     });
 
     it('should not tick when stopped', () => {

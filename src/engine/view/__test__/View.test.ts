@@ -19,6 +19,7 @@ const mockRenderer = {
     init: vi.fn(async () => {
         mockRenderer.initialized = true;
     }),
+    tick: vi.fn(),
     render: vi.fn(),
     onResize: vi.fn(),
     dispose: vi.fn(),
@@ -33,6 +34,7 @@ const mockRenderer = {
 const mockCanvasLifecycleManager = {
     dispose: vi.fn(),
     setCanvas: vi.fn(),
+    tick: vi.fn(),
     waitForRenderableCanvas: vi.fn<
         (
             canvas?: HTMLCanvasElement,
@@ -274,25 +276,29 @@ describe('DIVEView', () => {
     });
 
     describe('tick', () => {
-        it('should call renderer.render when not paused', () => {
+        it('should tick the canvas lifecycle manager and render when not paused', () => {
             view.tick();
-            expect(mockRenderer.render).toHaveBeenCalledTimes(1);
+            expect(mockCanvasLifecycleManager.tick).toHaveBeenCalledTimes(1);
+            expect(mockRenderer.tick).toHaveBeenCalledTimes(1);
         });
 
-        it('should not call renderer.render when paused', () => {
+        it('should still tick the canvas lifecycle manager when paused', () => {
             view.pause();
             view.tick();
+            expect(mockCanvasLifecycleManager.tick).toHaveBeenCalledTimes(1);
+            expect(mockRenderer.tick).not.toHaveBeenCalled();
             expect(mockRenderer.render).not.toHaveBeenCalled();
         });
 
         it('should resume rendering after being paused', () => {
             view.pause();
             view.tick();
-            expect(mockRenderer.render).not.toHaveBeenCalled();
+            expect(mockRenderer.tick).not.toHaveBeenCalled();
 
             view.resume();
             view.tick();
-            expect(mockRenderer.render).toHaveBeenCalledTimes(1);
+            expect(mockCanvasLifecycleManager.tick).toHaveBeenCalledTimes(2);
+            expect(mockRenderer.tick).toHaveBeenCalledTimes(1);
         });
     });
 

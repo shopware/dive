@@ -48,8 +48,12 @@ export class DIVEView implements DIVETicker {
     }
 
     public tick(): void {
-        if (this._paused) return;
-        this._renderer.render();
+        this._canvasLifecycleManager.tick();
+
+        if (this._paused) {
+            return;
+        }
+        this._renderer.tick();
     }
 
     public async init(): Promise<void> {

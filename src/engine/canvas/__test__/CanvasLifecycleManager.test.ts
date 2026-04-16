@@ -19,8 +19,14 @@ describe('DIVECanvasLifecycleManager', () => {
         (entries: ResizeObserverEntry[]) => void
     >;
 
-    const advanceBootstrap = async (ticks = 1): Promise<void> => {
-        await vi.advanceTimersByTimeAsync(16 * ticks);
+    const advanceBootstrap = async (
+        manager: DIVECanvasLifecycleManager,
+        ticks = 1,
+    ): Promise<void> => {
+        for (let index = 0; index < ticks; index += 1) {
+            manager.tick();
+            await Promise.resolve();
+        }
     };
 
     const createResizeEntry = (
@@ -83,7 +89,6 @@ describe('DIVECanvasLifecycleManager', () => {
     };
 
     beforeEach(() => {
-        vi.useFakeTimers();
         vi.clearAllMocks();
 
         onResize = vi.fn();
@@ -104,56 +109,16 @@ describe('DIVECanvasLifecycleManager', () => {
     });
 
     afterEach(() => {
-        vi.useRealTimers();
+        vi.restoreAllMocks();
         vi.unstubAllGlobals();
     });
 
-    it('attaches the resize observer only after two stable bootstrap polls', async () => {
-        const { canvas } = createCanvas(800, 600);
-        const manager = new DIVECanvasLifecycleManager(canvas, onResize);
-        const waitPromise = manager.waitForRenderableCanvas(canvas);
-
-        expect(mockObserve).not.toHaveBeenCalled();
-        expect(onResize).not.toHaveBeenCalled();
-
-        await advanceBootstrap(1);
-        expect(mockObserve).not.toHaveBeenCalled();
-        expect(onResize).not.toHaveBeenCalled();
-
-        await advanceBootstrap(1);
-        expect(mockObserve).toHaveBeenCalledWith(canvas);
-        expect(mockObserve).toHaveBeenCalledWith(canvas.parentElement);
-        expect(onResize).toHaveBeenCalledWith(800, 600);
-        await expect(waitPromise).resolves.toEqual({ width: 800, height: 600 });
-    });
-
-    it('resets bootstrap stabilization when the parent changes before observation attaches', async () => {
-        const firstParent = document.createElement('div');
-        const secondParent = document.createElement('div');
-        const { canvas, state } = createCanvas(800, 600, firstParent);
-        const manager = new DIVECanvasLifecycleManager(canvas, onResize);
-        const waitPromise = manager.waitForRenderableCanvas(canvas);
-
-        await advanceBootstrap(1);
-        state.parent = secondParent;
-
-        await advanceBootstrap(1);
-        expect(mockObserve).not.toHaveBeenCalled();
-        expect(onResize).not.toHaveBeenCalled();
-
-        await advanceBootstrap(1);
-        expect(mockObserve).toHaveBeenCalledWith(canvas);
-        expect(mockObserve).toHaveBeenCalledWith(secondParent);
-        expect(onResize).toHaveBeenCalledWith(800, 600);
-        await expect(waitPromise).resolves.toEqual({ width: 800, height: 600 });
-    });
-
-    it('waits for a parent and a stable renderable layout before bootstrapping', async () => {
+    it('waits for a parent and stable layout before resolving', async () => {
         const { canvas, state } = createCanvas(0, 0, null);
         const manager = new DIVECanvasLifecycleManager(canvas, onResize);
         const waitPromise = manager.waitForRenderableCanvas(canvas);
 
-        await advanceBootstrap(2);
+        await advanceBootstrap(manager, 2);
         expect(mockObserve).not.toHaveBeenCalled();
         expect(onResize).not.toHaveBeenCalled();
 
@@ -161,13 +126,12 @@ describe('DIVECanvasLifecycleManager', () => {
         state.width = 1024;
         state.height = 768;
 
-        await advanceBootstrap(1);
+        await advanceBootstrap(manager, 1);
         expect(mockObserve).not.toHaveBeenCalled();
         expect(onResize).not.toHaveBeenCalled();
 
-        await advanceBootstrap(1);
+        await advanceBootstrap(manager, 1);
         expect(mockObserve).toHaveBeenCalledWith(canvas);
-        expect(mockObserve).toHaveBeenCalledWith(state.parent);
         expect(onResize).toHaveBeenCalledWith(1024, 768);
         await expect(waitPromise).resolves.toEqual({
             width: 1024,
@@ -175,29 +139,47 @@ describe('DIVECanvasLifecycleManager', () => {
         });
     });
 
-    it('clears pending stabilization when a renderable layout drops back to zero', async () => {
+    it('resets stabilization when the parent changes before the layout is confirmed', async () => {
+        const firstParent = document.createElement('div');
+        const secondParent = document.createElement('div');
+        const { canvas, state } = createCanvas(800, 600, firstParent);
+        const manager = new DIVECanvasLifecycleManager(canvas, onResize);
+        const waitPromise = manager.waitForRenderableCanvas(canvas);
+
+        await advanceBootstrap(manager, 1);
+        state.parent = secondParent;
+
+        await advanceBootstrap(manager, 1);
+        expect(mockObserve).not.toHaveBeenCalled();
+        expect(onResize).not.toHaveBeenCalled();
+
+        await advanceBootstrap(manager, 1);
+        expect(mockObserve).toHaveBeenCalledWith(canvas);
+        expect(onResize).toHaveBeenCalledWith(800, 600);
+        await expect(waitPromise).resolves.toEqual({ width: 800, height: 600 });
+    });
+
+    it('clears stabilization when a renderable layout drops back to zero', async () => {
         const { canvas, state } = createCanvas(800, 600);
         const manager = new DIVECanvasLifecycleManager(canvas, onResize);
         const waitPromise = manager.waitForRenderableCanvas(canvas);
 
-        await advanceBootstrap(1);
-
+        await advanceBootstrap(manager, 1);
         state.width = 0;
         state.height = 0;
 
-        await advanceBootstrap(1);
+        await advanceBootstrap(manager, 1);
         expect(mockObserve).not.toHaveBeenCalled();
         expect(onResize).not.toHaveBeenCalled();
 
         state.width = 800;
         state.height = 600;
 
-        await advanceBootstrap(1);
+        await advanceBootstrap(manager, 1);
         expect(mockObserve).not.toHaveBeenCalled();
 
-        await advanceBootstrap(1);
+        await advanceBootstrap(manager, 1);
         expect(mockObserve).toHaveBeenCalledWith(canvas);
-        expect(mockObserve).toHaveBeenCalledWith(state.parent);
         expect(onResize).toHaveBeenCalledWith(800, 600);
         await expect(waitPromise).resolves.toEqual({ width: 800, height: 600 });
     });
@@ -212,7 +194,7 @@ describe('DIVECanvasLifecycleManager', () => {
             configurable: true,
         });
 
-        await advanceBootstrap(2);
+        await advanceBootstrap(manager, 2);
         expect(onResize).toHaveBeenCalledWith(320, 240);
         await expect(waitPromise).resolves.toEqual({ width: 320, height: 240 });
     });
@@ -221,9 +203,9 @@ describe('DIVECanvasLifecycleManager', () => {
         const { canvas } = createCanvas(800, 600);
         const manager = new DIVECanvasLifecycleManager(canvas, onResize);
         const waitPromise = manager.waitForRenderableCanvas(canvas);
-        await advanceBootstrap(2);
-        await expect(waitPromise).resolves.toEqual({ width: 800, height: 600 });
 
+        await advanceBootstrap(manager, 2);
+        await expect(waitPromise).resolves.toEqual({ width: 800, height: 600 });
         expect(onResize).toHaveBeenCalledTimes(1);
 
         resizeObserverCallbacks[0]?.(createResizeEntry(800, 600));
@@ -243,8 +225,9 @@ describe('DIVECanvasLifecycleManager', () => {
         const manager = new DIVECanvasLifecycleManager(first.canvas, onResize);
         const firstWait = manager.waitForRenderableCanvas(first.canvas);
 
-        await advanceBootstrap(2);
+        await advanceBootstrap(manager, 2);
         await expect(firstWait).resolves.toEqual({ width: 800, height: 600 });
+
         vi.mocked(onResize).mockClear();
         vi.mocked(mockObserve).mockClear();
 
@@ -254,17 +237,16 @@ describe('DIVECanvasLifecycleManager', () => {
         expect(mockDisconnect).toHaveBeenCalledTimes(1);
         expect(onResize).not.toHaveBeenCalled();
 
-        await advanceBootstrap(1);
+        await advanceBootstrap(manager, 1);
         expect(onResize).not.toHaveBeenCalled();
 
-        await advanceBootstrap(1);
+        await advanceBootstrap(manager, 1);
         expect(mockObserve).toHaveBeenCalledWith(second.canvas);
-        expect(mockObserve).toHaveBeenCalledWith(second.state.parent);
         expect(onResize).toHaveBeenCalledWith(800, 600);
         await expect(secondWait).resolves.toEqual({ width: 800, height: 600 });
     });
 
-    it('waitForRenderableCanvas resolves after bootstrap completes and then returns direct layouts', async () => {
+    it('returns a direct layout after bootstrap completes', async () => {
         const { canvas, state } = createCanvas(0, 0);
         const manager = new DIVECanvasLifecycleManager(canvas, onResize);
         const waitPromise = manager.waitForRenderableCanvas(canvas);
@@ -272,10 +254,10 @@ describe('DIVECanvasLifecycleManager', () => {
         state.width = 800;
         state.height = 600;
 
-        await advanceBootstrap(1);
+        await advanceBootstrap(manager, 1);
         expect(onResize).not.toHaveBeenCalled();
 
-        await advanceBootstrap(1);
+        await advanceBootstrap(manager, 1);
         await expect(waitPromise).resolves.toEqual({ width: 800, height: 600 });
         await expect(manager.waitForRenderableCanvas(canvas)).resolves.toEqual({
             width: 800,
@@ -283,24 +265,58 @@ describe('DIVECanvasLifecycleManager', () => {
         });
     });
 
+    it('early-returns from tick while the current canvas remains valid', async () => {
+        const { canvas } = createCanvas(800, 600);
+        const manager = new DIVECanvasLifecycleManager(canvas, onResize);
+        const waitPromise = manager.waitForRenderableCanvas(canvas);
+
+        await advanceBootstrap(manager, 2);
+        await expect(waitPromise).resolves.toEqual({ width: 800, height: 600 });
+
+        vi.mocked(mockObserve).mockClear();
+        vi.mocked(mockDisconnect).mockClear();
+        vi.mocked(onResize).mockClear();
+
+        manager.tick();
+
+        expect(mockObserve).not.toHaveBeenCalled();
+        expect(mockDisconnect).not.toHaveBeenCalled();
+        expect(onResize).not.toHaveBeenCalled();
+    });
+
     it('starts a new bootstrap when a previously ready canvas loses its parent', async () => {
         const { canvas, state } = createCanvas(800, 600);
         const manager = new DIVECanvasLifecycleManager(canvas, onResize);
         const firstWait = manager.waitForRenderableCanvas(canvas);
 
-        await advanceBootstrap(2);
+        await advanceBootstrap(manager, 2);
         await expect(firstWait).resolves.toEqual({ width: 800, height: 600 });
 
         state.parent = null;
         const waitPromise = manager.waitForRenderableCanvas(canvas);
 
-        await advanceBootstrap(1);
-        expect(mockObserve).toHaveBeenCalledTimes(2);
+        await advanceBootstrap(manager, 1);
+        expect(mockObserve).toHaveBeenCalledTimes(1);
+        expect(mockDisconnect).toHaveBeenCalledTimes(1);
 
         state.parent = document.createElement('div');
 
-        await advanceBootstrap(2);
+        await advanceBootstrap(manager, 2);
         await expect(waitPromise).resolves.toEqual({ width: 800, height: 600 });
+    });
+
+    it('shares the pending bootstrap between multiple waiters', async () => {
+        const { canvas } = createCanvas(800, 600);
+        const manager = new DIVECanvasLifecycleManager(canvas, onResize);
+
+        const firstWait = manager.waitForRenderableCanvas(canvas);
+        const secondWait = manager.waitForRenderableCanvas(canvas);
+
+        await advanceBootstrap(manager, 2);
+
+        await expect(firstWait).resolves.toEqual({ width: 800, height: 600 });
+        await expect(secondWait).resolves.toEqual({ width: 800, height: 600 });
+        expect(onResize).toHaveBeenCalledTimes(1);
     });
 
     it('returns null immediately for an aborted signal, a replaced canvas, or a disposed manager', async () => {
@@ -359,11 +375,11 @@ describe('DIVECanvasLifecycleManager', () => {
         state.width = 640;
         state.height = 480;
 
-        await advanceBootstrap(2);
+        await advanceBootstrap(manager, 2);
         expect(onResize).toHaveBeenCalledWith(640, 480);
     });
 
-    it('resolves signaled waits successfully and falls back to null when no ready layout remains', async () => {
+    it('resolves signaled waits successfully when the canvas becomes ready', async () => {
         const { canvas, state } = createCanvas(0, 0);
         const manager = new DIVECanvasLifecycleManager(canvas, onResize);
         const abortController = new AbortController();
@@ -380,21 +396,12 @@ describe('DIVECanvasLifecycleManager', () => {
         state.width = 500;
         state.height = 400;
 
-        await advanceBootstrap(2);
+        await advanceBootstrap(manager, 2);
         await expect(waitPromise).resolves.toEqual({ width: 500, height: 400 });
         expect(removeEventListenerSpy).toHaveBeenCalledWith(
             'abort',
             expect.any(Function),
         );
-
-        state.width = 0;
-        state.height = 0;
-
-        (manager as any)._bootstrapPromise = Promise.resolve(null);
-
-        await expect(
-            manager.waitForRenderableCanvas(canvas),
-        ).resolves.toBeNull();
     });
 
     it('returns null from the private wait path when the provided signal is already aborted during an active bootstrap', async () => {
@@ -407,26 +414,6 @@ describe('DIVECanvasLifecycleManager', () => {
 
         await expect(
             manager.waitForRenderableCanvas(canvas, abortController.signal),
-        ).resolves.toBeNull();
-
-        manager.dispose();
-        await expect(pendingBootstrap).resolves.toBeNull();
-    });
-
-    it('returns null from the inlined bootstrap wait when the abort signal flips on the second read', async () => {
-        const { canvas } = createCanvas(0, 0);
-        const manager = new DIVECanvasLifecycleManager(canvas, onResize);
-        const pendingBootstrap = manager.waitForRenderableCanvas(canvas);
-        let abortedReads = 0;
-        const signal = {
-            get aborted() {
-                abortedReads += 1;
-                return abortedReads >= 2;
-            },
-        } as AbortSignal;
-
-        await expect(
-            manager.waitForRenderableCanvas(canvas, signal),
         ).resolves.toBeNull();
 
         manager.dispose();
@@ -449,63 +436,15 @@ describe('DIVECanvasLifecycleManager', () => {
         expect(mockDisconnect).toHaveBeenCalledTimes(2);
     });
 
-    it('does not create duplicate bootstrap intervals and ignores observe requests after disposal', async () => {
+    it('ignores tick calls before bootstrap starts and after disposal', () => {
         const { canvas } = createCanvas(800, 600);
         const manager = new DIVECanvasLifecycleManager(canvas, onResize);
-        const setIntervalSpy = vi.spyOn(globalThis, 'setInterval');
 
-        const firstWait = manager.waitForRenderableCanvas(canvas);
-        const secondWait = manager.waitForRenderableCanvas(canvas);
-
-        expect(setIntervalSpy).toHaveBeenCalledTimes(1);
-
-        await advanceBootstrap(2);
-        await expect(firstWait).resolves.toEqual({ width: 800, height: 600 });
-        await expect(secondWait).resolves.toEqual({ width: 800, height: 600 });
+        expect(() => manager.tick()).not.toThrow();
 
         manager.dispose();
-        await expect(
-            manager.waitForRenderableCanvas(canvas),
-        ).resolves.toBeNull();
-        expect(setIntervalSpy).toHaveBeenCalledTimes(1);
-    });
 
-    it('handles an internal disposed flip during the bootstrap interval and can resolve direct layout fallbacks', async () => {
-        const { canvas } = createCanvas(800, 600);
-        const manager = new DIVECanvasLifecycleManager(canvas, onResize);
-        const pendingBootstrap = manager.waitForRenderableCanvas(canvas);
-
-        (manager as any)._disposed = true;
-        await advanceBootstrap(1);
-        await expect(pendingBootstrap).resolves.toBeNull();
-
-        (manager as any)._disposed = false;
-        (manager as any)._observedParent = canvas.parentElement;
-        await expect(manager.waitForRenderableCanvas(canvas)).resolves.toEqual({
-            width: 800,
-            height: 600,
-        });
-
-        (manager as any)._completeBootstrap(null);
-    });
-
-    it('returns null from the inline ready-layout fallback when the canvas is observed but still zero-sized', async () => {
-        const { canvas, state } = createCanvas(0, 0);
-        const manager = new DIVECanvasLifecycleManager(canvas, onResize);
-        let storedBootstrapPromise: Promise<null> | null = null;
-
-        (manager as any)._observedParent = state.parent;
-        Object.defineProperty(manager as any, '_bootstrapPromise', {
-            get: () => storedBootstrapPromise,
-            set: (value: Promise<null>) => {
-                storedBootstrapPromise = Promise.resolve(null);
-                void value;
-            },
-            configurable: true,
-        });
-
-        await expect(
-            manager.waitForRenderableCanvas(canvas),
-        ).resolves.toBeNull();
+        expect(() => manager.tick()).not.toThrow();
+        expect(onResize).not.toHaveBeenCalled();
     });
 });

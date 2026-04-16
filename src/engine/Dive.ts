@@ -205,15 +205,31 @@ export class DIVE {
             return;
         }
 
-        if (!this.mainView.renderer.initialized) {
-            await this.mainView.init();
+        if (this.mainView.renderer.initialized) {
+            this._clock.start();
+        } else {
+            const initPromise = this.mainView.init();
+
+            queueMicrotask(() => {
+                if (!this._disposed) {
+                    this._clock.start();
+                }
+            });
+
+            try {
+                await initPromise;
+            } catch (error) {
+                this.dispose();
+                console.error(
+                    'DIVE.startAsync: Failed to initialize. Error:',
+                    error,
+                );
+            }
         }
 
         if (this._disposed) {
             return;
         }
-
-        this._clock.start();
     }
 
     public stop(): void {
