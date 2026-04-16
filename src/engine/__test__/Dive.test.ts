@@ -24,7 +24,7 @@ vi.mock('../view/View.ts', async (importOriginal) => {
     const actual = await importOriginal<typeof import('../view/View.ts')>();
     return {
         ...actual,
-        DIVEView: vi.fn(function (this: any) {
+        DIVEView: vi.fn(function (this: any, _scene, _camera, _settings) {
             const renderer = {
                 initialized: false,
                 canvas: {
@@ -34,15 +34,15 @@ vi.mock('../view/View.ts', async (importOriginal) => {
                         height: 100,
                     }),
                 },
-                init: vi.fn(() => {
-                    renderer.initialized = true;
-                    return Promise.resolve();
-                }),
                 dispose: vi.fn(),
                 onResize: vi.fn(),
                 render: vi.fn(),
                 setCanvas: vi.fn(),
             };
+            this.init = vi.fn(() => {
+                renderer.initialized = true;
+                return Promise.resolve();
+            });
             this.dispose = vi.fn();
             this.onResize = vi.fn();
             this.tick = vi.fn();
@@ -54,6 +54,7 @@ vi.mock('../view/View.ts', async (importOriginal) => {
                 },
             };
             this.canvas = renderer.canvas;
+            this.dispose = vi.fn();
             return this;
         }),
     };
@@ -232,6 +233,13 @@ describe('DIVE', () => {
         expect(dive).toBeDefined();
     });
 
+    it('should register the main view with the clock', () => {
+        const dive = new DIVE();
+
+        expect(dive.clock.addTicker).toHaveBeenCalledTimes(1);
+        expect(dive.clock.addTicker).toHaveBeenCalledWith(dive.mainView);
+    });
+
     it('should instantiate in development DIVE_NODE_ENV', () => {
         process.env.DIVE_NODE_ENV = 'development';
         const dive = new DIVE();
@@ -298,6 +306,10 @@ describe('DIVE', () => {
         const dive = new DIVE(settings);
         await waitForAsync();
         expect(dive['_orientationDisplay']).toBeDefined();
+        expect(dive.clock.addTicker).toHaveBeenCalledTimes(2);
+        expect(dive.clock.addTicker).toHaveBeenCalledWith(
+            dive['_orientationDisplay'],
+        );
     });
 
     it('should not initialize axis camera when displayAxes is false', () => {
@@ -359,12 +371,12 @@ describe('DIVE', () => {
             autoStart: false,
         });
 
-        dive.mainView.renderer.init.mockRejectedValueOnce(error);
+        vi.mocked(dive.mainView.init).mockRejectedValueOnce(error);
         dive.start();
         await waitForAsync();
 
         expect(errorSpy).toHaveBeenCalledWith(
-            'DIVE.start: Failed to initialize the WebGPU renderer.',
+            'DIVE.startAsync: Failed to initialize. Error:',
             error,
         );
     });
@@ -376,7 +388,7 @@ describe('DIVE', () => {
 
         await dive.startAsync();
 
-        expect(dive.mainView.renderer.init).toHaveBeenCalled();
+        expect(dive.mainView.init).toHaveBeenCalled();
         expect(dive.clock.start).toHaveBeenCalled();
     });
 
@@ -386,13 +398,13 @@ describe('DIVE', () => {
         expect(dive.clock.stop).toHaveBeenCalled();
     });
 
-    it('should not start the clock after dispose when renderer init resolves late', async () => {
+    it('should queue the clock start while renderer init is pending', async () => {
         const dive = new DIVE({
             autoStart: false,
         });
         let resolveInit: (() => void) | undefined;
 
-        dive.mainView.renderer.init.mockImplementationOnce(
+        vi.mocked(dive.mainView.init).mockImplementationOnce(
             () =>
                 new Promise<void>((resolve) => {
                     resolveInit = resolve;
@@ -400,12 +412,12 @@ describe('DIVE', () => {
         );
 
         const pendingStart = dive.startAsync();
-        await dive.dispose();
+        await Promise.resolve();
+
+        expect(dive.clock.start).toHaveBeenCalledTimes(1);
 
         resolveInit?.();
         await pendingStart;
-
-        expect(dive.clock.start).not.toHaveBeenCalled();
     });
 
     it('should get the canvas', () => {

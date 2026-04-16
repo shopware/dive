@@ -126,6 +126,16 @@ describe('DIVERenderPipeline', () => {
         expect(instance.shadowMap.type).toBe(BasicShadowMap);
     });
 
+    it('should create a renderer with a supplied canvas', () => {
+        const canvas = document.createElement('canvas');
+
+        renderer = new DIVERenderer(scene, camera, { canvas });
+
+        expect(WebGPURenderer).toHaveBeenLastCalledWith(
+            expect.objectContaining({ canvas }),
+        );
+    });
+
     it('should expose the current renderer and canvas', () => {
         const instance = WebGPURenderer.mock.results[0].value;
 
@@ -179,6 +189,8 @@ describe('DIVERenderPipeline', () => {
 
         const firstInit = renderer.init();
         const secondInit = renderer.init();
+
+        await Promise.resolve();
 
         expect(instance.init).toHaveBeenCalledTimes(1);
         expect(environment.init).not.toHaveBeenCalled();
@@ -241,22 +253,21 @@ describe('DIVERenderPipeline', () => {
         ).toBeLessThan(firstInstance.dispose.mock.invocationCallOrder[0]);
     });
 
-    it('should reinitialize after canvas swap when the previous renderer was active', () => {
+    it('should not auto reinitialize after a canvas swap', () => {
         const firstInstance = WebGPURenderer.mock.results[0].value;
         const newCanvas = document.createElement('canvas');
 
         firstInstance.initialized = true;
-
         renderer.setCanvas(newCanvas);
 
         const secondInstance = WebGPURenderer.mock.results.at(-1)?.value;
-        expect(secondInstance.init).toHaveBeenCalled();
+
+        expect(secondInstance.init).not.toHaveBeenCalled();
     });
 
     it('should ignore stale init completions after a canvas swap', async () => {
         const firstInstance = WebGPURenderer.mock.results[0].value;
         const environment = MockedDIVEEnvironment.mock.results[0].value;
-        const newCanvas = document.createElement('canvas');
         let resolveFirstInit: (() => void) | undefined;
 
         firstInstance.init = vi.fn(
@@ -270,18 +281,12 @@ describe('DIVERenderPipeline', () => {
         );
 
         const pendingInit = renderer.init();
-        renderer.setCanvas(newCanvas);
-
-        const secondInstance = WebGPURenderer.mock.results.at(-1)?.value;
-        expect(secondInstance.init).toHaveBeenCalledTimes(1);
-
-        await new Promise((resolve) => setTimeout(resolve, 0));
-        expect(environment.init).toHaveBeenCalledTimes(1);
+        renderer.setCanvas(document.createElement('canvas'));
 
         resolveFirstInit?.();
         await pendingInit;
 
-        expect(environment.init).toHaveBeenCalledTimes(1);
+        expect(environment.init).not.toHaveBeenCalled();
     });
 
     it('should dispose environment and renderer', () => {

@@ -2,7 +2,7 @@ import { MathUtils } from 'three/webgpu';
 import { DIVETicker } from '../clock/Clock.ts';
 import { DIVEPerspectiveCamera } from '../camera/PerspectiveCamera.ts';
 import { DIVERenderer } from '../renderer/Renderer.ts';
-import { DIVEResizeManager } from '../resize/ResizeManager.ts';
+import { DIVECanvasLifecycleManager } from '../canvas/CanvasLifecycleManager.ts';
 import { DIVEScene } from '../scene/Scene.ts';
 import { DIVERendererSettings } from '../renderer/Renderer.ts';
 
@@ -14,7 +14,9 @@ export class DIVEView implements DIVETicker {
     private _paused: boolean = false;
 
     private _renderer: DIVERenderer;
-    private _resizeManager: DIVEResizeManager;
+    private _canvasLifecycleManager: DIVECanvasLifecycleManager;
+    private _initPromise: Promise<void> | null = null;
+    private _initAbortController: AbortController | null = null;
 
     constructor(
         private _scene: DIVEScene,
@@ -27,9 +29,9 @@ export class DIVEView implements DIVETicker {
             this._settings,
         );
 
-        this._resizeManager = new DIVEResizeManager(
-            this._renderer,
-            this._camera,
+        this._canvasLifecycleManager = new DIVECanvasLifecycleManager(
+            this._renderer.canvas,
+            this._handleCanvasResize,
         );
     }
 
@@ -46,12 +48,64 @@ export class DIVEView implements DIVETicker {
     }
 
     public tick(): void {
-        if (this._paused) return;
-        this._renderer.render();
+        this._canvasLifecycleManager.tick();
+
+        if (this._paused) {
+            return;
+        }
+        this._renderer.tick();
+    }
+
+    public async init(): Promise<void> {
+        if (this._renderer.initialized) {
+            return this._renderer.init();
+        }
+
+        if (!this._initPromise) {
+            const renderer = this._renderer;
+            const canvas = renderer.canvas;
+            const abortController = new AbortController();
+
+            this._initAbortController = abortController;
+
+            this._initPromise = (async () => {
+                const stableLayout =
+                    await this._canvasLifecycleManager.waitForHealthyCanvas(
+                        canvas,
+                        abortController.signal,
+                    );
+
+                if (
+                    stableLayout === null ||
+                    abortController.signal.aborted ||
+                    renderer !== this._renderer
+                ) {
+                    return;
+                }
+
+                await renderer.init();
+
+                if (
+                    abortController.signal.aborted ||
+                    renderer !== this._renderer
+                ) {
+                    return;
+                }
+            })().finally(() => {
+                if (this._initAbortController === abortController) {
+                    this._initAbortController = null;
+                    this._initPromise = null;
+                }
+            });
+        }
+
+        return this._initPromise;
     }
 
     public dispose(): void {
-        this._resizeManager.dispose();
+        this._abortInit();
+        this._initPromise = null;
+        this._canvasLifecycleManager.dispose();
         this._renderer.dispose();
     }
 
@@ -61,12 +115,17 @@ export class DIVEView implements DIVETicker {
     }
 
     public setCanvas(canvas: HTMLCanvasElement): void {
+        const shouldReinitialize =
+            this._renderer.initialized || this._initPromise !== null;
+
+        this._abortInit();
+        this._initPromise = null;
         this._renderer.setCanvas(canvas);
-        this._resizeManager.setCanvas(canvas);
-        this.onResize(
-            this._renderer.canvas.clientWidth,
-            this._renderer.canvas.clientHeight,
-        );
+        this._canvasLifecycleManager.setCanvas(canvas);
+
+        if (shouldReinitialize) {
+            void this.init();
+        }
     }
 
     // TODO: add methods to individually pause and resume the view
@@ -77,4 +136,14 @@ export class DIVEView implements DIVETicker {
     public resume(): void {
         this._paused = false;
     }
+
+    private _abortInit(): void {
+        this._initAbortController?.abort();
+        this._initAbortController = null;
+    }
+
+    private _handleCanvasResize = (width: number, height: number): void => {
+        this.onResize(width, height);
+        this._renderer.render();
+    };
 }

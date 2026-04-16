@@ -136,33 +136,38 @@ export class DIVERenderer {
 
     public async init(): Promise<void> {
         if (this._webgpurenderer.initialized) {
-            await this._environment.init();
-            return;
+            return this._environment.init();
         }
 
-        if (this._initPromise) {
-            return this._initPromise;
+        if (!this._initPromise) {
+            const renderer = this._webgpurenderer;
+            this._initPromise = (async () => {
+                await renderer.init();
+
+                if (renderer !== this._webgpurenderer) {
+                    return;
+                }
+
+                await this._environment.init();
+            })().finally(() => {
+                if (renderer === this._webgpurenderer) {
+                    this._initPromise = null;
+                }
+            });
         }
-
-        const renderer = this._webgpurenderer;
-        this._initPromise = (async () => {
-            await renderer.init();
-
-            if (renderer !== this._webgpurenderer) {
-                return;
-            }
-
-            await this._environment.init();
-        })().finally(() => {
-            if (renderer === this._webgpurenderer) {
-                this._initPromise = null;
-            }
-        });
 
         return this._initPromise;
     }
 
+    /**
+     * @deprecated Use {@link DIVERenderer.tick} instead.
+     */
     public render(): void {
+        console.warn('DIVERenderer.render: Use DIVERenderer.tick instead.');
+        this.tick();
+    }
+
+    public tick(): void {
         if (!this._webgpurenderer.initialized) return;
 
         this._webgpurenderer.render(this._scene, this._camera);
@@ -179,8 +184,6 @@ export class DIVERenderer {
 
     public setCanvas(canvas: HTMLCanvasElement): void {
         const previousRenderer = this._webgpurenderer;
-        const shouldReinitialize =
-            previousRenderer.initialized || this._initPromise !== null;
 
         this._initPromise = null;
 
@@ -190,10 +193,6 @@ export class DIVERenderer {
 
         this._environment.setRenderer(this._webgpurenderer);
         previousRenderer.dispose();
-
-        if (shouldReinitialize) {
-            void this.init();
-        }
     }
 
     private _createWebGPURenderer(): WebGPURenderer {
