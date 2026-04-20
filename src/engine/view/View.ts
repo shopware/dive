@@ -144,6 +144,6 @@ export class DIVEView implements DIVETicker {
 
     private _handleCanvasResize = (width: number, height: number): void => {
         this.onResize(width, height);
-        this._renderer.render();
+        this._renderer.tick();
     };
 }

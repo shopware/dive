@@ -9,6 +9,8 @@ type CanvasState = {
     width: number;
     height: number;
     parent: HTMLElement | null;
+    parentWidth: number;
+    parentHeight: number;
 };
 
 describe('DIVECanvasLifecycleManager', () => {
@@ -41,17 +43,53 @@ describe('DIVECanvasLifecycleManager', () => {
         } as ResizeObserverEntry,
     ];
 
+    const attachParentMetrics = (
+        parent: HTMLElement,
+        state: CanvasState,
+    ): HTMLElement => {
+        Object.defineProperty(parent, 'clientWidth', {
+            get: () => state.parentWidth,
+            configurable: true,
+        });
+        Object.defineProperty(parent, 'clientHeight', {
+            get: () => state.parentHeight,
+            configurable: true,
+        });
+        parent.getBoundingClientRect = vi.fn(() => ({
+            width: state.parentWidth,
+            height: state.parentHeight,
+            top: 0,
+            left: 0,
+            right: state.parentWidth,
+            bottom: state.parentHeight,
+            x: 0,
+            y: 0,
+            toJSON: () => ({}),
+        })) as any;
+
+        return parent;
+    };
+
+    const createParent = (state: CanvasState): HTMLElement =>
+        attachParentMetrics(document.createElement('div'), state);
+
     const createCanvas = (
         width: number,
         height: number,
-        parent: HTMLElement | null = document.createElement('div'),
+        parent: HTMLElement | null = null,
     ): { canvas: HTMLCanvasElement; state: CanvasState } => {
         const canvas = document.createElement('canvas');
         const state: CanvasState = {
             width,
             height,
-            parent,
+            parent: null,
+            parentWidth: width,
+            parentHeight: height,
         };
+
+        state.parent = parent
+            ? attachParentMetrics(parent, state)
+            : createParent(state);
 
         Object.defineProperty(canvas, 'clientWidth', {
             get: () => state.width,
@@ -122,16 +160,19 @@ describe('DIVECanvasLifecycleManager', () => {
         expect(mockObserve).not.toHaveBeenCalled();
         expect(onResize).not.toHaveBeenCalled();
 
-        state.parent = document.createElement('div');
+        state.parent = createParent(state);
         state.width = 1024;
         state.height = 768;
+        state.parentWidth = 1024;
+        state.parentHeight = 768;
 
         await advanceBootstrap(manager, 1);
         expect(mockObserve).not.toHaveBeenCalled();
         expect(onResize).not.toHaveBeenCalled();
 
         await advanceBootstrap(manager, 1);
-        expect(mockObserve).toHaveBeenCalledWith(canvas);
+        expect(mockObserve).toHaveBeenCalledWith(state.parent);
+        expect(mockObserve).not.toHaveBeenCalledWith(canvas);
         expect(onResize).toHaveBeenCalledWith(1024, 768);
         await expect(waitPromise).resolves.toEqual({
             width: 1024,
@@ -154,7 +195,8 @@ describe('DIVECanvasLifecycleManager', () => {
         expect(onResize).not.toHaveBeenCalled();
 
         await advanceBootstrap(manager, 1);
-        expect(mockObserve).toHaveBeenCalledWith(canvas);
+        expect(mockObserve).toHaveBeenCalledWith(secondParent);
+        expect(mockObserve).not.toHaveBeenCalledWith(canvas);
         expect(onResize).toHaveBeenCalledWith(800, 600);
         await expect(waitPromise).resolves.toEqual({ width: 800, height: 600 });
     });
@@ -167,6 +209,8 @@ describe('DIVECanvasLifecycleManager', () => {
         await advanceBootstrap(manager, 1);
         state.width = 0;
         state.height = 0;
+        state.parentWidth = 0;
+        state.parentHeight = 0;
 
         await advanceBootstrap(manager, 1);
         expect(mockObserve).not.toHaveBeenCalled();
@@ -174,21 +218,35 @@ describe('DIVECanvasLifecycleManager', () => {
 
         state.width = 800;
         state.height = 600;
+        state.parentWidth = 800;
+        state.parentHeight = 600;
 
         await advanceBootstrap(manager, 1);
         expect(mockObserve).not.toHaveBeenCalled();
 
         await advanceBootstrap(manager, 1);
-        expect(mockObserve).toHaveBeenCalledWith(canvas);
+        expect(mockObserve).toHaveBeenCalledWith(state.parent);
+        expect(mockObserve).not.toHaveBeenCalledWith(canvas);
         expect(onResize).toHaveBeenCalledWith(800, 600);
         await expect(waitPromise).resolves.toEqual({ width: 800, height: 600 });
     });
 
-    it('falls back to client sizes when getBoundingClientRect is unavailable', async () => {
-        const { canvas } = createCanvas(320, 240);
+    it('falls back to client sizes when parent and canvas rect APIs are unavailable', async () => {
+        const { canvas, state } = createCanvas(320, 240);
         const manager = new DIVECanvasLifecycleManager(canvas, onResize);
         const waitPromise = manager.waitForHealthyCanvas(canvas);
 
+        state.parentWidth = 0;
+        state.parentHeight = 0;
+
+        Object.defineProperty(
+            state.parent as HTMLElement,
+            'getBoundingClientRect',
+            {
+                value: undefined,
+                configurable: true,
+            },
+        );
         Object.defineProperty(canvas, 'getBoundingClientRect', {
             value: undefined,
             configurable: true,
@@ -200,7 +258,7 @@ describe('DIVECanvasLifecycleManager', () => {
     });
 
     it('deduplicates observer resizes and ignores non-renderable observer updates', async () => {
-        const { canvas } = createCanvas(800, 600);
+        const { canvas, state } = createCanvas(800, 600);
         const manager = new DIVECanvasLifecycleManager(canvas, onResize);
         const waitPromise = manager.waitForHealthyCanvas(canvas);
 
@@ -211,12 +269,55 @@ describe('DIVECanvasLifecycleManager', () => {
         resizeObserverCallbacks[0]?.(createResizeEntry(800, 600));
         expect(onResize).toHaveBeenCalledTimes(1);
 
+        state.parentWidth = 0;
+        state.parentHeight = 0;
         resizeObserverCallbacks[0]?.(createResizeEntry(0, 0));
         expect(onResize).toHaveBeenCalledTimes(1);
 
+        state.parentWidth = 1200;
+        state.parentHeight = 900;
         resizeObserverCallbacks[0]?.(createResizeEntry(1200, 900));
         expect(onResize).toHaveBeenCalledTimes(2);
         expect(onResize).toHaveBeenLastCalledWith(1200, 900);
+    });
+
+    it('invalidates a healthy canvas when the observer reports a non-renderable layout', async () => {
+        const { canvas, state } = createCanvas(800, 600);
+        const manager = new DIVECanvasLifecycleManager(canvas, onResize);
+        const initialWait = manager.waitForHealthyCanvas(canvas);
+
+        await advanceBootstrap(manager, 2);
+        await expect(initialWait).resolves.toEqual({ width: 800, height: 600 });
+
+        vi.mocked(onResize).mockClear();
+        vi.mocked(mockDisconnect).mockClear();
+
+        state.width = 0;
+        state.height = 0;
+        state.parentWidth = 0;
+        state.parentHeight = 0;
+
+        resizeObserverCallbacks[0]?.(createResizeEntry(0, 0));
+
+        expect(onResize).not.toHaveBeenCalled();
+        expect(mockDisconnect).toHaveBeenCalledTimes(1);
+
+        const waitPromise = manager.waitForHealthyCanvas(canvas);
+
+        await advanceBootstrap(manager, 1);
+        expect(onResize).not.toHaveBeenCalled();
+
+        state.width = 800;
+        state.height = 600;
+        state.parentWidth = 800;
+        state.parentHeight = 600;
+
+        await advanceBootstrap(manager, 1);
+        expect(onResize).not.toHaveBeenCalled();
+
+        await advanceBootstrap(manager, 1);
+        expect(onResize).toHaveBeenCalledWith(800, 600);
+        await expect(waitPromise).resolves.toEqual({ width: 800, height: 600 });
     });
 
     it('restarts bootstrap and re-emits the initial resize when switching to an equally sized canvas', async () => {
@@ -241,9 +342,28 @@ describe('DIVECanvasLifecycleManager', () => {
         expect(onResize).not.toHaveBeenCalled();
 
         await advanceBootstrap(manager, 1);
-        expect(mockObserve).toHaveBeenCalledWith(second.canvas);
+        expect(mockObserve).toHaveBeenCalledWith(second.state.parent);
+        expect(mockObserve).not.toHaveBeenCalledWith(second.canvas);
         expect(onResize).toHaveBeenCalledWith(800, 600);
         await expect(secondWait).resolves.toEqual({ width: 800, height: 600 });
+    });
+
+    it('reacts to parent-only resizes after bootstrap completes', async () => {
+        const { canvas, state } = createCanvas(800, 600);
+        const manager = new DIVECanvasLifecycleManager(canvas, onResize);
+        const waitPromise = manager.waitForHealthyCanvas(canvas);
+
+        await advanceBootstrap(manager, 2);
+        await expect(waitPromise).resolves.toEqual({ width: 800, height: 600 });
+
+        vi.mocked(onResize).mockClear();
+
+        state.parentWidth = 1024;
+        state.parentHeight = 768;
+        resizeObserverCallbacks[0]?.(createResizeEntry(1024, 768));
+
+        expect(onResize).toHaveBeenCalledTimes(1);
+        expect(onResize).toHaveBeenCalledWith(1024, 768);
     });
 
     it('returns a direct layout after bootstrap completes', async () => {
@@ -299,7 +419,7 @@ describe('DIVECanvasLifecycleManager', () => {
         expect(mockObserve).toHaveBeenCalledTimes(1);
         expect(mockDisconnect).toHaveBeenCalledTimes(1);
 
-        state.parent = document.createElement('div');
+        state.parent = createParent(state);
 
         await advanceBootstrap(manager, 2);
         await expect(waitPromise).resolves.toEqual({ width: 800, height: 600 });

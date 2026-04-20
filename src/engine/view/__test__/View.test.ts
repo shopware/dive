@@ -148,7 +148,7 @@ describe('DIVEView', () => {
 
             expect(mockRenderer.onResize).toHaveBeenCalledWith(640, 480);
             expect(mockCamera.onResize).toHaveBeenCalledWith(640, 480);
-            expect(mockRenderer.render).toHaveBeenCalledTimes(1);
+            expect(mockRenderer.tick).toHaveBeenCalledTimes(1);
         });
     });
 
