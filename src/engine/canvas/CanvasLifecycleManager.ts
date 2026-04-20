@@ -28,9 +28,8 @@ export class DIVECanvasLifecycleManager {
     ) {
         this._canvas = canvas;
 
-        this._resizeObserver = new ResizeObserver((entries) => {
-            const entry = entries[0];
-            const { width, height } = entry.contentRect;
+        this._resizeObserver = new ResizeObserver(() => {
+            const { width, height } = this._getCanvasLayout(this._canvas);
 
             if (!this._hasHealthySize(width, height)) {
                 this._width = width;
@@ -70,16 +69,17 @@ export class DIVECanvasLifecycleManager {
             return null;
         }
 
+        const layout = this._getCanvasLayout(canvas);
+
         if (
             this._isCanvasHealthy &&
             canvas.parentElement !== null &&
             canvas.parentElement === this._observedParent &&
-            this._hasHealthySize(this._width, this._height)
+            this._hasHealthySize(layout.width, layout.height) &&
+            layout.width === this._width &&
+            layout.height === this._height
         ) {
-            return {
-                width: this._width,
-                height: this._height,
-            };
+            return layout;
         }
 
         if (!this._healthyCanvasPromise) {
@@ -129,11 +129,14 @@ export class DIVECanvasLifecycleManager {
     private _checkCanvasHealth(): void {
         const canvas = this._canvas;
         const parent = canvas.parentElement;
+        const layout = this._getCanvasLayout(canvas);
 
         if (this._isCanvasHealthy) {
             if (
                 parent === this._observedParent &&
-                this._hasHealthySize(this._width, this._height)
+                this._hasHealthySize(layout.width, layout.height) &&
+                layout.width === this._width &&
+                layout.height === this._height
             ) {
                 return;
             }
@@ -150,8 +153,6 @@ export class DIVECanvasLifecycleManager {
             this._pendingStableLayout = null;
         }
 
-        const layout = this._getCanvasLayout(canvas);
-
         if (!this._hasHealthySize(layout.width, layout.height)) {
             this._pendingStableLayout = null;
             return;
@@ -166,7 +167,7 @@ export class DIVECanvasLifecycleManager {
             return;
         }
 
-        this._resizeObserver.observe(canvas);
+        this._resizeObserver.observe(this._observedParent);
         this._applyResize(layout.width, layout.height);
         this._isCanvasHealthy = true;
         this._resolvePendingWaiters(layout);
@@ -187,6 +188,23 @@ export class DIVECanvasLifecycleManager {
     }
 
     private _getCanvasLayout(canvas: HTMLCanvasElement): DIVECanvasLayout {
+        const parent = canvas.parentElement;
+
+        if (parent) {
+            const parentRect = parent.getBoundingClientRect?.() ?? {
+                width: 0,
+                height: 0,
+            };
+            const parentLayout = {
+                width: Math.max(parentRect.width, parent.clientWidth),
+                height: Math.max(parentRect.height, parent.clientHeight),
+            };
+
+            if (this._hasHealthySize(parentLayout.width, parentLayout.height)) {
+                return parentLayout;
+            }
+        }
+
         const rect = canvas.getBoundingClientRect?.() ?? {
             width: 0,
             height: 0,
