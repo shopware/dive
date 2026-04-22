@@ -45,6 +45,7 @@ const mockRenderer = {
     render: vi.fn(),
     canvas: mockCanvas,
     webgpurenderer: {
+        initialized: true,
         getViewport: vi.fn((viewport: Vector4) => viewport.set(0, 0, 800, 600)),
         setViewport: vi.fn(),
         render: vi.fn(),
@@ -57,6 +58,8 @@ describe('OrientationDisplay', () => {
 
     beforeEach(() => {
         vi.clearAllMocks();
+        (mockRenderer.webgpurenderer as any).initialized = true;
+        (mockRenderer.webgpurenderer as any).domElement = mockCanvas;
         mockRenderer.webgpurenderer.autoClear = true;
         orientationDisplay = new OrientationDisplay(
             mockRenderer,
@@ -104,6 +107,36 @@ describe('OrientationDisplay', () => {
     });
 
     describe('tick', () => {
+        it('should not render when renderer is not initialized', () => {
+            (mockRenderer.webgpurenderer as any).initialized = false;
+
+            orientationDisplay.tick();
+
+            expect(mockRenderer.webgpurenderer.render).not.toHaveBeenCalled();
+        });
+
+        it('should render when renderer is initialized', () => {
+            const originalBackground = new Color(0x000000);
+            mockScene.background = originalBackground;
+
+            orientationDisplay.tick();
+
+            expect(
+                mockRenderer.webgpurenderer.getViewport,
+            ).toHaveBeenCalledWith(orientationDisplay['_restoreViewport']);
+            expect(
+                mockRenderer.webgpurenderer.setViewport,
+            ).toHaveBeenCalledWith(0, 450, 150, 150);
+            expect(mockRenderer.webgpurenderer.render).toHaveBeenCalledWith(
+                mockScene,
+                orientationDisplay['_orthographicCamera'],
+            );
+            expect(
+                mockRenderer.webgpurenderer.setViewport,
+            ).toHaveBeenCalledWith(orientationDisplay['_restoreViewport']);
+            expect(mockScene.background).toBe(originalBackground);
+        });
+
         it('should handle viewport and rendering correctly', () => {
             const originalBackground = new Color(0x000000);
             mockScene.background = originalBackground;
@@ -156,7 +189,7 @@ describe('OrientationDisplay', () => {
         });
 
         it('should fall back to the stored viewport height when canvas height is unavailable', () => {
-            mockRenderer.webgpurenderer.domElement =
+            (mockRenderer.webgpurenderer as any).domElement =
                 undefined as unknown as HTMLCanvasElement;
 
             orientationDisplay.tick();
