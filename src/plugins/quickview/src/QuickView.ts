@@ -24,7 +24,8 @@ export const QuickView = async (
     uri: string,
     settings?: Partial<QuickViewSettings>,
 ): Promise<QuickView> => {
-    const dive = new DIVE(settings);
+    const dive = new DIVE({ ...settings, autoStart: false });
+
     dive.mainView.camera.position.set(0, 1, 2);
 
     // instantiate model
@@ -41,13 +42,17 @@ export const QuickView = async (
 
     const quickView = Object.assign(dive, { orbitController, model });
 
-    const originalDispose = dive.dispose.bind(dive);
-    quickView.dispose = async () => {
+    const originalDispose = dive.disposeAsync.bind(dive);
+    quickView.disposeAsync = async () => {
         orbitController.dispose();
 
         // dispose dive
         await originalDispose();
     };
+
+    if (settings?.autoStart ?? true) {
+        await dive.startAsync();
+    }
 
     return quickView;
 };

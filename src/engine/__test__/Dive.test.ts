@@ -37,9 +37,10 @@ vi.mock('../view/View.ts', async (importOriginal) => {
                 dispose: vi.fn(),
                 onResize: vi.fn(),
                 render: vi.fn(),
+                tick: vi.fn(),
                 setCanvas: vi.fn(),
             };
-            this.init = vi.fn(() => {
+            this.initAsync = vi.fn(() => {
                 renderer.initialized = true;
                 return Promise.resolve();
             });
@@ -116,7 +117,7 @@ vi.mock('../clock/Clock.ts', async (importOriginal) => {
             this.removeTicker = vi.fn();
             this.tick = vi.fn();
             this.dispose = vi.fn();
-            this.start = vi.fn();
+            this.startAsync = vi.fn(async () => {});
             this.stop = vi.fn();
             return this;
         }),
@@ -248,13 +249,13 @@ describe('DIVE', () => {
 
     it('should dispose', () => {
         let dive = new DIVE();
-        expect(() => dive.dispose()).not.toThrow();
+        expect(() => dive.disposeAsync()).not.toThrow();
 
         const settings = {
             displayAxes: true,
         };
         dive = new DIVE(settings);
-        expect(() => dive.dispose()).not.toThrow();
+        expect(() => dive.disposeAsync()).not.toThrow();
     });
 
     it('should instantiate with settings', () => {
@@ -333,7 +334,7 @@ describe('DIVE', () => {
         } as any;
         dive['_orientationDisplay'] = orientationDisplay;
 
-        await dive.dispose();
+        await dive.disposeAsync();
 
         expect(orientationDisplay.dispose).toHaveBeenCalled();
         expect(dive.clock.dispose).toHaveBeenCalled();
@@ -346,7 +347,7 @@ describe('DIVE', () => {
 
         const dive = new DIVE(settings);
 
-        expect(() => dive.dispose()).not.toThrow();
+        expect(() => dive.disposeAsync()).not.toThrow();
     });
 
     it('should add a new instance to the instances list', () => {
@@ -355,10 +356,12 @@ describe('DIVE', () => {
     });
 
     it('should start the clock', () => {
-        const dive = new DIVE();
+        const dive = new DIVE({
+            autoStart: false,
+        });
         dive.start();
         return waitForAsync().then(() => {
-            expect(dive.clock.start).toHaveBeenCalled();
+            expect(dive.clock.startAsync).toHaveBeenCalled();
         });
     });
 
@@ -370,11 +373,14 @@ describe('DIVE', () => {
         const dive = new DIVE({
             autoStart: false,
         });
+        const disposeSpy = vi.spyOn(dive, 'disposeAsync');
 
-        vi.mocked(dive.mainView.init).mockRejectedValueOnce(error);
+        vi.mocked(dive.mainView.initAsync).mockRejectedValueOnce(error);
         dive.start();
         await waitForAsync();
 
+        expect(disposeSpy).toHaveBeenCalled();
+        expect(dive.clock.startAsync).not.toHaveBeenCalled();
         expect(errorSpy).toHaveBeenCalledWith(
             'DIVE.startAsync: Failed to initialize. Error:',
             error,
@@ -388,8 +394,8 @@ describe('DIVE', () => {
 
         await dive.startAsync();
 
-        expect(dive.mainView.init).toHaveBeenCalled();
-        expect(dive.clock.start).toHaveBeenCalled();
+        expect(dive.mainView.initAsync).toHaveBeenCalled();
+        expect(dive.clock.startAsync).toHaveBeenCalled();
     });
 
     it('should stop the clock', () => {
@@ -398,13 +404,13 @@ describe('DIVE', () => {
         expect(dive.clock.stop).toHaveBeenCalled();
     });
 
-    it('should queue the clock start while renderer init is pending', async () => {
+    it('should wait for renderer init before starting the clock', async () => {
         const dive = new DIVE({
             autoStart: false,
         });
         let resolveInit: (() => void) | undefined;
 
-        vi.mocked(dive.mainView.init).mockImplementationOnce(
+        vi.mocked(dive.mainView.initAsync).mockImplementationOnce(
             () =>
                 new Promise<void>((resolve) => {
                     resolveInit = resolve;
@@ -414,10 +420,12 @@ describe('DIVE', () => {
         const pendingStart = dive.startAsync();
         await Promise.resolve();
 
-        expect(dive.clock.start).toHaveBeenCalledTimes(1);
+        expect(dive.clock.startAsync).not.toHaveBeenCalled();
 
         resolveInit?.();
         await pendingStart;
+
+        expect(dive.clock.startAsync).toHaveBeenCalledTimes(1);
     });
 
     it('should get the canvas', () => {

@@ -30,10 +30,10 @@ describe('DIVEClock', () => {
         expect(clock['_tickers']).not.toContain(mockTicker);
     });
 
-    it('should start and stop the clock', () => {
+    it('should start and stop the clock', async () => {
         clock.addTicker(mockTicker);
 
-        clock.start();
+        await clock.startAsync();
         expect(clock['_isRunning']).toBe(true);
 
         // Advance time to trigger tick
@@ -44,7 +44,7 @@ describe('DIVEClock', () => {
         expect(clock['_isRunning']).toBe(false);
     });
 
-    it('should tick multiple registered tickers even if one no-ops internally', () => {
+    it('should tick multiple registered tickers even if one no-ops internally', async () => {
         let canvasIsValid = true;
         const noOpTicker: DIVETicker = {
             uuid: 'noop-ticker',
@@ -61,7 +61,7 @@ describe('DIVEClock', () => {
 
         clock.addTicker(noOpTicker);
         clock.addTicker(activeTicker);
-        clock.start();
+        await clock.startAsync();
 
         vi.advanceTimersByTime(16);
 
@@ -75,7 +75,7 @@ describe('DIVEClock', () => {
         expect(activeTicker.tick).toHaveBeenCalledTimes(2);
     });
 
-    it('should stop ticking a removed ticker during runtime', () => {
+    it('should stop ticking a removed ticker during runtime', async () => {
         const removableTicker: DIVETicker = {
             uuid: 'removable-ticker',
             tick: vi.fn(),
@@ -87,7 +87,7 @@ describe('DIVEClock', () => {
 
         clock.addTicker(removableTicker);
         clock.addTicker(persistentTicker);
-        clock.start();
+        await clock.startAsync();
 
         vi.advanceTimersByTime(16);
         clock.removeTicker(removableTicker);
@@ -97,19 +97,19 @@ describe('DIVEClock', () => {
         expect(persistentTicker.tick).toHaveBeenCalledTimes(2);
     });
 
-    it('should not tick when stopped', () => {
+    it('should not tick when stopped', async () => {
         clock.addTicker(mockTicker);
 
-        clock.start();
+        await clock.startAsync();
         clock.stop();
 
         vi.advanceTimersByTime(16);
         expect(mockTicker.tick).not.toHaveBeenCalled();
     });
 
-    it('should calculate delta time between ticks', () => {
+    it('should calculate delta time between ticks', async () => {
         clock.addTicker(mockTicker);
-        clock.start();
+        await clock.startAsync();
 
         // First tick
         vi.advanceTimersByTime(16);
@@ -120,9 +120,9 @@ describe('DIVEClock', () => {
         expect(mockTicker.tick).toHaveBeenCalledWith(expect.any(Number));
     });
 
-    it('should dispose by stopping and clearing tickers', () => {
+    it('should dispose by stopping and clearing tickers', async () => {
         clock.addTicker(mockTicker);
-        clock.start();
+        await clock.startAsync();
 
         clock.dispose();
 
@@ -133,12 +133,12 @@ describe('DIVEClock', () => {
         expect(mockTicker.tick).not.toHaveBeenCalled();
     });
 
-    it('should not restart if already running', () => {
-        clock.start();
+    it('should not restart if already running', async () => {
+        await clock.startAsync();
         const initialLastTime = clock['_lastTime'];
 
         // Try to start again
-        clock.start();
+        await clock.startAsync();
         expect(clock['_lastTime']).toBe(initialLastTime);
     });
 
