@@ -380,7 +380,7 @@ describe('DIVE', () => {
         await waitForAsync();
 
         expect(disposeSpy).toHaveBeenCalled();
-        expect(dive.clock.startAsync).not.toHaveBeenCalled();
+        expect(dive.clock.startAsync).toHaveBeenCalledTimes(1);
         expect(errorSpy).toHaveBeenCalledWith(
             'DIVE.startAsync: Failed to initialize. Error:',
             error,
@@ -404,7 +404,7 @@ describe('DIVE', () => {
         expect(dive.clock.stop).toHaveBeenCalled();
     });
 
-    it('should wait for renderer init before starting the clock', async () => {
+    it('should start the clock before awaiting renderer init', async () => {
         const dive = new DIVE({
             autoStart: false,
         });
@@ -420,7 +420,8 @@ describe('DIVE', () => {
         const pendingStart = dive.startAsync();
         await Promise.resolve();
 
-        expect(dive.clock.startAsync).not.toHaveBeenCalled();
+        expect(dive.clock.startAsync).toHaveBeenCalledTimes(1);
+        expect(dive.mainView.initAsync).toHaveBeenCalledTimes(1);
 
         resolveInit?.();
         await pendingStart;
