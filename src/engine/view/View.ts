@@ -16,7 +16,7 @@ export class DIVEView implements DIVETicker {
 
     private _renderer: DIVERenderer;
     private _canvasLifecycleManager: DIVECanvasLifecycleManager;
-    private _initTask: DIVEAbortablePromise<void> | null = null;
+    private _initPromise: DIVEAbortablePromise<void> | null = null;
 
     constructor(
         private _scene: DIVEScene,
@@ -57,8 +57,8 @@ export class DIVEView implements DIVETicker {
 
     public async initAsync(): Promise<void> {
         // if not already an init task is running we create one
-        if (!this._initTask) {
-            this._initTask = new DIVEAbortablePromise(async (signal) => {
+        if (!this._initPromise) {
+            this._initPromise = new DIVEAbortablePromise(async (signal) => {
                 if (signal.aborted) {
                     return;
                 }
@@ -82,11 +82,12 @@ export class DIVEView implements DIVETicker {
         }
 
         // wait for init task to run
-        return await this._initTask.run();
+        return this._initPromise;
     }
 
     public dispose(): void {
-        this._initTask?.abort();
+        this._initPromise?.abort();
+        this._initPromise = null;
         this._canvasLifecycleManager.dispose();
         this._renderer.dispose();
     }
@@ -98,9 +99,10 @@ export class DIVEView implements DIVETicker {
 
     public setCanvas(canvas: HTMLCanvasElement): void {
         const shouldReinitialize =
-            this._renderer.initialized || this._initTask?.pending;
+            this._renderer.initialized || this._initPromise?.pending;
 
-        this._initTask?.abort();
+        this._initPromise?.abort();
+        this._initPromise = null;
         this._renderer.setCanvas(canvas);
         this._canvasLifecycleManager.setCanvas(canvas);
 

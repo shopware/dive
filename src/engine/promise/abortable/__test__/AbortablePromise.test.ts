@@ -14,14 +14,21 @@ const createDeferred = <T>() => {
 };
 
 describe('DIVEAbortablePromise', () => {
-    it('should be directly awaitable and start the executor', async () => {
+    it('should start the executor immediately after construction', () => {
         const executor = vi.fn(async () => 'done');
+
         const promise = new DIVEAbortablePromise(executor);
 
-        await expect(promise).resolves.toBe('done');
-
         expect(executor).toHaveBeenCalledTimes(1);
-        expect(promise.hasRun).toBe(true);
+        expect(promise.pending).toBe(true);
+    });
+
+    it('should be directly awaitable', async () => {
+        const promise = new DIVEAbortablePromise(async () => 'done');
+
+        await expect(promise).resolves.toBe('done');
+        expect(promise.pending).toBe(false);
+        expect(promise.settled).toBe(true);
     });
 
     it('should expose the native then, catch, and finally promise API', async () => {
@@ -36,45 +43,19 @@ describe('DIVEAbortablePromise', () => {
         expect(onFinally).toHaveBeenCalledTimes(1);
     });
 
-    it('should create a fresh signal when the promise starts', async () => {
+    it('should create a fresh signal for each instance', () => {
         const signals: AbortSignal[] = [];
-        const promise = new DIVEAbortablePromise(async (signal) => {
-            signals.push(signal);
-            return 'done';
-        });
 
-        await expect(promise.run()).resolves.toBe('done');
-
-        expect(signals[0]).toBeInstanceOf(AbortSignal);
-        expect(signals[0]?.aborted).toBe(false);
-        expect(promise.hasRun).toBe(true);
-        expect(promise.pending).toBe(false);
-    });
-
-    it('should reuse the current promise until it is cleared', async () => {
-        const executor = vi.fn(async () => 'done');
-        const promise = new DIVEAbortablePromise(executor);
-
-        const firstRun = promise.run();
-        const secondRun = promise.run();
-
-        expect(secondRun).toBe(firstRun);
-        await firstRun;
-
-        expect(promise.run()).toBe(firstRun);
-        expect(executor).toHaveBeenCalledTimes(1);
-    });
-
-    it('should abort the current signal and create a new controller on the next run', () => {
-        const signals: AbortSignal[] = [];
-        const promise = new DIVEAbortablePromise(async (signal) => {
+        const firstPromise = new DIVEAbortablePromise(async (signal) => {
             signals.push(signal);
             return await new Promise<void>(() => {});
         });
 
-        void promise.run();
-        promise.abort();
-        void promise.run();
+        firstPromise.abort();
+
+        new DIVEAbortablePromise(async (signal) => {
+            signals.push(signal);
+        });
 
         expect(signals[0]?.aborted).toBe(true);
         expect(signals[1]).toBeInstanceOf(AbortSignal);
@@ -82,58 +63,44 @@ describe('DIVEAbortablePromise', () => {
         expect(signals[1]?.aborted).toBe(false);
     });
 
-    it('should clear the cached promise without aborting the previous signal', () => {
-        const signals: AbortSignal[] = [];
-        const promise = new DIVEAbortablePromise(async (signal) => {
-            signals.push(signal);
-            return 'done';
+    it('should abort the current signal', () => {
+        let signal: AbortSignal | undefined;
+        const promise = new DIVEAbortablePromise(async (abortSignal) => {
+            signal = abortSignal;
+            return await new Promise<void>(() => {});
         });
 
-        const firstRun = promise.run();
-        promise.clear();
-        const secondRun = promise.run();
-
-        expect(secondRun).not.toBe(firstRun);
-        expect(signals[0]?.aborted).toBe(false);
-        expect(signals[1]).not.toBe(signals[0]);
-    });
-
-    it('should keep a newer run active when an aborted older run settles later', async () => {
-        const firstDeferred = createDeferred<string>();
-        const secondDeferred = createDeferred<string>();
-        let callCount = 0;
-
-        const promise = new DIVEAbortablePromise(async () => {
-            callCount += 1;
-            return await (callCount === 1
-                ? firstDeferred.promise
-                : secondDeferred.promise);
-        });
-
-        const firstRun = promise.run();
         promise.abort();
-        const secondRun = promise.run();
 
-        firstDeferred.resolve('first');
-        await firstRun;
-
-        expect(promise.promise).toBe(secondRun);
-        expect(promise.pending).toBe(true);
-
-        secondDeferred.resolve('second');
-        await secondRun;
-
-        expect(promise.pending).toBe(false);
+        expect(signal?.aborted).toBe(true);
     });
 
-    it('should expose synchronous executor failures through the promise', async () => {
+    it('should keep the same started promise for multiple awaiters', async () => {
+        const deferred = createDeferred<string>();
+        const executor = vi.fn(async () => await deferred.promise);
+        const promise = new DIVEAbortablePromise(executor);
+
+        const firstThen = promise.then((value) => value);
+        const secondThen = promise.then((value) => value);
+
+        expect(executor).toHaveBeenCalledTimes(1);
+
+        deferred.resolve('done');
+
+        await expect(firstThen).resolves.toBe('done');
+        await expect(secondThen).resolves.toBe('done');
+        expect(executor).toHaveBeenCalledTimes(1);
+    });
+
+    it('should expose synchronous executor failures through the promise API', async () => {
         const error = new Error('failed');
         const promise = new DIVEAbortablePromise<string>(() => {
             throw error;
         });
 
-        await expect(promise.run()).rejects.toThrow(error);
+        await expect(promise).rejects.toThrow(error);
         expect(promise.pending).toBe(false);
+        expect(promise.settled).toBe(true);
     });
 
     it('should route catch handlers through the wrapped promise', async () => {

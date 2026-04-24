@@ -137,10 +137,19 @@ export class DIVERenderer {
 
     public async init(): Promise<void> {
         if (!this._initPromise) {
-            this._initPromise = new DIVEAbortablePromise<void>(async () => {
-                await this._webgpurenderer.init();
-                await this._environment.init();
-            });
+            this._initPromise = new DIVEAbortablePromise<void>(
+                async (signal) => {
+                    if (!this._webgpurenderer.initialized) {
+                        await this._webgpurenderer.init();
+                    }
+
+                    if (signal.aborted) {
+                        return;
+                    }
+
+                    await this._environment.init();
+                },
+            );
         }
 
         return this._initPromise;
@@ -173,6 +182,7 @@ export class DIVERenderer {
     public setCanvas(canvas: HTMLCanvasElement): void {
         const previousRenderer = this._webgpurenderer;
 
+        this._initPromise?.abort();
         this._initPromise = null;
 
         // create new renderer with canvas

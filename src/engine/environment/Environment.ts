@@ -17,6 +17,7 @@ import {
 } from 'three/webgpu';
 import { HDRLoader } from 'three/examples/jsm/loaders/HDRLoader.js';
 import defaultEnvUrl from '../../../assets/maps/env/default.hdr?url';
+import { DIVEAbortablePromise } from '../promise/abortable/AbortablePromise.ts';
 
 export type DIVEEnvironmentSettings = {
     /**
@@ -83,7 +84,7 @@ export const DIVEEnvironmentDefaultSettings: DIVEEnvironmentSettings = {
 export class DIVEEnvironment {
     private originalBackground: typeof Scene.prototype.background;
 
-    private renderer: WebGPURenderer;
+    private _webgpurenderer: WebGPURenderer;
     private scene: Scene;
     private pmrem: PMREMGenerator;
     private currentEnvRT: RenderTarget | null = null;
@@ -91,7 +92,7 @@ export class DIVEEnvironment {
     private sourceImage: Texture | null = null;
     private options: DIVEEnvironmentSettings;
     private _loadPromise: Promise<void>;
-    private _initPromise: Promise<void> | null = null;
+    private _initPromise: DIVEAbortablePromise<void> | null = null;
     private _sourceImageLoadId = 0;
     private _initRequested = false;
     private _disposed = false;
@@ -101,7 +102,7 @@ export class DIVEEnvironment {
         scene: Scene,
         options: Partial<DIVEEnvironmentSettings> = {},
     ) {
-        this.renderer = renderer;
+        this._webgpurenderer = renderer;
         this.scene = scene;
         this.originalBackground = this.scene.background;
 
@@ -118,15 +119,20 @@ export class DIVEEnvironment {
         this._initRequested = true;
 
         if (!this._initPromise) {
-            this._initPromise = (async () => {
-                await this._loadPromise;
+            this._initPromise = new DIVEAbortablePromise<void>(
+                async (signal) => {
+                    await this._loadPromise;
 
-                if (this._disposed || !this.renderer.initialized) return;
+                    if (
+                        signal.aborted ||
+                        this._disposed ||
+                        !this._webgpurenderer.initialized
+                    )
+                        return;
 
-                this.update();
-            })().finally(() => {
-                this._initPromise = null;
-            });
+                    this.update();
+                },
+            );
         }
 
         return this._initPromise;
@@ -170,7 +176,7 @@ export class DIVEEnvironment {
      * - Early-returns if the source image is not loaded.
      */
     public update(): void {
-        if (!this.renderer.initialized) return;
+        if (!this._webgpurenderer.initialized) return;
 
         if (!this.sourceImage) {
             this.clearEnvironment();
@@ -191,10 +197,10 @@ export class DIVEEnvironment {
         skyMesh.rotation.y = this.options.rotateY ?? 0;
         skyScene.add(skyMesh);
 
-        const oldToneMapping = this.renderer.toneMapping;
-        const oldOutputCS = this.renderer.outputColorSpace;
-        this.renderer.toneMapping = NoToneMapping;
-        this.renderer.outputColorSpace = LinearSRGBColorSpace;
+        const oldToneMapping = this._webgpurenderer.toneMapping;
+        const oldOutputCS = this._webgpurenderer.outputColorSpace;
+        this._webgpurenderer.toneMapping = NoToneMapping;
+        this._webgpurenderer.outputColorSpace = LinearSRGBColorSpace;
 
         const cubeRT = new CubeRenderTarget(1024, {
             type: HalfFloatType,
@@ -202,11 +208,11 @@ export class DIVEEnvironment {
         const cubeCamera = new CubeCamera(0.1, 1000, cubeRT);
 
         // Position at origin; IBL is direction-only
-        cubeCamera.update(this.renderer, skyScene);
+        cubeCamera.update(this._webgpurenderer, skyScene);
 
         // restore renderer state
-        this.renderer.toneMapping = oldToneMapping;
-        this.renderer.outputColorSpace = oldOutputCS;
+        this._webgpurenderer.toneMapping = oldToneMapping;
+        this._webgpurenderer.outputColorSpace = oldOutputCS;
 
         // PMREM from cubemap
         const pmremRT = this.pmrem.fromCubemap(cubeRT.texture);
@@ -248,10 +254,14 @@ export class DIVEEnvironment {
      */
     public setRenderer(renderer: WebGPURenderer): void {
         this.pmrem.dispose();
-        this.renderer = renderer;
+        this._webgpurenderer = renderer;
         this.pmrem = new PMREMGenerator(renderer);
 
-        if (this._initRequested && renderer.initialized) {
+        this._initPromise?.abort();
+        this._initPromise = null;
+        this.init();
+
+        if (this._initRequested && this._webgpurenderer.initialized) {
             this.update();
         }
     }
@@ -267,7 +277,7 @@ export class DIVEEnvironment {
         this._loadPromise = this._loadSourceImage(this.options.imageUrl);
         await this._loadPromise;
 
-        if (this._initRequested && this.renderer.initialized) {
+        if (this._initRequested && this._webgpurenderer.initialized) {
             this.update();
         }
     }
