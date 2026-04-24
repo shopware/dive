@@ -204,6 +204,7 @@ export class DIVE {
         try {
             // start clock (internally wait for first tick done)
             await this._clock.startAsync();
+
             // await init main view
             await this.mainView.initAsync();
         } catch (error) {

@@ -5,6 +5,7 @@ import { DIVERenderer } from '../renderer/Renderer.ts';
 import { DIVECanvasLifecycleManager } from '../canvas/CanvasLifecycleManager.ts';
 import { DIVEScene } from '../scene/Scene.ts';
 import { DIVERendererSettings } from '../renderer/Renderer.ts';
+import { DIVEAbortablePromise } from '../promise/abortable/AbortablePromise.ts';
 
 export class DIVEView implements DIVETicker {
     public readonly isDIVEView: true = true;
@@ -15,8 +16,7 @@ export class DIVEView implements DIVETicker {
 
     private _renderer: DIVERenderer;
     private _canvasLifecycleManager: DIVECanvasLifecycleManager;
-    private _initPromise: Promise<void> | null = null;
-    private _initAbortController: AbortController | null = null;
+    private _initTask: DIVEAbortablePromise<void> | null = null;
 
     constructor(
         private _scene: DIVEScene,
@@ -50,56 +50,43 @@ export class DIVEView implements DIVETicker {
     public tick(): void {
         this._canvasLifecycleManager.tick();
 
-        if (this._paused) {
-            return;
+        if (!this._paused) {
+            this._renderer.tick();
         }
-        this._renderer.tick();
     }
 
     public async initAsync(): Promise<void> {
-        if (!this._initPromise) {
-            const renderer = this._renderer;
-            const canvas = renderer.canvas;
-            const abortController = new AbortController();
+        // if not already an init task is running we create one
+        if (!this._initTask) {
+            this._initTask = new DIVEAbortablePromise(async (signal) => {
+                if (signal.aborted) {
+                    return;
+                }
 
-            this._initAbortController = abortController;
-
-            this._initPromise = (async () => {
-                const stableLayout =
-                    await this._canvasLifecycleManager.waitForHealthyCanvas(
-                        canvas,
-                        abortController.signal,
+                try {
+                    await this._canvasLifecycleManager.waitForHealthyCanvas();
+                } catch (error) {
+                    console.error(
+                        'DIVEView.initAsync: Failed to wait for healthy canvas.',
+                        error,
                     );
-
-                if (
-                    stableLayout === null ||
-                    abortController.signal.aborted ||
-                    renderer !== this._renderer
-                ) {
                     return;
                 }
 
-                await renderer.init();
-
-                if (
-                    abortController.signal.aborted ||
-                    renderer !== this._renderer
-                ) {
+                if (signal.aborted) {
                     return;
                 }
-            })().finally(() => {
-                if (this._initAbortController === abortController) {
-                    this._initAbortController = null;
-                }
+
+                await this._renderer.init();
             });
         }
 
-        return this._initPromise;
+        // wait for init task to run
+        return await this._initTask.run();
     }
 
     public dispose(): void {
-        this._abortInit();
-        this._initPromise = null;
+        this._initTask?.abort();
         this._canvasLifecycleManager.dispose();
         this._renderer.dispose();
     }
@@ -111,10 +98,9 @@ export class DIVEView implements DIVETicker {
 
     public setCanvas(canvas: HTMLCanvasElement): void {
         const shouldReinitialize =
-            this._renderer.initialized || this._initPromise !== null;
+            this._renderer.initialized || this._initTask?.pending;
 
-        this._abortInit();
-        this._initPromise = null;
+        this._initTask?.abort();
         this._renderer.setCanvas(canvas);
         this._canvasLifecycleManager.setCanvas(canvas);
 
@@ -123,18 +109,12 @@ export class DIVEView implements DIVETicker {
         }
     }
 
-    // TODO: add methods to individually pause and resume the view
     public pause(): void {
         this._paused = true;
     }
 
     public resume(): void {
         this._paused = false;
-    }
-
-    private _abortInit(): void {
-        this._initAbortController?.abort();
-        this._initAbortController = null;
     }
 
     private _handleCanvasResize = (width: number, height: number): void => {

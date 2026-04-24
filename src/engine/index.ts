@@ -4,5 +4,7 @@ export * from './clock/Clock.ts';
 export * from './renderer/Renderer.ts';
 export * from './environment/Environment.ts';
 export * from './canvas/CanvasLifecycleManager.ts';
+export * from './promise/deferred/DeferredPromise.ts';
+export * from './promise/abortable/AbortablePromise.ts';
 export * from './scene/Scene.ts';
 export * from './view/View.ts';
