@@ -32,13 +32,20 @@ export class DIVECanvasLifecycleManager {
             if (this._disposed) return;
 
             entries.forEach((entry) => {
-                if (entry.target !== canvas.parentElement) return;
+                console.log(
+                    '[DIVECanvasLifecycleManager] ResizeObserver detected parent resize',
+                );
+                if (entry.target !== this._canvas.parentElement) return;
 
                 const box = entry.borderBoxSize?.[0];
                 const width = box?.inlineSize ?? entry.contentRect.width;
                 const height = box?.blockSize ?? entry.contentRect.height;
 
                 if (width > 0 && height > 0) {
+                    console.log(
+                        '[DIVECanvasLifecycleManager] Layout is healthy, applying resize',
+                        { width, height },
+                    );
                     this._applyResize(width, height);
                     this._healthyCanvasPromise.resolve({ width, height });
                 }
@@ -72,6 +79,9 @@ export class DIVECanvasLifecycleManager {
         this._pollCanvasParent = true;
 
         if (this._canvas.parentElement) {
+            console.log(
+                '[DIVECanvasLifecycleManager] Canvas parent detected, observing for resize',
+            );
             this._resizeObserver.observe(this._canvas.parentElement);
             this._pollCanvasParent = false;
         }
@@ -93,6 +103,11 @@ export class DIVECanvasLifecycleManager {
     }
 
     private _applyResize(width: number, height: number): void {
+        console.log('[DIVECanvasLifecycleManager] Applying resize', {
+            width,
+            height,
+        });
+
         if (width === this._width && height === this._height) {
             return;
         }

@@ -64,6 +64,7 @@ export class DIVEView implements DIVETicker {
                 }
 
                 try {
+                    console.log('[DIVEView] waiting for healthy canvas');
                     await this._canvasLifecycleManager.waitForHealthyCanvas();
                 } catch (error) {
                     console.error(
@@ -77,7 +78,8 @@ export class DIVEView implements DIVETicker {
                     return;
                 }
 
-                await this._renderer.init();
+                console.log('[DIVEView] initializing renderer');
+                await this._renderer.initAsync();
             });
         }
 
@@ -97,17 +99,27 @@ export class DIVEView implements DIVETicker {
         this._camera.onResize(width, height);
     }
 
-    public setCanvas(canvas: HTMLCanvasElement): void {
+    public async setCanvas(canvas: HTMLCanvasElement): Promise<void> {
+        console.log('[DIVEView] Canvas changed, rebinding renderer');
         const shouldReinitialize =
             this._renderer.initialized || this._initPromise?.pending;
+        console.log(
+            '[DIVEView] this._renderer.initialized ',
+            this._renderer.initialized,
+        );
+        console.log(
+            '[DIVEView] this._initPromise?.pending ',
+            this._initPromise?.pending,
+        );
 
         this._initPromise?.abort();
         this._initPromise = null;
-        this._renderer.setCanvas(canvas);
+
         this._canvasLifecycleManager.setCanvas(canvas);
+        this._renderer.setCanvas(canvas);
 
         if (shouldReinitialize) {
-            void this.initAsync();
+            await this.initAsync();
         }
     }
 
