@@ -153,7 +153,7 @@ describe('DIVERenderPipeline', () => {
         const instance = WebGPURenderer.mock.results[0].value;
         const environment = MockedDIVEEnvironment.mock.results[0].value;
 
-        await renderer.init();
+        await renderer.initAsync();
 
         expect(instance.init).toHaveBeenCalled();
         expect(environment.init).toHaveBeenCalled();
@@ -166,7 +166,7 @@ describe('DIVERenderPipeline', () => {
 
         instance.initialized = true;
 
-        await renderer.init();
+        await renderer.initAsync();
 
         expect(instance.init).not.toHaveBeenCalled();
         expect(environment.init).toHaveBeenCalledTimes(1);
@@ -187,8 +187,8 @@ describe('DIVERenderPipeline', () => {
                 }),
         );
 
-        const firstInit = renderer.init();
-        const secondInit = renderer.init();
+        const firstInit = renderer.initAsync();
+        const secondInit = renderer.initAsync();
 
         await Promise.resolve();
 
@@ -280,7 +280,7 @@ describe('DIVERenderPipeline', () => {
                 }),
         );
 
-        const pendingInit = renderer.init();
+        const pendingInit = renderer.initAsync();
         renderer.setCanvas(document.createElement('canvas'));
 
         resolveFirstInit?.();

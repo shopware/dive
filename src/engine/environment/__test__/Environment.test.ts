@@ -86,7 +86,7 @@ describe('HDREnvironment', () => {
     it('loads default image when no imageUrl provided', async () => {
         const env = new DIVEEnvironment(renderer, scene, { enabled: true });
 
-        await env.init();
+        await env.initAsync();
 
         expect(scene.environment).toBeDefined();
     });
@@ -100,8 +100,8 @@ describe('HDREnvironment', () => {
 
         (env as any)._loadPromise = deferred.promise;
 
-        const firstInit = env.init();
-        const secondInit = env.init();
+        const firstInit = env.initAsync();
+        const secondInit = env.initAsync();
 
         expect(updateSpy).not.toHaveBeenCalled();
 
@@ -120,7 +120,7 @@ describe('HDREnvironment', () => {
             useAsBackground: true,
         });
 
-        await env.init();
+        await env.initAsync();
 
         expect(scene.background).toBeDefined();
         expect(scene.environment).toBeDefined();
@@ -133,7 +133,7 @@ describe('HDREnvironment', () => {
             useAsBackground: true,
         });
 
-        await env.init();
+        await env.initAsync();
 
         expect(scene.environment).toBeDefined();
         expect(scene.background).toBeDefined();
@@ -142,7 +142,7 @@ describe('HDREnvironment', () => {
     it('can set image URL after construction and initialize again', async () => {
         const env = new DIVEEnvironment(renderer, scene, { enabled: true });
 
-        await env.init();
+        await env.initAsync();
         await env.setImageUrl('later.hdr');
 
         expect(scene.environment).toBeDefined();
@@ -156,7 +156,7 @@ describe('HDREnvironment', () => {
         });
         const updateSpy = vi.spyOn(env, 'update');
 
-        await env.init();
+        await env.initAsync();
 
         expect(updateSpy).not.toHaveBeenCalled();
     });
@@ -166,7 +166,7 @@ describe('HDREnvironment', () => {
             imageUrl: 'hdr.hdr',
         });
 
-        await env.init();
+        await env.initAsync();
         env.dispose();
 
         expect(scene.environment).toBeNull();
@@ -178,7 +178,7 @@ describe('HDREnvironment', () => {
             useAsBackground: true,
         });
 
-        await env.init();
+        await env.initAsync();
 
         expect((env as any).currentBackgroundCube).toBeDefined();
 
@@ -193,7 +193,7 @@ describe('HDREnvironment', () => {
             imageUrl: 'hdr.hdr',
         });
 
-        await env.init();
+        await env.initAsync();
 
         const spy = vi.spyOn(env, 'update');
         env.setRotationY(1.23);
@@ -209,7 +209,7 @@ describe('HDREnvironment', () => {
             useAsBackground: true,
         });
 
-        await env.init();
+        await env.initAsync();
 
         const firstCube = (env as any).currentBackgroundCube;
         expect(firstCube).toBeDefined();
@@ -230,7 +230,7 @@ describe('HDREnvironment', () => {
             useAsBackground: false,
         });
 
-        await env.init();
+        await env.initAsync();
 
         const baseLen = CubeRenderTarget.mock.instances.length;
 
@@ -250,7 +250,7 @@ describe('HDREnvironment', () => {
             useAsBackground: true,
         });
 
-        await env.init();
+        await env.initAsync();
 
         (env as any).sourceImage = null;
         env.update();
@@ -269,7 +269,7 @@ describe('HDREnvironment', () => {
             useAsBackground: true,
         });
 
-        await env.init();
+        await env.initAsync();
 
         expect(scene.background).not.toBe(originalBg);
         expect(scene.background).toBeDefined();
@@ -288,7 +288,7 @@ describe('HDREnvironment', () => {
             useAsBackground: true,
         });
 
-        await env.init();
+        await env.initAsync();
 
         const hdrBg = scene.background;
         expect(hdrBg).not.toBe(originalBg);
@@ -305,7 +305,7 @@ describe('HDREnvironment', () => {
             imageUrl: 'hdr.hdr',
         });
 
-        await env.init();
+        await env.initAsync();
 
         const newRenderer = new WebGPURenderer();
         const pmremDisposeSpy = vi.spyOn((env as any).pmrem, 'dispose');
@@ -323,7 +323,7 @@ describe('HDREnvironment', () => {
         });
         const updateSpy = vi.spyOn(env, 'update');
 
-        await env.init();
+        await env.initAsync();
         await env.setImageUrl(null);
 
         expect((env as any).options.imageUrl).toBeTruthy();
@@ -345,7 +345,7 @@ describe('HDREnvironment', () => {
         const firstLoad = createDeferred<any>();
         const secondLoad = createDeferred<any>();
 
-        await env.init();
+        await env.initAsync();
 
         vi.spyOn(env as any, 'loadHDRImage')
             .mockImplementationOnce(() => firstLoad.promise)
