@@ -16,7 +16,7 @@ import {
 
 const mockRenderer = {
     initialized: false,
-    init: vi.fn(async () => {
+    initAsync: vi.fn(async () => {
         mockRenderer.initialized = true;
     }),
     tick: vi.fn(),
@@ -92,7 +92,7 @@ describe('DIVEView', () => {
         vi.clearAllMocks();
         lifecycleResizeHandler = null;
         mockRenderer.initialized = false;
-        mockRenderer.init.mockImplementation(async () => {
+        mockRenderer.initAsync.mockImplementation(async () => {
             mockRenderer.initialized = true;
         });
         mockCanvasLifecycleManager.waitForHealthyCanvas.mockResolvedValue({
@@ -172,27 +172,24 @@ describe('DIVEView', () => {
 
             expect(
                 mockCanvasLifecycleManager.waitForHealthyCanvas,
-            ).toHaveBeenCalledWith(
-                mockRenderer.canvas,
-                expect.any(AbortSignal),
-            );
-            expect(mockRenderer.init).toHaveBeenCalledTimes(1);
+            ).toHaveBeenCalledWith();
+            expect(mockRenderer.initAsync).toHaveBeenCalledTimes(1);
         });
 
-        it('should skip renderer initialization if the canvas wait resolves stale', async () => {
+        it('should initialize the renderer after the canvas wait resolves null', async () => {
             mockCanvasLifecycleManager.waitForHealthyCanvas.mockResolvedValue(
                 null,
             );
 
             await view.initAsync();
 
-            expect(mockRenderer.init).not.toHaveBeenCalled();
+            expect(mockRenderer.initAsync).toHaveBeenCalledTimes(1);
         });
 
         it('should reuse the pending init promise', async () => {
             let resolveInit: (() => void) | undefined;
 
-            mockRenderer.init.mockImplementation(
+            mockRenderer.initAsync.mockImplementation(
                 () =>
                     new Promise<void>((resolve) => {
                         resolveInit = () => {
@@ -206,7 +203,7 @@ describe('DIVEView', () => {
             const secondInit = view.initAsync();
             await Promise.resolve();
 
-            expect(mockRenderer.init).toHaveBeenCalledTimes(1);
+            expect(mockRenderer.initAsync).toHaveBeenCalledTimes(1);
 
             resolveInit?.();
             await Promise.all([
@@ -214,7 +211,7 @@ describe('DIVEView', () => {
                 secondInit,
             ]);
 
-            expect(mockRenderer.init).toHaveBeenCalledTimes(1);
+            expect(mockRenderer.initAsync).toHaveBeenCalledTimes(1);
         });
 
         it('should delegate to renderer.init when already initialized', async () => {
@@ -222,13 +219,13 @@ describe('DIVEView', () => {
 
             await view.initAsync();
 
-            expect(mockRenderer.init).toHaveBeenCalledTimes(1);
+            expect(mockRenderer.initAsync).toHaveBeenCalledTimes(1);
         });
 
         it('should abort completion when the view is disposed while renderer.init is pending', async () => {
             let resolveInit: (() => void) | undefined;
 
-            mockRenderer.init.mockImplementation(
+            mockRenderer.initAsync.mockImplementation(
                 () =>
                     new Promise<void>((resolve) => {
                         resolveInit = () => {
@@ -244,34 +241,32 @@ describe('DIVEView', () => {
             resolveInit?.();
             await initPromise;
 
-            expect(view['_initTask']).toBeNull();
+            expect(view['_initPromise']).toBeNull();
         });
 
-        it('should abort the pending canvas wait when the view is disposed', async () => {
-            let capturedSignal: AbortSignal | undefined;
-
+        it('should abort the pending init promise when the view is disposed', async () => {
             mockCanvasLifecycleManager.waitForHealthyCanvas.mockImplementation(
-                async (_canvas, signal) => {
-                    capturedSignal = signal;
+                async () => {
                     return await new Promise<DIVECanvasLayout | null>(() => {});
                 },
             );
 
             void view.initAsync();
+            const initPromise = view['_initPromise'];
             view.dispose();
 
-            expect(capturedSignal?.aborted).toBe(true);
+            expect(initPromise?.signal.aborted).toBe(true);
         });
 
         it('should abort completion when renderer.init invalidates the view before it resolves', async () => {
-            mockRenderer.init.mockImplementation(async () => {
+            mockRenderer.initAsync.mockImplementation(async () => {
                 mockRenderer.initialized = true;
                 view.dispose();
             });
 
             await view.initAsync();
 
-            expect(view['_initTask']).toBeNull();
+            expect(view['_initPromise']).toBeNull();
         });
     });
 
@@ -369,23 +364,18 @@ describe('DIVEView', () => {
             expect(initSpy).toHaveBeenCalledTimes(1);
         });
 
-        it('should abort the pending canvas wait when swapping canvases', async () => {
-            const capturedSignals: AbortSignal[] = [];
-
+        it('should abort the pending init promise when swapping canvases', async () => {
             mockCanvasLifecycleManager.waitForHealthyCanvas.mockImplementation(
-                async (_canvas, signal) => {
-                    if (signal) {
-                        capturedSignals.push(signal);
-                    }
-
+                async () => {
                     return await new Promise<DIVECanvasLayout | null>(() => {});
                 },
             );
 
             void view.initAsync();
+            const initPromise = view['_initPromise'];
             view.setCanvas(document.createElement('canvas'));
 
-            expect(capturedSignals[0]?.aborted).toBe(true);
+            expect(initPromise?.signal.aborted).toBe(true);
         });
     });
 

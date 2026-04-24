@@ -87,7 +87,7 @@ vi.mock('@shopware-ag/dive', () => {
         };
 
         this.canvas = nativeRenderer.domElement;
-        this.init = mockRendererInit;
+        this.initAsync = mockRendererInit;
         this.webgpurenderer = nativeRenderer;
         return this;
     });

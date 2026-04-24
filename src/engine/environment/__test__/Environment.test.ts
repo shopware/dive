@@ -312,7 +312,7 @@ describe('HDREnvironment', () => {
 
         env.setRenderer(newRenderer);
 
-        expect((env as any).renderer).toBe(newRenderer);
+        expect((env as any)._webgpurenderer).toBe(newRenderer);
         expect(pmremDisposeSpy).toHaveBeenCalled();
         expect(scene.environment).toBeDefined();
     });

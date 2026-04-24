@@ -55,7 +55,7 @@ vi.mock('../../environment/Environment.ts', () => ({
     DIVEEnvironment: vi.fn(function (this: any) {
         this.dispose = vi.fn();
         this.setRenderer = vi.fn();
-        this.init = vi.fn(async () => {});
+        this.initAsync = vi.fn(async () => {});
         return this;
     }),
 }));
@@ -156,7 +156,7 @@ describe('DIVERenderPipeline', () => {
         await renderer.initAsync();
 
         expect(instance.init).toHaveBeenCalled();
-        expect(environment.init).toHaveBeenCalled();
+        expect(environment.initAsync).toHaveBeenCalled();
         expect(renderer.initialized).toBe(true);
     });
 
@@ -169,7 +169,7 @@ describe('DIVERenderPipeline', () => {
         await renderer.initAsync();
 
         expect(instance.init).not.toHaveBeenCalled();
-        expect(environment.init).toHaveBeenCalledTimes(1);
+        expect(environment.initAsync).toHaveBeenCalledTimes(1);
     });
 
     it('should reuse the pending init when init is called twice concurrently', async () => {
@@ -193,7 +193,7 @@ describe('DIVERenderPipeline', () => {
         await Promise.resolve();
 
         expect(instance.init).toHaveBeenCalledTimes(1);
-        expect(environment.init).not.toHaveBeenCalled();
+        expect(environment.initAsync).not.toHaveBeenCalled();
 
         resolveInit?.();
         await Promise.all([
@@ -201,7 +201,7 @@ describe('DIVERenderPipeline', () => {
             secondInit,
         ]);
 
-        expect(environment.init).toHaveBeenCalledTimes(1);
+        expect(environment.initAsync).toHaveBeenCalledTimes(1);
     });
 
     it('should render only after initialization', () => {
@@ -286,7 +286,7 @@ describe('DIVERenderPipeline', () => {
         resolveFirstInit?.();
         await pendingInit;
 
-        expect(environment.init).not.toHaveBeenCalled();
+        expect(environment.initAsync).not.toHaveBeenCalled();
     });
 
     it('should dispose environment and renderer', () => {
