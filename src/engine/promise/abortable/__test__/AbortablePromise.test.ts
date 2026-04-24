@@ -14,6 +14,28 @@ const createDeferred = <T>() => {
 };
 
 describe('DIVEAbortablePromise', () => {
+    it('should be directly awaitable and start the executor', async () => {
+        const executor = vi.fn(async () => 'done');
+        const promise = new DIVEAbortablePromise(executor);
+
+        await expect(promise).resolves.toBe('done');
+
+        expect(executor).toHaveBeenCalledTimes(1);
+        expect(promise.hasRun).toBe(true);
+    });
+
+    it('should expose the native then, catch, and finally promise API', async () => {
+        const onFinally = vi.fn();
+        const promise = new DIVEAbortablePromise(async () => 'ready');
+
+        const chained = promise
+            .then((value) => value.toUpperCase())
+            .finally(onFinally);
+
+        await expect(chained).resolves.toBe('READY');
+        expect(onFinally).toHaveBeenCalledTimes(1);
+    });
+
     it('should create a fresh signal when the promise starts', async () => {
         const signals: AbortSignal[] = [];
         const promise = new DIVEAbortablePromise(async (signal) => {
@@ -112,5 +134,20 @@ describe('DIVEAbortablePromise', () => {
 
         await expect(promise.run()).rejects.toThrow(error);
         expect(promise.pending).toBe(false);
+    });
+
+    it('should route catch handlers through the wrapped promise', async () => {
+        const promise = new DIVEAbortablePromise<string>(() => {
+            throw new Error('failed');
+        });
+        const handled = promise.catch((error: unknown) => {
+            if (error instanceof Error) {
+                return error.message;
+            }
+
+            return 'unknown';
+        });
+
+        await expect(handled).resolves.toBe('failed');
     });
 });
