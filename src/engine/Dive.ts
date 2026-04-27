@@ -187,13 +187,11 @@ export class DIVE {
         return this._clock;
     }
 
+    /**
+     * @deprecated Use startAsync() instead, which returns a promise that resolves when the engine is fully initialized.
+     */
     public start(): void {
-        void this.startAsync().catch((error) => {
-            console.error(
-                'DIVE.start: Failed to initialize the WebGPU renderer.',
-                error,
-            );
-        });
+        void this.startAsync();
     }
 
     public async startAsync(): Promise<void> {
@@ -201,19 +199,11 @@ export class DIVE {
             return;
         }
 
-        try {
-            // start clock (internally wait for first tick done)
-            await this._clock.startAsync();
+        // start clock (internally wait for first tick done)
+        await this._clock.startAsync();
 
-            // await init main view
-            await this.mainView.initAsync();
-        } catch (error) {
-            await this.disposeAsync();
-            console.error(
-                'DIVE.startAsync: Failed to initialize. Error:',
-                error,
-            );
-        }
+        // await init main view
+        await this.mainView.initAsync();
     }
 
     public stop(): void {
