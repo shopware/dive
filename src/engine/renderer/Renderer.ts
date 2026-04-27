@@ -140,9 +140,6 @@ export class DIVERenderer {
             this._initPromise = new DIVEAbortablePromise<void>(
                 async (signal) => {
                     if (!this._webgpurenderer.initialized) {
-                        console.log(
-                            '[DIVERenderer] webgpurenderer initializing',
-                        );
                         await this._webgpurenderer.init();
                     }
 
@@ -150,7 +147,6 @@ export class DIVERenderer {
                         return;
                     }
 
-                    console.log('[DIVERenderer] initializing environment');
                     await this._environment.initAsync();
                 },
             );
@@ -174,7 +170,6 @@ export class DIVERenderer {
     }
 
     public onResize(width: number, height: number): void {
-        console.log('[DIVERenderer] onResize called with', { width, height });
         this._webgpurenderer.setSize(width, height);
     }
 
@@ -185,7 +180,6 @@ export class DIVERenderer {
     }
 
     public setCanvas(canvas: HTMLCanvasElement): void {
-        console.log('[DIVERenderer] Canvas changed, rebinding renderer');
         const previousRenderer = this._webgpurenderer;
 
         this._initPromise?.abort();
@@ -200,7 +194,10 @@ export class DIVERenderer {
 
     private _createWebGPURenderer(): WebGPURenderer {
         // create new renderer
-        const renderer = new WebGPURenderer(this._settings);
+        const renderer = new WebGPURenderer({
+            ...this._settings,
+            forceWebGL: true,
+        });
         renderer.shadowMap.enabled = this._settings.shadows;
         renderer.shadowMap.type =
             this._settings.shadowQuality === 'high'
