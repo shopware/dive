@@ -365,26 +365,16 @@ describe('DIVE', () => {
         });
     });
 
-    it('should log renderer initialization failures from start', async () => {
+    it('should propagate renderer initialization failures from startAsync', async () => {
         const error = new Error('renderer failed');
-        const errorSpy = vi
-            .spyOn(console, 'error')
-            .mockImplementation(() => {});
         const dive = new DIVE({
             autoStart: false,
         });
-        const disposeSpy = vi.spyOn(dive, 'disposeAsync');
 
         vi.mocked(dive.mainView.initAsync).mockRejectedValueOnce(error);
-        dive.start();
-        await waitForAsync();
+        await expect(dive.startAsync()).rejects.toBe(error);
 
-        expect(disposeSpy).toHaveBeenCalled();
         expect(dive.clock.startAsync).toHaveBeenCalledTimes(1);
-        expect(errorSpy).toHaveBeenCalledWith(
-            'DIVE.startAsync: Failed to initialize. Error:',
-            error,
-        );
     });
 
     it('should expose an explicit async start path', async () => {
