@@ -121,7 +121,21 @@ export class DIVEEnvironment {
         if (!this._initPromise) {
             this._initPromise = new DIVEAbortablePromise<void>(
                 async (signal) => {
+                    console.log('[DIVEEnvironment] Initializing environment');
                     await this._loadPromise;
+
+                    console.log(
+                        '[DIVEEnvironment] signal.aborted',
+                        signal.aborted,
+                    );
+                    console.log(
+                        '[DIVEEnvironment] this._disposed',
+                        this._disposed,
+                    );
+                    console.log(
+                        '[DIVEEnvironment] this._webgpurenderer.initialized',
+                        this._webgpurenderer.initialized,
+                    );
 
                     if (
                         signal.aborted ||
@@ -262,7 +276,6 @@ export class DIVEEnvironment {
 
         this._initPromise?.abort();
         this._initPromise = null;
-        this.initAsync();
     }
 
     /**

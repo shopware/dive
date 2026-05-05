@@ -140,6 +140,9 @@ export class DIVERenderer {
             this._initPromise = new DIVEAbortablePromise<void>(
                 async (signal) => {
                     if (!this._webgpurenderer.initialized) {
+                        console.log(
+                            '[DIVERenderer] webgpurenderer initializing',
+                        );
                         await this._webgpurenderer.init();
                     }
 
@@ -147,6 +150,7 @@ export class DIVERenderer {
                         return;
                     }
 
+                    console.log('[DIVERenderer] initializing environment');
                     await this._environment.initAsync();
                 },
             );
@@ -170,6 +174,7 @@ export class DIVERenderer {
     }
 
     public onResize(width: number, height: number): void {
+        console.log('[DIVERenderer] onResize called with', { width, height });
         this._webgpurenderer.setSize(width, height);
     }
 

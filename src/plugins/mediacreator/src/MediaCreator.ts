@@ -67,7 +67,7 @@ export class MediaCreator {
         canvasElement?: HTMLCanvasElement,
         resolution?: MediaGenerationResolution,
     ): Promise<HTMLCanvasElement> {
-        await this._renderer.init();
+        await this._renderer.initAsync();
 
         const renderer = this._renderer.webgpurenderer;
         const width = Math.max(
