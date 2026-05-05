@@ -44,6 +44,8 @@ export class OrientationDisplay implements DIVETicker {
     }
 
     public tick(): void {
+        if (!this._renderer.webgpurenderer.initialized) return;
+
         // save current background reference and set it to transparent
         const restoreBackground = this._scene.background ?? null;
         const restoreAutoClear = this._renderer.webgpurenderer.autoClear;
