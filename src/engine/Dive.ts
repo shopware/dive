@@ -154,10 +154,6 @@ export class DIVE {
             );
         }
 
-        if (this._settings.autoStart) {
-            this.start();
-        }
-
         // Load version info
         console.log(
             `DIVE ${__APP_VERSION__}${__DEV_MODE__ ? '[DEV]' : ''} initialized successfully!`,
@@ -165,6 +161,10 @@ export class DIVE {
         console.log(DIVE_ASCII_ART);
 
         window.DIVE.instances.push(this);
+
+        if (this._settings.autoStart) {
+            this.start();
+        }
     }
 
     public get views(): DIVEView[] {
@@ -187,17 +187,11 @@ export class DIVE {
         return this._clock;
     }
 
+    /**
+     * @deprecated Use startAsync() instead, which returns a promise that resolves when the engine is fully initialized.
+     */
     public start(): void {
-        if (this._disposed) {
-            return;
-        }
-
-        void this.startAsync().catch((error) => {
-            console.error(
-                'DIVE.start: Failed to initialize the WebGPU renderer.',
-                error,
-            );
-        });
+        void this.startAsync();
     }
 
     public async startAsync(): Promise<void> {
@@ -205,41 +199,26 @@ export class DIVE {
             return;
         }
 
-        if (this.mainView.renderer.initialized) {
-            this._clock.start();
-        } else {
-            const initPromise = this.mainView.init();
+        // start clock (internally wait for first tick done)
+        await this._clock.startAsync();
 
-            queueMicrotask(() => {
-                if (!this._disposed) {
-                    this._clock.start();
-                }
-            });
-
-            try {
-                await initPromise;
-            } catch (error) {
-                this.dispose();
-                console.error(
-                    'DIVE.startAsync: Failed to initialize. Error:',
-                    error,
-                );
-            }
-        }
-
-        if (this._disposed) {
-            return;
-        }
+        // await init main view
+        await this.mainView.initAsync();
     }
 
     public stop(): void {
         this._clock.stop();
     }
 
-    public async dispose(): Promise<void> {
-        this._disposed = true;
+    public async disposeAsync(): Promise<void> {
+        return new Promise<void>((resolve) => {
+            if (this._disposed) {
+                resolve();
+                return;
+            }
 
-        return new Promise((resolve) => {
+            this._disposed = true;
+
             this._clock.dispose();
 
             this._views.forEach((view) => {

@@ -34,7 +34,8 @@ vi.mock('@shopware-ag/dive', () => {
                 clock: {
                     addTicker: vi.fn(),
                 },
-                dispose: vi.fn(),
+                startAsync: vi.fn(async () => {}),
+                disposeAsync: vi.fn(async () => {}),
             };
         }),
         DIVEDefaultSettings: {
@@ -61,6 +62,7 @@ vi.mock('@shopware-ag/dive/orbitcontroller', () => {
         OrbitController: vi.fn(() => {
             return {
                 focusObject: vi.fn(),
+                dispose: vi.fn(),
             };
         }),
     };
@@ -89,7 +91,10 @@ describe('QuickView', () => {
 
     it('should QuickView', async () => {
         const dive = await QuickView('test_uri');
+
         expect(dive).toBeDefined();
+        expect(DIVE).toHaveBeenCalledWith({ autoStart: false });
+        expect(dive.startAsync).toHaveBeenCalledTimes(1);
     });
 
     it('should handle QuickView with multiple instances', async () => {
@@ -101,6 +106,7 @@ describe('QuickView', () => {
 
     it('should QuickView with settings', async () => {
         const settings = {
+            autoStart: false,
             backgroundColor: 0xff0000,
             displayGrid: true,
             displayFloor: false,
@@ -109,5 +115,16 @@ describe('QuickView', () => {
         const dive = await QuickView('test_uri', settings);
 
         expect(dive).toBeDefined();
+        expect(DIVE).toHaveBeenCalledWith({ ...settings, autoStart: false });
+        expect(dive.startAsync).not.toHaveBeenCalled();
+    });
+
+    it('should dispose orbit controls before disposing the wrapped DIVE instance', async () => {
+        const quickView = await QuickView('test_uri');
+
+        await quickView.disposeAsync();
+
+        expect(quickView.orbitController.dispose).toHaveBeenCalledTimes(1);
+        expect(quickView.disposeAsync).toBeDefined();
     });
 });

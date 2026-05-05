@@ -47,6 +47,21 @@ vi.mock('@shopware-ag/dive/assetcache', () => ({
 
 const MockedAssetCache = vi.mocked(AssetCache);
 
+const createArrayBuffer = (bytes: number[]): ArrayBuffer => {
+    const buffer = new ArrayBuffer(bytes.length);
+    new Uint8Array(buffer).set(bytes);
+    return buffer;
+};
+
+const createAsciiArrayBuffer = (
+    text: string,
+    byteLength: number = text.length,
+): ArrayBuffer => {
+    const buffer = new ArrayBuffer(byteLength);
+    new Uint8Array(buffer).set(new TextEncoder().encode(text));
+    return buffer;
+};
+
 describe('AssetLoader', () => {
     let loader: AssetLoader;
     let mockChunk: any;
@@ -167,6 +182,187 @@ describe('AssetLoader', () => {
             await loader.load('model.GLB');
 
             expect(MockedAssetCache.create).toHaveBeenCalledWith('model.GLB');
+        });
+
+        it('should use an explicitly provided file type', async () => {
+            MockedAssetCache.read.mockReturnValue(null);
+            const mockArrayBuffer = new ArrayBuffer(1024);
+            const mockScene = new Group();
+            mockChunk.load.mockResolvedValue(mockArrayBuffer);
+            mockParseAsyncGLTF.mockResolvedValue({
+                scene: mockScene,
+                animations: [],
+            } as GLTF);
+
+            const result = await loader.load('model-without-extension', 'glb');
+
+            expect(MockedAssetCache.create).toHaveBeenCalledWith(
+                'model-without-extension',
+            );
+            expect(mockParseAsyncGLTF).toHaveBeenCalledWith(
+                mockArrayBuffer,
+                '',
+            );
+            expect(result).toBe(mockScene);
+        });
+
+        it('should detect GLB content from a cached array buffer', async () => {
+            const mockArrayBuffer = createArrayBuffer([
+                0x67,
+                0x6c,
+                0x54,
+                0x46,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+            ]);
+            const mockScene = new Group();
+            MockedAssetCache.read.mockReturnValue({
+                arrayBuffer: mockArrayBuffer,
+                promise: Promise.resolve(mockArrayBuffer),
+            } as any);
+            mockParseAsyncGLTF.mockResolvedValue({
+                scene: mockScene,
+                animations: [],
+            } as GLTF);
+
+            const result = await loader.load('model-without-extension');
+
+            expect(mockParseAsyncGLTF).toHaveBeenCalledWith(
+                mockArrayBuffer,
+                '',
+            );
+            expect(result).toBe(mockScene);
+        });
+
+        it('should detect GLTF content from a cached promise', async () => {
+            const mockArrayBuffer = createArrayBuffer([
+                0x67,
+                0x6c,
+                0x54,
+                0x46,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                1,
+            ]);
+            const mockScene = new Group();
+            MockedAssetCache.read.mockReturnValue({
+                arrayBuffer: null,
+                promise: Promise.resolve(mockArrayBuffer),
+            } as any);
+            mockParseAsyncGLTF.mockResolvedValue({
+                scene: mockScene,
+                animations: [],
+            } as GLTF);
+
+            const result = await loader.load('model-without-extension');
+
+            expect(mockParseAsyncGLTF).toHaveBeenCalledWith(
+                mockArrayBuffer,
+                '',
+            );
+            expect(result).toBe(mockScene);
+        });
+
+        it('should detect USDZ content by ZIP signature', async () => {
+            const mockArrayBuffer = createArrayBuffer([
+                0x50,
+                0x4b,
+                0x03,
+                0x04,
+            ]);
+            const mockObject = new Group();
+            MockedAssetCache.read.mockReturnValue({
+                arrayBuffer: mockArrayBuffer,
+                promise: Promise.resolve(mockArrayBuffer),
+            } as any);
+            mockParseUSD.mockReturnValue(mockObject);
+
+            const result = await loader.load('model-without-extension');
+
+            expect(mockParseUSD).toHaveBeenCalledWith(mockArrayBuffer);
+            expect(result).toBe(mockObject);
+        });
+
+        it('should detect USDZ content by ZIP empty archive signature', async () => {
+            const mockArrayBuffer = createArrayBuffer([
+                0x50,
+                0x4b,
+                0x05,
+                0x06,
+            ]);
+            const mockObject = new Group();
+            MockedAssetCache.read.mockReturnValue({
+                arrayBuffer: mockArrayBuffer,
+                promise: Promise.resolve(mockArrayBuffer),
+            } as any);
+            mockParseUSD.mockReturnValue(mockObject);
+
+            const result = await loader.load('model-without-extension');
+
+            expect(mockParseUSD).toHaveBeenCalledWith(mockArrayBuffer);
+            expect(result).toBe(mockObject);
+        });
+
+        it('should detect STEP content by ISO header', async () => {
+            const mockArrayBuffer = createAsciiArrayBuffer(
+                'ISO-10303-21;HEADER;',
+            );
+            const mockObject = new Group();
+            MockedAssetCache.read.mockReturnValue({
+                arrayBuffer: mockArrayBuffer,
+                promise: Promise.resolve(mockArrayBuffer),
+            } as any);
+            mockStepParseAsync.mockResolvedValue(mockObject);
+
+            const result = await loader.load('model-without-extension');
+
+            expect(mockStepParseAsync).toHaveBeenCalledWith(
+                mockArrayBuffer,
+                'step',
+            );
+            expect(result).toBe(mockObject);
+        });
+
+        it('should detect IGES content by section marker', async () => {
+            const mockArrayBuffer = new ArrayBuffer(80);
+            new Uint8Array(mockArrayBuffer)[72] = 0x53;
+            const mockObject = new Group();
+            MockedAssetCache.read.mockReturnValue({
+                arrayBuffer: mockArrayBuffer,
+                promise: Promise.resolve(mockArrayBuffer),
+            } as any);
+            mockStepParseAsync.mockResolvedValue(mockObject);
+
+            const result = await loader.load('model-without-extension');
+
+            expect(mockStepParseAsync).toHaveBeenCalledWith(
+                mockArrayBuffer,
+                'iges',
+            );
+            expect(result).toBe(mockObject);
+        });
+
+        it('should fall back to FileTypeError when content detection fails', async () => {
+            MockedAssetCache.read.mockImplementation(() => {
+                throw new Error('cache failed');
+            });
+
+            await expect(
+                loader.load('model-without-extension'),
+            ).rejects.toThrow(FileTypeError);
         });
     });
 

@@ -55,7 +55,7 @@ vi.mock('../../environment/Environment.ts', () => ({
     DIVEEnvironment: vi.fn(function (this: any) {
         this.dispose = vi.fn();
         this.setRenderer = vi.fn();
-        this.init = vi.fn(async () => {});
+        this.initAsync = vi.fn(async () => {});
         return this;
     }),
 }));
@@ -153,10 +153,10 @@ describe('DIVERenderPipeline', () => {
         const instance = WebGPURenderer.mock.results[0].value;
         const environment = MockedDIVEEnvironment.mock.results[0].value;
 
-        await renderer.init();
+        await renderer.initAsync();
 
         expect(instance.init).toHaveBeenCalled();
-        expect(environment.init).toHaveBeenCalled();
+        expect(environment.initAsync).toHaveBeenCalled();
         expect(renderer.initialized).toBe(true);
     });
 
@@ -166,10 +166,10 @@ describe('DIVERenderPipeline', () => {
 
         instance.initialized = true;
 
-        await renderer.init();
+        await renderer.initAsync();
 
         expect(instance.init).not.toHaveBeenCalled();
-        expect(environment.init).toHaveBeenCalledTimes(1);
+        expect(environment.initAsync).toHaveBeenCalledTimes(1);
     });
 
     it('should reuse the pending init when init is called twice concurrently', async () => {
@@ -187,13 +187,13 @@ describe('DIVERenderPipeline', () => {
                 }),
         );
 
-        const firstInit = renderer.init();
-        const secondInit = renderer.init();
+        const firstInit = renderer.initAsync();
+        const secondInit = renderer.initAsync();
 
         await Promise.resolve();
 
         expect(instance.init).toHaveBeenCalledTimes(1);
-        expect(environment.init).not.toHaveBeenCalled();
+        expect(environment.initAsync).not.toHaveBeenCalled();
 
         resolveInit?.();
         await Promise.all([
@@ -201,7 +201,7 @@ describe('DIVERenderPipeline', () => {
             secondInit,
         ]);
 
-        expect(environment.init).toHaveBeenCalledTimes(1);
+        expect(environment.initAsync).toHaveBeenCalledTimes(1);
     });
 
     it('should render only after initialization', () => {
@@ -280,13 +280,13 @@ describe('DIVERenderPipeline', () => {
                 }),
         );
 
-        const pendingInit = renderer.init();
+        const pendingInit = renderer.initAsync();
         renderer.setCanvas(document.createElement('canvas'));
 
         resolveFirstInit?.();
         await pendingInit;
 
-        expect(environment.init).not.toHaveBeenCalled();
+        expect(environment.initAsync).not.toHaveBeenCalled();
     });
 
     it('should dispose environment and renderer', () => {

@@ -3,10 +3,47 @@ import { DIVEClock, DIVETicker } from '../Clock.ts';
 describe('DIVEClock', () => {
     let clock: DIVEClock;
     let mockTicker: DIVETicker;
+    let animationFrameId: number;
+    let animationFrameTimers: Map<number, ReturnType<typeof setTimeout>>;
+
+    const advanceFrame = async (): Promise<void> => {
+        await vi.advanceTimersByTimeAsync(16);
+    };
+
+    const startClock = async (): Promise<void> => {
+        const startPromise = clock.startAsync();
+        await advanceFrame();
+        await startPromise;
+    };
 
     beforeEach(() => {
         vi.useFakeTimers();
         vi.clearAllMocks();
+        animationFrameId = 0;
+        animationFrameTimers = new Map();
+        vi.stubGlobal(
+            'requestAnimationFrame',
+            vi.fn((callback: FrameRequestCallback) => {
+                const id = ++animationFrameId;
+                const timer = setTimeout(() => {
+                    animationFrameTimers.delete(id);
+                    callback(performance.now());
+                }, 16);
+
+                animationFrameTimers.set(id, timer);
+                return id;
+            }),
+        );
+        vi.stubGlobal(
+            'cancelAnimationFrame',
+            vi.fn((id: number) => {
+                const timer = animationFrameTimers.get(id);
+                if (timer) {
+                    clearTimeout(timer);
+                    animationFrameTimers.delete(id);
+                }
+            }),
+        );
         clock = new DIVEClock();
         mockTicker = {
             uuid: 'test-uuid',
@@ -15,6 +52,8 @@ describe('DIVEClock', () => {
     });
 
     afterEach(() => {
+        clock.dispose();
+        vi.unstubAllGlobals();
         vi.useRealTimers();
     });
 
@@ -30,21 +69,20 @@ describe('DIVEClock', () => {
         expect(clock['_tickers']).not.toContain(mockTicker);
     });
 
-    it('should start and stop the clock', () => {
+    it('should start and stop the clock', async () => {
         clock.addTicker(mockTicker);
 
-        clock.start();
+        await startClock();
         expect(clock['_isRunning']).toBe(true);
 
-        // Advance time to trigger tick
-        vi.advanceTimersByTime(16); // 16ms for ~60fps
+        await advanceFrame();
         expect(mockTicker.tick).toHaveBeenCalled();
 
         clock.stop();
         expect(clock['_isRunning']).toBe(false);
     });
 
-    it('should tick multiple registered tickers even if one no-ops internally', () => {
+    it('should tick multiple registered tickers even if one no-ops internally', async () => {
         let canvasIsValid = true;
         const noOpTicker: DIVETicker = {
             uuid: 'noop-ticker',
@@ -61,21 +99,23 @@ describe('DIVEClock', () => {
 
         clock.addTicker(noOpTicker);
         clock.addTicker(activeTicker);
-        clock.start();
+        await startClock();
+        vi.mocked(noOpTicker.tick).mockClear();
+        vi.mocked(activeTicker.tick).mockClear();
 
-        vi.advanceTimersByTime(16);
+        await advanceFrame();
 
         expect(noOpTicker.tick).toHaveBeenCalledTimes(1);
         expect(activeTicker.tick).toHaveBeenCalledTimes(1);
 
         canvasIsValid = false;
-        vi.advanceTimersByTime(16);
+        await advanceFrame();
 
         expect(noOpTicker.tick).toHaveBeenCalledTimes(2);
         expect(activeTicker.tick).toHaveBeenCalledTimes(2);
     });
 
-    it('should stop ticking a removed ticker during runtime', () => {
+    it('should stop ticking a removed ticker during runtime', async () => {
         const removableTicker: DIVETicker = {
             uuid: 'removable-ticker',
             tick: vi.fn(),
@@ -87,58 +127,61 @@ describe('DIVEClock', () => {
 
         clock.addTicker(removableTicker);
         clock.addTicker(persistentTicker);
-        clock.start();
+        await startClock();
+        vi.mocked(removableTicker.tick).mockClear();
+        vi.mocked(persistentTicker.tick).mockClear();
 
-        vi.advanceTimersByTime(16);
+        await advanceFrame();
         clock.removeTicker(removableTicker);
-        vi.advanceTimersByTime(16);
+        await advanceFrame();
 
         expect(removableTicker.tick).toHaveBeenCalledTimes(1);
         expect(persistentTicker.tick).toHaveBeenCalledTimes(2);
     });
 
-    it('should not tick when stopped', () => {
+    it('should not tick when stopped', async () => {
         clock.addTicker(mockTicker);
 
-        clock.start();
+        await startClock();
+        vi.mocked(mockTicker.tick).mockClear();
         clock.stop();
 
-        vi.advanceTimersByTime(16);
+        await advanceFrame();
         expect(mockTicker.tick).not.toHaveBeenCalled();
     });
 
-    it('should calculate delta time between ticks', () => {
+    it('should calculate delta time between ticks', async () => {
         clock.addTicker(mockTicker);
-        clock.start();
+        await startClock();
+        vi.mocked(mockTicker.tick).mockClear();
 
-        // First tick
-        vi.advanceTimersByTime(16);
+        await advanceFrame();
         expect(mockTicker.tick).toHaveBeenCalledWith(expect.any(Number));
 
-        // Second tick
-        vi.advanceTimersByTime(16);
+        await advanceFrame();
         expect(mockTicker.tick).toHaveBeenCalledWith(expect.any(Number));
     });
 
-    it('should dispose by stopping and clearing tickers', () => {
+    it('should dispose by stopping and clearing tickers', async () => {
         clock.addTicker(mockTicker);
-        clock.start();
+        await startClock();
+        vi.mocked(mockTicker.tick).mockClear();
 
         clock.dispose();
 
         expect(clock['_isRunning']).toBe(false);
         expect(clock['_tickers']).toHaveLength(0);
 
-        vi.advanceTimersByTime(16);
+        await advanceFrame();
         expect(mockTicker.tick).not.toHaveBeenCalled();
     });
 
-    it('should not restart if already running', () => {
-        clock.start();
+    it('should not restart if already running', async () => {
+        await startClock();
         const initialLastTime = clock['_lastTime'];
 
         // Try to start again
-        clock.start();
+        await clock.startAsync();
         expect(clock['_lastTime']).toBe(initialLastTime);
     });
 

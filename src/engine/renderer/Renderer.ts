@@ -9,6 +9,7 @@ import {
 import { DIVEScene } from '../scene/Scene.ts';
 import { DIVEPerspectiveCamera } from '../camera/PerspectiveCamera.ts';
 import { DIVEEnvironment } from '../environment/Environment.ts';
+import { DIVEAbortablePromise } from '../promise/abortable/AbortablePromise.ts';
 
 export type DIVERendererSettings = {
     /**
@@ -96,7 +97,7 @@ export class DIVERenderer {
 
     private _webgpurenderer: WebGPURenderer;
     private _environment: DIVEEnvironment;
-    private _initPromise: Promise<void> | null = null;
+    private _initPromise: DIVEAbortablePromise<void> | null = null;
 
     private _settings: DIVERendererSettings;
 
@@ -134,26 +135,21 @@ export class DIVERenderer {
         return this._webgpurenderer.initialized;
     }
 
-    public async init(): Promise<void> {
-        if (this._webgpurenderer.initialized) {
-            return this._environment.init();
-        }
-
+    public async initAsync(): Promise<void> {
         if (!this._initPromise) {
-            const renderer = this._webgpurenderer;
-            this._initPromise = (async () => {
-                await renderer.init();
+            this._initPromise = new DIVEAbortablePromise<void>(
+                async (signal) => {
+                    if (!this._webgpurenderer.initialized) {
+                        await this._webgpurenderer.init();
+                    }
 
-                if (renderer !== this._webgpurenderer) {
-                    return;
-                }
+                    if (signal.aborted) {
+                        return;
+                    }
 
-                await this._environment.init();
-            })().finally(() => {
-                if (renderer === this._webgpurenderer) {
-                    this._initPromise = null;
-                }
-            });
+                    await this._environment.initAsync();
+                },
+            );
         }
 
         return this._initPromise;
@@ -178,6 +174,7 @@ export class DIVERenderer {
     }
 
     public dispose(): void {
+        this._initPromise?.abort();
         this._environment.dispose();
         this._webgpurenderer.dispose();
     }
@@ -185,19 +182,22 @@ export class DIVERenderer {
     public setCanvas(canvas: HTMLCanvasElement): void {
         const previousRenderer = this._webgpurenderer;
 
+        this._initPromise?.abort();
         this._initPromise = null;
 
         // create new renderer with canvas
         this._settings.canvas = canvas;
         this._webgpurenderer = this._createWebGPURenderer();
-
         this._environment.setRenderer(this._webgpurenderer);
         previousRenderer.dispose();
     }
 
     private _createWebGPURenderer(): WebGPURenderer {
         // create new renderer
-        const renderer = new WebGPURenderer(this._settings);
+        const renderer = new WebGPURenderer({
+            ...this._settings,
+            forceWebGL: true,
+        });
         renderer.shadowMap.enabled = this._settings.shadows;
         renderer.shadowMap.type =
             this._settings.shadowQuality === 'high'

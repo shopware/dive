@@ -31,6 +31,55 @@ export class Chunk {
         return this._arrayBuffer;
     }
 
+    private _getHeader(
+        response: Pick<Response, 'headers'>,
+        headerName: string,
+    ): string | null {
+        return response.headers?.get?.(headerName) ?? null;
+    }
+
+    private _concatChunks(
+        chunks: Uint8Array[],
+        totalByteLength: number,
+    ): ArrayBuffer {
+        const combined = new Uint8Array(totalByteLength);
+        let offset = 0;
+
+        for (const chunk of chunks) {
+            combined.set(chunk, offset);
+            offset += chunk.byteLength;
+        }
+
+        return combined.buffer;
+    }
+
+    private async _readBodyWithReader(
+        response: Response,
+    ): Promise<ArrayBuffer> {
+        const reader = response.body!.getReader();
+        const chunks: Uint8Array[] = [];
+        let totalByteLength = 0;
+
+        try {
+            while (true) {
+                const result = await reader.read();
+
+                if (result.done) {
+                    break;
+                }
+
+                const chunk = result.value ?? new Uint8Array(0);
+                chunks.push(chunk);
+                totalByteLength += chunk.byteLength;
+            }
+        } finally {
+            reader.releaseLock();
+        }
+
+        const arrayBuffer = this._concatChunks(chunks, totalByteLength);
+        return arrayBuffer;
+    }
+
     constructor(private _uri: string) {
         this._promise = new Promise((resolve) => {
             this._resolve = resolve;
@@ -47,9 +96,13 @@ export class Chunk {
         }
 
         try {
-            this._arrayBuffer = await response.arrayBuffer();
-            this._size += this._arrayBuffer.byteLength;
+            if (response.body?.getReader) {
+                this._arrayBuffer = await this._readBodyWithReader(response);
+            } else {
+                this._arrayBuffer = await response.arrayBuffer();
+            }
 
+            this._size += this._arrayBuffer.byteLength;
             this._updatedAt = new Date();
         } catch (error) {
             throw new FileContentError(this._uri);
