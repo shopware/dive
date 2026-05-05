@@ -20,10 +20,10 @@ export class DIVEClock {
 
             this._isRunning = true;
             this._lastTime = performance.now();
-            this._animationRequestId = requestAnimationFrame(
-                this._tick.bind(this),
-            );
-            resolve();
+            this._animationRequestId = requestAnimationFrame(() => {
+                this._tick(performance.now());
+                resolve();
+            });
         });
     }
 
