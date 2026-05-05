@@ -60,25 +60,23 @@ export class DIVEView implements DIVETicker {
         if (!this._initPromise) {
             this._initPromise = new DIVEAbortablePromise(async (signal) => {
                 if (signal.aborted) {
-                    return;
+                    return Promise.reject(
+                        new Error('DIVEView initialization aborted'),
+                    );
                 }
 
                 try {
-                    console.log('[DIVEView] waiting for healthy canvas');
                     await this._canvasLifecycleManager.waitForHealthyCanvas();
                 } catch (error) {
-                    console.error(
-                        'DIVEView.initAsync: Failed to wait for healthy canvas.',
-                        error,
-                    );
-                    return;
+                    return Promise.reject(error);
                 }
 
                 if (signal.aborted) {
-                    return;
+                    return Promise.reject(
+                        new Error('DIVEView initialization aborted'),
+                    );
                 }
 
-                console.log('[DIVEView] initializing renderer');
                 await this._renderer.initAsync();
             });
         }
@@ -100,17 +98,8 @@ export class DIVEView implements DIVETicker {
     }
 
     public async setCanvas(canvas: HTMLCanvasElement): Promise<void> {
-        console.log('[DIVEView] Canvas changed, rebinding renderer');
         const shouldReinitialize =
             this._renderer.initialized || this._initPromise?.pending;
-        console.log(
-            '[DIVEView] this._renderer.initialized ',
-            this._renderer.initialized,
-        );
-        console.log(
-            '[DIVEView] this._initPromise?.pending ',
-            this._initPromise?.pending,
-        );
 
         this._initPromise?.abort();
         this._initPromise = null;

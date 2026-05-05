@@ -1,7 +1,5 @@
 import { FileContentError, NetworkError } from '@shopware-ag/dive';
 
-type ChunkLoadLogDetails = Record<string, unknown>;
-
 export class Chunk {
     private _promise: Promise<ArrayBuffer>;
     private _resolve!: (value: ArrayBuffer) => void;
@@ -40,7 +38,10 @@ export class Chunk {
         return response.headers?.get?.(headerName) ?? null;
     }
 
-    private _concatChunks(chunks: Uint8Array[], totalByteLength: number): ArrayBuffer {
+    private _concatChunks(
+        chunks: Uint8Array[],
+        totalByteLength: number,
+    ): ArrayBuffer {
         const combined = new Uint8Array(totalByteLength);
         let offset = 0;
 
@@ -54,73 +55,29 @@ export class Chunk {
 
     private async _readBodyWithReader(
         response: Response,
-        startedAt: number,
     ): Promise<ArrayBuffer> {
         const reader = response.body!.getReader();
         const chunks: Uint8Array[] = [];
         let totalByteLength = 0;
-        let chunkCount = 0;
-
-        this._logLoad('reader-start', {
-            uri: this._uri,
-            elapsedMs: Math.round(performance.now() - startedAt),
-        });
 
         try {
             while (true) {
                 const result = await reader.read();
 
                 if (result.done) {
-                    this._logLoad('reader-done', {
-                        uri: this._uri,
-                        chunkCount,
-                        totalByteLength,
-                        elapsedMs: Math.round(performance.now() - startedAt),
-                    });
                     break;
                 }
 
                 const chunk = result.value ?? new Uint8Array(0);
                 chunks.push(chunk);
                 totalByteLength += chunk.byteLength;
-                chunkCount += 1;
-
-                this._logLoad('reader-chunk', {
-                    uri: this._uri,
-                    chunkCount,
-                    chunkByteLength: chunk.byteLength,
-                    totalByteLength,
-                    elapsedMs: Math.round(performance.now() - startedAt),
-                });
             }
         } finally {
             reader.releaseLock();
         }
 
         const arrayBuffer = this._concatChunks(chunks, totalByteLength);
-        this._logLoad('reader-complete', {
-            uri: this._uri,
-            chunkCount,
-            totalByteLength,
-            elapsedMs: Math.round(performance.now() - startedAt),
-        });
-
         return arrayBuffer;
-    }
-
-    private _logLoad(stage: string, details: ChunkLoadLogDetails = {}): void {
-        console.info('[Chunk.load]', stage, details);
-    }
-
-    private _logLoadError(
-        stage: string,
-        error: unknown,
-        details: ChunkLoadLogDetails = {},
-    ): void {
-        console.error('[Chunk.load]', stage, {
-            ...details,
-            error: error instanceof Error ? error.message : String(error),
-        });
     }
 
     constructor(private _uri: string) {
@@ -133,93 +90,25 @@ export class Chunk {
     }
 
     public async load(): Promise<ArrayBuffer> {
-        const startedAt = performance.now();
-        let response: Response;
-
-        this._logLoad('fetch-start', {
-            uri: this._uri,
-        });
-
-        try {
-            response = await fetch(this._uri);
-        } catch (error) {
-            this._logLoadError('fetch-failed', error, {
-                uri: this._uri,
-                elapsedMs: Math.round(performance.now() - startedAt),
-            });
-            throw error;
-        }
-
-        this._logLoad('fetch-resolved', {
-            uri: this._uri,
-            ok: response.ok,
-            status: response.status,
-            contentLength: this._getHeader(response, 'content-length'),
-            contentType: this._getHeader(response, 'content-type'),
-            elapsedMs: Math.round(performance.now() - startedAt),
-        });
+        const response = await fetch(this._uri);
         if (!response.ok) {
-            this._logLoad('fetch-not-ok', {
-                uri: this._uri,
-                status: response.status,
-                elapsedMs: Math.round(performance.now() - startedAt),
-            });
             throw new NetworkError(this._uri);
         }
 
         try {
-            this._logLoad('array-buffer-start', {
-                uri: this._uri,
-                elapsedMs: Math.round(performance.now() - startedAt),
-            });
-
             if (response.body?.getReader) {
-                this._arrayBuffer = await this._readBodyWithReader(response, startedAt);
+                this._arrayBuffer = await this._readBodyWithReader(response);
             } else {
-                this._logLoad('array-buffer-fallback-start', {
-                    uri: this._uri,
-                    elapsedMs: Math.round(performance.now() - startedAt),
-                });
                 this._arrayBuffer = await response.arrayBuffer();
-                this._logLoad('array-buffer-fallback-resolved', {
-                    uri: this._uri,
-                    byteLength: this._arrayBuffer.byteLength,
-                    elapsedMs: Math.round(performance.now() - startedAt),
-                });
             }
 
-            this._logLoad('array-buffer-resolved', {
-                uri: this._uri,
-                byteLength: this._arrayBuffer.byteLength,
-                elapsedMs: Math.round(performance.now() - startedAt),
-            });
             this._size += this._arrayBuffer.byteLength;
             this._updatedAt = new Date();
-            this._logLoad('metadata-updated', {
-                uri: this._uri,
-                size: this._size,
-                updatedAt: this._updatedAt.toISOString(),
-                elapsedMs: Math.round(performance.now() - startedAt),
-            });
         } catch (error) {
-            this._logLoadError('array-buffer-failed', error, {
-                uri: this._uri,
-                elapsedMs: Math.round(performance.now() - startedAt),
-            });
             throw new FileContentError(this._uri);
         }
 
-        this._logLoad('resolve-start', {
-            uri: this._uri,
-            byteLength: this._arrayBuffer.byteLength,
-            elapsedMs: Math.round(performance.now() - startedAt),
-        });
         this._resolve(this._arrayBuffer);
-        this._logLoad('resolve-complete', {
-            uri: this._uri,
-            byteLength: this._arrayBuffer.byteLength,
-            elapsedMs: Math.round(performance.now() - startedAt),
-        });
         return this._arrayBuffer;
     }
 }

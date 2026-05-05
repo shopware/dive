@@ -37,7 +37,6 @@ export const QuickView = async (
         dive.mainView.camera,
         dive.mainView.canvas,
     );
-
     dive.clock.addTicker(orbitController);
 
     const quickView = Object.assign(dive, { orbitController, model });
