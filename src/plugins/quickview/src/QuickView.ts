@@ -37,7 +37,7 @@ export const QuickView = async (
         dive.mainView.camera,
         dive.mainView.canvas,
     );
-    orbitController.focusObject(model);
+
     dive.clock.addTicker(orbitController);
 
     const quickView = Object.assign(dive, { orbitController, model });
@@ -52,6 +52,7 @@ export const QuickView = async (
 
     if (settings?.autoStart ?? true) {
         await dive.startAsync();
+        orbitController.focusObject(model);
     }
 
     return quickView;
