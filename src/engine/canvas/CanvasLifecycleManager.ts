@@ -15,6 +15,10 @@ export class DIVECanvasLifecycleManager {
     private _height: number = 0;
     private _canvas: HTMLCanvasElement;
     private _disposed: boolean = false;
+
+    // is true initially but is set to false as soon as canvas has a parent
+    private _pollCanvasParent: boolean = true;
+
     private _healthyCanvasPromise =
         new DIVEDeferredPromise<DIVECanvasLayout | null>();
 
@@ -24,38 +28,39 @@ export class DIVECanvasLifecycleManager {
     ) {
         this._canvas = canvas;
 
-        this._resizeObserver = new ResizeObserver(() => {
-            if (this._disposed || !this._canvas.parentElement) return;
+        this._resizeObserver = new ResizeObserver((entries) => {
+            if (this._disposed) return;
 
-            const parentRect =
-                this._canvas.parentElement.getBoundingClientRect() ?? {
-                    width: 0,
-                    height: 0,
-                };
+            entries.forEach((entry) => {
+                if (entry.target !== canvas.parentElement) return;
 
-            const parentLayout = {
-                width: Math.max(
-                    parentRect.width,
-                    this._canvas.parentElement.clientWidth,
-                ),
-                height: Math.max(
-                    parentRect.height,
-                    this._canvas.parentElement.clientHeight,
-                ),
-            };
+                const box = entry.borderBoxSize?.[0];
+                const width = box?.inlineSize ?? entry.contentRect.width;
+                const height = box?.blockSize ?? entry.contentRect.height;
 
-            if (parentLayout.width > 0 && parentLayout.height > 0) {
-                this._applyResize(parentLayout.width, parentLayout.height);
-                this._healthyCanvasPromise.resolve(parentLayout);
-
-                this._resizeObserver.disconnect();
-            }
+                if (width > 0 && height > 0) {
+                    this._applyResize(width, height);
+                    this._healthyCanvasPromise.resolve({ width, height });
+                }
+            });
         });
+
+        if (this._canvas.parentElement) {
+            this._resizeObserver.observe(this._canvas.parentElement);
+            this._pollCanvasParent = false;
+        }
     }
 
     public tick(): void {
         if (this._disposed) {
             return;
+        }
+
+        if (this._pollCanvasParent) {
+            if (this._canvas.parentElement) {
+                this._resizeObserver.observe(this._canvas.parentElement);
+                this._pollCanvasParent = false;
+            }
         }
     }
 
@@ -64,58 +69,26 @@ export class DIVECanvasLifecycleManager {
         this._width = 0;
         this._height = 0;
         this._resizeObserver.disconnect();
-        this._healthyCanvasPromise.resolve(null);
-        this._healthyCanvasPromise.reset();
+        this._pollCanvasParent = true;
+
+        if (this._canvas.parentElement) {
+            this._resizeObserver.observe(this._canvas.parentElement);
+            this._pollCanvasParent = false;
+        }
     }
 
-    public async waitForHealthyCanvas(
-        canvas: HTMLCanvasElement = this._canvas,
-        signal?: AbortSignal,
-    ): Promise<DIVECanvasLayout | null> {
-        if (signal?.aborted || canvas !== this._canvas) {
-            return null;
-        }
-
+    public async waitForHealthyCanvas(): Promise<DIVECanvasLayout | null> {
         if (this._disposed) {
             return Promise.reject(
                 new Error('DIVECanvasLifecycleManager is disposed.'),
             );
         }
 
-        const healthyCanvasPromise = this._healthyCanvasPromise.promise;
-
-        if (!signal) {
-            return await healthyCanvasPromise;
-        }
-
-        return await new Promise((resolve) => {
-            const onAbort = (): void => {
-                signal.removeEventListener('abort', onAbort);
-                resolve(null);
-            };
-
-            signal.addEventListener('abort', onAbort, { once: true });
-
-            void healthyCanvasPromise.then((layout) => {
-                signal.removeEventListener('abort', onAbort);
-
-                if (
-                    this._disposed ||
-                    signal.aborted ||
-                    canvas !== this._canvas
-                ) {
-                    resolve(null);
-                    return;
-                }
-
-                resolve(layout);
-            });
-        });
+        return this._healthyCanvasPromise;
     }
 
     public dispose(): void {
         this._disposed = true;
-        this._healthyCanvasPromise.resolve(null);
         this._resizeObserver.disconnect();
     }
 
