@@ -9,12 +9,22 @@ export class DIVEClock {
     private _lastTime: number = 0;
     private _isRunning: boolean = false;
     private _tickers: DIVETicker[] = [];
+    private _animationRequestId: number | null = null;
 
-    public start(): void {
-        if (this._isRunning) return;
-        this._isRunning = true;
-        this._lastTime = performance.now();
-        requestAnimationFrame(this._tick.bind(this));
+    public async startAsync(): Promise<void> {
+        return new Promise<void>((resolve) => {
+            if (this._isRunning) {
+                resolve();
+                return;
+            }
+
+            this._isRunning = true;
+            this._lastTime = performance.now();
+            this._animationRequestId = requestAnimationFrame(
+                this._tick.bind(this),
+            );
+            resolve();
+        });
     }
 
     public stop(): void {
@@ -42,6 +52,10 @@ export class DIVEClock {
         this._tickers = [];
         this._isRunning = false;
         this._lastTime = 0;
+        if (this._animationRequestId !== null) {
+            cancelAnimationFrame(this._animationRequestId);
+            this._animationRequestId = null;
+        }
     }
 
     private _tick(currentTime: number): void {
@@ -52,6 +66,6 @@ export class DIVEClock {
 
         this._tickers.forEach((ticker) => ticker.tick(deltaTime));
 
-        requestAnimationFrame(this._tick.bind(this));
+        this._animationRequestId = requestAnimationFrame(this._tick.bind(this));
     }
 }

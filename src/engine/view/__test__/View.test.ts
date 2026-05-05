@@ -168,7 +168,7 @@ describe('DIVEView', () => {
 
     describe('init', () => {
         it('should wait for the canvas before initializing the renderer', async () => {
-            await view.init();
+            await view.initAsync();
 
             expect(
                 mockCanvasLifecycleManager.waitForHealthyCanvas,
@@ -184,7 +184,7 @@ describe('DIVEView', () => {
                 null,
             );
 
-            await view.init();
+            await view.initAsync();
 
             expect(mockRenderer.init).not.toHaveBeenCalled();
         });
@@ -202,8 +202,8 @@ describe('DIVEView', () => {
                     }),
             );
 
-            const firstInit = view.init();
-            const secondInit = view.init();
+            const firstInit = view.initAsync();
+            const secondInit = view.initAsync();
             await Promise.resolve();
 
             expect(mockRenderer.init).toHaveBeenCalledTimes(1);
@@ -220,7 +220,7 @@ describe('DIVEView', () => {
         it('should delegate to renderer.init when already initialized', async () => {
             mockRenderer.initialized = true;
 
-            await view.init();
+            await view.initAsync();
 
             expect(mockRenderer.init).toHaveBeenCalledTimes(1);
         });
@@ -238,7 +238,7 @@ describe('DIVEView', () => {
                     }),
             );
 
-            const initPromise = view.init();
+            const initPromise = view.initAsync();
             view.dispose();
 
             resolveInit?.();
@@ -257,7 +257,7 @@ describe('DIVEView', () => {
                 },
             );
 
-            void view.init();
+            void view.initAsync();
             view.dispose();
 
             expect(capturedSignal?.aborted).toBe(true);
@@ -269,7 +269,7 @@ describe('DIVEView', () => {
                 view.dispose();
             });
 
-            await view.init();
+            await view.initAsync();
 
             expect(view['_initPromise']).toBeNull();
         });
@@ -348,7 +348,7 @@ describe('DIVEView', () => {
         });
 
         it('should reinitialize after a canvas swap when the renderer was already active', async () => {
-            const initSpy = vi.spyOn(view, 'init').mockResolvedValue();
+            const initSpy = vi.spyOn(view, 'initAsync').mockResolvedValue();
             mockRenderer.initialized = true;
 
             view.setCanvas(document.createElement('canvas'));
@@ -357,7 +357,7 @@ describe('DIVEView', () => {
         });
 
         it('should reinitialize after a canvas swap when an init is pending', async () => {
-            const initSpy = vi.spyOn(view, 'init').mockResolvedValue();
+            const initSpy = vi.spyOn(view, 'initAsync').mockResolvedValue();
             view['_initPromise'] = Promise.resolve();
 
             view.setCanvas(document.createElement('canvas'));
@@ -378,7 +378,7 @@ describe('DIVEView', () => {
                 },
             );
 
-            void view.init();
+            void view.initAsync();
             view.setCanvas(document.createElement('canvas'));
 
             expect(capturedSignals[0]?.aborted).toBe(true);
