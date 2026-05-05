@@ -244,7 +244,7 @@ describe('DIVEView', () => {
             resolveInit?.();
             await initPromise;
 
-            expect(view['_initPromise']).toBeNull();
+            expect(view['_initTask'].promise).toBeNull();
         });
 
         it('should abort the pending canvas wait when the view is disposed', async () => {
@@ -271,7 +271,7 @@ describe('DIVEView', () => {
 
             await view.initAsync();
 
-            expect(view['_initPromise']).toBeNull();
+            expect(view['_initTask'].promise).toBeNull();
         });
     });
 
@@ -357,8 +357,12 @@ describe('DIVEView', () => {
         });
 
         it('should reinitialize after a canvas swap when an init is pending', async () => {
+            mockCanvasLifecycleManager.waitForHealthyCanvas.mockImplementation(
+                async () =>
+                    await new Promise<DIVECanvasLayout | null>(() => {}),
+            );
+            void view.initAsync();
             const initSpy = vi.spyOn(view, 'initAsync').mockResolvedValue();
-            view['_initPromise'] = Promise.resolve();
 
             view.setCanvas(document.createElement('canvas'));
 
