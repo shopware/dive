@@ -115,7 +115,7 @@ export class DIVEEnvironment {
         this._loadPromise = this._loadSourceImage(this.options.imageUrl);
     }
 
-    public async init(): Promise<void> {
+    public async initAsync(): Promise<void> {
         this._initRequested = true;
 
         if (!this._initPromise) {
@@ -253,17 +253,16 @@ export class DIVEEnvironment {
      * @param renderer - The renderer.
      */
     public setRenderer(renderer: WebGPURenderer): void {
+        console.log(
+            '[DIVEEnvironment] Renderer changed, rebinding PMREM generator',
+        );
         this.pmrem.dispose();
         this._webgpurenderer = renderer;
         this.pmrem = new PMREMGenerator(renderer);
 
         this._initPromise?.abort();
         this._initPromise = null;
-        this.init();
-
-        if (this._initRequested && this._webgpurenderer.initialized) {
-            this.update();
-        }
+        this.initAsync();
     }
 
     /**
