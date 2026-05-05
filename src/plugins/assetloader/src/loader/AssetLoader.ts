@@ -13,10 +13,30 @@ import { DracoLoader } from '../draco/DracoLoader.ts';
 import { STEPLoader } from '../step/STEPLoader.ts';
 import { AssetCache } from '@shopware-ag/dive/assetcache';
 
+type AssetLoaderLogDetails = Record<string, unknown>;
+
+const getChildCount = (object: { children?: unknown } | null | undefined): number =>
+    Array.isArray(object?.children) ? object.children.length : 0;
+
 export class AssetLoader {
     private _gltfLoader: GLTFLoader;
     private _usdLoader: USDLoader;
     private _stepLoader: STEPLoader;
+
+    private _logLoad(stage: string, details: AssetLoaderLogDetails = {}): void {
+        console.info('[AssetLoader.load]', stage, details);
+    }
+
+    private _logLoadError(
+        stage: string,
+        error: unknown,
+        details: AssetLoaderLogDetails = {},
+    ): void {
+        console.error('[AssetLoader.load]', stage, {
+            ...details,
+            error: error instanceof Error ? error.message : String(error),
+        });
+    }
 
     constructor() {
         // create draco loader
@@ -37,18 +57,43 @@ export class AssetLoader {
     }
 
     public async load(uri: string, fileType?: FileType): Promise<Object3D> {
+        const startedAt = performance.now();
         let extension: string;
+
+        this._logLoad('start', {
+            uri,
+            fileType: fileType ?? null,
+        });
 
         // use provided file type
         if (fileType) {
             extension = fileType;
+            this._logLoad('using-explicit-file-type', {
+                uri,
+                extension,
+                elapsedMs: Math.round(performance.now() - startedAt),
+            });
         } else {
             // extract from URI
             extension = getFileTypeFromUri(uri);
+            this._logLoad('derived-file-type-from-uri', {
+                uri,
+                extension,
+                elapsedMs: Math.round(performance.now() - startedAt),
+            });
 
             // content-based detection
             if (extension.length === 0) {
+                this._logLoad('detect-file-type-from-content-start', {
+                    uri,
+                    elapsedMs: Math.round(performance.now() - startedAt),
+                });
                 extension = await this._detectFileTypeFromContent(uri);
+                this._logLoad('detect-file-type-from-content-complete', {
+                    uri,
+                    extension,
+                    elapsedMs: Math.round(performance.now() - startedAt),
+                });
                 if (extension.length === 0) {
                     throw new FileTypeError(
                         'No file extension found in URI',
@@ -67,12 +112,53 @@ export class AssetLoader {
 
         // check if chunk is already registered in cache and if it is already fetched
         const exstingChunk = AssetCache.read(uri);
+        this._logLoad(exstingChunk ? 'cache-hit' : 'cache-miss', {
+            uri,
+            extension,
+            hasArrayBuffer: Boolean(exstingChunk?.arrayBuffer),
+            elapsedMs: Math.round(performance.now() - startedAt),
+        });
         if (exstingChunk) {
             if (exstingChunk.arrayBuffer) {
-                return this._parse(exstingChunk.arrayBuffer, extension);
+                this._logLoad('parse-start', {
+                    uri,
+                    extension,
+                    source: 'cache-array-buffer',
+                    byteLength: exstingChunk.arrayBuffer.byteLength,
+                    elapsedMs: Math.round(performance.now() - startedAt),
+                });
+                return this._parse(exstingChunk.arrayBuffer, extension, {
+                    uri,
+                    source: 'cache-array-buffer',
+                    startedAt,
+                });
             }
+
+            this._logLoad('await-existing-cache-promise-start', {
+                uri,
+                extension,
+                elapsedMs: Math.round(performance.now() - startedAt),
+            });
             return exstingChunk.promise.then((arrayBuffer) => {
-                return this._parse(arrayBuffer, extension);
+                this._logLoad('await-existing-cache-promise-resolved', {
+                    uri,
+                    extension,
+                    byteLength: arrayBuffer.byteLength,
+                    elapsedMs: Math.round(performance.now() - startedAt),
+                });
+                this._logLoad('parse-start', {
+                    uri,
+                    extension,
+                    source: 'cache-promise',
+                    byteLength: arrayBuffer.byteLength,
+                    elapsedMs: Math.round(performance.now() - startedAt),
+                });
+
+                return this._parse(arrayBuffer, extension, {
+                    uri,
+                    source: 'cache-promise',
+                    startedAt,
+                });
             });
         }
 
@@ -84,8 +170,35 @@ export class AssetLoader {
 
         // factory chunk creation (recommended)
         const chunk = AssetCache.create(uri);
+        this._logLoad('chunk-created', {
+            uri,
+            extension,
+            elapsedMs: Math.round(performance.now() - startedAt),
+        });
+        this._logLoad('chunk-load-start', {
+            uri,
+            extension,
+            elapsedMs: Math.round(performance.now() - startedAt),
+        });
         const arrayBuffer = await chunk.load();
-        return this._parse(arrayBuffer, extension);
+        this._logLoad('chunk-load-resolved', {
+            uri,
+            extension,
+            byteLength: arrayBuffer.byteLength,
+            elapsedMs: Math.round(performance.now() - startedAt),
+        });
+        this._logLoad('parse-start', {
+            uri,
+            extension,
+            source: 'fresh-chunk',
+            byteLength: arrayBuffer.byteLength,
+            elapsedMs: Math.round(performance.now() - startedAt),
+        });
+        return this._parse(arrayBuffer, extension, {
+            uri,
+            source: 'fresh-chunk',
+            startedAt,
+        });
     }
 
     /**
@@ -178,43 +291,133 @@ export class AssetLoader {
     private async _parse(
         arrayBuffer: ArrayBuffer,
         type: FileType,
+        context: {
+            uri: string;
+            source: 'cache-array-buffer' | 'cache-promise' | 'fresh-chunk';
+            startedAt: number;
+        },
     ): Promise<Object3D> {
         try {
+            this._logLoad('parse-dispatch', {
+                uri: context.uri,
+                type,
+                source: context.source,
+                byteLength: arrayBuffer.byteLength,
+                elapsedMs: Math.round(performance.now() - context.startedAt),
+            });
+
             switch (type as FileType) {
                 case 'glb':
                 case 'gltf': {
+                    this._logLoad('gltf-parse-start', {
+                        uri: context.uri,
+                        type,
+                        source: context.source,
+                        elapsedMs: Math.round(
+                            performance.now() - context.startedAt,
+                        ),
+                    });
                     const gltf = await this._gltfLoader.parseAsync(
                         arrayBuffer,
                         '',
                     );
                     gltf.scene.animations = gltf.animations;
+                    this._logLoad('gltf-parse-complete', {
+                        uri: context.uri,
+                        type,
+                        source: context.source,
+                        childCount: getChildCount(gltf.scene),
+                        animationCount: Array.isArray(gltf.animations)
+                            ? gltf.animations.length
+                            : 0,
+                        elapsedMs: Math.round(
+                            performance.now() - context.startedAt,
+                        ),
+                    });
                     return gltf.scene;
                 }
                 case 'usdz': {
+                    this._logLoad('usdz-parse-start', {
+                        uri: context.uri,
+                        type,
+                        source: context.source,
+                        elapsedMs: Math.round(
+                            performance.now() - context.startedAt,
+                        ),
+                    });
                     const usdz = this._usdLoader.parse(arrayBuffer);
                     usdz.animations = [];
+                    this._logLoad('usdz-parse-complete', {
+                        uri: context.uri,
+                        type,
+                        source: context.source,
+                        childCount: getChildCount(usdz),
+                        elapsedMs: Math.round(
+                            performance.now() - context.startedAt,
+                        ),
+                    });
                     return usdz;
                 }
                 case 'step':
                 case 'stp': {
+                    this._logLoad('step-parse-start', {
+                        uri: context.uri,
+                        type,
+                        source: context.source,
+                        elapsedMs: Math.round(
+                            performance.now() - context.startedAt,
+                        ),
+                    });
                     const stp = await this._stepLoader.parseAsync(
                         arrayBuffer,
                         type as 'step' | 'stp',
                     );
                     stp.animations = [];
+                    this._logLoad('step-parse-complete', {
+                        uri: context.uri,
+                        type,
+                        source: context.source,
+                        childCount: getChildCount(stp),
+                        elapsedMs: Math.round(
+                            performance.now() - context.startedAt,
+                        ),
+                    });
                     return stp;
                 }
                 case 'iges':
                 case 'igs': {
+                    this._logLoad('iges-parse-start', {
+                        uri: context.uri,
+                        type,
+                        source: context.source,
+                        elapsedMs: Math.round(
+                            performance.now() - context.startedAt,
+                        ),
+                    });
                     const iges = await this._stepLoader.parseAsync(
                         arrayBuffer,
                         type as 'iges' | 'igs',
                     );
                     iges.animations = [];
+                    this._logLoad('iges-parse-complete', {
+                        uri: context.uri,
+                        type,
+                        source: context.source,
+                        childCount: getChildCount(iges),
+                        elapsedMs: Math.round(
+                            performance.now() - context.startedAt,
+                        ),
+                    });
                     return iges;
                 }
             }
         } catch (error) {
+            this._logLoadError('parse-failed', error, {
+                uri: context.uri,
+                type,
+                source: context.source,
+                elapsedMs: Math.round(performance.now() - context.startedAt),
+            });
             if (error instanceof Error) {
                 throw new ParseError(
                     `Failed to parse ${type} file: ${error.message}`,
