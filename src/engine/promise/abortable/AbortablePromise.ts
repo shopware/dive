@@ -4,8 +4,9 @@ type DIVEAbortablePromiseRun<T> = {
     settled: boolean;
 };
 
-export class DIVEAbortablePromise<T> {
+export class DIVEAbortablePromise<T> implements Promise<T> {
     public readonly isDIVEAbortablePromise: true = true;
+    public readonly [Symbol.toStringTag]: string = 'Promise';
 
     private _run: DIVEAbortablePromiseRun<T> | null = null;
 
@@ -46,6 +47,27 @@ export class DIVEAbortablePromise<T> {
         this._run = run;
 
         return run.promise;
+    }
+
+    public then<TResult1 = T, TResult2 = never>(
+        onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | null,
+        onrejected?:
+            | ((reason: unknown) => TResult2 | PromiseLike<TResult2>)
+            | null,
+    ): Promise<TResult1 | TResult2> {
+        return this.run().then(onfulfilled, onrejected);
+    }
+
+    public catch<TResult = never>(
+        onrejected?:
+            | ((reason: unknown) => TResult | PromiseLike<TResult>)
+            | null,
+    ): Promise<T | TResult> {
+        return this.run().catch(onrejected);
+    }
+
+    public finally(onfinally?: (() => void) | null): Promise<T> {
+        return this.run().finally(onfinally);
     }
 
     public abort(reason?: unknown): void {
