@@ -211,6 +211,38 @@ describe('Chunk', () => {
             expect(chunk.size).toBe(5);
         });
 
+        it('should handle empty reader chunks', async () => {
+            const read = vi
+                .fn()
+                .mockResolvedValueOnce({
+                    done: false,
+                    value: undefined,
+                })
+                .mockResolvedValueOnce({
+                    done: true,
+                    value: undefined,
+                });
+            const releaseLock = vi.fn();
+
+            vi.mocked(global.fetch).mockResolvedValueOnce({
+                ok: true,
+                body: {
+                    getReader: () => ({
+                        read,
+                        releaseLock,
+                    }),
+                },
+                arrayBuffer: async () => new ArrayBuffer(1),
+            } as unknown as Response);
+
+            const chunk = new Chunk(mockUri);
+            const result = await chunk.load();
+
+            expect(result.byteLength).toBe(0);
+            expect(chunk.size).toBe(0);
+            expect(releaseLock).toHaveBeenCalledTimes(1);
+        });
+
         it('should throw FileContentError when reader.read fails', async () => {
             const releaseLock = vi.fn();
 
@@ -231,6 +263,32 @@ describe('Chunk', () => {
 
             await expect(chunk.load()).rejects.toThrow(FileContentError);
             expect(releaseLock).toHaveBeenCalledTimes(1);
+        });
+
+        it('should read response headers through the helper', () => {
+            const chunk = new Chunk(mockUri);
+            const get = vi.fn().mockReturnValue('1024');
+            const response = {
+                headers: {
+                    get,
+                },
+            } as unknown as Pick<Response, 'headers'>;
+
+            expect(chunk['_getHeader'](response, 'content-length')).toBe(
+                '1024',
+            );
+            expect(get).toHaveBeenCalledWith('content-length');
+        });
+
+        it('should return null when response headers are unavailable', () => {
+            const chunk = new Chunk(mockUri);
+
+            expect(
+                chunk['_getHeader'](
+                    {} as unknown as Pick<Response, 'headers'>,
+                    'content-length',
+                ),
+            ).toBeNull();
         });
     });
 

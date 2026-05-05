@@ -93,4 +93,15 @@ describe('DIVEDeferredPromise', () => {
 
         await expect(handled).resolves.toBe('failed');
     });
+
+    it('should route finally handlers through the wrapped promise', async () => {
+        const deferred = new DIVEDeferredPromise<string>();
+        const onFinally = vi.fn();
+        const handled = deferred.finally(onFinally);
+
+        deferred.resolve('ready');
+
+        await expect(handled).resolves.toBe('ready');
+        expect(onFinally).toHaveBeenCalledTimes(1);
+    });
 });

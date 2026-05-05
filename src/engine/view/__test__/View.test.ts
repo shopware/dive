@@ -222,6 +222,71 @@ describe('DIVEView', () => {
             expect(mockRenderer.initAsync).toHaveBeenCalledTimes(1);
         });
 
+        it('should reject when initialization starts with an already aborted signal', async () => {
+            const OriginalAbortController = globalThis.AbortController;
+            class AlreadyAbortedAbortController {
+                public signal = {
+                    aborted: true,
+                } as AbortSignal;
+
+                public abort(): void {}
+            }
+            vi.stubGlobal('AbortController', AlreadyAbortedAbortController);
+
+            try {
+                await expect(view.initAsync()).rejects.toThrow(
+                    'DIVEView initialization aborted',
+                );
+            } finally {
+                vi.stubGlobal('AbortController', OriginalAbortController);
+            }
+
+            expect(
+                mockCanvasLifecycleManager.waitForHealthyCanvas,
+            ).not.toHaveBeenCalled();
+            expect(mockRenderer.initAsync).not.toHaveBeenCalled();
+        });
+
+        it('should propagate canvas readiness failures', async () => {
+            const error = new Error('canvas failed');
+            mockCanvasLifecycleManager.waitForHealthyCanvas.mockRejectedValue(
+                error,
+            );
+
+            await expect(view.initAsync()).rejects.toBe(error);
+            expect(mockRenderer.initAsync).not.toHaveBeenCalled();
+        });
+
+        it('should reject when the view is disposed after canvas readiness resolves', async () => {
+            let resolveCanvas:
+                | ((layout: DIVECanvasLayout | null) => void)
+                | undefined;
+            mockCanvasLifecycleManager.waitForHealthyCanvas.mockImplementation(
+                async () =>
+                    await new Promise<DIVECanvasLayout | null>((resolve) => {
+                        resolveCanvas = resolve;
+                    }),
+            );
+
+            const initPromise = view.initAsync();
+            await vi.waitFor(() => {
+                expect(
+                    mockCanvasLifecycleManager.waitForHealthyCanvas,
+                ).toHaveBeenCalledTimes(1);
+            });
+
+            view.dispose();
+            resolveCanvas?.({
+                width: 800,
+                height: 600,
+            });
+
+            await expect(initPromise).rejects.toThrow(
+                'DIVEView initialization aborted',
+            );
+            expect(mockRenderer.initAsync).not.toHaveBeenCalled();
+        });
+
         it('should abort completion when the view is disposed while renderer.init is pending', async () => {
             let resolveInit: (() => void) | undefined;
 
@@ -236,6 +301,10 @@ describe('DIVEView', () => {
             );
 
             const initPromise = view.initAsync();
+            await vi.waitFor(() => {
+                expect(mockRenderer.initAsync).toHaveBeenCalledTimes(1);
+            });
+
             view.dispose();
 
             resolveInit?.();

@@ -294,6 +294,16 @@ describe('DIVE', () => {
         expect(dive.mainView.canvas).toBeDefined();
     });
 
+    it('should expose the registered views', () => {
+        const dive = new DIVE({
+            autoStart: false,
+        });
+
+        expect(dive.views).toEqual([
+            dive.mainView,
+        ]);
+    });
+
     it('should resize', () => {
         const dive = new DIVE();
         expect(() => dive.mainView.onResize(800, 600)).not.toThrow();
@@ -377,6 +387,19 @@ describe('DIVE', () => {
         expect(dive.clock.startAsync).toHaveBeenCalledTimes(1);
     });
 
+    it('should skip startAsync after disposal', async () => {
+        const dive = new DIVE({
+            autoStart: false,
+        });
+
+        await dive.disposeAsync();
+        vi.mocked(dive.clock.startAsync).mockClear();
+
+        await dive.startAsync();
+
+        expect(dive.clock.startAsync).not.toHaveBeenCalled();
+    });
+
     it('should expose an explicit async start path', async () => {
         const dive = new DIVE({
             autoStart: false,
@@ -392,6 +415,19 @@ describe('DIVE', () => {
         const dive = new DIVE();
         dive.stop();
         expect(dive.clock.stop).toHaveBeenCalled();
+    });
+
+    it('should resolve repeated disposal without disposing twice', async () => {
+        const dive = new DIVE({
+            autoStart: false,
+        });
+
+        await dive.disposeAsync();
+        vi.mocked(dive.clock.dispose).mockClear();
+
+        await dive.disposeAsync();
+
+        expect(dive.clock.dispose).not.toHaveBeenCalled();
     });
 
     it('should start the clock before awaiting renderer init', async () => {

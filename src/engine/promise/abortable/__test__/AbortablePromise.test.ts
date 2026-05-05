@@ -117,4 +117,12 @@ describe('DIVEAbortablePromise', () => {
 
         await expect(handled).resolves.toBe('failed');
     });
+
+    it('should route finally handlers through the wrapped promise', async () => {
+        const onFinally = vi.fn();
+        const promise = new DIVEAbortablePromise(async () => 'ready');
+
+        await expect(promise.finally(onFinally)).resolves.toBe('ready');
+        expect(onFinally).toHaveBeenCalledTimes(1);
+    });
 });
