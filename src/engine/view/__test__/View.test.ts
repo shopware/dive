@@ -244,7 +244,7 @@ describe('DIVEView', () => {
             resolveInit?.();
             await initPromise;
 
-            expect(view['_initTask'].promise).toBeNull();
+            expect(view['_initTask']).toBeNull();
         });
 
         it('should abort the pending canvas wait when the view is disposed', async () => {
@@ -271,7 +271,7 @@ describe('DIVEView', () => {
 
             await view.initAsync();
 
-            expect(view['_initTask'].promise).toBeNull();
+            expect(view['_initTask']).toBeNull();
         });
     });
 
