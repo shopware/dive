@@ -40,6 +40,74 @@ export class Chunk {
         return response.headers?.get?.(headerName) ?? null;
     }
 
+    private _concatChunks(chunks: Uint8Array[], totalByteLength: number): ArrayBuffer {
+        const combined = new Uint8Array(totalByteLength);
+        let offset = 0;
+
+        for (const chunk of chunks) {
+            combined.set(chunk, offset);
+            offset += chunk.byteLength;
+        }
+
+        return combined.buffer;
+    }
+
+    private async _readBodyWithReader(
+        response: Response,
+        startedAt: number,
+    ): Promise<ArrayBuffer> {
+        const reader = response.body!.getReader();
+        const chunks: Uint8Array[] = [];
+        let totalByteLength = 0;
+        let chunkCount = 0;
+
+        this._logLoad('reader-start', {
+            uri: this._uri,
+            elapsedMs: Math.round(performance.now() - startedAt),
+        });
+
+        try {
+            while (true) {
+                const result = await reader.read();
+
+                if (result.done) {
+                    this._logLoad('reader-done', {
+                        uri: this._uri,
+                        chunkCount,
+                        totalByteLength,
+                        elapsedMs: Math.round(performance.now() - startedAt),
+                    });
+                    break;
+                }
+
+                const chunk = result.value ?? new Uint8Array(0);
+                chunks.push(chunk);
+                totalByteLength += chunk.byteLength;
+                chunkCount += 1;
+
+                this._logLoad('reader-chunk', {
+                    uri: this._uri,
+                    chunkCount,
+                    chunkByteLength: chunk.byteLength,
+                    totalByteLength,
+                    elapsedMs: Math.round(performance.now() - startedAt),
+                });
+            }
+        } finally {
+            reader.releaseLock();
+        }
+
+        const arrayBuffer = this._concatChunks(chunks, totalByteLength);
+        this._logLoad('reader-complete', {
+            uri: this._uri,
+            chunkCount,
+            totalByteLength,
+            elapsedMs: Math.round(performance.now() - startedAt),
+        });
+
+        return arrayBuffer;
+    }
+
     private _logLoad(stage: string, details: ChunkLoadLogDetails = {}): void {
         console.info('[Chunk.load]', stage, details);
     }
@@ -104,7 +172,22 @@ export class Chunk {
                 uri: this._uri,
                 elapsedMs: Math.round(performance.now() - startedAt),
             });
-            this._arrayBuffer = await response.arrayBuffer();
+
+            if (response.body?.getReader) {
+                this._arrayBuffer = await this._readBodyWithReader(response, startedAt);
+            } else {
+                this._logLoad('array-buffer-fallback-start', {
+                    uri: this._uri,
+                    elapsedMs: Math.round(performance.now() - startedAt),
+                });
+                this._arrayBuffer = await response.arrayBuffer();
+                this._logLoad('array-buffer-fallback-resolved', {
+                    uri: this._uri,
+                    byteLength: this._arrayBuffer.byteLength,
+                    elapsedMs: Math.round(performance.now() - startedAt),
+                });
+            }
+
             this._logLoad('array-buffer-resolved', {
                 uri: this._uri,
                 byteLength: this._arrayBuffer.byteLength,

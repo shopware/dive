@@ -156,6 +156,82 @@ describe('Chunk', () => {
                 expect(chunk.arrayBuffer).toBe(mockArrayBuffer);
             }
         });
+
+        it('should read from response.body reader when available', async () => {
+            const firstChunk = new Uint8Array([
+                1,
+                2,
+                3,
+            ]);
+            const secondChunk = new Uint8Array([
+                4,
+                5,
+            ]);
+            const read = vi
+                .fn()
+                .mockResolvedValueOnce({
+                    done: false,
+                    value: firstChunk,
+                })
+                .mockResolvedValueOnce({
+                    done: false,
+                    value: secondChunk,
+                })
+                .mockResolvedValueOnce({
+                    done: true,
+                    value: undefined,
+                });
+            const releaseLock = vi.fn();
+            const arrayBuffer = vi.fn();
+
+            vi.mocked(global.fetch).mockResolvedValueOnce({
+                ok: true,
+                body: {
+                    getReader: () => ({
+                        read,
+                        releaseLock,
+                    }),
+                },
+                arrayBuffer,
+            } as unknown as Response);
+
+            const chunk = new Chunk(mockUri);
+            const result = new Uint8Array(await chunk.load());
+
+            expect(Array.from(result)).toEqual([
+                1,
+                2,
+                3,
+                4,
+                5,
+            ]);
+            expect(read).toHaveBeenCalledTimes(3);
+            expect(releaseLock).toHaveBeenCalledTimes(1);
+            expect(arrayBuffer).not.toHaveBeenCalled();
+            expect(chunk.size).toBe(5);
+        });
+
+        it('should throw FileContentError when reader.read fails', async () => {
+            const releaseLock = vi.fn();
+
+            vi.mocked(global.fetch).mockResolvedValueOnce({
+                ok: true,
+                body: {
+                    getReader: () => ({
+                        read: async () => {
+                            throw new Error('Reader failed');
+                        },
+                        releaseLock,
+                    }),
+                },
+                arrayBuffer: async () => new ArrayBuffer(1),
+            } as unknown as Response);
+
+            const chunk = new Chunk(mockUri);
+
+            await expect(chunk.load()).rejects.toThrow(FileContentError);
+            expect(releaseLock).toHaveBeenCalledTimes(1);
+        });
     });
 
     describe('properties', () => {
