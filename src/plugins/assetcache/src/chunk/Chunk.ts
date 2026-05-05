@@ -42,20 +42,26 @@ export class Chunk {
 
     public async load(): Promise<ArrayBuffer> {
         const response = await fetch(this._uri);
+        console.log('response', response);
         if (!response.ok) {
             throw new NetworkError(this._uri);
         }
 
         try {
             this._arrayBuffer = await response.arrayBuffer();
+            console.log('this._arrayBuffer', this._arrayBuffer);
             this._size += this._arrayBuffer.byteLength;
+            console.log('this._size', this._size);
 
             this._updatedAt = new Date();
+            console.log('this._updatedAt', this._updatedAt);
         } catch (error) {
             throw new FileContentError(this._uri);
         }
 
+        console.log('this._resolve', this._resolve);
         this._resolve(this._arrayBuffer);
+        console.log('this._arrayBuffer', this._arrayBuffer);
         return this._arrayBuffer;
     }
 }
