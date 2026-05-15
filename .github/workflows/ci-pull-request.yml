@@ -131,11 +131,14 @@ jobs:
               env:
                   DEMO_APP_TOKEN: ${{ secrets.DEMO_APP_TOKEN }}
                   DEMO_APP_REPO: 'shopware/dive-demo'
+                  DEMO_APP_WORKFLOW: 'dive-pr-e2e.yaml'
+                  DEMO_APP_WORKFLOW_NAME: 'Test with DIVE PR'
                   PR_BRANCH: ${{ github.head_ref }}
                   PR_SHA: ${{ github.event.pull_request.head.sha }}
               run: |
                   set -e
                   echo "Triggering demo app E2E tests for PR: $PR_BRANCH"
+                  TRIGGERED_AFTER=$(date -u '+%Y-%m-%dT%H:%M:%SZ')
 
                   # Step 1: Trigger the workflow via repository_dispatch
                   RESPONSE=$(curl -X POST \
@@ -162,16 +165,26 @@ jobs:
                     sleep 2
                     WAIT_COUNT=$((WAIT_COUNT + 2))
 
-                    # Get the latest workflow run
+                    # Get the latest matching DIVE PR E2E workflow run. The repository
+                    # can have newer non-E2E runs, so don't poll the repo-wide latest run.
                     RUNS=$(curl -s -H "Authorization: token $DEMO_APP_TOKEN" \
-                      "https://api.github.com/repos/$DEMO_APP_REPO/actions/runs?per_page=1" | jq -r '.workflow_runs[0]')
+                      "https://api.github.com/repos/$DEMO_APP_REPO/actions/workflows/$DEMO_APP_WORKFLOW/runs?event=repository_dispatch&per_page=20")
 
-                    RUN_ID=$(echo $RUNS | jq -r '.id // empty')
+                    RUN_ID=$(echo "$RUNS" | jq -r \
+                      --arg workflow_name "$DEMO_APP_WORKFLOW_NAME" \
+                      --arg triggered_after "$TRIGGERED_AFTER" \
+                      '.workflow_runs // []
+                        | map(select(.name == $workflow_name and .event == "repository_dispatch" and .created_at >= $triggered_after))
+                        | sort_by(.created_at)
+                        | reverse
+                        | .[0].id // empty')
+                    RUN_CREATED_AT=$(echo "$RUNS" | jq -r \
+                      --argjson run_id "${RUN_ID:-0}" \
+                      '.workflow_runs // [] | map(select(.id == $run_id)) | .[0].created_at // empty')
 
                     if [ -n "$RUN_ID" ] && [ "$RUN_ID" != "null" ]; then
                       LOGS_URL="https://github.com/$DEMO_APP_REPO/actions/runs/$RUN_ID"
-                      echo "Found workflow run: $RUN_ID"
-                      echo "View logs at: $LOGS_URL"
+                      echo "Found workflow run: $RUN_ID ($DEMO_APP_WORKFLOW_NAME, created at $RUN_CREATED_AT)"
                       echo "::notice::E2E Tests started: $LOGS_URL"
                     fi
                   done
@@ -199,7 +212,7 @@ jobs:
                     if [ "$STATUS" == "completed" ]; then
                       # Get logs URL
                       LOGS_URL=$(echo $WORKFLOW_INFO | jq -r '.html_url')
-                      echo "Workflow completed! View logs: $LOGS_URL"
+                      echo "Workflow completed!"
 
                       if [ "$CONCLUSION" != "success" ]; then
                         echo "Demo app E2E tests failed!"
