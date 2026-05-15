@@ -175,31 +175,59 @@ export function DRACOWorker() {
         attributeType,
         attribute,
     ) {
-        const numComponents = attribute.num_components();
-        const numPoints = dracoGeometry.num_points();
-        const numValues = numPoints * numComponents;
-        const byteLength = numValues * attributeType.BYTES_PER_ELEMENT;
+        const count = dracoGeometry.num_points();
+        const itemSize = attribute.num_components();
         const dataType = getDracoDataType(draco, attributeType);
 
-        const ptr = draco._malloc(byteLength);
+        // Reference: https://registry.khronos.org/glTF/specs/2.0/glTF-2.0.html#data-alignment
+        const srcByteStride = itemSize * attributeType.BYTES_PER_ELEMENT;
+        const dstByteStride = Math.ceil(srcByteStride / 4) * 4;
+        const dstStride = dstByteStride / attributeType.BYTES_PER_ELEMENT;
+
+        const srcByteLength = count * srcByteStride;
+        const dstByteLength = count * dstByteStride;
+
+        const ptr = draco._malloc(srcByteLength);
         decoder.GetAttributeDataArrayForAllPoints(
             dracoGeometry,
             attribute,
             dataType,
-            byteLength,
+            srcByteLength,
             ptr,
         );
-        const array = new attributeType(
+        const srcArray = new attributeType(
             draco.HEAPF32.buffer,
             ptr,
-            numValues,
-        ).slice();
+            srcByteLength / attributeType.BYTES_PER_ELEMENT,
+        );
+        let dstArray;
+
+        if (srcByteStride === dstByteStride) {
+            dstArray = srcArray.slice();
+        } else {
+            dstArray = new attributeType(
+                dstByteLength / attributeType.BYTES_PER_ELEMENT,
+            );
+
+            let dstOffset = 0;
+
+            for (let i = 0, il = srcArray.length; i < il; i += itemSize) {
+                for (let j = 0; j < itemSize; j++) {
+                    dstArray[dstOffset + j] = srcArray[i + j];
+                }
+
+                dstOffset += dstStride;
+            }
+        }
+
         draco._free(ptr);
 
         return {
             name: attributeName,
-            array: array,
-            itemSize: numComponents,
+            count: count,
+            itemSize: itemSize,
+            array: dstArray,
+            stride: dstStride,
         };
     }
 
