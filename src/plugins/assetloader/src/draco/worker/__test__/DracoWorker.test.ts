@@ -402,6 +402,127 @@ describe('DRACOWorker', () => {
             expect(colorAttribute.vertexColorSpace).toBe('srgb');
         });
 
+        it('should include stride metadata for decoded attributes', async () => {
+            const buffer = new ArrayBuffer(16);
+            const taskConfig = {
+                attributeIDs: { position: 'POSITION' },
+                attributeTypes: { position: 'Float32Array' },
+                useUniqueIDs: false,
+            };
+
+            const message = {
+                data: {
+                    type: 'decode',
+                    id: 'test-id',
+                    buffer: buffer,
+                    taskConfig: taskConfig,
+                },
+            };
+
+            const mockAttributeArray = new Float32Array([
+                1,
+                2,
+                3,
+                4,
+                5,
+                6,
+                7,
+                8,
+                9,
+            ]);
+            mockDecoder.GetAttributeDataArrayForAllPoints.mockImplementation(
+                () => {
+                    const byteOffset = 1000;
+                    const length = 9;
+                    const view = new Float32Array(
+                        mockDraco.HEAPF32.buffer,
+                        byteOffset,
+                        length,
+                    );
+                    view.set(mockAttributeArray);
+                },
+            );
+
+            onmessageHandler(message as MessageEvent);
+
+            await new Promise((resolve) => setTimeout(resolve, 0));
+
+            const call = mockPostMessage.mock.calls[0];
+            const geometry = call[0].geometry;
+
+            expect(geometry.attributes[0]).toMatchObject({
+                name: 'position',
+                count: 3,
+                itemSize: 3,
+                stride: 3,
+            });
+        });
+
+        it('should pad attributes to a 4-byte stride when needed', async () => {
+            const buffer = new ArrayBuffer(16);
+            const taskConfig = {
+                attributeIDs: { color: 'COLOR' },
+                attributeTypes: { color: 'Uint8Array' },
+                useUniqueIDs: false,
+            };
+
+            const message = {
+                data: {
+                    type: 'decode',
+                    id: 'test-id',
+                    buffer: buffer,
+                    taskConfig: taskConfig,
+                },
+            };
+
+            mockGeometry.num_points.mockReturnValue(2);
+            mockAttribute.num_components.mockReturnValue(3);
+
+            mockDecoder.GetAttributeDataArrayForAllPoints.mockImplementation(
+                () => {
+                    const byteOffset = 1000;
+                    const view = new Uint8Array(
+                        mockDraco.HEAPF32.buffer,
+                        byteOffset,
+                        6,
+                    );
+                    view.set([
+                        1,
+                        2,
+                        3,
+                        4,
+                        5,
+                        6,
+                    ]);
+                },
+            );
+
+            onmessageHandler(message as MessageEvent);
+
+            await new Promise((resolve) => setTimeout(resolve, 0));
+
+            const call = mockPostMessage.mock.calls[0];
+            const geometry = call[0].geometry;
+            const colorAttribute = geometry.attributes[0];
+
+            expect(colorAttribute).toMatchObject({
+                name: 'color',
+                count: 2,
+                itemSize: 3,
+                stride: 4,
+            });
+            expect(Array.from(colorAttribute.array)).toEqual([
+                1,
+                2,
+                3,
+                0,
+                4,
+                5,
+                6,
+                0,
+            ]);
+        });
+
         it('should handle decoding errors', async () => {
             const buffer = new ArrayBuffer(16);
             const taskConfig = {
