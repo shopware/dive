@@ -5,7 +5,7 @@
  */
 export function getFileTypeFromUri(uri: string): string {
     // Extract the filename from the URI by taking everything after the last slash
-    const filename = uri.split('/').pop() || '';
+    const filename = (uri.split('/').pop() || '').split(/[?#]/)[0];
 
     // If the filename has no dots or ends with a dot, return empty string
     if (!filename.includes('.') || filename.endsWith('.')) {
@@ -13,6 +13,6 @@ export function getFileTypeFromUri(uri: string): string {
     }
 
     // Get the extension (everything after the last dot)
-    const extension = filename.split('.').pop()?.toLowerCase().split('?')[0];
+    const extension = filename.split('.').pop()?.toLowerCase();
     return extension || '';
 }

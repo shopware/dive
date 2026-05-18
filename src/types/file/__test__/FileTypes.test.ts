@@ -2,7 +2,9 @@ import { describe, it, expect } from 'vitest';
 import {
     FILE_TYPES,
     SUPPORTED_FILE_TYPES,
+    SUPPORTED_MIME_TYPES,
     type FileType,
+    type MimeType,
 } from '../FileTypes.ts';
 
 describe('FileTypes', () => {
@@ -10,6 +12,7 @@ describe('FileTypes', () => {
         it('should contain glb file type definition', () => {
             expect(FILE_TYPES.glb).toEqual({
                 key: 'glb',
+                mimeTypes: ['model/gltf-binary'],
                 extension: 'glb',
             });
         });
@@ -17,6 +20,7 @@ describe('FileTypes', () => {
         it('should contain gltf file type definition', () => {
             expect(FILE_TYPES.gltf).toEqual({
                 key: 'gltf',
+                mimeTypes: ['model/gltf+json'],
                 extension: 'gltf',
             });
         });
@@ -24,6 +28,7 @@ describe('FileTypes', () => {
         it('should contain usdz file type definition', () => {
             expect(FILE_TYPES.usdz).toEqual({
                 key: 'usdz',
+                mimeTypes: ['model/vnd.usdz+zip'],
                 extension: 'usdz',
             });
         });
@@ -31,6 +36,12 @@ describe('FileTypes', () => {
         it('should contain step file type definition', () => {
             expect(FILE_TYPES.step).toEqual({
                 key: 'step',
+                mimeTypes: [
+                    'application/step',
+                    'model/step',
+                    'model/step+zip',
+                    'model/step+xml',
+                ],
                 extension: 'step',
             });
         });
@@ -38,6 +49,12 @@ describe('FileTypes', () => {
         it('should contain stp file type definition', () => {
             expect(FILE_TYPES.stp).toEqual({
                 key: 'stp',
+                mimeTypes: [
+                    'application/step',
+                    'model/step',
+                    'model/step+zip',
+                    'model/step+xml',
+                ],
                 extension: 'stp',
             });
         });
@@ -45,6 +62,12 @@ describe('FileTypes', () => {
         it('should contain iges file type definition', () => {
             expect(FILE_TYPES.iges).toEqual({
                 key: 'iges',
+                mimeTypes: [
+                    'application/iges',
+                    'model/iges',
+                    'model/iges+zip',
+                    'model/iges+xml',
+                ],
                 extension: 'iges',
             });
         });
@@ -52,6 +75,12 @@ describe('FileTypes', () => {
         it('should contain igs file type definition', () => {
             expect(FILE_TYPES.igs).toEqual({
                 key: 'igs',
+                mimeTypes: [
+                    'application/iges',
+                    'model/iges',
+                    'model/iges+zip',
+                    'model/iges+xml',
+                ],
                 extension: 'igs',
             });
         });
@@ -78,6 +107,7 @@ describe('FileTypes', () => {
                 ]) => {
                     expect(value.key).toBe(key);
                     expect(value.extension).toBe(key);
+                    expect(value.mimeTypes.length).toBeGreaterThan(0);
                 },
             );
         });
@@ -87,6 +117,7 @@ describe('FileTypes', () => {
             const glbType = FILE_TYPES.glb;
             expect(glbType.key).toBe('glb');
             expect(glbType.extension).toBe('glb');
+            expect(glbType.mimeTypes).toEqual(['model/gltf-binary']);
         });
     });
 
@@ -136,6 +167,42 @@ describe('FileTypes', () => {
         });
     });
 
+    describe('SUPPORTED_MIME_TYPES', () => {
+        it('should contain all MIME types from FILE_TYPES', () => {
+            const expectedMimeTypes = Object.values(FILE_TYPES).flatMap(
+                (type) => type.mimeTypes,
+            );
+            expect(SUPPORTED_MIME_TYPES).toEqual(expectedMimeTypes);
+        });
+
+        it('should contain glb and gltf MIME types', () => {
+            expect(SUPPORTED_MIME_TYPES).toContain('model/gltf-binary');
+            expect(SUPPORTED_MIME_TYPES).toContain('model/gltf+json');
+        });
+
+        it('should contain usdz MIME type', () => {
+            expect(SUPPORTED_MIME_TYPES).toContain('model/vnd.usdz+zip');
+        });
+
+        it('should contain STEP MIME types', () => {
+            expect(SUPPORTED_MIME_TYPES).toContain('application/step');
+            expect(SUPPORTED_MIME_TYPES).toContain('model/step');
+            expect(SUPPORTED_MIME_TYPES).toContain('model/step+zip');
+            expect(SUPPORTED_MIME_TYPES).toContain('model/step+xml');
+        });
+
+        it('should contain IGES MIME types', () => {
+            expect(SUPPORTED_MIME_TYPES).toContain('application/iges');
+            expect(SUPPORTED_MIME_TYPES).toContain('model/iges');
+            expect(SUPPORTED_MIME_TYPES).toContain('model/iges+zip');
+            expect(SUPPORTED_MIME_TYPES).toContain('model/iges+xml');
+        });
+
+        it('should be a readonly array', () => {
+            expect(Array.isArray(SUPPORTED_MIME_TYPES)).toBe(true);
+        });
+    });
+
     describe('FileType type', () => {
         it('should include all keys from FILE_TYPES', () => {
             // This is a compile-time test, but we can verify the values exist
@@ -157,6 +224,28 @@ describe('FileTypes', () => {
         });
     });
 
+    describe('MimeType type', () => {
+        it('should include MIME types from FILE_TYPES', () => {
+            const validMimeTypes: MimeType[] = [
+                'model/gltf-binary',
+                'model/gltf+json',
+                'model/vnd.usdz+zip',
+                'application/step',
+                'model/step',
+                'model/step+zip',
+                'model/step+xml',
+                'application/iges',
+                'model/iges',
+                'model/iges+zip',
+                'model/iges+xml',
+            ];
+
+            validMimeTypes.forEach((mimeType) => {
+                expect(SUPPORTED_MIME_TYPES).toContain(mimeType);
+            });
+        });
+    });
+
     describe('Integration tests', () => {
         it('should maintain consistency between all exports', () => {
             // Verify that SUPPORTED_FILE_TYPES matches FILE_TYPES values
@@ -170,6 +259,11 @@ describe('FileTypes', () => {
 
             // SUPPORTED_FILE_TYPES should match the extensions
             expect(SUPPORTED_FILE_TYPES).toEqual(fileTypeExtensions);
+
+            // SUPPORTED_MIME_TYPES should match the configured MIME types
+            expect(SUPPORTED_MIME_TYPES).toEqual(
+                Object.values(FILE_TYPES).flatMap((type) => type.mimeTypes),
+            );
         });
 
         it('should be usable for file validation', () => {

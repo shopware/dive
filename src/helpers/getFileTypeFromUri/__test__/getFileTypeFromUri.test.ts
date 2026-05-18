@@ -12,6 +12,12 @@ describe('getFileTypeFromUri', () => {
         expect(getFileTypeFromUri('path/to/model.test.gltf')).toBe('gltf');
     });
 
+    it('should ignore query parameters and fragments', () => {
+        expect(getFileTypeFromUri('model.glb?version=1')).toBe('glb');
+        expect(getFileTypeFromUri('model.gltf#preview')).toBe('gltf');
+        expect(getFileTypeFromUri('model?file=model.glb')).toBe('');
+    });
+
     it('should return empty string for URIs without extension', () => {
         expect(getFileTypeFromUri('https://example.com/model')).toBe('');
         expect(getFileTypeFromUri('file:///path/to/model')).toBe('');
