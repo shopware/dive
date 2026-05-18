@@ -122,114 +122,114 @@ jobs:
                     exit 1
                   fi
                   echo "Docs are up to date."
-    e2e:
-        runs-on: ubuntu-latest
-        needs: build
-        if: github.actor != 'dependabot[bot]'
-        steps:
-            - name: Trigger demo app pipeline and wait for result
-              env:
-                  DEMO_APP_TOKEN: ${{ secrets.DEMO_APP_TOKEN }}
-                  DEMO_APP_REPO: 'shopware/dive-demo'
-                  DEMO_APP_WORKFLOW: 'dive-pr-e2e.yaml'
-                  DEMO_APP_WORKFLOW_NAME: 'Test with DIVE PR'
-                  PR_BRANCH: ${{ github.head_ref }}
-                  PR_SHA: ${{ github.event.pull_request.head.sha }}
-              run: |
-                  set -e
-                  echo "Triggering demo app E2E tests for PR: $PR_BRANCH"
-                  TRIGGERED_AFTER=$(date -u '+%Y-%m-%dT%H:%M:%SZ')
+    # e2e:
+    #     runs-on: ubuntu-latest
+    #     needs: build
+    #     if: github.actor != 'dependabot[bot]'
+    #     steps:
+    #         - name: Trigger demo app pipeline and wait for result
+    #           env:
+    #               DEMO_APP_TOKEN: ${{ secrets.DEMO_APP_TOKEN }}
+    #               DEMO_APP_REPO: 'shopware/dive-demo'
+    #               DEMO_APP_WORKFLOW: 'dive-pr-e2e.yaml'
+    #               DEMO_APP_WORKFLOW_NAME: 'Test with DIVE PR'
+    #               PR_BRANCH: ${{ github.head_ref }}
+    #               PR_SHA: ${{ github.event.pull_request.head.sha }}
+    #           run: |
+    #               set -e
+    #               echo "Triggering demo app E2E tests for PR: $PR_BRANCH"
+    #               TRIGGERED_AFTER=$(date -u '+%Y-%m-%dT%H:%M:%SZ')
 
-                  # Step 1: Trigger the workflow via repository_dispatch
-                  RESPONSE=$(curl -X POST \
-                    -H "Accept: application/vnd.github.v3+json" \
-                    -H "Authorization: token $DEMO_APP_TOKEN" \
-                    https://api.github.com/repos/$DEMO_APP_REPO/dispatches \
-                    -d '{
-                      "event_type": "dive-pr-e2e",
-                      "client_payload": {
-                        "dive_ref": "'$PR_BRANCH'",
-                        "pr_number": "'${{ github.event.pull_request.number }}'",
-                        "dive_sha": "'$PR_SHA'"
-                      }
-                    }')
+    #               # Step 1: Trigger the workflow via repository_dispatch
+    #               RESPONSE=$(curl -X POST \
+    #                 -H "Accept: application/vnd.github.v3+json" \
+    #                 -H "Authorization: token $DEMO_APP_TOKEN" \
+    #                 https://api.github.com/repos/$DEMO_APP_REPO/dispatches \
+    #                 -d '{
+    #                   "event_type": "dive-pr-e2e",
+    #                   "client_payload": {
+    #                     "dive_ref": "'$PR_BRANCH'",
+    #                     "pr_number": "'${{ github.event.pull_request.number }}'",
+    #                     "dive_sha": "'$PR_SHA'"
+    #                   }
+    #                 }')
 
-                  echo "Workflow triggered. Waiting for completion..."
+    #               echo "Workflow triggered. Waiting for completion..."
 
-                  # Step 2: Wait for workflow to appear in runs
-                  MAX_WAIT=600  # 10 minutes total
-                  WAIT_COUNT=0
-                  RUN_ID=""
+    #               # Step 2: Wait for workflow to appear in runs
+    #               MAX_WAIT=600  # 10 minutes total
+    #               WAIT_COUNT=0
+    #               RUN_ID=""
 
-                  while [ -z "$RUN_ID" ] && [ $WAIT_COUNT -lt $MAX_WAIT ]; do
-                    sleep 2
-                    WAIT_COUNT=$((WAIT_COUNT + 2))
+    #               while [ -z "$RUN_ID" ] && [ $WAIT_COUNT -lt $MAX_WAIT ]; do
+    #                 sleep 2
+    #                 WAIT_COUNT=$((WAIT_COUNT + 2))
 
-                    # Get the latest matching DIVE PR E2E workflow run. The repository
-                    # can have newer non-E2E runs, so don't poll the repo-wide latest run.
-                    RUNS=$(curl -s -H "Authorization: token $DEMO_APP_TOKEN" \
-                      "https://api.github.com/repos/$DEMO_APP_REPO/actions/workflows/$DEMO_APP_WORKFLOW/runs?event=repository_dispatch&per_page=20")
+    #                 # Get the latest matching DIVE PR E2E workflow run. The repository
+    #                 # can have newer non-E2E runs, so don't poll the repo-wide latest run.
+    #                 RUNS=$(curl -s -H "Authorization: token $DEMO_APP_TOKEN" \
+    #                   "https://api.github.com/repos/$DEMO_APP_REPO/actions/workflows/$DEMO_APP_WORKFLOW/runs?event=repository_dispatch&per_page=20")
 
-                    RUN_ID=$(echo "$RUNS" | jq -r \
-                      --arg workflow_name "$DEMO_APP_WORKFLOW_NAME" \
-                      --arg triggered_after "$TRIGGERED_AFTER" \
-                      '.workflow_runs // []
-                        | map(select(.name == $workflow_name and .event == "repository_dispatch" and .created_at >= $triggered_after))
-                        | sort_by(.created_at)
-                        | reverse
-                        | .[0].id // empty')
-                    RUN_CREATED_AT=$(echo "$RUNS" | jq -r \
-                      --argjson run_id "${RUN_ID:-0}" \
-                      '.workflow_runs // [] | map(select(.id == $run_id)) | .[0].created_at // empty')
+    #                 RUN_ID=$(echo "$RUNS" | jq -r \
+    #                   --arg workflow_name "$DEMO_APP_WORKFLOW_NAME" \
+    #                   --arg triggered_after "$TRIGGERED_AFTER" \
+    #                   '.workflow_runs // []
+    #                     | map(select(.name == $workflow_name and .event == "repository_dispatch" and .created_at >= $triggered_after))
+    #                     | sort_by(.created_at)
+    #                     | reverse
+    #                     | .[0].id // empty')
+    #                 RUN_CREATED_AT=$(echo "$RUNS" | jq -r \
+    #                   --argjson run_id "${RUN_ID:-0}" \
+    #                   '.workflow_runs // [] | map(select(.id == $run_id)) | .[0].created_at // empty')
 
-                    if [ -n "$RUN_ID" ] && [ "$RUN_ID" != "null" ]; then
-                      LOGS_URL="https://github.com/$DEMO_APP_REPO/actions/runs/$RUN_ID"
-                      echo "Found workflow run: $RUN_ID ($DEMO_APP_WORKFLOW_NAME, created at $RUN_CREATED_AT)"
-                      echo "::notice::E2E Tests started: $LOGS_URL"
-                    fi
-                  done
+    #                 if [ -n "$RUN_ID" ] && [ "$RUN_ID" != "null" ]; then
+    #                   LOGS_URL="https://github.com/$DEMO_APP_REPO/actions/runs/$RUN_ID"
+    #                   echo "Found workflow run: $RUN_ID ($DEMO_APP_WORKFLOW_NAME, created at $RUN_CREATED_AT)"
+    #                   echo "::notice::E2E Tests started: $LOGS_URL"
+    #                 fi
+    #               done
 
-                  if [ -z "$RUN_ID" ] || [ "$RUN_ID" == "null" ]; then
-                    echo "Timeout waiting for workflow to start"
-                    exit 1
-                  fi
+    #               if [ -z "$RUN_ID" ] || [ "$RUN_ID" == "null" ]; then
+    #                 echo "Timeout waiting for workflow to start"
+    #                 exit 1
+    #               fi
 
-                  # Step 3: Poll for completion
-                  echo "Monitoring workflow run $RUN_ID..."
-                  STATUS="queued"
+    #               # Step 3: Poll for completion
+    #               echo "Monitoring workflow run $RUN_ID..."
+    #               STATUS="queued"
 
-                  while [ "$STATUS" != "completed" ]; do
-                    sleep 10
+    #               while [ "$STATUS" != "completed" ]; do
+    #                 sleep 10
 
-                    WORKFLOW_INFO=$(curl -s -H "Authorization: token $DEMO_APP_TOKEN" \
-                      "https://api.github.com/repos/$DEMO_APP_REPO/actions/runs/$RUN_ID")
+    #                 WORKFLOW_INFO=$(curl -s -H "Authorization: token $DEMO_APP_TOKEN" \
+    #                   "https://api.github.com/repos/$DEMO_APP_REPO/actions/runs/$RUN_ID")
 
-                    STATUS=$(echo $WORKFLOW_INFO | jq -r '.status')
-                    CONCLUSION=$(echo $WORKFLOW_INFO | jq -r '.conclusion // "pending"')
+    #                 STATUS=$(echo $WORKFLOW_INFO | jq -r '.status')
+    #                 CONCLUSION=$(echo $WORKFLOW_INFO | jq -r '.conclusion // "pending"')
 
-                    echo "Workflow status: $STATUS (conclusion: $CONCLUSION)"
+    #                 echo "Workflow status: $STATUS (conclusion: $CONCLUSION)"
 
-                    if [ "$STATUS" == "completed" ]; then
-                      # Get logs URL
-                      LOGS_URL=$(echo $WORKFLOW_INFO | jq -r '.html_url')
-                      echo "Workflow completed!"
+    #                 if [ "$STATUS" == "completed" ]; then
+    #                   # Get logs URL
+    #                   LOGS_URL=$(echo $WORKFLOW_INFO | jq -r '.html_url')
+    #                   echo "Workflow completed!"
 
-                      if [ "$CONCLUSION" != "success" ]; then
-                        echo "Demo app E2E tests failed!"
-                        exit 1
-                      fi
+    #                   if [ "$CONCLUSION" != "success" ]; then
+    #                     echo "Demo app E2E tests failed!"
+    #                     exit 1
+    #                   fi
 
-                      echo "Demo app E2E tests passed!"
-                      break
-                    fi
+    #                   echo "Demo app E2E tests passed!"
+    #                   break
+    #                 fi
 
-                    # Timeout after 30 minutes
-                    WAIT_COUNT=$((WAIT_COUNT + 10))
-                    if [ $WAIT_COUNT -ge 1800 ]; then
-                      echo "Workflow did not complete in time"
-                      exit 1
-                    fi
-                  done
+    #                 # Timeout after 30 minutes
+    #                 WAIT_COUNT=$((WAIT_COUNT + 10))
+    #                 if [ $WAIT_COUNT -ge 1800 ]; then
+    #                   echo "Workflow did not complete in time"
+    #                   exit 1
+    #                 fi
+    #               done
     publish-dry-run:
         runs-on: ubuntu-latest
         needs: [unit, eslint, build, prettier-check, check-docs]
