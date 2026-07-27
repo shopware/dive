@@ -4,13 +4,17 @@ updates:
       directory: '/'
       schedule:
           interval: 'weekly'
-      open-pull-requests-limit: 0 # Disable scheduled version updates, only allow security updates
+          day: sunday
       labels:
           - 'dependencies'
       commit-message:
-          prefix: 'chore'
+          prefix: 'chore(deps): '
           include: 'scope'
+      ignore:
+          - dependency-name: '*'
+            update-types:
+                - 'version-update:semver-major'
       groups:
-          dependencies:
+          all-npm:
               patterns:
                   - '*'
