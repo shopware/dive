@@ -7,11 +7,7 @@
     "arrowParens": "always",
     "htmlWhitespaceSensitivity": "css",
     "bracketSpacing": true,
-    "multilineArraysWrapThreshold": 1,
     "endOfLine": "lf",
-    "plugins": [
-        "prettier-plugin-multiline-arrays"
-    ],
     "overrides": [
         {
             "files": "*.md",

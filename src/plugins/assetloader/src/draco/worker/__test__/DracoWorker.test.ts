@@ -175,24 +175,9 @@ describe('DRACOWorker', () => {
 
             // Setup mocks for successful decoding
             const mockAttributeArray = new Float32Array([
-                1,
-                2,
-                3,
-                4,
-                5,
-                6,
-                7,
-                8,
-                9,
+                1, 2, 3, 4, 5, 6, 7, 8, 9,
             ]);
-            const mockIndexArray = new Uint32Array([
-                0,
-                1,
-                2,
-                3,
-                4,
-                5,
-            ]);
+            const mockIndexArray = new Uint32Array([0, 1, 2, 3, 4, 5]);
 
             mockDecoder.GetAttributeDataArrayForAllPoints.mockImplementation(
                 () => {
@@ -261,14 +246,7 @@ describe('DRACOWorker', () => {
                 },
             };
 
-            const mockAttributeArray = new Float32Array([
-                1,
-                2,
-                3,
-                4,
-                5,
-                6,
-            ]);
+            const mockAttributeArray = new Float32Array([1, 2, 3, 4, 5, 6]);
             mockDecoder.GetAttributeDataArrayForAllPoints.mockImplementation(
                 () => {
                     const byteOffset = 1000;
@@ -319,11 +297,7 @@ describe('DRACOWorker', () => {
 
             mockDecoder.GetAttributeByUniqueId.mockReturnValue(mockAttribute);
 
-            const mockAttributeArray = new Float32Array([
-                1,
-                2,
-                3,
-            ]);
+            const mockAttributeArray = new Float32Array([1, 2, 3]);
             mockDecoder.GetAttributeDataArrayForAllPoints.mockImplementation(
                 () => {
                     const byteOffset = 1000;
@@ -366,15 +340,7 @@ describe('DRACOWorker', () => {
             };
 
             const mockAttributeArray = new Float32Array([
-                1,
-                0,
-                0,
-                0,
-                1,
-                0,
-                0,
-                0,
-                1,
+                1, 0, 0, 0, 1, 0, 0, 0, 1,
             ]);
             mockDecoder.GetAttributeDataArrayForAllPoints.mockImplementation(
                 () => {
@@ -420,15 +386,7 @@ describe('DRACOWorker', () => {
             };
 
             const mockAttributeArray = new Float32Array([
-                1,
-                2,
-                3,
-                4,
-                5,
-                6,
-                7,
-                8,
-                9,
+                1, 2, 3, 4, 5, 6, 7, 8, 9,
             ]);
             mockDecoder.GetAttributeDataArrayForAllPoints.mockImplementation(
                 () => {
@@ -486,14 +444,7 @@ describe('DRACOWorker', () => {
                         byteOffset,
                         6,
                     );
-                    view.set([
-                        1,
-                        2,
-                        3,
-                        4,
-                        5,
-                        6,
-                    ]);
+                    view.set([1, 2, 3, 4, 5, 6]);
                 },
             );
 
@@ -512,14 +463,7 @@ describe('DRACOWorker', () => {
                 stride: 4,
             });
             expect(Array.from(colorAttribute.array)).toEqual([
-                1,
-                2,
-                3,
-                0,
-                4,
-                5,
-                6,
-                0,
+                1, 2, 3, 0, 4, 5, 6, 0,
             ]);
         });
 
@@ -616,15 +560,7 @@ describe('DRACOWorker', () => {
             };
 
             const mockAttributeArray = new Float32Array([
-                1,
-                2,
-                3,
-                4,
-                5,
-                6,
-                7,
-                8,
-                9,
+                1, 2, 3, 4, 5, 6, 7, 8, 9,
             ]);
             mockDecoder.GetAttributeDataArrayForAllPoints.mockImplementation(
                 () => {
@@ -707,17 +643,7 @@ describe('DRACOWorker', () => {
                             length,
                         );
                         view.set(
-                            type === Float32Array
-                                ? [
-                                      1.0,
-                                      2.0,
-                                      3.0,
-                                  ]
-                                : [
-                                      1,
-                                      2,
-                                      3,
-                                  ],
+                            type === Float32Array ? [1.0, 2.0, 3.0] : [1, 2, 3],
                         );
                     },
                 );
@@ -773,11 +699,7 @@ describe('DRACOWorker', () => {
                 },
             };
 
-            const mockAttributeArray = new Float32Array([
-                1,
-                2,
-                3,
-            ]);
+            const mockAttributeArray = new Float32Array([1, 2, 3]);
             mockDecoder.GetAttributeDataArrayForAllPoints.mockImplementation(
                 () => {
                     const byteOffset = 1000;

@@ -67,10 +67,7 @@ function deepClone<T>(obj: T, visited = new WeakMap()): T {
         const clonedMap = new Map();
         visited.set(obj as object, clonedMap as T);
 
-        for (const [
-            key,
-            value,
-        ] of obj) {
+        for (const [key, value] of obj) {
             clonedMap.set(deepClone(key, visited), deepClone(value, visited));
         }
         return clonedMap as T;

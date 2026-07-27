@@ -79,22 +79,13 @@ export class Toolbox {
 
         // Create and register all tools
         this._tools = new Map<ToolType, Tool>([
-            [
-                'hover',
-                new HoverTool(),
-            ],
-            [
-                'select',
-                new SelectTool(this._selectionState),
-            ],
+            ['hover', new HoverTool()],
+            ['select', new SelectTool(this._selectionState)],
             [
                 'transform',
                 new TransformTool(scene, controller, this._selectionState),
             ],
-            [
-                'drag',
-                new DragTool(controller),
-            ],
+            ['drag', new DragTool(controller)],
         ]);
 
         // Bind event handlers

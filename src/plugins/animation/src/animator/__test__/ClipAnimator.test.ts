@@ -94,11 +94,7 @@ describe('ClipAnimator', () => {
 
     describe('Clip Names', () => {
         it('should return all clip names', () => {
-            expect(animator.clipNames).toEqual([
-                'Walk',
-                'Idle',
-                'Jump',
-            ]);
+            expect(animator.clipNames).toEqual(['Walk', 'Idle', 'Jump']);
         });
 
         it('should return null for currentClipName when idle', () => {

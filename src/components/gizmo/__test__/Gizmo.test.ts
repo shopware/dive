@@ -119,11 +119,7 @@ describe('DIVEGizmo', () => {
         });
 
         it('should accept all valid modes', () => {
-            const modes: DIVEGizmoMode[] = [
-                'translate',
-                'rotate',
-                'scale',
-            ];
+            const modes: DIVEGizmoMode[] = ['translate', 'rotate', 'scale'];
 
             modes.forEach((mode) => {
                 expect(() => {

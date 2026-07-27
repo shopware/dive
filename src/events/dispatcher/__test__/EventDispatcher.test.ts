@@ -170,11 +170,7 @@ describe('dive/events/executor/EventDispatcher', () => {
 
             eventExecutor.dispatchEvent('user-click', { x: 0, y: 0 });
 
-            expect(callOrder).toEqual([
-                1,
-                2,
-                3,
-            ]);
+            expect(callOrder).toEqual([1, 2, 3]);
         });
     });
 

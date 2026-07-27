@@ -18,14 +18,9 @@ const mockRender = vi.fn();
 const mockToDataURL = vi.fn().mockReturnValue('data:image/png;base64,test');
 const mockSetRenderTarget = vi.fn();
 const mockGetRenderTarget = vi.fn().mockReturnValue(null);
-const mockReadRenderTargetPixelsAsync = vi.fn().mockResolvedValue(
-    new Uint8Array([
-        255,
-        0,
-        0,
-        255,
-    ]),
-);
+const mockReadRenderTargetPixelsAsync = vi
+    .fn()
+    .mockResolvedValue(new Uint8Array([255, 0, 0, 255]));
 const mockRendererInit = vi.fn().mockResolvedValue(undefined);
 const mockCreateImageData = vi.fn((width: number, height: number) => ({
     data: new Uint8ClampedArray(width * height * 4),

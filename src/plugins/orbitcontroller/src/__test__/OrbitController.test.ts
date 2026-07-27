@@ -163,10 +163,7 @@ describe('modules/controller/orbit/OrbitController', () => {
         it('should handle array of dom elements', () => {
             const canvas1 = document.createElement('canvas');
             const canvas2 = document.createElement('canvas');
-            controller = new OrbitController(mockCamera, [
-                canvas1,
-                canvas2,
-            ]);
+            controller = new OrbitController(mockCamera, [canvas1, canvas2]);
             expect(controller.domElements).toHaveLength(2);
         });
 
@@ -2253,10 +2250,7 @@ describe('modules/controller/orbit/OrbitController', () => {
             const pointer1 = { pointerId: 1, pointerType: 'mouse' };
             const pointer2 = { pointerId: 2, pointerType: 'mouse' };
 
-            (controller as any).pointers = [
-                pointer1,
-                pointer2,
-            ];
+            (controller as any).pointers = [pointer1, pointer2];
 
             const secondPointer = (controller as any).getSecondPointer(
                 pointer1,
@@ -2686,22 +2680,7 @@ describe('modules/controller/orbit/OrbitController', () => {
             // Mock the matrix to ensure panLeft actually changes the offset
             const mockMatrix = new Matrix4();
             mockMatrix.elements = [
-                1,
-                0,
-                0,
-                0,
-                0,
-                1,
-                0,
-                0,
-                0,
-                0,
-                1,
-                0,
-                0,
-                0,
-                0,
-                1,
+                1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1,
             ];
 
             (controller as any).panLeft(-10, mockMatrix);
@@ -2714,22 +2693,7 @@ describe('modules/controller/orbit/OrbitController', () => {
             // Mock the matrix to ensure panUp actually changes the offset
             const mockMatrix = new Matrix4();
             mockMatrix.elements = [
-                1,
-                0,
-                0,
-                0,
-                0,
-                1,
-                0,
-                0,
-                0,
-                0,
-                1,
-                0,
-                0,
-                0,
-                0,
-                1,
+                1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1,
             ];
 
             (controller as any).panUp(-10, mockMatrix);
@@ -2800,16 +2764,7 @@ describe('modules/controller/orbit/OrbitController', () => {
 
     describe('State Management - Extended', () => {
         it('should handle state transitions with all states', () => {
-            const states = [
-                -1,
-                0,
-                1,
-                2,
-                3,
-                4,
-                5,
-                6,
-            ];
+            const states = [-1, 0, 1, 2, 3, 4, 5, 6];
 
             states.forEach((state) => {
                 (controller as any).state = state;

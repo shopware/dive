@@ -34,6 +34,4 @@ export type SceneLightSchema = BaseLightSchema & {
 type LightTypeSchema = 'ambient' | 'point' | 'scene';
 
 export type LightSchema =
-    | AmbientLightSchema
-    | PointLightSchema
-    | SceneLightSchema;
+    AmbientLightSchema | PointLightSchema | SceneLightSchema;

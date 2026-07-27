@@ -63,12 +63,7 @@ describe('deepClone', () => {
 
     describe('arrays', () => {
         it('should clone a simple array', () => {
-            const arr = [
-                1,
-                2,
-                3,
-                'hello',
-            ];
+            const arr = [1, 2, 3, 'hello'];
             const cloned = deepClone(arr);
 
             expect(cloned).toEqual(arr);
@@ -78,17 +73,8 @@ describe('deepClone', () => {
         it('should clone nested arrays', () => {
             const arr: (number | (number | number[])[])[] = [
                 1,
-                [
-                    2,
-                    3,
-                ],
-                [
-                    4,
-                    [
-                        5,
-                        6,
-                    ],
-                ],
+                [2, 3],
+                [4, [5, 6]],
             ];
             const cloned = deepClone(arr);
 
@@ -102,10 +88,7 @@ describe('deepClone', () => {
         });
 
         it('should clone arrays with objects', () => {
-            const arr = [
-                { a: 1 },
-                { b: 2 },
-            ];
+            const arr = [{ a: 1 }, { b: 2 }];
             const cloned = deepClone(arr);
 
             expect(cloned).toEqual(arr);
@@ -141,14 +124,8 @@ describe('deepClone', () => {
     describe('Map objects', () => {
         it('should clone Map objects', () => {
             const map = new Map<string, string | { nested: string }>([
-                [
-                    'key1',
-                    'value1',
-                ],
-                [
-                    'key2',
-                    { nested: 'value' },
-                ],
+                ['key1', 'value1'],
+                ['key2', { nested: 'value' }],
             ]);
             const cloned = deepClone(map);
 
@@ -162,11 +139,7 @@ describe('deepClone', () => {
 
     describe('Set objects', () => {
         it('should clone Set objects', () => {
-            const set = new Set([
-                1,
-                'hello',
-                { nested: 'value' },
-            ]);
+            const set = new Set([1, 'hello', { nested: 'value' }]);
             const cloned = deepClone(set);
 
             expect(cloned).not.toBe(set);
@@ -279,10 +252,7 @@ describe('deepClone', () => {
         });
 
         it('should handle circular references in arrays', () => {
-            const arr: any[] = [
-                1,
-                2,
-            ];
+            const arr: any[] = [1, 2];
             arr.push(arr);
 
             const cloned = deepClone(arr);
@@ -414,28 +384,11 @@ describe('deepClone', () => {
                 boolean: true,
                 date: new Date('2023-01-01'),
                 regex: /test/gi,
-                array: [
-                    1,
-                    2,
-                    { nested: true },
-                ],
-                map: new Map([
-                    [
-                        'key',
-                        'value',
-                    ],
-                ]),
-                set: new Set([
-                    1,
-                    2,
-                    3,
-                ]),
+                array: [1, 2, { nested: true }],
+                map: new Map([['key', 'value']]),
+                set: new Set([1, 2, 3]),
                 instance: new ComplexClass({
-                    values: [
-                        1,
-                        2,
-                        3,
-                    ],
+                    values: [1, 2, 3],
                 }),
                 nested: {
                     deep: {
@@ -461,11 +414,7 @@ describe('deepClone', () => {
             expect(cloned.nested).not.toBe(complex.nested);
 
             // Verify functionality is preserved
-            expect(cloned.instance.process()).toEqual([
-                2,
-                4,
-                6,
-            ]);
+            expect(cloned.instance.process()).toEqual([2, 4, 6]);
             expect(cloned.instance instanceof ComplexClass).toBe(true);
         });
     });

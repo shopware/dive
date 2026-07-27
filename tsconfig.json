@@ -18,12 +18,8 @@
         "baseUrl": ".",
         "paths": {
             "@shopware-ag/dive": ["./src/index.ts"],
-            "@shopware-ag/dive/animation": [
-                "src/plugins/animation/index.ts"
-            ],
-            "@shopware-ag/dive/ar": [
-                "src/plugins/ar/index.ts"
-            ],
+            "@shopware-ag/dive/animation": ["src/plugins/animation/index.ts"],
+            "@shopware-ag/dive/ar": ["src/plugins/ar/index.ts"],
             "@shopware-ag/dive/assetconverter": [
                 "src/plugins/assetconverter/index.ts"
             ],
@@ -33,9 +29,7 @@
             "@shopware-ag/dive/assetloader": [
                 "src/plugins/assetloader/index.ts"
             ],
-            "@shopware-ag/dive/assetcache": [
-                "src/plugins/assetcache/index.ts"
-            ],
+            "@shopware-ag/dive/assetcache": ["src/plugins/assetcache/index.ts"],
             "@shopware-ag/dive/orientationdisplay": [
                 "src/plugins/orientationdisplay/index.ts"
             ],
@@ -45,31 +39,13 @@
             "@shopware-ag/dive/orbitcontroller": [
                 "src/plugins/orbitcontroller/index.ts"
             ],
-            "@shopware-ag/dive/quickview": [
-                "src/plugins/quickview/index.ts"
-            ],
-            "@shopware-ag/dive/shader": [
-                "src/plugins/shader/index.ts"
-            ],
-            "@shopware-ag/dive/state": [
-                "src/plugins/state/index.ts"
-            ],
-            "@shopware-ag/dive/systeminfo": [
-                "src/plugins/systeminfo/index.ts"
-            ],
-            "@shopware-ag/dive/toolbox": [
-                "src/plugins/toolbox/index.ts"
-            ]
+            "@shopware-ag/dive/quickview": ["src/plugins/quickview/index.ts"],
+            "@shopware-ag/dive/shader": ["src/plugins/shader/index.ts"],
+            "@shopware-ag/dive/state": ["src/plugins/state/index.ts"],
+            "@shopware-ag/dive/systeminfo": ["src/plugins/systeminfo/index.ts"],
+            "@shopware-ag/dive/toolbox": ["src/plugins/toolbox/index.ts"]
         }
     },
-    "include": [
-        "src/**/*",
-        "docs/**/*",
-        "scripts/**/*.ts",
-        "vite.config*.ts"
-    ],
-    "exclude": [
-        "node_modules",
-        "build"
-    ]
+    "include": ["src/**/*", "docs/**/*", "scripts/**/*.ts", "vite.config*.ts"],
+    "exclude": ["node_modules", "build"]
 }

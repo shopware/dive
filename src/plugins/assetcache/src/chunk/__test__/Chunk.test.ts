@@ -133,12 +133,7 @@ describe('Chunk', () => {
         });
 
         it('should handle different array buffer sizes', async () => {
-            const testSizes = [
-                0,
-                1,
-                1024,
-                1024 * 1024,
-            ];
+            const testSizes = [0, 1, 1024, 1024 * 1024];
 
             for (const size of testSizes) {
                 vi.clearAllMocks();
@@ -158,15 +153,8 @@ describe('Chunk', () => {
         });
 
         it('should read from response.body reader when available', async () => {
-            const firstChunk = new Uint8Array([
-                1,
-                2,
-                3,
-            ]);
-            const secondChunk = new Uint8Array([
-                4,
-                5,
-            ]);
+            const firstChunk = new Uint8Array([1, 2, 3]);
+            const secondChunk = new Uint8Array([4, 5]);
             const read = vi
                 .fn()
                 .mockResolvedValueOnce({
@@ -198,13 +186,7 @@ describe('Chunk', () => {
             const chunk = new Chunk(mockUri);
             const result = new Uint8Array(await chunk.load());
 
-            expect(Array.from(result)).toEqual([
-                1,
-                2,
-                3,
-                4,
-                5,
-            ]);
+            expect(Array.from(result)).toEqual([1, 2, 3, 4, 5]);
             expect(read).toHaveBeenCalledTimes(3);
             expect(releaseLock).toHaveBeenCalledTimes(1);
             expect(arrayBuffer).not.toHaveBeenCalled();

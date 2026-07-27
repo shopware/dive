@@ -206,10 +206,7 @@ describe('DIVEView', () => {
             expect(mockRenderer.initAsync).toHaveBeenCalledTimes(1);
 
             resolveInit?.();
-            await Promise.all([
-                firstInit,
-                secondInit,
-            ]);
+            await Promise.all([firstInit, secondInit]);
 
             expect(mockRenderer.initAsync).toHaveBeenCalledTimes(1);
         });
@@ -259,8 +256,7 @@ describe('DIVEView', () => {
 
         it('should reject when the view is disposed after canvas readiness resolves', async () => {
             let resolveCanvas:
-                | ((layout: DIVECanvasLayout | null) => void)
-                | undefined;
+                ((layout: DIVECanvasLayout | null) => void) | undefined;
             mockCanvasLifecycleManager.waitForHealthyCanvas.mockImplementation(
                 async () =>
                     await new Promise<DIVECanvasLayout | null>((resolve) => {

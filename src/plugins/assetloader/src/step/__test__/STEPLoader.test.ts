@@ -338,45 +338,17 @@ describe('STEPLoader', () => {
             meshes: [
                 {
                     name: 'TestMesh',
-                    color: [
-                        0.8,
-                        0.2,
-                        0.1,
-                    ] as [number, number, number],
+                    color: [0.8, 0.2, 0.1] as [number, number, number],
                     attributes: {
                         position: {
-                            array: [
-                                0,
-                                0,
-                                0,
-                                1,
-                                0,
-                                0,
-                                0,
-                                1,
-                                0,
-                            ],
+                            array: [0, 0, 0, 1, 0, 0, 0, 1, 0],
                         },
                         normal: {
-                            array: [
-                                0,
-                                0,
-                                1,
-                                0,
-                                0,
-                                1,
-                                0,
-                                0,
-                                1,
-                            ],
+                            array: [0, 0, 1, 0, 0, 1, 0, 0, 1],
                         },
                     },
                     index: {
-                        array: [
-                            0,
-                            1,
-                            2,
-                        ],
+                        array: [0, 1, 2],
                     },
                 },
             ],
@@ -650,17 +622,7 @@ describe('STEPLoader', () => {
                     name: 'Mesh0',
                     attributes: {
                         position: {
-                            array: [
-                                0,
-                                0,
-                                0,
-                                1,
-                                0,
-                                0,
-                                0,
-                                1,
-                                0,
-                            ],
+                            array: [0, 0, 0, 1, 0, 0, 0, 1, 0],
                         },
                     },
                 },
@@ -722,10 +684,7 @@ describe('STEPLoader', () => {
         it('should handle multiple mesh indices', () => {
             const node = {
                 name: 'Part',
-                meshes: [
-                    0,
-                    1,
-                ],
+                meshes: [0, 1],
                 children: [],
             };
             const meshes = [
@@ -733,11 +692,7 @@ describe('STEPLoader', () => {
                     name: 'Mesh0',
                     attributes: {
                         position: {
-                            array: [
-                                0,
-                                0,
-                                0,
-                            ],
+                            array: [0, 0, 0],
                         },
                     },
                 },
@@ -745,11 +700,7 @@ describe('STEPLoader', () => {
                     name: 'Mesh1',
                     attributes: {
                         position: {
-                            array: [
-                                1,
-                                1,
-                                1,
-                            ],
+                            array: [1, 1, 1],
                         },
                     },
                 },
@@ -775,17 +726,7 @@ describe('STEPLoader', () => {
                 name: 'TestMesh',
                 attributes: {
                     position: {
-                        array: [
-                            0,
-                            0,
-                            0,
-                            1,
-                            0,
-                            0,
-                            0,
-                            1,
-                            0,
-                        ],
+                        array: [0, 0, 0, 1, 0, 0, 0, 1, 0],
                     },
                 },
             };
@@ -800,17 +741,7 @@ describe('STEPLoader', () => {
             const occtMesh = {
                 attributes: {
                     position: {
-                        array: [
-                            0,
-                            0,
-                            0,
-                            1,
-                            0,
-                            0,
-                            0,
-                            1,
-                            0,
-                        ],
+                        array: [0, 0, 0, 1, 0, 0, 0, 1, 0],
                     },
                 },
             };
@@ -827,17 +758,7 @@ describe('STEPLoader', () => {
                 name: 'TestMesh',
                 attributes: {
                     position: {
-                        array: [
-                            0,
-                            0,
-                            0,
-                            1,
-                            0,
-                            0,
-                            0,
-                            1,
-                            0,
-                        ],
+                        array: [0, 0, 0, 1, 0, 0, 0, 1, 0],
                     },
                 },
             };
@@ -858,30 +779,10 @@ describe('STEPLoader', () => {
                 name: 'WithNormals',
                 attributes: {
                     position: {
-                        array: [
-                            0,
-                            0,
-                            0,
-                            1,
-                            0,
-                            0,
-                            0,
-                            1,
-                            0,
-                        ],
+                        array: [0, 0, 0, 1, 0, 0, 0, 1, 0],
                     },
                     normal: {
-                        array: [
-                            0,
-                            0,
-                            1,
-                            0,
-                            0,
-                            1,
-                            0,
-                            0,
-                            1,
-                        ],
+                        array: [0, 0, 1, 0, 0, 1, 0, 0, 1],
                     },
                 },
             };
@@ -902,25 +803,11 @@ describe('STEPLoader', () => {
                 name: 'NoNormals',
                 attributes: {
                     position: {
-                        array: [
-                            0,
-                            0,
-                            0,
-                            1,
-                            0,
-                            0,
-                            0,
-                            1,
-                            0,
-                        ],
+                        array: [0, 0, 0, 1, 0, 0, 0, 1, 0],
                     },
                 },
                 index: {
-                    array: [
-                        0,
-                        1,
-                        2,
-                    ],
+                    array: [0, 1, 2],
                 },
             };
 
@@ -936,31 +823,11 @@ describe('STEPLoader', () => {
             const occtMesh = {
                 name: 'WithIndex',
                 index: {
-                    array: [
-                        0,
-                        1,
-                        2,
-                        1,
-                        2,
-                        3,
-                    ],
+                    array: [0, 1, 2, 1, 2, 3],
                 },
                 attributes: {
                     position: {
-                        array: [
-                            0,
-                            0,
-                            0,
-                            1,
-                            0,
-                            0,
-                            0,
-                            1,
-                            0,
-                            1,
-                            1,
-                            0,
-                        ],
+                        array: [0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 1, 0],
                     },
                 },
             };
@@ -978,24 +845,10 @@ describe('STEPLoader', () => {
                 name: 'AttribIndex',
                 attributes: {
                     position: {
-                        array: [
-                            0,
-                            0,
-                            0,
-                            1,
-                            0,
-                            0,
-                            0,
-                            1,
-                            0,
-                        ],
+                        array: [0, 0, 0, 1, 0, 0, 0, 1, 0],
                     },
                     index: {
-                        array: [
-                            0,
-                            1,
-                            2,
-                        ],
+                        array: [0, 1, 2],
                     },
                 },
             };
@@ -1013,17 +866,7 @@ describe('STEPLoader', () => {
                 name: 'NoIndex',
                 attributes: {
                     position: {
-                        array: [
-                            0,
-                            0,
-                            0,
-                            1,
-                            0,
-                            0,
-                            0,
-                            1,
-                            0,
-                        ],
+                        array: [0, 0, 0, 1, 0, 0, 0, 1, 0],
                     },
                 },
             };
@@ -1039,24 +882,10 @@ describe('STEPLoader', () => {
 
             const occtMesh = {
                 name: 'Colored',
-                color: [
-                    0.5,
-                    0.3,
-                    0.8,
-                ] as [number, number, number],
+                color: [0.5, 0.3, 0.8] as [number, number, number],
                 attributes: {
                     position: {
-                        array: [
-                            0,
-                            0,
-                            0,
-                            1,
-                            0,
-                            0,
-                            0,
-                            1,
-                            0,
-                        ],
+                        array: [0, 0, 0, 1, 0, 0, 0, 1, 0],
                     },
                 },
             };
@@ -1075,17 +904,7 @@ describe('STEPLoader', () => {
                 name: 'NoColor',
                 attributes: {
                     position: {
-                        array: [
-                            0,
-                            0,
-                            0,
-                            1,
-                            0,
-                            0,
-                            0,
-                            1,
-                            0,
-                        ],
+                        array: [0, 0, 0, 1, 0, 0, 0, 1, 0],
                     },
                 },
             };
@@ -1101,17 +920,7 @@ describe('STEPLoader', () => {
                 name: 'Shadows',
                 attributes: {
                     position: {
-                        array: [
-                            0,
-                            0,
-                            0,
-                            1,
-                            0,
-                            0,
-                            0,
-                            1,
-                            0,
-                        ],
+                        array: [0, 0, 0, 1, 0, 0, 0, 1, 0],
                     },
                 },
             };
@@ -1129,17 +938,7 @@ describe('STEPLoader', () => {
                 name: 'MatProps',
                 attributes: {
                     position: {
-                        array: [
-                            0,
-                            0,
-                            0,
-                            1,
-                            0,
-                            0,
-                            0,
-                            1,
-                            0,
-                        ],
+                        array: [0, 0, 0, 1, 0, 0, 0, 1, 0],
                     },
                 },
             };

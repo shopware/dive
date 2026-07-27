@@ -101,23 +101,26 @@ export class DIVEPrimitive extends DIVEModel {
     }
 
     private createPyramidGeometry(geometry: GeometrySchema): BufferGeometry {
-        // prettier-multiline-arrays-next-line-pattern: 3
         const vertices = new Float32Array([
-            -geometry.width / 2, 0, -geometry.depth / 2, // 0
-            geometry.width / 2, 0, -geometry.depth / 2, // 1
-            geometry.width / 2, 0, geometry.depth / 2, // 2
-            -geometry.width / 2, 0, geometry.depth / 2, // 3
-            0, geometry.height, 0,
+            -geometry.width / 2,
+            0,
+            -geometry.depth / 2, // 0
+            geometry.width / 2,
+            0,
+            -geometry.depth / 2, // 1
+            geometry.width / 2,
+            0,
+            geometry.depth / 2, // 2
+            -geometry.width / 2,
+            0,
+            geometry.depth / 2, // 3
+            0,
+            geometry.height,
+            0,
         ]);
 
-        // prettier-multiline-arrays-next-line-pattern: 3
         const indices = new Uint16Array([
-            0, 1, 2,
-            0, 2, 3,
-            0, 4, 1,
-            1, 4, 2,
-            2, 4, 3,
-            3, 4, 0,
+            0, 1, 2, 0, 2, 3, 0, 4, 1, 1, 4, 2, 2, 4, 3, 3, 4, 0,
         ]);
 
         const geometryBuffer = new BufferGeometry();

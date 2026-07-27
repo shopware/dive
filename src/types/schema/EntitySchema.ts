@@ -14,8 +14,4 @@ export type PartialSchema<T extends EntitySchema | void = void> =
         : MinimalSchema<EntitySchema> & Partial<EntitySchema>;
 
 export type EntitySchema =
-    | PovSchema
-    | LightSchema
-    | ModelSchema
-    | PrimitiveSchema
-    | GroupSchema;
+    PovSchema | LightSchema | ModelSchema | PrimitiveSchema | GroupSchema;

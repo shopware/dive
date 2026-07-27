@@ -106,10 +106,7 @@ describe('HDREnvironment', () => {
         expect(updateSpy).not.toHaveBeenCalled();
 
         deferred.resolve();
-        await Promise.all([
-            firstInit,
-            secondInit,
-        ]);
+        await Promise.all([firstInit, secondInit]);
 
         expect(updateSpy).toHaveBeenCalledTimes(1);
     });
@@ -357,10 +354,7 @@ describe('HDREnvironment', () => {
         firstLoad.resolve(firstTexture);
         await Promise.resolve();
         secondLoad.resolve(secondTexture);
-        await Promise.all([
-            firstUpdate,
-            secondUpdate,
-        ]);
+        await Promise.all([firstUpdate, secondUpdate]);
 
         expect(firstTexture.dispose).toHaveBeenCalledTimes(1);
         expect((env as any).sourceImage).toBe(secondTexture);

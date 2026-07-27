@@ -19,10 +19,7 @@ describe('dive/helper/applyMixins', () => {
 
         interface Product extends Movable, Selectable {}
 
-        applyMixins(Product, [
-            Movable,
-            Selectable,
-        ]);
+        applyMixins(Product, [Movable, Selectable]);
 
         const instance = new Product();
         expect(instance).toBeDefined();

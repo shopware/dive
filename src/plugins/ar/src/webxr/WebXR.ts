@@ -22,10 +22,7 @@ export class DIVEWebXR {
     private static _referenceSpaceType: XRReferenceSpaceType = 'local';
     private static _overlay: Overlay | null = null;
     private static _options: XRSessionInit = {
-        requiredFeatures: [
-            'local',
-            'hit-test',
-        ],
+        requiredFeatures: ['local', 'hit-test'],
         optionalFeatures: [
             'light-estimation',
             'local-floor',

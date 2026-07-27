@@ -70,9 +70,8 @@ export class AnimationSystem implements DIVETicker {
         duration: number,
         options?: TargetAnimatorOptions,
     ): Promise<TargetAnimator> {
-        const { TargetAnimator } = await import(
-            '../animator/TargetAnimator.ts'
-        );
+        const { TargetAnimator } =
+            await import('../animator/TargetAnimator.ts');
         const animator = new TargetAnimator(targets, duration, options);
         this._animators.set(animator.uuid, animator);
         return animator;

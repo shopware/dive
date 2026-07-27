@@ -100,16 +100,11 @@ describe('FileTypes', () => {
         });
 
         it('should have consistent key and extension values', () => {
-            Object.entries(FILE_TYPES).forEach(
-                ([
-                    key,
-                    value,
-                ]) => {
-                    expect(value.key).toBe(key);
-                    expect(value.extension).toBe(key);
-                    expect(value.mimeTypes.length).toBeGreaterThan(0);
-                },
-            );
+            Object.entries(FILE_TYPES).forEach(([key, value]) => {
+                expect(value.key).toBe(key);
+                expect(value.extension).toBe(key);
+                expect(value.mimeTypes.length).toBeGreaterThan(0);
+            });
         });
 
         it('should be immutable (as const)', () => {
@@ -293,10 +288,7 @@ describe('FileTypes', () => {
             // Test that we can find file types by extension
             SUPPORTED_FILE_TYPES.forEach((extension) => {
                 const fileType = Object.entries(FILE_TYPES).find(
-                    ([
-                        ,
-                        value,
-                    ]) => value.extension === extension,
+                    ([, value]) => value.extension === extension,
                 );
                 expect(fileType).toBeDefined();
                 expect(fileType![1].extension).toBe(extension);

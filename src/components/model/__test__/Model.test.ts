@@ -195,8 +195,8 @@ describe('dive/model/DIVEModel', () => {
 
         (Box3 as any).mockImplementationOnce(function (this: any) {
             this.min = new Vector3(0, -2, 0);
-            (this.max = new Vector3(0, 2, 0)),
-                (this.getCenter = vi.fn(() => new Vector3()));
+            ((this.max = new Vector3(0, 2, 0)),
+                (this.getCenter = vi.fn(() => new Vector3())));
             this.expandByObject = vi.fn(() => this);
             this.setFromObject = vi.fn(() => this);
             return this;
@@ -205,9 +205,7 @@ describe('dive/model/DIVEModel', () => {
         const scene = {
             parent: null,
             root: {
-                children: [
-                    model,
-                ],
+                children: [model],
             },
         } as unknown as DIVEScene;
         scene.root.parent = scene;
@@ -288,9 +286,7 @@ describe('dive/model/DIVEModel', () => {
         const scene = {
             parent: null,
             root: {
-                children: [
-                    model,
-                ],
+                children: [model],
             },
         } as unknown as DIVEScene;
         scene.root.parent = scene;

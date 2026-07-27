@@ -69,10 +69,7 @@ export class STEPLoader {
         if (this._workerPending) return this._workerPending;
 
         this._workerPending = (async () => {
-            const [
-                occtJs,
-                wasmUrl,
-            ] = await Promise.all([
+            const [occtJs, wasmUrl] = await Promise.all([
                 STEP_LOADER_REGISTRY.LOAD_OCCT_JS(),
                 STEP_LOADER_REGISTRY.LOAD_OCCT_WASM_URL(),
             ]);
@@ -115,10 +112,7 @@ export class STEPLoader {
             };
 
             worker.onerror = (e) => {
-                for (const [
-                    ,
-                    { reject },
-                ] of this._pending) {
+                for (const [, { reject }] of this._pending) {
                     reject(new Error(e.message ?? 'Worker error'));
                 }
                 this._pending.clear();
@@ -154,10 +148,7 @@ export class STEPLoader {
      */
     public dispose(): void {
         if (this._worker) {
-            for (const [
-                ,
-                { reject },
-            ] of this._pending) {
+            for (const [, { reject }] of this._pending) {
                 reject(new Error('STEPLoader disposed'));
             }
             this._pending.clear();
