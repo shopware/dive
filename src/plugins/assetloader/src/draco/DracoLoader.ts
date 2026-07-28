@@ -7,9 +7,7 @@ const DRACO_LOADER_REGISTRY = {
             .default,
     LOAD_DRACO_WASM_WRAPPER: async () =>
         (
-            await import(
-                'three/examples/jsm/libs/draco/draco_wasm_wrapper.js?raw'
-            )
+            await import('three/examples/jsm/libs/draco/draco_wasm_wrapper.js?raw')
         ).default,
     LOAD_DRACO_WASM_DECODER: async () => {
         const wasmURL = (

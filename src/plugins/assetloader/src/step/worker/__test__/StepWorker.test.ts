@@ -41,11 +41,7 @@ describe('STEPWorker', () => {
                 {
                     attributes: {
                         position: {
-                            array: [
-                                0,
-                                0,
-                                0,
-                            ],
+                            array: [0, 0, 0],
                         },
                     },
                 },
@@ -59,11 +55,7 @@ describe('STEPWorker', () => {
                 {
                     attributes: {
                         position: {
-                            array: [
-                                0,
-                                0,
-                                0,
-                            ],
+                            array: [0, 0, 0],
                         },
                     },
                 },
@@ -180,11 +172,7 @@ describe('STEPWorker', () => {
                     {
                         attributes: {
                             position: {
-                                array: [
-                                    1,
-                                    2,
-                                    3,
-                                ],
+                                array: [1, 2, 3],
                             },
                         },
                     },
@@ -629,11 +617,7 @@ describe('STEPWorker', () => {
 
     describe('buffer handling', () => {
         it('should convert ArrayBuffer to Uint8Array for STEP parsing', async () => {
-            const data = new Uint8Array([
-                73,
-                83,
-                79,
-            ]); // "ISO"
+            const data = new Uint8Array([73, 83, 79]); // "ISO"
             const buffer = data.buffer;
 
             const message = {

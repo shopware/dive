@@ -41,8 +41,7 @@ export class State {
 
     // modules
     private _mediaCreator:
-        | import('@shopware-ag/dive/mediacreator').MediaCreator
-        | null = null;
+        import('@shopware-ag/dive/mediacreator').MediaCreator | null = null;
 
     private async getMediaCreator(): Promise<
         import('@shopware-ag/dive/mediacreator').MediaCreator
@@ -73,8 +72,7 @@ export class State {
     }
 
     private _assetExplorer:
-        | import('@shopware-ag/dive/assetexporter').AssetExporter
-        | null = null;
+        import('@shopware-ag/dive/assetexporter').AssetExporter | null = null;
 
     private async getAssetExporter(): Promise<
         import('@shopware-ag/dive/assetexporter').AssetExporter
@@ -88,8 +86,7 @@ export class State {
     }
 
     private _animationSystem:
-        | import('@shopware-ag/dive/animation').AnimationSystem
-        | null = null;
+        import('@shopware-ag/dive/animation').AnimationSystem | null = null;
 
     private async getAnimationSystem(): Promise<
         import('@shopware-ag/dive/animation').AnimationSystem

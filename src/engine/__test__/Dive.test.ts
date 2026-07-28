@@ -299,9 +299,7 @@ describe('DIVE', () => {
             autoStart: false,
         });
 
-        expect(dive.views).toEqual([
-            dive.mainView,
-        ]);
+        expect(dive.views).toEqual([dive.mainView]);
     });
 
     it('should resize', () => {

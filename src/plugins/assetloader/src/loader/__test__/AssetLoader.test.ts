@@ -208,19 +208,7 @@ describe('AssetLoader', () => {
 
         it('should detect GLB content from a cached array buffer', async () => {
             const mockArrayBuffer = createArrayBuffer([
-                0x67,
-                0x6c,
-                0x54,
-                0x46,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
+                0x67, 0x6c, 0x54, 0x46, 0, 0, 0, 0, 0, 0, 0, 0, 0,
             ]);
             const mockScene = new Group();
             MockedAssetCache.read.mockReturnValue({
@@ -243,19 +231,7 @@ describe('AssetLoader', () => {
 
         it('should detect GLTF content from a cached promise', async () => {
             const mockArrayBuffer = createArrayBuffer([
-                0x67,
-                0x6c,
-                0x54,
-                0x46,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                1,
+                0x67, 0x6c, 0x54, 0x46, 0, 0, 0, 0, 0, 0, 0, 0, 1,
             ]);
             const mockScene = new Group();
             MockedAssetCache.read.mockReturnValue({
@@ -277,12 +253,7 @@ describe('AssetLoader', () => {
         });
 
         it('should detect USDZ content by ZIP signature', async () => {
-            const mockArrayBuffer = createArrayBuffer([
-                0x50,
-                0x4b,
-                0x03,
-                0x04,
-            ]);
+            const mockArrayBuffer = createArrayBuffer([0x50, 0x4b, 0x03, 0x04]);
             const mockObject = new Group();
             MockedAssetCache.read.mockReturnValue({
                 arrayBuffer: mockArrayBuffer,
@@ -297,12 +268,7 @@ describe('AssetLoader', () => {
         });
 
         it('should detect USDZ content by ZIP empty archive signature', async () => {
-            const mockArrayBuffer = createArrayBuffer([
-                0x50,
-                0x4b,
-                0x05,
-                0x06,
-            ]);
+            const mockArrayBuffer = createArrayBuffer([0x50, 0x4b, 0x05, 0x06]);
             const mockObject = new Group();
             MockedAssetCache.read.mockReturnValue({
                 arrayBuffer: mockArrayBuffer,

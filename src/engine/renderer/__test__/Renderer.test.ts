@@ -196,10 +196,7 @@ describe('DIVERenderPipeline', () => {
         expect(environment.initAsync).not.toHaveBeenCalled();
 
         resolveInit?.();
-        await Promise.all([
-            firstInit,
-            secondInit,
-        ]);
+        await Promise.all([firstInit, secondInit]);
 
         expect(environment.initAsync).toHaveBeenCalledTimes(1);
     });

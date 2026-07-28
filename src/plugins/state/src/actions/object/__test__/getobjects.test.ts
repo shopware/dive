@@ -62,10 +62,7 @@ describe('GetObjectsAction', () => {
         // Act
         const action = new GetObjectsAction(
             {
-                ids: [
-                    'object1',
-                    'object3',
-                ],
+                ids: ['object1', 'object3'],
             },
             { engine: {} as any, registered: mockRegistered },
         );

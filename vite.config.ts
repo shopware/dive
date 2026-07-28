@@ -19,11 +19,7 @@ export default defineConfig({
         coverage: {
             provider: 'v8',
             include: ['src/**/*.{ts,js}'],
-            reporter: [
-                'text',
-                'html',
-                'json',
-            ],
+            reporter: ['text', 'html', 'json'],
             exclude: [
                 '**/build/**',
                 'src/plugins/ar/src/webxr/**', // webxr currently not supported in dive

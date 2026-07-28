@@ -549,9 +549,8 @@ describe('modules/state/State', () => {
             await state.performAction('TEST_MEDIA_CREATOR');
 
             // Verify that MediaCreator was instantiated
-            const { MediaCreator } = await import(
-                '@shopware-ag/dive/mediacreator'
-            );
+            const { MediaCreator } =
+                await import('@shopware-ag/dive/mediacreator');
             expect(MediaCreator).toHaveBeenCalledWith(
                 mockDive.mainView.renderer,
                 mockDive.scene,
@@ -579,9 +578,8 @@ describe('modules/state/State', () => {
             await state.performAction('TEST_ASSET_EXPORTER');
 
             // Verify that AssetExporter was instantiated
-            const { AssetExporter } = await import(
-                '@shopware-ag/dive/assetexporter'
-            );
+            const { AssetExporter } =
+                await import('@shopware-ag/dive/assetexporter');
             expect(AssetExporter).toHaveBeenCalled();
         });
 
@@ -593,9 +591,8 @@ describe('modules/state/State', () => {
             await state.performAction('TEST_ANIMATION_SYSTEM');
 
             // Verify that AnimationSystem was instantiated
-            const { AnimationSystem } = await import(
-                '@shopware-ag/dive/animation'
-            );
+            const { AnimationSystem } =
+                await import('@shopware-ag/dive/animation');
             expect(AnimationSystem).toHaveBeenCalled();
         });
 
@@ -624,9 +621,8 @@ describe('modules/state/State', () => {
             await state.performAction('TEST_MEDIA_CREATOR');
 
             // Verify that MediaCreator was only instantiated once
-            const { MediaCreator } = await import(
-                '@shopware-ag/dive/mediacreator'
-            );
+            const { MediaCreator } =
+                await import('@shopware-ag/dive/mediacreator');
             expect(MediaCreator).toHaveBeenCalledTimes(1);
         });
 
@@ -654,9 +650,8 @@ describe('modules/state/State', () => {
             await state.performAction('TEST_ASSET_EXPORTER');
 
             // Verify that AssetExporter was only instantiated once
-            const { AssetExporter } = await import(
-                '@shopware-ag/dive/assetexporter'
-            );
+            const { AssetExporter } =
+                await import('@shopware-ag/dive/assetexporter');
             expect(AssetExporter).toHaveBeenCalledTimes(1);
         });
 
@@ -670,9 +665,8 @@ describe('modules/state/State', () => {
             await state.performAction('TEST_ANIMATION_SYSTEM');
 
             // Verify that AnimationSystem was only instantiated once
-            const { AnimationSystem } = await import(
-                '@shopware-ag/dive/animation'
-            );
+            const { AnimationSystem } =
+                await import('@shopware-ag/dive/animation');
             expect(AnimationSystem).toHaveBeenCalledTimes(1);
         });
 

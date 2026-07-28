@@ -39,8 +39,7 @@ export class DIVEModel extends DIVENode {
     }
 
     private _assetLoader:
-        | import('@shopware-ag/dive/assetloader').AssetLoader
-        | null = null;
+        import('@shopware-ag/dive/assetloader').AssetLoader | null = null;
 
     private async _getAssetLoader(): Promise<
         import('@shopware-ag/dive/assetloader').AssetLoader

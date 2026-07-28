@@ -134,16 +134,8 @@ describe('radToDeg', () => {
 
     it('should handle mixed angles', () => {
         // Arrange
-        const angles = [
-            Math.PI / 6,
-            Math.PI,
-            (5 * Math.PI) / 3,
-        ];
-        const mockReturns = [
-            30,
-            180,
-            300,
-        ];
+        const angles = [Math.PI / 6, Math.PI, (5 * Math.PI) / 3];
+        const mockReturns = [30, 180, 300];
         const expectedDegrees = [
             (30 + 360) % 360,
             (180 + 360) % 360,

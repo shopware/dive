@@ -177,18 +177,9 @@ describe('AssetCache', () => {
 
             expect(AssetCache.get()).toStrictEqual(
                 new Map([
-                    [
-                        'key1',
-                        AssetCache.create('key1'),
-                    ],
-                    [
-                        'key2',
-                        AssetCache.create('key2'),
-                    ],
-                    [
-                        'key3',
-                        AssetCache.create('key3'),
-                    ],
+                    ['key1', AssetCache.create('key1')],
+                    ['key2', AssetCache.create('key2')],
+                    ['key3', AssetCache.create('key3')],
                 ]),
             );
         });

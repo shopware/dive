@@ -347,10 +347,7 @@ describe('components/root/DIVERoot', () => {
             mockObject2.traverse = vi.fn((callback) => callback(mockObject2));
 
             const root = new DIVERoot();
-            root.children = [
-                mockObject1,
-                mockObject2,
-            ];
+            root.children = [mockObject1, mockObject2];
 
             const bb = root.computeSceneBB();
             expect(bb).toBeDefined();

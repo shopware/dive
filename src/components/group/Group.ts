@@ -124,10 +124,7 @@ export class DIVEGroup extends DIVENode {
      * Updates a line to the object.
      */
     private _updateLineTo(line: Line, object: Object3D): void {
-        const points = [
-            new Vector3(0, 0, 0),
-            object.position.clone(),
-        ];
+        const points = [new Vector3(0, 0, 0), object.position.clone()];
         line.geometry.setFromPoints(points);
         line.computeLineDistances();
     }

@@ -109,9 +109,7 @@ describe('dive/primitive/DIVEPrimitive', () => {
         const scene = {
             parent: null,
             root: {
-                children: [
-                    primitive,
-                ],
+                children: [primitive],
             },
         } as unknown as DIVEScene;
         scene.root.parent = scene;
@@ -176,9 +174,7 @@ describe('dive/primitive/DIVEPrimitive', () => {
         const scene = {
             parent: null,
             root: {
-                children: [
-                    primitive,
-                ],
+                children: [primitive],
             },
         } as unknown as DIVEScene;
         scene.root.parent = scene;

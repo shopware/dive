@@ -43,16 +43,8 @@ describe('DIVEGizmoPlane', () => {
     });
 
     it('should not throw for any mode/axis combination', () => {
-        const modes: DIVEGizmoMode[] = [
-            'translate',
-            'rotate',
-            'scale',
-        ];
-        const axes: DIVEGizmoAxis[] = [
-            'x',
-            'y',
-            'z',
-        ];
+        const modes: DIVEGizmoMode[] = ['translate', 'rotate', 'scale'];
+        const axes: DIVEGizmoAxis[] = ['x', 'y', 'z'];
         for (const mode of modes) {
             for (const axis of axes) {
                 expect(() => gizmoPlane.assemble(mode, axis)).not.toThrow();

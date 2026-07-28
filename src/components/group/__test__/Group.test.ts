@@ -161,12 +161,7 @@ describe('dive/group/DIVEGroup', () => {
 
         // Assign the _members array (assuming it's protected or public for testing)
         // If _members is private, you might need to use a different approach or modify the class for testability
-        (group as any)._members = [
-            diveNode1,
-            member1,
-            diveNode2,
-            member2,
-        ];
+        (group as any)._members = [diveNode1, member1, diveNode2, member2];
 
         const position: Vector3Like = { x: 4, y: 5, z: 6 };
         group.setPosition(position);
@@ -191,10 +186,7 @@ describe('dive/group/DIVEGroup', () => {
         } as unknown as DIVENode;
 
         // Assign the _members array
-        (group as any)._members = [
-            member1,
-            member2,
-        ];
+        (group as any)._members = [member1, member2];
 
         const position: Vector3Like = { x: 7, y: 8, z: 9 };
         group.setPosition(position);
@@ -222,10 +214,7 @@ describe('dive/group/DIVEGroup', () => {
             // Define other properties/methods if necessary
         } as unknown as DIVENode;
 
-        (group as any)._members = [
-            diveNode,
-            member,
-        ];
+        (group as any)._members = [diveNode, member];
 
         const position: Vector3Like = { x: 13, y: 14, z: 15 };
         group.setPosition(position);
