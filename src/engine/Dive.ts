@@ -32,6 +32,12 @@ declare global {
              * Get the first instance of DIVE
              */
             get instance(): DIVE | undefined;
+            /**
+             * Maximum amount of DIVE instances that can be created. This is checked on initialization of a new instance.
+             *
+             * You can change this value to allow more instances, but be aware that this can lead to performance issues and crashes.
+             */
+            instanceLimit: number;
         };
     }
 }
@@ -41,6 +47,7 @@ window.DIVE = {
     get instance() {
         return window.DIVE.instances[0];
     },
+    instanceLimit: 8,
 };
 
 export type DIVESettings = {
@@ -113,6 +120,14 @@ export class DIVE {
             ...DIVEDefaultSettings,
             ...(settings ?? {}),
         };
+
+        // check for instance limit
+        if (window.DIVE.instances.length == window.DIVE.instanceLimit) {
+            throw new Error(
+                `DIVE instance limit exceeded! Maximum allowed instances: ${window.DIVE.instanceLimit}. Current instances: ${window.DIVE.instances.length}.`,
+            );
+        }
+
         // set up the clock to define the tick
         this._clock = new DIVEClock();
 

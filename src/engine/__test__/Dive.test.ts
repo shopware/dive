@@ -225,6 +225,7 @@ vi.mock('../../components/model/Model', () => {
 
 describe('DIVE', () => {
     beforeEach(() => {
+        window.DIVE.instanceLimit = 8;
         window.DIVE.instances = [];
         console.log = vi.fn();
     });
@@ -232,6 +233,16 @@ describe('DIVE', () => {
     it('should instantiate', () => {
         const dive = new DIVE();
         expect(dive).toBeDefined();
+    });
+
+    it('should not exceed the instance limit', () => {
+        window.DIVE.instanceLimit = 1;
+        const dive1 = new DIVE();
+        expect(dive1).toBeDefined();
+
+        expect(() => new DIVE()).toThrowError(
+            /DIVE instance limit exceeded! Maximum allowed instances: 1. Current instances: 1./,
+        );
     });
 
     it('should register the main view with the clock', () => {
