@@ -6,25 +6,32 @@ on:
             - trunk
     workflow_dispatch: # manual trigger = publish a beta
 
-permissions:
-    contents: write
-    pull-requests: write
-
 jobs:
     # ── Stable release (push to trunk) ────────────────────────────────
     release-please:
         if: ${{ github.event_name == 'push' }}
         runs-on: ubuntu-latest
+        permissions:
+            contents: read
+            id-token: write # required for octo-sts to mint a token via OIDC
         outputs:
             release_created: ${{ steps.release.outputs.release_created }}
             tag_name: ${{ steps.release.outputs.tag_name }}
         steps:
+            - name: Mint scoped token via octo-sts
+              id: sts-release
+              uses: octo-sts/action@f603d3be9d8dd9871a265776e625a27b00effe05 # v1.1.1
+              with:
+                  scope: shopware/dive
+                  identity: release
             - name: Run Release Please
               id: release
               uses: googleapis/release-please-action@v4
               with:
-                  # PAT (not GITHUB_TOKEN) so the created Release PR triggers the CI checks
-                  token: ${{ secrets.RELEASE_PLEASE_TOKEN }}
+                  # short-lived token from octo-sts (trust policy in
+                  # .github/chainguard/release.sts.yaml) so the created Release PR
+                  # triggers the CI checks
+                  token: ${{ steps.sts-release.outputs.token }}
                   config-file: release-please-config.json
                   manifest-file: .release-please-manifest.json
 
