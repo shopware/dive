@@ -1,0 +1,8 @@
+issuer: https://token.actions.githubusercontent.com
+subject_pattern: repo:shopware/dive:.*
+claim_pattern:
+    workflow_ref: shopware/dive/.github/workflows/release-please.yml@refs/heads/trunk
+
+permissions:
+    contents: write
+    pull_requests: write
