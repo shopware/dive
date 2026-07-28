@@ -24,35 +24,40 @@ export const QuickView = async (
     uri: string,
     settings?: Partial<QuickViewSettings>,
 ): Promise<QuickView> => {
-    const dive = new DIVE({ ...settings, autoStart: false });
+    try {
+        const dive = new DIVE({ ...settings, autoStart: false });
 
-    dive.mainView.camera.position.set(0, 1, 2);
+        dive.mainView.camera.position.set(0, 1, 2);
 
-    // instantiate model
-    const model = await new DIVEModel().setFromURL(uri);
-    dive.scene.root.add(model);
-    model.placeOnFloor();
+        // instantiate model
+        const model = await new DIVEModel().setFromURL(uri);
+        dive.scene.root.add(model);
+        model.placeOnFloor();
 
-    const orbitController = new OrbitController(
-        dive.mainView.camera,
-        dive.mainView.canvas,
-    );
-    dive.clock.addTicker(orbitController);
+        const orbitController = new OrbitController(
+            dive.mainView.camera,
+            dive.mainView.canvas,
+        );
+        dive.clock.addTicker(orbitController);
 
-    const quickView = Object.assign(dive, { orbitController, model });
+        const quickView = Object.assign(dive, { orbitController, model });
 
-    const originalDispose = dive.disposeAsync.bind(dive);
-    quickView.disposeAsync = async () => {
-        orbitController.dispose();
+        const originalDispose = dive.disposeAsync.bind(dive);
+        quickView.disposeAsync = async () => {
+            orbitController.dispose();
 
-        // dispose dive
-        await originalDispose();
-    };
+            // dispose dive
+            await originalDispose();
+        };
 
-    if (settings?.autoStart ?? true) {
-        await dive.startAsync();
-        orbitController.focusObject(model);
+        if (settings?.autoStart ?? true) {
+            await dive.startAsync();
+            orbitController.focusObject(model);
+        }
+
+        return quickView;
+    } catch (error) {
+        console.error('Failed to initialize QuickView:', error);
+        return Promise.reject(error);
     }
-
-    return quickView;
 };

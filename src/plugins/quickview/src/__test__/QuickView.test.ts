@@ -97,6 +97,16 @@ describe('QuickView', () => {
         expect(dive.startAsync).toHaveBeenCalledTimes(1);
     });
 
+    it('should catch errors during DIVE initialization', async () => {
+        vi.mocked(DIVE).mockImplementationOnce(() => {
+            throw new Error('DIVE initialization error');
+        });
+
+        await expect(QuickView('test_uri')).rejects.toThrow(
+            'DIVE initialization error',
+        );
+    });
+
     it('should handle QuickView with multiple instances', async () => {
         const dive1 = await QuickView('test_uri');
         const dive2 = await QuickView('test_uri');
