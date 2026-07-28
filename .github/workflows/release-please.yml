@@ -1,0 +1,125 @@
+name: 'Release'
+
+on:
+    push:
+        branches:
+            - trunk
+    workflow_dispatch: # manual trigger = publish a beta
+
+permissions:
+    contents: write
+    pull-requests: write
+
+jobs:
+    # ── Stable release (push to trunk) ────────────────────────────────
+    release-please:
+        if: ${{ github.event_name == 'push' }}
+        runs-on: ubuntu-latest
+        outputs:
+            release_created: ${{ steps.release.outputs.release_created }}
+            tag_name: ${{ steps.release.outputs.tag_name }}
+        steps:
+            - name: Run Release Please
+              id: release
+              uses: googleapis/release-please-action@v4
+              with:
+                  # PAT (not GITHUB_TOKEN) so the created Release PR triggers the CI checks
+                  token: ${{ secrets.RELEASE_PLEASE_TOKEN }}
+                  config-file: release-please-config.json
+                  manifest-file: .release-please-manifest.json
+
+    publish:
+        needs: release-please
+        if: ${{ needs.release-please.outputs.release_created == 'true' }}
+        runs-on: ubuntu-latest
+        permissions:
+            id-token: write # npm Trusted Publishing (OIDC)
+            contents: read
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v4
+            - name: Setup Node.js
+              uses: actions/setup-node@v6
+              with:
+                  node-version: '24'
+                  registry-url: 'https://registry.npmjs.org'
+            - name: Search for cached dependencies
+              uses: actions/cache@v4
+              id: yarn-cache
+              with:
+                  path: node_modules
+                  key: node-modules-${{ runner.os }}-${{ hashFiles('yarn.lock') }}
+            - name: Install dependencies (if cache not found)
+              if: steps.yarn-cache.outputs.cache-hit != 'true'
+              run: yarn
+            - name: Build DIVE
+              run: yarn build
+            - name: Publish DIVE to npm
+              run: npm publish --access public
+
+    # ── Beta release (manual dispatch) ────────────────────────────────
+    # Kept in this same file so a single npm Trusted Publisher (this workflow)
+    # authorizes both the stable and the beta publish.
+    publish-beta:
+        if: ${{ github.event_name == 'workflow_dispatch' }}
+        runs-on: ubuntu-latest
+        permissions:
+            id-token: write # npm Trusted Publishing (OIDC)
+            contents: write # push the beta tag
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v4
+            - name: Setup Node.js
+              uses: actions/setup-node@v6
+              with:
+                  node-version: '24'
+                  registry-url: 'https://registry.npmjs.org'
+            - name: Search for cached dependencies
+              uses: actions/cache@v4
+              id: yarn-cache
+              with:
+                  path: node_modules
+                  key: node-modules-${{ runner.os }}-${{ hashFiles('yarn.lock') }}
+            - name: Install dependencies (if cache not found)
+              if: steps.yarn-cache.outputs.cache-hit != 'true'
+              run: yarn
+
+            - name: Register git user
+              run: |
+                  git config user.name "GitHub Actions"
+                  git config user.email "actions@github.com"
+
+            - name: Calculate next beta version
+              id: calculate-beta
+              run: |
+                  git fetch --tags
+
+                  current_version=$(node -p "require('./package.json').version")
+
+                  prefix="$current_version-beta."
+                  last_beta=$(git tag --list "${prefix}*" | sed "s/${prefix}//" | sort -n | tail -n 1)
+
+                  if [ -z "$last_beta" ]; then
+                    next_beta="$current_version-beta.0"
+                  else
+                    next_beta="$current_version-beta.$((last_beta + 1))"
+                  fi
+
+                  echo "next_beta=$next_beta" >> $GITHUB_OUTPUT
+
+            - name: Update package.json with beta version
+              run: |
+                  npm version --no-git-tag-version ${{ steps.calculate-beta.outputs.next_beta }}
+                  git add package.json
+
+            - name: Build DIVE
+              run: yarn build
+
+            - name: Publish DIVE beta to npm
+              run: npm publish --access public --tag beta
+
+            - name: Add beta tag
+              run: git tag -a ${{ steps.calculate-beta.outputs.next_beta }} -m "DIVE Beta Version ${{ steps.calculate-beta.outputs.next_beta }}"
+
+            - name: Push beta tag
+              run: git push origin tag ${{ steps.calculate-beta.outputs.next_beta }}
