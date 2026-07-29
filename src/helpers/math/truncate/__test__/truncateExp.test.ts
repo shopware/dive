@@ -1,4 +1,4 @@
-import truncateExp from '../truncateExp';
+import truncateExp from '../truncateExp.ts';
 
 describe('dive/math/truncate/truncateExp', () => {
     it('should truncateExp', () => {

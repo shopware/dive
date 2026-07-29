@@ -1,4 +1,4 @@
-import roundExp from '../roundExp';
+import roundExp from '../roundExp.ts';
 
 describe('dive/math/round/roundExp', () => {
     it('should roundExp', () => {

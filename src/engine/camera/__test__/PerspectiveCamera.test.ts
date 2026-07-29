@@ -1,11 +1,11 @@
-import { DIVEPerspectiveCamera } from '../PerspectiveCamera';
-import { DIVEPerspectiveCameraDefaultSettings } from '../PerspectiveCamera';
+import { DIVEPerspectiveCamera } from '../PerspectiveCamera.ts';
+import { DIVEPerspectiveCameraDefaultSettings } from '../PerspectiveCamera.ts';
 import {
     DEFAULT_LAYER_MASK,
     HELPER_LAYER_MASK,
     PRODUCT_LAYER_MASK,
     UI_LAYER_MASK,
-} from '../../../constants/VisibilityLayerMask';
+} from '../../../constants/VisibilityLayerMask.ts';
 
 describe('dive/engine/camera/DIVEPerspectiveCamera', () => {
     it('should instantiate with default settings', () => {

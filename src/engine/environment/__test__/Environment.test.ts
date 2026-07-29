@@ -147,7 +147,9 @@ describe('HDREnvironment', () => {
 
     it('does not update during init when the renderer is not initialized', async () => {
         const uninitializedRenderer = new WebGPURenderer();
-        uninitializedRenderer.initialized = false;
+        (
+            uninitializedRenderer as unknown as { initialized: boolean }
+        ).initialized = false;
         const env = new DIVEEnvironment(uninitializedRenderer, scene, {
             imageUrl: 'hdr.hdr',
         });

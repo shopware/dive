@@ -1,4 +1,4 @@
-import { FileTypeError } from '../file-type-error';
+import { FileTypeError } from '../file-type-error.ts';
 
 describe('FileTypeError', () => {
     it('should create a FileTypeError with message and requested file type', () => {

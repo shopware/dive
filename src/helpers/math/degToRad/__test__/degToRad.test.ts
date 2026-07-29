@@ -1,4 +1,4 @@
-import degToRad from '../degToRad';
+import degToRad from '../degToRad.ts';
 import { MathUtils } from 'three/webgpu';
 
 vi.mock('three/webgpu', async () => {

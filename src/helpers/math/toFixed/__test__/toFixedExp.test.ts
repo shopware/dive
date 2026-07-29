@@ -1,4 +1,4 @@
-import toFixedExp from '../toFixedExp';
+import toFixedExp from '../toFixedExp.ts';
 
 describe('dive/math/toFixed/toFixedExp', () => {
     it('should toFixedExp', () => {

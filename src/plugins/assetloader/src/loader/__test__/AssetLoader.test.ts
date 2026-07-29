@@ -93,7 +93,7 @@ describe('AssetLoader', () => {
             mockParseAsyncGLTF.mockResolvedValue({
                 scene: mockScene,
                 animations: [],
-            } as GLTF);
+            } as unknown as GLTF);
 
             const result = await loader.load('model.glb');
 
@@ -117,7 +117,7 @@ describe('AssetLoader', () => {
             mockParseAsyncGLTF.mockResolvedValue({
                 scene: mockScene,
                 animations: [],
-            } as GLTF);
+            } as unknown as GLTF);
 
             const result = await loader.load('model.glb');
 
@@ -138,7 +138,7 @@ describe('AssetLoader', () => {
             mockParseAsyncGLTF.mockResolvedValue({
                 scene: mockScene,
                 animations: [],
-            } as GLTF);
+            } as unknown as GLTF);
 
             const result = await loader.load('model.glb');
 
@@ -177,7 +177,9 @@ describe('AssetLoader', () => {
             const mockArrayBuffer = new ArrayBuffer(1024);
             const mockResult = new Group();
             mockChunk.load.mockResolvedValue(mockArrayBuffer);
-            mockParseAsyncGLTF.mockResolvedValue({ scene: mockResult } as GLTF);
+            mockParseAsyncGLTF.mockResolvedValue({
+                scene: mockResult,
+            } as unknown as GLTF);
 
             await loader.load('model.GLB');
 
@@ -192,7 +194,7 @@ describe('AssetLoader', () => {
             mockParseAsyncGLTF.mockResolvedValue({
                 scene: mockScene,
                 animations: [],
-            } as GLTF);
+            } as unknown as GLTF);
 
             const result = await loader.load('model-without-extension', 'glb');
 
@@ -218,7 +220,7 @@ describe('AssetLoader', () => {
             mockParseAsyncGLTF.mockResolvedValue({
                 scene: mockScene,
                 animations: [],
-            } as GLTF);
+            } as unknown as GLTF);
 
             const result = await loader.load('model-without-extension');
 
@@ -241,7 +243,7 @@ describe('AssetLoader', () => {
             mockParseAsyncGLTF.mockResolvedValue({
                 scene: mockScene,
                 animations: [],
-            } as GLTF);
+            } as unknown as GLTF);
 
             const result = await loader.load('model-without-extension');
 
@@ -343,7 +345,7 @@ describe('AssetLoader', () => {
             mockParseAsyncGLTF.mockResolvedValue({
                 scene: mockScene,
                 animations: [],
-            } as GLTF);
+            } as unknown as GLTF);
             mockChunk.load.mockResolvedValue(mockArrayBuffer);
 
             const result = await loader.load('model.glb');
@@ -363,7 +365,7 @@ describe('AssetLoader', () => {
             mockParseAsyncGLTF.mockResolvedValue({
                 scene: mockScene,
                 animations: [],
-            } as GLTF);
+            } as unknown as GLTF);
             mockChunk.load.mockResolvedValue(mockArrayBuffer);
 
             const result = await loader.load('model.gltf');
@@ -443,7 +445,7 @@ describe('AssetLoader', () => {
             mockParseAsyncGLTF.mockResolvedValue({
                 scene: mockScene,
                 animations: [],
-            } as GLTF);
+            } as unknown as GLTF);
 
             const result = await loader.load(uri);
 
@@ -494,7 +496,7 @@ describe('AssetLoader', () => {
             mockChunk.load.mockResolvedValue(mockArrayBuffer);
             mockParseAsyncGLTF.mockResolvedValue({
                 scene: new Group(),
-            } as GLTF);
+            } as unknown as GLTF);
             mockParseUSD.mockResolvedValue(new Group());
             mockStepParseAsync.mockResolvedValue(new Group());
         });

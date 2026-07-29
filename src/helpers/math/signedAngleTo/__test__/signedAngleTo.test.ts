@@ -1,5 +1,5 @@
 import { Vector3 } from 'three/webgpu';
-import signedAngleTo from '../signedAngleTo';
+import signedAngleTo from '../signedAngleTo.ts';
 
 describe('dive/math/signedAngleTo', () => {
     it('should signedAngleTo', () => {

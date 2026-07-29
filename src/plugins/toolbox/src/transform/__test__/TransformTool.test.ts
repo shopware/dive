@@ -818,7 +818,7 @@ describe('TransformTool', () => {
 
     describe('gizmo initialization', () => {
         it('should call traverse on gizmo during initialization', () => {
-            expect(transformTool.gizmo.traverse).toHaveBeenCalled();
+            expect((transformTool.gizmo as any).traverse).toHaveBeenCalled();
         });
 
         it('should set colors on mesh children during traverse', () => {

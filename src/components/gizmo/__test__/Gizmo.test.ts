@@ -76,7 +76,7 @@ describe('DIVEGizmo', () => {
     let mockObject: Object3D & DIVESelectable;
 
     beforeEach(() => {
-        mockController = new OrbitController();
+        mockController = new OrbitController(null as any, null as any);
         gizmo = new DIVEGizmo(mockController);
 
         mockObject = new Object3D() as Object3D & DIVESelectable;

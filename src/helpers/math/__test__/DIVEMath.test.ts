@@ -1,4 +1,4 @@
-import { DIVEMath } from '../index';
+import { DIVEMath } from '../index.ts';
 
 describe('dive/math', () => {
     it('should be defined', () => {

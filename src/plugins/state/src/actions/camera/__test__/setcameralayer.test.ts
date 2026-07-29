@@ -4,9 +4,10 @@ import { OrbitController } from '@shopware-ag/dive/orbitcontroller';
 describe('SetCameraLayerAction', () => {
     it('should set camera layer', async () => {
         // Mock dependencies
+        const setCameraLayer = vi.fn();
         const mockController = {
             object: {
-                setCameraLayer: vi.fn(),
+                setCameraLayer,
             },
         } as unknown as OrbitController;
 
@@ -21,8 +22,6 @@ describe('SetCameraLayerAction', () => {
         action.execute();
 
         // Verify results
-        expect(mockController.object.setCameraLayer).toHaveBeenCalledWith(
-            'LIVE',
-        );
+        expect(setCameraLayer).toHaveBeenCalledWith('LIVE');
     });
 });
