@@ -1,4 +1,4 @@
-import { DIVESelectable } from '../Selectable';
+import { DIVESelectable } from '../Selectable.ts';
 
 describe('DIVESelectable', () => {
     it('should have isSelectable property set to true', () => {

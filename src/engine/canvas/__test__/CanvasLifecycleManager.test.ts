@@ -54,7 +54,7 @@ describe('DIVECanvasLifecycleManager', () => {
                 width,
                 height,
             },
-        }) as ResizeObserverEntry;
+        }) as unknown as ResizeObserverEntry;
 
     beforeEach(() => {
         vi.clearAllMocks();

@@ -62,7 +62,7 @@ describe('DIVERotateGizmo', () => {
     beforeEach(() => {
         vi.clearAllMocks();
 
-        mockController = new OrbitController();
+        mockController = new OrbitController(null as any, null as any);
         rotateGizmo = new DIVERotateGizmo(mockController);
 
         mockGizmo = {

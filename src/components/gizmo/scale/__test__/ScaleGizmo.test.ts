@@ -54,7 +54,7 @@ describe('DIVEScaleGizmo', () => {
     beforeEach(() => {
         vi.clearAllMocks();
 
-        mockController = new OrbitController();
+        mockController = new OrbitController(null as any, null as any);
         scaleGizmo = new DIVEScaleGizmo(mockController);
 
         mockGizmo = {

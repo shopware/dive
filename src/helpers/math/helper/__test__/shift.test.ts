@@ -1,4 +1,4 @@
-import shift from '../shift';
+import shift from '../shift.ts';
 
 describe('dive/math/helper/shift', () => {
     it('should shift', () => {

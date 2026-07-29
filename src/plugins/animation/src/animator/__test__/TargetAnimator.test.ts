@@ -229,11 +229,11 @@ describe('TargetAnimator', () => {
     describe('Update', () => {
         it('should not throw on update', () => {
             animator.play();
-            expect(() => animator.update(0.016)).not.toThrow();
+            expect(() => animator.update()).not.toThrow();
         });
 
         it('should skip group update when idle', () => {
-            expect(() => animator.update(0.016)).not.toThrow();
+            expect(() => animator.update()).not.toThrow();
         });
     });
 

@@ -53,7 +53,12 @@ export class AssetExporter {
                 return this._exportGltf(object, options);
             }
             case 'usdz': {
-                return this._exportUsdz(object, options);
+                // `options` is FileTypeToExporterOptions[T]; TS can't correlate it
+                // with the runtime `type` switch, so narrow to the usdz variant here.
+                return this._exportUsdz(
+                    object,
+                    options as USDZExporterOptions | undefined,
+                );
             }
             default:
                 throw new FileTypeError(`Unsupported file type: ${type}`, type);

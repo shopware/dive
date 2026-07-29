@@ -53,7 +53,7 @@ describe('DIVETranslateGizmo', () => {
     beforeEach(() => {
         vi.clearAllMocks();
 
-        mockController = new OrbitController();
+        mockController = new OrbitController(null as any, null as any);
         translateGizmo = new DIVETranslateGizmo(mockController);
 
         mockGizmo = {

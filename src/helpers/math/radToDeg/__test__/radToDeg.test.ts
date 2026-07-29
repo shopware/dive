@@ -1,4 +1,4 @@
-import radToDeg from '../radToDeg';
+import radToDeg from '../radToDeg.ts';
 import { MathUtils } from 'three/webgpu';
 
 vi.mock('three/webgpu', async () => {

@@ -1,4 +1,4 @@
-import { DIVEMovable } from '../Movable';
+import { DIVEMovable } from '../Movable.ts';
 
 describe('DIVEMovable', () => {
     it('should have isMovable property set to true', () => {

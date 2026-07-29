@@ -1,4 +1,4 @@
-import ceilExp from '../ceilExp';
+import ceilExp from '../ceilExp.ts';
 
 describe('dive/math/ceil/ceilExp', () => {
     it('should ceilExp', () => {

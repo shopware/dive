@@ -1,4 +1,4 @@
-import floorExp from '../floorExp';
+import floorExp from '../floorExp.ts';
 
 describe('dive/math/floor/floorExp', () => {
     it('should floorExp', () => {

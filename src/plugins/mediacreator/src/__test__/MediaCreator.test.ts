@@ -251,15 +251,12 @@ describe('MediaCreator', () => {
             },
         });
 
-        expect(mockOrbitController.object.onResize).toHaveBeenNthCalledWith(
-            1,
-            16,
-            9,
-        );
-        expect(mockOrbitController.object.onResize).toHaveBeenLastCalledWith(
-            16,
-            9,
-        );
+        expect(
+            (mockOrbitController.object as any).onResize,
+        ).toHaveBeenNthCalledWith(1, 16, 9);
+        expect(
+            (mockOrbitController.object as any).onResize,
+        ).toHaveBeenLastCalledWith(16, 9);
     });
 
     it('should fall back to the renderer canvas size when no resolution is provided', async () => {
