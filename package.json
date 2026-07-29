@@ -135,7 +135,6 @@
         "ts-jest": "^29.1.2",
         "ts-morph": "^25.0.1",
         "ts-node": "^10.9.2",
-        "tsc": "^2.0.4",
         "tsx": "^4.19.4",
         "typescript": "^5.8.2",
         "typescript-eslint": "^7.7.1",
@@ -147,7 +146,9 @@
     },
     "resolutions": {
         "lodash": "4.18.1",
-        "vite-plugin-dts/@microsoft/api-extractor/minimatch": "3.1.5"
+        "vite-plugin-dts/@microsoft/api-extractor/minimatch": "3.1.5",
+        "minimatch/brace-expansion": "1.1.16",
+        "fast-uri": "^3.1.4"
     },
     "scripts": {
         "build": "vite build",
