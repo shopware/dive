@@ -119,26 +119,26 @@ describe('MoveCameraAction', () => {
         });
     });
 
-    describe('POV-based Movement', () => {
-        it('should move camera to a POV position and target', async () => {
+    describe('CAMERA-based Movement', () => {
+        it('should move camera to a CAMERA position and target', async () => {
             const mockRegistered = new Map<string, EntitySchema>();
 
-            const testPOV: EntitySchema = {
-                id: 'test-pov',
-                entityType: 'pov',
+            const testCAMERA: EntitySchema = {
+                id: 'test-camera',
+                entityType: 'camera',
                 position: new Vector3(1, 1, 1),
                 target: new Vector3(0, 0, 0),
                 rotation: { x: 0, y: 0, z: 0 },
                 scale: { x: 1, y: 1, z: 1 },
-                name: 'Test POV',
+                name: 'Test CAMERA',
                 visible: true,
             } as unknown as EntitySchema;
 
-            mockRegistered.set(testPOV.id, testPOV);
+            mockRegistered.set(testCAMERA.id, testCAMERA);
 
             const action = new MoveCameraAction(
                 {
-                    id: 'test-pov',
+                    id: 'test-camera',
                     locked: true,
                     duration: 1000,
                 },
@@ -172,12 +172,12 @@ describe('MoveCameraAction', () => {
             expect(typeof result.stop).toBe('function');
         });
 
-        it('should throw error if POV is not registered', async () => {
+        it('should throw error if CAMERA is not registered', async () => {
             const mockRegistered = new Map<string, EntitySchema>();
 
             const action = new MoveCameraAction(
                 {
-                    id: 'non-existent-pov',
+                    id: 'non-existent-camera',
                     locked: true,
                     duration: 1000,
                 },
@@ -190,11 +190,11 @@ describe('MoveCameraAction', () => {
             );
 
             await expect(action.execute()).rejects.toThrow(
-                'POV with id non-existent-pov not registered',
+                'CAMERA with id non-existent-camera not registered',
             );
         });
 
-        it('should throw error if object is not a POV', async () => {
+        it('should throw error if object is not a CAMERA', async () => {
             const mockRegistered = new Map<string, EntitySchema>();
 
             const testObject: EntitySchema = {
@@ -223,7 +223,7 @@ describe('MoveCameraAction', () => {
             );
 
             await expect(action.execute()).rejects.toThrow(
-                'Object with id test-object is not a POV',
+                'Object with id test-object is not a CAMERA',
             );
         });
     });

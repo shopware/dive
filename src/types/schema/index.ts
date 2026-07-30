@@ -7,5 +7,5 @@ export * from './GroupSchema.ts';
 export * from './LightSchema.ts';
 export * from './MaterialSchema.ts';
 export * from './ModelSchema.ts';
-export * from './PovSchema.ts';
+export * from './CameraSchema.ts';
 export * from './PrimitiveSchema.ts';

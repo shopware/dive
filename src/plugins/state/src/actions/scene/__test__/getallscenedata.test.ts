@@ -5,7 +5,7 @@ import {
     type GroupSchema,
     type LightSchema,
     type ModelSchema,
-    type PovSchema,
+    type CameraSchema,
     type PrimitiveSchema,
 } from '@shopware-ag/dive';
 import { OrbitController } from '@shopware-ag/dive/orbitcontroller';
@@ -52,11 +52,11 @@ describe('GetAllSceneDataAction', () => {
             target: new Vector3(0, 0, 0),
         } as unknown as ModelSchema);
 
-        mockRegistered.set('pov', {
-            entityType: 'pov',
+        mockRegistered.set('camera', {
+            entityType: 'camera',
             position: new Vector3(0, 0, 0),
             target: new Vector3(0, 0, 0),
-        } as unknown as PovSchema);
+        } as unknown as CameraSchema);
 
         mockRegistered.set('primitive', {
             entityType: 'primitive',
@@ -90,7 +90,7 @@ describe('GetAllSceneDataAction', () => {
             floorColor: '#ffffff',
             cameras: [
                 {
-                    entityType: 'pov',
+                    entityType: 'camera',
                     position: { x: 0, y: 0, z: 0 },
                     target: { x: 0, y: 0, z: 0 },
                 },

@@ -1,4 +1,4 @@
-import { PovSchema } from './PovSchema.ts';
+import { CameraSchema } from './CameraSchema.ts';
 import { LightSchema } from './LightSchema.ts';
 import { ModelSchema } from './ModelSchema.ts';
 import { PrimitiveSchema } from './PrimitiveSchema.ts';
@@ -14,4 +14,4 @@ export type PartialSchema<T extends EntitySchema | void = void> =
         : MinimalSchema<EntitySchema> & Partial<EntitySchema>;
 
 export type EntitySchema =
-    PovSchema | LightSchema | ModelSchema | PrimitiveSchema | GroupSchema;
+    CameraSchema | LightSchema | ModelSchema | PrimitiveSchema | GroupSchema;

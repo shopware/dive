@@ -1,7 +1,7 @@
 import { Action } from '../action.ts';
 import { registerAction } from '../../ActionRegistry.ts';
 import { type ActionDependencies } from '../../../types/index.ts';
-import { isPovSchema } from '@shopware-ag/dive';
+import { isCameraSchema } from '@shopware-ag/dive';
 import { type Vector3Like } from 'three/webgpu';
 
 export const MoveCameraAction = Action.define<
@@ -34,13 +34,13 @@ export const MoveCameraAction = Action.define<
             const object = registered.get(payload.id);
             if (!object) {
                 throw new Error(
-                    `POV with id ${payload.id} not registered. Registered: ${registered}`,
+                    `CAMERA with id ${payload.id} not registered. Registered: ${registered}`,
                 );
             }
 
-            if (!isPovSchema(object)) {
+            if (!isCameraSchema(object)) {
                 throw new Error(
-                    `Object with id ${payload.id} is not a POV. Object: ${object}`,
+                    `Object with id ${payload.id} is not a CAMERA. Object: ${object}`,
                 );
             }
 

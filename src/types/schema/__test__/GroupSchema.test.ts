@@ -84,17 +84,17 @@ describe('GroupSchema', () => {
             expect(isGroupSchema(primitiveEntity)).toBe(false);
         });
 
-        it('should return false for pov schema', () => {
-            const povEntity: EntitySchema = {
-                id: 'test-pov',
-                name: 'Test POV',
-                entityType: 'pov',
+        it('should return false for camera schema', () => {
+            const cameraEntity: EntitySchema = {
+                id: 'test-camera',
+                name: 'Test CAMERA',
+                entityType: 'camera',
                 visible: true,
                 position: { x: 0, y: 0, z: 0 },
                 target: { x: 0, y: 0, z: -1 },
             };
 
-            expect(isGroupSchema(povEntity)).toBe(false);
+            expect(isGroupSchema(cameraEntity)).toBe(false);
         });
     });
 });

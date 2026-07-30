@@ -7,7 +7,7 @@ import {
     GroupSchema,
     LightSchema,
     ModelSchema,
-    PovSchema,
+    CameraSchema,
     PrimitiveSchema,
 } from '@shopware-ag/dive';
 
@@ -41,8 +41,8 @@ export const GetAllSceneDataAction = Action.define<
                 (object) => object.entityType === 'model',
             ) as ModelSchema[],
             cameras: Array.from(registered.values()).filter(
-                (object) => object.entityType === 'pov',
-            ) as PovSchema[],
+                (object) => object.entityType === 'camera',
+            ) as CameraSchema[],
             primitives: Array.from(registered.values()).filter(
                 (object) => object.entityType === 'primitive',
             ) as PrimitiveSchema[],

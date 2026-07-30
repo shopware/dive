@@ -48,24 +48,24 @@ describe('GenerateMediaAction', () => {
         expect(result).toBe('data:image/png;base64,test');
     });
 
-    it('should generate media from POV', async () => {
-        const testPOV: EntitySchema = {
-            id: 'test-pov',
-            entityType: 'pov',
+    it('should generate media from CAMERA', async () => {
+        const testCAMERA: EntitySchema = {
+            id: 'test-camera',
+            entityType: 'camera',
             position: new Vector3(1, 1, 1),
             target: new Vector3(0, 0, 0),
             rotation: { x: 0, y: 0, z: 0 },
             scale: { x: 1, y: 1, z: 1 },
-            name: 'Test POV',
+            name: 'Test CAMERA',
             visible: true,
         } as unknown as EntitySchema;
 
-        // Add the POV first
-        mockRegistered.set(testPOV.id, testPOV);
+        // Add the CAMERA first
+        mockRegistered.set(testCAMERA.id, testCAMERA);
 
         const action = new GenerateMediaAction(
             {
-                id: 'test-pov',
+                id: 'test-camera',
                 resolution: {
                     width: 800,
                     height: 600,
@@ -93,10 +93,10 @@ describe('GenerateMediaAction', () => {
         expect(result).toBe('data:image/png;base64,test');
     });
 
-    it('should throw error if POV is not registered', async () => {
+    it('should throw error if CAMERA is not registered', async () => {
         const action = new GenerateMediaAction(
             {
-                id: 'non-existent-pov',
+                id: 'non-existent-camera',
                 resolution: {
                     width: 800,
                     height: 600,
@@ -110,11 +110,11 @@ describe('GenerateMediaAction', () => {
 
         // Execute action and expect error
         await expect(action.execute()).rejects.toThrow(
-            'Object with id non-existent-pov not registered',
+            'Object with id non-existent-camera not registered',
         );
     });
 
-    it('should throw error if object is not a POV', async () => {
+    it('should throw error if object is not a CAMERA', async () => {
         const testObject: EntitySchema = {
             id: 'test-object',
             entityType: 'model',
@@ -145,7 +145,7 @@ describe('GenerateMediaAction', () => {
 
         // Execute action and expect error
         await expect(action.execute()).rejects.toThrow(
-            'Object with id test-object is not a POV',
+            'Object with id test-object is not a CAMERA',
         );
     });
 });

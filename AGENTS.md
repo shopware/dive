@@ -21,7 +21,7 @@
 - `DIVEPrimitive` tests are more stable with real `Box3` plus per-test spies on `Box3.prototype`/`Raycaster`, instead of mocking the full `three` module surface
 - `OrientationDisplayAxes` tests should locally stub `three-spritetext` because jsdom does not implement the canvas text context that the real package needs
 - `DIVERoot` should detach both legacy scene-level `TransformControls` objects and modern `TransformControlsRoot.controls` helper roots when cleaning up transform controls
-- `DIVERoot` POV update/delete coverage requires manually seeding a matching `Object3D` in tests because `addSceneObject` intentionally skips creating POV scene nodes
+- `DIVERoot` CAMERA update/delete coverage requires manually seeding a matching `Object3D` in tests because `addSceneObject` intentionally skips creating CAMERA scene nodes
 - Plugins live in `src/plugins/<name>/` and are auto-discovered by looking for `index.ts` in subdirectories
 - Plugins are exported as subpath exports: `@shopware-ag/dive/<plugin-name>` (e.g. `@shopware-ag/dive/shader`, `@shopware-ag/dive/state`)
 - The shader plugin (`src/plugins/shader/`) now exposes node-based building blocks like `GridNode` and `GridNodeUniforms`; legacy `DIVEShaderLib`/`DIVEShaderMaterial` shader-lib wrappers are being removed
