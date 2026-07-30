@@ -299,6 +299,164 @@ describe('HDREnvironment', () => {
         expect(scene.background).not.toBe(originalBg);
     });
 
+    it('does not capture the scene background in the constructor', () => {
+        scene.background = new Color(0x654321);
+
+        const env = new DIVEEnvironment(renderer, scene, {
+            imageUrl: 'hdr.hdr',
+        });
+
+        expect((env as any).originalBackground).toBeNull();
+        expect((env as any).installedBackground).toBeNull();
+    });
+
+    it('captures a background that is set after construction', async () => {
+        const env = new DIVEEnvironment(renderer, scene, {
+            imageUrl: 'hdr.hdr',
+            useAsBackground: true,
+        });
+
+        // the scene background is commonly set while the HDR is still loading
+        const originalBg = new Color(0x123456);
+        scene.background = originalBg;
+
+        await env.initAsync();
+
+        expect((env as any).originalBackground).toBe(originalBg);
+        expect(scene.background).not.toBe(originalBg);
+
+        env.setUseAsBackground(false);
+
+        expect(scene.background).toBe(originalBg);
+    });
+
+    it('does not mistake its own HDR background for the original one', async () => {
+        const env = new DIVEEnvironment(renderer, scene, {
+            imageUrl: 'hdr.hdr',
+            useAsBackground: true,
+        });
+        const originalBg = new Color(0xff00ff);
+        scene.background = originalBg;
+
+        await env.initAsync();
+
+        // the HDR cube is the scene background now, and re-capturing it would
+        // make the original background unrecoverable
+        env.update();
+        env.setRotationY(1.5);
+
+        expect((env as any).originalBackground).toBe(originalBg);
+
+        env.setUseAsBackground(false);
+
+        expect(scene.background).toBe(originalBg);
+    });
+
+    it('restores the latest foreign background, not the first one', async () => {
+        const env = new DIVEEnvironment(renderer, scene, {
+            imageUrl: 'hdr.hdr',
+            useAsBackground: true,
+        });
+        scene.background = new Color(0x111111);
+
+        await env.initAsync();
+
+        // the background is changed while the HDR is the one on the scene
+        const latestBg = new Color(0x222222);
+        scene.background = latestBg;
+
+        env.setRotationY(0.75);
+
+        expect((env as any).originalBackground).toBe(latestBg);
+
+        env.setUseAsBackground(false);
+
+        expect(scene.background).toBe(latestBg);
+    });
+
+    it('restores a color that was set between two useAsBackground toggles', async () => {
+        const first = new Color(0x0000ff);
+        scene.background = first;
+
+        const env = new DIVEEnvironment(renderer, scene, {
+            imageUrl: 'hdr.hdr',
+            useAsBackground: true,
+        });
+
+        await env.initAsync();
+        expect(scene.background).not.toBe(first);
+
+        env.setUseAsBackground(false);
+        expect(scene.background).toBe(first);
+
+        // the color is changed while the HDR is not used as background
+        const red = new Color(0xff0000);
+        scene.background = red;
+
+        env.setUseAsBackground(true);
+        env.setUseAsBackground(false);
+
+        expect(scene.background).toBe(red);
+        expect(scene.background).not.toBe(first);
+    });
+
+    it('re-captures the background on every update while unused as background', async () => {
+        const env = new DIVEEnvironment(renderer, scene, {
+            imageUrl: 'hdr.hdr',
+            useAsBackground: false,
+        });
+        scene.background = new Color(0x333333);
+
+        await env.initAsync();
+
+        const latestBg = new Color(0x444444);
+        scene.background = latestBg;
+
+        env.setRotationY(0.5);
+
+        expect((env as any).originalBackground).toBe(latestBg);
+        expect(scene.background).toBe(latestBg);
+    });
+
+    it('keeps a foreign background when the source image is missing', async () => {
+        const originalBg = new Color(0xabcdef);
+        scene.background = originalBg;
+
+        const env = new DIVEEnvironment(renderer, scene, {
+            imageUrl: 'hdr.hdr',
+            useAsBackground: true,
+        });
+
+        // the HDR is still in flight, so update() only clears the environment
+        env.update();
+
+        expect(scene.environment).toBeNull();
+        expect(scene.background).toBe(originalBg);
+
+        await env.initAsync();
+        env.setUseAsBackground(false);
+
+        expect(scene.background).toBe(originalBg);
+    });
+
+    it('keeps a foreign background on dispose', async () => {
+        const env = new DIVEEnvironment(renderer, scene, {
+            imageUrl: 'hdr.hdr',
+            useAsBackground: true,
+        });
+        scene.background = new Color(0x555555);
+
+        await env.initAsync();
+
+        const latestBg = new Color(0x666666);
+        scene.background = latestBg;
+
+        env.dispose();
+
+        expect(scene.environment).toBeNull();
+        expect(scene.background).toBe(latestBg);
+    });
+
     it('updates renderer and regenerates PMREM', async () => {
         const env = new DIVEEnvironment(renderer, scene, {
             imageUrl: 'hdr.hdr',

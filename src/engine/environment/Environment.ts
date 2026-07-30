@@ -82,7 +82,11 @@ export const DIVEEnvironmentDefaultSettings: DIVEEnvironmentSettings = {
  * generating a PMREM for scene.environment.
  */
 export class DIVEEnvironment {
-    private originalBackground: typeof Scene.prototype.background;
+    // The background to put back once the HDR is no longer used as one.
+    private originalBackground: typeof Scene.prototype.background = null;
+
+    // The background this environment last put on the scene itself.
+    private installedBackground: typeof Scene.prototype.background = null;
 
     private _webgpurenderer: WebGPURenderer;
     private scene: Scene;
@@ -104,7 +108,6 @@ export class DIVEEnvironment {
     ) {
         this._webgpurenderer = renderer;
         this.scene = scene;
-        this.originalBackground = this.scene.background;
 
         this.pmrem = new PMREMGenerator(renderer);
         this.options = {
@@ -149,9 +152,27 @@ export class DIVEEnvironment {
         this.clearEnvironment();
     }
 
+    /**
+     * Whether `scene.background` is still the one this environment installed.
+     *
+     * A foreign value means something else has changed the background in the
+     * meantime, which makes it the value to restore instead.
+     */
+    private ownsSceneBackground(): boolean {
+        return (
+            this.installedBackground !== null &&
+            this.scene.background === this.installedBackground
+        );
+    }
+
     private clearEnvironment(): void {
         this.scene.environment = null;
-        this.scene.background = this.originalBackground;
+
+        // never revert a background that was not put there by this environment
+        if (this.ownsSceneBackground()) {
+            this.scene.background = this.originalBackground;
+            this.installedBackground = null;
+        }
 
         if (this.currentEnvRT) {
             this.currentEnvRT.texture.dispose();
@@ -177,6 +198,12 @@ export class DIVEEnvironment {
      */
     public update(): void {
         if (!this._webgpurenderer.initialized) return;
+
+        // a background we did not install belongs to someone else and is the one
+        // to restore, so it has to be picked up before it gets overwritten
+        if (!this.ownsSceneBackground()) {
+            this.originalBackground = this.scene.background;
+        }
 
         if (!this.sourceImage) {
             this.clearEnvironment();
@@ -234,9 +261,11 @@ export class DIVEEnvironment {
         // keep unfiltered capture as background (matches HDRLoader brightness)
         if (this.options.useAsBackground) {
             this.scene.background = cubeRT.texture;
+            this.installedBackground = cubeRT.texture;
             this.currentBackgroundCube = cubeRT;
         } else {
             this.scene.background = this.originalBackground;
+            this.installedBackground = null;
             // We created a cubeRT but are not using it as background.
             // We should dispose it if we don't store it in currentBackgroundCube.
             // But we used it for PMREM. Can we dispose it now?
