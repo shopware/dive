@@ -7,4 +7,5 @@ export * from './model/Model.ts';
 export * from './node/Node.ts';
 export * from './primitive/Primitive.ts';
 export * from './root/Root.ts';
+export * from './spritetext/SpriteText.ts';
 export * from './boundingbox/BoundingBox.ts';

@@ -6,9 +6,9 @@ import {
     AxesColorRed,
     AxesColorRedLetter,
     COORDINATE_LAYER_MASK,
+    DIVESpriteText,
 } from '@shopware-ag/dive';
 import { AxesHelper, Color, Material, Matrix4, Object3D } from 'three/webgpu';
-import SpriteText from 'three-spritetext';
 
 export class OrientationDisplayAxes extends Object3D {
     private _axesHelper: AxesHelper;
@@ -27,9 +27,9 @@ export class OrientationDisplayAxes extends Object3D {
             new Color(AxesColorBlue),
         );
 
-        const x = new SpriteText('X', 0.2, AxesColorRedLetter);
-        const y = new SpriteText('Y', 0.2, AxesColorGreenLetter);
-        const z = new SpriteText('Z', 0.2, AxesColorBlueLetter);
+        const x = new DIVESpriteText('X', 0.2, AxesColorRedLetter);
+        const y = new DIVESpriteText('Y', 0.2, AxesColorGreenLetter);
+        const z = new DIVESpriteText('Z', 0.2, AxesColorBlueLetter);
         x.layers.mask = COORDINATE_LAYER_MASK;
         y.layers.mask = COORDINATE_LAYER_MASK;
         z.layers.mask = COORDINATE_LAYER_MASK;

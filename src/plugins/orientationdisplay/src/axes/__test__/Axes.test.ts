@@ -1,18 +1,8 @@
 import { Matrix4 } from 'three/webgpu';
 import { OrientationDisplayAxes } from '../Axes.ts';
 
-vi.mock('three-spritetext', async () => {
-    const actual =
-        await vi.importActual<typeof import('three/webgpu')>('three/webgpu');
-
-    return {
-        default: vi.fn((text: string, textHeight: number, color: unknown) =>
-            Object.assign(new actual.Object3D(), {
-                userData: { text, textHeight, color },
-            }),
-        ),
-    };
-});
+// jsdom has no 2D canvas context, so the axes labels cannot rasterize their text
+vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockReturnValue(null);
 
 describe('OrientationDisplayAxes', () => {
     it('should construct without errors', () => {

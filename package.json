@@ -109,7 +109,6 @@
     "dependencies": {
         "three": "^0.185.1",
         "@tweenjs/tween.js": "^25.0.0",
-        "three-spritetext": "^1.8.2",
         "lodash": "^4.18.1",
         "occt-import-js": "^0.0.23"
     },
