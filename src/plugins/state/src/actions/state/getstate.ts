@@ -1,7 +1,7 @@
 import { Action } from '../action.ts';
 import { registerAction } from '../../ActionRegistry.ts';
 import { type ActionDependencies } from '../../../types/index.ts';
-import { type StateSceneData } from '../../../types/StateSceneData.ts';
+import { type State } from '../../../types/index.ts';
 import { Color, MeshStandardMaterial } from 'three/webgpu';
 import {
     GroupSchema,
@@ -11,15 +11,12 @@ import {
     PrimitiveSchema,
 } from '@shopware-ag/dive';
 
-/**
- * @deprecated use [`GetStateAction`](../state/getstate.ts) instead. This action will be removed in next major release.
- */
-export const GetAllSceneDataAction = Action.define<
-    object,
+export const GetStateAction = Action.define<
+    void,
     Pick<ActionDependencies, 'engine' | 'controller' | 'registered'>,
-    StateSceneData
+    State
 >({
-    description: 'Retrieves all current scene data.',
+    description: 'Retrieves complete state data.',
     execute: (_payload, { engine, controller, registered }) => {
         return {
             name: engine.scene.name,
@@ -58,11 +55,8 @@ export const GetAllSceneDataAction = Action.define<
 
 declare global {
     interface ActionTypes {
-        GET_ALL_SCENE_DATA: typeof GetAllSceneDataAction;
+        GET_STATE: typeof GetStateAction;
     }
 }
 
-registerAction<'GET_ALL_SCENE_DATA'>(
-    'GET_ALL_SCENE_DATA',
-    GetAllSceneDataAction,
-);
+registerAction<'GET_STATE'>('GET_STATE', GetStateAction);
