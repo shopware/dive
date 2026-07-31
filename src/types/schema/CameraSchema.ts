@@ -2,12 +2,12 @@ import { type Vector3Like } from 'three/webgpu';
 import { type BaseEntitySchema } from './BaseEntitySchema.ts';
 import { type EntitySchema } from './EntitySchema.ts';
 
-export function isPovSchema(entity: EntitySchema): entity is PovSchema {
-    return entity.entityType === 'pov';
+export function isCameraSchema(entity: EntitySchema): entity is CameraSchema {
+    return entity.entityType === 'camera';
 }
 
-export type PovSchema = BaseEntitySchema & {
-    entityType: 'pov';
+export type CameraSchema = BaseEntitySchema & {
+    entityType: 'camera';
     position: Vector3Like;
     target: Vector3Like;
     locked?: boolean;

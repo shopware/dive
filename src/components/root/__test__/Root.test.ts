@@ -5,7 +5,7 @@ import {
     EntitySchema,
     PrimitiveSchema,
     GroupSchema,
-    PovSchema,
+    CameraSchema,
     EntityTypeSchema,
     GeometryTypeSchema,
 } from '@shopware-ag/dive';
@@ -717,21 +717,21 @@ describe('components/root/DIVERoot', () => {
             expect(group?.userData.id).toBe('group-1');
         });
 
-        it('should handle POV objects', () => {
-            const povData: PovSchema = {
-                id: 'pov-1',
-                entityType: 'pov',
-                name: 'Test POV',
+        it('should handle CAMERA objects', () => {
+            const cameraData: CameraSchema = {
+                id: 'camera-1',
+                entityType: 'camera',
+                name: 'Test Camera',
                 visible: true,
                 position: { x: 1, y: 2, z: 3 },
                 target: { x: 0, y: 0, z: 0 },
             };
 
             const root = new DIVERoot();
-            root.addSceneObject(povData);
-            // POV objects are not added to the scene
-            const pov = root.getSceneObject(povData);
-            expect(pov).toBeUndefined();
+            root.addSceneObject(cameraData);
+            // CAMERA objects are not added to the scene
+            const camera = root.getSceneObject(cameraData);
+            expect(camera).toBeUndefined();
         });
 
         it('should warn for unknown entity type', () => {
@@ -911,38 +911,38 @@ describe('components/root/DIVERoot', () => {
             );
         });
 
-        it('should handle POV update', () => {
-            const povData = {
-                id: 'pov-1',
-                entityType: 'pov' as EntityTypeSchema,
-                name: 'Test POV',
+        it('should handle CAMERA update', () => {
+            const cameraData = {
+                id: 'camera-1',
+                entityType: 'camera' as EntityTypeSchema,
+                name: 'Test CAMERA',
                 visible: true,
             };
 
             const root = new DIVERoot();
-            root.updateSceneObject(povData);
+            root.updateSceneObject(cameraData);
             expect(spyConsoleWarn).toHaveBeenCalledWith(
-                'DIVERoot.updateSceneObject: Scene object with id pov-1 does not exist',
+                'DIVERoot.updateSceneObject: Scene object with id camera-1 does not exist',
             );
         });
 
-        it('should no-op when updating a found POV object', () => {
-            const povData = {
-                id: 'pov-1',
-                entityType: 'pov' as EntityTypeSchema,
-                name: 'Test POV',
+        it('should no-op when updating a found CAMERA object', () => {
+            const cameraData = {
+                id: 'camera-1',
+                entityType: 'camera' as EntityTypeSchema,
+                name: 'Test CAMERA',
                 visible: true,
             };
 
             const root = new DIVERoot();
-            const povObject = new Object3D();
-            povObject.userData.id = povData.id;
-            root.add(povObject);
+            const cameraObject = new Object3D();
+            cameraObject.userData.id = cameraData.id;
+            root.add(cameraObject);
 
-            root.updateSceneObject(povData);
+            root.updateSceneObject(cameraData);
 
             expect(spyConsoleWarn).not.toHaveBeenCalled();
-            expect(root.getSceneObject(povData)).toBe(povObject);
+            expect(root.getSceneObject(cameraData)).toBe(cameraObject);
         });
 
         it('should warn for unknown entity type in update', () => {
@@ -1022,42 +1022,42 @@ describe('components/root/DIVERoot', () => {
             );
         });
 
-        it('should handle POV deletion', () => {
-            const povData: PovSchema = {
-                id: 'pov-1',
-                entityType: 'pov',
-                name: 'Test POV',
+        it('should handle CAMERA deletion', () => {
+            const cameraData: CameraSchema = {
+                id: 'camera-1',
+                entityType: 'camera',
+                name: 'Test CAMERA',
                 visible: true,
                 position: { x: 1, y: 2, z: 3 },
                 target: { x: 0, y: 0, z: 0 },
             };
 
             const root = new DIVERoot();
-            root.deleteSceneObject(povData);
+            root.deleteSceneObject(cameraData);
             expect(spyConsoleWarn).toHaveBeenCalledWith(
-                'DIVERoot.deleteSceneObject: Object with id pov-1 not found',
+                'DIVERoot.deleteSceneObject: Object with id camera-1 not found',
             );
         });
 
-        it('should no-op when deleting a found POV object', () => {
-            const povData: PovSchema = {
-                id: 'pov-1',
-                entityType: 'pov',
-                name: 'Test POV',
+        it('should no-op when deleting a found CAMERA object', () => {
+            const cameraData: CameraSchema = {
+                id: 'camera-1',
+                entityType: 'camera',
+                name: 'Test CAMERA',
                 visible: true,
                 position: { x: 1, y: 2, z: 3 },
                 target: { x: 0, y: 0, z: 0 },
             };
 
             const root = new DIVERoot();
-            const povObject = new Object3D();
-            povObject.userData.id = povData.id;
-            root.add(povObject);
+            const cameraObject = new Object3D();
+            cameraObject.userData.id = cameraData.id;
+            root.add(cameraObject);
 
-            root.deleteSceneObject(povData);
+            root.deleteSceneObject(cameraData);
 
             expect(spyConsoleWarn).not.toHaveBeenCalled();
-            expect(root.getSceneObject(povData)).toBe(povObject);
+            expect(root.getSceneObject(cameraData)).toBe(cameraObject);
         });
 
         it('should warn for unknown entity type in deletion', () => {

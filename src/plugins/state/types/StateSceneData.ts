@@ -3,24 +3,31 @@ import type {
     GroupSchema,
     LightSchema,
     ModelSchema,
-    PovSchema,
+    CameraSchema,
     PrimitiveSchema,
 } from '@shopware-ag/dive';
 
 export type StateSceneData = {
-    name: string;
-    mediaItem: null;
-    backgroundColor: string;
-    floorEnabled: boolean;
-    floorColor: string;
+    // user data
     userCamera: {
         position: Vector3Like;
         target: Vector3Like;
     };
+
+    // scene data
+    name: string;
+    backgroundColor: string;
+    floorEnabled: boolean;
+    floorColor: string;
+
+    // scene content
     spotmarks: object[];
     lights: LightSchema[];
     objects: ModelSchema[];
-    cameras: PovSchema[];
+    cameras: CameraSchema[];
     primitives: PrimitiveSchema[];
     groups: GroupSchema[];
+
+    // dunno yet :D
+    mediaItem: null;
 };

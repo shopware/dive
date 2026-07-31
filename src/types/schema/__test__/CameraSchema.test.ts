@@ -1,48 +1,48 @@
 import { describe, it, expect } from 'vitest';
-import { isPovSchema } from '../PovSchema.ts';
+import { isCameraSchema } from '../CameraSchema.ts';
 import type { EntitySchema } from '../EntitySchema.ts';
 
-describe('PovSchema', () => {
-    describe('isPovSchema', () => {
-        it('should return true for valid pov schema', () => {
-            const povEntity: EntitySchema = {
-                id: 'test-pov',
-                name: 'Test POV',
-                entityType: 'pov',
+describe('CameraSchema', () => {
+    describe('isCameraSchema', () => {
+        it('should return true for valid camera schema', () => {
+            const cameraEntity: EntitySchema = {
+                id: 'test-camera',
+                name: 'Test Camera',
+                entityType: 'camera',
                 visible: true,
                 position: { x: 0, y: 0, z: 5 },
                 target: { x: 0, y: 0, z: 0 },
             };
 
-            expect(isPovSchema(povEntity)).toBe(true);
+            expect(isCameraSchema(cameraEntity)).toBe(true);
         });
 
-        it('should return true for pov schema with locked property', () => {
-            const povEntity: EntitySchema = {
-                id: 'test-pov-locked',
-                name: 'Test Locked POV',
-                entityType: 'pov',
+        it('should return true for camera schema with locked property', () => {
+            const cameraEntity: EntitySchema = {
+                id: 'test-camera-locked',
+                name: 'Test Locked Camera',
+                entityType: 'camera',
                 visible: true,
                 position: { x: 10, y: 5, z: 10 },
                 target: { x: 0, y: 0, z: 0 },
                 locked: true,
             };
 
-            expect(isPovSchema(povEntity)).toBe(true);
+            expect(isCameraSchema(cameraEntity)).toBe(true);
         });
 
-        it('should return true for pov schema with unlocked property', () => {
-            const povEntity: EntitySchema = {
-                id: 'test-pov-unlocked',
-                name: 'Test Unlocked POV',
-                entityType: 'pov',
+        it('should return true for camera schema with unlocked property', () => {
+            const cameraEntity: EntitySchema = {
+                id: 'test-camera-unlocked',
+                name: 'Test Unlocked Camera',
+                entityType: 'camera',
                 visible: false,
                 position: { x: -5, y: 2, z: 8 },
                 target: { x: 1, y: 1, z: 1 },
                 locked: false,
             };
 
-            expect(isPovSchema(povEntity)).toBe(true);
+            expect(isCameraSchema(cameraEntity)).toBe(true);
         });
 
         it('should return false for model schema', () => {
@@ -58,7 +58,7 @@ describe('PovSchema', () => {
                 loaded: false,
             };
 
-            expect(isPovSchema(modelEntity)).toBe(false);
+            expect(isCameraSchema(modelEntity)).toBe(false);
         });
 
         it('should return false for group schema', () => {
@@ -72,7 +72,7 @@ describe('PovSchema', () => {
                 scale: { x: 1, y: 1, z: 1 },
             };
 
-            expect(isPovSchema(groupEntity)).toBe(false);
+            expect(isCameraSchema(groupEntity)).toBe(false);
         });
 
         it('should return false for light schema', () => {
@@ -87,7 +87,7 @@ describe('PovSchema', () => {
                 enabled: true,
             };
 
-            expect(isPovSchema(lightEntity)).toBe(false);
+            expect(isCameraSchema(lightEntity)).toBe(false);
         });
 
         it('should return false for primitive schema', () => {
@@ -107,7 +107,7 @@ describe('PovSchema', () => {
                 },
             };
 
-            expect(isPovSchema(primitiveEntity)).toBe(false);
+            expect(isCameraSchema(primitiveEntity)).toBe(false);
         });
     });
 });

@@ -1,2 +1,2 @@
 export type EntityTypeSchema =
-    'pov' | 'light' | 'model' | 'primitive' | 'group';
+    'camera' | 'light' | 'model' | 'primitive' | 'group';

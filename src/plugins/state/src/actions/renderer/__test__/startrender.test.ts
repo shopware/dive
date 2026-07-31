@@ -5,7 +5,7 @@ describe('StartRenderAction', () => {
     it('should start the renderer', async () => {
         // Mock dependencies
         const mockEngine = {
-            start: vi.fn(),
+            startAsync: vi.fn(),
         } as unknown as DIVE;
 
         const action = new StartRenderAction(undefined, {
@@ -16,6 +16,6 @@ describe('StartRenderAction', () => {
         action.execute();
 
         // Verify results
-        expect(mockEngine.start).toHaveBeenCalled();
+        expect(mockEngine.startAsync).toHaveBeenCalled();
     });
 });

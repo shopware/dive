@@ -59,7 +59,7 @@ describe('ModelLoadedAction', () => {
 
         const testObject: EntitySchema = {
             id: 'test-object',
-            entityType: 'pov',
+            entityType: 'camera',
             position: { x: 0, y: 0, z: 0 },
             rotation: { x: 0, y: 0, z: 0 },
             scale: { x: 1, y: 1, z: 1 },

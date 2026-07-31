@@ -80,7 +80,7 @@ export class DIVERoot extends Object3D {
         }
 
         switch (object.entityType) {
-            case 'pov': {
+            case 'camera': {
                 break;
             }
             case 'light': {
@@ -155,7 +155,7 @@ export class DIVERoot extends Object3D {
         }
 
         switch (object.entityType) {
-            case 'pov': {
+            case 'camera': {
                 break;
             }
             case 'light': {
@@ -192,7 +192,7 @@ export class DIVERoot extends Object3D {
         }
 
         switch (object.entityType) {
-            case 'pov': {
+            case 'camera': {
                 break;
             }
             case 'light': {

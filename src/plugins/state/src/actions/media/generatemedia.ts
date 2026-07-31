@@ -1,7 +1,7 @@
 import { Action } from '../action.ts';
 import { registerAction } from '../../ActionRegistry.ts';
 import { type ActionDependencies } from '../../../types/index.ts';
-import { isPovSchema } from '@shopware-ag/dive';
+import { isCameraSchema } from '@shopware-ag/dive';
 import {
     type MediaGenerationByPosition,
     type MediaGenerationById,
@@ -25,9 +25,9 @@ export const GenerateMediaAction = Action.define<
                 );
             }
 
-            if (!isPovSchema(object)) {
+            if (!isCameraSchema(object)) {
                 throw new Error(
-                    `Object with id ${payload.id} is not a POV. Object: ${object}`,
+                    `Object with id ${payload.id} is not a CAMERA. Object: ${object}`,
                 );
             }
 

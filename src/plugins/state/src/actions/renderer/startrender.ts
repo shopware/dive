@@ -5,11 +5,11 @@ import { ActionDependencies } from '../../../types/index.ts';
 export const StartRenderAction = Action.define<
     void,
     Pick<ActionDependencies, 'engine'>,
-    void
+    Promise<void>
 >({
     description: 'Starts the render process.',
-    execute: (_, { engine }) => {
-        engine.start();
+    execute: async (_, { engine }) => {
+        return engine.startAsync();
     },
 });
 
