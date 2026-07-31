@@ -1,7 +1,7 @@
 import { Action } from '../action.ts';
 import { registerAction } from '../../ActionRegistry.ts';
 import { type ActionDependencies } from '../../../types/index.ts';
-import { type State } from '../../../types/index.ts';
+import { type StateData } from '../../../types/index.ts';
 import { Color, MeshStandardMaterial } from 'three/webgpu';
 import {
     GroupSchema,
@@ -14,7 +14,7 @@ import {
 export const GetStateAction = Action.define<
     void,
     Pick<ActionDependencies, 'engine' | 'controller' | 'registered'>,
-    State
+    StateData
 >({
     description: 'Retrieves complete state data.',
     execute: (_payload, { engine, controller, registered }) => {

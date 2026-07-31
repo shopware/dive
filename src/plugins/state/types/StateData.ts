@@ -7,7 +7,7 @@ import type {
     PrimitiveSchema,
 } from '@shopware-ag/dive';
 
-export type State = {
+export type StateData = {
     // scene data
     name: string;
     backgroundColor: string;
