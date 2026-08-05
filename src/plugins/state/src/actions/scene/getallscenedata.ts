@@ -1,7 +1,7 @@
 import { Action } from '../action.ts';
 import { registerAction } from '../../ActionRegistry.ts';
 import { type ActionDependencies } from '../../../types/index.ts';
-import { type StateSceneData } from '../../../types/StateSceneData.ts';
+import { type StateData } from '../../../types/StateData.ts';
 import { Color, MeshStandardMaterial } from 'three/webgpu';
 import {
     GroupSchema,
@@ -17,7 +17,7 @@ import {
 export const GetAllSceneDataAction = Action.define<
     object,
     Pick<ActionDependencies, 'engine' | 'controller' | 'registered'>,
-    StateSceneData
+    StateData
 >({
     description: 'Retrieves all current scene data.',
     execute: (_payload, { engine, controller, registered }) => {
