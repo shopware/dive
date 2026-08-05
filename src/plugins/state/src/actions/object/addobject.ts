@@ -1,23 +1,23 @@
 import { Action } from '../action.ts';
 import { registerAction } from '../../ActionRegistry.ts';
 import { type ActionDependencies } from '../../../types/index.ts';
-import { type EntitySchema } from '@shopware-ag/dive';
+import { type EntitySchema, type DIVESceneObject } from '@shopware-ag/dive';
 
 export const AddObjectAction = Action.define<
     EntitySchema,
     Pick<ActionDependencies, 'engine' | 'registered'>,
-    Promise<void>
+    Promise<DIVESceneObject | undefined>
 >({
     description: 'Adds an object to the scene.',
     execute: async (payload, { engine, registered }) => {
-        if (registered.get(payload.id)) return;
+        const existing = registered.get(payload.id);
+        if (existing) return engine.scene.root.getSceneObject(existing);
 
         if (payload.parentId === undefined) payload.parentId = null;
 
         registered.set(payload.id, payload);
 
-        // awaited, so a model is fully loaded once this action settles
-        await engine.scene.root.addSceneObject(payload);
+        return engine.scene.root.addSceneObject(payload);
     },
 });
 
