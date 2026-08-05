@@ -104,12 +104,13 @@ export class BoundingBox extends DIVENode {
     }
 
     /**
-     * Creates a new BoundingBox instance for the specified 3D object.
+     * Creates a new BoundingBox instance for the specified 3D object or objects.
      *
-     * The constructor computes both a bounding box and bounding sphere for the given object.
-     * It handles complex objects with multiple meshes and nested transformations.
+     * The constructor computes both a bounding box and bounding sphere for the given objects.
+     * It handles complex objects with multiple meshes and nested transformations. When several
+     * objects are passed, the resulting volumes encompass all of them.
      *
-     * @param object - The 3D object to compute bounding volumes for
+     * @param object - The 3D object, or objects, to compute bounding volumes for
      * @param axisAligned - Whether to create an axis-aligned bounding box (true) or oriented bounding box (false). Defaults to false.
      * @param wireframeColor - The color for the wireframe helpers. Can be a hex number or ColorRepresentation. Defaults to green (0x00ff00).
      *
@@ -121,45 +122,54 @@ export class BoundingBox extends DIVENode {
      * // Create an axis-aligned bounding box (aligned with world coordinates)
      * const aabb = new BoundingBox(mesh, true, 0xff0000);
      *
+     * // Encompass several objects at once
+     * const combined = new BoundingBox([meshA, meshB, meshC]);
+     *
      * // Use default green color
      * const defaultBox = new BoundingBox(mesh);
      * ```
      */
     constructor(
-        object: Object3D,
+        object: Object3D | Object3D[],
         axisAligned: boolean = false,
         wireframeColor: ColorRepresentation | number = 0x00ff00,
     ) {
         super();
 
+        const objects = Array.isArray(object) ? object : [object];
+
         // Compute bounding box
         const box = new Box3();
         if (axisAligned) {
             // Simple axis-aligned bounding box computation
-            box.setFromObject(object);
+            // expandByObject unions into the box, so several objects accumulate
+            objects.forEach((entry) => box.expandByObject(entry));
         } else {
             // Oriented bounding box computation
-            // Ensure all world matrices are up to date (including children)
-            object.updateWorldMatrix(true, true);
-            object.traverse((child) => {
-                if (!('isMesh' in child)) return;
-                if (!(child as Mesh).isMesh) return;
+            objects.forEach((entry) => {
+                // Ensure all world matrices are up to date (including children)
+                entry.updateWorldMatrix(true, true);
+                entry.traverse((child) => {
+                    if (!('isMesh' in child)) return;
+                    if (!(child as Mesh).isMesh) return;
 
-                const mesh = child as Mesh;
-                mesh.geometry.computeBoundingBox();
+                    const mesh = child as Mesh;
+                    mesh.geometry.computeBoundingBox();
 
-                if (!mesh.geometry.boundingBox) return;
+                    if (!mesh.geometry.boundingBox) return;
 
-                box.union(
-                    mesh.geometry.boundingBox
-                        .clone()
-                        .applyMatrix4(mesh.matrixWorld),
-                );
+                    box.union(
+                        mesh.geometry.boundingBox
+                            .clone()
+                            .applyMatrix4(mesh.matrixWorld),
+                    );
+                });
             });
         }
 
-        // Copy the object's rotation to maintain orientation
-        this.rotation.copy(object.rotation);
+        // Copy the object's rotation to maintain orientation. Several objects
+        // have no common orientation, so the box stays unrotated in that case.
+        if (objects.length === 1) this.rotation.copy(objects[0].rotation);
 
         this._box = box;
         this._size = box.getSize(new Vector3());
@@ -175,7 +185,8 @@ export class BoundingBox extends DIVENode {
         this._radius = this._sphere.radius;
 
         // Create sphere helper (wireframe)
-        const sphereGeo = new SphereGeometry(this._radius, 32, 32);
+        // an empty box yields a radius of -1, which is not a valid geometry
+        const sphereGeo = new SphereGeometry(Math.max(0, this._radius), 32, 32);
         sphereGeo.translate(this._center.x, this._center.y, this._center.z);
         this._sphereHelper = new Mesh(
             sphereGeo,

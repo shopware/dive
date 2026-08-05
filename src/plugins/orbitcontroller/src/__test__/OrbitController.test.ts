@@ -3,6 +3,9 @@ import {
     DIVEPerspectiveCamera,
     DIVERenderer,
     DIVEScene,
+    // the instance OrbitController itself constructs, which is a different
+    // module specifier than the BoundingBox imported below
+    BoundingBox as UsedBoundingBox,
 } from '@shopware-ag/dive';
 import { BoundingBox } from 'src/components/boundingbox/BoundingBox.ts';
 import {
@@ -447,6 +450,78 @@ describe('modules/controller/orbit/OrbitController', () => {
         it('should focus object with padding', () => {
             const mockObject = new Object3D();
             expect(() => controller.focusObject(mockObject, 0.5)).not.toThrow();
+        });
+    });
+
+    describe('Focus Object targets', () => {
+        beforeEach(() => {
+            vi.mocked(UsedBoundingBox).mockClear();
+        });
+
+        it('should build the bounding box from a single object', () => {
+            const object = new Object3D();
+
+            controller.focusObject(object);
+
+            expect(UsedBoundingBox).toHaveBeenCalledTimes(1);
+            expect(UsedBoundingBox).toHaveBeenCalledWith(object);
+        });
+
+        it('should hand a list of objects to the bounding box as a list', () => {
+            const first = new Object3D();
+            const second = new Object3D();
+
+            controller.focusObject([first, second]);
+
+            expect(UsedBoundingBox).toHaveBeenCalledTimes(1);
+            expect(UsedBoundingBox).toHaveBeenCalledWith([first, second]);
+        });
+
+        it('should encompass a single element list just like the object', () => {
+            const object = new Object3D();
+
+            controller.focusObject([object]);
+            const fromList = controller.object.position.clone();
+
+            controller.focusObject(object);
+
+            expect(controller.object.position).toEqual(fromList);
+        });
+
+        it('should move camera and target onto the computed view', () => {
+            const position = new Vector3(1, 2, 3);
+            const target = new Vector3(4, 5, 6);
+            vi.spyOn(controller, 'computeEncompassingView').mockReturnValue({
+                position,
+                target,
+            });
+
+            controller.focusObject(new Object3D());
+
+            // update() rebuilds the position from spherical coordinates, so it
+            // only lands on the computed one within floating point tolerance
+            expect(controller.object.position.x).toBeCloseTo(position.x);
+            expect(controller.object.position.y).toBeCloseTo(position.y);
+            expect(controller.object.position.z).toBeCloseTo(position.z);
+            expect(controller.target).toEqual(target);
+        });
+
+        it('should forward the padding and default it to zero', () => {
+            const spy = vi.spyOn(controller, 'computeEncompassingView');
+
+            controller.focusObject(new Object3D(), 0.5);
+            expect(spy).toHaveBeenLastCalledWith(expect.anything(), 0.5);
+
+            controller.focusObject(new Object3D());
+            expect(spy).toHaveBeenLastCalledWith(expect.anything(), 0);
+        });
+
+        it('should update the controller after focusing', () => {
+            const updateSpy = vi.spyOn(controller, 'update');
+
+            controller.focusObject([new Object3D(), new Object3D()]);
+
+            expect(updateSpy).toHaveBeenCalledTimes(1);
         });
     });
 
