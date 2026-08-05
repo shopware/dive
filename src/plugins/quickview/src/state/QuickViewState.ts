@@ -3,7 +3,6 @@ import { OrbitController } from '@shopware-ag/dive/orbitcontroller';
 import type { StateData } from '@shopware-ag/dive/state';
 import { QuickViewSettings } from '../../types/QuickViewSettings.ts';
 import { type QuickViewWithState } from '../../types/index.ts';
-import { type Object3D } from 'three/webgpu';
 
 export const QuickViewState = async (
     sceneData: StateData,
@@ -25,45 +24,35 @@ export const QuickViewState = async (
             orbitController,
         );
 
-        let modelLoadedCountdown = sceneData.objects.length;
-
         const quickView = Object.assign(dive, { orbitController, state });
 
         const originalDispose = dive.disposeAsync.bind(dive);
         quickView.disposeAsync = async () => {
             orbitController.dispose();
+            // otherwise the instance lingers in State's static registry
+            state.destroyInstance();
 
             // dispose dive
             await originalDispose();
         };
 
-        state.subscribe('MODEL_LOADED', async () => {
-            modelLoadedCountdown--;
-            if (modelLoadedCountdown === 0) {
-                const objectsToFocus: Object3D[] = [];
-                sceneData.objects.forEach((object) => {
-                    const sceneModel = dive.scene.root.getSceneObject(object);
-                    if (sceneModel) {
-                        objectsToFocus.push(sceneModel);
-                    }
-                });
-                sceneData.primitives.forEach((primitive) => {
-                    const scenePrimitive =
-                        dive.scene.root.getSceneObject(primitive);
-                    if (scenePrimitive) {
-                        objectsToFocus.push(scenePrimitive);
-                    }
-                });
+        // SET_STATE settles once every model is loaded, so there is nothing
+        // left to wait for and the created objects come back with it
+        // a single broken asset is warned about rather than dropping the whole
+        // scene, so what comes back is everything that made it in
+        const objects = await state.performAction('SET_STATE', sceneData);
 
-                orbitController.focusObject(objectsToFocus);
-            }
+        const objectsToFocus = objects.filter(
+            (object) => 'isDIVEModel' in object || 'isDIVEPrimitive' in object,
+        );
+        // an empty list would give the bounding box a negative radius
+        if (objectsToFocus.length > 0) {
+            orbitController.focusObject(objectsToFocus);
+        }
 
-            if (settings?.autoStart ?? true) {
-                await dive.startAsync();
-            }
-        });
-
-        await state.performAction('SET_STATE', sceneData);
+        if (settings?.autoStart ?? true) {
+            await dive.startAsync();
+        }
 
         return quickView;
     } catch (error) {
