@@ -204,12 +204,12 @@ describe('DIVERenderPipeline', () => {
     it('should render only after initialization', () => {
         const instance = WebGPURenderer.mock.results[0].value;
 
-        renderer.render();
-        expect(instance.render).not.toHaveBeenCalled();
+        renderer.tick();
+        expect(instance.tick).not.toHaveBeenCalled();
 
         instance.initialized = true;
-        renderer.render();
-        expect(instance.render).toHaveBeenCalledWith(scene, camera);
+        renderer.tick();
+        expect(instance.tick).toHaveBeenCalledWith(scene, camera);
     });
 
     it('should handle resize', () => {
