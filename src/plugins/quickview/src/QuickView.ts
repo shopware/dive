@@ -1,6 +1,12 @@
-import { DIVE, DIVEDefaultSettings, DIVEModel } from '@shopware-ag/dive';
-import { OrbitController } from '@shopware-ag/dive/orbitcontroller';
-import { type QuickViewSettings } from '../types/index.ts';
+import { DIVEDefaultSettings } from '@shopware-ag/dive';
+import type { StateData } from '@shopware-ag/dive/state';
+import {
+    QuickViewWithModel,
+    QuickViewWithState,
+    type QuickViewSettings,
+} from '../types/index.ts';
+import { QuickViewUri } from './uri/QuickViewUri.ts';
+import { QuickViewState } from './state/QuickViewState.ts';
 
 export const QuickViewDefaultSettings: Omit<
     Required<QuickViewSettings>,
@@ -9,55 +15,35 @@ export const QuickViewDefaultSettings: Omit<
     ...DIVEDefaultSettings,
 };
 
-export type QuickView = DIVE & {
-    orbitController: OrbitController;
-    model: DIVEModel;
-};
-
 /**
+ * Creates a QuickView from a model URI.
  *
  * @param uri - The URI of the 3D model to display in QuickView
  * @param settings - The settings for the QuickView
  * @returns The DIVE instance with the orbit controller and hdr environment - { ...DIVE, orbitController: OrbitController, hdr: HDREnvironment }
  */
-export const QuickView = async (
+export function QuickView(
     uri: string,
     settings?: Partial<QuickViewSettings>,
-): Promise<QuickView> => {
-    try {
-        const dive = new DIVE({ ...settings, autoStart: false });
+): Promise<QuickViewWithModel>;
 
-        dive.mainView.camera.position.set(0, 1, 2);
+/**
+ * Creates a QuickView from scene state.
+ *
+ * @param state - The scene data to display in QuickView
+ * @param settings - The settings for the QuickView
+ * @returns The DIVE instance with the orbit controller and hdr environment - { ...DIVE, orbitController: OrbitController, hdr: HDREnvironment }
+ */
+export function QuickView(
+    state: StateData,
+    settings?: Partial<QuickViewSettings>,
+): Promise<QuickViewWithState>;
 
-        // instantiate model
-        const model = await new DIVEModel().setFromURL(uri);
-        dive.scene.root.add(model);
-        model.placeOnFloor();
-
-        const orbitController = new OrbitController(
-            dive.mainView.camera,
-            dive.mainView.canvas,
-        );
-        dive.clock.addTicker(orbitController);
-
-        const quickView = Object.assign(dive, { orbitController, model });
-
-        const originalDispose = dive.disposeAsync.bind(dive);
-        quickView.disposeAsync = async () => {
-            orbitController.dispose();
-
-            // dispose dive
-            await originalDispose();
-        };
-
-        if (settings?.autoStart ?? true) {
-            await dive.startAsync();
-            orbitController.focusObject(model);
-        }
-
-        return quickView;
-    } catch (error) {
-        console.error('Failed to initialize QuickView:', error);
-        return Promise.reject(error);
-    }
-};
+export function QuickView(
+    source: string | StateData,
+    settings?: Partial<QuickViewSettings>,
+): Promise<QuickViewWithModel | QuickViewWithState> {
+    return typeof source === 'string'
+        ? QuickViewUri(source, settings)
+        : QuickViewState(source, settings);
+}
