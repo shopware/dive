@@ -464,7 +464,7 @@ describe('components/root/DIVERoot', () => {
     });
 
     describe('addSceneObject', () => {
-        it('should add different types of lights', () => {
+        it('should add different types of lights', async () => {
             const sceneLightData: LightSchema = {
                 id: 'scene-light-1',
                 entityType: 'light',
@@ -514,10 +514,10 @@ describe('components/root/DIVERoot', () => {
             } as any;
 
             const root = new DIVERoot();
-            root.addSceneObject(sceneLightData);
-            root.addSceneObject(ambientLightData);
-            root.addSceneObject(pointLightData);
-            expect(() => root.addSceneObject(unknownLightData)).toThrow(
+            await root.addSceneObject(sceneLightData);
+            await root.addSceneObject(ambientLightData);
+            await root.addSceneObject(pointLightData);
+            await expect(root.addSceneObject(unknownLightData)).rejects.toThrow(
                 'DIVERoot.addSceneObject: Unknown light type: unknown',
             );
 
@@ -532,7 +532,7 @@ describe('components/root/DIVERoot', () => {
             expect(unknownLight).toBeUndefined();
         });
 
-        it('should update all light properties', () => {
+        it('should update all light properties', async () => {
             const lightData: LightSchema = {
                 id: 'light-1',
                 entityType: 'light',
@@ -547,7 +547,7 @@ describe('components/root/DIVERoot', () => {
             };
 
             const root = new DIVERoot();
-            root.addSceneObject(lightData);
+            await root.addSceneObject(lightData);
             expect(spyConsoleWarn).not.toHaveBeenCalled();
 
             const light = root.getSceneObject(lightData);
@@ -562,7 +562,7 @@ describe('components/root/DIVERoot', () => {
             expect(light?.visible).toBe(true);
         });
 
-        it('should update all model properties', () => {
+        it('should update all model properties', async () => {
             const modelData: ModelSchema = {
                 id: 'model-1',
                 entityType: 'model',
@@ -578,7 +578,7 @@ describe('components/root/DIVERoot', () => {
             };
 
             const root = new DIVERoot();
-            root.addSceneObject(modelData);
+            await root.addSceneObject(modelData);
             const model = root.getSceneObject(modelData);
             expect(model).toBeDefined();
             expect(model?.name).toBe('Test Model');
@@ -591,7 +591,7 @@ describe('components/root/DIVERoot', () => {
             expect(model?.setMaterial).toHaveBeenCalledWith(modelData.material);
         });
 
-        it('should update all primitive properties', () => {
+        it('should update all primitive properties', async () => {
             const primitiveData: PrimitiveSchema = {
                 id: 'primitive-1',
                 entityType: 'primitive',
@@ -606,7 +606,7 @@ describe('components/root/DIVERoot', () => {
             };
 
             const root = new DIVERoot();
-            root.addSceneObject(primitiveData);
+            await root.addSceneObject(primitiveData);
             const primitive = root.getSceneObject(primitiveData);
             expect(primitive).toBeDefined();
             expect(primitive?.name).toBe('Test Primitive');
@@ -630,7 +630,7 @@ describe('components/root/DIVERoot', () => {
             );
         });
 
-        it('should update all group properties', () => {
+        it('should update all group properties', async () => {
             const groupData: GroupSchema = {
                 id: 'group-1',
                 entityType: 'group',
@@ -644,7 +644,7 @@ describe('components/root/DIVERoot', () => {
             };
 
             const root = new DIVERoot();
-            root.addSceneObject(groupData);
+            await root.addSceneObject(groupData);
             const group = root.getSceneObject(groupData);
             expect(group).toBeDefined();
             expect(group?.name).toBe('Test Group');
@@ -659,7 +659,7 @@ describe('components/root/DIVERoot', () => {
             );
         });
 
-        it('should add a model object', () => {
+        it('should add a model object', async () => {
             const modelData: ModelSchema = {
                 id: 'model-1',
                 entityType: 'model',
@@ -673,14 +673,14 @@ describe('components/root/DIVERoot', () => {
             };
 
             const root = new DIVERoot();
-            root.addSceneObject(modelData);
+            await root.addSceneObject(modelData);
             const model = root.getSceneObject(modelData);
             expect(model).toBeDefined();
             expect(model?.userData.uri).toBe('test.glb');
             expect(model?.userData.id).toBe('model-1');
         });
 
-        it('should add a primitive object', () => {
+        it('should add a primitive object', async () => {
             const primitiveData: PrimitiveSchema = {
                 id: 'primitive-1',
                 entityType: 'primitive',
@@ -693,13 +693,13 @@ describe('components/root/DIVERoot', () => {
             };
 
             const root = new DIVERoot();
-            root.addSceneObject(primitiveData);
+            await root.addSceneObject(primitiveData);
             const primitive = root.getSceneObject(primitiveData);
             expect(primitive).toBeDefined();
             expect(primitive?.userData.id).toBe('primitive-1');
         });
 
-        it('should add a group object', () => {
+        it('should add a group object', async () => {
             const groupData: GroupSchema = {
                 id: 'group-1',
                 entityType: 'group',
@@ -711,13 +711,13 @@ describe('components/root/DIVERoot', () => {
             };
 
             const root = new DIVERoot();
-            root.addSceneObject(groupData);
+            await root.addSceneObject(groupData);
             const group = root.getSceneObject(groupData);
             expect(group).toBeDefined();
             expect(group?.userData.id).toBe('group-1');
         });
 
-        it('should handle CAMERA objects', () => {
+        it('should handle CAMERA objects', async () => {
             const cameraData: CameraSchema = {
                 id: 'camera-1',
                 entityType: 'camera',
@@ -728,13 +728,13 @@ describe('components/root/DIVERoot', () => {
             };
 
             const root = new DIVERoot();
-            root.addSceneObject(cameraData);
+            await root.addSceneObject(cameraData);
             // CAMERA objects are not added to the scene
             const camera = root.getSceneObject(cameraData);
             expect(camera).toBeUndefined();
         });
 
-        it('should warn for unknown entity type', () => {
+        it('should warn for unknown entity type', async () => {
             const unknownData = {
                 id: 'unknown',
                 entityType: 'unknown' as EntityTypeSchema,
@@ -746,12 +746,12 @@ describe('components/root/DIVERoot', () => {
             } as unknown as EntitySchema;
 
             const root = new DIVERoot();
-            expect(() => root.addSceneObject(unknownData)).toThrow(
+            await expect(root.addSceneObject(unknownData)).rejects.toThrow(
                 'DIVERoot.addSceneObject: Unknown entity type: unknown',
             );
         });
 
-        it('should warn and return the existing object when adding a duplicate id', () => {
+        it('should warn and return the existing object when adding a duplicate id', async () => {
             const modelData: ModelSchema = {
                 id: 'model-duplicate',
                 entityType: 'model',
@@ -765,8 +765,8 @@ describe('components/root/DIVERoot', () => {
             };
 
             const root = new DIVERoot();
-            const firstObject = root.addSceneObject(modelData);
-            const duplicateObject = root.addSceneObject(modelData);
+            const firstObject = await root.addSceneObject(modelData);
+            const duplicateObject = await root.addSceneObject(modelData);
 
             expect(duplicateObject).toBe(firstObject);
             expect(spyConsoleWarn).toHaveBeenCalledWith(
@@ -776,7 +776,7 @@ describe('components/root/DIVERoot', () => {
     });
 
     describe('updateSceneObject', () => {
-        it('should update existing object properties', () => {
+        it('should update existing object properties', async () => {
             const modelData: ModelSchema = {
                 id: 'model-1',
                 entityType: 'model',
@@ -790,7 +790,7 @@ describe('components/root/DIVERoot', () => {
             };
 
             const root = new DIVERoot();
-            root.addSceneObject(modelData);
+            await root.addSceneObject(modelData);
             const model = root.getSceneObject(modelData);
             expect(model).toBeDefined();
 
@@ -799,13 +799,13 @@ describe('components/root/DIVERoot', () => {
                 position: { x: 2, y: 3, z: 4 },
             };
 
-            root.updateSceneObject(updatedData);
+            await root.updateSceneObject(updatedData);
             expect(model?.setPosition).toHaveBeenCalledWith(
                 updatedData.position,
             );
         });
 
-        it('should update existing light properties', () => {
+        it('should update existing light properties', async () => {
             const lightData: LightSchema = {
                 id: 'light-1',
                 entityType: 'light',
@@ -819,7 +819,7 @@ describe('components/root/DIVERoot', () => {
             };
 
             const root = new DIVERoot();
-            root.addSceneObject(lightData);
+            await root.addSceneObject(lightData);
             const light = root.getSceneObject(lightData);
             expect(light).toBeDefined();
 
@@ -829,12 +829,12 @@ describe('components/root/DIVERoot', () => {
                 color: '#ff0000',
             };
 
-            root.updateSceneObject(updatedData);
+            await root.updateSceneObject(updatedData);
             expect((light as any).setIntensity).toHaveBeenCalledWith(2.0);
             expect((light as any).setColor).toHaveBeenCalled();
         });
 
-        it('should update existing primitive properties', () => {
+        it('should update existing primitive properties', async () => {
             const primitiveData: PrimitiveSchema = {
                 id: 'primitive-1',
                 entityType: 'primitive',
@@ -847,7 +847,7 @@ describe('components/root/DIVERoot', () => {
             };
 
             const root = new DIVERoot();
-            root.addSceneObject(primitiveData);
+            await root.addSceneObject(primitiveData);
             const primitive = root.getSceneObject(primitiveData);
             expect(primitive).toBeDefined();
 
@@ -861,13 +861,13 @@ describe('components/root/DIVERoot', () => {
                 },
             };
 
-            root.updateSceneObject(updatedData);
+            await root.updateSceneObject(updatedData);
             expect((primitive as any).setGeometry).toHaveBeenCalledWith(
                 updatedData.geometry,
             );
         });
 
-        it('should update existing group properties', () => {
+        it('should update existing group properties', async () => {
             const groupData: GroupSchema = {
                 id: 'group-1',
                 entityType: 'group',
@@ -879,7 +879,7 @@ describe('components/root/DIVERoot', () => {
             };
 
             const root = new DIVERoot();
-            root.addSceneObject(groupData);
+            await root.addSceneObject(groupData);
             const group = root.getSceneObject(groupData);
             expect(group).toBeDefined();
 
@@ -889,14 +889,14 @@ describe('components/root/DIVERoot', () => {
                 bbVisible: true,
             };
 
-            root.updateSceneObject(updatedData);
+            await root.updateSceneObject(updatedData);
             expect((group as any).setVisibility).toHaveBeenCalledWith(false);
             expect((group as any).setLinesVisibility).toHaveBeenCalledWith(
                 true,
             );
         });
 
-        it('should handle update of non-existent object', () => {
+        it('should handle update of non-existent object', async () => {
             const nonExistentData = {
                 id: 'non-existent',
                 entityType: 'model' as EntityTypeSchema,
@@ -905,13 +905,13 @@ describe('components/root/DIVERoot', () => {
             };
 
             const root = new DIVERoot();
-            root.updateSceneObject(nonExistentData);
+            await root.updateSceneObject(nonExistentData);
             expect(spyConsoleWarn).toHaveBeenCalledWith(
                 'DIVERoot.updateSceneObject: Scene object with id non-existent does not exist',
             );
         });
 
-        it('should handle CAMERA update', () => {
+        it('should handle CAMERA update', async () => {
             const cameraData = {
                 id: 'camera-1',
                 entityType: 'camera' as EntityTypeSchema,
@@ -920,13 +920,13 @@ describe('components/root/DIVERoot', () => {
             };
 
             const root = new DIVERoot();
-            root.updateSceneObject(cameraData);
+            await root.updateSceneObject(cameraData);
             expect(spyConsoleWarn).toHaveBeenCalledWith(
                 'DIVERoot.updateSceneObject: Scene object with id camera-1 does not exist',
             );
         });
 
-        it('should no-op when updating a found CAMERA object', () => {
+        it('should no-op when updating a found CAMERA object', async () => {
             const cameraData = {
                 id: 'camera-1',
                 entityType: 'camera' as EntityTypeSchema,
@@ -939,13 +939,13 @@ describe('components/root/DIVERoot', () => {
             cameraObject.userData.id = cameraData.id;
             root.add(cameraObject);
 
-            root.updateSceneObject(cameraData);
+            await root.updateSceneObject(cameraData);
 
             expect(spyConsoleWarn).not.toHaveBeenCalled();
             expect(root.getSceneObject(cameraData)).toBe(cameraObject);
         });
 
-        it('should warn for unknown entity type in update', () => {
+        it('should warn for unknown entity type in update', async () => {
             const unknownData = {
                 id: 'unknown',
                 entityType: 'unknown' as EntityTypeSchema,
@@ -953,14 +953,14 @@ describe('components/root/DIVERoot', () => {
             };
 
             const root = new DIVERoot();
-            root.updateSceneObject(unknownData);
+            await root.updateSceneObject(unknownData);
             expect(spyConsoleWarn).toHaveBeenCalled();
             expect(spyConsoleWarn).toHaveBeenCalledWith(
                 'DIVERoot.updateSceneObject: Scene object with id unknown does not exist',
             );
         });
 
-        it('should throw for unknown entity type when the object exists', () => {
+        it('should throw for unknown entity type when the object exists', async () => {
             const unknownData = {
                 id: 'unknown',
                 entityType: 'unknown' as EntityTypeSchema,
@@ -972,14 +972,14 @@ describe('components/root/DIVERoot', () => {
             existingObject.userData.id = unknownData.id;
             root.add(existingObject);
 
-            expect(() => root.updateSceneObject(unknownData)).toThrow(
+            await expect(root.updateSceneObject(unknownData)).rejects.toThrow(
                 'DIVERoot.updateSceneObject: Unknown entity type: unknown',
             );
         });
     });
 
     describe('deleteSceneObject', () => {
-        it('should remove object from scene', () => {
+        it('should remove object from scene', async () => {
             const modelData: ModelSchema = {
                 id: 'model-1',
                 entityType: 'model',
@@ -993,7 +993,7 @@ describe('components/root/DIVERoot', () => {
             };
 
             const root = new DIVERoot();
-            root.addSceneObject(modelData);
+            await root.addSceneObject(modelData);
             const model = root.getSceneObject(modelData);
             expect(model).toBeDefined();
 
@@ -1080,7 +1080,7 @@ describe('components/root/DIVERoot', () => {
             );
         });
 
-        it('should handle group member detachment', () => {
+        it('should handle group member detachment', async () => {
             const groupData: GroupSchema = {
                 id: 'group-1',
                 entityType: 'group',
@@ -1105,8 +1105,8 @@ describe('components/root/DIVERoot', () => {
             };
 
             const root = new DIVERoot();
-            root.addSceneObject(groupData);
-            root.addSceneObject(memberData);
+            await root.addSceneObject(groupData);
+            await root.addSceneObject(memberData);
 
             const group = root.getSceneObject(groupData);
             const member = root.getSceneObject(memberData);
@@ -1123,7 +1123,7 @@ describe('components/root/DIVERoot', () => {
             expect(root.attach).toHaveBeenCalledWith(member);
         });
 
-        it('should handle transform controls detachment', () => {
+        it('should handle transform controls detachment', async () => {
             const modelData: ModelSchema = {
                 id: 'model-1',
                 entityType: 'model',
@@ -1145,7 +1145,7 @@ describe('components/root/DIVERoot', () => {
             mockScene.children = [mockTransformControls];
 
             const root = new DIVERoot();
-            root.addSceneObject(modelData);
+            await root.addSceneObject(modelData);
             const model = root.getSceneObject(modelData);
             expect(model).toBeDefined();
 
@@ -1158,7 +1158,7 @@ describe('components/root/DIVERoot', () => {
             expect(mockTransformControls.detach).toHaveBeenCalled();
         });
 
-        it('should handle primitive deletion', () => {
+        it('should handle primitive deletion', async () => {
             const primitiveData: PrimitiveSchema = {
                 id: 'primitive-1',
                 entityType: 'primitive',
@@ -1179,7 +1179,7 @@ describe('components/root/DIVERoot', () => {
             mockScene.children = [mockTransformControls];
 
             const root = new DIVERoot();
-            root.addSceneObject(primitiveData);
+            await root.addSceneObject(primitiveData);
             const primitive = root.getSceneObject(primitiveData);
             expect(primitive).toBeDefined();
 
@@ -1192,7 +1192,7 @@ describe('components/root/DIVERoot', () => {
             expect(mockTransformControls.detach).toHaveBeenCalled();
         });
 
-        it('should handle group deletion with transform controls', () => {
+        it('should handle group deletion with transform controls', async () => {
             const groupData: GroupSchema = {
                 id: 'group-1',
                 entityType: 'group',
@@ -1212,7 +1212,7 @@ describe('components/root/DIVERoot', () => {
             mockScene.children = [mockTransformControls];
 
             const root = new DIVERoot();
-            root.addSceneObject(groupData);
+            await root.addSceneObject(groupData);
             const group = root.getSceneObject(groupData);
             expect(group).toBeDefined();
 
@@ -1229,7 +1229,7 @@ describe('components/root/DIVERoot', () => {
     });
 
     describe('_setParent', () => {
-        it('should set parent-child relationship', () => {
+        it('should set parent-child relationship', async () => {
             const parentData: GroupSchema = {
                 id: 'parent-1',
                 entityType: 'group',
@@ -1254,8 +1254,8 @@ describe('components/root/DIVERoot', () => {
             };
 
             const root = new DIVERoot();
-            root.addSceneObject(parentData);
-            root.addSceneObject(childData);
+            await root.addSceneObject(parentData);
+            await root.addSceneObject(childData);
 
             const parent = root.getSceneObject(parentData);
             const child = root.getSceneObject(childData);
@@ -1265,7 +1265,7 @@ describe('components/root/DIVERoot', () => {
             expect(parent?.attach).toHaveBeenCalled();
         });
 
-        it('should attach to root when parent is null', () => {
+        it('should attach to root when parent is null', async () => {
             const childData: ModelSchema = {
                 id: 'child-1',
                 entityType: 'model',
@@ -1280,13 +1280,13 @@ describe('components/root/DIVERoot', () => {
             };
 
             const root = new DIVERoot();
-            root.addSceneObject(childData);
+            await root.addSceneObject(childData);
             const child = root.getSceneObject(childData);
             expect(child).toBeDefined();
             expect(root.attach).toHaveBeenCalled();
         });
 
-        it('should handle non-existent parent', () => {
+        it('should handle non-existent parent', async () => {
             const childData: ModelSchema = {
                 id: 'child-1',
                 entityType: 'model',
@@ -1301,14 +1301,14 @@ describe('components/root/DIVERoot', () => {
             };
 
             const root = new DIVERoot();
-            root.addSceneObject(childData);
+            await root.addSceneObject(childData);
             const child = root.getSceneObject(childData);
             expect(child).toBeDefined();
             // When parent doesn't exist, the object should remain where it is
             expect(root.attach).not.toHaveBeenCalled();
         });
 
-        it('should handle non-existent object', () => {
+        it('should handle non-existent object', async () => {
             const modelData: ModelSchema = {
                 id: 'model-1',
                 entityType: 'model',
@@ -1324,13 +1324,13 @@ describe('components/root/DIVERoot', () => {
 
             const root = new DIVERoot();
             // Don't add the object to the scene
-            root.updateSceneObject(modelData);
+            await root.updateSceneObject(modelData);
             expect(root.attach).not.toHaveBeenCalled();
         });
     });
 
     describe('_updateLight', () => {
-        it('should handle light with undefined properties', () => {
+        it('should handle light with undefined properties', async () => {
             const lightData: Partial<LightSchema> & {
                 id: string;
                 entityType: string;
@@ -1348,12 +1348,12 @@ describe('components/root/DIVERoot', () => {
             };
 
             const root = new DIVERoot();
-            root.addSceneObject(lightData as LightSchema);
+            await root.addSceneObject(lightData as LightSchema);
             const light = root.getSceneObject(lightData);
             expect(light).toBeDefined();
         });
 
-        it('should handle light with null properties', () => {
+        it('should handle light with null properties', async () => {
             const lightData: Partial<LightSchema> & {
                 id: string;
                 entityType: string;
@@ -1375,14 +1375,14 @@ describe('components/root/DIVERoot', () => {
             };
 
             const root = new DIVERoot();
-            root.addSceneObject(lightData as LightSchema);
+            await root.addSceneObject(lightData as LightSchema);
             const light = root.getSceneObject(lightData);
             expect(light).toBeDefined();
         });
     });
 
     describe('_deleteLight', () => {
-        it('should handle light with transform controls', () => {
+        it('should handle light with transform controls', async () => {
             const lightData: LightSchema = {
                 id: 'light-1',
                 entityType: 'light',
@@ -1404,7 +1404,7 @@ describe('components/root/DIVERoot', () => {
             mockScene.children = [mockTransformControls];
 
             const root = new DIVERoot();
-            root.addSceneObject(lightData);
+            await root.addSceneObject(lightData);
             const light = root.getSceneObject(lightData);
             expect(light).toBeDefined();
 
@@ -1439,7 +1439,7 @@ describe('components/root/DIVERoot', () => {
     });
 
     describe('_deleteGroup', () => {
-        it('should handle group with transform controls and members', () => {
+        it('should handle group with transform controls and members', async () => {
             const groupData: GroupSchema = {
                 id: 'group-1',
                 entityType: 'group',
@@ -1459,7 +1459,7 @@ describe('components/root/DIVERoot', () => {
             mockScene.children = [mockTransformControls];
 
             const root = new DIVERoot();
-            root.addSceneObject(groupData);
+            await root.addSceneObject(groupData);
             const group = root.getSceneObject(groupData);
             expect(group).toBeDefined();
 
@@ -1494,7 +1494,7 @@ describe('components/root/DIVERoot', () => {
     });
 
     describe('_setParent', () => {
-        it('should handle object with null parentId', () => {
+        it('should handle object with null parentId', async () => {
             const modelData: ModelSchema = {
                 id: 'model-1',
                 entityType: 'model',
@@ -1509,13 +1509,13 @@ describe('components/root/DIVERoot', () => {
             };
 
             const root = new DIVERoot();
-            root.addSceneObject(modelData);
+            await root.addSceneObject(modelData);
             const model = root.getSceneObject(modelData);
             expect(model).toBeDefined();
             expect(root.attach).toHaveBeenCalled();
         });
 
-        it('should handle object with non-existent parent', () => {
+        it('should handle object with non-existent parent', async () => {
             const modelData: ModelSchema = {
                 id: 'model-1',
                 entityType: 'model',
@@ -1530,7 +1530,7 @@ describe('components/root/DIVERoot', () => {
             };
 
             const root = new DIVERoot();
-            root.addSceneObject(modelData);
+            await root.addSceneObject(modelData);
             const model = root.getSceneObject(modelData);
             expect(model).toBeDefined();
             expect(root.attach).not.toHaveBeenCalled();
@@ -1538,7 +1538,7 @@ describe('components/root/DIVERoot', () => {
     });
 
     describe('_updateModel', () => {
-        it('should handle model with undefined properties', () => {
+        it('should handle model with undefined properties', async () => {
             const modelData: Partial<ModelSchema> & {
                 id: string;
                 entityType: string;
@@ -1562,12 +1562,12 @@ describe('components/root/DIVERoot', () => {
             };
 
             const root = new DIVERoot();
-            root.addSceneObject(modelData as ModelSchema);
+            await root.addSceneObject(modelData as ModelSchema);
             const model = root.getSceneObject(modelData);
             expect(model).toBeDefined();
         });
 
-        it('should handle model with null properties', () => {
+        it('should handle model with null properties', async () => {
             const modelData: Partial<ModelSchema> & {
                 id: string;
                 entityType: string;
@@ -1593,14 +1593,14 @@ describe('components/root/DIVERoot', () => {
             };
 
             const root = new DIVERoot();
-            root.addSceneObject(modelData as ModelSchema);
+            await root.addSceneObject(modelData as ModelSchema);
             const model = root.getSceneObject(modelData);
             expect(model).toBeDefined();
         });
     });
 
     describe('_updatePrimitive', () => {
-        it('should handle primitive with undefined properties', () => {
+        it('should handle primitive with undefined properties', async () => {
             const primitiveData: Partial<PrimitiveSchema> & {
                 id: string;
                 entityType: string;
@@ -1617,12 +1617,12 @@ describe('components/root/DIVERoot', () => {
             };
 
             const root = new DIVERoot();
-            root.addSceneObject(primitiveData as PrimitiveSchema);
+            await root.addSceneObject(primitiveData as PrimitiveSchema);
             const primitive = root.getSceneObject(primitiveData);
             expect(primitive).toBeDefined();
         });
 
-        it('should handle primitive with null properties', () => {
+        it('should handle primitive with null properties', async () => {
             const primitiveData: Partial<PrimitiveSchema> & {
                 id: string;
                 entityType: string;
@@ -1652,7 +1652,7 @@ describe('components/root/DIVERoot', () => {
             };
 
             const root = new DIVERoot();
-            root.addSceneObject(primitiveData as PrimitiveSchema);
+            await root.addSceneObject(primitiveData as PrimitiveSchema);
             const primitive = root.getSceneObject(primitiveData);
             expect(primitive).toBeDefined();
         });

@@ -6,17 +6,18 @@ import { type EntitySchema } from '@shopware-ag/dive';
 export const AddObjectAction = Action.define<
     EntitySchema,
     Pick<ActionDependencies, 'engine' | 'registered'>,
-    void
+    Promise<void>
 >({
     description: 'Adds an object to the scene.',
-    execute: (payload, { engine, registered }) => {
+    execute: async (payload, { engine, registered }) => {
         if (registered.get(payload.id)) return;
 
         if (payload.parentId === undefined) payload.parentId = null;
 
         registered.set(payload.id, payload);
 
-        engine.scene.root.addSceneObject(payload);
+        // awaited, so a model is fully loaded once this action settles
+        await engine.scene.root.addSceneObject(payload);
     },
 });
 

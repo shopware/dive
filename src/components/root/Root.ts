@@ -70,7 +70,9 @@ export class DIVERoot extends Object3D {
         return foundObject;
     }
 
-    public addSceneObject(object: EntitySchema): DIVESceneObject | undefined {
+    public async addSceneObject(
+        object: EntitySchema,
+    ): Promise<DIVESceneObject | undefined> {
         let sceneObject = this.getSceneObject(object);
         if (sceneObject) {
             console.warn(
@@ -116,7 +118,7 @@ export class DIVERoot extends Object3D {
                 sceneObject.userData.id = object.id;
                 sceneObject.userData.uri = object.uri;
                 this.add(sceneObject);
-                this._updateModel(sceneObject as DIVEModel, object);
+                await this._updateModel(sceneObject as DIVEModel, object);
                 break;
             }
             case 'primitive': {
@@ -145,7 +147,7 @@ export class DIVERoot extends Object3D {
         return sceneObject;
     }
 
-    public updateSceneObject(object: PartialSchema): void {
+    public async updateSceneObject(object: PartialSchema): Promise<void> {
         const sceneObject = this.getSceneObject(object);
         if (!sceneObject) {
             console.warn(
@@ -163,7 +165,7 @@ export class DIVERoot extends Object3D {
                 break;
             }
             case 'model': {
-                this._updateModel(sceneObject as DIVEModel, object);
+                await this._updateModel(sceneObject as DIVEModel, object);
                 break;
             }
             case 'primitive': {
@@ -243,11 +245,12 @@ export class DIVERoot extends Object3D {
             this._setParent({ ...props, parentId: props.parentId });
     }
 
-    private _updateModel(
+    private async _updateModel(
         sceneObject: DIVEModel,
         model: PartialSchema<ModelSchema>,
-    ): void {
-        if (model.uri !== undefined) sceneObject.setFromURL(model.uri);
+    ): Promise<void> {
+        // awaited, so callers can tell when the model is actually in the scene
+        if (model.uri !== undefined) await sceneObject.setFromURL(model.uri);
         if (model.name !== undefined) sceneObject.name = model.name;
         if (model.position !== undefined)
             sceneObject.setPosition(model.position);
