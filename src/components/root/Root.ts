@@ -345,7 +345,12 @@ export class DIVERoot extends Object3D {
                 id: object.parentId,
                 entityType: object.entityType,
             });
-            if (!parent) return;
+            if (!parent) {
+                console.warn(
+                    `DIVERoot._setParent: Parent with id ${object.parentId} is not in the scene, ${object.id} stays at the root`,
+                );
+                return;
+            }
 
             // attach to new parent (if exists in scene)
             parent.attach(sceneObject);
