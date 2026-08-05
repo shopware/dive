@@ -10,5 +10,4 @@ export type CameraSchema = BaseEntitySchema & {
     entityType: 'camera';
     position: Vector3Like;
     target: Vector3Like;
-    locked?: boolean;
 };

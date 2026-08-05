@@ -6,4 +6,5 @@ export type BaseEntitySchema = {
     entityType: EntityTypeSchema;
     visible: boolean;
     parentId?: string | null;
+    locked?: boolean;
 };

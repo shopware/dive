@@ -223,6 +223,7 @@ export class State {
             registered: this.registered,
             engine: this.engine,
             controller: this.controller,
+            state: this,
             getARSystem: () => this.getARSystem(),
             getAssetExporter: () => this.getAssetExporter(),
             getAnimationSystem: () => this.getAnimationSystem(),
