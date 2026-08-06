@@ -1,4 +1,10 @@
 import { SetStateAction } from '../setstate.ts';
+import {
+    State,
+    AddObjectAction,
+    DeleteObjectAction,
+    SetParentAction,
+} from '@shopware-ag/dive/state';
 import { GetStateAction } from '../getstate.ts';
 import {
     DIVE,
@@ -12,8 +18,48 @@ import {
 } from '@shopware-ag/dive';
 import { Color, MeshStandardMaterial, Vector3 } from 'three/webgpu';
 import { OrbitController } from '@shopware-ag/dive/orbitcontroller';
-import { type State } from '../../../State.ts';
 import { type StateData } from '../../../../types/index.ts';
+
+// SET_STATE builds these actions itself, so both the constructor arguments and
+// the executions are recorded. Payload and dependencies are handed to the
+// execute mocks as well, which lets the defaults keep the registry in sync the
+// way the real actions do.
+const { addExecute, deleteExecute, setParentExecute } = vi.hoisted(() => ({
+    addExecute: vi.fn(),
+    deleteExecute: vi.fn(),
+    setParentExecute: vi.fn(),
+}));
+
+vi.mock('@shopware-ag/dive/state', () => ({
+    AddObjectAction: vi.fn((payload, deps) => ({
+        execute: () => addExecute(payload, deps),
+    })),
+    DeleteObjectAction: vi.fn((payload, deps) => ({
+        execute: () => deleteExecute(payload, deps),
+    })),
+    SetParentAction: vi.fn((payload, deps) => ({
+        execute: () => setParentExecute(payload, deps),
+    })),
+}));
+
+type MockDeps = { registered: Map<string, EntitySchema> };
+
+/** Restores the default behaviour, since single tests override it. */
+const resetActionMocks = (): void => {
+    addExecute
+        .mockReset()
+        .mockImplementation(async (entity: EntitySchema, deps: MockDeps) => {
+            deps.registered.set(entity.id, entity);
+            // no scene object by default, tests that need one opt in
+            return undefined;
+        });
+    deleteExecute
+        .mockReset()
+        .mockImplementation((entity: EntitySchema, deps: MockDeps) => {
+            deps.registered.delete(entity.id);
+        });
+    setParentExecute.mockReset();
+};
 
 const controllerState = {
     azimuthalAngle: 0.1,
@@ -27,10 +73,8 @@ const createDependencies = (
 ): {
     engine: DIVE;
     controller: OrbitController;
-    state: State;
     registered: Map<string, EntitySchema>;
     floor: { setVisibility: ReturnType<typeof vi.fn>; setColor: typeof vi.fn };
-    performAction: ReturnType<typeof vi.fn>;
 } => {
     const floor = {
         setVisibility: vi.fn(),
@@ -54,17 +98,7 @@ const createDependencies = (
         getState: vi.fn(() => controllerState),
     } as unknown as OrbitController;
 
-    const performAction = vi.fn(async () => {});
-    const state = { performAction } as unknown as State;
-
-    return {
-        engine,
-        controller,
-        state,
-        registered,
-        floor,
-        performAction,
-    } as never;
+    return { engine, controller, registered, floor } as never;
 };
 
 /** Scene data with everything left out unless explicitly given. */
@@ -80,6 +114,8 @@ const stateData = (overrides: Partial<StateData> = {}): StateData =>
 
 describe('SetStateAction', () => {
     beforeEach(() => {
+        vi.clearAllMocks();
+        resetActionMocks();
         console.warn = vi.fn();
     });
 
@@ -170,16 +206,16 @@ describe('SetStateAction', () => {
                 deps,
             ).execute();
 
-            expect(deps.performAction).toHaveBeenCalledTimes(5);
-            const entityTypes = deps.performAction.mock.calls.map(
-                ([action, payload]) => [action, payload.entityType],
-            );
+            expect(AddObjectAction).toHaveBeenCalledTimes(5);
+            const entityTypes = vi
+                .mocked(AddObjectAction)
+                .mock.calls.map(([payload]) => payload.entityType);
             expect(entityTypes).toEqual([
-                ['ADD_OBJECT', 'group'],
-                ['ADD_OBJECT', 'light'],
-                ['ADD_OBJECT', 'camera'],
-                ['ADD_OBJECT', 'primitive'],
-                ['ADD_OBJECT', 'model'],
+                'group',
+                'light',
+                'camera',
+                'primitive',
+                'model',
             ]);
         });
 
@@ -193,14 +229,17 @@ describe('SetStateAction', () => {
                 deps,
             ).execute();
 
-            expect(deps.performAction).toHaveBeenCalledWith('ADD_OBJECT', {
-                id: 'o',
-                locked: false,
-                visible: true,
-                entityType: 'model',
-                // the first pass adds detached, the second pass reparents
-                parentId: null,
-            });
+            expect(AddObjectAction).toHaveBeenCalledWith(
+                {
+                    id: 'o',
+                    locked: false,
+                    visible: true,
+                    entityType: 'model',
+                    // the first pass adds detached, the second pass reparents
+                    parentId: null,
+                },
+                expect.anything(),
+            );
         });
 
         it('should keep locked and visible when the entity carries them', async () => {
@@ -213,9 +252,9 @@ describe('SetStateAction', () => {
                 deps,
             ).execute();
 
-            expect(deps.performAction).toHaveBeenCalledWith(
-                'ADD_OBJECT',
+            expect(AddObjectAction).toHaveBeenCalledWith(
                 expect.objectContaining({ locked: true, visible: false }),
+                expect.anything(),
             );
         });
 
@@ -224,7 +263,7 @@ describe('SetStateAction', () => {
 
             await new SetStateAction(stateData(), deps).execute();
 
-            expect(deps.performAction).not.toHaveBeenCalled();
+            expect(AddObjectAction).not.toHaveBeenCalled();
         });
     });
 
@@ -232,7 +271,7 @@ describe('SetStateAction', () => {
         it('should not settle before every added object has settled', async () => {
             const deps = createDependencies();
             let releaseModel!: () => void;
-            deps.performAction.mockImplementation(
+            addExecute.mockImplementation(
                 () =>
                     new Promise<void>((resolve) => {
                         releaseModel = resolve;
@@ -263,7 +302,7 @@ describe('SetStateAction', () => {
         it('should report a failed object instead of dropping the scene', async () => {
             const deps = createDependencies();
             const survivor = { name: 'ok' };
-            deps.performAction
+            addExecute
                 .mockResolvedValueOnce(survivor)
                 .mockRejectedValueOnce(new Error('asset missing'));
 
@@ -306,23 +345,20 @@ describe('SetStateAction', () => {
                 deps,
             ).execute();
 
-            expect(deps.performAction).toHaveBeenCalledWith('DELETE_OBJECT', {
-                id: 'old-model',
-                entityType: 'model',
-            });
-            expect(deps.performAction).toHaveBeenCalledWith('DELETE_OBJECT', {
-                id: 'old-light',
-                entityType: 'light',
-            });
-
-            const order = deps.performAction.mock.calls.map(
-                ([action]) => action,
+            expect(DeleteObjectAction).toHaveBeenCalledWith(
+                { id: 'old-model', entityType: 'model' },
+                expect.anything(),
             );
-            expect(order).toEqual([
-                'DELETE_OBJECT',
-                'DELETE_OBJECT',
-                'ADD_OBJECT',
-            ]);
+            expect(DeleteObjectAction).toHaveBeenCalledWith(
+                { id: 'old-light', entityType: 'light' },
+                expect.anything(),
+            );
+
+            // both deletions happen before anything is added
+            expect(deleteExecute).toHaveBeenCalledTimes(2);
+            expect(deleteExecute.mock.invocationCallOrder[1]).toBeLessThan(
+                addExecute.mock.invocationCallOrder[0],
+            );
         });
 
         it('should delete nothing when the scene is empty', async () => {
@@ -330,7 +366,7 @@ describe('SetStateAction', () => {
 
             await new SetStateAction(stateData(), deps).execute();
 
-            expect(deps.performAction).not.toHaveBeenCalled();
+            expect(DeleteObjectAction).not.toHaveBeenCalled();
         });
     });
 
@@ -338,7 +374,7 @@ describe('SetStateAction', () => {
         it('should return the objects that were added', async () => {
             const deps = createDependencies();
             const created = [{ name: 'model' }, { name: 'primitive' }];
-            deps.performAction
+            addExecute
                 .mockResolvedValueOnce(created[0])
                 .mockResolvedValueOnce(created[1]);
 
@@ -357,7 +393,7 @@ describe('SetStateAction', () => {
             const deps = createDependencies();
             const camera = undefined;
             const created = { name: 'model' };
-            deps.performAction
+            addExecute
                 .mockResolvedValueOnce(camera)
                 .mockResolvedValueOnce(created);
 
@@ -580,18 +616,22 @@ describe('SetStateAction', () => {
                 deps,
             ).execute();
 
-            const actions = deps.performAction.mock.calls.map(([name]) => name);
-            expect(actions).toEqual(['ADD_OBJECT', 'ADD_OBJECT', 'SET_PARENT']);
+            // both adds happen before any reparenting
+            expect(addExecute).toHaveBeenCalledTimes(2);
+            expect(setParentExecute).toHaveBeenCalledTimes(1);
+            expect(addExecute.mock.invocationCallOrder[1]).toBeLessThan(
+                setParentExecute.mock.invocationCallOrder[0],
+            );
 
             // both were added without a parent, so order cannot matter
-            deps.performAction.mock.calls
-                .filter(([name]) => name === 'ADD_OBJECT')
-                .forEach(([, payload]) => expect(payload.parentId).toBeNull());
+            vi.mocked(AddObjectAction).mock.calls.forEach(([payload]) =>
+                expect(payload.parentId).toBeNull(),
+            );
 
-            expect(deps.performAction).toHaveBeenCalledWith('SET_PARENT', {
-                object: { id: 'inner' },
-                parent: { id: 'outer' },
-            });
+            expect(SetParentAction).toHaveBeenCalledWith(
+                { object: { id: 'inner' }, parent: { id: 'outer' } },
+                expect.anything(),
+            );
         });
 
         it('should reparent a child that arrives before its parent', async () => {
@@ -608,10 +648,10 @@ describe('SetStateAction', () => {
                 deps,
             ).execute();
 
-            expect(deps.performAction).toHaveBeenCalledWith('SET_PARENT', {
-                object: { id: 'inner' },
-                parent: { id: 'outer' },
-            });
+            expect(SetParentAction).toHaveBeenCalledWith(
+                { object: { id: 'inner' }, parent: { id: 'outer' } },
+                expect.anything(),
+            );
         });
 
         it('should not reparent entities without a parent', async () => {
@@ -624,15 +664,12 @@ describe('SetStateAction', () => {
                 deps,
             ).execute();
 
-            expect(deps.performAction).not.toHaveBeenCalledWith(
-                'SET_PARENT',
-                expect.anything(),
-            );
+            expect(SetParentAction).not.toHaveBeenCalled();
         });
 
         it('should not reparent an entity that failed to be added', async () => {
             const deps = createDependencies();
-            deps.performAction.mockRejectedValueOnce(new Error('nope'));
+            addExecute.mockRejectedValueOnce(new Error('nope'));
 
             const result = await new SetStateAction(
                 stateData({
@@ -641,19 +678,14 @@ describe('SetStateAction', () => {
                 deps,
             ).execute();
 
-            expect(deps.performAction).not.toHaveBeenCalledWith(
-                'SET_PARENT',
-                expect.anything(),
-            );
+            expect(SetParentAction).not.toHaveBeenCalled();
             expect(result).toEqual([]);
         });
 
         it('should report a parent that cannot be resolved', async () => {
             const deps = createDependencies();
-            deps.performAction.mockImplementation(async (action: string) => {
-                if (action === 'SET_PARENT')
-                    throw new Error('Object not found.');
-                return undefined;
+            setParentExecute.mockImplementation(() => {
+                throw new Error('Object not found.');
             });
 
             const result = await new SetStateAction(

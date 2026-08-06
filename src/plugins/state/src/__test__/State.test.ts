@@ -27,7 +27,6 @@ declare global {
         TEST_ANIMATION_SYSTEM: typeof AnimationSystemActionClass;
         TEST_TOOLBOX: typeof ToolboxActionClass;
         TEST_DEPENDENCIES: typeof DependencyCaptureActionClass;
-        TEST_NESTED_ACTION: typeof NestedActionClass;
     }
 }
 
@@ -44,19 +43,6 @@ const DependencyCaptureActionClass = Action.define<
     execute: (payload, deps) => {
         capturedDependencies = deps;
     },
-});
-
-const NestedActionClass = Action.define<
-    void,
-    Pick<ActionDependencies, 'state'>,
-    {
-        position: Vector3Like;
-        target: Vector3Like;
-    }
->({
-    description: 'Performs another action through the state dependency',
-    execute: (payload, deps) =>
-        deps.state.performAction('GET_CAMERA_TRANSFORM'),
 });
 
 // Create a mock action class
@@ -735,10 +721,6 @@ describe('modules/state/State', () => {
             expect(performCapture().controller).toBe(mockController);
         });
 
-        it('should pass the state instance itself as the state dependency', () => {
-            expect(performCapture().state).toBe(state);
-        });
-
         it('should pass the live registry rather than a copy of it', () => {
             const deps = performCapture();
 
@@ -768,7 +750,7 @@ describe('modules/state/State', () => {
             const second = performCapture();
 
             expect(second).not.toBe(first);
-            expect(second.state).toBe(first.state);
+            expect(second.engine).toBe(first.engine);
             expect(second.registered).toBe(first.registered);
         });
 
@@ -791,26 +773,10 @@ describe('modules/state/State', () => {
             otherState.performAction('TEST_DEPENDENCIES');
             const other = capturedDependencies!;
 
-            expect(own.state).toBe(state);
-            expect(other.state).toBe(otherState);
+            expect(own.engine).toBe(mockDive);
             expect(other.engine).toBe(otherDive);
             expect(other.controller).toBe(otherController);
             expect(other.registered).not.toBe(own.registered);
-        });
-
-        it('should let an action perform another action through the state dependency', () => {
-            vi.mocked(getActionClass).mockImplementation((action) =>
-                action === 'GET_CAMERA_TRANSFORM'
-                    ? (MockActionClass as any)
-                    : (NestedActionClass as any),
-            );
-
-            const result = state.performAction('TEST_NESTED_ACTION');
-
-            expect(result).toEqual({
-                position: { x: 0, y: 0, z: 0 },
-                target: { x: 0, y: 0, z: 0 },
-            });
         });
     });
 });

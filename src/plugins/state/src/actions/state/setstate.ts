@@ -3,20 +3,28 @@ import { registerAction } from '../../ActionRegistry.ts';
 import { type ActionDependencies } from '../../../types/index.ts';
 import { type StateData } from '../../../types/index.ts';
 import { type DIVESceneObject, type EntitySchema } from '@shopware-ag/dive';
+import {
+    AddObjectAction,
+    DeleteObjectAction,
+    SetParentAction,
+} from '@shopware-ag/dive/state';
 
 export const SetStateAction = Action.define<
     StateData,
-    Pick<ActionDependencies, 'engine' | 'controller' | 'state' | 'registered'>,
+    Pick<ActionDependencies, 'engine' | 'controller' | 'registered'>,
     Promise<DIVESceneObject[]>
 >({
     description: 'Applies complete state data to current dive instance.',
-    execute: async (_payload, { engine, controller, state, registered }) => {
+    execute: async (_payload, { engine, controller, registered }) => {
         // the state is meant to replace what is there, and ADD_OBJECT skips ids that are already registered, so clear the scene up front
         Array.from(registered.values()).forEach((entity: EntitySchema) => {
-            state.performAction('DELETE_OBJECT', {
-                id: entity.id,
-                entityType: entity.entityType,
-            });
+            new DeleteObjectAction(
+                {
+                    id: entity.id,
+                    entityType: entity.entityType,
+                },
+                { engine, registered },
+            ).execute();
         });
 
         _payload.name !== undefined && (engine.scene.name = _payload.name);
@@ -55,11 +63,14 @@ export const SetStateAction = Action.define<
                     entityType: 'group' as const,
                 };
                 promises.push(
-                    state
-                        .performAction('ADD_OBJECT', {
+                    new AddObjectAction(
+                        {
                             ...entity,
                             parentId: null,
-                        })
+                        },
+                        { engine, registered },
+                    )
+                        .execute()
                         .then((object) => {
                             added.push(entity);
                             if (object !== undefined) objects.push(object);
@@ -69,6 +80,7 @@ export const SetStateAction = Action.define<
                         }),
                 );
             });
+
         _payload.lights !== undefined &&
             _payload.lights.forEach((light) => {
                 const entity = {
@@ -78,11 +90,14 @@ export const SetStateAction = Action.define<
                     entityType: 'light' as const,
                 };
                 promises.push(
-                    state
-                        .performAction('ADD_OBJECT', {
+                    new AddObjectAction(
+                        {
                             ...entity,
                             parentId: null,
-                        })
+                        },
+                        { engine, registered },
+                    )
+                        .execute()
                         .then((object) => {
                             added.push(entity);
                             if (object !== undefined) objects.push(object);
@@ -101,11 +116,14 @@ export const SetStateAction = Action.define<
                     entityType: 'camera' as const,
                 };
                 promises.push(
-                    state
-                        .performAction('ADD_OBJECT', {
+                    new AddObjectAction(
+                        {
                             ...entity,
                             parentId: null,
-                        })
+                        },
+                        { engine, registered },
+                    )
+                        .execute()
                         .then((object) => {
                             added.push(entity);
                             if (object !== undefined) objects.push(object);
@@ -124,11 +142,14 @@ export const SetStateAction = Action.define<
                     entityType: 'primitive' as const,
                 };
                 promises.push(
-                    state
-                        .performAction('ADD_OBJECT', {
+                    new AddObjectAction(
+                        {
                             ...entity,
                             parentId: null,
-                        })
+                        },
+                        { engine, registered },
+                    )
+                        .execute()
                         .then((object) => {
                             added.push(entity);
                             if (object !== undefined) objects.push(object);
@@ -147,11 +168,14 @@ export const SetStateAction = Action.define<
                     entityType: 'model' as const,
                 };
                 promises.push(
-                    state
-                        .performAction('ADD_OBJECT', {
+                    new AddObjectAction(
+                        {
                             ...entity,
                             parentId: null,
-                        })
+                        },
+                        { engine, registered },
+                    )
+                        .execute()
                         .then((sceneObject) => {
                             added.push(entity);
                             if (sceneObject !== undefined)
@@ -177,10 +201,13 @@ export const SetStateAction = Action.define<
 
             try {
                 // awaited so a rejection is caught too, should SET_PARENT ever stop being synchronous
-                await state.performAction('SET_PARENT', {
-                    object: { id: entity.id },
-                    parent: { id: entity.parentId },
-                });
+                await new SetParentAction(
+                    {
+                        object: { id: entity.id },
+                        parent: { id: entity.parentId },
+                    },
+                    { engine, registered },
+                ).execute();
             } catch (reason) {
                 failed.push({ entity, reason });
             }
