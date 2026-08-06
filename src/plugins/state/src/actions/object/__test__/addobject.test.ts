@@ -5,6 +5,7 @@ const mockEngine = {
     scene: {
         root: {
             addSceneObject: vi.fn(),
+            getSceneObject: vi.fn(),
         },
     } as unknown as DIVEScene,
 } as unknown as DIVE;

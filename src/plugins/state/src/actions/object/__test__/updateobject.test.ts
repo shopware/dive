@@ -67,8 +67,8 @@ describe('UpdateObjectAction', () => {
             registered: mockRegistered,
         });
 
-        // Execute action and expect error
-        expect(() => action.execute()).toThrow('Object not found.');
+        // the action is async now, so the error surfaces as a rejection
+        await expect(action.execute()).rejects.toThrow('Object not found.');
 
         // Verify results
         expect(mockEngine.scene.root.updateSceneObject).not.toHaveBeenCalled();

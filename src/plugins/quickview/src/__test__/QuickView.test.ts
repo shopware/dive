@@ -3,138 +3,94 @@
  */
 
 import { vi } from 'vitest';
-import { DIVE, DIVEModel } from '@shopware-ag/dive';
-import { QuickView } from '../QuickView.ts';
+import type { StateData } from '@shopware-ag/dive/state';
+import { QuickView, QuickViewDefaultSettings } from '../QuickView.ts';
+import { QuickViewUri } from '../uri/QuickViewUri.ts';
+import { QuickViewState } from '../state/QuickViewState.ts';
+import {
+    type QuickViewWithModel,
+    type QuickViewWithState,
+} from '../../types/index.ts';
 
-vi.mock('@shopware-ag/dive', () => {
-    return {
-        DIVE: vi.fn(() => {
-            return {
-                mainView: {
-                    canvas: vi.fn(),
-                    camera: {
-                        position: {
-                            set: vi.fn(),
-                        },
-                    },
-                    renderer: {},
-                },
-                scene: {
-                    setBackground: vi.fn(),
-                    grid: {
-                        setVisibility: vi.fn(),
-                    },
-                    root: {
-                        add: vi.fn(),
-                        floor: {
-                            setVisibility: vi.fn(),
-                        },
-                    },
-                },
-                clock: {
-                    addTicker: vi.fn(),
-                },
-                startAsync: vi.fn(async () => {}),
-                disposeAsync: vi.fn(async () => {}),
-            };
-        }),
-        DIVEDefaultSettings: {
+const uriResult = { source: 'uri' } as unknown as QuickViewWithModel;
+const stateResult = { source: 'state' } as unknown as QuickViewWithState;
+
+vi.mock('../uri/QuickViewUri.ts', () => ({
+    QuickViewUri: vi.fn(async () => uriResult),
+}));
+
+vi.mock('../state/QuickViewState.ts', () => ({
+    QuickViewState: vi.fn(async () => stateResult),
+}));
+
+vi.mock('@shopware-ag/dive', () => ({
+    DIVEDefaultSettings: {
+        backgroundColor: '#000000',
+        displayGrid: false,
+        displayFloor: false,
+        lightIntensity: 1,
+    },
+}));
+
+const settings = { autoStart: false, displayGrid: true };
+
+const state = {
+    name: 'scene',
+    objects: [],
+} as unknown as StateData;
+
+describe('QuickView', () => {
+    beforeEach(() => {
+        vi.clearAllMocks();
+    });
+
+    it('routes a string source to the uri implementation', async () => {
+        const result = await QuickView('test_uri');
+
+        expect(QuickViewUri).toHaveBeenCalledWith('test_uri', undefined);
+        expect(QuickViewState).not.toHaveBeenCalled();
+        expect(result).toBe(uriResult);
+    });
+
+    it('routes a state object to the state implementation', async () => {
+        const result = await QuickView(state);
+
+        expect(QuickViewState).toHaveBeenCalledWith(state, undefined);
+        expect(QuickViewUri).not.toHaveBeenCalled();
+        expect(result).toBe(stateResult);
+    });
+
+    it('forwards the settings to the uri implementation', async () => {
+        await QuickView('test_uri', settings);
+
+        expect(QuickViewUri).toHaveBeenCalledWith('test_uri', settings);
+    });
+
+    it('forwards the settings to the state implementation', async () => {
+        await QuickView(state, settings);
+
+        expect(QuickViewState).toHaveBeenCalledWith(state, settings);
+    });
+
+    it('treats an empty string as a uri rather than as state', async () => {
+        await QuickView('');
+
+        expect(QuickViewUri).toHaveBeenCalledWith('', undefined);
+        expect(QuickViewState).not.toHaveBeenCalled();
+    });
+
+    it('propagates a rejection from the selected implementation', async () => {
+        vi.mocked(QuickViewUri).mockRejectedValueOnce(new Error('load failed'));
+
+        await expect(QuickView('test_uri')).rejects.toThrow('load failed');
+    });
+
+    it('exposes the DIVE defaults as QuickView defaults', () => {
+        expect(QuickViewDefaultSettings).toMatchObject({
             backgroundColor: '#000000',
             displayGrid: false,
             displayFloor: false,
             lightIntensity: 1,
-        },
-        DIVEModel: vi.fn(function (this: DIVEModel) {
-            this.placeOnFloor = vi.fn();
-            this.setFromURL = vi.fn(async () => this);
-            return this;
-        }),
-        DIVESceneLight: vi.fn(() => {
-            return {
-                setIntensity: vi.fn(),
-            };
-        }),
-    };
-});
-
-vi.mock('@shopware-ag/dive/orbitcontroller', () => {
-    return {
-        OrbitController: vi.fn(() => {
-            return {
-                focusObject: vi.fn(),
-                dispose: vi.fn(),
-            };
-        }),
-    };
-});
-
-vi.mock('@shopware-ag/dive/hdr', () => {
-    return {
-        HDREnvironment: vi.fn(() => {
-            return {
-                enable: vi.fn(),
-            };
-        }),
-        HDREnvironmentDefaultSettings: {
-            enabled: false,
-            imageUrl: '',
-            useAsBackground: false,
-            replaceLights: false,
-        },
-    };
-});
-
-describe('QuickView', () => {
-    beforeEach(() => {
-        console.log = vi.fn();
-    });
-
-    it('should QuickView', async () => {
-        const dive = await QuickView('test_uri');
-
-        expect(dive).toBeDefined();
-        expect(DIVE).toHaveBeenCalledWith({ autoStart: false });
-        expect(dive.startAsync).toHaveBeenCalledTimes(1);
-    });
-
-    it('should catch errors during DIVE initialization', async () => {
-        vi.mocked(DIVE).mockImplementationOnce(() => {
-            throw new Error('DIVE initialization error');
         });
-
-        await expect(QuickView('test_uri')).rejects.toThrow(
-            'DIVE initialization error',
-        );
-    });
-
-    it('should handle QuickView with multiple instances', async () => {
-        const dive1 = await QuickView('test_uri');
-        const dive2 = await QuickView('test_uri');
-        expect(dive1).toBeDefined();
-        expect(dive2).toBeDefined();
-    });
-
-    it('should QuickView with settings', async () => {
-        const settings = {
-            autoStart: false,
-            backgroundColor: 0xff0000,
-            displayGrid: true,
-            displayFloor: false,
-            lightIntensity: 2,
-        };
-        const dive = await QuickView('test_uri', settings);
-
-        expect(dive).toBeDefined();
-        expect(DIVE).toHaveBeenCalledWith({ ...settings, autoStart: false });
-        expect(dive.startAsync).not.toHaveBeenCalled();
-    });
-
-    it('should dispose orbit controls before disposing the wrapped DIVE instance', async () => {
-        const quickView = await QuickView('test_uri');
-
-        await quickView.disposeAsync();
-
-        expect(quickView.orbitController.dispose).toHaveBeenCalledTimes(1);
-        expect(quickView.disposeAsync).toBeDefined();
     });
 });

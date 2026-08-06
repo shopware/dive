@@ -419,8 +419,8 @@ export class OrbitController
         };
     }
 
-    public focusObject(object: Object3D, padding = 0.0): void {
-        const bb = new BoundingBox(object);
+    public focusObject(objects: Object3D | Object3D[], padding = 0.0): void {
+        const bb = new BoundingBox(objects);
         const transform = this.computeEncompassingView(bb, padding);
 
         this.object.position.copy(transform.position as Vector3);

@@ -26,8 +26,24 @@ declare global {
         TEST_ASSET_EXPORTER: typeof AssetExporterActionClass;
         TEST_ANIMATION_SYSTEM: typeof AnimationSystemActionClass;
         TEST_TOOLBOX: typeof ToolboxActionClass;
+        TEST_DEPENDENCIES: typeof DependencyCaptureActionClass;
     }
 }
+
+// Records what an action actually receives, so the dependency object handed to
+// actions can be asserted from the outside.
+let capturedDependencies: ActionDependencies | undefined;
+
+const DependencyCaptureActionClass = Action.define<
+    void,
+    ActionDependencies,
+    void
+>({
+    description: 'Captures the dependencies it receives',
+    execute: (payload, deps) => {
+        capturedDependencies = deps;
+    },
+});
 
 // Create a mock action class
 const MockActionClass = Action.define<
@@ -195,6 +211,7 @@ describe('modules/state/State', () => {
     beforeEach(() => {
         // Clear all instances before each test
         State['__instances'] = [];
+        capturedDependencies = undefined;
 
         const diveSettings: Partial<DIVESettings> = {
             autoStart: false,
@@ -682,6 +699,84 @@ describe('modules/state/State', () => {
             // Verify that Toolbox was only instantiated once
             const { Toolbox } = await import('@shopware-ag/dive/toolbox');
             expect(Toolbox).toHaveBeenCalledTimes(1);
+        });
+    });
+
+    describe('Action Dependencies', () => {
+        const performCapture = (): ActionDependencies => {
+            vi.mocked(getActionClass).mockReturnValue(
+                DependencyCaptureActionClass as any,
+            );
+            state.performAction('TEST_DEPENDENCIES');
+
+            expect(capturedDependencies).toBeDefined();
+            return capturedDependencies!;
+        };
+
+        it('should pass the DIVE instance as the engine dependency', () => {
+            expect(performCapture().engine).toBe(mockDive);
+        });
+
+        it('should pass the orbit controller it was constructed with', () => {
+            expect(performCapture().controller).toBe(mockController);
+        });
+
+        it('should pass the live registry rather than a copy of it', () => {
+            const deps = performCapture();
+
+            expect(deps.registered).toBe(state['registered']);
+
+            // the action sees entities that are registered afterwards
+            state['registered'].set('added-later', {
+                id: 'added-later',
+                entityType: 'model',
+            } as never);
+
+            expect(deps.registered.get('added-later')).toBeDefined();
+        });
+
+        it('should expose the lazy module getters as functions', () => {
+            const deps = performCapture();
+
+            expect(typeof deps.getMediaCreator).toBe('function');
+            expect(typeof deps.getARSystem).toBe('function');
+            expect(typeof deps.getAssetExporter).toBe('function');
+            expect(typeof deps.getAnimationSystem).toBe('function');
+            expect(typeof deps.getToolbox).toBe('function');
+        });
+
+        it('should build a fresh dependency object per action', () => {
+            const first = performCapture();
+            const second = performCapture();
+
+            expect(second).not.toBe(first);
+            expect(second.engine).toBe(first.engine);
+            expect(second.registered).toBe(first.registered);
+        });
+
+        it('should scope the dependencies to the instance performing the action', () => {
+            const otherDive = new DIVE({
+                autoStart: false,
+                displayAxes: false,
+            });
+            const otherController = new OrbitController(
+                new DIVEPerspectiveCamera(),
+                document.createElement('canvas'),
+            );
+            const otherState = new State(otherDive, otherController);
+
+            const own = performCapture();
+
+            vi.mocked(getActionClass).mockReturnValue(
+                DependencyCaptureActionClass as any,
+            );
+            otherState.performAction('TEST_DEPENDENCIES');
+            const other = capturedDependencies!;
+
+            expect(own.engine).toBe(mockDive);
+            expect(other.engine).toBe(otherDive);
+            expect(other.controller).toBe(otherController);
+            expect(other.registered).not.toBe(own.registered);
         });
     });
 });

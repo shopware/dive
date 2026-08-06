@@ -38,6 +38,7 @@ The following table lists all available actions in DIVE:
 | [GetAllSceneDataAction](src/actions/scene/getallscenedata.ts) | Retrieves all current scene data. |
 | [GetCameraTransformAction](src/actions/camera/getcameratransform.ts) | Gets the current camera position and target. |
 | [GetObjectsAction](src/actions/object/getobjects.ts) | Returns a list of objects of given IDs. |
+| [GetStateAction](src/actions/state/getstate.ts) | Retrieves complete state data. |
 | [LaunchARAction](src/actions/ar/launchar.ts) | Launches AR mode in native capabilities. (iOS: AR Quick Look, Android: Google Scene Viewer) |
 | [ModelLoadedAction](src/actions/object/modelloaded.ts) | Is triggered when a model is loaded. |
 | [MoveCameraAction](src/actions/camera/movecamera.ts) | Moves the camera to a new position and target. |
@@ -51,6 +52,7 @@ The following table lists all available actions in DIVE:
 | [SetGizmoScaleLinkedAction](src/actions/toolbox/setgizmoscalelinked.ts) | Sets the gizmo's unified scale mode. |
 | [SetGizmoVisibleAction](src/actions/toolbox/setgizmovisible.ts) | Sets the gizmo's visibility. |
 | [SetParentAction](src/actions/object/setparent.ts) | Attach an object to another object. |
+| [SetStateAction](src/actions/state/setstate.ts) | Applies complete state data to current dive instance. |
 | [StartRenderAction](src/actions/renderer/startrender.ts) | Starts the render process. |
 | [UpdateObjectAction](src/actions/object/updateobject.ts) | Updates an existing object. |
 | [UpdateSceneAction](src/actions/scene/updatescene.ts) | Updates scene properties. |

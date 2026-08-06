@@ -1,33 +1,6 @@
-import type { Vector3Like } from 'three/webgpu';
-import type {
-    GroupSchema,
-    LightSchema,
-    ModelSchema,
-    CameraSchema,
-    PrimitiveSchema,
-} from '@shopware-ag/dive';
+import { StateData } from './StateData.ts';
 
-export type StateSceneData = {
-    // user data
-    userCamera: {
-        position: Vector3Like;
-        target: Vector3Like;
-    };
-
-    // scene data
-    name: string;
-    backgroundColor: string;
-    floorEnabled: boolean;
-    floorColor: string;
-
-    // scene content
-    spotmarks: object[];
-    lights: LightSchema[];
-    objects: ModelSchema[];
-    cameras: CameraSchema[];
-    primitives: PrimitiveSchema[];
-    groups: GroupSchema[];
-
-    // dunno yet :D
-    mediaItem: null;
-};
+/**
+ * @deprecated use [`StateData`](./StateData.ts) type instead. This type will be removed in release 4.0.
+ */
+export type StateSceneData = StateData;

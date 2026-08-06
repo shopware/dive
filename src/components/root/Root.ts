@@ -70,7 +70,9 @@ export class DIVERoot extends Object3D {
         return foundObject;
     }
 
-    public addSceneObject(object: EntitySchema): DIVESceneObject | undefined {
+    public async addSceneObject(
+        object: EntitySchema,
+    ): Promise<DIVESceneObject | undefined> {
         let sceneObject = this.getSceneObject(object);
         if (sceneObject) {
             console.warn(
@@ -114,9 +116,8 @@ export class DIVERoot extends Object3D {
                 sceneObject = new DIVEModel();
                 sceneObject.name = object.name;
                 sceneObject.userData.id = object.id;
-                sceneObject.userData.uri = object.uri;
                 this.add(sceneObject);
-                this._updateModel(sceneObject as DIVEModel, object);
+                await this._updateModel(sceneObject as DIVEModel, object);
                 break;
             }
             case 'primitive': {
@@ -145,7 +146,7 @@ export class DIVERoot extends Object3D {
         return sceneObject;
     }
 
-    public updateSceneObject(object: PartialSchema): void {
+    public async updateSceneObject(object: PartialSchema): Promise<void> {
         const sceneObject = this.getSceneObject(object);
         if (!sceneObject) {
             console.warn(
@@ -163,7 +164,7 @@ export class DIVERoot extends Object3D {
                 break;
             }
             case 'model': {
-                this._updateModel(sceneObject as DIVEModel, object);
+                await this._updateModel(sceneObject as DIVEModel, object);
                 break;
             }
             case 'primitive': {
@@ -223,31 +224,34 @@ export class DIVERoot extends Object3D {
         sceneObject: DIVELight,
         props: PartialSchema<LightSchema>,
     ): void {
-        if (props.name !== undefined && props.name !== null)
-            sceneObject.name = props.name;
-        if (props.position !== undefined && props.position !== null)
+        if (props.name !== undefined) sceneObject.name = props.name;
+        if (props.position !== undefined)
             sceneObject.position.set(
                 props.position.x,
                 props.position.y,
                 props.position.z,
             );
-        if (props.intensity !== undefined && props.intensity !== null)
+        if (props.intensity !== undefined)
             sceneObject.setIntensity(props.intensity);
-        if (props.enabled !== undefined && props.enabled !== null)
-            sceneObject.setEnabled(props.enabled);
-        if (props.color !== undefined && props.color !== null)
+        if (props.enabled !== undefined) sceneObject.setEnabled(props.enabled);
+        if (props.color !== undefined)
             sceneObject.setColor(new Color(props.color));
-        if (props.visible !== undefined && props.visible !== null)
-            sceneObject.visible = props.visible;
+        if (props.visible !== undefined) sceneObject.visible = props.visible;
         if (props.parentId !== undefined)
             this._setParent({ ...props, parentId: props.parentId });
     }
 
-    private _updateModel(
+    private async _updateModel(
         sceneObject: DIVEModel,
         model: PartialSchema<ModelSchema>,
-    ): void {
-        if (model.uri !== undefined) sceneObject.setFromURL(model.uri);
+    ): Promise<void> {
+        // awaited, so callers can tell when the model is actually in the scene.
+        // userData.uri holds what is currently loaded, so an update that only
+        // moves the model does not fetch the asset again.
+        if (model.uri !== undefined && model.uri !== sceneObject.userData.uri) {
+            await sceneObject.setFromURL(model.uri);
+            sceneObject.userData.uri = model.uri;
+        }
         if (model.name !== undefined) sceneObject.name = model.name;
         if (model.position !== undefined)
             sceneObject.setPosition(model.position);
@@ -342,7 +346,12 @@ export class DIVERoot extends Object3D {
                 id: object.parentId,
                 entityType: object.entityType,
             });
-            if (!parent) return;
+            if (!parent) {
+                console.warn(
+                    `DIVERoot._setParent: Parent with id ${object.parentId} is not in the scene, ${object.id} stays at the root`,
+                );
+                return;
+            }
 
             // attach to new parent (if exists in scene)
             parent.attach(sceneObject);

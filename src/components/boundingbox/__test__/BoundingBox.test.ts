@@ -235,13 +235,98 @@ describe('BoundingBox', () => {
         });
     });
 
+    describe('multiple objects', () => {
+        /** Two unit cubes, four units apart on X. */
+        const twoSeparatedCubes = (): Object3D[] => {
+            const left = new Mesh(new BoxGeometry(1, 1, 1));
+            left.position.set(-2, 0, 0);
+
+            const right = new Mesh(new BoxGeometry(1, 1, 1));
+            right.position.set(2, 0, 0);
+
+            return [left, right];
+        };
+
+        it('should encompass every object it is given', () => {
+            const [left, right] = twoSeparatedCubes();
+
+            const combined = new BoundingBox([left, right]);
+
+            // -2.5 .. 2.5 on X, -0.5 .. 0.5 on Y and Z
+            expect(combined.size.x).toBeCloseTo(5);
+            expect(combined.size.y).toBeCloseTo(1);
+            expect(combined.size.z).toBeCloseTo(1);
+            expect(combined.center.x).toBeCloseTo(0);
+        });
+
+        it('should be wider than a box around a single one of them', () => {
+            const [left, right] = twoSeparatedCubes();
+
+            const single = new BoundingBox(left);
+            const combined = new BoundingBox([left, right]);
+
+            expect(combined.size.x).toBeGreaterThan(single.size.x);
+            expect(combined.radius).toBeGreaterThan(single.radius);
+        });
+
+        it('should encompass every object for axis-aligned boxes as well', () => {
+            const [left, right] = twoSeparatedCubes();
+
+            const combined = new BoundingBox([left, right], true);
+
+            expect(combined.size.x).toBeCloseTo(5);
+            expect(combined.center.x).toBeCloseTo(0);
+        });
+
+        it('should treat a single element array like the object itself', () => {
+            const fromArray = new BoundingBox([mockObject]);
+            const fromObject = new BoundingBox(mockObject);
+
+            expect(fromArray.size).toEqual(fromObject.size);
+            expect(fromArray.center).toEqual(fromObject.center);
+            expect(fromArray.radius).toBe(fromObject.radius);
+        });
+
+        it('should adopt the rotation of a single object', () => {
+            mockObject.rotation.set(0, Math.PI / 4, 0);
+
+            const boundingBox = new BoundingBox([mockObject]);
+
+            expect(boundingBox.rotation.y).toBeCloseTo(Math.PI / 4);
+        });
+
+        it('should stay unrotated for several objects, which share no orientation', () => {
+            const [left, right] = twoSeparatedCubes();
+            left.rotation.set(0, Math.PI / 4, 0);
+            right.rotation.set(0, -Math.PI / 3, 0);
+
+            const combined = new BoundingBox([left, right]);
+
+            expect(combined.rotation.x).toBe(0);
+            expect(combined.rotation.y).toBe(0);
+            expect(combined.rotation.z).toBe(0);
+        });
+
+        it('should not build an invalid sphere helper for an empty list', () => {
+            const boundingBox = new BoundingBox([]);
+
+            expect(boundingBox.box.isEmpty()).toBe(true);
+            expect(() =>
+                boundingBox.setSphereHelperVisible(true),
+            ).not.toThrow();
+        });
+    });
+
     describe('axis-aligned vs oriented bounding box', () => {
-        it('should use setFromObject for axis-aligned bounding box', () => {
-            const setFromObjectSpy = vi.spyOn(Box3.prototype, 'setFromObject');
+        it('should use expandByObject for axis-aligned bounding box', () => {
+            const expandByObjectSpy = vi.spyOn(
+                Box3.prototype,
+                'expandByObject',
+            );
             const boundingBox = new BoundingBox(mockObject, true);
 
             expect(boundingBox).toBeDefined();
-            expect(setFromObjectSpy).toHaveBeenCalledWith(mockObject);
+            expect(expandByObjectSpy).toHaveBeenCalledWith(mockObject);
         });
 
         it('should use traverse and geometry manipulation for oriented bounding box', () => {
