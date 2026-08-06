@@ -27,7 +27,4 @@ export type StateData = {
         position: Vector3Like;
         target: Vector3Like;
     };
-
-    // dunno yet :D
-    mediaItem: null;
 };
