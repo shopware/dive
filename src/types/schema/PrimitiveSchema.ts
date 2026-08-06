@@ -10,11 +10,16 @@ export function isPrimitiveSchema(
     return entity.entityType === 'primitive';
 }
 
+/**
+ * A shape that DIVE generates itself, so unlike a model it needs no asset and
+ * is there the moment it is added.
+ */
 export type PrimitiveSchema = BaseEntitySchema & {
     entityType: 'primitive';
     position: Vector3Like;
     rotation: Vector3Like;
     scale: Vector3Like;
+    /** Rebuilding this replaces the mesh, see {@link GeometrySchema}. */
     geometry: GeometrySchema;
     material?: Partial<MaterialSchema>;
 };
