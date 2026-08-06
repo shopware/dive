@@ -205,11 +205,11 @@ describe('DIVERenderPipeline', () => {
         const instance = WebGPURenderer.mock.results[0].value;
 
         renderer.tick();
-        expect(instance.tick).not.toHaveBeenCalled();
+        expect(instance.render).not.toHaveBeenCalled();
 
         instance.initialized = true;
         renderer.tick();
-        expect(instance.tick).toHaveBeenCalledWith(scene, camera);
+        expect(instance.render).toHaveBeenCalledWith(scene, camera);
     });
 
     it('should handle resize', () => {
