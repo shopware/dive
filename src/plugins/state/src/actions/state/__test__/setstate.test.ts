@@ -331,6 +331,57 @@ describe('SetStateAction', () => {
         });
     });
 
+    describe('every kind of entity', () => {
+        const oneOfEach = () =>
+            stateData({
+                groups: [{ id: 'g' }],
+                lights: [{ id: 'l' }],
+                cameras: [{ id: 'c' }],
+                primitives: [{ id: 'p' }],
+                objects: [{ id: 'o' }],
+            } as unknown as Partial<StateData>);
+
+        it('should report a failure from any collection', async () => {
+            const deps = createDependencies();
+            addExecute.mockRejectedValue(new Error('nope'));
+
+            const result = await new SetStateAction(
+                oneOfEach(),
+                deps,
+            ).execute();
+
+            expect(result).toEqual([]);
+
+            const failures = vi.mocked(console.warn).mock.calls.at(-1)?.[1] as {
+                entity: EntitySchema;
+            }[];
+            expect(
+                failures.map((failure) => failure.entity.entityType),
+            ).toEqual(['group', 'light', 'camera', 'primitive', 'model']);
+        });
+
+        it('should collect a scene object from any collection', async () => {
+            const deps = createDependencies();
+            addExecute.mockImplementation(async (entity: EntitySchema) => ({
+                name: entity.id,
+            }));
+
+            const result = await new SetStateAction(
+                oneOfEach(),
+                deps,
+            ).execute();
+
+            expect(result).toEqual([
+                { name: 'g' },
+                { name: 'l' },
+                { name: 'c' },
+                { name: 'p' },
+                { name: 'o' },
+            ]);
+            expect(console.warn).not.toHaveBeenCalled();
+        });
+    });
+
     describe('replacing what is already there', () => {
         it('should delete every registered entity before adding', async () => {
             const deps = createDependencies([
