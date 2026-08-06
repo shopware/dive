@@ -1353,31 +1353,95 @@ describe('components/root/DIVERoot', () => {
             expect(light).toBeDefined();
         });
 
-        it('should handle light with null properties', async () => {
-            const lightData: Partial<LightSchema> & {
-                id: string;
-                entityType: string;
-                type: string;
-            } = {
+        it('should only touch the fields a patch carries', async () => {
+            const root = new DIVERoot();
+            await root.addSceneObject({
                 id: 'light-1',
                 entityType: 'light',
                 type: 'point',
-                name: null as unknown as string,
-                visible: null as unknown as boolean,
-                position: null as unknown as {
-                    x: number;
-                    y: number;
-                    z: number;
-                },
-                intensity: null as unknown as number,
-                enabled: null as unknown as boolean,
-                color: null as unknown as string,
-            };
+                name: 'Lamp',
+                intensity: 2,
+            } as LightSchema);
 
+            const light = root.getSceneObject({
+                id: 'light-1',
+                entityType: 'light',
+            }) as any;
+            light.setIntensity.mockClear();
+            light.setColor.mockClear();
+            light.setEnabled.mockClear();
+
+            await root.updateSceneObject({
+                id: 'light-1',
+                entityType: 'light',
+                name: 'Renamed',
+            });
+
+            expect(light.name).toBe('Renamed');
+            // absent means unchanged, so no other setter runs
+            expect(light.setIntensity).not.toHaveBeenCalled();
+            expect(light.setColor).not.toHaveBeenCalled();
+            expect(light.setEnabled).not.toHaveBeenCalled();
+        });
+    });
+
+    describe('model asset loading', () => {
+        const addModel = async (root: DIVERoot, uri: string): Promise<any> => {
+            await root.addSceneObject({
+                id: 'model-1',
+                entityType: 'model',
+                name: 'M',
+                uri,
+            } as ModelSchema);
+
+            return root.getSceneObject({
+                id: 'model-1',
+                entityType: 'model',
+            }) as any;
+        };
+
+        it('should load the asset when the model is added', async () => {
             const root = new DIVERoot();
-            await root.addSceneObject(lightData as LightSchema);
-            const light = root.getSceneObject(lightData);
-            expect(light).toBeDefined();
+            const model = await addModel(root, 'a.glb');
+
+            expect(model.setFromURL).toHaveBeenCalledWith('a.glb');
+            expect(model.userData.uri).toBe('a.glb');
+        });
+
+        it('should not fetch the asset again when the uri is unchanged', async () => {
+            const root = new DIVERoot();
+            const model = await addModel(root, 'a.glb');
+            model.setFromURL.mockClear();
+
+            await root.updateSceneObject({
+                id: 'model-1',
+                entityType: 'model',
+                uri: 'a.glb',
+                position: { x: 1, y: 2, z: 3 },
+            });
+
+            expect(model.setFromURL).not.toHaveBeenCalled();
+            // the rest of the patch still applies
+            expect(model.setPosition).toHaveBeenCalledWith({
+                x: 1,
+                y: 2,
+                z: 3,
+            });
+        });
+
+        it('should fetch the asset when the uri changed', async () => {
+            const root = new DIVERoot();
+            const model = await addModel(root, 'a.glb');
+            model.setFromURL.mockClear();
+
+            await root.updateSceneObject({
+                id: 'model-1',
+                entityType: 'model',
+                uri: 'b.glb',
+            });
+
+            expect(model.setFromURL).toHaveBeenCalledWith('b.glb');
+            expect(model.userData.uri).toBe('b.glb');
         });
     });
 

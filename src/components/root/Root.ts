@@ -116,7 +116,6 @@ export class DIVERoot extends Object3D {
                 sceneObject = new DIVEModel();
                 sceneObject.name = object.name;
                 sceneObject.userData.id = object.id;
-                sceneObject.userData.uri = object.uri;
                 this.add(sceneObject);
                 await this._updateModel(sceneObject as DIVEModel, object);
                 break;
@@ -225,22 +224,19 @@ export class DIVERoot extends Object3D {
         sceneObject: DIVELight,
         props: PartialSchema<LightSchema>,
     ): void {
-        if (props.name !== undefined && props.name !== null)
-            sceneObject.name = props.name;
-        if (props.position !== undefined && props.position !== null)
+        if (props.name !== undefined) sceneObject.name = props.name;
+        if (props.position !== undefined)
             sceneObject.position.set(
                 props.position.x,
                 props.position.y,
                 props.position.z,
             );
-        if (props.intensity !== undefined && props.intensity !== null)
+        if (props.intensity !== undefined)
             sceneObject.setIntensity(props.intensity);
-        if (props.enabled !== undefined && props.enabled !== null)
-            sceneObject.setEnabled(props.enabled);
-        if (props.color !== undefined && props.color !== null)
+        if (props.enabled !== undefined) sceneObject.setEnabled(props.enabled);
+        if (props.color !== undefined)
             sceneObject.setColor(new Color(props.color));
-        if (props.visible !== undefined && props.visible !== null)
-            sceneObject.visible = props.visible;
+        if (props.visible !== undefined) sceneObject.visible = props.visible;
         if (props.parentId !== undefined)
             this._setParent({ ...props, parentId: props.parentId });
     }
@@ -249,8 +245,13 @@ export class DIVERoot extends Object3D {
         sceneObject: DIVEModel,
         model: PartialSchema<ModelSchema>,
     ): Promise<void> {
-        // awaited, so callers can tell when the model is actually in the scene
-        if (model.uri !== undefined) await sceneObject.setFromURL(model.uri);
+        // awaited, so callers can tell when the model is actually in the scene.
+        // userData.uri holds what is currently loaded, so an update that only
+        // moves the model does not fetch the asset again.
+        if (model.uri !== undefined && model.uri !== sceneObject.userData.uri) {
+            await sceneObject.setFromURL(model.uri);
+            sceneObject.userData.uri = model.uri;
+        }
         if (model.name !== undefined) sceneObject.name = model.name;
         if (model.position !== undefined)
             sceneObject.setPosition(model.position);
