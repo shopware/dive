@@ -9,7 +9,7 @@ import {
 import { PRODUCT_LAYER_MASK } from '../../constants/VisibilityLayerMask.ts';
 import { findSceneRecursive } from '../../helpers/findSceneRecursive/findSceneRecursive.ts';
 import { DIVENode } from '../node/Node.ts';
-import { MaterialSchema } from 'src/types/index.ts';
+import { DIVEMaterial } from 'src/types/index.ts';
 import { BoundingBox } from '../boundingbox/BoundingBox.ts';
 
 /**
@@ -108,7 +108,7 @@ export class DIVEModel extends DIVENode {
         return this;
     }
 
-    public setMaterial(material: Partial<MaterialSchema>): void {
+    public setMaterial(material: Partial<DIVEMaterial>): void {
         // if there is no material, create a new one
         if (!this._material) {
             this._material = new MeshStandardMaterial();

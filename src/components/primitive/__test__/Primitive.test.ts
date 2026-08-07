@@ -7,9 +7,9 @@ import {
     type MeshStandardMaterial,
 } from 'three/webgpu';
 import { DIVEScene } from 'src/engine/scene/Scene.ts';
-import { GeometrySchema } from 'src/types/schema/GeometrySchema.ts';
-import { MaterialSchema } from 'src/types/schema/MaterialSchema.ts';
-import { GeometryTypeSchema } from 'src/types/schema/GeometryTypeSchema.ts';
+import { DIVEGeometry } from '../../../types/geometry/DIVEGeometry.ts';
+import { DIVEMaterial } from '../../../types/material/DIVEMaterial.ts';
+import { DIVEGeometryType } from '../../../types/geometry/DIVEGeometryType.ts';
 
 const RaycasterIntersectObjectMock = vi.fn().mockReturnValue([]);
 
@@ -55,11 +55,11 @@ describe('dive/primitive/DIVEPrimitive', () => {
     it('should set geometry', () => {
         vi.spyOn(console, 'warn');
         const geometry = {
-            name: 'cube' as GeometryTypeSchema,
+            name: 'cube' as DIVEGeometryType,
             width: 1,
             height: 1,
             depth: 1,
-        } as GeometrySchema;
+        } as DIVEGeometry;
         expect(() => primitive.setGeometry(geometry)).not.toThrow();
         expect(console.warn).not.toHaveBeenCalled();
     });
@@ -67,8 +67,8 @@ describe('dive/primitive/DIVEPrimitive', () => {
     it('should warn when geometry is invalid', () => {
         vi.spyOn(console, 'warn').mockImplementation(() => {});
         const geometry = {
-            name: 'INVALID' as GeometryTypeSchema,
-        } as GeometrySchema;
+            name: 'INVALID' as DIVEGeometryType,
+        } as DIVEGeometry;
         expect(() => primitive.setGeometry(geometry)).not.toThrow();
         expect(console.warn).toHaveBeenCalled();
     });
@@ -222,7 +222,7 @@ describe('dive/primitive/DIVEPrimitive', () => {
             width: 1,
             height: 1.5,
             depth: 1,
-        } as GeometrySchema;
+        } as DIVEGeometry;
         expect(() => primitive.setGeometry(cylinder)).not.toThrow();
 
         // sphere
@@ -231,7 +231,7 @@ describe('dive/primitive/DIVEPrimitive', () => {
             width: 1,
             height: 1,
             depth: 1,
-        } as GeometrySchema;
+        } as DIVEGeometry;
         expect(() => primitive.setGeometry(sphere)).not.toThrow();
 
         // pyramid
@@ -240,7 +240,7 @@ describe('dive/primitive/DIVEPrimitive', () => {
             width: 1,
             height: 1.5,
             depth: 1,
-        } as GeometrySchema;
+        } as DIVEGeometry;
         expect(() => primitive.setGeometry(pyramid)).not.toThrow();
 
         // box
@@ -249,7 +249,7 @@ describe('dive/primitive/DIVEPrimitive', () => {
             width: 1,
             height: 1,
             depth: 1,
-        } as GeometrySchema;
+        } as DIVEGeometry;
         expect(() => primitive.setGeometry(box)).not.toThrow();
 
         // cone
@@ -258,7 +258,7 @@ describe('dive/primitive/DIVEPrimitive', () => {
             width: 1,
             height: 1.5,
             depth: 1,
-        } as GeometrySchema;
+        } as DIVEGeometry;
         expect(() => primitive.setGeometry(cone)).not.toThrow();
 
         // wall
@@ -267,14 +267,14 @@ describe('dive/primitive/DIVEPrimitive', () => {
             width: 1,
             height: 1.5,
             depth: 0.1,
-        } as GeometrySchema;
+        } as DIVEGeometry;
         expect(() => primitive.setGeometry(wall)).not.toThrow();
 
         const wallWithoutDepth = {
             name: 'wall',
             width: 1,
             height: 1.5,
-        } as GeometrySchema;
+        } as DIVEGeometry;
         expect(() => primitive.setGeometry(wallWithoutDepth)).not.toThrow();
 
         // plane
@@ -283,7 +283,7 @@ describe('dive/primitive/DIVEPrimitive', () => {
             width: 1,
             height: 0.1,
             depth: 1,
-        } as GeometrySchema;
+        } as DIVEGeometry;
         expect(() => primitive.setGeometry(plane)).not.toThrow();
     });
 
@@ -291,7 +291,7 @@ describe('dive/primitive/DIVEPrimitive', () => {
         const material = primitive['_mesh'].material as MeshStandardMaterial;
 
         // apply invalid material should not crash
-        expect(() => primitive.setMaterial({} as MaterialSchema)).not.toThrow();
+        expect(() => primitive.setMaterial({} as DIVEMaterial)).not.toThrow();
         expect(material).toBeDefined();
 
         expect(() =>
@@ -299,7 +299,7 @@ describe('dive/primitive/DIVEPrimitive', () => {
                 color: 0xffffff,
                 roughness: 0,
                 metalness: 1,
-            } as MaterialSchema),
+            } as DIVEMaterial),
         ).not.toThrow();
         expect((material as MeshStandardMaterial).roughness).toBe(0);
         expect((material as MeshStandardMaterial).roughnessMap).toBeNull();
@@ -316,7 +316,7 @@ describe('dive/primitive/DIVEPrimitive', () => {
                 roughnessMap: 'This_Is_A_Texture' as unknown as Texture,
                 metalness: 1,
                 metalnessMap: 'This_Is_A_Texture' as unknown as Texture,
-            } as MaterialSchema),
+            } as DIVEMaterial),
         ).not.toThrow();
         expect((material as MeshStandardMaterial).roughness).toBe(1.0);
         expect((material as MeshStandardMaterial).roughnessMap).toBeDefined();

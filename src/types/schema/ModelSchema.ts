@@ -1,5 +1,5 @@
 import { type Vector3Like } from 'three/webgpu';
-import { type MaterialSchema } from './MaterialSchema.ts';
+import { type DIVEMaterial } from '../material/DIVEMaterial.ts';
 import { type BaseEntitySchema } from './BaseEntitySchema.ts';
 import { type EntitySchema } from './EntitySchema.ts';
 
@@ -30,5 +30,5 @@ export type ModelSchema = BaseEntitySchema & {
      */
     loaded: boolean;
     /** Overrides on top of what the asset itself brings along. */
-    material?: Partial<MaterialSchema>;
+    material?: Partial<DIVEMaterial>;
 };

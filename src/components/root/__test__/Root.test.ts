@@ -7,7 +7,7 @@ import {
     GroupSchema,
     CameraSchema,
     EntityTypeSchema,
-    GeometryTypeSchema,
+    DIVEGeometryType,
 } from '@shopware-ag/dive';
 import { Object3D, Vector3, Box3 } from 'three/webgpu';
 
@@ -854,7 +854,7 @@ describe('components/root/DIVERoot', () => {
             const updatedData = {
                 ...primitiveData,
                 geometry: {
-                    name: 'box' as GeometryTypeSchema,
+                    name: 'box' as DIVEGeometryType,
                     width: 2,
                     height: 2,
                     depth: 2,

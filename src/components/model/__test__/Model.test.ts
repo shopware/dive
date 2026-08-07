@@ -9,7 +9,7 @@ import {
     Object3D,
 } from 'three/webgpu';
 import { DIVENode } from '../../node/Node.ts';
-import { type MaterialSchema } from '../../../types/schema/MaterialSchema.ts';
+import { type DIVEMaterial } from '../../../types/material/DIVEMaterial.ts';
 import { BoundingBox } from '../../boundingbox/BoundingBox.ts';
 
 // ============================================================================
@@ -378,7 +378,7 @@ describe('dive/model/DIVEModel', () => {
 
     it('should set material', () => {
         // apply invalid material should not crash
-        expect(() => model.setMaterial({} as MaterialSchema)).not.toThrow();
+        expect(() => model.setMaterial({} as DIVEMaterial)).not.toThrow();
         expect(model['_material']).not.toBeNull();
 
         expect(() =>
@@ -386,7 +386,7 @@ describe('dive/model/DIVEModel', () => {
                 color: 0xffffff,
                 roughness: 0,
                 metalness: 1,
-            } as MaterialSchema),
+            } as DIVEMaterial),
         ).not.toThrow();
         expect((model['_material'] as MeshStandardMaterial).roughness).toBe(0);
         expect(
@@ -407,7 +407,7 @@ describe('dive/model/DIVEModel', () => {
                 roughnessMap: 'This_Is_A_Texture' as unknown as Texture,
                 metalness: 1,
                 metalnessMap: 'This_Is_A_Texture' as unknown as Texture,
-            } as MaterialSchema),
+            } as DIVEMaterial),
         ).not.toThrow();
         expect((model['_material'] as MeshStandardMaterial).roughness).toBe(1);
         expect(
@@ -420,7 +420,7 @@ describe('dive/model/DIVEModel', () => {
     });
 
     it('should set model material when material already set before', () => {
-        model.setMaterial({ roughness: 0.5 } as MaterialSchema);
+        model.setMaterial({ roughness: 0.5 } as DIVEMaterial);
         expect(() => model.setFromGLTF(object)).not.toThrow();
         expect(
             (model['_mesh']?.material as MeshStandardMaterial).roughness,
@@ -430,7 +430,7 @@ describe('dive/model/DIVEModel', () => {
     it('should set material to model when model already set before', () => {
         model.setFromGLTF(object);
         expect(() =>
-            model.setMaterial({ roughness: 0.5 } as MaterialSchema),
+            model.setMaterial({ roughness: 0.5 } as DIVEMaterial),
         ).not.toThrow();
         expect(
             (model['_mesh']?.material as MeshStandardMaterial).roughness,
@@ -475,7 +475,7 @@ describe('dive/model/DIVEModel', () => {
         (model['_material'] as unknown) = null;
         (model['_mesh'] as unknown) = null;
         expect(() =>
-            model.setMaterial({ roughness: 0.5 } as MaterialSchema),
+            model.setMaterial({ roughness: 0.5 } as DIVEMaterial),
         ).not.toThrow();
 
         // Verify new material was created

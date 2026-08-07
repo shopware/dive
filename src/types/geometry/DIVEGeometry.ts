@@ -1,4 +1,4 @@
-import { GeometryTypeSchema } from './GeometryTypeSchema.ts';
+import { DIVEGeometryType } from './DIVEGeometryType.ts';
 
 /**
  * Describes the shape of a primitive.
@@ -8,9 +8,9 @@ import { GeometryTypeSchema } from './GeometryTypeSchema.ts';
  * radius from `width` alone and ignores the other two, while a box uses all
  * three.
  */
-export type GeometrySchema = {
-    /** Picks the shape to build, see {@link GeometryTypeSchema}. */
-    name: GeometryTypeSchema;
+export type DIVEGeometry = {
+    /** Picks the shape to build, see {@link DIVEGeometryType}. */
+    name: DIVEGeometryType;
     width: number;
     height: number;
     depth: number;

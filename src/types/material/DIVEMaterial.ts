@@ -9,7 +9,7 @@ import { type Texture } from 'three/webgpu';
  *
  * The `null` on the texture slots means "no texture", not "unchanged".
  */
-export type MaterialSchema = {
+export type DIVEMaterial = {
     vertexColors: boolean;
     color: string | number;
     /** The base colour texture. */
