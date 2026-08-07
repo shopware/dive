@@ -9,7 +9,7 @@ export const SetBackgroundAction = Action.define<
 >({
     description: 'Set the background color of the scene.',
     execute: (payload, { gateway }) => {
-        gateway.setBackground(payload.color);
+        gateway.applySceneSettings({ backgroundColor: payload.color });
     },
 });
 

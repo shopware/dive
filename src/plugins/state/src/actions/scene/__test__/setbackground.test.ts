@@ -4,7 +4,7 @@ import { type EngineGateway } from '../../../EngineGateway.ts';
 describe('SetBackgroundAction', () => {
     it('should set scene background', async () => {
         const mockGateway = {
-            setBackground: vi.fn(),
+            applySceneSettings: vi.fn(),
         } as unknown as EngineGateway;
 
         const action = new SetBackgroundAction(
@@ -16,6 +16,10 @@ describe('SetBackgroundAction', () => {
 
         await action.execute();
 
-        expect(mockGateway.setBackground).toHaveBeenCalledWith('#ff0000');
+        // there is one way into the scene properties, not a second one just
+        // for the background
+        expect(mockGateway.applySceneSettings).toHaveBeenCalledWith({
+            backgroundColor: '#ff0000',
+        });
     });
 });

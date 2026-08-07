@@ -24,7 +24,7 @@ describe('SetParentAction', () => {
                     return null;
                 },
             ),
-        sceneRoot: { attach: vi.fn() },
+        root: { attach: vi.fn() },
         updateEntity: vi.fn(),
     } as unknown as EngineGateway;
 
@@ -122,9 +122,7 @@ describe('SetParentAction', () => {
         action.execute();
 
         // Assert
-        expect(mockGateway.sceneRoot.attach).toHaveBeenCalledWith(
-            mockSceneObject,
-        );
+        expect(mockGateway.root.attach).toHaveBeenCalledWith(mockSceneObject);
     });
 
     it('should throw error if object does not exist', () => {

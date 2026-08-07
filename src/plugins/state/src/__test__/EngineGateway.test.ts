@@ -6,6 +6,7 @@ import {
     type DIVE,
 } from '@shopware-ag/dive';
 import { type State } from '../State.ts';
+import { type DIVESceneObject } from '@shopware-ag/dive';
 import {
     LightSchema,
     ModelSchema,
@@ -335,7 +336,7 @@ describe('plugins/state/EngineGateway', () => {
             mockObject.userData = { id: 'test-id' };
 
             const gateway = makeGateway();
-            gateway.sceneRoot.add(mockObject);
+            gateway.root.add(mockObject);
 
             const found = findEntity(gateway, {
                 id: 'test-id',
@@ -361,7 +362,7 @@ describe('plugins/state/EngineGateway', () => {
                     id: 'test-id',
                 },
             };
-            gateway.sceneRoot.add(mockObject as any);
+            gateway.root.add(mockObject as any);
             const result = findEntity(gateway, {
                 id: 'test-id',
                 entityType: 'model',
@@ -420,7 +421,7 @@ describe('plugins/state/EngineGateway', () => {
             const mockObject2 = { ...mockObject1, id: 'obj2', uuid: 'uuid2' };
 
             let traverseCount = 0;
-            gateway.sceneRoot.traverse = vi.fn((callback) => {
+            gateway.root.traverse = vi.fn((callback) => {
                 traverseCount++;
                 callback(mockObject1 as any);
                 callback(mockObject2 as any);
@@ -909,7 +910,7 @@ describe('plugins/state/EngineGateway', () => {
             const gateway = makeGateway();
             const cameraObject = new Object3D();
             cameraObject.userData.id = cameraData.id;
-            gateway.sceneRoot.add(cameraObject);
+            gateway.root.add(cameraObject);
 
             await gateway.updateEntity(cameraData);
 
@@ -942,7 +943,7 @@ describe('plugins/state/EngineGateway', () => {
             const gateway = makeGateway();
             const existingObject = new Object3D();
             existingObject.userData.id = unknownData.id;
-            gateway.sceneRoot.add(existingObject);
+            gateway.root.add(existingObject);
 
             await expect(gateway.updateEntity(unknownData)).rejects.toThrow(
                 'EngineGateway.updateEntity: Unknown entity type: unknown',
@@ -970,8 +971,8 @@ describe('plugins/state/EngineGateway', () => {
             expect(model).toBeDefined();
 
             if (model) {
-                model.parent = gateway.sceneRoot;
-                gateway.sceneRoot.children = [model as unknown as Object3D];
+                model.parent = gateway.root;
+                gateway.root.children = [model as unknown as Object3D];
             }
 
             gateway.removeEntity(modelData);
@@ -1029,7 +1030,7 @@ describe('plugins/state/EngineGateway', () => {
             const gateway = makeGateway();
             const cameraObject = new Object3D();
             cameraObject.userData.id = cameraData.id;
-            gateway.sceneRoot.add(cameraObject);
+            gateway.root.add(cameraObject);
 
             gateway.removeEntity(cameraData);
 
@@ -1047,7 +1048,7 @@ describe('plugins/state/EngineGateway', () => {
             const gateway = makeGateway();
             const stranger = new Object3D();
             stranger.userData.id = 'unknown';
-            gateway.sceneRoot.add(stranger);
+            gateway.root.add(stranger);
 
             gateway.removeEntity(unknownData);
 
@@ -1090,11 +1091,11 @@ describe('plugins/state/EngineGateway', () => {
 
             if (group && member) {
                 (group as any).members = [member];
-                group.parent = gateway.sceneRoot;
+                group.parent = gateway.root;
             }
 
             gateway.removeEntity(groupData);
-            expect(gateway.sceneRoot.attach).toHaveBeenCalledWith(member);
+            expect(gateway.root.attach).toHaveBeenCalledWith(member);
         });
 
         it('should handle transform controls detachment', async () => {
@@ -1124,8 +1125,8 @@ describe('plugins/state/EngineGateway', () => {
             expect(model).toBeDefined();
 
             if (model) {
-                model.parent = gateway.sceneRoot;
-                gateway.sceneRoot.parent = mockScene;
+                model.parent = gateway.root;
+                gateway.root.parent = mockScene;
             }
 
             gateway.removeEntity(modelData);
@@ -1158,8 +1159,8 @@ describe('plugins/state/EngineGateway', () => {
             expect(primitive).toBeDefined();
 
             if (primitive) {
-                primitive.parent = gateway.sceneRoot;
-                gateway.sceneRoot.parent = mockScene;
+                primitive.parent = gateway.root;
+                gateway.root.parent = mockScene;
             }
 
             gateway.removeEntity(primitiveData);
@@ -1191,14 +1192,14 @@ describe('plugins/state/EngineGateway', () => {
             expect(group).toBeDefined();
 
             if (group) {
-                group.parent = gateway.sceneRoot;
-                gateway.sceneRoot.parent = mockScene;
+                group.parent = gateway.root;
+                gateway.root.parent = mockScene;
                 (group as any).members = [new Object3D()];
             }
 
             gateway.removeEntity(groupData);
             expect(mockTransformControls.detach).toHaveBeenCalled();
-            expect(gateway.sceneRoot.attach).toHaveBeenCalled();
+            expect(gateway.root.attach).toHaveBeenCalled();
         });
     });
 
@@ -1257,7 +1258,7 @@ describe('plugins/state/EngineGateway', () => {
             await gateway.addEntity(childData);
             const child = findEntity(gateway, childData);
             expect(child).toBeDefined();
-            expect(gateway.sceneRoot.attach).toHaveBeenCalled();
+            expect(gateway.root.attach).toHaveBeenCalled();
         });
 
         it('should handle non-existent parent', async () => {
@@ -1279,7 +1280,7 @@ describe('plugins/state/EngineGateway', () => {
             const child = findEntity(gateway, childData);
             expect(child).toBeDefined();
             // When parent doesn't exist, the object should remain where it is
-            expect(gateway.sceneRoot.attach).not.toHaveBeenCalled();
+            expect(gateway.root.attach).not.toHaveBeenCalled();
         });
 
         it('should handle non-existent object', async () => {
@@ -1299,7 +1300,7 @@ describe('plugins/state/EngineGateway', () => {
             const gateway = makeGateway();
             // Don't add the object to the scene
             await gateway.updateEntity(modelData);
-            expect(gateway.sceneRoot.attach).not.toHaveBeenCalled();
+            expect(gateway.root.attach).not.toHaveBeenCalled();
         });
     });
 
@@ -1450,8 +1451,8 @@ describe('plugins/state/EngineGateway', () => {
             expect(light).toBeDefined();
 
             if (light) {
-                light.parent = gateway.sceneRoot;
-                gateway.sceneRoot.parent = mockScene;
+                light.parent = gateway.root;
+                gateway.root.parent = mockScene;
             }
 
             gateway.removeEntity(lightData);
@@ -1505,14 +1506,14 @@ describe('plugins/state/EngineGateway', () => {
             expect(group).toBeDefined();
 
             if (group) {
-                group.parent = gateway.sceneRoot;
-                gateway.sceneRoot.parent = mockScene;
+                group.parent = gateway.root;
+                gateway.root.parent = mockScene;
                 (group as any).members = [new Object3D()];
             }
 
             gateway.removeEntity(groupData);
             expect(mockTransformControls.detach).toHaveBeenCalled();
-            expect(gateway.sceneRoot.attach).toHaveBeenCalled();
+            expect(gateway.root.attach).toHaveBeenCalled();
         });
 
         it('should handle non-existent group', () => {
@@ -1553,7 +1554,7 @@ describe('plugins/state/EngineGateway', () => {
             await gateway.addEntity(modelData);
             const model = findEntity(gateway, modelData);
             expect(model).toBeDefined();
-            expect(gateway.sceneRoot.attach).toHaveBeenCalled();
+            expect(gateway.root.attach).toHaveBeenCalled();
         });
 
         it('should handle object with non-existent parent', async () => {
@@ -1574,7 +1575,7 @@ describe('plugins/state/EngineGateway', () => {
             await gateway.addEntity(modelData);
             const model = findEntity(gateway, modelData);
             expect(model).toBeDefined();
-            expect(gateway.sceneRoot.attach).not.toHaveBeenCalled();
+            expect(gateway.root.attach).not.toHaveBeenCalled();
         });
     });
 
@@ -1969,7 +1970,7 @@ describe('plugins/state/EngineGateway', () => {
             const { gateway } = makeWired();
             await gateway.addEntity(modelData);
             const model = findEntity(gateway, modelData)!;
-            model.parent = gateway.sceneRoot;
+            model.parent = gateway.root;
 
             gateway.removeEntity(modelData);
 

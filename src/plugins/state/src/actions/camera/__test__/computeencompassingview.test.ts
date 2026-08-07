@@ -1,16 +1,16 @@
 import { type EngineGateway } from '../../../EngineGateway.ts';
 import { OrbitController } from '@shopware-ag/dive/orbitcontroller';
 import { ComputeEncompassingViewAction } from '../computeencompassingview.ts';
-import { Vector3 } from 'three/webgpu';
 
 vi.mock('../../../../../../components/boundingbox/BoundingBox.ts', () => ({
     BoundingBox: vi.fn(),
 }));
+import { Vector3 } from 'three/webgpu';
 
 describe('modules/state/actions/camera/computeEncompassingView', () => {
     it('should compute encompassing view for a scene', async () => {
         // Mock dependencies
-        const sceneRoot = {
+        const root = {
             computeSceneBB: vi.fn().mockReturnValue({
                 min: new Vector3(0, 0, 0),
                 max: new Vector3(10, 10, 10),
@@ -25,7 +25,7 @@ describe('modules/state/actions/camera/computeEncompassingView', () => {
             }),
         } as unknown as OrbitController;
 
-        const mockGateway = { sceneRoot } as unknown as EngineGateway;
+        const mockGateway = { root } as unknown as EngineGateway;
 
         const action = new ComputeEncompassingViewAction(undefined, {
             gateway: mockGateway,

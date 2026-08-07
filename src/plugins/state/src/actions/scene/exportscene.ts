@@ -11,7 +11,7 @@ export const ExportSceneAction = Action.define<
     description: 'Exports the current scene to a blob and returns the URL.',
     execute: async (payload, { gateway, getAssetExporter }) => {
         return getAssetExporter().then((assetExporter) => {
-            return assetExporter.export(gateway.sceneRoot, payload.type);
+            return assetExporter.export(gateway.root, payload.type);
         });
     },
 });

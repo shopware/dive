@@ -22,7 +22,7 @@ export const SetParentAction = Action.define<
 
         if (payload.parent === null) {
             // detach from current parent
-            gateway.sceneRoot.attach(sceneObject);
+            gateway.root.attach(sceneObject);
             // Update registration to reflect no parent
             new UpdateObjectAction(
                 {

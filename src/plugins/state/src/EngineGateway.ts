@@ -1,4 +1,4 @@
-import { Color, MeshStandardMaterial, Object3D } from 'three/webgpu';
+import { Color, MeshStandardMaterial } from 'three/webgpu';
 import {
     detachTransformControls,
     DIVEAmbientLight,
@@ -112,17 +112,9 @@ export class EngineGateway {
         this._state = state;
     }
 
-    private get _root(): DIVERoot {
+    /** The scene root, for everything that needs the subtree as a whole. */
+    public get root(): DIVERoot {
         return this._engine.scene.root;
-    }
-
-    /**
-     * The scene root as a plain object, for the few consumers that need the
-     * whole subtree rather than a single entity — computing an encompassing
-     * view and exporting.
-     */
-    public get sceneRoot(): Object3D {
-        return this._root;
     }
 
     // ---------------------------------------------------------------- entities
@@ -131,7 +123,7 @@ export class EngineGateway {
         entity: MinimalSchema<EntitySchema>,
     ): DIVESceneObject | undefined {
         let found: DIVESceneObject | undefined;
-        this._root.traverse((object3D) => {
+        this.root.traverse((object3D) => {
             if (found) return;
             if (object3D.userData.id === entity.id) {
                 found = object3D as DIVESceneObject;
@@ -158,7 +150,7 @@ export class EngineGateway {
 
         sceneObject.name = entity.name;
         sceneObject.userData.id = entity.id;
-        this._root.add(sceneObject);
+        this.root.add(sceneObject);
 
         // Wired before the schema is applied, not after: applying a model
         // schema awaits `setFromURL`, and that is exactly where `object-load`
@@ -200,7 +192,7 @@ export class EngineGateway {
         // Their own wiring is keyed by their own id and stays untouched.
         if (sceneObject instanceof DIVEGroup) {
             for (let i = sceneObject.members.length - 1; i >= 0; i--) {
-                this._root.attach(sceneObject.members[i]);
+                this.root.attach(sceneObject.members[i]);
             }
         }
 
@@ -241,10 +233,6 @@ export class EngineGateway {
             scene.root.floor.setVisibility(patch.floorEnabled);
         if (patch.floorColor !== undefined)
             scene.root.floor.setColor(patch.floorColor);
-    }
-
-    public setBackground(color: string | number): void {
-        this._engine.scene.setBackground(color);
     }
 
     // ---------------------------------------------------------------- engine
@@ -410,7 +398,7 @@ export class EngineGateway {
         }
 
         if (entity.parentId === null) {
-            this._root.attach(sceneObject);
+            this.root.attach(sceneObject);
             return;
         }
 

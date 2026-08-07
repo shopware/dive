@@ -9,8 +9,8 @@ const mockGetAssetExporter = vi.fn().mockResolvedValue({
 
 describe('ExportSceneAction', () => {
     it('should export scene', async () => {
-        const sceneRoot = new Object3D();
-        const mockGateway = { sceneRoot } as unknown as EngineGateway;
+        const root = new Object3D();
+        const mockGateway = { root } as unknown as EngineGateway;
 
         const action = new ExportSceneAction(
             { type: 'glb' },
@@ -23,7 +23,7 @@ describe('ExportSceneAction', () => {
         const result = await action.execute();
 
         expect(mockGetAssetExporter).toHaveBeenCalled();
-        expect(mockExport).toHaveBeenCalledWith(sceneRoot, 'glb');
+        expect(mockExport).toHaveBeenCalledWith(root, 'glb');
         expect(result).toBe('exported-scene-data');
     });
 });
