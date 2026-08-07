@@ -23,3 +23,11 @@ jobs:
                       test
                       perf
                       ci
+                      !feat
+                      !fix
+                      !docs
+                      !chore
+                      !style
+                      !test
+                      !perf
+                      !ci
