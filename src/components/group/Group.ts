@@ -12,9 +12,9 @@ import { type DIVESceneObject } from '../../types/index.ts';
 export class DIVEGroup extends DIVENode {
     readonly isDIVEGroup: true = true;
 
-    private _members: Object3D[]; // children objects
+    private _members: DIVESceneObject[];
 
-    public get members(): Object3D[] {
+    public get members(): DIVESceneObject[] {
         return this._members;
     }
 
@@ -47,7 +47,7 @@ export class DIVEGroup extends DIVENode {
             return;
         }
 
-        const index = this._members.indexOf(object);
+        const index = this._members.findIndex((member) => member === object);
         if (index === -1) return;
 
         this._lines[index].visible = visible;
@@ -99,7 +99,7 @@ export class DIVEGroup extends DIVENode {
     }
 
     public updateLineTo(object: Object3D): void {
-        const index = this._members.indexOf(object);
+        const index = this._members.findIndex((member) => member === object);
         if (index === -1) return;
 
         this._updateLineTo(this._lines[index], object);
