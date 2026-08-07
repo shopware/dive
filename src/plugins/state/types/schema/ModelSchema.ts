@@ -1,5 +1,5 @@
 import { type Vector3Like } from 'three/webgpu';
-import { type DIVEMaterial } from '../material/DIVEMaterial.ts';
+import { type DIVEMaterial } from '@shopware-ag/dive';
 import { type BaseEntitySchema } from './BaseEntitySchema.ts';
 import { type EntitySchema } from './EntitySchema.ts';
 
@@ -25,8 +25,11 @@ export type ModelSchema = BaseEntitySchema & {
     rotation: Vector3Like;
     scale: Vector3Like;
     /**
-     * @deprecated Never written or read. Whether an asset has arrived is
-     * signalled by the `MODEL_LOADED` action instead.
+     * Whether the asset has arrived.
+     *
+     * Set by the `MODEL_LOADED` action once the load finishes, never by the
+     * caller. It travels back out with the state, so a stored scene records
+     * which models were ready.
      */
     loaded: boolean;
     /** Overrides on top of what the asset itself brings along. */

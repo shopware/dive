@@ -2,7 +2,7 @@ import { type EngineGateway } from '../../../EngineGateway.ts';
 import { type DIVESceneObject } from '@shopware-ag/dive';
 import { AddObjectAction } from '../addobject.ts';
 import { DIVE, DIVEScene } from '@shopware-ag/dive';
-import { type EntitySchema } from '@shopware-ag/dive';
+import { type EntitySchema } from '../../../../types/index.ts';
 
 const existingSceneObject = { name: 'already there' } as DIVESceneObject;
 

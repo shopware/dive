@@ -2,7 +2,7 @@ import { MathUtils } from 'three/webgpu';
 
 // type imports
 import { type DIVE } from '@shopware-ag/dive';
-import { type EntitySchema } from '@shopware-ag/dive';
+import { type EntitySchema } from '../types/index.ts';
 import { type OrbitController } from '@shopware-ag/dive/orbitcontroller';
 import {
     ActionDependencies,

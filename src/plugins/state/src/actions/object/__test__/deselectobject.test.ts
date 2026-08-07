@@ -2,7 +2,7 @@ import { type EngineGateway } from '../../../EngineGateway.ts';
 import { DeselectObjectAction } from '../deselectobject.ts';
 import { Object3D } from 'three/webgpu';
 import { DIVE, type DIVESelectable, DIVESceneObject } from '@shopware-ag/dive';
-import { type EntitySchema } from '@shopware-ag/dive';
+import { type EntitySchema } from '../../../../types/index.ts';
 import { type Toolbox, type SelectionState } from '@shopware-ag/dive/toolbox';
 
 const mockSceneObject = {

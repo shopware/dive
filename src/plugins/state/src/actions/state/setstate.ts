@@ -3,7 +3,7 @@ import { registerAction } from '../../ActionRegistry.ts';
 import { type ActionDependencies } from '../../../types/index.ts';
 import { type StateData } from '../../../types/index.ts';
 import { type DIVESceneObject } from '@shopware-ag/dive';
-import { type EntitySchema } from '@shopware-ag/dive';
+import { type EntitySchema } from '../../../types/index.ts';
 import {
     AddObjectAction,
     DeleteObjectAction,

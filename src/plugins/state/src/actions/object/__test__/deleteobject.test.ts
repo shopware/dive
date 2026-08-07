@@ -1,7 +1,7 @@
 import { type EngineGateway } from '../../../EngineGateway.ts';
 import { DeleteObjectAction } from '../deleteobject.ts';
 import { DIVE, DIVEScene } from '@shopware-ag/dive';
-import { type EntitySchema } from '@shopware-ag/dive';
+import { type EntitySchema } from '../../../../types/index.ts';
 import { SetParentAction } from '../setparent.ts';
 import { UpdateObjectAction } from '../updateobject.ts';
 

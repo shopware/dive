@@ -1,7 +1,7 @@
 import { type EngineGateway } from '../../../EngineGateway.ts';
 import { DropItAction } from '../dropit.ts';
 import { DIVEModel, DIVE } from '@shopware-ag/dive';
-import { type EntitySchema } from '@shopware-ag/dive';
+import { type EntitySchema } from '../../../../types/index.ts';
 
 const mockModel = {
     isDIVEModel: true,

@@ -1,7 +1,7 @@
 import { SetParentAction } from '../setparent.ts';
 import { DIVESceneObject } from '@shopware-ag/dive';
 import { type EngineGateway } from '../../../EngineGateway.ts';
-import { type EntitySchema } from '@shopware-ag/dive';
+import { type EntitySchema } from '../../../../types/index.ts';
 import { Object3D } from 'three/webgpu';
 
 describe('SetParentAction', () => {

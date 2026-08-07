@@ -15,7 +15,7 @@ import {
     type LightSchema,
     type ModelSchema,
     type PrimitiveSchema,
-} from '@shopware-ag/dive';
+} from '../../../../types/index.ts';
 import { Color, MeshStandardMaterial, Vector3 } from 'three/webgpu';
 import { OrbitController } from '@shopware-ag/dive/orbitcontroller';
 import { type StateData } from '../../../../types/index.ts';

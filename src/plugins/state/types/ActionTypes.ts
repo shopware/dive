@@ -1,5 +1,5 @@
 import { type OrbitController } from '@shopware-ag/dive/orbitcontroller';
-import { type EntitySchema } from '@shopware-ag/dive';
+import { type EntitySchema } from './schema/index.ts';
 import { type EngineGateway } from '../src/EngineGateway.ts';
 
 // Extracted types for performAction_new

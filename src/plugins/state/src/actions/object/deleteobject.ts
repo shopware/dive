@@ -3,7 +3,7 @@ import { registerAction } from '../../ActionRegistry.ts';
 import { type ActionDependencies } from '../../../types/index.ts';
 import { SetParentAction } from './setparent.ts';
 import { UpdateObjectAction } from './updateobject.ts';
-import { type EntitySchema } from '@shopware-ag/dive';
+import { type EntitySchema } from '../../../types/index.ts';
 
 export const DeleteObjectAction = Action.define<
     Partial<EntitySchema> & { id: string },

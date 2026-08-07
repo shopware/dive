@@ -1,6 +1,6 @@
 import { type EngineGateway } from '../../../EngineGateway.ts';
 import { MoveCameraAction } from '../movecamera.ts';
-import { EntitySchema } from '@shopware-ag/dive';
+import { EntitySchema } from '../../../../types/index.ts';
 import { OrbitController } from '@shopware-ag/dive/orbitcontroller';
 import { Vector3 } from 'three/webgpu';
 import { DIVE } from '@shopware-ag/dive';

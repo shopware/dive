@@ -26,7 +26,7 @@ import {
     type ModelSchema,
     type PartialSchema,
     type PrimitiveSchema,
-} from '@shopware-ag/dive';
+} from '../types/index.ts';
 import { type State } from './State.ts';
 
 /**

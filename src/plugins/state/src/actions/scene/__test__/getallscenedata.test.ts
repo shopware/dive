@@ -6,7 +6,7 @@ import {
     type ModelSchema,
     type CameraSchema,
     type PrimitiveSchema,
-} from '@shopware-ag/dive';
+} from '../../../../types/index.ts';
 import { OrbitController } from '@shopware-ag/dive/orbitcontroller';
 import { Vector3 } from 'three/webgpu';
 

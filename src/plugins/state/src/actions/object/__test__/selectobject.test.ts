@@ -1,6 +1,6 @@
 import { type EngineGateway } from '../../../EngineGateway.ts';
 import { DIVE, DIVESceneObject, DIVESelectable } from '@shopware-ag/dive';
-import { type EntitySchema } from '@shopware-ag/dive';
+import { type EntitySchema } from '../../../../types/index.ts';
 import { SelectObjectAction } from '../selectobject.ts';
 import { Object3D } from 'three/webgpu';
 import { Toolbox, SelectionState } from '@shopware-ag/dive/toolbox';

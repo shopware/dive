@@ -3,7 +3,7 @@ import { Action } from '../action.ts';
 import { registerAction } from '../../ActionRegistry.ts';
 import { type ActionDependencies } from '../../../types/index.ts';
 import { type DIVESelectable } from '@shopware-ag/dive';
-import { type EntitySchema } from '@shopware-ag/dive';
+import { type EntitySchema } from '../../../types/index.ts';
 
 export const SelectObjectAction = Action.define<
     Partial<EntitySchema> & { id: string },

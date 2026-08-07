@@ -8,7 +8,7 @@ import {
     ModelSchema,
     CameraSchema,
     PrimitiveSchema,
-} from '@shopware-ag/dive';
+} from '../../../types/index.ts';
 
 /**
  * @deprecated use [`GetStateAction`](../state/getstate.ts) instead. This action will be removed in next major release.

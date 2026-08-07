@@ -1,6 +1,6 @@
 import { type EngineGateway } from '../../../EngineGateway.ts';
 import { DIVE, DIVEScene } from '@shopware-ag/dive';
-import { type EntitySchema } from '@shopware-ag/dive';
+import { type EntitySchema } from '../../../../types/index.ts';
 import { UpdateObjectAction } from '../updateobject.ts';
 
 // Mock dependencies

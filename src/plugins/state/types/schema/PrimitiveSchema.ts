@@ -1,7 +1,6 @@
 import { type Vector3Like } from 'three/webgpu';
 import { type BaseEntitySchema } from './BaseEntitySchema.ts';
-import { type DIVEGeometry } from '../geometry/DIVEGeometry.ts';
-import { type DIVEMaterial } from '../material/DIVEMaterial.ts';
+import { type DIVEGeometry, type DIVEMaterial } from '@shopware-ag/dive';
 import { type EntitySchema } from './EntitySchema.ts';
 
 export function isPrimitiveSchema(

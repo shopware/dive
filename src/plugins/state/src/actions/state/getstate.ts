@@ -8,7 +8,7 @@ import {
     ModelSchema,
     CameraSchema,
     PrimitiveSchema,
-} from '@shopware-ag/dive';
+} from '../../../types/index.ts';
 
 export const GetStateAction = Action.define<
     void,

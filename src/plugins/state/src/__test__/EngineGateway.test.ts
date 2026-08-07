@@ -14,7 +14,7 @@ import {
     GroupSchema,
     CameraSchema,
     EntityTypeSchema,
-} from '@shopware-ag/dive';
+} from '../../types/index.ts';
 import { Color, Object3D, Vector3 } from 'three/webgpu';
 
 vi.mock('three/webgpu', async () => {
