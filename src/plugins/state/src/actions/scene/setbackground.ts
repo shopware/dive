@@ -4,12 +4,12 @@ import { type ActionDependencies } from '../../../types/index.ts';
 
 export const SetBackgroundAction = Action.define<
     { color: string | number },
-    Pick<ActionDependencies, 'engine'>,
+    Pick<ActionDependencies, 'gateway'>,
     void
 >({
     description: 'Set the background color of the scene.',
-    execute: (payload, { engine }) => {
-        engine.scene.setBackground(payload.color);
+    execute: (payload, { gateway }) => {
+        gateway.setBackground(payload.color);
     },
 });
 

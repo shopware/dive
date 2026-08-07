@@ -6,18 +6,18 @@ import { merge } from 'lodash';
 
 export const UpdateObjectAction = Action.define<
     Partial<EntitySchema> & { id: string },
-    Pick<ActionDependencies, 'engine' | 'registered'>,
+    Pick<ActionDependencies, 'gateway' | 'registered'>,
     Promise<void>
 >({
     description: 'Updates an existing object.',
-    execute: async (payload, { engine, registered }) => {
+    execute: async (payload, { gateway, registered }) => {
         const objectToUpdate = registered.get(payload.id);
         if (!objectToUpdate) throw new Error('Object not found.');
 
         const updatedObject = merge(objectToUpdate, payload);
         registered.set(payload.id, updatedObject);
 
-        await engine.scene.root.updateSceneObject({
+        await gateway.updateEntity({
             ...payload,
             id: updatedObject.id,
             entityType: updatedObject.entityType,

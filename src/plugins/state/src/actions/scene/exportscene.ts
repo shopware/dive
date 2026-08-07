@@ -5,13 +5,13 @@ import { registerAction } from '../../ActionRegistry.ts';
 
 export const ExportSceneAction = Action.define<
     { type: keyof StateExportFileType },
-    Pick<ActionDependencies, 'engine' | 'getAssetExporter'>,
+    Pick<ActionDependencies, 'gateway' | 'getAssetExporter'>,
     Promise<ArrayBuffer | null>
 >({
     description: 'Exports the current scene to a blob and returns the URL.',
-    execute: async (payload, { engine, getAssetExporter }) => {
+    execute: async (payload, { gateway, getAssetExporter }) => {
         return getAssetExporter().then((assetExporter) => {
-            return assetExporter.export(engine.scene.root, payload.type);
+            return assetExporter.export(gateway.sceneRoot, payload.type);
         });
     },
 });

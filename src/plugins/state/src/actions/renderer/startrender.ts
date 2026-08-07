@@ -4,12 +4,12 @@ import { ActionDependencies } from '../../../types/index.ts';
 
 export const StartRenderAction = Action.define<
     void,
-    Pick<ActionDependencies, 'engine'>,
+    Pick<ActionDependencies, 'gateway'>,
     Promise<void>
 >({
     description: 'Starts the render process.',
-    execute: async (_, { engine }) => {
-        return engine.startAsync();
+    execute: async (_, { gateway }) => {
+        return gateway.startRendering();
     },
 });
 

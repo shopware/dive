@@ -1,5 +1,7 @@
+import { type EngineGateway } from '../../../EngineGateway.ts';
 import { DeleteObjectAction } from '../deleteobject.ts';
-import { DIVE, DIVEScene, type EntitySchema } from '@shopware-ag/dive';
+import { DIVE, DIVEScene } from '@shopware-ag/dive';
+import { type EntitySchema } from '@shopware-ag/dive';
 import { SetParentAction } from '../setparent.ts';
 import { UpdateObjectAction } from '../updateobject.ts';
 
@@ -14,9 +16,9 @@ describe('DeleteObjectAction', () => {
         },
     } as unknown as DIVEScene;
 
-    const mockEngine = {
-        scene: mockScene,
-    } as unknown as DIVE;
+    const mockGateway = {
+        removeEntity: vi.fn(),
+    } as unknown as EngineGateway;
 
     const mockRegistered = new Map<string, EntitySchema>();
 
@@ -50,14 +52,12 @@ describe('DeleteObjectAction', () => {
         // Act
         const action = new DeleteObjectAction(
             { id: object.id },
-            { engine: mockEngine, registered: mockRegistered },
+            { gateway: mockGateway, registered: mockRegistered },
         );
         action.execute();
 
         // Assert
-        expect(mockEngine.scene.root.deleteSceneObject).toHaveBeenCalledWith(
-            object,
-        );
+        expect(mockGateway.removeEntity).toHaveBeenCalledWith(object);
         expect(mockRegistered.has(object.id)).toBe(false);
     });
 
@@ -84,7 +84,7 @@ describe('DeleteObjectAction', () => {
         // Act
         const action = new DeleteObjectAction(
             { id: object.id },
-            { engine: mockEngine, registered: mockRegistered },
+            { gateway: mockGateway, registered: mockRegistered },
         );
         action.execute();
 
@@ -95,13 +95,11 @@ describe('DeleteObjectAction', () => {
                 parent: null,
             },
             {
-                engine: mockEngine,
+                gateway: mockGateway,
                 registered: mockRegistered,
             },
         );
-        expect(mockEngine.scene.root.deleteSceneObject).toHaveBeenCalledWith(
-            object,
-        );
+        expect(mockGateway.removeEntity).toHaveBeenCalledWith(object);
         expect(mockRegistered.has(object.id)).toBe(false);
     });
 
@@ -157,7 +155,7 @@ describe('DeleteObjectAction', () => {
         // Act
         const action = new DeleteObjectAction(
             { id: group.id },
-            { engine: mockEngine, registered: mockRegistered },
+            { gateway: mockGateway, registered: mockRegistered },
         );
         action.execute();
 
@@ -169,7 +167,7 @@ describe('DeleteObjectAction', () => {
                 parentId: null,
             },
             {
-                engine: mockEngine,
+                gateway: mockGateway,
                 registered: mockRegistered,
             },
         );
@@ -179,13 +177,11 @@ describe('DeleteObjectAction', () => {
                 parentId: null,
             },
             {
-                engine: mockEngine,
+                gateway: mockGateway,
                 registered: mockRegistered,
             },
         );
-        expect(mockEngine.scene.root.deleteSceneObject).toHaveBeenCalledWith(
-            group,
-        );
+        expect(mockGateway.removeEntity).toHaveBeenCalledWith(group);
         expect(mockRegistered.has(group.id)).toBe(false);
     });
 
@@ -193,12 +189,12 @@ describe('DeleteObjectAction', () => {
         // Act
         const action = new DeleteObjectAction(
             { id: 'non-existent' },
-            { engine: mockEngine, registered: mockRegistered },
+            { gateway: mockGateway, registered: mockRegistered },
         );
         const result = action.execute();
 
         // Assert
         expect(result).toBe(false);
-        expect(mockEngine.scene.root.deleteSceneObject).not.toHaveBeenCalled();
+        expect(mockGateway.removeEntity).not.toHaveBeenCalled();
     });
 });

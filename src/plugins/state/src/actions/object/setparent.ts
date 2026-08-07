@@ -9,27 +9,27 @@ export const SetParentAction = Action.define<
         object: Partial<EntitySchema> & { id: string };
         parent: (Partial<EntitySchema> & { id: string }) | null;
     },
-    Pick<ActionDependencies, 'engine' | 'registered'>,
+    Pick<ActionDependencies, 'gateway' | 'registered'>,
     void
 >({
     description: 'Attach an object to another object.',
-    execute: (payload, { engine, registered }) => {
+    execute: (payload, { gateway, registered }) => {
         const object = registered.get(payload.object.id);
         if (!object) throw new Error('Object not found.');
 
-        const sceneObject = engine.scene.root.getSceneObject(object);
+        const sceneObject = gateway.findEntity(object);
         if (!sceneObject) throw new Error('Object not found in scene.');
 
         if (payload.parent === null) {
             // detach from current parent
-            engine.scene.root.attach(sceneObject);
+            gateway.sceneRoot.attach(sceneObject);
             // Update registration to reflect no parent
             new UpdateObjectAction(
                 {
                     id: object.id,
                     parentId: null,
                 },
-                { engine, registered },
+                { gateway, registered },
             ).execute();
             return;
         }
@@ -47,7 +47,7 @@ export const SetParentAction = Action.define<
         }
 
         // attach to new parent
-        const parentObject = engine.scene.root.getSceneObject(parent);
+        const parentObject = gateway.findEntity(parent);
         if (!parentObject) {
             console.warn('Parent object not found in scene.');
             return;
@@ -61,7 +61,7 @@ export const SetParentAction = Action.define<
                 id: object.id,
                 parentId: parent.id,
             },
-            { engine, registered },
+            { gateway, registered },
         ).execute();
     },
 });

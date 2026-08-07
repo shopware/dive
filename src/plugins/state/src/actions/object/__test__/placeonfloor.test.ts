@@ -1,18 +1,16 @@
+import { type EngineGateway } from '../../../EngineGateway.ts';
 import { PlaceOnFloorAction } from '../placeonfloor.ts';
-import { DIVE, DIVEModel, type EntitySchema } from '@shopware-ag/dive';
+import { DIVE, DIVEModel } from '@shopware-ag/dive';
+import { type EntitySchema } from '@shopware-ag/dive';
 
 const mockModel = {
     isDIVEModel: true,
     placeOnFloor: vi.fn(),
 } as unknown as DIVEModel;
 
-const mockEngine = {
-    scene: {
-        root: {
-            getSceneObject: vi.fn().mockReturnValue(mockModel),
-        },
-    },
-} as unknown as DIVE;
+const mockGateway = {
+    findEntity: vi.fn().mockReturnValue(mockModel),
+} as unknown as EngineGateway;
 
 const mockRegistered = new Map<string, EntitySchema>();
 
@@ -39,7 +37,7 @@ describe('PlaceOnFloorAction', () => {
         const action = new PlaceOnFloorAction(
             { id: 'test-object' },
             {
-                engine: mockEngine,
+                gateway: mockGateway,
                 registered: mockRegistered,
             },
         );
@@ -48,9 +46,7 @@ describe('PlaceOnFloorAction', () => {
         action.execute();
 
         // Verify results
-        expect(mockEngine.scene.root.getSceneObject).toHaveBeenCalledWith(
-            testObject,
-        );
+        expect(mockGateway.findEntity).toHaveBeenCalledWith(testObject);
         expect(mockModel.placeOnFloor).toHaveBeenCalled();
     });
 
@@ -58,7 +54,7 @@ describe('PlaceOnFloorAction', () => {
         const action = new PlaceOnFloorAction(
             { id: 'non-existent-object' },
             {
-                engine: mockEngine,
+                gateway: mockGateway,
                 registered: mockRegistered,
             },
         );
@@ -70,9 +66,7 @@ describe('PlaceOnFloorAction', () => {
     });
 
     it('should throw error if object is not found in scene', async () => {
-        vi.mocked(mockEngine.scene.root.getSceneObject).mockReturnValue(
-            undefined,
-        );
+        vi.mocked(mockGateway.findEntity).mockReturnValue(undefined);
 
         const testObject: EntitySchema = {
             id: 'test-object',
@@ -90,7 +84,7 @@ describe('PlaceOnFloorAction', () => {
         const action = new PlaceOnFloorAction(
             { id: 'test-object' },
             {
-                engine: mockEngine,
+                gateway: mockGateway,
                 registered: mockRegistered,
             },
         );
@@ -121,14 +115,12 @@ describe('PlaceOnFloorAction', () => {
             // isDIVEModel: true <= specifically not set
             dropIt: vi.fn(),
         } as unknown as DIVEModel;
-        vi.mocked(mockEngine.scene.root.getSceneObject).mockReturnValue(
-            mockDIVEModel,
-        );
+        vi.mocked(mockGateway.findEntity).mockReturnValue(mockDIVEModel);
 
         const action = new PlaceOnFloorAction(
             { id: 'test-object' },
             {
-                engine: mockEngine,
+                gateway: mockGateway,
                 registered: mockRegistered,
             },
         );

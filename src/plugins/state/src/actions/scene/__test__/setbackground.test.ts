@@ -1,28 +1,21 @@
 import { SetBackgroundAction } from '../setbackground.ts';
-import { DIVE, DIVEScene } from '@shopware-ag/dive';
+import { type EngineGateway } from '../../../EngineGateway.ts';
 
 describe('SetBackgroundAction', () => {
     it('should set scene background', async () => {
-        // Mock dependencies
-        const mockScene = {
+        const mockGateway = {
             setBackground: vi.fn(),
-        } as unknown as DIVEScene;
-
-        const mockEngine = {
-            scene: mockScene,
-        } as unknown as DIVE;
+        } as unknown as EngineGateway;
 
         const action = new SetBackgroundAction(
             { color: '#ff0000' },
             {
-                engine: mockEngine,
+                gateway: mockGateway,
             },
         );
 
-        // Execute action
         await action.execute();
 
-        // Verify results
-        expect(mockScene.setBackground).toHaveBeenCalledWith('#ff0000');
+        expect(mockGateway.setBackground).toHaveBeenCalledWith('#ff0000');
     });
 });

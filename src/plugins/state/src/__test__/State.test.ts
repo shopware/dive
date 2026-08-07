@@ -1,3 +1,4 @@
+import { EngineGateway } from '../EngineGateway.ts';
 vi.mock('three/webgpu', async (importOriginal) => {
     const actual = await importOriginal<typeof import('three')>();
     return { ...actual };
@@ -713,8 +714,17 @@ describe('modules/state/State', () => {
             return capturedDependencies!;
         };
 
-        it('should pass the DIVE instance as the engine dependency', () => {
-            expect(performCapture().engine).toBe(mockDive);
+        it('should pass a gateway instead of the engine itself', () => {
+            // the DIVE instance is deliberately not handed out — an action
+            // reaching past the gateway is what this replaces
+            const deps = performCapture();
+
+            expect(deps.gateway).toBeInstanceOf(EngineGateway);
+            expect(deps).not.toHaveProperty('engine');
+        });
+
+        it('should reuse one gateway for the whole instance', () => {
+            expect(performCapture().gateway).toBe(performCapture().gateway);
         });
 
         it('should pass the orbit controller it was constructed with', () => {
@@ -750,7 +760,7 @@ describe('modules/state/State', () => {
             const second = performCapture();
 
             expect(second).not.toBe(first);
-            expect(second.engine).toBe(first.engine);
+            expect(second.gateway).toBe(first.gateway);
             expect(second.registered).toBe(first.registered);
         });
 
@@ -773,8 +783,7 @@ describe('modules/state/State', () => {
             otherState.performAction('TEST_DEPENDENCIES');
             const other = capturedDependencies!;
 
-            expect(own.engine).toBe(mockDive);
-            expect(other.engine).toBe(otherDive);
+            expect(other.gateway).not.toBe(own.gateway);
             expect(other.controller).toBe(otherController);
             expect(other.registered).not.toBe(own.registered);
         });

@@ -1,3 +1,4 @@
+import { type EngineGateway } from '../../../EngineGateway.ts';
 import { MoveCameraAction } from '../movecamera.ts';
 import { EntitySchema } from '@shopware-ag/dive';
 import { OrbitController } from '@shopware-ag/dive/orbitcontroller';
@@ -21,12 +22,9 @@ const mockGetAnimationSystem = vi.fn().mockResolvedValue({
     },
 });
 
-const mockEngine = {
-    clock: {
-        addTicker: vi.fn(),
-        hasTicker: vi.fn(),
-    },
-} as unknown as DIVE;
+const mockGateway = {
+    registerTicker: vi.fn(),
+} as unknown as EngineGateway;
 
 const mockController = {
     object: {
@@ -58,14 +56,14 @@ describe('MoveCameraAction', () => {
                     controller: mockController,
                     registered: mockRegistered,
                     getAnimationSystem: mockGetAnimationSystem,
-                    engine: mockEngine,
+                    gateway: mockGateway,
                 },
             );
 
             const result = await action.execute();
 
             expect(mockGetAnimationSystem).toHaveBeenCalled();
-            expect(mockEngine.clock.addTicker).toHaveBeenCalled();
+            expect(mockGateway.registerTicker).toHaveBeenCalled();
 
             expect(mockFromTargets).toHaveBeenCalledWith(
                 expect.arrayContaining([
@@ -105,7 +103,7 @@ describe('MoveCameraAction', () => {
                     controller: mockController,
                     registered: mockRegistered,
                     getAnimationSystem: mockGetAnimationSystem,
-                    engine: mockEngine,
+                    gateway: mockGateway,
                 },
             );
 
@@ -146,7 +144,7 @@ describe('MoveCameraAction', () => {
                     controller: mockController,
                     registered: mockRegistered,
                     getAnimationSystem: mockGetAnimationSystem,
-                    engine: mockEngine,
+                    gateway: mockGateway,
                 },
             );
 
@@ -185,7 +183,7 @@ describe('MoveCameraAction', () => {
                     controller: mockController,
                     registered: mockRegistered,
                     getAnimationSystem: mockGetAnimationSystem,
-                    engine: mockEngine,
+                    gateway: mockGateway,
                 },
             );
 
@@ -218,7 +216,7 @@ describe('MoveCameraAction', () => {
                     controller: mockController,
                     registered: mockRegistered,
                     getAnimationSystem: mockGetAnimationSystem,
-                    engine: mockEngine,
+                    gateway: mockGateway,
                 },
             );
 
@@ -243,7 +241,7 @@ describe('MoveCameraAction', () => {
                     controller: mockController,
                     registered: mockRegistered,
                     getAnimationSystem: mockGetAnimationSystem,
-                    engine: mockEngine,
+                    gateway: mockGateway,
                 },
             );
 
@@ -271,7 +269,7 @@ describe('MoveCameraAction', () => {
                     controller: mockController,
                     registered: mockRegistered,
                     getAnimationSystem: mockGetAnimationSystem,
-                    engine: mockEngine,
+                    gateway: mockGateway,
                 },
             );
 

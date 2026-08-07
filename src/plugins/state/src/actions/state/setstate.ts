@@ -2,7 +2,8 @@ import { Action } from '../action.ts';
 import { registerAction } from '../../ActionRegistry.ts';
 import { type ActionDependencies } from '../../../types/index.ts';
 import { type StateData } from '../../../types/index.ts';
-import { type DIVESceneObject, type EntitySchema } from '@shopware-ag/dive';
+import { type DIVESceneObject } from '@shopware-ag/dive';
+import { type EntitySchema } from '@shopware-ag/dive';
 import {
     AddObjectAction,
     DeleteObjectAction,
@@ -11,11 +12,11 @@ import {
 
 export const SetStateAction = Action.define<
     StateData,
-    Pick<ActionDependencies, 'engine' | 'controller' | 'registered'>,
+    Pick<ActionDependencies, 'gateway' | 'controller' | 'registered'>,
     Promise<DIVESceneObject[]>
 >({
     description: 'Applies complete state data to current dive instance.',
-    execute: async (_payload, { engine, controller, registered }) => {
+    execute: async (_payload, { gateway, controller, registered }) => {
         // the state is meant to replace what is there, and ADD_OBJECT skips ids that are already registered, so clear the scene up front
         Array.from(registered.values()).forEach((entity: EntitySchema) => {
             new DeleteObjectAction(
@@ -23,17 +24,13 @@ export const SetStateAction = Action.define<
                     id: entity.id,
                     entityType: entity.entityType,
                 },
-                { engine, registered },
+                { gateway, registered },
             ).execute();
         });
 
-        _payload.name !== undefined && (engine.scene.name = _payload.name);
-        _payload.backgroundColor !== undefined &&
-            engine.scene.setBackground(_payload.backgroundColor);
-        _payload.floorEnabled !== undefined &&
-            engine.scene.root.floor.setVisibility(_payload.floorEnabled);
-        _payload.floorColor !== undefined &&
-            engine.scene.root.floor.setColor(_payload.floorColor);
+        // one call instead of a hand-written copy per property, which is how
+        // gridEnabled went missing here while updatescene had it
+        gateway.applySceneSettings(_payload);
         _payload.userCamera !== undefined &&
             controller.setState({
                 position: _payload.userCamera.position,
@@ -68,7 +65,7 @@ export const SetStateAction = Action.define<
                             ...entity,
                             parentId: null,
                         },
-                        { engine, registered },
+                        { gateway, registered },
                     )
                         .execute()
                         .then((object) => {
@@ -95,7 +92,7 @@ export const SetStateAction = Action.define<
                             ...entity,
                             parentId: null,
                         },
-                        { engine, registered },
+                        { gateway, registered },
                     )
                         .execute()
                         .then((object) => {
@@ -121,7 +118,7 @@ export const SetStateAction = Action.define<
                             ...entity,
                             parentId: null,
                         },
-                        { engine, registered },
+                        { gateway, registered },
                     )
                         .execute()
                         .then((object) => {
@@ -147,7 +144,7 @@ export const SetStateAction = Action.define<
                             ...entity,
                             parentId: null,
                         },
-                        { engine, registered },
+                        { gateway, registered },
                     )
                         .execute()
                         .then((object) => {
@@ -173,7 +170,7 @@ export const SetStateAction = Action.define<
                             ...entity,
                             parentId: null,
                         },
-                        { engine, registered },
+                        { gateway, registered },
                     )
                         .execute()
                         .then((sceneObject) => {
@@ -206,7 +203,7 @@ export const SetStateAction = Action.define<
                         object: { id: entity.id },
                         parent: { id: entity.parentId },
                     },
-                    { engine, registered },
+                    { gateway, registered },
                 ).execute();
             } catch (reason) {
                 failed.push({ entity, reason });

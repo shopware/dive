@@ -1,105 +1,63 @@
 import { UpdateSceneAction } from '../updatescene.ts';
-import { DIVE, DIVEScene } from '@shopware-ag/dive';
-import { Color, MeshStandardMaterial } from 'three/webgpu';
+import {
+    type EngineGateway,
+    type SceneSettings,
+} from '../../../EngineGateway.ts';
+
+/**
+ * What the scene actually holds is the gateway's business and is covered in
+ * its own tests. What matters here is that the action writes the patch and
+ * then reports back what the scene ended up with, rather than echoing the
+ * patch it was handed.
+ */
+const settled: SceneSettings = {
+    name: 'Updated Scene',
+    backgroundColor: '#ff0000',
+    gridEnabled: false,
+    floorEnabled: false,
+    floorColor: '#00ff00',
+};
 
 describe('UpdateSceneAction', () => {
-    it('should update scene properties', async () => {
-        // Mock dependencies
-        const mockGrid = {
-            setVisibility: vi.fn(),
-            visible: true,
+    it('should apply the patch and fill the payload with the result', async () => {
+        const mockGateway = {
+            applySceneSettings: vi.fn(),
+            readSceneSettings: vi.fn(() => settled),
+        } as unknown as EngineGateway;
+
+        const payload = {
+            name: 'Updated Scene',
+            backgroundColor: '#ff0000',
+            gridEnabled: false,
+            floorEnabled: false,
+            floorColor: '#00ff00',
         };
 
-        const mockFloor = {
-            setVisibility: vi.fn(),
-            setColor: vi.fn(),
-            visible: true,
-            material: new MeshStandardMaterial({ color: new Color('#ffffff') }),
-        };
+        const action = new UpdateSceneAction(payload, {
+            gateway: mockGateway,
+        });
 
-        const mockScene = {
-            name: 'Test Scene',
-            background: new Color('#000000'),
-            setBackground: vi.fn(),
-            grid: mockGrid,
-            root: {
-                floor: mockFloor,
-            },
-        } as unknown as DIVEScene;
-
-        const mockEngine = {
-            scene: mockScene,
-        } as unknown as DIVE;
-
-        const action = new UpdateSceneAction(
-            {
-                name: 'Updated Scene',
-                backgroundColor: '#ff0000',
-                gridEnabled: false,
-                floorEnabled: false,
-                floorColor: '#00ff00',
-            },
-            {
-                engine: mockEngine,
-            },
-        );
-
-        // Execute action
         await action.execute();
 
-        // Verify results
-        expect(mockScene.name).toBe('Updated Scene');
-        expect(mockScene.setBackground).toHaveBeenCalledWith('#ff0000');
-        expect(mockGrid.setVisibility).toHaveBeenCalledWith(false);
-        expect(mockFloor.setVisibility).toHaveBeenCalledWith(false);
-        expect(mockFloor.setColor).toHaveBeenCalledWith('#00ff00');
+        expect(mockGateway.applySceneSettings).toHaveBeenCalledWith(payload);
+        expect(payload).toEqual(settled);
     });
 
-    it('should update only specified properties', async () => {
-        // Mock dependencies
-        const mockGrid = {
-            setVisibility: vi.fn(),
-            visible: true,
-        };
+    it('should report the scene state even for properties it did not touch', async () => {
+        const mockGateway = {
+            applySceneSettings: vi.fn(),
+            readSceneSettings: vi.fn(() => settled),
+        } as unknown as EngineGateway;
 
-        const mockFloor = {
-            setVisibility: vi.fn(),
-            setColor: vi.fn(),
-            visible: true,
-            material: new MeshStandardMaterial({ color: new Color('#ffffff') }),
-        };
+        const payload: Partial<SceneSettings> = { name: 'Updated Scene' };
 
-        const mockScene = {
-            name: 'Test Scene',
-            background: new Color('#000000'),
-            setBackground: vi.fn(),
-            grid: mockGrid,
-            root: {
-                floor: mockFloor,
-            },
-        } as unknown as DIVEScene;
+        await new UpdateSceneAction(payload, {
+            gateway: mockGateway,
+        }).execute();
 
-        const mockEngine = {
-            scene: mockScene,
-        } as unknown as DIVE;
-
-        const action = new UpdateSceneAction(
-            {
-                name: 'Updated Scene',
-            },
-            {
-                engine: mockEngine,
-            },
-        );
-
-        // Execute action
-        await action.execute();
-
-        // Verify results
-        expect(mockScene.name).toBe('Updated Scene');
-        expect(mockScene.setBackground).not.toHaveBeenCalled();
-        expect(mockGrid.setVisibility).not.toHaveBeenCalled();
-        expect(mockFloor.setVisibility).not.toHaveBeenCalled();
-        expect(mockFloor.setColor).not.toHaveBeenCalled();
+        // gridEnabled was never in the patch and still comes back — this is
+        // the property setstate used to drop
+        expect(payload.gridEnabled).toBe(false);
+        expect(payload.floorColor).toBe('#00ff00');
     });
 });

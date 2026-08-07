@@ -7,11 +7,11 @@ import { type EntitySchema } from '@shopware-ag/dive';
 
 export const DeleteObjectAction = Action.define<
     Partial<EntitySchema> & { id: string },
-    Pick<ActionDependencies, 'engine' | 'registered'>,
+    Pick<ActionDependencies, 'gateway' | 'registered'>,
     void
 >({
     description: 'Deletes an object from the scene.',
-    execute: (payload, { engine, registered }) => {
+    execute: (payload, { gateway, registered }) => {
         const deletedObject = registered.get(payload.id);
         if (!deletedObject) return false;
 
@@ -24,7 +24,7 @@ export const DeleteObjectAction = Action.define<
                     parent: null,
                 },
                 {
-                    engine,
+                    gateway,
                     registered,
                 },
             ).execute();
@@ -40,7 +40,7 @@ export const DeleteObjectAction = Action.define<
                             parentId: null,
                         },
                         {
-                            engine,
+                            gateway,
                             registered,
                         },
                     ).execute();
@@ -53,7 +53,7 @@ export const DeleteObjectAction = Action.define<
 
         registered.delete(payload.id);
 
-        engine.scene.root.deleteSceneObject(deletedObject);
+        gateway.removeEntity(deletedObject);
     },
 });
 

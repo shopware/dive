@@ -2,7 +2,6 @@ import { Action } from '../action.ts';
 import { registerAction } from '../../ActionRegistry.ts';
 import { type ActionDependencies } from '../../../types/index.ts';
 import { type StateData } from '../../../types/StateData.ts';
-import { Color, MeshStandardMaterial } from 'three/webgpu';
 import {
     GroupSchema,
     LightSchema,
@@ -16,22 +15,19 @@ import {
  */
 export const GetAllSceneDataAction = Action.define<
     object,
-    Pick<ActionDependencies, 'engine' | 'controller' | 'registered'>,
+    Pick<ActionDependencies, 'gateway' | 'controller' | 'registered'>,
     StateData
 >({
     description: 'Retrieves all current scene data.',
-    execute: (_payload, { engine, controller, registered }) => {
+    execute: (_payload, { gateway, controller, registered }) => {
+        const settings = gateway.readSceneSettings();
+
         return {
-            name: engine.scene.name,
+            name: settings.name,
             mediaItem: null,
-            backgroundColor:
-                '#' + (engine.scene.background as Color).getHexString(),
-            floorEnabled: engine.scene.root.floor.visible,
-            floorColor:
-                '#' +
-                (
-                    engine.scene.root.floor.material as MeshStandardMaterial
-                ).color.getHexString(),
+            backgroundColor: settings.backgroundColor,
+            floorEnabled: settings.floorEnabled,
+            floorColor: settings.floorColor,
             userCamera: {
                 position: controller.object.position.clone(),
                 target: controller.target.clone(),

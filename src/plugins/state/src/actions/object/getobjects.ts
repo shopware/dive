@@ -5,7 +5,7 @@ import { type EntitySchema } from '@shopware-ag/dive';
 
 export const GetObjectsAction = Action.define<
     { ids: string[] },
-    Pick<ActionDependencies, 'engine' | 'registered'>,
+    Pick<ActionDependencies, 'gateway' | 'registered'>,
     EntitySchema[]
 >({
     description: 'Returns a list of objects of given IDs.',

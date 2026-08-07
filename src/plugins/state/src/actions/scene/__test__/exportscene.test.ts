@@ -1,39 +1,29 @@
 import { ExportSceneAction } from '../exportscene.ts';
-import { DIVE } from '@shopware-ag/dive';
+import { Object3D } from 'three/webgpu';
+import { type EngineGateway } from '../../../EngineGateway.ts';
 
 const mockExport = vi.fn().mockResolvedValue('exported-scene-data');
 const mockGetAssetExporter = vi.fn().mockResolvedValue({
     export: mockExport,
 });
 
-const mockEngine = {
-    scene: {
-        root: {},
-    },
-} as unknown as DIVE;
-
 describe('ExportSceneAction', () => {
     it('should export scene', async () => {
-        const mockEngine = {
-            scene: {
-                root: {},
-            },
-        } as unknown as DIVE;
+        const sceneRoot = new Object3D();
+        const mockGateway = { sceneRoot } as unknown as EngineGateway;
 
         const action = new ExportSceneAction(
             { type: 'glb' },
             {
-                engine: mockEngine,
+                gateway: mockGateway,
                 getAssetExporter: mockGetAssetExporter,
             },
         );
 
-        // Execute action
         const result = await action.execute();
 
-        // Verify results
         expect(mockGetAssetExporter).toHaveBeenCalled();
-        expect(mockExport).toHaveBeenCalledWith(mockEngine.scene.root, 'glb');
+        expect(mockExport).toHaveBeenCalledWith(sceneRoot, 'glb');
         expect(result).toBe('exported-scene-data');
     });
 });
