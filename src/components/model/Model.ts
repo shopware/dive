@@ -56,11 +56,7 @@ export class DIVEModel extends DIVENode {
         const assetLoader = await this._getAssetLoader();
         const gltf = await assetLoader.load(url);
         this.setFromGLTF(gltf);
-        import('@shopware-ag/dive/state').then(({ State }) => {
-            State.get(this.userData.id!)?.performAction('MODEL_LOADED', {
-                id: this.userData.id!,
-            });
-        });
+        this.dispatchEvent({ type: 'object-load' });
 
         return this;
     }
@@ -197,15 +193,6 @@ export class DIVEModel extends DIVENode {
 
         this.setPosition(worldPos);
 
-        import('@shopware-ag/dive/state').then(({ State }) => {
-            State.get(this.userData.id)?.performAction('UPDATE_OBJECT', {
-                id: this.userData.id,
-                position: worldPos,
-                rotation: this.rotation,
-                scale: this.scale,
-            });
-        });
-
         this.onMove();
     }
 
@@ -258,15 +245,6 @@ export class DIVEModel extends DIVENode {
             if (worldPos.y === oldWorldPos.y) return;
 
             this.setPosition(worldPos);
-
-            import('@shopware-ag/dive/state').then(({ State }) => {
-                State.get(this.userData.id)?.performAction('UPDATE_OBJECT', {
-                    id: this.userData.id,
-                    position: worldPos,
-                    rotation: this.rotation,
-                    scale: this.scale,
-                });
-            });
 
             this.onMove();
         } else {

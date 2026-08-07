@@ -6,7 +6,6 @@ import {
     type Texture,
     type MeshStandardMaterial,
 } from 'three/webgpu';
-import { type State } from '@shopware-ag/dive/state';
 import { DIVEScene } from 'src/engine/scene/Scene.ts';
 import { GeometrySchema } from 'src/types/schema/GeometrySchema.ts';
 import { MaterialSchema } from 'src/types/schema/MaterialSchema.ts';
@@ -28,14 +27,6 @@ vi.mock('three', async () => {
         Raycaster,
     };
 });
-
-vi.mock('@shopware-ag/dive/state', () => ({
-    State: {
-        get: vi.fn().mockReturnValue({
-            performAction: vi.fn(),
-        }),
-    },
-}));
 
 let primitive: DIVEPrimitive;
 
@@ -83,14 +74,8 @@ describe('dive/primitive/DIVEPrimitive', () => {
     });
 
     it('should place on floor', async () => {
-        const State = await import('@shopware-ag/dive/state').then(
-            ({ State }) => State,
-        );
-
-        const performAction = vi.fn();
-        vi.spyOn(State, 'get').mockReturnValue({
-            performAction,
-        } as unknown as State);
+        const onTransform = vi.fn();
+        primitive.addEventListener('object-transform', onTransform);
 
         // ensure placeOnFloor uses a gltf reference
         (primitive as any)['_gltf'] = primitive;
@@ -118,23 +103,19 @@ describe('dive/primitive/DIVEPrimitive', () => {
         (scene.root as any).updateWorldMatrix = vi.fn();
 
         primitive.placeOnFloor();
-        await new Promise(setImmediate);
-        expect(performAction).toHaveBeenCalledWith(
-            'UPDATE_OBJECT',
+
+        // exactly one report: the explicit dispatch beside onMove is gone
+        expect(onTransform).toHaveBeenCalledTimes(1);
+        expect(onTransform).toHaveBeenCalledWith(
             expect.objectContaining({
-                position: expect.objectContaining({
-                    y: 6,
-                }),
+                position: expect.objectContaining({ y: 6 }),
             }),
         );
     });
 
     it('should drop it', async () => {
-        const State = await import('@shopware-ag/dive/state').then(
-            ({ State }) => State,
-        );
-
-        const spy = vi.spyOn(primitive, 'onMove').mockImplementation(() => {});
+        // spied but not stubbed, so the real dispatch still happens
+        const spy = vi.spyOn(primitive, 'onMove');
 
         const size = {
             x: 1,
@@ -188,13 +169,10 @@ describe('dive/primitive/DIVEPrimitive', () => {
 
         primitive.parent = scene.root;
 
-        const performAction = vi.fn();
-        vi.spyOn(State, 'get').mockReturnValue({
-            performAction,
-        } as unknown as State);
+        const onTransform = vi.fn();
+        primitive.addEventListener('object-transform', onTransform);
         expect(() => primitive.dropIt()).not.toThrow();
-        await new Promise(setImmediate);
-        expect(performAction).toHaveBeenCalled();
+        expect(onTransform).toHaveBeenCalledTimes(1);
         expect(spy).toHaveBeenCalledTimes(1);
 
         // second drop with zero delta -> no move
@@ -231,7 +209,6 @@ describe('dive/primitive/DIVEPrimitive', () => {
             this.max.set(0, 2, 0);
             return this;
         });
-        vi.spyOn(State, 'get').mockReturnValueOnce(undefined as any);
         expect(() => primitive.dropIt()).not.toThrow();
         expect(spy).toHaveBeenCalledTimes(2);
     });
@@ -360,10 +337,6 @@ describe('dive/primitive/DIVEPrimitive', () => {
     });
 
     it('should handle placeOnFloor when position does not change', async () => {
-        const State = await import('@shopware-ag/dive/state').then(
-            ({ State }) => State,
-        );
-
         primitive.userData.id = 'something';
         (primitive as any)['_gltf'] = primitive;
 
@@ -375,13 +348,11 @@ describe('dive/primitive/DIVEPrimitive', () => {
             },
         );
 
-        const comMock = {
-            performAction: vi.fn(),
-        } as unknown as State;
-        vi.spyOn(State, 'get').mockReturnValue(comMock);
+        const onTransform = vi.fn();
+        primitive.addEventListener('object-transform', onTransform);
 
         primitive.placeOnFloor();
-        expect(comMock.performAction).not.toHaveBeenCalled();
+        expect(onTransform).not.toHaveBeenCalled();
     });
 
     it('should set material with all properties', () => {

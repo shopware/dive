@@ -1,18 +1,5 @@
 import { DIVEPointLight } from '../PointLight.ts';
-import { State } from '@shopware-ag/dive/state';
-import { type Color, type PointLight } from 'three/webgpu';
-
-vi.mock('../../../modules/state/State', () => {
-    return {
-        State: {
-            get: vi.fn(() => {
-                return {
-                    performAction: vi.fn(),
-                };
-            }),
-        },
-    };
-});
+import { Object3D, type Color, type PointLight } from 'three/webgpu';
 
 describe('dive/light/DIVEPointLight', () => {
     it('should instantiate', () => {
@@ -50,7 +37,6 @@ describe('dive/light/DIVEPointLight', () => {
         testLight.userData.id = 'something';
         expect(() => testLight.onMove()).not.toThrow();
 
-        vi.spyOn(State, 'get').mockReturnValueOnce(undefined);
         expect(() => testLight.onMove()).not.toThrow();
     });
 
@@ -59,7 +45,6 @@ describe('dive/light/DIVEPointLight', () => {
         testLight.userData.id = 'something';
         expect(() => testLight.onSelect()).not.toThrow();
 
-        vi.spyOn(State, 'get').mockReturnValueOnce(undefined);
         expect(() => testLight.onSelect()).not.toThrow();
     });
 
@@ -68,7 +53,59 @@ describe('dive/light/DIVEPointLight', () => {
         testLight.userData.id = 'something';
         expect(() => testLight.onDeselect()).not.toThrow();
 
-        vi.spyOn(State, 'get').mockReturnValueOnce(undefined);
         expect(() => testLight.onDeselect()).not.toThrow();
+    });
+
+    describe('reporting about itself', () => {
+        it('should report a transform on move', () => {
+            const testLight = new DIVEPointLight();
+            const onTransform = vi.fn();
+            testLight.addEventListener('object-transform', onTransform);
+            testLight.position.set(1, 2, 3);
+
+            testLight.onMove();
+
+            expect(onTransform).toHaveBeenCalledTimes(1);
+            expect(onTransform).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    position: expect.objectContaining({ x: 1, y: 2, z: 3 }),
+                }),
+            );
+        });
+
+        it('should report the world position when nested in a group', () => {
+            // used to report the local position, which is only the same thing
+            // while the light hangs directly off the root
+            const parent = new Object3D();
+            parent.position.set(10, 0, 0);
+            const testLight = new DIVEPointLight();
+            parent.add(testLight);
+            testLight.position.set(1, 0, 0);
+
+            const onTransform = vi.fn();
+            testLight.addEventListener('object-transform', onTransform);
+
+            testLight.onMove();
+
+            expect(onTransform).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    position: expect.objectContaining({ x: 11 }),
+                }),
+            );
+        });
+
+        it('should report selection and deselection', () => {
+            const testLight = new DIVEPointLight();
+            const onSelect = vi.fn();
+            const onDeselect = vi.fn();
+            testLight.addEventListener('object-select', onSelect);
+            testLight.addEventListener('object-deselect', onDeselect);
+
+            testLight.onSelect();
+            testLight.onDeselect();
+
+            expect(onSelect).toHaveBeenCalledTimes(1);
+            expect(onDeselect).toHaveBeenCalledTimes(1);
+        });
     });
 });

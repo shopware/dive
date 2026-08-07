@@ -1,22 +1,5 @@
 import { DIVENode } from '../Node.ts';
-import { State } from '@shopware-ag/dive/state';
 import { Vector3 } from 'three/webgpu';
-
-vi.mock('../../../modules/state/State', () => {
-    return {
-        State: {
-            get: vi.fn(() => {
-                return {
-                    performAction: vi.fn(),
-                };
-            }),
-        },
-    };
-});
-
-vi.spyOn(State, 'get').mockReturnValue({
-    performAction: vi.fn(),
-} as unknown as State);
 
 let node: DIVENode;
 
@@ -90,7 +73,6 @@ describe('dive/node/DIVENode', () => {
         expect(node.position.y).toBe(0);
         expect(node.position.z).toBe(0);
 
-        vi.spyOn(State, 'get').mockReturnValueOnce(undefined);
         expect(() => node.setToWorldOrigin()).not.toThrow();
     });
 
@@ -103,7 +85,6 @@ describe('dive/node/DIVENode', () => {
 
         expect(() => node.onMove()).not.toThrow();
 
-        vi.spyOn(State, 'get').mockReturnValueOnce(undefined);
         expect(() => node.onMove()).not.toThrow();
     });
 
@@ -112,7 +93,6 @@ describe('dive/node/DIVENode', () => {
 
         expect(() => node.onSelect()).not.toThrow();
 
-        vi.spyOn(State, 'get').mockReturnValueOnce(undefined);
         expect(() => node.onSelect()).not.toThrow();
     });
 
@@ -121,7 +101,80 @@ describe('dive/node/DIVENode', () => {
 
         expect(() => node.onDeselect()).not.toThrow();
 
-        vi.spyOn(State, 'get').mockReturnValueOnce(undefined);
         expect(() => node.onDeselect()).not.toThrow();
+    });
+
+    describe('reporting about itself', () => {
+        // The engine only states facts; turning them into actions is the state
+        // plugin's job, and it subscribes per object.
+
+        it('should report a transform on move', () => {
+            const onTransform = vi.fn();
+            node.addEventListener('object-transform', onTransform);
+            node.position.set(1, 2, 3);
+
+            node.onMove();
+
+            expect(onTransform).toHaveBeenCalledTimes(1);
+            expect(onTransform).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    position: expect.objectContaining({ x: 1, y: 2, z: 3 }),
+                    rotation: node.rotation,
+                    scale: node.scale,
+                }),
+            );
+        });
+
+        it('should report the world position, not the local one', () => {
+            const parent = new DIVENode();
+            parent.position.set(10, 0, 0);
+            parent.add(node);
+            node.position.set(1, 0, 0);
+            vi.mocked(node.getWorldPosition).mockRestore();
+
+            const onTransform = vi.fn();
+            node.addEventListener('object-transform', onTransform);
+
+            node.onMove();
+
+            expect(onTransform).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    position: expect.objectContaining({ x: 11 }),
+                }),
+            );
+        });
+
+        it('should report exactly once when moved to the world origin', () => {
+            const onTransform = vi.fn();
+            node.addEventListener('object-transform', onTransform);
+
+            node.setToWorldOrigin();
+
+            expect(node.position.x).toBe(0);
+            expect(onTransform).toHaveBeenCalledTimes(1);
+        });
+
+        it('should report selection and deselection', () => {
+            const onSelect = vi.fn();
+            const onDeselect = vi.fn();
+            node.addEventListener('object-select', onSelect);
+            node.addEventListener('object-deselect', onDeselect);
+
+            node.onSelect();
+            node.onDeselect();
+
+            expect(onSelect).toHaveBeenCalledTimes(1);
+            expect(onDeselect).toHaveBeenCalledTimes(1);
+        });
+
+        it('should stay silent after the listener is removed', () => {
+            const onTransform = vi.fn();
+            node.addEventListener('object-transform', onTransform);
+            node.removeEventListener('object-transform', onTransform);
+
+            node.onMove();
+
+            expect(onTransform).not.toHaveBeenCalled();
+        });
     });
 });

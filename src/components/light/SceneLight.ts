@@ -1,4 +1,5 @@
 import { DIVESelectable } from '@shopware-ag/dive';
+import { type DIVEEntityEventMap } from '../../types/events/index.ts';
 import { PRODUCT_LAYER_MASK } from '../../constants/VisibilityLayerMask.ts';
 import {
     Color,
@@ -15,7 +16,10 @@ import {
  * @module
  */
 
-export class DIVESceneLight extends Object3D implements DIVESelectable {
+export class DIVESceneLight
+    extends Object3D<DIVEEntityEventMap>
+    implements DIVESelectable
+{
     readonly isDIVELight: true = true;
     readonly isDIVESceneLight: true = true;
     readonly isSelectable: true = true;

@@ -6,6 +6,7 @@ import {
     Mesh,
     FrontSide,
     Object3D,
+    Vector3,
 } from 'three/webgpu';
 import {
     PRODUCT_LAYER_MASK,
@@ -14,6 +15,7 @@ import {
 import { DIVEMovable } from '../../interfaces/Movable.ts';
 import { DIVESelectable } from '../../interfaces/Selectable.ts';
 import type { TransformControls } from 'three/examples/jsm/controls/TransformControls.ts';
+import { type DIVEEntityEventMap } from '../../types/events/index.ts';
 
 /**
  * A basic point light.
@@ -26,7 +28,7 @@ import type { TransformControls } from 'three/examples/jsm/controls/TransformCon
  */
 
 export class DIVEPointLight
-    extends Object3D
+    extends Object3D<DIVEEntityEventMap>
     implements DIVESelectable, DIVEMovable
 {
     readonly isDIVELight: true = true;
@@ -38,6 +40,9 @@ export class DIVEPointLight
 
     private light: PointLight;
     private mesh: Mesh;
+
+    /** Reused so reporting a move does not allocate every frame. */
+    private _positionWorldBuffer = new Vector3();
 
     constructor() {
         super();
@@ -92,27 +97,22 @@ export class DIVEPointLight
     }
 
     public onMove(): void {
-        import('@shopware-ag/dive/state').then(({ State }) => {
-            State.get(this.userData.id)?.performAction('UPDATE_OBJECT', {
-                id: this.userData.id,
-                position: this.position,
-            });
+        // reports the world position, same as every other entity. The local
+        // one this used to send is only correct while the light hangs
+        // directly off the root.
+        this.dispatchEvent({
+            type: 'object-transform',
+            position: this.getWorldPosition(this._positionWorldBuffer),
+            rotation: this.rotation,
+            scale: this.scale,
         });
     }
 
     public onSelect(): void {
-        import('@shopware-ag/dive/state').then(({ State }) => {
-            State.get(this.userData.id)?.performAction('SELECT_OBJECT', {
-                id: this.userData.id,
-            });
-        });
+        this.dispatchEvent({ type: 'object-select' });
     }
 
     public onDeselect(): void {
-        import('@shopware-ag/dive/state').then(({ State }) => {
-            State.get(this.userData.id)?.performAction('DESELECT_OBJECT', {
-                id: this.userData.id,
-            });
-        });
+        this.dispatchEvent({ type: 'object-deselect' });
     }
 }

@@ -5,8 +5,12 @@ import { DIVEMovable } from '../../interfaces/Movable.ts';
 import { DIVESelectable } from '../../interfaces/Selectable.ts';
 import { type TransformControls } from 'three/examples/jsm/controls/TransformControls.ts';
 import { type DIVEGroup } from '../group/Group.ts';
+import { type DIVEEntityEventMap } from '../../types/events/index.ts';
 
-export class DIVENode extends Object3D implements DIVESelectable, DIVEMovable {
+export class DIVENode
+    extends Object3D<DIVEEntityEventMap>
+    implements DIVESelectable, DIVEMovable
+{
     readonly isSelectable: true = true;
     readonly isMovable: true = true;
     readonly isDIVENode: true = true;
@@ -55,43 +59,26 @@ export class DIVENode extends Object3D implements DIVESelectable, DIVEMovable {
 
     public setToWorldOrigin(): void {
         this.position.set(0, 0, 0);
-        import('@shopware-ag/dive/state').then(({ State }) => {
-            State.get(this.userData.id)?.performAction('UPDATE_OBJECT', {
-                id: this.userData.id,
-                position: this.getWorldPosition(this._positionWorldBuffer),
-                rotation: this.rotation,
-                scale: this.scale,
-            });
-        });
+        this.onMove();
     }
 
     /**
      * Can be called when the object is moved from a foreign object (gizmo, parent, etc.) to update the object's position.
      */
     public onMove(): void {
-        import('@shopware-ag/dive/state').then(({ State }) => {
-            State.get(this.userData.id)?.performAction('UPDATE_OBJECT', {
-                id: this.userData.id,
-                position: this.getWorldPosition(this._positionWorldBuffer),
-                rotation: this.rotation,
-                scale: this.scale,
-            });
+        this.dispatchEvent({
+            type: 'object-transform',
+            position: this.getWorldPosition(this._positionWorldBuffer),
+            rotation: this.rotation,
+            scale: this.scale,
         });
     }
 
     public onSelect(): void {
-        import('@shopware-ag/dive/state').then(({ State }) => {
-            State.get(this.userData.id)?.performAction('SELECT_OBJECT', {
-                id: this.userData.id,
-            });
-        });
+        this.dispatchEvent({ type: 'object-select' });
     }
 
     public onDeselect(): void {
-        import('@shopware-ag/dive/state').then(({ State }) => {
-            State.get(this.userData.id)?.performAction('DESELECT_OBJECT', {
-                id: this.userData.id,
-            });
-        });
+        this.dispatchEvent({ type: 'object-deselect' });
     }
 }

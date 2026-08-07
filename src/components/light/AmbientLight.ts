@@ -1,6 +1,7 @@
 import { AmbientLight, Color, Object3D } from 'three/webgpu';
 import { PRODUCT_LAYER_MASK } from '../../constants/VisibilityLayerMask.ts';
 import { DIVESelectable } from '@shopware-ag/dive';
+import { type DIVEEntityEventMap } from '../../types/events/index.ts';
 
 /**
  * A basic ambient light.
@@ -10,7 +11,10 @@ import { DIVESelectable } from '@shopware-ag/dive';
  * @module
  */
 
-export class DIVEAmbientLight extends Object3D implements DIVESelectable {
+export class DIVEAmbientLight
+    extends Object3D<DIVEEntityEventMap>
+    implements DIVESelectable
+{
     readonly isDIVELight: true = true;
     readonly isDIVEAmbientLight: true = true;
     readonly isSelectable: true = true;
