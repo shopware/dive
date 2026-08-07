@@ -1204,6 +1204,22 @@ describe('plugins/state/EngineGateway', () => {
     });
 
     describe('_setParent', () => {
+        it('should warn when the entity itself is not in the scene', () => {
+            // reachable through a patch that carries a parentId for an id that
+            // was never added
+            const gateway = makeGateway();
+
+            gateway['_setParent']({
+                id: 'ghost',
+                entityType: 'model',
+                parentId: null,
+            });
+
+            expect(spyConsoleWarn).toHaveBeenCalledWith(
+                'EngineGateway._setParent: ghost is not in the scene',
+            );
+        });
+
         it('should set parent-child relationship', async () => {
             const parentData: GroupSchema = {
                 id: 'parent-1',
@@ -1987,6 +2003,26 @@ describe('plugins/state/EngineGateway', () => {
             );
         });
 
+        it('should forget the selection when the selected object is removed', async () => {
+            // otherwise the id stays in _selectedId and an object added again
+            // under the same id could never be selected
+            const { gateway, performAction } = makeWired();
+            await gateway.addEntity(modelData);
+            fire(findEntity(gateway, modelData)!, 'object-select');
+            findEntity(gateway, modelData)!.parent = gateway.root;
+
+            gateway.removeEntity(modelData);
+
+            await gateway.addEntity(modelData);
+            fire(findEntity(gateway, modelData)!, 'object-select');
+
+            expect(
+                performAction.mock.calls.filter(
+                    (call) => call[0] === 'SELECT_OBJECT',
+                ),
+            ).toHaveLength(2);
+        });
+
         it('should drop every subscription on dispose', async () => {
             const { gateway } = makeWired();
             await gateway.addEntity(modelData);
@@ -2010,6 +2046,54 @@ describe('plugins/state/EngineGateway', () => {
             } as CameraSchema);
 
             expect(result).toBeUndefined();
+        });
+    });
+
+    describe('engine control', () => {
+        const makeControllable = () => {
+            const clock = {
+                hasTicker: vi.fn(() => false),
+                addTicker: vi.fn(),
+            };
+            const startAsync = vi.fn().mockResolvedValue(undefined);
+            const gateway = new EngineGateway(
+                {
+                    scene: { root: new DIVERoot() },
+                    clock,
+                    startAsync,
+                } as unknown as DIVE,
+                { performAction: vi.fn() } as unknown as State,
+            );
+            return { gateway, clock, startAsync };
+        };
+
+        it('should start the engine', async () => {
+            const { gateway, startAsync } = makeControllable();
+
+            await gateway.startRendering();
+
+            expect(startAsync).toHaveBeenCalledTimes(1);
+        });
+
+        it('should add a ticker the clock does not have yet', () => {
+            const { gateway, clock } = makeControllable();
+            const ticker = { tick: vi.fn() };
+
+            gateway.registerTicker(ticker as never);
+
+            expect(clock.addTicker).toHaveBeenCalledWith(ticker);
+        });
+
+        it('should not add a ticker twice', () => {
+            // MOVE_CAMERA registers the animation system on every call, so the
+            // guard is what keeps one ticker from running several times
+            const { gateway, clock } = makeControllable();
+            clock.hasTicker.mockReturnValue(true);
+            const ticker = { tick: vi.fn() };
+
+            gateway.registerTicker(ticker as never);
+
+            expect(clock.addTicker).not.toHaveBeenCalled();
         });
     });
 });
