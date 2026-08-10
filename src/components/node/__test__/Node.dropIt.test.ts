@@ -4,9 +4,10 @@ import {
     MeshStandardMaterial,
     Object3D,
 } from 'three/webgpu';
-import { DIVEModel } from '../Model.ts';
+import { DIVENode } from '../Node.ts';
 import { DIVEFloor } from '../../floor/Floor.ts';
-import { DIVERoot } from '../../root/Root.ts';
+import { MeshComponent } from '../../mesh/MeshComponent.ts';
+import { DIVEScene } from '../../../engine/scene/Scene.ts';
 import {
     HELPER_LAYER_MASK,
     PRODUCT_LAYER_MASK,
@@ -18,16 +19,19 @@ import {
  * of the mocks rather than where the model actually ends up.
  */
 
-/** Minimal stand-in for DIVEScene: dropIt only needs `isDIVEScene` and `root`. */
-class TestScene extends Object3D {
-    readonly isDIVEScene: true = true;
-    public root = new DIVERoot();
-
-    constructor() {
-        super();
-        this.add(this.root);
-    }
-}
+/**
+ * Uses the real DIVEScene rather than a stand-in: `isDIVEScene` is a contract
+ * that includes the component tick registry, and a fake carrying the brand
+ * without the methods breaks node attachment.
+ */
+vi.mock('../../grid/Grid.ts', () => ({
+    DIVEGrid: vi.fn(function (this: Record<string, unknown>) {
+        this.isDIVEGrid = true;
+        this.setVisibility = vi.fn();
+        this.dispose = vi.fn();
+        return this;
+    }),
+}));
 
 /** A 1x1x1 product-layer cube centred on its own origin. */
 const createCube = (): Mesh => {
@@ -36,18 +40,19 @@ const createCube = (): Mesh => {
     return mesh;
 };
 
-const createModel = (): DIVEModel => {
-    const model = new DIVEModel();
-    model.add(createCube());
+const createModel = (): DIVENode => {
+    const model = new DIVENode();
+    // geometry lives in a component, exactly as the gateway composes it
+    model.addComponent(new MeshComponent()).add(createCube());
     return model;
 };
 
-describe('dive/model/DIVEModel dropIt', () => {
-    let scene: TestScene;
-    let model: DIVEModel;
+describe('dive/node/DIVENode dropIt', () => {
+    let scene: DIVEScene;
+    let model: DIVENode;
 
     beforeEach(() => {
-        scene = new TestScene();
+        scene = new DIVEScene();
         model = createModel();
         scene.root.add(model);
         scene.updateMatrixWorld(true);
@@ -162,7 +167,7 @@ describe('dive/model/DIVEModel dropIt', () => {
         const helper = createCube();
         helper.layers.mask = HELPER_LAYER_MASK;
         helper.position.set(0, -10, 0);
-        model.add(helper);
+        model.requireComponent(MeshComponent).add(helper);
 
         model.position.set(0, 5, 0);
         scene.updateMatrixWorld(true);
@@ -180,7 +185,7 @@ describe('dive/model/DIVEModel dropIt', () => {
     });
 
     it('should do nothing when the model holds no product geometry', () => {
-        const empty = new DIVEModel();
+        const empty = new DIVENode();
         scene.root.add(empty);
         empty.position.set(0, 5, 0);
         scene.updateMatrixWorld(true);

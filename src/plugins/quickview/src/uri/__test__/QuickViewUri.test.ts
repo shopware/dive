@@ -3,12 +3,12 @@
  */
 
 import { vi } from 'vitest';
-import { DIVE, DIVEModel } from '@shopware-ag/dive';
+import { DIVE, DIVENode, MeshComponent } from '@shopware-ag/dive';
 import { OrbitController } from '@shopware-ag/dive/orbitcontroller';
 import { QuickViewUri } from '../QuickViewUri.ts';
 
 // shared across instances, because QuickViewUri replaces disposeAsync on the
-// returned object and the model's loader is created per DIVEModel instance
+// returned object and the mesh component's loader is created per instance
 const { setFromURL, diveDisposeAsync } = vi.hoisted(() => ({
     setFromURL: vi.fn(),
     diveDisposeAsync: vi.fn(async () => {}),
@@ -38,8 +38,12 @@ vi.mock('@shopware-ag/dive', () => {
                 disposeAsync: diveDisposeAsync,
             };
         }),
-        DIVEModel: vi.fn(function (this: DIVEModel) {
+        DIVENode: vi.fn(function (this: DIVENode) {
             this.dropIt = vi.fn();
+            this.addComponent = vi.fn((component) => component);
+            return this;
+        }),
+        MeshComponent: vi.fn(function (this: MeshComponent) {
             this.setFromURL = setFromURL.mockImplementation(async () => this);
             return this;
         }),

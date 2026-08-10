@@ -24,9 +24,9 @@ export const DropItAction = Action.define<
             );
         }
 
-        if (!('isDIVEModel' in model)) {
+        if (!('isDIVENode' in model)) {
             throw new Error(
-                `Object with id ${payload.id} is not a DIVEModel. Object: ${model}`,
+                `Object with id ${payload.id} is not a DIVENode. Object: ${model}`,
             );
         }
 
