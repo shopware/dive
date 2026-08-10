@@ -39,7 +39,7 @@ vi.mock('@shopware-ag/dive', () => {
             };
         }),
         DIVEModel: vi.fn(function (this: DIVEModel) {
-            this.placeOnFloor = vi.fn();
+            this.dropIt = vi.fn();
             this.setFromURL = setFromURL.mockImplementation(async () => this);
             return this;
         }),
@@ -70,11 +70,11 @@ describe('QuickViewUri', () => {
         expect(quickView.model).toBeDefined();
     });
 
-    it('places the loaded model on the floor of the scene', async () => {
+    it('grounds the loaded model in the scene', async () => {
         const quickView = await QuickViewUri('test_uri');
 
         expect(quickView.scene.root.add).toHaveBeenCalledWith(quickView.model);
-        expect(quickView.model.placeOnFloor).toHaveBeenCalledTimes(1);
+        expect(quickView.model.dropIt).toHaveBeenCalledTimes(1);
     });
 
     it('creates the DIVE instance without auto start and starts it afterwards', async () => {

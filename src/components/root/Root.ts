@@ -1,4 +1,5 @@
-import { Box3, Object3D } from 'three/webgpu';
+import { type Box3, Object3D } from 'three/webgpu';
+import { computeProductBounds } from '../../helpers/computeProductBounds/computeProductBounds.ts';
 import { DIVEFloor } from '../floor/Floor.ts';
 
 /**
@@ -27,16 +28,13 @@ export class DIVERoot extends Object3D {
         this.add(this._floor);
     }
 
+    /**
+     * The world bounding box of everything the scene actually contains.
+     *
+     * Helpers, gizmo handles and the floor are excluded by their layer, so no
+     * per-class exceptions are needed here.
+     */
     public computeSceneBB(): Box3 {
-        const bb = new Box3();
-        this.children.forEach((object) => {
-            if ('isDIVEFloor' in object) return;
-            object.traverse((child) => {
-                if ('isObject3D' in child) {
-                    bb.expandByObject(child);
-                }
-            });
-        });
-        return bb;
+        return computeProductBounds(this);
     }
 }

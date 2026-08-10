@@ -42,7 +42,6 @@ The following table lists all available actions in DIVE:
 | [LaunchARAction](src/actions/ar/launchar.ts) | Launches AR mode in native capabilities. (iOS: AR Quick Look, Android: Google Scene Viewer) |
 | [ModelLoadedAction](src/actions/object/modelloaded.ts) | Is triggered when a model is loaded. |
 | [MoveCameraAction](src/actions/camera/movecamera.ts) | Moves the camera to a new position and target. |
-| [PlaceOnFloorAction](src/actions/object/placeonfloor.ts) | Places an object on the floor. |
 | [SelectObjectAction](src/actions/object/selectobject.ts) | Selects an existing object. |
 | [SetBackgroundAction](src/actions/scene/setbackground.ts) | Set the background color of the scene. |
 | [SetCameraLayerAction](src/actions/camera/setcameralayer.ts) | Sets the camera layer to a certain layer. |

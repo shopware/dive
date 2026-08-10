@@ -1,5 +1,4 @@
 import {
-    Box3,
     Mesh,
     MeshStandardMaterial,
     Object3D,
@@ -7,10 +6,10 @@ import {
     Vector3,
 } from 'three/webgpu';
 import { PRODUCT_LAYER_MASK } from '../../constants/VisibilityLayerMask.ts';
+import { computeProductBounds } from '../../helpers/computeProductBounds/computeProductBounds.ts';
 import { findSceneRecursive } from '../../helpers/findSceneRecursive/findSceneRecursive.ts';
 import { DIVENode } from '../node/Node.ts';
 import { DIVEMaterial } from 'src/types/index.ts';
-import { BoundingBox } from '../boundingbox/BoundingBox.ts';
 
 /**
  * A basic model class.
@@ -169,33 +168,15 @@ export class DIVEModel extends DIVENode {
         }
     }
 
-    public placeOnFloor(): void {
-        this.updateWorldMatrix(true, true);
-
-        const worldPos = this.getWorldPosition(this._positionWorldBuffer);
-        const oldWorldPos = worldPos.clone();
-
-        // compute the world bounding box
-        const box = new Box3();
-        this.children.forEach((child) => {
-            if (child instanceof BoundingBox) return;
-            box.expandByObject(child, true);
-        });
-        const delta = -box.min.y;
-
-        // skip any action when delta is too small
-        if (Math.abs(delta) < 1e-9) return;
-
-        worldPos.y += delta;
-
-        // skip any action when the position did not change
-        if (worldPos.y === oldWorldPos.y) return;
-
-        this.setPosition(worldPos);
-
-        this.onMove();
-    }
-
+    /**
+     * Rests the model on the highest surface below it, and never below the
+     * ground plane.
+     *
+     * The floor is deliberately not a raycast target: it is a flat plane at
+     * y = 0, so "hit the floor" and "hit nothing" produce the same answer. The
+     * clamp to y = 0 covers the remaining case, geometry parked below the floor,
+     * which must not drag the model underground.
+     */
     public dropIt(): void {
         if (!this.parent) {
             console.warn(
@@ -205,24 +186,22 @@ export class DIVEModel extends DIVENode {
             return;
         }
 
-        const worldPos = this.getWorldPosition(this._positionWorldBuffer);
-        const oldWorldPos = worldPos.clone();
-
-        // compute the world bounding box
-        const box = new Box3();
-        this.children.forEach((child) => {
-            if (child instanceof BoundingBox) return;
-            box.expandByObject(child, true);
-        });
-
-        // calculate the bottom center of the bounding box
-        const bottomCenter = box.getCenter(new Vector3());
-        bottomCenter.y = box.min.y;
-
         const scene = findSceneRecursive(this);
         if (!scene) return;
 
-        // set up raycaster and raycast all scene objects (product layer)
+        this.updateWorldMatrix(true, true);
+
+        const worldPos = this.getWorldPosition(this._positionWorldBuffer);
+        const oldWorldPosY = worldPos.y;
+
+        const box = computeProductBounds(this);
+        if (box.isEmpty()) return;
+
+        // cast down from the bottom centre, which keeps the model's own
+        // geometry out of the results
+        const bottomCenter = box.getCenter(new Vector3());
+        bottomCenter.y = box.min.y;
+
         const raycaster = new Raycaster(bottomCenter, new Vector3(0, -1, 0));
         raycaster.layers.mask = PRODUCT_LAYER_MASK;
         const intersections = raycaster.intersectObjects(
@@ -230,28 +209,24 @@ export class DIVEModel extends DIVENode {
             true,
         );
 
-        // if we hit something, move the model to the top on the hit object's bounding box
-        if (intersections.length > 0) {
-            const mesh = intersections[0].object as Mesh;
+        const hitY =
+            intersections.length > 0
+                ? computeProductBounds(intersections[0].object).max.y
+                : 0;
 
-            const targetBox = new Box3().setFromObject(mesh);
-            const targetBoxMaxY = targetBox.max.y;
+        const restY = Math.max(hitY, 0);
+        const delta = restY - box.min.y;
 
-            const delta = targetBoxMaxY - box.min.y;
+        // skip any action when delta is too small
+        if (Math.abs(delta) < 1e-9) return;
 
-            // skip any action when delta is too small
-            if (Math.abs(delta) < 1e-9) return;
+        worldPos.y += delta;
 
-            worldPos.y += delta;
+        // skip any action when the position did not change
+        if (worldPos.y === oldWorldPosY) return;
 
-            // skip any action when the position did not change
-            if (worldPos.y === oldWorldPos.y) return;
+        this.setPosition(worldPos);
 
-            this.setPosition(worldPos);
-
-            this.onMove();
-        } else {
-            this.placeOnFloor();
-        }
+        this.onMove();
     }
 }

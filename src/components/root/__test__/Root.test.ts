@@ -1,144 +1,115 @@
+import {
+    Box3,
+    BoxGeometry,
+    Mesh,
+    MeshBasicMaterial,
+    Object3D,
+} from 'three/webgpu';
 import { DIVERoot } from '../Root.ts';
-import { Object3D, Vector3, Box3 } from 'three/webgpu';
+import { DIVEFloor } from '../../floor/Floor.ts';
+import {
+    HELPER_LAYER_MASK,
+    PRODUCT_LAYER_MASK,
+    UI_LAYER_MASK,
+} from '../../../constants/VisibilityLayerMask.ts';
 
-vi.mock('three/webgpu', async () => {
-    const actual =
-        await vi.importActual<typeof import('three/webgpu')>('three/webgpu');
+/**
+ * Uses real three: `computeSceneBB` now measures actual geometry through
+ * `computeProductBounds`, so a hand-rolled `Object3D` mock cannot exercise it.
+ * The previous version of these tests only asserted `instanceof Box3`, which
+ * held regardless of what the box contained.
+ */
 
-    const Object3D = vi.fn(function (this: any) {
-        this.isObject3D = true;
-        this.children = [];
-        this.parent = null;
-        this.name = '';
-        this.userData = {};
-        this.visible = true;
-        this.layers = { mask: 0 };
-        this.position = new actual.Vector3();
-        this.rotation = new actual.Euler();
-        this.quaternion = new actual.Quaternion();
-        this.scale = new actual.Vector3(1, 1, 1);
-        this.add = vi.fn((...objects: any[]) => {
-            objects.forEach((object) => {
-                this.children.push(object);
-                if (object && typeof object === 'object') {
-                    object.parent = this;
-                }
-            });
-            return this;
-        });
-        this.attach = vi.fn((object: any) => {
-            this.children.push(object);
-            if (object && typeof object === 'object') {
-                object.parent = this;
-            }
-            return this;
-        });
-        this.remove = vi.fn((object: any) => {
-            this.children = this.children.filter(
-                (child: any) => child !== object,
-            );
-            if (object && typeof object === 'object') {
-                object.parent = null;
-            }
-            return this;
-        });
-        this.removeFromParent = vi.fn(() => {
-            this.parent?.remove?.(this);
-        });
-        this.dispatchEvent = vi.fn();
-        this.updateWorldMatrix = vi.fn();
-        this.applyMatrix4 = vi.fn();
-        this.worldToLocal = vi.fn((vector: any) => vector);
-        this.traverse = vi.fn((callback: (object: any) => void) => {
-            callback(this);
-            this.children.forEach((child: any) => {
-                if (child?.traverse && child !== this) {
-                    child.traverse(callback);
-                } else {
-                    callback(child);
-                }
-            });
-        });
-        return this;
-    });
-
-    return {
-        ...actual,
-        Object3D,
-    };
-});
-
-vi.mock('../../floor/Floor', () => {
-    return {
-        DIVEFloor: vi.fn(function (this: any) {
-            this.isDIVEFloor = true;
-            this.isObject3D = true;
-            this.parent = null;
-            this.dispatchEvent = vi.fn();
-            this.removeFromParent = vi.fn();
-            this.userData = {
-                id: undefined,
-            };
-            return this;
-        }),
-    };
-});
+/** A 1x1x1 cube on the given layer, centred on its own origin. */
+const createCube = (layerMask: number): Mesh => {
+    const mesh = new Mesh(new BoxGeometry(1, 1, 1), new MeshBasicMaterial());
+    mesh.layers.mask = layerMask;
+    return mesh;
+};
 
 describe('components/root/DIVERoot', () => {
+    let root: DIVERoot;
+
     beforeEach(() => {
-        vi.clearAllMocks();
+        root = new DIVERoot();
     });
 
     describe('constructor', () => {
         it('should initialize with correct properties', () => {
-            const root = new DIVERoot();
             expect(root.isDIVERoot).toBe(true);
             expect(root.name).toBe('Root');
-            expect(root.floor).toBeDefined();
+            expect(root.floor).toBeInstanceOf(DIVEFloor);
         });
     });
 
     describe('computeSceneBB', () => {
-        it('should compute bounding box for scene objects', () => {
-            const mockObject = new Object3D();
-            mockObject.position.set(1, 2, 3);
-
-            Object3D.prototype.traverse = vi.fn((callback) =>
-                callback(mockObject as Object3D),
-            );
-
-            const root = new DIVERoot();
+        it('should return an empty box for a scene holding only the floor', () => {
             const bb = root.computeSceneBB();
-            expect(bb).toBeDefined();
+
             expect(bb).toBeInstanceOf(Box3);
+            // the floor is on its own layer, so it must not inflate the box
+            expect(bb.isEmpty()).toBe(true);
         });
 
-        it('should handle empty scene', () => {
-            Object3D.prototype.traverse = vi.fn((callback) => {});
+        it('should measure product geometry', () => {
+            root.add(createCube(PRODUCT_LAYER_MASK));
+            root.updateMatrixWorld(true);
 
-            const root = new DIVERoot();
             const bb = root.computeSceneBB();
-            expect(bb).toBeDefined();
-            expect(bb).toBeInstanceOf(Box3);
+
+            expect(bb.min.x).toBeCloseTo(-0.5);
+            expect(bb.max.y).toBeCloseTo(0.5);
         });
 
-        it('should handle multiple objects', () => {
-            const mockObject1 = new Object3D();
-            mockObject1.position.set(1, 2, 3);
-            mockObject1.traverse = vi.fn((callback) => callback(mockObject1));
-
-            const mockObject2 = new Object3D();
-            mockObject2.position.set(4, 5, 6);
-            mockObject2.traverse = vi.fn((callback) => callback(mockObject2));
-
-            const root = new DIVERoot();
-            root.children = [mockObject1, mockObject2];
+        it('should union multiple product objects', () => {
+            const first = createCube(PRODUCT_LAYER_MASK);
+            const second = createCube(PRODUCT_LAYER_MASK);
+            second.position.set(4, 0, 0);
+            root.add(first, second);
+            root.updateMatrixWorld(true);
 
             const bb = root.computeSceneBB();
-            expect(bb).toBeDefined();
-            expect(bb).toBeInstanceOf(Box3);
-            expect(mockObject1.traverse).toHaveBeenCalled();
-            expect(mockObject2.traverse).toHaveBeenCalled();
+
+            expect(bb.min.x).toBeCloseTo(-0.5);
+            expect(bb.max.x).toBeCloseTo(4.5);
+        });
+
+        it('should exclude helper and ui geometry', () => {
+            const helper = createCube(HELPER_LAYER_MASK);
+            helper.position.set(100, 0, 0);
+            const handle = createCube(UI_LAYER_MASK);
+            handle.position.set(-100, 0, 0);
+            root.add(helper, handle, createCube(PRODUCT_LAYER_MASK));
+            root.updateMatrixWorld(true);
+
+            const bb = root.computeSceneBB();
+
+            expect(bb.min.x).toBeCloseTo(-0.5);
+            expect(bb.max.x).toBeCloseTo(0.5);
+        });
+
+        it('should measure product geometry nested inside plain objects', () => {
+            const wrapper = new Object3D();
+            wrapper.position.set(0, 3, 0);
+            wrapper.add(createCube(PRODUCT_LAYER_MASK));
+            root.add(wrapper);
+            root.updateMatrixWorld(true);
+
+            const bb = root.computeSceneBB();
+
+            expect(bb.min.y).toBeCloseTo(2.5);
+            expect(bb.max.y).toBeCloseTo(3.5);
+        });
+
+        it('should respect the root transform', () => {
+            root.add(createCube(PRODUCT_LAYER_MASK));
+            root.position.set(10, 0, 0);
+            root.updateMatrixWorld(true);
+
+            const bb = root.computeSceneBB();
+
+            expect(bb.min.x).toBeCloseTo(9.5);
+            expect(bb.max.x).toBeCloseTo(10.5);
         });
     });
 });

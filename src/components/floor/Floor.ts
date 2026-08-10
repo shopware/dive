@@ -6,7 +6,7 @@ import {
     MeshStandardMaterial,
     PlaneGeometry,
 } from 'three/webgpu';
-import { PRODUCT_LAYER_MASK } from '../../constants/VisibilityLayerMask.ts';
+import { FLOOR_LAYER_MASK } from '../../constants/VisibilityLayerMask.ts';
 
 /**
  * A basic floor geometry.
@@ -33,7 +33,7 @@ export class DIVEFloor extends Mesh {
 
         this.name = 'Floor';
 
-        this.layers.mask = PRODUCT_LAYER_MASK;
+        this.layers.mask = FLOOR_LAYER_MASK;
 
         this.receiveShadow = true;
     }

@@ -1,6 +1,7 @@
 import { PerspectiveCamera } from 'three/webgpu';
 import {
     DEFAULT_LAYER_MASK,
+    FLOOR_LAYER_MASK,
     HELPER_LAYER_MASK,
     PRODUCT_LAYER_MASK,
     UI_LAYER_MASK,
@@ -35,8 +36,10 @@ export class DIVEPerspectiveCamera extends PerspectiveCamera {
         DEFAULT_LAYER_MASK |
         UI_LAYER_MASK |
         HELPER_LAYER_MASK |
-        PRODUCT_LAYER_MASK;
-    public static readonly LIVE_VIEW_LAYER_MASK = PRODUCT_LAYER_MASK;
+        PRODUCT_LAYER_MASK |
+        FLOOR_LAYER_MASK;
+    public static readonly LIVE_VIEW_LAYER_MASK =
+        PRODUCT_LAYER_MASK | FLOOR_LAYER_MASK;
 
     public onSetCameraLayer: (mask: number) => void = () => {};
 
