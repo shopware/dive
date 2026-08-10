@@ -184,18 +184,6 @@ describe('dive/primitive/DIVEPrimitive', () => {
         expect((material as MeshStandardMaterial).metalnessMap).toBeDefined();
     });
 
-    it.skip('should handle placeOnFloor with no mesh or geometry', () => {
-        primitive.userData.id = 'something';
-
-        // Test with no geometry
-        (primitive['_mesh'].geometry as unknown) = null;
-        expect(() => primitive.placeOnFloor()).not.toThrow();
-
-        // Test with no mesh
-        (primitive['_mesh'] as unknown) = null;
-        expect(() => primitive.placeOnFloor()).not.toThrow();
-    });
-
     it('should set material with all properties', () => {
         const material = {
             vertexColors: true,
