@@ -1,6 +1,7 @@
 import { Raycaster, Vector2, type Intersection, Layers } from 'three/webgpu';
 import {
     type DIVEScene,
+    isVisibleInHierarchy,
     PRODUCT_LAYER_MASK,
     UI_LAYER_MASK,
 } from '@shopware-ag/dive';
@@ -294,10 +295,17 @@ export class Toolbox {
 
     private raycast(): Intersection[] {
         this._raycaster.layers.mask = PRODUCT_LAYER_MASK | UI_LAYER_MASK;
-        const filteredObjects = this._scene.children.filter(
-            (i) => i.visible && 'isMesh' in i && i.isMesh,
-        );
-        return this._raycaster.intersectObjects(filteredObjects, true);
+
+        // Recurse from the scene's direct children: none of them is a Mesh
+        // itself (they are the root, the grid and helper roots), so filtering
+        // this list for meshes would leave nothing to intersect at all.
+        // `layers` already prunes per object while recursing; `visible` does
+        // not, because Raycaster ignores it -- hence the hierarchy check.
+        return this._raycaster
+            .intersectObjects(this._scene.children, true)
+            .filter((intersection) =>
+                isVisibleInHierarchy(intersection.object),
+            );
     }
 
     private filterIntersectsByLayer(

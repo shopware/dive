@@ -1116,7 +1116,9 @@ describe('plugins/state/EngineGateway', () => {
                 detach: vi.fn(),
             });
 
-            const mockScene = new Object3D();
+            const mockScene = Object.assign(new Object3D(), {
+                isDIVEScene: true,
+            });
             mockScene.children = [mockTransformControls];
 
             const gateway = makeGateway();
@@ -1150,7 +1152,9 @@ describe('plugins/state/EngineGateway', () => {
                 detach: vi.fn(),
             });
 
-            const mockScene = new Object3D();
+            const mockScene = Object.assign(new Object3D(), {
+                isDIVEScene: true,
+            });
             mockScene.children = [mockTransformControls];
 
             const gateway = makeGateway();
@@ -1183,7 +1187,9 @@ describe('plugins/state/EngineGateway', () => {
                 detach: vi.fn(),
             });
 
-            const mockScene = new Object3D();
+            const mockScene = Object.assign(new Object3D(), {
+                isDIVEScene: true,
+            });
             mockScene.children = [mockTransformControls];
 
             const gateway = makeGateway();
@@ -1458,7 +1464,9 @@ describe('plugins/state/EngineGateway', () => {
                 detach: vi.fn(),
             });
 
-            const mockScene = new Object3D();
+            const mockScene = Object.assign(new Object3D(), {
+                isDIVEScene: true,
+            });
             mockScene.children = [mockTransformControls];
 
             const gateway = makeGateway();
@@ -1513,7 +1521,9 @@ describe('plugins/state/EngineGateway', () => {
                 detach: vi.fn(),
             });
 
-            const mockScene = new Object3D();
+            const mockScene = Object.assign(new Object3D(), {
+                isDIVEScene: true,
+            });
             mockScene.children = [mockTransformControls];
 
             const gateway = makeGateway();

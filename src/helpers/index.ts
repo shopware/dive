@@ -7,6 +7,7 @@ export * from './getFileTypeFromUri/getFileTypeFromUri.ts';
 export * from './getObjectDelta/getObjectDelta.ts';
 export * from './implementsInterface/implementsInterface.ts';
 export * from './isFileTypeSupported/isFileTypeSupported.ts';
+export * from './isVisibleInHierarchy/isVisibleInHierarchy.ts';
 export * from './isMimeTypeSupported/isMimeTypeSupported.ts';
 export * from './isFileExtensionSupported/isFileExtensionSupported.ts';
 export * from './isURIFileExtensionSupported/isURIFileExtensionSupported.ts';

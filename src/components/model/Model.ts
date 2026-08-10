@@ -219,11 +219,14 @@ export class DIVEModel extends DIVENode {
         const bottomCenter = box.getCenter(new Vector3());
         bottomCenter.y = box.min.y;
 
+        const scene = findSceneRecursive(this);
+        if (!scene) return;
+
         // set up raycaster and raycast all scene objects (product layer)
         const raycaster = new Raycaster(bottomCenter, new Vector3(0, -1, 0));
         raycaster.layers.mask = PRODUCT_LAYER_MASK;
         const intersections = raycaster.intersectObjects(
-            findSceneRecursive(this).root.children,
+            scene.root.children,
             true,
         );
 

@@ -208,6 +208,7 @@ describe('dive/model/DIVEModel', () => {
         });
 
         const scene = {
+            isDIVEScene: true,
             parent: null,
             root: {
                 children: [model],
@@ -282,6 +283,7 @@ describe('dive/model/DIVEModel', () => {
             });
 
         const scene = {
+            isDIVEScene: true,
             parent: null,
             root: {
                 children: [model],
@@ -551,6 +553,7 @@ describe('dive/model/DIVEModel', () => {
 
         // Set up parent for dropIt
         const scene = {
+            isDIVEScene: true,
             parent: null,
             root: {
                 children: [model],
@@ -590,6 +593,7 @@ describe('dive/model/DIVEModel', () => {
         });
 
         const scene = {
+            isDIVEScene: true,
             parent: null,
             root: {
                 children: [model],
@@ -616,6 +620,7 @@ describe('dive/model/DIVEModel', () => {
         model.children.push(mockBoundingBox);
 
         const scene = {
+            isDIVEScene: true,
             parent: null,
             root: {
                 children: [model],
@@ -642,6 +647,7 @@ describe('dive/model/DIVEModel', () => {
         model.position.set(0, 2, 0);
 
         const scene = {
+            isDIVEScene: true,
             parent: null,
             root: {
                 children: [model],
