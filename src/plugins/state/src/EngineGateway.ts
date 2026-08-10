@@ -109,6 +109,9 @@ export class EngineGateway {
      */
     private _selectedId: string | null = null;
 
+    /** id -> scene object, so lookups do not walk the tree. */
+    private readonly _entities: Map<string, DIVESceneObject> = new Map();
+
     constructor(engine: DIVE, state: State) {
         this._engine = engine;
         this._state = state;
@@ -121,17 +124,17 @@ export class EngineGateway {
 
     // ---------------------------------------------------------------- entities
 
+    /**
+     * Resolves an entity id to its scene object.
+     *
+     * Backed by a map rather than a tree walk: this runs on every frame a gizmo
+     * is dragged, via `object-transform` -> `UPDATE_OBJECT` -> `updateEntity`,
+     * and a `traverse` visits every mesh of every loaded asset on the way.
+     */
     public findEntity(
         entity: MinimalSchema<EntitySchema>,
     ): DIVESceneObject | undefined {
-        let found: DIVESceneObject | undefined;
-        this.root.traverse((object3D) => {
-            if (found) return;
-            if (object3D.userData.id === entity.id) {
-                found = object3D as DIVESceneObject;
-            }
-        });
-        return found;
+        return this._entities.get(entity.id);
     }
 
     public async addEntity(
@@ -152,6 +155,7 @@ export class EngineGateway {
 
         sceneObject.name = entity.name;
         sceneObject.userData.id = entity.id;
+        this._entities.set(entity.id, sceneObject);
         this.root.add(sceneObject);
 
         // Wired before the schema is applied, not after: applying a model
@@ -187,6 +191,7 @@ export class EngineGateway {
 
         this._unsubscribes.get(entity.id)?.();
         this._unsubscribes.delete(entity.id);
+        this._entities.delete(entity.id);
 
         detachTransformControls(sceneObject);
 
@@ -208,6 +213,7 @@ export class EngineGateway {
     public dispose(): void {
         this._unsubscribes.forEach((unsubscribe) => unsubscribe());
         this._unsubscribes.clear();
+        this._entities.clear();
     }
 
     // ----------------------------------------------------------------- scene

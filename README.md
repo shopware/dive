@@ -24,6 +24,7 @@
 - [Installation](#installation)
 - [Getting Started](#getting-started)
   - [Basic Setup](#basic-setup)
+  - [Nodes and Components](#nodes-and-components)
   - [Quick View](#quick-view)
 - [Plugins](#plugins)
 - [Documentation](#documentation)
@@ -34,8 +35,10 @@ DIVE is a spatial framework made by and optimized for Shopware. It can be used d
 in a Shopware frontend such as Storefront or in any other frontend you want to use it in, it is not
 tied to Shopware.
 
-DIVE supplies your frontend application with all needed tooling to set up a basic 3D application
-with event-based controls called "Actions".
+DIVE supplies your frontend application with all needed tooling to set up a basic 3D application.
+A scene is a tree of nodes, and what a node *does* comes from the components attached to it — the
+model Unity and Unreal use. Driving a scene from data is the job of the
+[state plugin](src/plugins/state/README.md), which adds event-based controls called "Actions".
 
 ## Installation
 
@@ -66,16 +69,37 @@ const myCanvasWrapper = document.createElement('div');
 myCanvasWrapper.appendChild(dive.canvas);
 ```
 
+### Nodes and Components
+
+Everything in a scene is a `DIVENode`. Geometry, lights and behaviour are components you attach:
+
+```ts
+import { DIVENode, MeshComponent, PointLightComponent } from '@shopware-ag/dive';
+
+const model = new DIVENode();
+model.addComponent(new MeshComponent());
+dive.scene.root.add(model);
+await model.requireComponent(MeshComponent).setFromURL('your/asset/uri.glb');
+model.dropIt();
+
+const lamp = new DIVENode();
+lamp.addComponent(new PointLightComponent());
+lamp.setPosition({ x: 0, y: 2, z: 0 });
+dive.scene.root.add(lamp);
+```
+
+You can write your own components too — see
+[Component System Documentation](docs/component-system.md).
+
 ### Quick View
 
 For a simpler setup, you can use QuickView to quickly display your assets within a basic default
 scene setup:
 
 ```ts
-import { DIVE } from '@shopware-ag/dive';
+import { QuickView } from '@shopware-ag/dive/quickview';
 
-// Use static QuickView method to instantiate DIVE
-const dive = await DIVE.QuickView('your/asset/uri.glb');
+const dive = await QuickView('your/asset/uri.glb');
 const myCanvasWrapper = document.createElement('div');
 myCanvasWrapper.appendChild(dive.canvas);
 ```
@@ -102,6 +126,7 @@ For detailed information about the plugin system, see
 
 For detailed documentation, please refer to the following sections:
 
+- [Component System](docs/component-system.md) - Nodes, components, ticking and layers
 - [Plugin System](docs/plugin-system.md) - Detailed plugin system architecture and usage
 - [Shopware Integration](docs/shopware-integration.md) - Integration with Shopware projects
 - [Testing and Quality Assurance](docs/testing.md) - Testing guidelines and best practices

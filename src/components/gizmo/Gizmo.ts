@@ -6,6 +6,21 @@ import { DIVEScaleGizmo } from './scale/ScaleGizmo.ts';
 import { DIVEGizmoPlane as DIVEGizmoPlane } from './plane/GizmoPlane.ts';
 import { DIVESelectable } from '../../interfaces/Selectable.ts';
 
+/**
+ * DIVE's own transform gizmo.
+ *
+ * **Written ahead of its activation, and deliberately not wired up yet.** The
+ * toolbox currently drives three's `TransformControls` (see
+ * `plugins/toolbox/src/transform/TransformTool.ts`), so nothing constructs a
+ * `DIVEGizmo` at runtime.
+ *
+ * Being unreferenced is therefore expected and is *not* a sign that this is
+ * obsolete — do not remove it as dead code. Its tests keep it compiling until
+ * the switch happens.
+ *
+ * @module
+ */
+
 export type DIVEGizmoMode = 'translate' | 'rotate' | 'scale';
 
 export type DIVEGizmoAxis = 'x' | 'y' | 'z';
