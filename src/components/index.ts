@@ -1,5 +1,5 @@
 export * from './component/Component.ts';
-export * from './floor/Floor.ts';
+export * from './floor/index.ts';
 export * from './gizmo/Gizmo.ts';
 export * from './grid/Grid.ts';
 export * from './group/index.ts';
@@ -8,4 +8,4 @@ export * from './mesh/index.ts';
 export * from './node/Node.ts';
 export * from './root/Root.ts';
 export * from './spritetext/SpriteText.ts';
-export * from './boundingbox/BoundingBox.ts';
+export * from './bounds/index.ts';

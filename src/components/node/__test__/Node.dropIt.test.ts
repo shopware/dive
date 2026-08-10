@@ -5,7 +5,7 @@ import {
     Object3D,
 } from 'three/webgpu';
 import { DIVENode } from '../Node.ts';
-import { DIVEFloor } from '../../floor/Floor.ts';
+import { FloorComponent } from '../../floor/FloorComponent.ts';
 import { MeshComponent } from '../../mesh/MeshComponent.ts';
 import { DIVEScene } from '../../../engine/scene/Scene.ts';
 import {
@@ -180,8 +180,8 @@ describe('dive/node/DIVENode dropIt', () => {
     it('should not be blocked by the floor being a raycast target', () => {
         // the floor is on its own layer, so it is never a hit candidate
         const floor = scene.root.floor;
-        expect(floor).toBeInstanceOf(DIVEFloor);
-        expect(floor.layers.mask & PRODUCT_LAYER_MASK).toBe(0);
+        expect(floor).toBeInstanceOf(FloorComponent);
+        expect(floor.mesh!.layers.mask & PRODUCT_LAYER_MASK).toBe(0);
     });
 
     it('should do nothing when the model holds no product geometry', () => {

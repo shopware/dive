@@ -1,31 +1,34 @@
-import { type Box3, Object3D } from 'three/webgpu';
+import { type Box3 } from 'three/webgpu';
 import { computeProductBounds } from '../../helpers/computeProductBounds/computeProductBounds.ts';
-import { DIVEFloor } from '../floor/Floor.ts';
+import { FloorComponent } from '../floor/FloorComponent.ts';
+import { DIVENode } from '../node/Node.ts';
 
 /**
- * A basic scene node to hold grid, floor and all lower level roots.
+ * The scene node every entity hangs off, and the owner of the ground plane.
  *
  * It holds objects, it does not interpret them: turning entity data into
  * scene objects is the state plugin's job and lives in its `EngineGateway`.
  *
  * @module
  */
-
-export class DIVERoot extends Object3D {
+export class DIVERoot extends DIVENode {
     readonly isDIVERoot: true = true;
 
-    public get floor(): DIVEFloor {
-        return this._floor;
+    /**
+     * The ground plane component.
+     *
+     * Kept as a named accessor because scene settings address the floor
+     * directly, rather than as an entity.
+     */
+    public get floor(): FloorComponent {
+        return this.requireComponent(FloorComponent);
     }
-
-    private _floor: DIVEFloor;
 
     constructor() {
         super();
         this.name = 'Root';
 
-        this._floor = new DIVEFloor();
-        this.add(this._floor);
+        this.addComponent(new FloorComponent());
     }
 
     /**

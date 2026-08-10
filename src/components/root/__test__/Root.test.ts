@@ -6,7 +6,7 @@ import {
     Object3D,
 } from 'three/webgpu';
 import { DIVERoot } from '../Root.ts';
-import { DIVEFloor } from '../../floor/Floor.ts';
+import { FloorComponent } from '../../floor/FloorComponent.ts';
 import {
     HELPER_LAYER_MASK,
     PRODUCT_LAYER_MASK,
@@ -38,7 +38,7 @@ describe('components/root/DIVERoot', () => {
         it('should initialize with correct properties', () => {
             expect(root.isDIVERoot).toBe(true);
             expect(root.name).toBe('Root');
-            expect(root.floor).toBeInstanceOf(DIVEFloor);
+            expect(root.floor).toBeInstanceOf(FloorComponent);
         });
     });
 
