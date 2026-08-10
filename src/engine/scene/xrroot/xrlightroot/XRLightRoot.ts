@@ -2,7 +2,9 @@ import { XREstimatedLight } from 'three/examples/jsm/webxr/XREstimatedLight.ts';
 import { Object3D } from 'three/webgpu';
 import { type DIVEScene } from '../../Scene.ts';
 import { DIVERoot } from '../../../../components/root/Root.ts';
-import { DIVESceneLight } from '../../../../components/light/SceneLight.ts';
+import { DIVENode } from '../../../../components/node/Node.ts';
+import { HemisphereLightComponent } from '../../../../components/light/HemisphereLightComponent.ts';
+import { DirectionalLightComponent } from '../../../../components/light/DirectionalLightComponent.ts';
 
 export class DIVEXRLightRoot extends Object3D {
     private _scene: DIVEScene;
@@ -25,11 +27,14 @@ export class DIVEXRLightRoot extends Object3D {
 
         // This used to go through updateSceneObject on a freshly built root,
         // which found nothing to update and warned — the XR light root has
-        // been shipping without a light. The defaults of DIVESceneLight are
+        // been shipping without a light. A hemisphere plus a directional
+        // component is what the old scene light was, and their defaults are
         // white, intensity 1 and enabled, which is what the old call asked for.
-        const light = new DIVESceneLight();
+        const light = new DIVENode();
         light.name = 'XRSceneLight';
         light.userData.id = 'XRSceneLight';
+        light.addComponent(new HemisphereLightComponent());
+        light.addComponent(new DirectionalLightComponent());
         this._lightRoot.add(light);
 
         this.add(this._lightRoot);

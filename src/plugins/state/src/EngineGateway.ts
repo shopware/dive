@@ -1,14 +1,16 @@
 import { Color, MeshStandardMaterial } from 'three/webgpu';
 import {
+    AmbientLightComponent,
     detachTransformControls,
-    DIVEAmbientLight,
+    DirectionalLightComponent,
     DIVEGroup,
+    DIVELightComponent,
     DIVEModel,
-    DIVEPointLight,
+    DIVENode,
     DIVEPrimitive,
-    DIVESceneLight,
+    HemisphereLightComponent,
+    PointLightComponent,
     type DIVE,
-    type DIVELight,
     type DIVEEntityTransformEvent,
     type DIVERoot,
     type DIVESceneObject,
@@ -190,9 +192,12 @@ export class EngineGateway {
 
         // A group only ever held its members, so they outlive it at the root.
         // Their own wiring is keyed by their own id and stays untouched.
-        if (sceneObject instanceof DIVEGroup) {
-            for (let i = sceneObject.members.length - 1; i >= 0; i--) {
-                this.root.attach(sceneObject.members[i]);
+        // Brand check rather than `instanceof`, matching the rest of the
+        // codebase: it survives module mocking and duplicate class identities.
+        if ('isDIVEGroup' in sceneObject) {
+            const members = (sceneObject as DIVEGroup).members;
+            for (let i = members.length - 1; i >= 0; i--) {
+                this.root.attach(members[i]);
             }
         }
 
@@ -251,28 +256,47 @@ export class EngineGateway {
 
     // --------------------------------------------------------------- private
 
+    /**
+     * Builds the node for an entity by composing the components its type needs.
+     *
+     * This is the whole "which entity type means which capabilities" mapping.
+     * Note a `scene` light is not one component but two: a hemisphere and a
+     * directional one, each carrying its own intensity factor, which is what
+     * lets {@link _applyLight} stay free of per-type branching.
+     */
     private _instantiate(entity: EntitySchema): DIVESceneObject {
         if (isModelSchema(entity)) return new DIVEModel();
         if (isPrimitiveSchema(entity)) return new DIVEPrimitive();
         if (isGroupSchema(entity)) return new DIVEGroup();
-        if (isLightSchema(entity)) {
-            switch (entity.type) {
-                case 'scene':
-                    return new DIVESceneLight();
-                case 'ambient':
-                    return new DIVEAmbientLight();
-                case 'point':
-                    return new DIVEPointLight();
-                default:
-                    throw new Error(
-                        `EngineGateway.addEntity: Unknown light type: ${(entity as LightSchema).type}`,
-                    );
-            }
-        }
+        if (isLightSchema(entity)) return this._instantiateLight(entity);
 
         throw new Error(
             `EngineGateway.addEntity: Unknown entity type: ${(entity as EntitySchema).entityType}`,
         );
+    }
+
+    private _instantiateLight(entity: LightSchema): DIVESceneObject {
+        const node = new DIVENode();
+        node.name = 'DIVELight';
+
+        switch (entity.type) {
+            case 'scene':
+                node.addComponent(new HemisphereLightComponent());
+                node.addComponent(new DirectionalLightComponent());
+                break;
+            case 'ambient':
+                node.addComponent(new AmbientLightComponent());
+                break;
+            case 'point':
+                node.addComponent(new PointLightComponent());
+                break;
+            default:
+                throw new Error(
+                    `EngineGateway.addEntity: Unknown light type: ${(entity as LightSchema).type}`,
+                );
+        }
+
+        return node;
     }
 
     private async _apply(
@@ -283,7 +307,7 @@ export class EngineGateway {
             case 'camera':
                 return;
             case 'light':
-                this._applyLight(sceneObject as DIVELight, patch);
+                this._applyLight(sceneObject as DIVENode, patch);
                 return;
             case 'model':
                 await this._applyModel(sceneObject as DIVEModel, patch);
@@ -302,21 +326,27 @@ export class EngineGateway {
     }
 
     private _applyLight(
-        sceneObject: DIVELight,
+        sceneObject: DIVENode,
         props: PartialSchema<LightSchema>,
     ): void {
         if (props.name !== undefined) sceneObject.name = props.name;
+
+        // setPosition, not position.set: a light is a node like any other entity,
+        // so its schema position is a world position. Setting the local vector
+        // directly put a light inside a group in group space.
         if (props.position !== undefined)
-            sceneObject.position.set(
-                props.position.x,
-                props.position.y,
-                props.position.z,
-            );
-        if (props.intensity !== undefined)
-            sceneObject.setIntensity(props.intensity);
-        if (props.enabled !== undefined) sceneObject.setEnabled(props.enabled);
-        if (props.color !== undefined)
-            sceneObject.setColor(new Color(props.color));
+            sceneObject.setPosition(props.position);
+
+        // every light component on the node, whatever kind: a scene light has two
+        const lights = sceneObject.getComponents(DIVELightComponent);
+        lights.forEach((light) => {
+            if (props.intensity !== undefined)
+                light.setIntensity(props.intensity);
+            if (props.enabled !== undefined) light.setEnabled(props.enabled);
+            if (props.color !== undefined)
+                light.setColor(new Color(props.color));
+        });
+
         if (props.visible !== undefined) sceneObject.visible = props.visible;
         if (props.parentId !== undefined)
             this._setParent({ ...props, parentId: props.parentId });

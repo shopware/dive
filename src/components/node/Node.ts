@@ -6,7 +6,10 @@ import { DIVESelectable } from '../../interfaces/Selectable.ts';
 import { type TransformControls } from 'three/examples/jsm/controls/TransformControls.ts';
 import { type DIVEEntityEventMap } from '../../types/events/index.ts';
 import { type DIVEGroup } from '../group/Group.ts';
-import { type DIVEComponent } from '../component/Component.ts';
+import {
+    type DIVEComponent,
+    type DIVEComponentClass,
+} from '../component/Component.ts';
 import { findSceneRecursive } from '../../helpers/findSceneRecursive/findSceneRecursive.ts';
 import { type DIVEScene } from '../../engine/scene/Scene.ts';
 
@@ -115,7 +118,7 @@ export class DIVENode
      * @param Ctor - The component class to look for.
      */
     public getComponent<T extends DIVEComponent>(
-        Ctor: abstract new () => T,
+        Ctor: DIVEComponentClass<T>,
     ): T | undefined {
         return this._components.find(
             (component) => component instanceof Ctor,
@@ -128,7 +131,7 @@ export class DIVENode
      * @param Ctor - The component class to look for.
      */
     public getComponents<T extends DIVEComponent>(
-        Ctor: abstract new () => T,
+        Ctor: DIVEComponentClass<T>,
     ): T[] {
         return this._components.filter(
             (component) => component instanceof Ctor,
@@ -145,7 +148,7 @@ export class DIVENode
      * @param Ctor - The component class to look for.
      */
     public requireComponent<T extends DIVEComponent>(
-        Ctor: abstract new () => T,
+        Ctor: DIVEComponentClass<T>,
     ): T {
         const component = this.getComponent(Ctor);
         if (!component) {

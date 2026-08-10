@@ -1,8 +1,13 @@
 import { EngineGateway } from '../EngineGateway.ts';
 import {
     detachTransformControls,
+    DirectionalLightComponent,
+    DIVELightComponent,
+    DIVENode,
     DIVERoot,
     DIVEGeometryType,
+    HemisphereLightComponent,
+    PointLightComponent,
     type DIVE,
 } from '@shopware-ag/dive';
 import { type State } from '../State.ts';
@@ -18,273 +23,117 @@ import {
 } from '../../types/index.ts';
 import { Color, Object3D, Vector3 } from 'three/webgpu';
 
-vi.mock('three/webgpu', async () => {
-    const actual =
+/**
+ * `three/webgpu` is deliberately NOT mocked. DIVENode and DIVEComponent both
+ * rely on real Object3D behaviour -- the `childadded`/`childremoved` and
+ * `added`/`removed` events are what keeps the component registry and the tick
+ * enrolment in sync -- and a hand-rolled stand-in with `addEventListener:
+ * vi.fn()` silently drops all of it.
+ */
+
+/**
+ * The component mocks below all build on a REAL `Object3D` rather than a
+ * hand-rolled object literal. DIVENode keeps its component registry and its tick
+ * enrolment in sync through three's own `childadded`/`added` events, and
+ * `findEntity` walks the tree with a real `traverse`, so a stand-in without that
+ * machinery silently breaks both. The spies are kept so assertions can still
+ * observe which setters the gateway called.
+ */
+vi.mock('../../../../components/floor/Floor', async () => {
+    const { Object3D, Color } =
         await vi.importActual<typeof import('three/webgpu')>('three/webgpu');
-
-    const Object3D = vi.fn(function (this: any) {
-        this.isObject3D = true;
-        this.children = [];
-        this.parent = null;
-        this.name = '';
-        this.userData = {};
-        this.visible = true;
-        this.layers = { mask: 0 };
-        this.position = new actual.Vector3();
-        this.rotation = new actual.Euler();
-        this.quaternion = new actual.Quaternion();
-        this.scale = new actual.Vector3(1, 1, 1);
-        this.add = vi.fn((...objects: any[]) => {
-            objects.forEach((object) => {
-                this.children.push(object);
-                if (object && typeof object === 'object') {
-                    object.parent = this;
-                }
+    return {
+        DIVEFloor: vi.fn(function () {
+            const self = new Object3D() as any;
+            self.isDIVEFloor = true;
+            self.material = { color: new Color() };
+            self.setVisibility = vi.fn((visible: boolean) => {
+                self.visible = visible;
             });
-            return this;
-        });
-        this.attach = vi.fn((object: any) => {
-            this.children.push(object);
-            if (object && typeof object === 'object') {
-                object.parent = this;
-            }
-            return this;
-        });
-        this.remove = vi.fn((object: any) => {
-            this.children = this.children.filter(
-                (child: any) => child !== object,
-            );
-            if (object && typeof object === 'object') {
-                object.parent = null;
-            }
-            return this;
-        });
-        this.removeFromParent = vi.fn(() => {
-            this.parent?.remove?.(this);
-        });
-        this.dispatchEvent = vi.fn();
-        this.addEventListener = vi.fn();
-        this.removeEventListener = vi.fn();
-        this.updateWorldMatrix = vi.fn();
-        this.applyMatrix4 = vi.fn();
-        this.worldToLocal = vi.fn((vector: any) => vector);
-        this.traverse = vi.fn((callback: (object: any) => void) => {
-            callback(this);
-            this.children.forEach((child: any) => {
-                if (child?.traverse && child !== this) {
-                    child.traverse(callback);
-                } else {
-                    callback(child);
-                }
+            self.setColor = vi.fn();
+            return self;
+        }),
+    };
+});
+
+vi.mock('../../../../components/grid/Grid', async () => {
+    // stays mocked regardless: the real grid pulls in the shader plugin
+    const { Object3D } =
+        await vi.importActual<typeof import('three/webgpu')>('three/webgpu');
+    return {
+        DIVEGrid: vi.fn(function () {
+            const self = new Object3D() as any;
+            self.isDIVEGrid = true;
+            self.setVisibility = vi.fn((visible: boolean) => {
+                self.visible = visible;
             });
-        });
-        return this;
-    });
-
-    return {
-        ...actual,
-        Object3D,
-    };
-});
-
-vi.mock('../../../../components/floor/Floor', () => {
-    return {
-        DIVEFloor: vi.fn(function (this: any) {
-            this.isDIVEFloor = true;
-            this.isObject3D = true;
-            this.parent = null;
-            this.dispatchEvent = vi.fn();
-            this.addEventListener = vi.fn();
-            this.removeEventListener = vi.fn();
-            this.removeFromParent = vi.fn();
-            this.userData = {
-                id: undefined,
-            };
-            return this;
+            self.dispose = vi.fn();
+            return self;
         }),
     };
 });
 
-vi.mock('../../../../components/grid/Grid', () => {
+vi.mock('../../../../components/model/Model', async () => {
+    const { Object3D } =
+        await vi.importActual<typeof import('three/webgpu')>('three/webgpu');
     return {
-        DIVEGrid: vi.fn(function (this: any) {
-            this.isObject3D = true;
-            this.parent = null;
-            this.dispatchEvent = vi.fn();
-            this.addEventListener = vi.fn();
-            this.removeEventListener = vi.fn();
-            this.removeFromParent = vi.fn();
-            this.updateMatrixWorld = vi.fn();
-            return this;
+        DIVEModel: vi.fn(function () {
+            const self = new Object3D() as any;
+            self.isDIVEModel = true;
+            self.isDIVENode = true;
+            self.setFromGLTF = vi.fn();
+            // mirrors the real Model: the load is reported from inside
+            // setFromURL, which is why listeners must be wired up first
+            self.setFromURL = vi.fn(async () => {
+                self.dispatchEvent({ type: 'object-load' });
+                return self;
+            });
+            self.setPosition = vi.fn();
+            self.setRotation = vi.fn();
+            self.setScale = vi.fn();
+            self.setVisibility = vi.fn();
+            self.setMaterial = vi.fn();
+            self.dropIt = vi.fn();
+            return self;
         }),
     };
 });
 
-vi.mock('../../../../components/light/AmbientLight', () => {
+vi.mock('../../../../components/primitive/Primitive', async () => {
+    const { Object3D } =
+        await vi.importActual<typeof import('three/webgpu')>('three/webgpu');
     return {
-        DIVEAmbientLight: vi.fn(function (this: any) {
-            this.isObject3D = true;
-            this.name = '';
-            this.parent = null;
-            this.dispatchEvent = vi.fn();
-            this.addEventListener = vi.fn();
-            this.removeEventListener = vi.fn();
-            this.position = new Vector3();
-            this.attach = vi.fn();
-            this.applyMatrix4 = vi.fn();
-            this.updateWorldMatrix = vi.fn();
-            this.children = [];
-            this.setIntensity = vi.fn();
-            this.setEnabled = vi.fn();
-            this.setColor = vi.fn();
-            this.userData = {
-                id: undefined,
-            };
-            this.removeFromParent = vi.fn();
-            return this;
+        DIVEPrimitive: vi.fn(function () {
+            const self = new Object3D() as any;
+            self.isDIVEPrimitive = true;
+            self.isDIVENode = true;
+            self.setGeometry = vi.fn();
+            self.setMaterial = vi.fn();
+            self.setPosition = vi.fn();
+            self.setRotation = vi.fn();
+            self.setScale = vi.fn();
+            self.setVisibility = vi.fn();
+            self.dropIt = vi.fn();
+            return self;
         }),
     };
 });
 
-vi.mock('../../../../components/light/PointLight', () => {
+vi.mock('../../../../components/group/Group', async () => {
+    const { Object3D } =
+        await vi.importActual<typeof import('three/webgpu')>('three/webgpu');
     return {
-        DIVEPointLight: vi.fn(function (this: any) {
-            this.isObject3D = true;
-            this.name = '';
-            this.parent = null;
-            this.dispatchEvent = vi.fn();
-            this.addEventListener = vi.fn();
-            this.removeEventListener = vi.fn();
-            this.position = new Vector3();
-            this.attach = vi.fn();
-            this.applyMatrix4 = vi.fn();
-            this.updateWorldMatrix = vi.fn();
-            this.children = [];
-            this.setIntensity = vi.fn();
-            this.setEnabled = vi.fn();
-            this.setColor = vi.fn();
-            this.userData = {
-                id: undefined,
-            };
-            this.removeFromParent = vi.fn();
-            return this;
-        }),
-    };
-});
-
-vi.mock('../../../../components/light/SceneLight', () => {
-    return {
-        DIVESceneLight: vi.fn(function (this: any) {
-            this.isObject3D = true;
-            this.name = '';
-            this.parent = null;
-            this.dispatchEvent = vi.fn();
-            this.addEventListener = vi.fn();
-            this.removeEventListener = vi.fn();
-            this.position = new Vector3();
-            this.attach = vi.fn();
-            this.applyMatrix4 = vi.fn();
-            this.updateWorldMatrix = vi.fn();
-            this.children = [];
-            this.setIntensity = vi.fn();
-            this.setEnabled = vi.fn();
-            this.setColor = vi.fn();
-            this.userData = {
-                id: undefined,
-            };
-            this.removeFromParent = vi.fn();
-            return this;
-        }),
-    };
-});
-
-vi.mock('../../../../components/model/Model', () => {
-    return {
-        DIVEModel: vi.fn(function (this: any) {
-            this.isObject3D = true;
-            this.parent = null;
-            this.dispatchEvent = vi.fn();
-            this.addEventListener = vi.fn();
-            this.removeEventListener = vi.fn();
-            this.userData = {
-                id: undefined,
-            };
-            this.attach = vi.fn();
-            this.applyMatrix4 = vi.fn();
-            this.updateWorldMatrix = vi.fn();
-            this.children = [];
-            this.setFromGLTF = vi.fn();
-            this.setPosition = vi.fn();
-            this.setRotation = vi.fn();
-            this.setScale = vi.fn();
-            this.setVisibility = vi.fn();
-            this.setMaterial = vi.fn();
-            this.placeOnFloor = vi.fn();
-            this.removeFromParent = vi.fn();
-            this.position = new Vector3();
-            this.setFromURL = vi.fn().mockResolvedValue(void 0);
-            return this;
-        }),
-    };
-});
-
-vi.mock('../../../../components/primitive/Primitive', () => {
-    return {
-        DIVEPrimitive: vi.fn(function (this: any) {
-            this.isObject3D = true;
-            this.parent = null;
-            this.dispatchEvent = vi.fn();
-            this.addEventListener = vi.fn();
-            this.removeEventListener = vi.fn();
-            this.userData = {
-                id: undefined,
-            };
-            this.attach = vi.fn();
-            this.applyMatrix4 = vi.fn();
-            this.updateWorldMatrix = vi.fn();
-            this.children = [];
-            this.setGeometry = vi.fn();
-            this.setMaterial = vi.fn();
-            this.setPosition = vi.fn();
-            this.setRotation = vi.fn();
-            this.setScale = vi.fn();
-            this.setVisibility = vi.fn();
-            this.placeOnFloor = vi.fn();
-            this.removeFromParent = vi.fn();
-            this.position = new Vector3();
-            return this;
-        }),
-    };
-});
-
-vi.mock('../../../../components/group/Group', () => {
-    return {
-        DIVEGroup: vi.fn(function (this: any) {
-            this.isDIVEGroup = true;
-            this.isObject3D = true;
-            this.parent = null;
-            this.dispatchEvent = vi.fn();
-            this.addEventListener = vi.fn();
-            this.removeEventListener = vi.fn();
-            this.userData = {
-                id: undefined,
-            };
-            this.attach = vi.fn();
-            this.applyMatrix4 = vi.fn();
-            this.updateWorldMatrix = vi.fn();
-            this.children = [];
-            this.setGeometry = vi.fn();
-            this.setMaterial = vi.fn();
-            this.setPosition = vi.fn();
-            this.setRotation = vi.fn();
-            this.setScale = vi.fn();
-            this.setVisibility = vi.fn();
-            this.setLinesVisibility = vi.fn();
-            this.placeOnFloor = vi.fn();
-            this.removeFromParent = vi.fn();
-            this.position = new Vector3();
-            this.members = [];
-            return this;
+        DIVEGroup: vi.fn(function () {
+            const self = new Object3D() as any;
+            self.isDIVEGroup = true;
+            self.isDIVENode = true;
+            self.members = [];
+            self.setPosition = vi.fn();
+            self.setRotation = vi.fn();
+            self.setScale = vi.fn();
+            self.setVisibility = vi.fn();
+            self.setLinesVisibility = vi.fn();
+            return self;
         }),
     };
 });
@@ -356,13 +205,9 @@ describe('plugins/state/EngineGateway', () => {
 
         it('should get scene object by id', () => {
             const gateway = makeGateway();
-            const mockObject = {
-                isObject3D: true,
-                userData: {
-                    id: 'test-id',
-                },
-            };
-            gateway.root.add(mockObject as any);
+            const mockObject = new Object3D();
+            mockObject.userData.id = 'test-id';
+            gateway.root.add(mockObject);
             const result = findEntity(gateway, {
                 id: 'test-id',
                 entityType: 'model',
@@ -529,10 +374,72 @@ describe('plugins/state/EngineGateway', () => {
             expect(light?.position.x).toBe(1);
             expect(light?.position.y).toBe(2);
             expect(light?.position.z).toBe(3);
-            expect((light as any).setIntensity).toHaveBeenCalledWith(1.0);
-            expect((light as any).setEnabled).toHaveBeenCalledWith(true);
-            expect((light as any).setColor).toHaveBeenCalled();
             expect(light?.visible).toBe(true);
+
+            // a point light node carries one light component, and the schema
+            // values land on the three light it owns
+            const component = (light as DIVENode).requireComponent(
+                PointLightComponent,
+            );
+            expect(component.light.intensity).toBe(1.0);
+            expect(component.light.visible).toBe(true);
+            expect((component.light.color as Color).getHexString()).toBe(
+                'ffffff',
+            );
+        });
+
+        it('should compose a scene light from two light components', () => {
+            const gateway = makeGateway();
+            const node = gateway['_instantiate']({
+                id: 'light-scene',
+                entityType: 'light',
+                type: 'scene',
+                name: 'Scene Light',
+                visible: true,
+                intensity: 1,
+                enabled: true,
+                color: '#ffffff',
+            } as LightSchema) as DIVENode;
+
+            expect(node.getComponents(DIVELightComponent)).toHaveLength(2);
+            expect(node.getComponent(HemisphereLightComponent)).toBeDefined();
+            expect(node.getComponent(DirectionalLightComponent)).toBeDefined();
+        });
+
+        it('should apply intensity to every light component with its own factor', () => {
+            const gateway = makeGateway();
+            const node = gateway['_instantiate']({
+                id: 'light-scene',
+                entityType: 'light',
+                type: 'scene',
+            } as LightSchema) as DIVENode;
+
+            gateway['_applyLight'](node, {
+                id: 'light-scene',
+                entityType: 'light',
+                intensity: 2,
+            } as never);
+
+            // the factors that used to be hard-coded in DIVESceneLight
+            expect(
+                node.requireComponent(HemisphereLightComponent).light.intensity,
+            ).toBe(4);
+            expect(
+                node.requireComponent(DirectionalLightComponent).light
+                    .intensity,
+            ).toBe(6);
+        });
+
+        it('should throw when the light type is unknown', () => {
+            const gateway = makeGateway();
+
+            expect(() =>
+                gateway['_instantiate']({
+                    id: 'light-bogus',
+                    entityType: 'light',
+                    type: 'sunbeam',
+                } as unknown as LightSchema),
+            ).toThrow(/Unknown light type/);
         });
 
         it('should update all model properties', async () => {
@@ -803,8 +710,14 @@ describe('plugins/state/EngineGateway', () => {
             };
 
             await gateway.updateEntity(updatedData);
-            expect((light as any).setIntensity).toHaveBeenCalledWith(2.0);
-            expect((light as any).setColor).toHaveBeenCalled();
+
+            const component = (light as DIVENode).requireComponent(
+                PointLightComponent,
+            );
+            expect(component.light.intensity).toBe(2.0);
+            expect((component.light.color as Color).getHexString()).toBe(
+                'ff0000',
+            );
         });
 
         it('should update existing primitive properties', async () => {
@@ -1095,7 +1008,8 @@ describe('plugins/state/EngineGateway', () => {
             }
 
             gateway.removeEntity(groupData);
-            expect(gateway.root.attach).toHaveBeenCalledWith(member);
+            // members are re-parented to the root rather than deleted with the group
+            expect(member!.parent).toBe(gateway.root);
         });
 
         it('should handle transform controls detachment', async () => {
@@ -1203,9 +1117,10 @@ describe('plugins/state/EngineGateway', () => {
                 (group as any).members = [new Object3D()];
             }
 
+            const members = (group as any).members as Object3D[];
             gateway.removeEntity(groupData);
             expect(mockTransformControls.detach).toHaveBeenCalled();
-            expect(gateway.root.attach).toHaveBeenCalled();
+            expect(members[0].parent).toBe(gateway.root);
         });
     });
 
@@ -1259,7 +1174,7 @@ describe('plugins/state/EngineGateway', () => {
 
             expect(parent).toBeDefined();
             expect(child).toBeDefined();
-            expect(parent?.attach).toHaveBeenCalled();
+            expect(child?.parent).toBe(parent);
         });
 
         it('should attach to gateway when parent is null', async () => {
@@ -1280,7 +1195,7 @@ describe('plugins/state/EngineGateway', () => {
             await gateway.addEntity(childData);
             const child = findEntity(gateway, childData);
             expect(child).toBeDefined();
-            expect(gateway.root.attach).toHaveBeenCalled();
+            expect(child?.parent).toBe(gateway.root);
         });
 
         it('should handle non-existent parent', async () => {
@@ -1302,7 +1217,7 @@ describe('plugins/state/EngineGateway', () => {
             const child = findEntity(gateway, childData);
             expect(child).toBeDefined();
             // When parent doesn't exist, the object should remain where it is
-            expect(gateway.root.attach).not.toHaveBeenCalled();
+            expect(child?.parent).toBe(gateway.root);
         });
 
         it('should handle non-existent object', async () => {
@@ -1322,7 +1237,12 @@ describe('plugins/state/EngineGateway', () => {
             const gateway = makeGateway();
             // Don't add the object to the scene
             await gateway.updateEntity(modelData);
-            expect(gateway.root.attach).not.toHaveBeenCalled();
+            // nothing to re-parent, so the root gained no model
+            expect(
+                gateway.root.children.some(
+                    (child) => child.userData.id === modelData.id,
+                ),
+            ).toBe(false);
         });
     });
 
@@ -1363,10 +1283,12 @@ describe('plugins/state/EngineGateway', () => {
             const light = findEntity(gateway, {
                 id: 'light-1',
                 entityType: 'light',
-            }) as any;
-            light.setIntensity.mockClear();
-            light.setColor.mockClear();
-            light.setEnabled.mockClear();
+            }) as DIVENode;
+            const component = light.requireComponent(PointLightComponent);
+
+            const setIntensity = vi.spyOn(component, 'setIntensity');
+            const setColor = vi.spyOn(component, 'setColor');
+            const setEnabled = vi.spyOn(component, 'setEnabled');
 
             await gateway.updateEntity({
                 id: 'light-1',
@@ -1376,9 +1298,9 @@ describe('plugins/state/EngineGateway', () => {
 
             expect(light.name).toBe('Renamed');
             // absent means unchanged, so no other setter runs
-            expect(light.setIntensity).not.toHaveBeenCalled();
-            expect(light.setColor).not.toHaveBeenCalled();
-            expect(light.setEnabled).not.toHaveBeenCalled();
+            expect(setIntensity).not.toHaveBeenCalled();
+            expect(setColor).not.toHaveBeenCalled();
+            expect(setEnabled).not.toHaveBeenCalled();
         });
     });
 
@@ -1537,9 +1459,10 @@ describe('plugins/state/EngineGateway', () => {
                 (group as any).members = [new Object3D()];
             }
 
+            const members = (group as any).members as Object3D[];
             gateway.removeEntity(groupData);
             expect(mockTransformControls.detach).toHaveBeenCalled();
-            expect(gateway.root.attach).toHaveBeenCalled();
+            expect(members[0].parent).toBe(gateway.root);
         });
 
         it('should handle non-existent group', () => {
@@ -1580,7 +1503,7 @@ describe('plugins/state/EngineGateway', () => {
             await gateway.addEntity(modelData);
             const model = findEntity(gateway, modelData);
             expect(model).toBeDefined();
-            expect(gateway.root.attach).toHaveBeenCalled();
+            expect(model?.parent).toBe(gateway.root);
         });
 
         it('should handle object with non-existent parent', async () => {
@@ -1601,7 +1524,7 @@ describe('plugins/state/EngineGateway', () => {
             await gateway.addEntity(modelData);
             const model = findEntity(gateway, modelData);
             expect(model).toBeDefined();
-            expect(gateway.root.attach).not.toHaveBeenCalled();
+            expect(model?.parent).toBe(gateway.root);
         });
     });
 
@@ -1855,30 +1778,30 @@ describe('plugins/state/EngineGateway', () => {
             return { gateway, performAction };
         };
 
-        /** Replays what the object would have dispatched. */
+        /**
+         * Dispatches the event for real, rather than replaying captured
+         * `addEventListener` calls: the objects are real Object3Ds now, so this
+         * exercises the actual path from the engine to the state.
+         */
         const fire = (
             object: MockedSceneObject,
             type: string,
             payload: object = {},
         ): void => {
-            object.addEventListener.mock.calls
-                .filter((call: unknown[]) => call[0] === type)
-                .forEach((call: unknown[]) =>
-                    (call[1] as (e: object) => void)({ type, ...payload }),
-                );
+            object.dispatchEvent({ type, ...payload });
         };
 
         it('should subscribe before the schema is applied', async () => {
             // applying a model schema awaits setFromURL, and object-load fires
             // in there — listening afterwards would miss it
-            const { gateway } = makeWired();
+            const { gateway, performAction } = makeWired();
             await gateway.addEntity(modelData);
-            const model = findEntity(gateway, modelData)!;
 
-            const order = (name: string): number =>
-                model[name].mock.invocationCallOrder[0];
-
-            expect(order('addEventListener')).toBeLessThan(order('setFromURL'));
+            // setFromURL dispatches object-load while addEntity is still
+            // awaiting it; wiring up afterwards would drop it on the floor
+            expect(performAction).toHaveBeenCalledWith('MODEL_LOADED', {
+                id: 'model-1',
+            });
         });
 
         it('should turn a reported transform into one UPDATE_OBJECT', async () => {
@@ -1993,24 +1916,24 @@ describe('plugins/state/EngineGateway', () => {
         });
 
         it('should stop listening once the object is removed', async () => {
-            const { gateway } = makeWired();
+            const { gateway, performAction } = makeWired();
             await gateway.addEntity(modelData);
             const model = findEntity(gateway, modelData)!;
-            model.parent = gateway.root;
 
             gateway.removeEntity(modelData);
+            performAction.mockClear();
 
-            const removed = model.removeEventListener.mock.calls.map(
-                (call: unknown[]) => call[0],
-            );
-            expect(removed).toEqual(
-                expect.arrayContaining([
-                    'object-transform',
-                    'object-select',
-                    'object-deselect',
-                    'object-load',
-                ]),
-            );
+            // a detached object must no longer be able to drive the state
+            fire(model, 'object-transform', {
+                position: { x: 9, y: 9, z: 9 },
+                rotation: { x: 0, y: 0, z: 0 },
+                scale: { x: 1, y: 1, z: 1 },
+            });
+            fire(model, 'object-select');
+            fire(model, 'object-deselect');
+            fire(model, 'object-load');
+
+            expect(performAction).not.toHaveBeenCalled();
         });
 
         it('should forget the selection when the selected object is removed', async () => {
@@ -2034,13 +1957,23 @@ describe('plugins/state/EngineGateway', () => {
         });
 
         it('should drop every subscription on dispose', async () => {
-            const { gateway } = makeWired();
+            const { gateway, performAction } = makeWired();
             await gateway.addEntity(modelData);
             const model = findEntity(gateway, modelData)!;
 
             gateway.dispose();
+            performAction.mockClear();
 
-            expect(model.removeEventListener).toHaveBeenCalledTimes(4);
+            fire(model, 'object-transform', {
+                position: { x: 1, y: 1, z: 1 },
+                rotation: { x: 0, y: 0, z: 0 },
+                scale: { x: 1, y: 1, z: 1 },
+            });
+            fire(model, 'object-select');
+            fire(model, 'object-deselect');
+            fire(model, 'object-load');
+
+            expect(performAction).not.toHaveBeenCalled();
         });
 
         it('should not wire a camera, because it never enters the scene', async () => {
