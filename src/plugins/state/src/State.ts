@@ -1,7 +1,8 @@
 import { MathUtils } from 'three/webgpu';
 
 // type imports
-import { type EntitySchema, type DIVE } from '@shopware-ag/dive';
+import { type DIVE } from '@shopware-ag/dive';
+import { type EntitySchema } from '../types/index.ts';
 import { type OrbitController } from '@shopware-ag/dive/orbitcontroller';
 import {
     ActionDependencies,
@@ -9,6 +10,7 @@ import {
     ActionReturn,
 } from '../types/index.ts';
 import { getActionClass } from './ActionRegistry.ts';
+import { EngineGateway } from './EngineGateway.ts';
 
 export type ActionSubscriber<ActionType extends keyof ActionTypes> = (
     payload: ActionPayload<ActionTypes[ActionType]>,
@@ -19,6 +21,16 @@ export type ActionUnsubscribe = () => void;
 export class State {
     private static __instances: State[] = [];
 
+    /**
+     * Find the instance that owns an id, either the state's own or one of the
+     * entities it holds.
+     *
+     * @deprecated Nothing inside DIVE uses this any more. It existed so scene
+     * objects could look up their state at runtime; they now report through
+     * events and the {@link EngineGateway} routes them without a search. Hold
+     * on to the instance you created instead. Will be removed in a future
+     * major release.
+     */
     public static get(id: string): State | undefined {
         const fromComID = this.__instances.find(
             (instance) => instance.id === id,
@@ -38,6 +50,9 @@ export class State {
 
     private engine: DIVE;
     private controller: OrbitController;
+
+    /** The only way from here into the engine, see {@link EngineGateway}. */
+    private gateway: EngineGateway;
 
     // modules
     private _mediaCreator:
@@ -124,6 +139,7 @@ export class State {
         this._id = MathUtils.generateUUID();
         this.engine = dive;
         this.controller = controller;
+        this.gateway = new EngineGateway(dive, this);
 
         State.__instances.push(this);
     }
@@ -134,6 +150,7 @@ export class State {
         );
         if (existingIndex === -1) return false;
         State.__instances.splice(existingIndex, 1);
+        this.gateway.dispose();
         return true;
     }
 
@@ -221,7 +238,7 @@ export class State {
     private getDependencies(): ActionDependencies {
         return {
             registered: this.registered,
-            engine: this.engine,
+            gateway: this.gateway,
             controller: this.controller,
             getARSystem: () => this.getARSystem(),
             getAssetExporter: () => this.getAssetExporter(),
@@ -233,6 +250,7 @@ export class State {
 }
 
 export * from './ActionRegistry.ts';
+export * from './EngineGateway.ts';
 export * from './actions/index.ts';
 export * from '../types/index.ts';
 export type { ActionTypes };

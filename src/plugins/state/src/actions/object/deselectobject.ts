@@ -1,19 +1,19 @@
 import { Action } from '../action.ts';
 import { registerAction } from '../../ActionRegistry.ts';
 import { type ActionDependencies } from '../../../types/index.ts';
-import { type EntitySchema } from '@shopware-ag/dive';
+import { type EntitySchema } from '../../../types/index.ts';
 
 export const DeselectObjectAction = Action.define<
     Partial<EntitySchema> & { id: string },
-    Pick<ActionDependencies, 'engine' | 'getToolbox' | 'registered'>,
+    Pick<ActionDependencies, 'gateway' | 'getToolbox' | 'registered'>,
     Promise<void>
 >({
     description: 'Deselects an existing object.',
-    execute: async (payload, { engine, getToolbox, registered }) => {
+    execute: async (payload, { gateway, getToolbox, registered }) => {
         const object = registered.get(payload.id);
         if (!object) throw new Error('Object not found.');
 
-        const sceneObject = engine.scene.root.getSceneObject(object);
+        const sceneObject = gateway.findEntity(object);
         if (!sceneObject) throw new Error('Object not found in scene.');
 
         if (!('isSelectable' in sceneObject))

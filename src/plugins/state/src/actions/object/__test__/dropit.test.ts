@@ -1,18 +1,16 @@
+import { type EngineGateway } from '../../../EngineGateway.ts';
 import { DropItAction } from '../dropit.ts';
-import { DIVEModel, DIVE, type EntitySchema } from '@shopware-ag/dive';
+import { DIVEModel, DIVE } from '@shopware-ag/dive';
+import { type EntitySchema } from '../../../../types/index.ts';
 
 const mockModel = {
     isDIVEModel: true,
     dropIt: vi.fn(),
 } as unknown as DIVEModel;
 
-const mockEngine = {
-    scene: {
-        root: {
-            getSceneObject: vi.fn().mockReturnValue(mockModel),
-        },
-    },
-} as unknown as DIVE;
+const mockGateway = {
+    findEntity: vi.fn().mockReturnValue(mockModel),
+} as unknown as EngineGateway;
 
 const mockRegistered = new Map<string, EntitySchema>();
 
@@ -41,7 +39,7 @@ describe('DropItAction', () => {
         const action = new DropItAction(
             { id: 'test-object' },
             {
-                engine: mockEngine,
+                gateway: mockGateway,
                 registered: mockRegistered,
             },
         );
@@ -50,9 +48,7 @@ describe('DropItAction', () => {
         await action.execute();
 
         // Verify results
-        expect(mockEngine.scene.root.getSceneObject).toHaveBeenCalledWith(
-            testObject,
-        );
+        expect(mockGateway.findEntity).toHaveBeenCalledWith(testObject);
         expect(mockModel.dropIt).toHaveBeenCalled();
     });
 
@@ -60,7 +56,7 @@ describe('DropItAction', () => {
         const action = new DropItAction(
             { id: 'non-existent-object' },
             {
-                engine: mockEngine,
+                gateway: mockGateway,
                 registered: mockRegistered,
             },
         );
@@ -72,9 +68,7 @@ describe('DropItAction', () => {
     });
 
     it('should throw error if object is not found in scene', async () => {
-        vi.mocked(mockEngine.scene.root.getSceneObject).mockReturnValue(
-            undefined,
-        );
+        vi.mocked(mockGateway.findEntity).mockReturnValue(undefined);
 
         const testObject: EntitySchema = {
             id: 'test-object',
@@ -92,7 +86,7 @@ describe('DropItAction', () => {
         const action = new DropItAction(
             { id: 'test-object' },
             {
-                engine: mockEngine,
+                gateway: mockGateway,
                 registered: mockRegistered,
             },
         );
@@ -123,14 +117,12 @@ describe('DropItAction', () => {
             // isDIVEModel: true <= specifically not set
             dropIt: vi.fn(),
         } as unknown as DIVEModel;
-        vi.mocked(mockEngine.scene.root.getSceneObject).mockReturnValue(
-            mockDIVEModel,
-        );
+        vi.mocked(mockGateway.findEntity).mockReturnValue(mockDIVEModel);
 
         const action = new DropItAction(
             { id: 'test-object' },
             {
-                engine: mockEngine,
+                gateway: mockGateway,
                 registered: mockRegistered,
             },
         );

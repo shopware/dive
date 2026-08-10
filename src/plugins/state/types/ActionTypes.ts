@@ -1,6 +1,6 @@
-import { DIVE } from '@shopware-ag/dive';
 import { type OrbitController } from '@shopware-ag/dive/orbitcontroller';
-import { type EntitySchema } from '@shopware-ag/dive';
+import { type EntitySchema } from './schema/index.ts';
+import { type EngineGateway } from '../src/EngineGateway.ts';
 
 // Extracted types for performAction_new
 export type ActionPayload<T> = T extends new (
@@ -30,7 +30,7 @@ export type ActionDeps<T> = T extends new (
 
 export interface ActionDependencies {
     registered: Map<string, EntitySchema>;
-    engine: DIVE;
+    gateway: EngineGateway;
     controller: OrbitController;
     getAnimationSystem: () => Promise<
         import('@shopware-ag/dive/animation').AnimationSystem

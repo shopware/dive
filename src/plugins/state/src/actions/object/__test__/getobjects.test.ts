@@ -1,5 +1,5 @@
 import { GetObjectsAction } from '../getobjects.ts';
-import { type EntitySchema } from '@shopware-ag/dive';
+import { type EntitySchema } from '../../../../types/index.ts';
 
 describe('GetObjectsAction', () => {
     const mockRegistered = new Map<string, EntitySchema>();
@@ -64,7 +64,7 @@ describe('GetObjectsAction', () => {
             {
                 ids: ['object1', 'object3'],
             },
-            { engine: {} as any, registered: mockRegistered },
+            { gateway: {} as never, registered: mockRegistered },
         );
         const result = action.execute();
 
@@ -79,7 +79,7 @@ describe('GetObjectsAction', () => {
         // Act
         const action = new GetObjectsAction(
             { ids: [] },
-            { engine: {} as any, registered: mockRegistered },
+            { gateway: {} as never, registered: mockRegistered },
         );
         const result = action.execute();
 
@@ -111,7 +111,7 @@ describe('GetObjectsAction', () => {
         // Act
         const action = new GetObjectsAction(
             { ids: ['non-existent'] },
-            { engine: {} as any, registered: mockRegistered },
+            { gateway: {} as never, registered: mockRegistered },
         );
         const result = action.execute();
 

@@ -1,11 +1,11 @@
 import type { Vector3Like } from 'three/webgpu';
-import type {
+import {
     GroupSchema,
     LightSchema,
     ModelSchema,
     CameraSchema,
     PrimitiveSchema,
-} from '@shopware-ag/dive';
+} from './index.ts';
 
 export type StateData = {
     // scene data

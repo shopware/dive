@@ -12,9 +12,9 @@ import { type DIVESceneObject } from '../../types/index.ts';
 export class DIVEGroup extends DIVENode {
     readonly isDIVEGroup: true = true;
 
-    private _members: Object3D[]; // children objects
+    private _members: DIVESceneObject[];
 
-    public get members(): Object3D[] {
+    public get members(): DIVESceneObject[] {
         return this._members;
     }
 
@@ -47,7 +47,7 @@ export class DIVEGroup extends DIVENode {
             return;
         }
 
-        const index = this._members.indexOf(object);
+        const index = this._members.findIndex((member) => member === object);
         if (index === -1) return;
 
         this._lines[index].visible = visible;
@@ -99,7 +99,7 @@ export class DIVEGroup extends DIVENode {
     }
 
     public updateLineTo(object: Object3D): void {
-        const index = this._members.indexOf(object);
+        const index = this._members.findIndex((member) => member === object);
         if (index === -1) return;
 
         this._updateLineTo(this._lines[index], object);
@@ -128,62 +128,4 @@ export class DIVEGroup extends DIVENode {
         line.geometry.setFromPoints(points);
         line.computeLineDistances();
     }
-
-    // public setBoundingBoxVisibility(visible: boolean): void {
-    //     this._boxMesh.visible = visible;
-    // }
-
-    // /**
-    //  * Recalculates the position of the group based on it's bounding box.
-    //  * Children's world positions are kept.
-    //  */
-    // private recalculatePosition(): void {
-    //     // store all children's world positions
-    //     const childrensWorldPositions: Vector3[] = this.children.map((child) => child.getWorldPosition(new Vector3()));
-
-    //     // calculate new center and set it as the group's position
-    //     const bbcenter = this.updateBB();
-    //     this.position.copy(bbcenter);
-
-    //     // set childrens's positions so their world positions are kept
-    //     this.children.forEach((child, i) => {
-    //         if (child.uuid === this._boxMesh.uuid) return;
-    //         child.position.copy(this.worldToLocal(childrensWorldPositions[i]));
-    //     });
-
-    //     DIVECommunication.get(this.userData.id)?.performAction('UPDATE_OBJECT', { id: this.userData.id, position: this.position });
-    // }
-
-    // /**
-    //  * Updates the bounding box of the group.
-    //  * @returns {Vector3} The new center of the bounding box.
-    //  */
-    // private updateBB(): Vector3 {
-    //     this._boundingBox.makeEmpty();
-
-    //     if (this.children.length === 1) {
-    //         // because we always have the box mesh as 1 child
-    //         return this.position.clone();
-    //     }
-
-    //     this.children.forEach((child) => {
-    //         if (child.uuid === this._boxMesh.uuid) return;
-    //         this._boundingBox.expandByObject(child);
-    //     });
-
-    //     return this._boundingBox.getCenter(new Vector3());
-    // }
-
-    // private updateBoxMesh(): void {
-    //     if (this.children.length === 1) {
-    //         // because we always have the box mesh as 1 child
-    //         this._boxMesh.visible = false;
-    //         return;
-    //     }
-
-    //     this._boxMesh.quaternion.copy(this.quaternion.clone().invert());
-    //     this._boxMesh.scale.set(1 / this.scale.x, 1 / this.scale.y, 1 / this.scale.z);
-    //     this._boxMesh.geometry = new BoxGeometry(this._boundingBox.max.x - this._boundingBox.min.x, this._boundingBox.max.y - this._boundingBox.min.y, this._boundingBox.max.z - this._boundingBox.min.z);
-    //     this._boxMesh.visible = true;
-    // }
 }

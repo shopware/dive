@@ -2,19 +2,20 @@ import { type Object3D } from 'three/webgpu';
 import { Action } from '../action.ts';
 import { registerAction } from '../../ActionRegistry.ts';
 import { type ActionDependencies } from '../../../types/index.ts';
-import { type EntitySchema, type DIVESelectable } from '@shopware-ag/dive';
+import { type DIVESelectable } from '@shopware-ag/dive';
+import { type EntitySchema } from '../../../types/index.ts';
 
 export const SelectObjectAction = Action.define<
     Partial<EntitySchema> & { id: string },
-    Pick<ActionDependencies, 'engine' | 'getToolbox' | 'registered'>,
+    Pick<ActionDependencies, 'gateway' | 'getToolbox' | 'registered'>,
     Promise<void>
 >({
     description: 'Selects an existing object.',
-    execute: async (payload, { engine, getToolbox, registered }) => {
+    execute: async (payload, { gateway, getToolbox, registered }) => {
         const object = registered.get(payload.id);
         if (!object) throw new Error('Object not found.');
 
-        const sceneObject = engine.scene.root.getSceneObject(object);
+        const sceneObject = gateway.findEntity(object);
         if (!sceneObject) throw new Error('Object not found in scene.');
 
         if (!('isSelectable' in sceneObject))

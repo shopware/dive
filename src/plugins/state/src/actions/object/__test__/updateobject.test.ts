@@ -1,14 +1,12 @@
-import { DIVE, DIVEScene, type EntitySchema } from '@shopware-ag/dive';
+import { type EngineGateway } from '../../../EngineGateway.ts';
+import { DIVE, DIVEScene } from '@shopware-ag/dive';
+import { type EntitySchema } from '../../../../types/index.ts';
 import { UpdateObjectAction } from '../updateobject.ts';
 
 // Mock dependencies
-const mockEngine = {
-    scene: {
-        root: {
-            updateSceneObject: vi.fn(),
-        },
-    } as unknown as DIVEScene,
-} as unknown as DIVE;
+const mockGateway = {
+    updateEntity: vi.fn(),
+} as unknown as EngineGateway;
 
 const mockRegistered = new Map<string, EntitySchema>();
 
@@ -38,7 +36,7 @@ describe('UpdateObjectAction', () => {
         mockRegistered.set(originalObject.id, originalObject);
 
         const action = new UpdateObjectAction(updatePayload, {
-            engine: mockEngine,
+            gateway: mockGateway,
             registered: mockRegistered,
         });
 
@@ -46,7 +44,7 @@ describe('UpdateObjectAction', () => {
         action.execute();
 
         // Verify results
-        expect(mockEngine.scene.root.updateSceneObject).toHaveBeenCalledWith({
+        expect(mockGateway.updateEntity).toHaveBeenCalledWith({
             ...updatePayload,
             entityType: 'model',
         });
@@ -63,7 +61,7 @@ describe('UpdateObjectAction', () => {
         };
 
         const action = new UpdateObjectAction(updatePayload, {
-            engine: mockEngine,
+            gateway: mockGateway,
             registered: mockRegistered,
         });
 
@@ -71,6 +69,6 @@ describe('UpdateObjectAction', () => {
         await expect(action.execute()).rejects.toThrow('Object not found.');
 
         // Verify results
-        expect(mockEngine.scene.root.updateSceneObject).not.toHaveBeenCalled();
+        expect(mockGateway.updateEntity).not.toHaveBeenCalled();
     });
 });

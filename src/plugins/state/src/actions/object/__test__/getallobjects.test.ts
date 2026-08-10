@@ -1,5 +1,5 @@
 import { GetAllObjectsAction } from '../getallobjects.ts';
-import { type EntitySchema } from '@shopware-ag/dive';
+import { type EntitySchema } from '../../../../types/index.ts';
 
 describe('GetAllObjectsAction', () => {
     const mockRegistered = new Map<string, EntitySchema>();

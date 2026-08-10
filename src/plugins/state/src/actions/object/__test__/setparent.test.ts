@@ -1,10 +1,7 @@
 import { SetParentAction } from '../setparent.ts';
-import {
-    DIVE,
-    DIVEScene,
-    DIVESceneObject,
-    type EntitySchema,
-} from '@shopware-ag/dive';
+import { DIVESceneObject } from '@shopware-ag/dive';
+import { type EngineGateway } from '../../../EngineGateway.ts';
+import { type EntitySchema } from '../../../../types/index.ts';
 import { Object3D } from 'three/webgpu';
 
 describe('SetParentAction', () => {
@@ -17,25 +14,19 @@ describe('SetParentAction', () => {
         attach: vi.fn(),
     } as unknown as Object3D;
 
-    const mockScene = {
-        root: {
-            getSceneObject: vi
-                .fn()
-                .mockImplementation(
-                    (obj: Partial<EntitySchema> & { id: string }) => {
-                        if (obj.id === 'test-object') return mockSceneObject;
-                        if (obj.id === 'parent-object') return mockParentObject;
-                        return null;
-                    },
-                ),
-            attach: vi.fn(),
-            updateSceneObject: vi.fn(),
-        },
-    } as unknown as DIVEScene;
-
-    const mockEngine = {
-        scene: mockScene,
-    } as unknown as DIVE;
+    const mockGateway = {
+        findEntity: vi
+            .fn()
+            .mockImplementation(
+                (obj: Partial<EntitySchema> & { id: string }) => {
+                    if (obj.id === 'test-object') return mockSceneObject;
+                    if (obj.id === 'parent-object') return mockParentObject;
+                    return null;
+                },
+            ),
+        root: { attach: vi.fn() },
+        updateEntity: vi.fn(),
+    } as unknown as EngineGateway;
 
     const mockRegistered = new Map<string, EntitySchema>();
 
@@ -84,7 +75,7 @@ describe('SetParentAction', () => {
                 parent: { id: 'parent-object' },
             },
             {
-                engine: mockEngine,
+                gateway: mockGateway,
                 registered: mockRegistered,
             },
         );
@@ -122,7 +113,7 @@ describe('SetParentAction', () => {
                 parent: null,
             },
             {
-                engine: mockEngine,
+                gateway: mockGateway,
                 registered: mockRegistered,
             },
         );
@@ -131,7 +122,7 @@ describe('SetParentAction', () => {
         action.execute();
 
         // Assert
-        expect(mockScene.root.attach).toHaveBeenCalledWith(mockSceneObject);
+        expect(mockGateway.root.attach).toHaveBeenCalledWith(mockSceneObject);
     });
 
     it('should throw error if object does not exist', () => {
@@ -142,7 +133,7 @@ describe('SetParentAction', () => {
                 parent: { id: 'parent-object' },
             },
             {
-                engine: mockEngine,
+                gateway: mockGateway,
                 registered: mockRegistered,
             },
         );
@@ -170,7 +161,7 @@ describe('SetParentAction', () => {
         };
 
         mockRegistered.set(testObject.id, testObject);
-        vi.mocked(mockScene.root.getSceneObject).mockReturnValueOnce(undefined);
+        vi.mocked(mockGateway.findEntity).mockReturnValueOnce(undefined);
 
         // Act & Assert
         const action = new SetParentAction(
@@ -179,7 +170,7 @@ describe('SetParentAction', () => {
                 parent: { id: 'parent-object' },
             },
             {
-                engine: mockEngine,
+                gateway: mockGateway,
                 registered: mockRegistered,
             },
         );
@@ -217,7 +208,7 @@ describe('SetParentAction', () => {
                 parent: { id: 'non-existent-parent' },
             },
             {
-                engine: mockEngine,
+                gateway: mockGateway,
                 registered: mockRegistered,
             },
         );
@@ -260,7 +251,7 @@ describe('SetParentAction', () => {
 
         mockRegistered.set(testObject.id, testObject);
         mockRegistered.set(parentObject.id, parentObject);
-        vi.mocked(mockScene.root.getSceneObject).mockImplementation(
+        vi.mocked(mockGateway.findEntity).mockImplementation(
             (obj: Partial<EntitySchema> & { id: string }) => {
                 if (obj.id === 'test-object') return mockSceneObject;
                 if (obj.id === 'parent-object') return undefined;
@@ -275,7 +266,7 @@ describe('SetParentAction', () => {
                 parent: { id: 'parent-object' },
             },
             {
-                engine: mockEngine,
+                gateway: mockGateway,
                 registered: mockRegistered,
             },
         );
@@ -316,7 +307,7 @@ describe('SetParentAction', () => {
                 parent: { id: 'test-object' },
             },
             {
-                engine: mockEngine,
+                gateway: mockGateway,
                 registered: mockRegistered,
             },
         );

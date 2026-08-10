@@ -1,7 +1,7 @@
 import { Action } from '../action.ts';
 import { registerAction } from '../../ActionRegistry.ts';
 import { type ActionDependencies } from '../../../types/index.ts';
-import { isCameraSchema } from '@shopware-ag/dive';
+import { isCameraSchema } from '../../../types/index.ts';
 import { type Vector3Like } from 'three/webgpu';
 
 export const MoveCameraAction = Action.define<
@@ -18,14 +18,14 @@ export const MoveCameraAction = Action.define<
       },
     Pick<
         ActionDependencies,
-        'registered' | 'controller' | 'getAnimationSystem' | 'engine'
+        'registered' | 'controller' | 'getAnimationSystem' | 'gateway'
     >,
     Promise<{ stop: () => void }>
 >({
     description: 'Moves the camera to a new position and target.',
     execute: async (
         payload,
-        { controller, registered, getAnimationSystem, engine },
+        { controller, registered, getAnimationSystem, gateway },
     ) => {
         const animationSystem = await getAnimationSystem();
         let position = { x: 0, y: 0, z: 0 };
@@ -51,9 +51,7 @@ export const MoveCameraAction = Action.define<
             target = payload.target;
         }
 
-        if (!engine.clock.hasTicker(animationSystem)) {
-            engine.clock.addTicker(animationSystem);
-        }
+        gateway.registerTicker(animationSystem);
 
         controller.enabled = true;
 

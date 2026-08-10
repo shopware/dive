@@ -1,5 +1,6 @@
 export * from './applyMixins/applyMixins.ts';
 export * from './deepClone/deepClone.ts';
+export * from './detachTransformControls/detachTransformControls.ts';
 export * from './findInterface/findInterface.ts';
 export * from './findSceneRecursive/findSceneRecursive.ts';
 export * from './getFileTypeFromUri/getFileTypeFromUri.ts';

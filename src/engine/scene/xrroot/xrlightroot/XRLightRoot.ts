@@ -2,6 +2,7 @@ import { XREstimatedLight } from 'three/examples/jsm/webxr/XREstimatedLight.ts';
 import { Object3D } from 'three/webgpu';
 import { type DIVEScene } from '../../Scene.ts';
 import { DIVERoot } from '../../../../components/root/Root.ts';
+import { DIVESceneLight } from '../../../../components/light/SceneLight.ts';
 
 export class DIVEXRLightRoot extends Object3D {
     private _scene: DIVEScene;
@@ -21,16 +22,16 @@ export class DIVEXRLightRoot extends Object3D {
 
         // add scene
         this._lightRoot = new DIVERoot();
-        this._lightRoot.updateSceneObject({
-            id: 'XRSceneLight',
-            entityType: 'light',
-            name: 'XRSceneLight',
-            type: 'scene',
-            color: 0xffffff,
-            intensity: 1,
-            enabled: true,
-            visible: true,
-        });
+
+        // This used to go through updateSceneObject on a freshly built root,
+        // which found nothing to update and warned — the XR light root has
+        // been shipping without a light. The defaults of DIVESceneLight are
+        // white, intensity 1 and enabled, which is what the old call asked for.
+        const light = new DIVESceneLight();
+        light.name = 'XRSceneLight';
+        light.userData.id = 'XRSceneLight';
+        this._lightRoot.add(light);
+
         this.add(this._lightRoot);
     }
 

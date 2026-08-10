@@ -1,7 +1,6 @@
 import { type Vector3Like } from 'three/webgpu';
 import { type BaseEntitySchema } from './BaseEntitySchema.ts';
-import { type GeometrySchema } from './GeometrySchema.ts';
-import { type MaterialSchema } from './MaterialSchema.ts';
+import { type DIVEGeometry, type DIVEMaterial } from '@shopware-ag/dive';
 import { type EntitySchema } from './EntitySchema.ts';
 
 export function isPrimitiveSchema(
@@ -19,7 +18,7 @@ export type PrimitiveSchema = BaseEntitySchema & {
     position: Vector3Like;
     rotation: Vector3Like;
     scale: Vector3Like;
-    /** Rebuilding this replaces the mesh, see {@link GeometrySchema}. */
-    geometry: GeometrySchema;
-    material?: Partial<MaterialSchema>;
+    /** Rebuilding this replaces the mesh, see {@link DIVEGeometry}. */
+    geometry: DIVEGeometry;
+    material?: Partial<DIVEMaterial>;
 };

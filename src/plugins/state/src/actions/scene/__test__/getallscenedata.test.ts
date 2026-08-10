@@ -1,35 +1,27 @@
+import { type EngineGateway } from '../../../EngineGateway.ts';
 import { GetAllSceneDataAction } from '../getallscenedata.ts';
 import {
-    DIVE,
-    DIVEScene,
     type GroupSchema,
     type LightSchema,
     type ModelSchema,
     type CameraSchema,
     type PrimitiveSchema,
-} from '@shopware-ag/dive';
+} from '../../../../types/index.ts';
 import { OrbitController } from '@shopware-ag/dive/orbitcontroller';
-import { Color, MeshStandardMaterial, Vector3 } from 'three/webgpu';
+import { Vector3 } from 'three/webgpu';
 
 describe('GetAllSceneDataAction', () => {
     it('should get all scene data', async () => {
         // Mock dependencies
-        const mockScene = {
-            name: 'Test Scene',
-            background: new Color(0x000000),
-            root: {
-                floor: {
-                    visible: true,
-                    material: new MeshStandardMaterial({ color: 0xffffff }),
-                },
-            },
-            objects: [],
-            settings: {},
-        } as unknown as DIVEScene;
-
-        const mockEngine = {
-            scene: mockScene,
-        } as unknown as DIVE;
+        const mockGateway = {
+            readSceneSettings: vi.fn(() => ({
+                name: 'Test Scene',
+                backgroundColor: '#000000',
+                gridEnabled: true,
+                floorEnabled: true,
+                floorColor: '#ffffff',
+            })),
+        } as unknown as EngineGateway;
 
         const mockController = {
             object: {
@@ -73,7 +65,7 @@ describe('GetAllSceneDataAction', () => {
         const action = new GetAllSceneDataAction(
             {},
             {
-                engine: mockEngine,
+                gateway: mockGateway,
                 controller: mockController,
                 registered: mockRegistered,
             },

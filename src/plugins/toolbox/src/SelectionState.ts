@@ -31,12 +31,17 @@ export class SelectionState {
     public select(obj: Object3D & DIVESelectable): void {
         if (this._selected === obj) return;
 
-        // Deselect previous
-        if (this._selected) {
-            this._selected.onDeselect?.();
-        }
+        // Both handlers below can call straight back in here, so the field is
+        // moved to its next value before each of them rather than after. The
+        // guards then break any loop on their own, without relying on a
+        // handler being asynchronous.
+        const previous = this._selected;
 
-        // Select new
+        // cleared first, so a deselect() from within onDeselect finds nothing
+        // to do instead of dropping the incoming selection
+        this._selected = null;
+        previous?.onDeselect?.();
+
         this._selected = obj;
         obj.onSelect?.();
 
@@ -48,10 +53,12 @@ export class SelectionState {
      * Calls onDeselect on the object.
      */
     public deselect(): void {
-        if (!this._selected) return;
+        const previous = this._selected;
+        if (!previous) return;
 
-        this._selected.onDeselect?.();
+        // cleared before the handler runs, for the same reason as in select()
         this._selected = null;
+        previous.onDeselect?.();
 
         this.notifyListeners();
     }

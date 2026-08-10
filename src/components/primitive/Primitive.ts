@@ -10,7 +10,7 @@ import {
 } from 'three/webgpu';
 import { PRODUCT_LAYER_MASK } from '../../constants/VisibilityLayerMask.ts';
 import { DIVEModel } from '../model/Model.ts';
-import { type GeometrySchema } from '../../types/index.ts';
+import { type DIVEGeometry } from '../../types/index.ts';
 
 /**
  * A basic model class.
@@ -41,7 +41,7 @@ export class DIVEPrimitive extends DIVEModel {
         this._mesh.material = this._material;
     }
 
-    public setGeometry(geometry: GeometrySchema): void {
+    public setGeometry(geometry: DIVEGeometry): void {
         const geo = this.assembleGeometry(geometry);
         if (!geo) return;
 
@@ -52,7 +52,7 @@ export class DIVEPrimitive extends DIVEModel {
         this._boundingBox.setFromObject(this._mesh);
     }
 
-    private assembleGeometry(geometry: GeometrySchema): BufferGeometry | null {
+    private assembleGeometry(geometry: DIVEGeometry): BufferGeometry | null {
         // reset material to smooth shading
         this._material.flatShading = false;
 
@@ -84,7 +84,7 @@ export class DIVEPrimitive extends DIVEModel {
         }
     }
 
-    private createCylinderGeometry(geometry: GeometrySchema): BufferGeometry {
+    private createCylinderGeometry(geometry: DIVEGeometry): BufferGeometry {
         const geo = new CylinderGeometry(
             geometry.width / 2,
             geometry.width / 2,
@@ -95,12 +95,12 @@ export class DIVEPrimitive extends DIVEModel {
         return geo;
     }
 
-    private createSphereGeometry(geometry: GeometrySchema): BufferGeometry {
+    private createSphereGeometry(geometry: DIVEGeometry): BufferGeometry {
         const geo = new SphereGeometry(geometry.width / 2, 256, 256);
         return geo;
     }
 
-    private createPyramidGeometry(geometry: GeometrySchema): BufferGeometry {
+    private createPyramidGeometry(geometry: DIVEGeometry): BufferGeometry {
         const vertices = new Float32Array([
             -geometry.width / 2,
             0,
@@ -132,7 +132,7 @@ export class DIVEPrimitive extends DIVEModel {
         return geometryBuffer;
     }
 
-    private createBoxGeometry(geometry: GeometrySchema): BufferGeometry {
+    private createBoxGeometry(geometry: DIVEGeometry): BufferGeometry {
         const geo = new BoxGeometry(
             geometry.width,
             geometry.height,
@@ -142,13 +142,13 @@ export class DIVEPrimitive extends DIVEModel {
         return geo;
     }
 
-    private createConeGeometry(geometry: GeometrySchema): BufferGeometry {
+    private createConeGeometry(geometry: DIVEGeometry): BufferGeometry {
         const geo = new ConeGeometry(geometry.width / 2, geometry.height, 256);
         geo.translate(0, geometry.height / 2, 0);
         return geo;
     }
 
-    private createWallGeometry(geometry: GeometrySchema): BufferGeometry {
+    private createWallGeometry(geometry: DIVEGeometry): BufferGeometry {
         const geo = new BoxGeometry(
             geometry.width,
             geometry.height,
@@ -159,7 +159,7 @@ export class DIVEPrimitive extends DIVEModel {
         return geo;
     }
 
-    private createPlaneGeometry(geometry: GeometrySchema): BufferGeometry {
+    private createPlaneGeometry(geometry: DIVEGeometry): BufferGeometry {
         const geo = new BoxGeometry(
             geometry.width,
             geometry.height,

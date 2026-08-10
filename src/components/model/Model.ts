@@ -9,7 +9,7 @@ import {
 import { PRODUCT_LAYER_MASK } from '../../constants/VisibilityLayerMask.ts';
 import { findSceneRecursive } from '../../helpers/findSceneRecursive/findSceneRecursive.ts';
 import { DIVENode } from '../node/Node.ts';
-import { MaterialSchema } from 'src/types/index.ts';
+import { DIVEMaterial } from 'src/types/index.ts';
 import { BoundingBox } from '../boundingbox/BoundingBox.ts';
 
 /**
@@ -56,11 +56,7 @@ export class DIVEModel extends DIVENode {
         const assetLoader = await this._getAssetLoader();
         const gltf = await assetLoader.load(url);
         this.setFromGLTF(gltf);
-        import('@shopware-ag/dive/state').then(({ State }) => {
-            State.get(this.userData.id!)?.performAction('MODEL_LOADED', {
-                id: this.userData.id!,
-            });
-        });
+        this.dispatchEvent({ type: 'object-load' });
 
         return this;
     }
@@ -112,7 +108,7 @@ export class DIVEModel extends DIVENode {
         return this;
     }
 
-    public setMaterial(material: Partial<MaterialSchema>): void {
+    public setMaterial(material: Partial<DIVEMaterial>): void {
         // if there is no material, create a new one
         if (!this._material) {
             this._material = new MeshStandardMaterial();
@@ -197,15 +193,6 @@ export class DIVEModel extends DIVENode {
 
         this.setPosition(worldPos);
 
-        import('@shopware-ag/dive/state').then(({ State }) => {
-            State.get(this.userData.id)?.performAction('UPDATE_OBJECT', {
-                id: this.userData.id,
-                position: worldPos,
-                rotation: this.rotation,
-                scale: this.scale,
-            });
-        });
-
         this.onMove();
     }
 
@@ -258,15 +245,6 @@ export class DIVEModel extends DIVENode {
             if (worldPos.y === oldWorldPos.y) return;
 
             this.setPosition(worldPos);
-
-            import('@shopware-ag/dive/state').then(({ State }) => {
-                State.get(this.userData.id)?.performAction('UPDATE_OBJECT', {
-                    id: this.userData.id,
-                    position: worldPos,
-                    rotation: this.rotation,
-                    scale: this.scale,
-                });
-            });
 
             this.onMove();
         } else {

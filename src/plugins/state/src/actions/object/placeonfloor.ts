@@ -4,11 +4,11 @@ import { type ActionDependencies } from '../../../types/index.ts';
 
 export const PlaceOnFloorAction = Action.define<
     { id: string },
-    Pick<ActionDependencies, 'engine' | 'registered'>,
+    Pick<ActionDependencies, 'gateway' | 'registered'>,
     void
 >({
     description: 'Places an object on the floor.',
-    execute: (payload, { engine, registered }) => {
+    execute: (payload, { gateway, registered }) => {
         const object = registered.get(payload.id);
         if (!object) {
             throw new Error(
@@ -16,10 +16,10 @@ export const PlaceOnFloorAction = Action.define<
             );
         }
 
-        const model = engine.scene.root.getSceneObject(object);
+        const model = gateway.findEntity(object);
         if (!model) {
             throw new Error(
-                `Object with id ${payload.id} is not found in the scene. Scene: ${engine.scene}`,
+                `Object with id ${payload.id} is not found in the scene.`,
             );
         }
 

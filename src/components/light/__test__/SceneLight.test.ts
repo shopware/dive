@@ -1,22 +1,5 @@
-import { State } from '@shopware-ag/dive/state';
 import { type Color } from 'three/webgpu';
 import { DIVESceneLight } from '../SceneLight.ts';
-
-vi.mock('../../../modules/state/State', () => {
-    return {
-        State: {
-            get: vi.fn(() => {
-                return {
-                    performAction: vi.fn(),
-                };
-            }),
-        },
-    };
-});
-
-vi.spyOn(State, 'get').mockReturnValue({
-    performAction: vi.fn(),
-} as unknown as State);
 
 describe('dive/light/DIVESceneLight', () => {
     it('should instantiate', () => {

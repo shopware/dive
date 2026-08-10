@@ -1,7 +1,7 @@
 import { Action } from '../action.ts';
 import { registerAction } from '../../ActionRegistry.ts';
 import { type ActionDependencies } from '../../../types/index.ts';
-import { isModelSchema } from '@shopware-ag/dive';
+import { isModelSchema } from '../../../types/index.ts';
 
 export const ModelLoadedAction = Action.define<
     { id: string },

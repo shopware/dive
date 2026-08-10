@@ -6,11 +6,10 @@ import {
     type Texture,
     type MeshStandardMaterial,
 } from 'three/webgpu';
-import { type State } from '@shopware-ag/dive/state';
 import { DIVEScene } from 'src/engine/scene/Scene.ts';
-import { GeometrySchema } from 'src/types/schema/GeometrySchema.ts';
-import { MaterialSchema } from 'src/types/schema/MaterialSchema.ts';
-import { GeometryTypeSchema } from 'src/types/schema/GeometryTypeSchema.ts';
+import { DIVEGeometry } from '../../../types/geometry/DIVEGeometry.ts';
+import { DIVEMaterial } from '../../../types/material/DIVEMaterial.ts';
+import { DIVEGeometryType } from '../../../types/geometry/DIVEGeometryType.ts';
 
 const RaycasterIntersectObjectMock = vi.fn().mockReturnValue([]);
 
@@ -28,14 +27,6 @@ vi.mock('three', async () => {
         Raycaster,
     };
 });
-
-vi.mock('@shopware-ag/dive/state', () => ({
-    State: {
-        get: vi.fn().mockReturnValue({
-            performAction: vi.fn(),
-        }),
-    },
-}));
 
 let primitive: DIVEPrimitive;
 
@@ -64,11 +55,11 @@ describe('dive/primitive/DIVEPrimitive', () => {
     it('should set geometry', () => {
         vi.spyOn(console, 'warn');
         const geometry = {
-            name: 'cube' as GeometryTypeSchema,
+            name: 'cube' as DIVEGeometryType,
             width: 1,
             height: 1,
             depth: 1,
-        } as GeometrySchema;
+        } as DIVEGeometry;
         expect(() => primitive.setGeometry(geometry)).not.toThrow();
         expect(console.warn).not.toHaveBeenCalled();
     });
@@ -76,21 +67,15 @@ describe('dive/primitive/DIVEPrimitive', () => {
     it('should warn when geometry is invalid', () => {
         vi.spyOn(console, 'warn').mockImplementation(() => {});
         const geometry = {
-            name: 'INVALID' as GeometryTypeSchema,
-        } as GeometrySchema;
+            name: 'INVALID' as DIVEGeometryType,
+        } as DIVEGeometry;
         expect(() => primitive.setGeometry(geometry)).not.toThrow();
         expect(console.warn).toHaveBeenCalled();
     });
 
     it('should place on floor', async () => {
-        const State = await import('@shopware-ag/dive/state').then(
-            ({ State }) => State,
-        );
-
-        const performAction = vi.fn();
-        vi.spyOn(State, 'get').mockReturnValue({
-            performAction,
-        } as unknown as State);
+        const onTransform = vi.fn();
+        primitive.addEventListener('object-transform', onTransform);
 
         // ensure placeOnFloor uses a gltf reference
         (primitive as any)['_gltf'] = primitive;
@@ -118,23 +103,19 @@ describe('dive/primitive/DIVEPrimitive', () => {
         (scene.root as any).updateWorldMatrix = vi.fn();
 
         primitive.placeOnFloor();
-        await new Promise(setImmediate);
-        expect(performAction).toHaveBeenCalledWith(
-            'UPDATE_OBJECT',
+
+        // exactly one report: the explicit dispatch beside onMove is gone
+        expect(onTransform).toHaveBeenCalledTimes(1);
+        expect(onTransform).toHaveBeenCalledWith(
             expect.objectContaining({
-                position: expect.objectContaining({
-                    y: 6,
-                }),
+                position: expect.objectContaining({ y: 6 }),
             }),
         );
     });
 
     it('should drop it', async () => {
-        const State = await import('@shopware-ag/dive/state').then(
-            ({ State }) => State,
-        );
-
-        const spy = vi.spyOn(primitive, 'onMove').mockImplementation(() => {});
+        // spied but not stubbed, so the real dispatch still happens
+        const spy = vi.spyOn(primitive, 'onMove');
 
         const size = {
             x: 1,
@@ -188,13 +169,10 @@ describe('dive/primitive/DIVEPrimitive', () => {
 
         primitive.parent = scene.root;
 
-        const performAction = vi.fn();
-        vi.spyOn(State, 'get').mockReturnValue({
-            performAction,
-        } as unknown as State);
+        const onTransform = vi.fn();
+        primitive.addEventListener('object-transform', onTransform);
         expect(() => primitive.dropIt()).not.toThrow();
-        await new Promise(setImmediate);
-        expect(performAction).toHaveBeenCalled();
+        expect(onTransform).toHaveBeenCalledTimes(1);
         expect(spy).toHaveBeenCalledTimes(1);
 
         // second drop with zero delta -> no move
@@ -231,7 +209,6 @@ describe('dive/primitive/DIVEPrimitive', () => {
             this.max.set(0, 2, 0);
             return this;
         });
-        vi.spyOn(State, 'get').mockReturnValueOnce(undefined as any);
         expect(() => primitive.dropIt()).not.toThrow();
         expect(spy).toHaveBeenCalledTimes(2);
     });
@@ -245,7 +222,7 @@ describe('dive/primitive/DIVEPrimitive', () => {
             width: 1,
             height: 1.5,
             depth: 1,
-        } as GeometrySchema;
+        } as DIVEGeometry;
         expect(() => primitive.setGeometry(cylinder)).not.toThrow();
 
         // sphere
@@ -254,7 +231,7 @@ describe('dive/primitive/DIVEPrimitive', () => {
             width: 1,
             height: 1,
             depth: 1,
-        } as GeometrySchema;
+        } as DIVEGeometry;
         expect(() => primitive.setGeometry(sphere)).not.toThrow();
 
         // pyramid
@@ -263,7 +240,7 @@ describe('dive/primitive/DIVEPrimitive', () => {
             width: 1,
             height: 1.5,
             depth: 1,
-        } as GeometrySchema;
+        } as DIVEGeometry;
         expect(() => primitive.setGeometry(pyramid)).not.toThrow();
 
         // box
@@ -272,7 +249,7 @@ describe('dive/primitive/DIVEPrimitive', () => {
             width: 1,
             height: 1,
             depth: 1,
-        } as GeometrySchema;
+        } as DIVEGeometry;
         expect(() => primitive.setGeometry(box)).not.toThrow();
 
         // cone
@@ -281,7 +258,7 @@ describe('dive/primitive/DIVEPrimitive', () => {
             width: 1,
             height: 1.5,
             depth: 1,
-        } as GeometrySchema;
+        } as DIVEGeometry;
         expect(() => primitive.setGeometry(cone)).not.toThrow();
 
         // wall
@@ -290,14 +267,14 @@ describe('dive/primitive/DIVEPrimitive', () => {
             width: 1,
             height: 1.5,
             depth: 0.1,
-        } as GeometrySchema;
+        } as DIVEGeometry;
         expect(() => primitive.setGeometry(wall)).not.toThrow();
 
         const wallWithoutDepth = {
             name: 'wall',
             width: 1,
             height: 1.5,
-        } as GeometrySchema;
+        } as DIVEGeometry;
         expect(() => primitive.setGeometry(wallWithoutDepth)).not.toThrow();
 
         // plane
@@ -306,7 +283,7 @@ describe('dive/primitive/DIVEPrimitive', () => {
             width: 1,
             height: 0.1,
             depth: 1,
-        } as GeometrySchema;
+        } as DIVEGeometry;
         expect(() => primitive.setGeometry(plane)).not.toThrow();
     });
 
@@ -314,7 +291,7 @@ describe('dive/primitive/DIVEPrimitive', () => {
         const material = primitive['_mesh'].material as MeshStandardMaterial;
 
         // apply invalid material should not crash
-        expect(() => primitive.setMaterial({} as MaterialSchema)).not.toThrow();
+        expect(() => primitive.setMaterial({} as DIVEMaterial)).not.toThrow();
         expect(material).toBeDefined();
 
         expect(() =>
@@ -322,7 +299,7 @@ describe('dive/primitive/DIVEPrimitive', () => {
                 color: 0xffffff,
                 roughness: 0,
                 metalness: 1,
-            } as MaterialSchema),
+            } as DIVEMaterial),
         ).not.toThrow();
         expect((material as MeshStandardMaterial).roughness).toBe(0);
         expect((material as MeshStandardMaterial).roughnessMap).toBeNull();
@@ -339,7 +316,7 @@ describe('dive/primitive/DIVEPrimitive', () => {
                 roughnessMap: 'This_Is_A_Texture' as unknown as Texture,
                 metalness: 1,
                 metalnessMap: 'This_Is_A_Texture' as unknown as Texture,
-            } as MaterialSchema),
+            } as DIVEMaterial),
         ).not.toThrow();
         expect((material as MeshStandardMaterial).roughness).toBe(1.0);
         expect((material as MeshStandardMaterial).roughnessMap).toBeDefined();
@@ -360,10 +337,6 @@ describe('dive/primitive/DIVEPrimitive', () => {
     });
 
     it('should handle placeOnFloor when position does not change', async () => {
-        const State = await import('@shopware-ag/dive/state').then(
-            ({ State }) => State,
-        );
-
         primitive.userData.id = 'something';
         (primitive as any)['_gltf'] = primitive;
 
@@ -375,13 +348,11 @@ describe('dive/primitive/DIVEPrimitive', () => {
             },
         );
 
-        const comMock = {
-            performAction: vi.fn(),
-        } as unknown as State;
-        vi.spyOn(State, 'get').mockReturnValue(comMock);
+        const onTransform = vi.fn();
+        primitive.addEventListener('object-transform', onTransform);
 
         primitive.placeOnFloor();
-        expect(comMock.performAction).not.toHaveBeenCalled();
+        expect(onTransform).not.toHaveBeenCalled();
     });
 
     it('should set material with all properties', () => {

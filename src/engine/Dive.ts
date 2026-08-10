@@ -81,7 +81,7 @@ export const DIVEDefaultSettings: Required<DIVESettings> = {
  * #### DIVE
  * is the main class of the DIVE framework.
  *
- * An instance of this class delivers a complete 3D environment with a perspective camera, orbit controls, a toolbox, and a communication system.
+ * An instance of this class delivers a complete 3D environment with a perspective camera and orbit controls.
  * ```ts
  * import { DIVE } from "@shopware-ag/dive";
  *
@@ -89,13 +89,16 @@ export const DIVEDefaultSettings: Required<DIVESettings> = {
  *
  * const dive = new DIVE();
  *
- * myWrapper.appendChild(dive.Canvas);
+ * myWrapper.appendChild(dive.canvas);
+ * ```
  *
- * dive.Communication.subscribe('GET_ALL_SCENE_DATA', () => {
- *  // do something
- * }));
+ * Driving a scene from data is the job of the state plugin, which wraps a
+ * DIVE instance rather than being part of it:
+ * ```ts
+ * import { State } from "@shopware-ag/dive/state";
  *
- * dive.Communication.performAction('GET_ALL_SCENE_DATA', {});
+ * const state = new State(dive, orbitController);
+ * await state.performAction('SET_STATE', sceneData);
  * ```
  * @module
  */

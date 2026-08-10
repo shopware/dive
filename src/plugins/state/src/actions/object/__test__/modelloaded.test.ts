@@ -1,5 +1,8 @@
 import { ModelLoadedAction } from '../modelloaded.ts';
-import { type EntitySchema, type ModelSchema } from '@shopware-ag/dive';
+import {
+    type EntitySchema,
+    type ModelSchema,
+} from '../../../../types/index.ts';
 
 describe('ModelLoadedAction', () => {
     it('should mark a model as loaded', async () => {

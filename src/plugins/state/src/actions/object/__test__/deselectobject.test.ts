@@ -1,11 +1,8 @@
+import { type EngineGateway } from '../../../EngineGateway.ts';
 import { DeselectObjectAction } from '../deselectobject.ts';
 import { Object3D } from 'three/webgpu';
-import {
-    DIVE,
-    type DIVESelectable,
-    DIVESceneObject,
-    type EntitySchema,
-} from '@shopware-ag/dive';
+import { DIVE, type DIVESelectable, DIVESceneObject } from '@shopware-ag/dive';
+import { type EntitySchema } from '../../../../types/index.ts';
 import { type Toolbox, type SelectionState } from '@shopware-ag/dive/toolbox';
 
 const mockSceneObject = {
@@ -13,13 +10,9 @@ const mockSceneObject = {
     isSelectable: true,
 } as unknown as Object3D & DIVESelectable;
 
-const mockEngine = {
-    scene: {
-        root: {
-            getSceneObject: vi.fn().mockReturnValue(mockSceneObject),
-        },
-    },
-} as unknown as DIVE;
+const mockGateway = {
+    findEntity: vi.fn().mockReturnValue(mockSceneObject),
+} as unknown as EngineGateway;
 
 const mockSelectionState = {
     select: vi.fn(),
@@ -63,7 +56,7 @@ describe('DeselectObjectAction', () => {
         const action = new DeselectObjectAction(
             { id: 'test-object' },
             {
-                engine: mockEngine,
+                gateway: mockGateway,
                 getToolbox: mockGetToolbox,
                 registered: mockRegistered,
             },
@@ -79,7 +72,7 @@ describe('DeselectObjectAction', () => {
         const action = new DeselectObjectAction(
             { id: 'non-existent-object' },
             {
-                engine: mockEngine,
+                gateway: mockGateway,
                 getToolbox: mockGetToolbox,
                 registered: mockRegistered,
             },
@@ -109,15 +102,13 @@ describe('DeselectObjectAction', () => {
         } as unknown as EntitySchema;
 
         mockRegistered.set(testObject.id, testObject);
-        vi.mocked(mockEngine.scene.root.getSceneObject).mockReturnValueOnce(
-            undefined,
-        );
+        vi.mocked(mockGateway.findEntity).mockReturnValueOnce(undefined);
 
         // Act
         const action = new DeselectObjectAction(
             { id: 'test-object' },
             {
-                engine: mockEngine,
+                gateway: mockGateway,
                 getToolbox: mockGetToolbox,
                 registered: mockRegistered,
             },
@@ -149,7 +140,7 @@ describe('DeselectObjectAction', () => {
         } as unknown as EntitySchema;
 
         mockRegistered.set(testObject.id, testObject);
-        vi.mocked(mockEngine.scene.root.getSceneObject).mockReturnValueOnce(
+        vi.mocked(mockGateway.findEntity).mockReturnValueOnce(
             {} as DIVESceneObject,
         );
 
@@ -157,7 +148,7 @@ describe('DeselectObjectAction', () => {
         const action = new DeselectObjectAction(
             { id: 'test-object' },
             {
-                engine: mockEngine,
+                gateway: mockGateway,
                 getToolbox: mockGetToolbox,
                 registered: mockRegistered,
             },

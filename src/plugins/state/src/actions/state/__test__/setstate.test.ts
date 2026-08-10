@@ -6,16 +6,16 @@ import {
     SetParentAction,
 } from '@shopware-ag/dive/state';
 import { GetStateAction } from '../getstate.ts';
+import { DIVE, DIVEScene } from '@shopware-ag/dive';
+import { EngineGateway } from '../../../EngineGateway.ts';
 import {
-    DIVE,
-    DIVEScene,
     type EntitySchema,
     type CameraSchema,
     type GroupSchema,
     type LightSchema,
     type ModelSchema,
     type PrimitiveSchema,
-} from '@shopware-ag/dive';
+} from '../../../../types/index.ts';
 import { Color, MeshStandardMaterial, Vector3 } from 'three/webgpu';
 import { OrbitController } from '@shopware-ag/dive/orbitcontroller';
 import { type StateData } from '../../../../types/index.ts';
@@ -71,34 +71,26 @@ const controllerState = {
 const createDependencies = (
     alreadyRegistered: EntitySchema[] = [],
 ): {
-    engine: DIVE;
+    gateway: EngineGateway;
     controller: OrbitController;
     registered: Map<string, EntitySchema>;
-    floor: { setVisibility: ReturnType<typeof vi.fn>; setColor: typeof vi.fn };
 } => {
-    const floor = {
-        setVisibility: vi.fn(),
-        setColor: vi.fn(),
-    };
-
     const registered = new Map<string, EntitySchema>(
         alreadyRegistered.map((entity) => [entity.id, entity]),
     );
 
-    const engine = {
-        scene: {
-            name: 'untouched',
-            setBackground: vi.fn(),
-            root: { floor },
-        } as unknown as DIVEScene,
-    } as unknown as DIVE;
+    // what the scene ends up holding is the gateway's own business, tested
+    // there; here it only matters that the state is handed over in one piece
+    const gateway = {
+        applySceneSettings: vi.fn(),
+    } as unknown as EngineGateway;
 
     const controller = {
         setState: vi.fn(),
         getState: vi.fn(() => controllerState),
     } as unknown as OrbitController;
 
-    return { engine, controller, registered, floor } as never;
+    return { gateway, controller, registered };
 };
 
 /** Scene data with everything left out unless explicitly given. */
@@ -133,12 +125,14 @@ describe('SetStateAction', () => {
                 deps,
             ).execute();
 
-            expect(deps.engine.scene.name).toBe('Applied Scene');
-            expect(deps.engine.scene.setBackground).toHaveBeenCalledWith(
-                '#ff0000',
+            expect(deps.gateway.applySceneSettings).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    name: 'Applied Scene',
+                    backgroundColor: '#ff0000',
+                    floorEnabled: true,
+                    floorColor: '#00ff00',
+                }),
             );
-            expect(deps.floor.setVisibility).toHaveBeenCalledWith(true);
-            expect(deps.floor.setColor).toHaveBeenCalledWith('#00ff00');
         });
 
         it('should leave out properties the state does not carry', async () => {
@@ -146,10 +140,11 @@ describe('SetStateAction', () => {
 
             await new SetStateAction(stateData(), deps).execute();
 
-            expect(deps.engine.scene.name).toBe('untouched');
-            expect(deps.engine.scene.setBackground).not.toHaveBeenCalled();
-            expect(deps.floor.setVisibility).not.toHaveBeenCalled();
-            expect(deps.floor.setColor).not.toHaveBeenCalled();
+            // the gateway is handed the state as it stands and is the one
+            // that skips what is not in it
+            expect(deps.gateway.applySceneSettings).toHaveBeenCalledWith(
+                expect.not.objectContaining({ name: expect.anything() }),
+            );
             expect(deps.controller.setState).not.toHaveBeenCalled();
         });
 
@@ -474,10 +469,12 @@ describe('SetStateAction', () => {
     const createInstance = (
         entities: EntitySchema[] = [],
     ): {
-        engine: DIVE;
+        gateway: EngineGateway;
         controller: OrbitController;
         state: State;
         registered: Map<string, EntitySchema>;
+        scene: { name: string; background: Color };
+        floor: { visible: boolean; material: MeshStandardMaterial };
     } => {
         const floor = {
             visible: false,
@@ -493,11 +490,12 @@ describe('SetStateAction', () => {
         const scene = {
             name: '',
             background: new Color('#000000'),
+            grid: { visible: false, setVisibility: vi.fn() },
             setBackground: vi.fn((color: string) => {
                 scene.background = new Color(color);
             }),
             root: { floor },
-        } as unknown as DIVEScene;
+        } as unknown as DIVEScene & { name: string; background: Color };
 
         const controller = {
             object: { position: new Vector3(0, 0, 0) },
@@ -532,12 +530,11 @@ describe('SetStateAction', () => {
             ),
         } as unknown as State;
 
-        return {
-            engine: { scene } as unknown as DIVE,
-            controller,
-            state,
-            registered,
-        };
+        // the real gateway, so the round trip goes through the same read and
+        // write path the application uses
+        const gateway = new EngineGateway({ scene } as unknown as DIVE, state);
+
+        return { gateway, controller, state, registered, scene, floor };
     };
 
     const entity = <T>(id: string, entityType: string): T =>
@@ -563,12 +560,10 @@ describe('SetStateAction', () => {
                 entity<PrimitiveSchema>('primitive-1', 'primitive'),
                 entity<GroupSchema>('group-1', 'group'),
             ]);
-            source.engine.scene.name = 'Source Scene';
-            source.engine.scene.background = new Color('#123456');
-            source.engine.scene.root.floor.visible = true;
-            (
-                source.engine.scene.root.floor.material as MeshStandardMaterial
-            ).color = new Color('#abcdef');
+            source.scene.name = 'Source Scene';
+            source.scene.background = new Color('#123456');
+            source.floor.visible = true;
+            source.floor.material.color = new Color('#abcdef');
             source.controller.object.position.set(1, 2, 3);
             source.controller.target.set(4, 5, 6);
 
@@ -635,7 +630,7 @@ describe('SetStateAction', () => {
             const source = createInstance([
                 entity<ModelSchema>('model-1', 'model'),
             ]);
-            source.engine.scene.name = 'Twice';
+            source.scene.name = 'Twice';
             const exported = await new GetStateAction(
                 undefined,
                 source,

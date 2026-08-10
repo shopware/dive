@@ -425,5 +425,17 @@ describe('BoundingBox', () => {
             expect(boundingBox.children).toBeDefined();
             expect(Array.isArray(boundingBox.children)).toBe(true);
         });
+
+        it('should stay silent, because nothing subscribes to it', () => {
+            // A bounding box is scaffolding, not an entity. It inherits
+            // onMove() from DIVENode, but the state layer never wires it up,
+            // so the inherited call has to be inert rather than guarded away.
+            const boundingBox = new BoundingBox(mockObject);
+
+            expect(
+                (boundingBox as unknown as { _listeners?: object })._listeners,
+            ).toBeUndefined();
+            expect(() => boundingBox.onMove()).not.toThrow();
+        });
     });
 });

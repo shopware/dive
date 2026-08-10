@@ -1,23 +1,7 @@
 import { Object3D, type Vector3Like } from 'three/webgpu';
-import { State } from '@shopware-ag/dive/state';
-import { type DIVENode } from '../../node/Node.ts';
+import { DIVENode } from '../../node/Node.ts';
 import { DIVEGroup } from '../Group.ts';
-
-vi.mock('../../../modules/state/State', () => {
-    return {
-        State: {
-            get: vi.fn(() => {
-                return {
-                    performAction: vi.fn(),
-                };
-            }),
-        },
-    };
-});
-
-vi.spyOn(State, 'get').mockReturnValue({
-    performAction: vi.fn(),
-} as unknown as State);
+import { type DIVESceneObject } from '../../../types/components/DIVESceneObject.ts';
 
 let group: DIVEGroup;
 let obj: Object3D;
@@ -108,7 +92,6 @@ describe('dive/group/DIVEGroup', () => {
 
         expect(() => group.onMove()).not.toThrow();
 
-        vi.spyOn(State, 'get').mockReturnValueOnce(undefined);
         expect(() => group.onMove()).not.toThrow();
     });
 
@@ -117,7 +100,6 @@ describe('dive/group/DIVEGroup', () => {
 
         expect(() => group.onSelect()).not.toThrow();
 
-        vi.spyOn(State, 'get').mockReturnValueOnce(undefined);
         expect(() => group.onSelect()).not.toThrow();
     });
 
@@ -126,7 +108,6 @@ describe('dive/group/DIVEGroup', () => {
 
         expect(() => group.onDeselect()).not.toThrow();
 
-        vi.spyOn(State, 'get').mockReturnValueOnce(undefined);
         expect(() => group.onDeselect()).not.toThrow();
     });
 
@@ -135,7 +116,6 @@ describe('dive/group/DIVEGroup', () => {
 
         expect(() => group.onMove()).not.toThrow();
 
-        vi.spyOn(State, 'get').mockReturnValueOnce(undefined);
         expect(() => group.onMove()).not.toThrow();
     });
 
@@ -246,5 +226,40 @@ describe('dive/group/DIVEGroup', () => {
         group.attach(objWithoutId as any);
         expect(() => group.remove(objWithoutId as any)).not.toThrow();
         expect(group.members).not.toContain(objWithoutId);
+    });
+
+    describe('cascading moves to its members', () => {
+        // Moving a group moves everything in it, so every member has to report
+        // its own new transform — the group's event alone says nothing about
+        // where the members ended up.
+
+        it('should make each node member report a transform', () => {
+            const memberA = new DIVENode();
+            const memberB = new DIVENode();
+            memberA.userData.id = 'a';
+            memberB.userData.id = 'b';
+            // DIVENode is the base of every real member; attach() is typed
+            // to the concrete union, so the test stands in for it
+            group.attach(memberA as unknown as DIVESceneObject);
+            group.attach(memberB as unknown as DIVESceneObject);
+
+            const onA = vi.fn();
+            const onB = vi.fn();
+            memberA.addEventListener('object-transform', onA);
+            memberB.addEventListener('object-transform', onB);
+
+            group.setPosition({ x: 5, y: 0, z: 0 });
+
+            expect(onA).toHaveBeenCalledTimes(1);
+            expect(onB).toHaveBeenCalledTimes(1);
+        });
+
+        it('should skip members that are not nodes', () => {
+            const plain = new Object3D();
+            plain.userData.id = 'plain';
+            group.attach(plain as unknown as DIVESceneObject);
+
+            expect(() => group.setPosition({ x: 5, y: 0, z: 0 })).not.toThrow();
+        });
     });
 });

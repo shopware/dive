@@ -9,7 +9,7 @@ import {
     Object3D,
 } from 'three/webgpu';
 import { DIVENode } from '../../node/Node.ts';
-import { type MaterialSchema } from '../../../types/schema/MaterialSchema.ts';
+import { type DIVEMaterial } from '../../../types/material/DIVEMaterial.ts';
 import { BoundingBox } from '../../boundingbox/BoundingBox.ts';
 
 // ============================================================================
@@ -115,6 +115,23 @@ vi.mock('three/webgpu', async (importOriginal) => {
             target.z = this.position.z;
             return target;
         });
+
+        // the EventDispatcher half of Object3D, which the entities now use to
+        // report about themselves
+        this._listeners = {};
+        this.addEventListener = vi.fn((type: string, listener: any) => {
+            (this._listeners[type] ??= []).push(listener);
+        });
+        this.removeEventListener = vi.fn((type: string, listener: any) => {
+            this._listeners[type] = (this._listeners[type] ?? []).filter(
+                (entry: any) => entry !== listener,
+            );
+        });
+        this.dispatchEvent = vi.fn((event: any) => {
+            (this._listeners[event.type] ?? []).forEach((listener: any) =>
+                listener({ ...event, target: this }),
+            );
+        });
         return this;
     });
 
@@ -135,14 +152,6 @@ vi.mock('three/webgpu', async (importOriginal) => {
         Raycaster: MockRaycaster,
     };
 });
-
-vi.mock('@shopware-ag/dive/state', () => ({
-    State: {
-        get: vi.fn().mockReturnValue({
-            performAction: vi.fn(),
-        }),
-    },
-}));
 
 // Mock for AssetLoader
 const mockLoad = vi.fn();
@@ -181,14 +190,10 @@ describe('dive/model/DIVEModel', () => {
     });
 
     it('should place on floor', async () => {
-        const State = await import('@shopware-ag/dive/state').then(
-            ({ State }) => State,
-        );
-
         model.setFromGLTF(object);
 
-        const com = State.get('id')!;
-        const spyperformAction = vi.spyOn(com, 'performAction');
+        const onTransform = vi.fn();
+        model.addEventListener('object-transform', onTransform);
 
         model.userData.id = 'something';
         model.position.set(0, 4, 0);
@@ -209,35 +214,28 @@ describe('dive/model/DIVEModel', () => {
             },
         } as unknown as DIVEScene;
         scene.root.parent = scene;
+        (scene.root as any).worldToLocal = (v: Vector3) => v;
         model.parent = scene.root;
 
-        vi.spyOn(DIVENode.prototype, 'setPosition').mockImplementationOnce(
-            () => {},
-        );
-        const onMoveSpy = vi
-            .spyOn(model, 'onMove')
-            .mockImplementation(() => {});
+        // setPosition runs for real, so the reported world position is the one
+        // the model actually ended up at
+        // spied but not stubbed, so the real dispatch still happens
+        const onMoveSpy = vi.spyOn(model, 'onMove');
         model.placeOnFloor();
-        await new Promise(setImmediate);
-        expect(spyperformAction).toHaveBeenCalledWith(
-            'UPDATE_OBJECT',
+
+        // exactly one report: the explicit dispatch beside onMove is gone
+        expect(onMoveSpy).toHaveBeenCalledTimes(1);
+        expect(onTransform).toHaveBeenCalledTimes(1);
+        expect(onTransform).toHaveBeenCalledWith(
             expect.objectContaining({
-                position: expect.objectContaining({
-                    y: 6,
-                }),
+                position: expect.objectContaining({ y: 6 }),
             }),
         );
-        expect(onMoveSpy).toHaveBeenCalledTimes(1);
     });
 
     it('should drop it', async () => {
-        const State = await import('@shopware-ag/dive/state').then(
-            ({ State }) => State,
-        );
-
-        const spyOnMove = vi
-            .spyOn(model, 'onMove')
-            .mockImplementation(() => {});
+        // spied but not stubbed, so the real dispatch still happens
+        const spyOnMove = vi.spyOn(model, 'onMove');
 
         const size = {
             x: 1,
@@ -301,12 +299,12 @@ describe('dive/model/DIVEModel', () => {
         model.parent = scene.root;
 
         // first drop with movement
-        const com = State.get('id')!;
-        const spyPerform = vi.spyOn(com, 'performAction');
+        const onTransform = vi.fn();
+        model.addEventListener('object-transform', onTransform);
         expect(() => model.dropIt()).not.toThrow();
-        await new Promise(setImmediate);
-        expect(spyPerform).toHaveBeenCalledWith(
-            'UPDATE_OBJECT',
+        // exactly one report, the explicit dispatch next to onMove is gone
+        expect(onTransform).toHaveBeenCalledTimes(1);
+        expect(onTransform).toHaveBeenCalledWith(
             expect.objectContaining({
                 position: expect.objectContaining({ y: 2.5 }),
             }),
@@ -374,14 +372,13 @@ describe('dive/model/DIVEModel', () => {
                 this.setFromObject = vi.fn(() => this);
                 return this;
             });
-        vi.spyOn(State, 'get').mockReturnValueOnce(undefined as any);
         expect(() => model.dropIt()).not.toThrow();
         expect(spyOnMove).toHaveBeenCalledTimes(2);
     });
 
     it('should set material', () => {
         // apply invalid material should not crash
-        expect(() => model.setMaterial({} as MaterialSchema)).not.toThrow();
+        expect(() => model.setMaterial({} as DIVEMaterial)).not.toThrow();
         expect(model['_material']).not.toBeNull();
 
         expect(() =>
@@ -389,7 +386,7 @@ describe('dive/model/DIVEModel', () => {
                 color: 0xffffff,
                 roughness: 0,
                 metalness: 1,
-            } as MaterialSchema),
+            } as DIVEMaterial),
         ).not.toThrow();
         expect((model['_material'] as MeshStandardMaterial).roughness).toBe(0);
         expect(
@@ -410,7 +407,7 @@ describe('dive/model/DIVEModel', () => {
                 roughnessMap: 'This_Is_A_Texture' as unknown as Texture,
                 metalness: 1,
                 metalnessMap: 'This_Is_A_Texture' as unknown as Texture,
-            } as MaterialSchema),
+            } as DIVEMaterial),
         ).not.toThrow();
         expect((model['_material'] as MeshStandardMaterial).roughness).toBe(1);
         expect(
@@ -423,7 +420,7 @@ describe('dive/model/DIVEModel', () => {
     });
 
     it('should set model material when material already set before', () => {
-        model.setMaterial({ roughness: 0.5 } as MaterialSchema);
+        model.setMaterial({ roughness: 0.5 } as DIVEMaterial);
         expect(() => model.setFromGLTF(object)).not.toThrow();
         expect(
             (model['_mesh']?.material as MeshStandardMaterial).roughness,
@@ -433,7 +430,7 @@ describe('dive/model/DIVEModel', () => {
     it('should set material to model when model already set before', () => {
         model.setFromGLTF(object);
         expect(() =>
-            model.setMaterial({ roughness: 0.5 } as MaterialSchema),
+            model.setMaterial({ roughness: 0.5 } as DIVEMaterial),
         ).not.toThrow();
         expect(
             (model['_mesh']?.material as MeshStandardMaterial).roughness,
@@ -450,10 +447,6 @@ describe('dive/model/DIVEModel', () => {
     });
 
     it('should handle placeOnFloor when position does not change', async () => {
-        const State = await import('@shopware-ag/dive/state').then(
-            ({ State }) => State,
-        );
-
         model.setFromGLTF(object);
         model.userData.id = 'something';
 
@@ -466,14 +459,14 @@ describe('dive/model/DIVEModel', () => {
             return this;
         });
 
-        const com = State.get('id')!;
-        const spyperformAction = vi.spyOn(com, 'performAction');
+        const onTransform = vi.fn();
+        model.addEventListener('object-transform', onTransform);
         const onMoveSpy = vi
             .spyOn(model, 'onMove')
             .mockImplementation(() => {});
 
         model.placeOnFloor();
-        expect(spyperformAction).not.toHaveBeenCalled();
+        expect(onTransform).not.toHaveBeenCalled();
         expect(onMoveSpy).not.toHaveBeenCalled();
     });
 
@@ -482,7 +475,7 @@ describe('dive/model/DIVEModel', () => {
         (model['_material'] as unknown) = null;
         (model['_mesh'] as unknown) = null;
         expect(() =>
-            model.setMaterial({ roughness: 0.5 } as MaterialSchema),
+            model.setMaterial({ roughness: 0.5 } as DIVEMaterial),
         ).not.toThrow();
 
         // Verify new material was created
@@ -493,28 +486,20 @@ describe('dive/model/DIVEModel', () => {
     });
 
     it('should load model from URL', async () => {
-        const State = await import('@shopware-ag/dive/state').then(
-            ({ State }) => State,
-        );
-
         const mockGltf = new Object3D();
         mockGltf.children.push(new Mesh());
         mockLoad.mockResolvedValue(mockGltf);
 
         model.userData.id = 'test-id';
+        const onLoad = vi.fn();
+        model.addEventListener('object-load', onLoad);
 
         const result = await model.setFromURL('https://example.com/model.glb');
 
         expect(mockLoad).toHaveBeenCalledWith('https://example.com/model.glb');
         expect(result).toBe(model);
 
-        // Wait for the dynamic import and action
-        await new Promise(setImmediate);
-
-        const com = State.get('test-id')!;
-        expect(com.performAction).toHaveBeenCalledWith('MODEL_LOADED', {
-            id: 'test-id',
-        });
+        expect(onLoad).toHaveBeenCalledTimes(1);
     });
 
     it('should reuse existing asset loader on subsequent calls', async () => {
