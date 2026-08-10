@@ -3,12 +3,12 @@ import {
     AmbientLightComponent,
     detachTransformControls,
     DirectionalLightComponent,
-    DIVEGroup,
     DIVELightComponent,
     DIVEModel,
     DIVENode,
     DIVEPrimitive,
     HemisphereLightComponent,
+    MemberLinksComponent,
     PointLightComponent,
     type DIVE,
     type DIVEEntityTransformEvent,
@@ -190,14 +190,14 @@ export class EngineGateway {
 
         detachTransformControls(sceneObject);
 
-        // A group only ever held its members, so they outlive it at the root.
-        // Their own wiring is keyed by their own id and stays untouched.
-        // Brand check rather than `instanceof`, matching the rest of the
-        // codebase: it survives module mocking and duplicate class identities.
-        if ('isDIVEGroup' in sceneObject) {
-            const members = (sceneObject as DIVEGroup).members;
-            for (let i = members.length - 1; i >= 0; i--) {
-                this.root.attach(members[i]);
+        // Child nodes outlive their parent at the root -- deleting a group must
+        // not take its members with it. Their own wiring is keyed by their own id
+        // and stays untouched. No group special case needed: every node's child
+        // nodes are simply its `nodes`.
+        if ('isDIVENode' in sceneObject) {
+            const children = (sceneObject as DIVENode).nodes;
+            for (let i = children.length - 1; i >= 0; i--) {
+                this.root.attach(children[i]);
             }
         }
 
@@ -267,7 +267,12 @@ export class EngineGateway {
     private _instantiate(entity: EntitySchema): DIVESceneObject {
         if (isModelSchema(entity)) return new DIVEModel();
         if (isPrimitiveSchema(entity)) return new DIVEPrimitive();
-        if (isGroupSchema(entity)) return new DIVEGroup();
+        if (isGroupSchema(entity)) {
+            const group = new DIVENode();
+            group.name = 'DIVEGroup';
+            group.addComponent(new MemberLinksComponent());
+            return group;
+        }
         if (isLightSchema(entity)) return this._instantiateLight(entity);
 
         throw new Error(
@@ -316,7 +321,7 @@ export class EngineGateway {
                 this._applyPrimitive(sceneObject as DIVEPrimitive, patch);
                 return;
             case 'group':
-                this._applyGroup(sceneObject as DIVEGroup, patch);
+                this._applyGroup(sceneObject as DIVENode, patch);
                 return;
             default:
                 throw new Error(
@@ -334,7 +339,7 @@ export class EngineGateway {
         // setPosition, not position.set: a light is a node like any other entity,
         // so its schema position is a world position. Setting the local vector
         // directly put a light inside a group in group space.
-        if (props.position !== undefined)
+        if (props.position !== undefined && props.position !== null)
             sceneObject.setPosition(props.position);
 
         // every light component on the node, whatever kind: a scene light has two
@@ -364,11 +369,12 @@ export class EngineGateway {
             sceneObject.userData.uri = model.uri;
         }
         if (model.name !== undefined) sceneObject.name = model.name;
-        if (model.position !== undefined)
+        if (model.position !== undefined && model.position !== null)
             sceneObject.setPosition(model.position);
-        if (model.rotation !== undefined)
+        if (model.rotation !== undefined && model.rotation !== null)
             sceneObject.setRotation(model.rotation);
-        if (model.scale !== undefined) sceneObject.setScale(model.scale);
+        if (model.scale !== undefined && model.scale !== null)
+            sceneObject.setScale(model.scale);
         if (model.visible !== undefined)
             sceneObject.setVisibility(model.visible);
         if (model.material !== undefined)
@@ -384,11 +390,11 @@ export class EngineGateway {
         if (primitive.name !== undefined) sceneObject.name = primitive.name;
         if (primitive.geometry !== undefined)
             sceneObject.setGeometry(primitive.geometry);
-        if (primitive.position !== undefined)
+        if (primitive.position !== undefined && primitive.position !== null)
             sceneObject.setPosition(primitive.position);
-        if (primitive.rotation !== undefined)
+        if (primitive.rotation !== undefined && primitive.rotation !== null)
             sceneObject.setRotation(primitive.rotation);
-        if (primitive.scale !== undefined)
+        if (primitive.scale !== undefined && primitive.scale !== null)
             sceneObject.setScale(primitive.scale);
         if (primitive.visible !== undefined)
             sceneObject.setVisibility(primitive.visible);
@@ -399,19 +405,22 @@ export class EngineGateway {
     }
 
     private _applyGroup(
-        sceneObject: DIVEGroup,
+        sceneObject: DIVENode,
         props: PartialSchema<GroupSchema>,
     ): void {
         if (props.name !== undefined) sceneObject.name = props.name;
-        if (props.position !== undefined)
+        if (props.position !== undefined && props.position !== null)
             sceneObject.setPosition(props.position);
-        if (props.rotation !== undefined)
+        if (props.rotation !== undefined && props.rotation !== null)
             sceneObject.setRotation(props.rotation);
-        if (props.scale !== undefined) sceneObject.setScale(props.scale);
+        if (props.scale !== undefined && props.scale !== null)
+            sceneObject.setScale(props.scale);
         if (props.visible !== undefined)
             sceneObject.setVisibility(props.visible);
         if (props.bbVisible !== undefined)
-            sceneObject.setLinesVisibility(props.bbVisible);
+            sceneObject
+                .requireComponent(MemberLinksComponent)
+                .setVisible(props.bbVisible);
         if (props.parentId !== undefined)
             this._setParent({ ...props, parentId: props.parentId });
     }

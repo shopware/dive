@@ -7,6 +7,7 @@ import {
     DIVERoot,
     DIVEGeometryType,
     HemisphereLightComponent,
+    MemberLinksComponent,
     PointLightComponent,
     type DIVE,
 } from '@shopware-ag/dive';
@@ -74,13 +75,15 @@ vi.mock('../../../../components/grid/Grid', async () => {
 });
 
 vi.mock('../../../../components/model/Model', async () => {
-    const { Object3D } =
-        await vi.importActual<typeof import('three/webgpu')>('three/webgpu');
+    // built on the real DIVENode: `nodes`, the component registry and the tree
+    // events all have to behave, only the asset/material calls are spied
+    const { DIVENode } = await vi.importActual<
+        typeof import('../../../../components/node/Node.ts')
+    >('../../../../components/node/Node.ts');
     return {
         DIVEModel: vi.fn(function () {
-            const self = new Object3D() as any;
+            const self = new DIVENode() as any;
             self.isDIVEModel = true;
-            self.isDIVENode = true;
             self.setFromGLTF = vi.fn();
             // mirrors the real Model: the load is reported from inside
             // setFromURL, which is why listeners must be wired up first
@@ -88,10 +91,6 @@ vi.mock('../../../../components/model/Model', async () => {
                 self.dispatchEvent({ type: 'object-load' });
                 return self;
             });
-            self.setPosition = vi.fn();
-            self.setRotation = vi.fn();
-            self.setScale = vi.fn();
-            self.setVisibility = vi.fn();
             self.setMaterial = vi.fn();
             self.dropIt = vi.fn();
             return self;
@@ -100,43 +99,30 @@ vi.mock('../../../../components/model/Model', async () => {
 });
 
 vi.mock('../../../../components/primitive/Primitive', async () => {
-    const { Object3D } =
-        await vi.importActual<typeof import('three/webgpu')>('three/webgpu');
+    const { DIVENode } = await vi.importActual<
+        typeof import('../../../../components/node/Node.ts')
+    >('../../../../components/node/Node.ts');
     return {
         DIVEPrimitive: vi.fn(function () {
-            const self = new Object3D() as any;
+            const self = new DIVENode() as any;
             self.isDIVEPrimitive = true;
-            self.isDIVENode = true;
             self.setGeometry = vi.fn();
             self.setMaterial = vi.fn();
-            self.setPosition = vi.fn();
-            self.setRotation = vi.fn();
-            self.setScale = vi.fn();
-            self.setVisibility = vi.fn();
             self.dropIt = vi.fn();
             return self;
         }),
     };
 });
 
-vi.mock('../../../../components/group/Group', async () => {
-    const { Object3D } =
-        await vi.importActual<typeof import('three/webgpu')>('three/webgpu');
-    return {
-        DIVEGroup: vi.fn(function () {
-            const self = new Object3D() as any;
-            self.isDIVEGroup = true;
-            self.isDIVENode = true;
-            self.members = [];
-            self.setPosition = vi.fn();
-            self.setRotation = vi.fn();
-            self.setScale = vi.fn();
-            self.setVisibility = vi.fn();
-            self.setLinesVisibility = vi.fn();
-            return self;
-        }),
-    };
-});
+/** Compares a three vector/euler by component, sidestepping -0 vs 0. */
+const expectVec = (
+    actual: { x: number; y: number; z: number } | undefined,
+    expected: { x: number; y: number; z: number },
+): void => {
+    expect(actual?.x).toBeCloseTo(expected.x);
+    expect(actual?.y).toBeCloseTo(expected.y);
+    expect(actual?.z).toBeCloseTo(expected.z);
+};
 
 const spyConsoleWarn = vi.spyOn(console, 'warn').mockImplementation(() => {});
 /**
@@ -462,12 +448,10 @@ describe('plugins/state/EngineGateway', () => {
             const model = findEntity(gateway, modelData);
             expect(model).toBeDefined();
             expect(model?.name).toBe('Test Model');
-            expect(model?.setPosition).toHaveBeenCalledWith(modelData.position);
-            expect(model?.setRotation).toHaveBeenCalledWith(modelData.rotation);
-            expect(model?.setScale).toHaveBeenCalledWith(modelData.scale);
-            expect(model?.setVisibility).toHaveBeenCalledWith(
-                modelData.visible,
-            );
+            expectVec(model?.position, modelData.position);
+            expectVec(model?.rotation, modelData.rotation);
+            expectVec(model?.scale, modelData.scale);
+            expect(model?.visible).toBe(modelData.visible);
             expect(model?.setMaterial).toHaveBeenCalledWith(modelData.material);
         });
 
@@ -493,18 +477,10 @@ describe('plugins/state/EngineGateway', () => {
             expect(primitive?.setGeometry).toHaveBeenCalledWith(
                 primitiveData.geometry,
             );
-            expect(primitive?.setPosition).toHaveBeenCalledWith(
-                primitiveData.position,
-            );
-            expect(primitive?.setRotation).toHaveBeenCalledWith(
-                primitiveData.rotation,
-            );
-            expect(primitive?.setScale).toHaveBeenCalledWith(
-                primitiveData.scale,
-            );
-            expect(primitive?.setVisibility).toHaveBeenCalledWith(
-                primitiveData.visible,
-            );
+            expectVec(primitive?.position, primitiveData.position);
+            expectVec(primitive?.rotation, primitiveData.rotation);
+            expectVec(primitive?.scale, primitiveData.scale);
+            expect(primitive?.visible).toBe(primitiveData.visible);
             expect(primitive?.setMaterial).toHaveBeenCalledWith(
                 primitiveData.material,
             );
@@ -528,15 +504,15 @@ describe('plugins/state/EngineGateway', () => {
             const group = findEntity(gateway, groupData);
             expect(group).toBeDefined();
             expect(group?.name).toBe('Test Group');
-            expect(group?.setPosition).toHaveBeenCalledWith(groupData.position);
-            expect(group?.setRotation).toHaveBeenCalledWith(groupData.rotation);
-            expect(group?.setScale).toHaveBeenCalledWith(groupData.scale);
-            expect(group?.setVisibility).toHaveBeenCalledWith(
-                groupData.visible,
-            );
-            expect(group?.setLinesVisibility).toHaveBeenCalledWith(
-                groupData.bbVisible,
-            );
+            expectVec(group?.position, groupData.position);
+            expectVec(group?.rotation, groupData.rotation);
+            expectVec(group?.scale, groupData.scale);
+            expect(group?.visible).toBe(groupData.visible);
+            expect(
+                group
+                    ?.requireComponent(MemberLinksComponent)
+                    .children.every((line: Object3D) => line.visible),
+            ).toBe(groupData.bbVisible);
         });
 
         it('should add a model object', async () => {
@@ -680,9 +656,7 @@ describe('plugins/state/EngineGateway', () => {
             };
 
             await gateway.updateEntity(updatedData);
-            expect(model?.setPosition).toHaveBeenCalledWith(
-                updatedData.position,
-            );
+            expectVec(model?.position, updatedData.position);
         });
 
         it('should update existing light properties', async () => {
@@ -776,10 +750,7 @@ describe('plugins/state/EngineGateway', () => {
             };
 
             await gateway.updateEntity(updatedData);
-            expect((group as any).setVisibility).toHaveBeenCalledWith(false);
-            expect((group as any).setLinesVisibility).toHaveBeenCalledWith(
-                true,
-            );
+            expect((group as DIVENode).visible).toBe(false);
         });
 
         it('should handle update of non-existent object', async () => {
@@ -1111,16 +1082,16 @@ describe('plugins/state/EngineGateway', () => {
             const group = findEntity(gateway, groupData);
             expect(group).toBeDefined();
 
+            const member = new DIVENode();
             if (group) {
-                group.parent = gateway.root;
                 gateway.root.parent = mockScene;
-                (group as any).members = [new Object3D()];
+                group.add(member);
             }
 
-            const members = (group as any).members as Object3D[];
             gateway.removeEntity(groupData);
             expect(mockTransformControls.detach).toHaveBeenCalled();
-            expect(members[0].parent).toBe(gateway.root);
+            // the member outlives the group at the root
+            expect(member.parent).toBe(gateway.root);
         });
     });
 
@@ -1344,11 +1315,7 @@ describe('plugins/state/EngineGateway', () => {
 
             expect(model.setFromURL).not.toHaveBeenCalled();
             // the rest of the patch still applies
-            expect(model.setPosition).toHaveBeenCalledWith({
-                x: 1,
-                y: 2,
-                z: 3,
-            });
+            expectVec(model.position, { x: 1, y: 2, z: 3 });
         });
 
         it('should fetch the asset when the uri changed', async () => {
@@ -1453,16 +1420,16 @@ describe('plugins/state/EngineGateway', () => {
             const group = findEntity(gateway, groupData);
             expect(group).toBeDefined();
 
+            const member = new DIVENode();
             if (group) {
-                group.parent = gateway.root;
                 gateway.root.parent = mockScene;
-                (group as any).members = [new Object3D()];
+                group.add(member);
             }
 
-            const members = (group as any).members as Object3D[];
             gateway.removeEntity(groupData);
             expect(mockTransformControls.detach).toHaveBeenCalled();
-            expect(members[0].parent).toBe(gateway.root);
+            // the member outlives the group at the root
+            expect(member.parent).toBe(gateway.root);
         });
 
         it('should handle non-existent group', () => {

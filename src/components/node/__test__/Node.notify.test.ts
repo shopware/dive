@@ -1,8 +1,7 @@
 import { Object3D } from 'three/webgpu';
 import { DIVENode } from '../Node.ts';
 import { DIVEComponent } from '../../component/Component.ts';
-import { DIVEGroup } from '../../group/Group.ts';
-import { type DIVESceneObject } from '../../../types/components/DIVESceneObject.ts';
+import { MemberLinksComponent } from '../../group/MemberLinksComponent.ts';
 
 class WatchingComponent extends DIVEComponent {
     public moved: DIVENode[] = [];
@@ -66,15 +65,15 @@ describe('dive/node/DIVENode transform notification', () => {
         expect(() => lonely.setRotation({ x: 1, y: 0, z: 0 })).not.toThrow();
     });
 
-    it('should still update a group link on move', () => {
-        // transitional path: DIVEGroup keeps its member lines itself for now
-        const group = new DIVEGroup();
+    it('should let a link component follow a member', () => {
+        const group = new DIVENode();
+        const links = group.addComponent(new MemberLinksComponent());
         const member = new DIVENode();
-        group.attach(member as unknown as DIVESceneObject);
-        const updateLineTo = vi.spyOn(group, 'updateLineTo');
+        group.add(member);
+        const updateLinkTo = vi.spyOn(links, 'updateLinkTo');
 
         member.setPosition({ x: 3, y: 0, z: 0 });
 
-        expect(updateLineTo).toHaveBeenCalledWith(member);
+        expect(updateLinkTo).toHaveBeenCalledWith(member);
     });
 });
