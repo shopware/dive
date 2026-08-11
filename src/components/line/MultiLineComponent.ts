@@ -4,12 +4,12 @@ import {
     Float32BufferAttribute,
     LineDashedMaterial,
     LineSegments,
-    Object3D,
     Vector3,
+    type ColorRepresentation,
+    type Vector3Like,
 } from 'three/webgpu';
 import { HELPER_LAYER_MASK } from '../../constants/VisibilityLayerMask.ts';
 import { DIVEComponent } from '../component/Component.ts';
-import { type DIVENode } from '../node/Node.ts';
 
 /** Floats per line: two vertices, three components each. */
 const FLOATS_PER_LINE = 6;
@@ -20,23 +20,30 @@ const VERTICES_PER_LINE = 2;
 
 const INITIAL_CAPACITY = 8;
 
-const _end = new Vector3();
+const _delta = new Vector3();
 
 /**
- * Draws a dashed line from the owner's origin to each of its child nodes.
+ * Identifies a line for later updates. Only valid until the line is removed.
+ */
+export type DIVELineHandle = number;
+
+/**
+ * Draws a set of independent line segments.
  *
- * Attach this to a node to turn it into a "group": the lines are what makes the
- * grouping visible, and the membership itself is just the node's children.
+ * A pure drawing primitive: it knows about points, nothing else. It does not
+ * watch the scene, does not care what the lines mean, and never decides when
+ * they should change — a caller adds lines, moves them and removes them. What
+ * keeps the lines in sync with something else is that caller's job (see
+ * `GroupLinksComponent` for the group case).
  *
- * All lines live in **one** `LineSegments`, so the whole set costs a single draw
- * call no matter how many members there are. Every line occupies a fixed slot of
- * two vertices in a shared buffer; adding, moving or hiding a member rewrites
- * only that slot and uploads only that range.
+ * All lines share **one** `LineSegments`, so the whole set costs a single draw
+ * call no matter how many there are. Each line owns a fixed slot of two vertices
+ * in a shared buffer, so adding, moving or hiding one rewrites only that slot and
+ * uploads only that range.
  *
- * The points are in the **owner's local space**, not world space. That is what
- * keeps moving the group itself free: the GPU applies the owner's matrix, so no
- * buffer has to be touched. World-space points would have to be rewritten on
- * every move of the owner, and would be transformed a second time on top.
+ * Coordinates are in the component's own space, which is its owner's space.
+ * Passing world-space points would have them transformed a second time by the
+ * owner's matrix.
  *
  * @module
  */
@@ -50,24 +57,18 @@ export class MultiLineComponent extends DIVEComponent {
     private _positions: Float32BufferAttribute;
     private _distances: Float32BufferAttribute;
 
-    /** Which slot each member occupies. */
-    private _slots: Map<Object3D, number> = new Map();
-    /** Slots freed by departed members, reused before the buffer grows. */
-    private _freeSlots: number[] = [];
-    /** Members whose line is individually hidden. */
-    private _hidden: Set<Object3D> = new Set();
+    /** Slots currently handed out. */
+    private _used: Set<DIVELineHandle> = new Set();
+    /** Slots freed by removed lines, reused before the buffer grows. */
+    private _freeSlots: DIVELineHandle[] = [];
+    /** Slots whose line is hidden, collapsed rather than removed. */
+    private _hidden: Set<DIVELineHandle> = new Set();
+    /** The endpoints of each slot, so a hidden line can be restored. */
+    private _endpoints: Map<DIVELineHandle, [Vector3, Vector3]> = new Map();
 
     private _capacity: number = INITIAL_CAPACITY;
     /** One past the highest slot ever used, i.e. what has to be drawn. */
     private _highWater: number = 0;
-
-    private _onChildAdded = (event: { child: Object3D }): void => {
-        if ('isDIVENode' in event.child) this._addLine(event.child);
-    };
-
-    private _onChildRemoved = (event: { child: Object3D }): void => {
-        this._removeLine(event.child);
-    };
 
     constructor() {
         super();
@@ -81,16 +82,8 @@ export class MultiLineComponent extends DIVEComponent {
         });
 
         this._geometry = new BufferGeometry();
-        this._positions = new Float32BufferAttribute(
-            new Float32Array(this._capacity * FLOATS_PER_LINE),
-            3,
-        );
-        this._positions.setUsage(DynamicDrawUsage);
-        this._distances = new Float32BufferAttribute(
-            new Float32Array(this._capacity * DISTANCES_PER_LINE),
-            1,
-        );
-        this._distances.setUsage(DynamicDrawUsage);
+        this._positions = this._createAttribute(FLOATS_PER_LINE, 3);
+        this._distances = this._createAttribute(DISTANCES_PER_LINE, 1);
 
         this._geometry.setAttribute('position', this._positions);
         this._geometry.setAttribute('lineDistance', this._distances);
@@ -107,167 +100,222 @@ export class MultiLineComponent extends DIVEComponent {
         return this._lines;
     }
 
-    /** How many members currently have a line. */
+    /** How many lines currently exist, hidden ones included. */
     public get lineCount(): number {
-        return this._slots.size;
-    }
-
-    protected onAttach(owner: DIVENode): void {
-        owner.addEventListener('childadded', this._onChildAdded);
-        owner.addEventListener('childremoved', this._onChildRemoved);
-
-        // the node may already have children when this is attached
-        owner.nodes.forEach((node) => this._addLine(node));
-    }
-
-    protected onDetach(previousOwner: DIVENode): void {
-        previousOwner.removeEventListener('childadded', this._onChildAdded);
-        previousOwner.removeEventListener('childremoved', this._onChildRemoved);
-
-        this._clearLines();
-    }
-
-    public onChildNodeTransform(node: DIVENode): void {
-        this.updateLineTo(node);
+        return this._used.size;
     }
 
     /**
-     * Shows or hides lines.
+     * Adds a line.
      *
-     * A hidden line keeps its slot and is collapsed to zero length rather than
-     * removed, so toggling it back costs one range upload and never reshuffles
-     * the buffer.
-     *
-     * @param visible - Whether the lines should be drawn.
-     * @param object - Restricts the change to the line for this member.
+     * @param start - Where the line begins.
+     * @param end - Where the line ends.
+     * @returns A handle for updating or removing it.
      */
-    public setVisible(visible: boolean, object?: Object3D): void {
-        if (object) {
-            if (!this._slots.has(object)) return;
+    public addLine(start: Vector3Like, end: Vector3Like): DIVELineHandle {
+        const handle = this._freeSlots.pop() ?? this._used.size;
+        if (handle >= this._capacity) this._grow();
 
-            if (visible) {
-                this._hidden.delete(object);
-            } else {
-                this._hidden.add(object);
-            }
+        this._used.add(handle);
+        this._endpoints.set(handle, [
+            new Vector3(start.x, start.y, start.z),
+            new Vector3(end.x, end.y, end.z),
+        ]);
 
-            this._writeSlot(object);
-            return;
+        if (handle + 1 > this._highWater) {
+            this._highWater = handle + 1;
+            this._geometry.setDrawRange(0, this._highWater * VERTICES_PER_LINE);
         }
 
-        // one flag for the whole set, which also covers lines added later
+        this._writeSlot(handle);
+
+        return handle;
+    }
+
+    /**
+     * Moves an existing line.
+     *
+     * @param handle - The line to move.
+     * @param start - Where the line begins.
+     * @param end - Where the line ends.
+     */
+    public setLine(
+        handle: DIVELineHandle,
+        start: Vector3Like,
+        end: Vector3Like,
+    ): void {
+        const endpoints = this._endpoints.get(handle);
+        if (!endpoints) return;
+
+        endpoints[0].set(start.x, start.y, start.z);
+        endpoints[1].set(end.x, end.y, end.z);
+
+        this._writeSlot(handle);
+    }
+
+    /**
+     * Removes a line and frees its slot for reuse.
+     *
+     * @param handle - The line to remove.
+     */
+    public removeLine(handle: DIVELineHandle): void {
+        if (!this._used.has(handle)) return;
+
+        this._used.delete(handle);
+        this._hidden.delete(handle);
+        this._endpoints.delete(handle);
+        this._freeSlots.push(handle);
+
+        // collapse rather than repack: every other line keeps its slot, so none
+        // of them has to be rewritten
+        this._collapseSlot(handle);
+    }
+
+    /**
+     * Shows or hides a single line.
+     *
+     * A hidden line keeps its slot and is collapsed to zero length, so toggling
+     * it back costs one range upload and never reshuffles the buffer.
+     *
+     * @param handle - The line to change.
+     * @param visible - Whether it should be drawn.
+     */
+    public setLineVisible(handle: DIVELineHandle, visible: boolean): void {
+        if (!this._used.has(handle)) return;
+
+        if (visible) {
+            this._hidden.delete(handle);
+        } else {
+            this._hidden.add(handle);
+        }
+
+        this._writeSlot(handle);
+    }
+
+    /**
+     * Shows or hides the whole set, including lines added later.
+     *
+     * @param visible - Whether the lines should be drawn.
+     */
+    public setVisible(visible: boolean): void {
         this._lines.visible = visible;
     }
 
     /**
-     * Redraws the line to a member after it moved.
-     *
-     * @param object - The member whose line should be refreshed.
+     * @param color - The line colour.
      */
-    public updateLineTo(object: Object3D): void {
-        if (!this._slots.has(object)) return;
+    public setColor(color: ColorRepresentation): void {
+        this._material.color.set(color);
+    }
 
-        this._writeSlot(object);
+    /**
+     * Sets the dash pattern.
+     *
+     * @param dashSize - Length of a drawn stretch.
+     * @param gapSize - Length of a gap.
+     */
+    public setDashPattern(dashSize: number, gapSize: number): void {
+        this._material.dashSize = dashSize;
+        this._material.gapSize = gapSize;
+    }
+
+    /**
+     * Removes every line.
+     *
+     * Deliberately not called `clear`: that is `Object3D.clear()`, which removes
+     * children, and overriding it with a different meaning would be a trap.
+     */
+    public clearLines(): void {
+        this._used.forEach((handle) => this._collapseSlot(handle));
+        this._used.clear();
+        this._freeSlots = [];
+        this._hidden.clear();
+        this._endpoints.clear();
+        this._highWater = 0;
+        this._geometry.setDrawRange(0, 0);
     }
 
     public dispose(): void {
         this._geometry.dispose();
         this._material.dispose();
-        this._slots.clear();
+        this._used.clear();
         this._freeSlots = [];
         this._hidden.clear();
+        this._endpoints.clear();
     }
 
-    private _addLine(object: Object3D): void {
-        if (this._slots.has(object)) return;
-
-        const slot = this._freeSlots.pop() ?? this._slots.size;
-        if (slot >= this._capacity) this._grow();
-
-        this._slots.set(object, slot);
-
-        if (slot + 1 > this._highWater) {
-            this._highWater = slot + 1;
-            this._geometry.setDrawRange(0, this._highWater * VERTICES_PER_LINE);
-        }
-
-        this._writeSlot(object);
+    private _createAttribute(
+        stride: number,
+        itemSize: number,
+    ): Float32BufferAttribute {
+        const attribute = new Float32BufferAttribute(
+            new Float32Array(this._capacity * stride),
+            itemSize,
+        );
+        attribute.setUsage(DynamicDrawUsage);
+        return attribute;
     }
 
-    private _removeLine(object: Object3D): void {
-        const slot = this._slots.get(object);
-        if (slot === undefined) return;
+    /** Writes a slot's endpoints, or collapses it when hidden. */
+    private _writeSlot(handle: DIVELineHandle): void {
+        const endpoints = this._endpoints.get(handle);
+        if (!endpoints) return;
 
-        this._slots.delete(object);
-        this._hidden.delete(object);
-        this._freeSlots.push(slot);
-
-        // collapse rather than repack: other members keep their slots, so no
-        // other line has to be rewritten
-        this._collapseSlot(slot);
-    }
-
-    /**
-     * Writes the line for a member: origin to its local position.
-     *
-     * A hidden line is collapsed instead, which draws nothing.
-     */
-    private _writeSlot(object: Object3D): void {
-        const slot = this._slots.get(object);
-        if (slot === undefined) return;
-
-        if (this._hidden.has(object)) {
-            this._collapseSlot(slot);
+        if (this._hidden.has(handle)) {
+            this._collapseSlot(handle);
             return;
         }
 
-        _end.copy(object.position);
+        const [start, end] = endpoints;
 
-        const offset = slot * FLOATS_PER_LINE;
+        const offset = handle * FLOATS_PER_LINE;
         const positions = this._positions.array as Float32Array;
-        positions[offset] = 0;
-        positions[offset + 1] = 0;
-        positions[offset + 2] = 0;
-        positions[offset + 3] = _end.x;
-        positions[offset + 4] = _end.y;
-        positions[offset + 5] = _end.z;
+        positions[offset] = start.x;
+        positions[offset + 1] = start.y;
+        positions[offset + 2] = start.z;
+        positions[offset + 3] = end.x;
+        positions[offset + 4] = end.y;
+        positions[offset + 5] = end.z;
 
         // Each line restarts the dash pattern at 0. LineSegments'
         // computeLineDistances() accumulates across segments instead, which lets
         // a short line land entirely inside a gap and vanish.
         const distances = this._distances.array as Float32Array;
-        const distanceOffset = slot * DISTANCES_PER_LINE;
+        const distanceOffset = handle * DISTANCES_PER_LINE;
         distances[distanceOffset] = 0;
-        distances[distanceOffset + 1] = _end.length();
+        distances[distanceOffset + 1] = _delta.subVectors(end, start).length();
 
-        this._markSlotDirty(slot);
+        this._markSlotDirty(handle);
     }
 
-    private _collapseSlot(slot: number): void {
-        const offset = slot * FLOATS_PER_LINE;
+    private _collapseSlot(handle: DIVELineHandle): void {
+        const offset = handle * FLOATS_PER_LINE;
         (this._positions.array as Float32Array).fill(
             0,
             offset,
             offset + FLOATS_PER_LINE,
         );
 
-        const distanceOffset = slot * DISTANCES_PER_LINE;
+        const distanceOffset = handle * DISTANCES_PER_LINE;
         (this._distances.array as Float32Array).fill(
             0,
             distanceOffset,
             distanceOffset + DISTANCES_PER_LINE,
         );
 
-        this._markSlotDirty(slot);
+        this._markSlotDirty(handle);
     }
 
     /** Uploads just this slot's range instead of the whole buffer. */
-    private _markSlotDirty(slot: number): void {
-        this._positions.addUpdateRange(slot * FLOATS_PER_LINE, FLOATS_PER_LINE);
+    private _markSlotDirty(handle: DIVELineHandle): void {
+        this._positions.addUpdateRange(
+            handle * FLOATS_PER_LINE,
+            FLOATS_PER_LINE,
+        );
         this._positions.needsUpdate = true;
 
         this._distances.addUpdateRange(
-            slot * DISTANCES_PER_LINE,
+            handle * DISTANCES_PER_LINE,
             DISTANCES_PER_LINE,
         );
         this._distances.needsUpdate = true;
@@ -276,26 +324,19 @@ export class MultiLineComponent extends DIVEComponent {
     private _grow(): void {
         this._capacity *= 2;
 
-        const positions = new Float32Array(this._capacity * FLOATS_PER_LINE);
-        positions.set(this._positions.array as Float32Array);
-        this._positions = new Float32BufferAttribute(positions, 3);
-        this._positions.setUsage(DynamicDrawUsage);
+        const positions = this._createAttribute(FLOATS_PER_LINE, 3);
+        (positions.array as Float32Array).set(
+            this._positions.array as Float32Array,
+        );
+        this._positions = positions;
 
-        const distances = new Float32Array(this._capacity * DISTANCES_PER_LINE);
-        distances.set(this._distances.array as Float32Array);
-        this._distances = new Float32BufferAttribute(distances, 1);
-        this._distances.setUsage(DynamicDrawUsage);
+        const distances = this._createAttribute(DISTANCES_PER_LINE, 1);
+        (distances.array as Float32Array).set(
+            this._distances.array as Float32Array,
+        );
+        this._distances = distances;
 
         this._geometry.setAttribute('position', this._positions);
         this._geometry.setAttribute('lineDistance', this._distances);
-    }
-
-    private _clearLines(): void {
-        this._slots.forEach((slot) => this._collapseSlot(slot));
-        this._slots.clear();
-        this._freeSlots = [];
-        this._hidden.clear();
-        this._highWater = 0;
-        this._geometry.setDrawRange(0, 0);
     }
 }
