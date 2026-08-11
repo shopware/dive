@@ -7,7 +7,7 @@ import {
     DIVERoot,
     DIVEGeometryType,
     HemisphereLightComponent,
-    GroupLinksComponent,
+    MultiLineComponent,
     MeshComponent,
     PointLightComponent,
     PrimitiveMeshComponent,
@@ -394,7 +394,7 @@ describe('plugins/state/EngineGateway', () => {
             expect(group?.visible).toBe(groupData.visible);
             // all member lines share one LineSegments, so one flag covers them
             expect(
-                group?.requireComponent(GroupLinksComponent).lines.visible,
+                group?.requireComponent(MultiLineComponent).lines.visible,
             ).toBe(groupData.bbVisible);
         });
 
