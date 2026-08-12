@@ -177,4 +177,122 @@ describe('dive/node/DIVENode', () => {
             expect(onTransform).not.toHaveBeenCalled();
         });
     });
+
+    describe('reporting a transform it was told to make', () => {
+        // One event for every kind of move: a listener cannot tell a gizmo drag
+        // from a setPosition, and does not need to.
+        let parent: DIVENode;
+        let onTransform: ReturnType<typeof vi.fn>;
+
+        beforeEach(() => {
+            parent = new DIVENode();
+            parent.add(node);
+            onTransform = vi.fn();
+            node.addEventListener('object-transform', onTransform);
+        });
+
+        it('should report a position it was given', () => {
+            node.setPosition({ x: 1, y: 2, z: 3 });
+
+            expect(onTransform).toHaveBeenCalledTimes(1);
+        });
+
+        it('should report a rotation it was given', () => {
+            node.setRotation({ x: 0, y: 1, z: 0 });
+
+            expect(onTransform).toHaveBeenCalledTimes(1);
+        });
+
+        it('should report a scale it was given', () => {
+            node.setScale({ x: 2, y: 2, z: 2 });
+
+            expect(onTransform).toHaveBeenCalledTimes(1);
+        });
+
+        it('should stay silent when the position does not change', () => {
+            // a patch carrying all three transform fields must not report three
+            // moves for one changed value
+            node.setPosition({ x: 1, y: 2, z: 3 });
+            onTransform.mockClear();
+
+            node.setPosition({ x: 1, y: 2, z: 3 });
+
+            expect(onTransform).not.toHaveBeenCalled();
+        });
+
+        it('should stay silent when the rotation does not change', () => {
+            node.setRotation({ x: 0, y: 1, z: 0 });
+            onTransform.mockClear();
+
+            node.setRotation({ x: 0, y: 1, z: 0 });
+
+            expect(onTransform).not.toHaveBeenCalled();
+        });
+
+        it('should stay silent when the scale does not change', () => {
+            node.setScale({ x: 2, y: 2, z: 2 });
+            onTransform.mockClear();
+
+            node.setScale({ x: 2, y: 2, z: 2 });
+
+            expect(onTransform).not.toHaveBeenCalled();
+        });
+
+        it('should stay silent while it has no parent', () => {
+            // there is no world position to report yet
+            parent.remove(node);
+
+            node.setPosition({ x: 5, y: 5, z: 5 });
+
+            expect(onTransform).not.toHaveBeenCalled();
+        });
+
+        describe('members', () => {
+            let member: DIVENode;
+            let grandMember: DIVENode;
+            let onMemberTransform: ReturnType<typeof vi.fn>;
+            let onGrandMemberTransform: ReturnType<typeof vi.fn>;
+
+            beforeEach(() => {
+                member = new DIVENode();
+                grandMember = new DIVENode();
+                member.add(grandMember);
+                node.add(member);
+
+                onMemberTransform = vi.fn();
+                onGrandMemberTransform = vi.fn();
+                member.addEventListener('object-transform', onMemberTransform);
+                grandMember.addEventListener(
+                    'object-transform',
+                    onGrandMemberTransform,
+                );
+            });
+
+            it('should report their new world position when the group moves', () => {
+                node.setPosition({ x: 10, y: 0, z: 0 });
+
+                expect(onMemberTransform).toHaveBeenCalledTimes(1);
+            });
+
+            it('should report when the group rotates', () => {
+                // used to fire for setPosition only, so a rotated group left its
+                // members' reported positions stale
+                node.setRotation({ x: 0, y: 1, z: 0 });
+
+                expect(onMemberTransform).toHaveBeenCalledTimes(1);
+            });
+
+            it('should report when the group is scaled', () => {
+                node.setScale({ x: 2, y: 2, z: 2 });
+
+                expect(onMemberTransform).toHaveBeenCalledTimes(1);
+            });
+
+            it('should reach a nested group, not just the first level', () => {
+                node.setPosition({ x: 10, y: 0, z: 0 });
+
+                expect(onGrandMemberTransform).toHaveBeenCalledTimes(1);
+            });
+        });
+    });
 });
