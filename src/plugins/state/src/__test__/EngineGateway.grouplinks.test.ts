@@ -4,9 +4,13 @@ import {
     DIVERoot,
     MultiLineComponent,
     type DIVE,
+    type DIVESceneObject,
 } from '@shopware-ag/dive';
-import { type State } from '../State.ts';
-import { type GroupSchema, type ModelSchema } from '../../types/index.ts';
+import {
+    type EntitySchema,
+    type GroupSchema,
+    type ModelSchema,
+} from '../../types/index.ts';
 
 /**
  * Group links are a state-level concept: the engine only knows that some node
@@ -29,10 +33,18 @@ vi.mock('@shopware-ag/dive/assetloader', () => ({
 }));
 
 const makeGateway = (): EngineGateway =>
-    new EngineGateway(
-        { scene: { root: new DIVERoot() } } as unknown as DIVE,
-        { performAction: vi.fn() } as unknown as State,
-    );
+    new EngineGateway({ scene: { root: new DIVERoot() } } as unknown as DIVE);
+
+/** Creates an entity and applies its data, as `ADD_OBJECT` does. */
+const addEntity = async (
+    gateway: EngineGateway,
+    entity: EntitySchema,
+): Promise<DIVESceneObject | undefined> => {
+    const node = gateway.createEntity(entity);
+    if (node) await gateway.applyEntity(node, entity);
+
+    return node;
+};
 
 const groupSchema = (id: string): GroupSchema =>
     ({
@@ -70,7 +82,7 @@ describe('plugins/state/EngineGateway group links', () => {
         ).requireComponent(MultiLineComponent);
 
     it('should give a group nothing but a line component', () => {
-        return gateway.addEntity(groupSchema('g')).then(() => {
+        return addEntity(gateway, groupSchema('g')).then(() => {
             const group = gateway.findEntity({
                 id: 'g',
                 entityType: 'group',
@@ -83,22 +95,22 @@ describe('plugins/state/EngineGateway group links', () => {
     });
 
     it('should draw no line while the group is empty', async () => {
-        await gateway.addEntity(groupSchema('g'));
+        await addEntity(gateway, groupSchema('g'));
 
         expect(linesOf('g').lineCount).toBe(0);
     });
 
     it('should add a line when a member is parented in', async () => {
-        await gateway.addEntity(groupSchema('g'));
-        await gateway.addEntity(modelSchema('m', 'g'));
+        await addEntity(gateway, groupSchema('g'));
+        await addEntity(gateway, modelSchema('m', 'g'));
 
         expect(linesOf('g').lineCount).toBe(1);
     });
 
     it('should not add a line for a member of a plain node', async () => {
         // a model has no line component, so nothing is drawn towards its children
-        await gateway.addEntity(modelSchema('parent', null));
-        await gateway.addEntity(modelSchema('child', 'parent'));
+        await addEntity(gateway, modelSchema('parent', null));
+        await addEntity(gateway, modelSchema('child', 'parent'));
 
         expect(() =>
             (
@@ -111,8 +123,8 @@ describe('plugins/state/EngineGateway group links', () => {
     });
 
     it('should drop the line when a member is moved to the root', async () => {
-        await gateway.addEntity(groupSchema('g'));
-        await gateway.addEntity(modelSchema('m', 'g'));
+        await addEntity(gateway, groupSchema('g'));
+        await addEntity(gateway, modelSchema('m', 'g'));
 
         await gateway.updateEntity({
             id: 'm',
@@ -124,9 +136,9 @@ describe('plugins/state/EngineGateway group links', () => {
     });
 
     it('should move the line when a member changes group', async () => {
-        await gateway.addEntity(groupSchema('a'));
-        await gateway.addEntity(groupSchema('b'));
-        await gateway.addEntity(modelSchema('m', 'a'));
+        await addEntity(gateway, groupSchema('a'));
+        await addEntity(gateway, groupSchema('b'));
+        await addEntity(gateway, modelSchema('m', 'a'));
 
         await gateway.updateEntity({
             id: 'm',
@@ -139,8 +151,8 @@ describe('plugins/state/EngineGateway group links', () => {
     });
 
     it('should drop the line when a member is deleted', async () => {
-        await gateway.addEntity(groupSchema('g'));
-        await gateway.addEntity(modelSchema('m', 'g'));
+        await addEntity(gateway, groupSchema('g'));
+        await addEntity(gateway, modelSchema('m', 'g'));
 
         gateway.removeEntity({ id: 'm', entityType: 'model' });
 
@@ -148,8 +160,8 @@ describe('plugins/state/EngineGateway group links', () => {
     });
 
     it('should follow a member that is repositioned by a patch', async () => {
-        await gateway.addEntity(groupSchema('g'));
-        await gateway.addEntity(modelSchema('m', 'g'));
+        await addEntity(gateway, groupSchema('g'));
+        await addEntity(gateway, modelSchema('m', 'g'));
         const setLine = vi.spyOn(linesOf('g'), 'setLine');
 
         await gateway.updateEntity({
@@ -161,25 +173,9 @@ describe('plugins/state/EngineGateway group links', () => {
         expect(setLine).toHaveBeenCalled();
     });
 
-    it('should follow a member that reports a transform itself', async () => {
-        await gateway.addEntity(groupSchema('g'));
-        await gateway.addEntity(modelSchema('m', 'g'));
-        const member = gateway.findEntity({
-            id: 'm',
-            entityType: 'model',
-        }) as DIVENode;
-        const setLine = vi.spyOn(linesOf('g'), 'setLine');
-
-        // this is the gizmo path: the object reports its own move
-        member.position.set(4, 0, 0);
-        member.onMove();
-
-        expect(setLine).toHaveBeenCalled();
-    });
-
     it('should toggle link visibility through the group schema', async () => {
-        await gateway.addEntity(groupSchema('g'));
-        await gateway.addEntity(modelSchema('m', 'g'));
+        await addEntity(gateway, groupSchema('g'));
+        await addEntity(gateway, modelSchema('m', 'g'));
 
         await gateway.updateEntity({
             id: 'g',
@@ -191,8 +187,8 @@ describe('plugins/state/EngineGateway group links', () => {
     });
 
     it('should forget its bookkeeping on dispose', async () => {
-        await gateway.addEntity(groupSchema('g'));
-        await gateway.addEntity(modelSchema('m', 'g'));
+        await addEntity(gateway, groupSchema('g'));
+        await addEntity(gateway, modelSchema('m', 'g'));
 
         gateway.dispose();
 

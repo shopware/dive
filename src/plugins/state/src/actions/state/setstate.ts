@@ -12,11 +12,14 @@ import {
 
 export const SetStateAction = Action.define<
     StateData,
-    Pick<ActionDependencies, 'gateway' | 'controller' | 'registry'>,
+    Pick<
+        ActionDependencies,
+        'gateway' | 'controller' | 'registry' | 'dispatch'
+    >,
     Promise<DIVESceneObject[]>
 >({
     description: 'Applies complete state data to current dive instance.',
-    execute: async (_payload, { gateway, controller, registry }) => {
+    execute: async (_payload, { gateway, controller, registry, dispatch }) => {
         // the state is meant to replace what is there, and ADD_OBJECT skips ids that are already registered, so clear the scene up front
         registry.read().forEach(({ schema: entity }) => {
             new DeleteObjectAction(
@@ -68,7 +71,7 @@ export const SetStateAction = Action.define<
                             ...entity,
                             parentId: null,
                         },
-                        { gateway, registry },
+                        { gateway, registry, dispatch },
                     )
                         .execute()
                         .then((object) => {
@@ -95,7 +98,7 @@ export const SetStateAction = Action.define<
                             ...entity,
                             parentId: null,
                         },
-                        { gateway, registry },
+                        { gateway, registry, dispatch },
                     )
                         .execute()
                         .then((object) => {
@@ -121,7 +124,7 @@ export const SetStateAction = Action.define<
                             ...entity,
                             parentId: null,
                         },
-                        { gateway, registry },
+                        { gateway, registry, dispatch },
                     )
                         .execute()
                         .then((object) => {
@@ -147,7 +150,7 @@ export const SetStateAction = Action.define<
                             ...entity,
                             parentId: null,
                         },
-                        { gateway, registry },
+                        { gateway, registry, dispatch },
                     )
                         .execute()
                         .then((object) => {
@@ -173,7 +176,7 @@ export const SetStateAction = Action.define<
                             ...entity,
                             parentId: null,
                         },
-                        { gateway, registry },
+                        { gateway, registry, dispatch },
                     )
                         .execute()
                         .then((sceneObject) => {
