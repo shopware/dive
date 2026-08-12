@@ -1,135 +1,56 @@
-import { type EngineGateway } from '../../../EngineGateway.ts';
+import { makeActionDeps } from '../../../__test__/actionDeps.ts';
 import { DropItAction } from '../dropit.ts';
-import { DIVENode, DIVE } from '@shopware-ag/dive';
+import { type DIVENode } from '@shopware-ag/dive';
 import { type EntitySchema } from '../../../../types/index.ts';
 
-const mockModel = {
-    isDIVENode: true,
-    dropIt: vi.fn(),
-} as unknown as DIVENode;
-
-const mockGateway = {
-    findEntity: vi.fn().mockReturnValue(mockModel),
-} as unknown as EngineGateway;
-
-const mockRegistered = new Map<string, EntitySchema>();
+const testObject: EntitySchema = {
+    id: 'test-object',
+    entityType: 'model',
+    position: { x: 0, y: 0, z: 0 },
+    rotation: { x: 0, y: 0, z: 0 },
+    scale: { x: 1, y: 1, z: 1 },
+    name: 'Test Object',
+    visible: true,
+    uri: 'test-uri',
+    loaded: true,
+} as unknown as EntitySchema;
 
 describe('DropItAction', () => {
+    let deps: ReturnType<typeof makeActionDeps>;
+    let mockModel: DIVENode;
+
     beforeEach(() => {
         vi.clearAllMocks();
-        mockRegistered.clear();
+        mockModel = { dropIt: vi.fn() } as unknown as DIVENode;
+        deps = makeActionDeps();
     });
 
-    it('should drop an object on the floor or another object', async () => {
-        const testObject: EntitySchema = {
-            id: 'test-object',
-            entityType: 'model',
-            position: { x: 0, y: 0, z: 0 },
-            rotation: { x: 0, y: 0, z: 0 },
-            scale: { x: 1, y: 1, z: 1 },
-            name: 'Test Object',
-            visible: true,
-            uri: 'test-uri',
-            loaded: true,
-        };
+    it('should drop an object on the floor or another object', () => {
+        deps.registry.register(testObject, mockModel);
 
-        // Add the object first
-        mockRegistered.set(testObject.id, testObject);
+        const action = new DropItAction({ id: 'test-object' }, deps);
 
-        const action = new DropItAction(
-            { id: 'test-object' },
-            {
-                gateway: mockGateway,
-                registered: mockRegistered,
-            },
-        );
+        action.execute();
 
-        // Execute action
-        await action.execute();
-
-        // Verify results
-        expect(mockGateway.findEntity).toHaveBeenCalledWith(testObject);
         expect(mockModel.dropIt).toHaveBeenCalled();
     });
 
-    it('should throw error if object is not registered', async () => {
-        const action = new DropItAction(
-            { id: 'non-existent-object' },
-            {
-                gateway: mockGateway,
-                registered: mockRegistered,
-            },
-        );
+    it('should throw error if object is not registered', () => {
+        const action = new DropItAction({ id: 'non-existent-object' }, deps);
 
-        // Execute action and expect error
         expect(() => action.execute()).toThrow(
             'Object with id non-existent-object not registered',
         );
     });
 
-    it('should throw error if object is not found in scene', async () => {
-        vi.mocked(mockGateway.findEntity).mockReturnValue(undefined);
+    it('should throw error if object has no scene object', () => {
+        // registered, but state-only — a camera is the real case
+        deps.registry.register(testObject);
 
-        const testObject: EntitySchema = {
-            id: 'test-object',
-            entityType: 'model',
-            position: { x: 0, y: 0, z: 0 },
-            rotation: { x: 0, y: 0, z: 0 },
-            scale: { x: 1, y: 1, z: 1 },
-            name: 'Test Object',
-            visible: true,
-        } as unknown as EntitySchema;
+        const action = new DropItAction({ id: 'test-object' }, deps);
 
-        // Add the object first
-        mockRegistered.set(testObject.id, testObject);
-
-        const action = new DropItAction(
-            { id: 'test-object' },
-            {
-                gateway: mockGateway,
-                registered: mockRegistered,
-            },
-        );
-
-        // Execute action and expect error
         expect(() => action.execute()).toThrow(
-            'Object with id test-object is not found in the scene',
-        );
-    });
-
-    it('should throw error if object is not a DIVENode', async () => {
-        const testObject: EntitySchema = {
-            id: 'test-object',
-            entityType: 'model',
-            position: { x: 0, y: 0, z: 0 },
-            rotation: { x: 0, y: 0, z: 0 },
-            scale: { x: 1, y: 1, z: 1 },
-            name: 'Test Object',
-            visible: true,
-            uri: 'test-uri',
-            loaded: true,
-        };
-
-        // Add the object first
-        mockRegistered.set(testObject.id, testObject);
-
-        const mockDIVENode = {
-            // isDIVENode: true <= specifically not set
-            dropIt: vi.fn(),
-        } as unknown as DIVENode;
-        vi.mocked(mockGateway.findEntity).mockReturnValue(mockDIVENode);
-
-        const action = new DropItAction(
-            { id: 'test-object' },
-            {
-                gateway: mockGateway,
-                registered: mockRegistered,
-            },
-        );
-
-        // Execute action and expect error
-        expect(() => action.execute()).toThrow(
-            `Object with id test-object is not a DIVENode. Object: ${mockDIVENode}`,
+            'Object with id test-object is not in the scene.',
         );
     });
 });

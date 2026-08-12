@@ -1,11 +1,12 @@
+import { makeActionDeps } from '../../../__test__/actionDeps.ts';
 import { GetObjectsAction } from '../getobjects.ts';
 import { type EntitySchema } from '../../../../types/index.ts';
 
 describe('GetObjectsAction', () => {
-    const mockRegistered = new Map<string, EntitySchema>();
+    const deps = makeActionDeps();
 
     beforeEach(() => {
-        mockRegistered.clear();
+        deps.registry.clear();
     });
 
     it('should return objects with specified IDs', () => {
@@ -55,16 +56,16 @@ describe('GetObjectsAction', () => {
             },
         };
 
-        mockRegistered.set(object1.id, object1);
-        mockRegistered.set(object2.id, object2);
-        mockRegistered.set(object3.id, object3);
+        deps.registry.register(object1);
+        deps.registry.register(object2);
+        deps.registry.register(object3);
 
         // Act
         const action = new GetObjectsAction(
             {
                 ids: ['object1', 'object3'],
             },
-            { gateway: {} as never, registered: mockRegistered },
+            { gateway: {} as never, ...deps },
         );
         const result = action.execute();
 
@@ -79,7 +80,7 @@ describe('GetObjectsAction', () => {
         // Act
         const action = new GetObjectsAction(
             { ids: [] },
-            { gateway: {} as never, registered: mockRegistered },
+            { gateway: {} as never, ...deps },
         );
         const result = action.execute();
 
@@ -106,12 +107,12 @@ describe('GetObjectsAction', () => {
             },
         };
 
-        mockRegistered.set(object1.id, object1);
+        deps.registry.register(object1);
 
         // Act
         const action = new GetObjectsAction(
             { ids: ['non-existent'] },
-            { gateway: {} as never, registered: mockRegistered },
+            { gateway: {} as never, ...deps },
         );
         const result = action.execute();
 

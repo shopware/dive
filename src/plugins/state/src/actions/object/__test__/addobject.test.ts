@@ -1,3 +1,4 @@
+import { makeActionDeps } from '../../../__test__/actionDeps.ts';
 import { type EngineGateway } from '../../../EngineGateway.ts';
 import { type DIVESceneObject } from '@shopware-ag/dive';
 import { AddObjectAction } from '../addobject.ts';
@@ -8,14 +9,13 @@ const existingSceneObject = { name: 'already there' } as DIVESceneObject;
 
 const mockGateway = {
     addEntity: vi.fn(),
-    findEntity: vi.fn().mockReturnValue(existingSceneObject),
 } as unknown as EngineGateway;
 
-const mockRegistered = new Map<string, EntitySchema>();
+const deps = makeActionDeps();
 
 describe('AddObjectAction', () => {
     beforeEach(() => {
-        mockRegistered.clear();
+        deps.registry.clear();
         vi.clearAllMocks();
     });
 
@@ -32,7 +32,7 @@ describe('AddObjectAction', () => {
 
         const action = new AddObjectAction(testObject, {
             gateway: mockGateway,
-            registered: mockRegistered,
+            ...deps,
         });
 
         // Execute action
@@ -40,7 +40,7 @@ describe('AddObjectAction', () => {
 
         // Verify results
         expect(mockGateway.addEntity).toHaveBeenCalledWith(testObject);
-        expect(mockRegistered.get(testObject.id)).toEqual(testObject);
+        expect(deps.registry.read(testObject.id)?.schema).toEqual(testObject);
     });
 
     it('should not add an object if it already exists', async () => {
@@ -54,12 +54,12 @@ describe('AddObjectAction', () => {
             visible: true,
         } as unknown as EntitySchema;
 
-        // Add the object first
-        mockRegistered.set(testObject.id, testObject);
+        // already there, node included — that node is what comes back
+        deps.registry.register(testObject, existingSceneObject);
 
         const action = new AddObjectAction(testObject, {
             gateway: mockGateway,
-            registered: mockRegistered,
+            ...deps,
         });
 
         // awaited, so a rejection surfaces here instead of going unhandled
@@ -67,7 +67,6 @@ describe('AddObjectAction', () => {
 
         // Verify results
         expect(mockGateway.addEntity).not.toHaveBeenCalled();
-        expect(mockGateway.findEntity).toHaveBeenCalledWith(testObject);
         expect(result).toBe(existingSceneObject);
     });
 });

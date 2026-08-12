@@ -5,12 +5,12 @@ import { isModelSchema } from '../../../types/index.ts';
 
 export const ModelLoadedAction = Action.define<
     { id: string },
-    Pick<ActionDependencies, 'registered'>,
+    Pick<ActionDependencies, 'registry'>,
     void
 >({
     description: 'Is triggered when a model is loaded.',
-    execute: (payload, { registered }) => {
-        const model = registered.get(payload.id);
+    execute: (payload, { registry }) => {
+        const model = registry.read(payload.id)?.schema;
 
         if (!model) {
             throw new Error(`Model with id ${payload.id} not found`);

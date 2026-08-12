@@ -5,17 +5,17 @@ import { type EntitySchema } from '../../../types/index.ts';
 
 export const GetObjectsAction = Action.define<
     { ids: string[] },
-    Pick<ActionDependencies, 'gateway' | 'registered'>,
+    Pick<ActionDependencies, 'gateway' | 'registry'>,
     EntitySchema[]
 >({
     description: 'Returns a list of objects of given IDs.',
-    execute: (payload, { registered }) => {
-        if (payload.ids.length === 0) return [];
-
-        return Array.from(registered.values()).filter((object) =>
-            payload.ids.includes(object.id),
-        );
-    },
+    // Looks each id up instead of scanning every entity and filtering, which is
+    // what `read(id)` is for. Unknown ids drop out rather than throwing, as
+    // before.
+    execute: (payload, { registry }) =>
+        payload.ids
+            .map((id) => registry.read(id)?.schema)
+            .filter((schema): schema is EntitySchema => schema !== undefined),
 });
 
 declare global {
