@@ -8,7 +8,7 @@ import {
     type PartialSchema,
 } from '../../../types/index.ts';
 import { copyVectors } from '../copyVectors/copyVectors.ts';
-import { updateParentLink } from '../parentLink/parentLink.ts';
+import { updateParentLink } from '../updateParentLink/updateParentLink.ts';
 
 /**
  * Listens to what a scene object reports about itself and records it.

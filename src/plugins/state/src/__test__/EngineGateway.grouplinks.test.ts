@@ -199,6 +199,69 @@ describe('plugins/state/EngineGateway group links', () => {
         expect(linesOf('g').lines.visible).toBe(false);
     });
 
+    describe('a member that leaves without the gateway', () => {
+        // The group listens for `childremoved`, so it drops the link whichever
+        // way a member goes. Callers used to have to remember this, and a line
+        // stayed behind -- still drawn, and still holding the departed member,
+        // its subtree and its geometry alive -- whenever anyone re-parented a
+        // node through the engine directly.
+
+        it('should lose its line when re-parented straight through three', async () => {
+            await addEntity(gateway, groupSchema('g'));
+            const member = (await addEntity(
+                gateway,
+                modelSchema('m', 'g'),
+            )) as DIVENode;
+            expect(linesOf('g').lineCount).toBe(1);
+
+            // no gateway, no action: three's own re-parenting
+            gateway.root.attach(member);
+
+            expect(linesOf('g').lineCount).toBe(0);
+            expect(linesOf('g').hasLineFor(member)).toBe(false);
+        });
+
+        it('should lose its line when removed straight through three', async () => {
+            await addEntity(gateway, groupSchema('g'));
+            const member = (await addEntity(
+                gateway,
+                modelSchema('m', 'g'),
+            )) as DIVENode;
+
+            member.removeFromParent();
+
+            expect(linesOf('g').lineCount).toBe(0);
+        });
+
+        it('should keep the lines of the members that stayed', async () => {
+            await addEntity(gateway, groupSchema('g'));
+            const leaving = (await addEntity(
+                gateway,
+                modelSchema('leaving', 'g'),
+            )) as DIVENode;
+            await addEntity(gateway, modelSchema('staying', 'g'));
+
+            gateway.root.attach(leaving);
+
+            expect(linesOf('g').lineCount).toBe(1);
+        });
+
+        it('should not mind a component being detached', async () => {
+            // components travel through childremoved as well, and never had a line
+            await addEntity(gateway, groupSchema('g'));
+            await addEntity(gateway, modelSchema('m', 'g'));
+            const group = gateway.findEntity({
+                id: 'g',
+                entityType: 'group',
+            }) as DIVENode;
+            const lines = linesOf('g');
+
+            group.removeComponent(lines);
+
+            expect(lines.lineCount).toBe(1);
+        });
+    });
+
     it('should forget every scene object on dispose', async () => {
         // there is no line bookkeeping left to forget here — the line component
         // owns which member each line belongs to

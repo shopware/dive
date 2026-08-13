@@ -28,10 +28,7 @@ import {
     type PartialSchema,
     type PrimitiveSchema,
 } from '../types/index.ts';
-import {
-    removeParentLink,
-    updateParentLink,
-} from './helpers/parentLink/parentLink.ts';
+import { updateParentLink } from './helpers/updateParentLink/updateParentLink.ts';
 
 /**
  * The scene properties that are not entities.
@@ -172,7 +169,6 @@ export class EngineGateway {
         }
 
         this._entities.delete(entity.id);
-        removeParentLink(sceneObject);
 
         detachTransformControls(sceneObject);
 
@@ -267,7 +263,20 @@ export class EngineGateway {
         if (isGroupSchema(entity)) {
             const group = new DIVENode();
             group.name = 'DIVEGroup';
-            group.addComponent(new MultiLineComponent());
+            const lines = group.addComponent(new MultiLineComponent());
+
+            // A member that leaves has to lose its link, and the group is the
+            // only one who can tell: `Object3D.remove` nulls `child.parent`
+            // before announcing anything, so a departing member can no longer
+            // reach the line drawn for it. `childremoved` fires here and carries
+            // the child, and `attach` removes from the old parent first -- so
+            // re-parenting comes through here too, even straight through three.
+            // A detached component lands here as well, harmlessly: it never had
+            // a line.
+            group.addEventListener('childremoved', (event) =>
+                lines.removeLineFor(event.child),
+            );
+
             return group;
         }
         if (isLightSchema(entity)) return this._instantiateLight(entity);
@@ -431,8 +440,6 @@ export class EngineGateway {
             );
             return;
         }
-
-        removeParentLink(sceneObject);
 
         if (entity.parentId === null) {
             this.root.attach(sceneObject);
