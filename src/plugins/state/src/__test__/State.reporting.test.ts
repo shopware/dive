@@ -1,3 +1,4 @@
+import { Object3D } from 'three/webgpu';
 import {
     DIVENode,
     DIVERoot,
@@ -80,9 +81,18 @@ describe('plugins/state/State reporting to subscribers', () => {
         State['__instances'] = [];
 
         root = new DIVERoot();
+        // enough of a scene and a controller for the toolbox to build on, which
+        // the selection actions need
         state = new State(
-            { scene: { root } } as unknown as DIVE,
-            {} as unknown as OrbitController,
+            {
+                scene: Object.assign(new Object3D(), { root }),
+            } as unknown as DIVE,
+            {
+                domElement: document.createElement('canvas'),
+                object: new Object3D(),
+                addEventListener: vi.fn(),
+                removeEventListener: vi.fn(),
+            } as unknown as OrbitController,
         );
 
         node = await addModel();
@@ -320,6 +330,105 @@ describe('plugins/state/State reporting to subscribers', () => {
             node.setPosition({ x: 3, y: 0, z: 0 });
 
             expect(onUpdate).toHaveBeenCalledTimes(1);
+        });
+    });
+
+    describe('how many notifications a selection produces', () => {
+        // One per object whose selection actually changed. An action used to
+        // announce itself twice: `performAction` reports it when it returns, and
+        // the object reported it as well, because the action drove the selection
+        // through the same call a click does.
+        const otherModel = async (): Promise<DIVENode> => {
+            const added = (await state.performAction('ADD_OBJECT', {
+                ...modelData(),
+                id: 'model-2',
+            })) as DIVESceneObject;
+
+            return added as unknown as DIVENode;
+        };
+
+        let selects: unknown[];
+        let deselects: unknown[];
+
+        beforeEach(() => {
+            selects = [];
+            deselects = [];
+            state.subscribe('SELECT_OBJECT', (payload) =>
+                selects.push(payload),
+            );
+            state.subscribe('DESELECT_OBJECT', (payload) =>
+                deselects.push(payload),
+            );
+        });
+
+        it('should send one for a selection through the action', async () => {
+            await state.performAction('SELECT_OBJECT', { id: 'model-1' });
+
+            expect(selects).toHaveLength(1);
+        });
+
+        it('should send one for a click', async () => {
+            const toolbox = await state['getToolbox']();
+
+            toolbox.selectionState.select(node as never);
+
+            expect(selects).toHaveLength(1);
+        });
+
+        it('should announce the object a selection displaced', async () => {
+            // the only source for that news: nobody asked for it, so the object
+            // reports it even on the silent path
+            await otherModel();
+            await state.performAction('SELECT_OBJECT', { id: 'model-1' });
+            selects.length = 0;
+
+            await state.performAction('SELECT_OBJECT', { id: 'model-2' });
+
+            expect(selects).toHaveLength(1);
+            expect(deselects).toEqual([{ id: 'model-1', entityType: 'model' }]);
+        });
+
+        it('should still send one when the same object is selected again', async () => {
+            // SelectionState stops early, so nothing reports -- the one
+            // performAction sends is what keeps this from going unanswered
+            await state.performAction('SELECT_OBJECT', { id: 'model-1' });
+            selects.length = 0;
+
+            await state.performAction('SELECT_OBJECT', { id: 'model-1' });
+
+            expect(selects).toHaveLength(1);
+        });
+
+        it('should send one for a deselection through the action', async () => {
+            await state.performAction('SELECT_OBJECT', { id: 'model-1' });
+
+            await state.performAction('DESELECT_OBJECT', { id: 'model-1' });
+
+            expect(deselects).toHaveLength(1);
+        });
+
+        it('should send one for a click that deselects', async () => {
+            const toolbox = await state['getToolbox']();
+            toolbox.selectionState.select(node as never);
+            deselects.length = 0;
+
+            toolbox.selectionState.deselect();
+
+            expect(deselects).toHaveLength(1);
+        });
+
+        it('should still let the gizmo attach on a programmatic selection', async () => {
+            // TransformTool listens through onChange, which the silent path fires
+            const toolbox = await state['getToolbox']();
+            const changes: unknown[] = [];
+            toolbox.selectionState.onChange((selected) =>
+                changes.push(selected),
+            );
+
+            await state.performAction('SELECT_OBJECT', { id: 'model-1' });
+
+            expect(changes).toEqual([node]);
+            expect(toolbox.selectionState.selected).toBe(node);
         });
     });
 

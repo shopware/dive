@@ -11,8 +11,10 @@ const mockSceneObject = {
 } as unknown as Object3D & DIVESelectable;
 
 const mockSelectionState = {
-    select: vi.fn(),
-    deselect: vi.fn(),
+    // the silent variants: the action announces the change itself, through
+    // performAction, so the object must not announce it as well
+    applySelection: vi.fn(),
+    applyDeselection: vi.fn(),
 } as unknown as SelectionState;
 
 const mockGetToolbox = vi.fn().mockResolvedValue({
@@ -62,7 +64,7 @@ describe('DeselectObjectAction', () => {
         await action.execute();
 
         // Assert
-        expect(mockSelectionState.deselect).toHaveBeenCalled();
+        expect(mockSelectionState.applyDeselection).toHaveBeenCalled();
     });
 
     it('should return false if object does not exist', async () => {
