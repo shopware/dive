@@ -218,70 +218,133 @@ export class DIVENode
     }
 
     public setPosition(position: Vector3Like): void {
-        // if there is no parent, the object will be attached later and keep it's world position
-        if (!this.parent) {
-            this.position.set(position.x, position.y, position.z);
-            // Nothing to report: without a parent there is no world position
-            // yet, and attaching will produce the real one.
-            return;
-        }
-
-        // if we have a parent, we have to calculate the position in the parent's coordinate system to keep the world position
-        const newPosition = new Vector3(position.x, position.y, position.z);
-        const target = this.parent.worldToLocal(newPosition);
-
-        // A tolerance rather than `equals`, because the target came through a
-        // matrix: an unchanged world position does not map back to a bit-identical
-        // local one. Without this, a patch carrying all three transform fields
-        // would report three moves for one changed value.
-        if (this.position.distanceToSquared(target) < 1e-12) return;
-
-        this.position.copy(target);
-        this._reportTransform();
+        if (this._writeTransform({ position })) this.onMove();
     }
 
     public setRotation(rotation: Vector3Like): void {
-        // Exact, unlike setPosition: the value is written straight through with
-        // no matrix in between.
-        if (
-            this.rotation.x === rotation.x &&
-            this.rotation.y === rotation.y &&
-            this.rotation.z === rotation.z
-        )
-            return;
-
-        this.rotation.set(rotation.x, rotation.y, rotation.z);
-        this._reportTransform();
+        if (this._writeTransform({ rotation })) this.onMove();
     }
 
     public setScale(scale: Vector3Like): void {
-        if (
-            this.scale.x === scale.x &&
-            this.scale.y === scale.y &&
-            this.scale.z === scale.z
-        )
-            return;
-
-        this.scale.set(scale.x, scale.y, scale.z);
-        this._reportTransform();
+        if (this._writeTransform({ scale })) this.onMove();
     }
 
     /**
-     * Reports this node's new transform, and its members' new world transforms.
+     * Writes a transform **without reporting it for this node**.
+     *
+     * For a caller that announces the change itself: the state's apply path
+     * writes a whole patch and its action announces it once. Going through
+     * `setPosition`, `setRotation` and `setScale` there meant three reports for
+     * one patch, on top of the action's own — which is what this exists to avoid.
+     *
+     * Members are still woken, because nothing else tells them: their own
+     * transform did not change, but their world transform did, and no caller
+     * knows about them.
+     *
+     * @param patch - The parts of the transform to write. Anything absent is left
+     * alone.
+     */
+    public applyTransform(patch: {
+        position?: Vector3Like | null;
+        rotation?: Vector3Like | null;
+        scale?: Vector3Like | null;
+    }): void {
+        if (this._writeTransform(patch)) this._reportMembers();
+    }
+
+    /**
+     * Reports this node's transform, and its members' new world transforms.
      *
      * One event for every kind of move, so a listener never has to ask what
      * caused it: a gizmo drag and a `setPosition` both arrive as
      * `object-transform`.
      *
-     * Members report too, and recursively. Their own local transform did not
-     * change, but their world transform did, and that is what gets reported.
-     * This used to happen for `setPosition` only, one level deep — so rotating a
-     * group left its members' reported positions stale, and a nested group never
-     * heard about anything.
+     * Can be called when the object is moved from a foreign object (gizmo,
+     * parent, etc.) to update the object's position.
      */
-    private _reportTransform(): void {
-        this.onMove();
-        this.nodes.forEach((node) => node._reportTransform());
+    public onMove(): void {
+        this.dispatchEvent({
+            type: 'object-transform',
+            position: this.getWorldPosition(this._positionWorldBuffer),
+            rotation: this.rotation,
+            scale: this.scale,
+        });
+
+        this._reportMembers();
+    }
+
+    /**
+     * Writes whatever the patch carries, guarded field by field.
+     *
+     * @returns Whether anything actually changed. Nothing reports otherwise, so
+     * a patch that repeats the current transform stays silent.
+     */
+    private _writeTransform(patch: {
+        position?: Vector3Like | null;
+        rotation?: Vector3Like | null;
+        scale?: Vector3Like | null;
+    }): boolean {
+        let changed = false;
+
+        const { position, rotation, scale } = patch;
+
+        if (position !== undefined && position !== null) {
+            // if there is no parent, the object will be attached later and keep it's world position
+            if (!this.parent) {
+                this.position.set(position.x, position.y, position.z);
+                // Not a change to report: without a parent there is no world
+                // position yet, and attaching will produce the real one.
+            } else {
+                // if we have a parent, we have to calculate the position in the parent's coordinate system to keep the world position
+                const target = this.parent.worldToLocal(
+                    new Vector3(position.x, position.y, position.z),
+                );
+
+                // A tolerance rather than `equals`, because the target came
+                // through a matrix: an unchanged world position does not map back
+                // to a bit-identical local one.
+                if (this.position.distanceToSquared(target) >= 1e-12) {
+                    this.position.copy(target);
+                    changed = true;
+                }
+            }
+        }
+
+        // Exact, unlike the position: these are written straight through with no
+        // matrix in between.
+        if (rotation !== undefined && rotation !== null) {
+            if (
+                this.rotation.x !== rotation.x ||
+                this.rotation.y !== rotation.y ||
+                this.rotation.z !== rotation.z
+            ) {
+                this.rotation.set(rotation.x, rotation.y, rotation.z);
+                changed = true;
+            }
+        }
+
+        if (scale !== undefined && scale !== null) {
+            if (
+                this.scale.x !== scale.x ||
+                this.scale.y !== scale.y ||
+                this.scale.z !== scale.z
+            ) {
+                this.scale.set(scale.x, scale.y, scale.z);
+                changed = true;
+            }
+        }
+
+        return changed;
+    }
+
+    /**
+     * Has every member report its new world transform, recursively.
+     *
+     * Members are reached through their own `onMove`, so a nested group carries
+     * on down its own members.
+     */
+    private _reportMembers(): void {
+        this.nodes.forEach((node) => node.onMove());
     }
 
     /**
@@ -352,18 +415,6 @@ export class DIVENode
     public setToWorldOrigin(): void {
         this.position.set(0, 0, 0);
         this.onMove();
-    }
-
-    /**
-     * Can be called when the object is moved from a foreign object (gizmo, parent, etc.) to update the object's position.
-     */
-    public onMove(): void {
-        this.dispatchEvent({
-            type: 'object-transform',
-            position: this.getWorldPosition(this._positionWorldBuffer),
-            rotation: this.rotation,
-            scale: this.scale,
-        });
     }
 
     public onSelect(): void {

@@ -304,24 +304,31 @@ export class EngineGateway {
     ): Promise<void> {
         switch (patch.entityType) {
             case 'camera':
+                // state-only: there is nothing in the scene to write to
                 return;
             case 'light':
                 this._applyLight(sceneObject as DIVENode, patch);
-                return;
+                break;
             case 'model':
                 await this._applyModel(sceneObject as DIVENode, patch);
-                return;
+                break;
             case 'primitive':
                 this._applyPrimitive(sceneObject as DIVENode, patch);
-                return;
+                break;
             case 'group':
                 this._applyGroup(sceneObject as DIVENode, patch);
-                return;
+                break;
             default:
                 throw new Error(
                     `EngineGateway.updateEntity: Unknown entity type: ${(patch as EntitySchema).entityType}`,
                 );
         }
+
+        // A member a patch moved needs its link to the group redrawn. The gizmo
+        // path gets that from the member's own transform report, but
+        // `applyTransform` is deliberately silent -- so the write path says it
+        // here, once, instead of in each of the four branches above.
+        updateParentLink(sceneObject);
     }
 
     private _applyLight(
@@ -330,11 +337,10 @@ export class EngineGateway {
     ): void {
         if (props.name !== undefined) sceneObject.name = props.name;
 
-        // setPosition, not position.set: a light is a node like any other entity,
-        // so its schema position is a world position. Setting the local vector
-        // directly put a light inside a group in group space.
-        if (props.position !== undefined && props.position !== null)
-            sceneObject.setPosition(props.position);
+        // applyTransform, not position.set: a light is a node like any other
+        // entity, so its schema position is a world position. Setting the local
+        // vector directly put a light inside a group in group space.
+        sceneObject.applyTransform(props);
 
         // every light component on the node, whatever kind: a scene light has two
         const lights = sceneObject.getComponents(DIVELightComponent);
@@ -365,12 +371,7 @@ export class EngineGateway {
             sceneObject.userData.uri = model.uri;
         }
         if (model.name !== undefined) sceneObject.name = model.name;
-        if (model.position !== undefined && model.position !== null)
-            sceneObject.setPosition(model.position);
-        if (model.rotation !== undefined && model.rotation !== null)
-            sceneObject.setRotation(model.rotation);
-        if (model.scale !== undefined && model.scale !== null)
-            sceneObject.setScale(model.scale);
+        sceneObject.applyTransform(model);
         if (model.visible !== undefined)
             sceneObject.setVisibility(model.visible);
         if (model.material !== undefined && model.material !== null)
@@ -390,12 +391,7 @@ export class EngineGateway {
             sceneObject
                 .requireComponent(PrimitiveMeshComponent)
                 .setGeometry(primitive.geometry);
-        if (primitive.position !== undefined && primitive.position !== null)
-            sceneObject.setPosition(primitive.position);
-        if (primitive.rotation !== undefined && primitive.rotation !== null)
-            sceneObject.setRotation(primitive.rotation);
-        if (primitive.scale !== undefined && primitive.scale !== null)
-            sceneObject.setScale(primitive.scale);
+        sceneObject.applyTransform(primitive);
         if (primitive.visible !== undefined)
             sceneObject.setVisibility(primitive.visible);
         if (primitive.material !== undefined && primitive.material !== null)
@@ -411,12 +407,7 @@ export class EngineGateway {
         props: PartialSchema<GroupSchema>,
     ): void {
         if (props.name !== undefined) sceneObject.name = props.name;
-        if (props.position !== undefined && props.position !== null)
-            sceneObject.setPosition(props.position);
-        if (props.rotation !== undefined && props.rotation !== null)
-            sceneObject.setRotation(props.rotation);
-        if (props.scale !== undefined && props.scale !== null)
-            sceneObject.setScale(props.scale);
+        sceneObject.applyTransform(props);
         if (props.visible !== undefined)
             sceneObject.setVisibility(props.visible);
         if (props.bbVisible !== undefined)
