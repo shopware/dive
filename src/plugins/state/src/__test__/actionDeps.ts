@@ -3,7 +3,7 @@ import {
     type ActionDependencies,
     type EntitySchema,
 } from '../../types/index.ts';
-import { Registry } from '../Registry.ts';
+import { EntityRegistry } from '../EntityRegistry.ts';
 
 /** One entity to put into the registry before the action runs. */
 export type SeedEntity = {
@@ -15,7 +15,7 @@ export type SeedEntity = {
 /**
  * Builds the registry-related dependencies an action expects.
  *
- * Uses a **real** {@link Registry}, not a mock: `read`/`write`/`register` do the
+ * Uses a **real** {@link EntityRegistry}, not a mock: `read`/`write`/`register` do the
  * actual thing, so a test asserts on stored data rather than on which method got
  * called. That also means the vector copying in `write` is exercised instead of
  * stubbed away.
@@ -27,7 +27,7 @@ export type SeedEntity = {
 export const makeActionDeps = (
     entities: SeedEntity[] = [],
 ): Pick<ActionDependencies, 'registry' | 'dispatch'> => {
-    const registry = new Registry();
+    const registry = new EntityRegistry();
     entities.forEach(({ schema, node }) => registry.register(schema, node));
 
     return { registry, dispatch: vi.fn() };

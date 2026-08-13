@@ -19,7 +19,7 @@ import {
 import { Color, MeshStandardMaterial, Vector3 } from 'three/webgpu';
 import { OrbitController } from '@shopware-ag/dive/orbitcontroller';
 import { type StateData } from '../../../../types/index.ts';
-import { Registry } from '../../../Registry.ts';
+import { EntityRegistry } from '../../../EntityRegistry.ts';
 
 // SET_STATE builds these actions itself, so both the constructor arguments and
 // the executions are recorded. Payload and dependencies are handed to the
@@ -43,7 +43,7 @@ vi.mock('@shopware-ag/dive/state', () => ({
     })),
 }));
 
-type MockDeps = { registry: Registry };
+type MockDeps = { registry: EntityRegistry };
 
 /** Restores the default behaviour, since single tests override it. */
 const resetActionMocks = (): void => {
@@ -74,10 +74,10 @@ const createDependencies = (
 ): {
     gateway: EngineGateway;
     controller: OrbitController;
-    registry: Registry;
+    registry: EntityRegistry;
     dispatch: ReturnType<typeof vi.fn>;
 } => {
-    const registry = new Registry();
+    const registry = new EntityRegistry();
     alreadyRegistered.forEach((entity) => registry.register(entity));
 
     // what the scene ends up holding is the gateway's own business, tested
@@ -473,7 +473,7 @@ describe('SetStateAction', () => {
         gateway: EngineGateway;
         controller: OrbitController;
         state: State;
-        registry: Registry;
+        registry: EntityRegistry;
         dispatch: ReturnType<typeof vi.fn>;
         scene: { name: string; background: Color };
         floor: { visible: boolean; material: MeshStandardMaterial };
@@ -512,7 +512,7 @@ describe('SetStateAction', () => {
             target: Vector3;
         };
 
-        const registry = new Registry();
+        const registry = new EntityRegistry();
         entities.forEach((entity) => registry.register(entity));
 
         // stands in for the real action dispatch: ADD_OBJECT registers,

@@ -1,6 +1,6 @@
 import { type OrbitController } from '@shopware-ag/dive/orbitcontroller';
 import { type EngineGateway } from '../src/EngineGateway.ts';
-import { type Registry } from '../src/Registry.ts';
+import { type EntityRegistry } from '../src/EntityRegistry.ts';
 
 // Extracted types for performAction_new
 export type ActionPayload<T> = T extends new (
@@ -36,7 +36,7 @@ export interface ActionDependencies {
      * stored stays the registry's business — and so `write` stays the only way
      * into a schema, which is what makes the vector-copy rule enforceable.
      */
-    registry: Registry;
+    registry: EntityRegistry;
 
     /**
      * Notifies subscribers without performing an action.

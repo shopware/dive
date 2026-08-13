@@ -1,6 +1,6 @@
 import { Vector3 } from 'three/webgpu';
 import { type DIVESceneObject } from '@shopware-ag/dive';
-import { Registry } from '../Registry.ts';
+import { EntityRegistry } from '../EntityRegistry.ts';
 import { type EntitySchema, type PartialSchema } from '../../types/index.ts';
 
 const schema = (id: string, overrides: object = {}): EntitySchema =>
@@ -22,11 +22,11 @@ const node = (): DIVESceneObject => ({ name: 'node' }) as DIVESceneObject;
 const patch = (id: string, changed: object): PartialSchema =>
     ({ id, entityType: 'model', ...changed }) as unknown as PartialSchema;
 
-describe('Registry', () => {
-    let registry: Registry;
+describe('EntityRegistry', () => {
+    let registry: EntityRegistry;
 
     beforeEach(() => {
-        registry = new Registry();
+        registry = new EntityRegistry();
     });
 
     describe('read', () => {
