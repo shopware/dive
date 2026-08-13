@@ -23,23 +23,56 @@ const INITIAL_CAPACITY = 8;
 const _delta = new Vector3();
 
 /**
- * Identifies a line for later updates. Only valid until the line is removed.
+ * Whatever a caller identifies one of its lines by.
+ *
+ * Opaque here: this component never inspects a key, it only compares them. A
+ * caller drawing lines to scene objects passes the objects; one drawing an
+ * arbitrary set passes numbers or symbols.
  */
-export type DIVELineHandle = number;
+export type DIVELineKey = unknown;
+
+/**
+ * One line: where it is drawn, and where in the shared buffer it lives.
+ *
+ * Named for the prefix rather than plain `Line`, which is three's own class.
+ */
+type DIVELine = {
+    /**
+     * Index of this line's two vertices in the shared buffer.
+     *
+     * Fixed for the line's lifetime, so moving or hiding it never touches
+     * another line's vertices.
+     */
+    readonly slot: number;
+    readonly start: Vector3;
+    readonly end: Vector3;
+    /**
+     * Whether the line is drawn, spelled as `Object3D.visible` is rather than
+     * inverted, so it reads the same way as everything else in the scene.
+     */
+    visible: boolean;
+};
 
 /**
  * Draws a set of independent line segments.
  *
  * A pure drawing primitive: it knows about points, nothing else. It does not
  * watch the scene, does not care what the lines mean, and never decides when
- * they should change — a caller adds lines, moves them and removes them. What
- * keeps the lines in sync with something else is that caller's job (see
- * `GroupLinksComponent` for the group case).
+ * they should change — a caller places lines and removes them. What keeps the
+ * lines in sync with something else is that caller's job.
  *
  * All lines share **one** `LineSegments`, so the whole set costs a single draw
  * call no matter how many there are. Each line owns a fixed slot of two vertices
  * in a shared buffer, so adding, moving or hiding one rewrites only that slot and
  * uploads only that range.
+ *
+ * ### Lines are addressed by the caller's own identity for them
+ *
+ * There is no line handle to keep. `setLineFor(key, …)` places the line for a
+ * key, adding it if there is none yet, so a caller never holds a second piece of
+ * bookkeeping beside the thing the line belongs to — which is where handles and
+ * their objects used to drift apart. It also means placing and moving are one
+ * call, so the two cannot be confused.
  *
  * Coordinates are in the component's own space, which is its owner's space.
  * Passing world-space points would have them transformed a second time by the
@@ -57,14 +90,17 @@ export class MultiLineComponent extends DIVEComponent {
     private _positions: Float32BufferAttribute;
     private _distances: Float32BufferAttribute;
 
-    /** Slots currently handed out. */
-    private _used: Set<DIVELineHandle> = new Set();
+    /**
+     * Every line, by the key it was placed under.
+     *
+     * The single piece of bookkeeping: which keys exist, where each line is
+     * drawn, which buffer slot it owns and whether it is visible. Those were four
+     * separate containers keyed by a handle, which had to be kept in step with
+     * each other and with whatever the caller kept on its own side.
+     */
+    private _byKey: Map<DIVELineKey, DIVELine> = new Map();
     /** Slots freed by removed lines, reused before the buffer grows. */
-    private _freeSlots: DIVELineHandle[] = [];
-    /** Slots whose line is hidden, collapsed rather than removed. */
-    private _hidden: Set<DIVELineHandle> = new Set();
-    /** The endpoints of each slot, so a hidden line can be restored. */
-    private _endpoints: Map<DIVELineHandle, [Vector3, Vector3]> = new Map();
+    private _freeSlots: number[] = [];
 
     private _capacity: number = INITIAL_CAPACITY;
     /** One past the highest slot ever used, i.e. what has to be drawn. */
@@ -102,73 +138,70 @@ export class MultiLineComponent extends DIVEComponent {
 
     /** How many lines currently exist, hidden ones included. */
     public get lineCount(): number {
-        return this._used.size;
+        return this._byKey.size;
     }
 
     /**
-     * Adds a line.
+     * Places the line for a key, adding it if there is none yet.
      *
-     * @param start - Where the line begins.
-     * @param end - Where the line ends.
-     * @returns A handle for updating or removing it.
-     */
-    public addLine(start: Vector3Like, end: Vector3Like): DIVELineHandle {
-        const handle = this._freeSlots.pop() ?? this._used.size;
-        if (handle >= this._capacity) this._grow();
-
-        this._used.add(handle);
-        this._endpoints.set(handle, [
-            new Vector3(start.x, start.y, start.z),
-            new Vector3(end.x, end.y, end.z),
-        ]);
-
-        if (handle + 1 > this._highWater) {
-            this._highWater = handle + 1;
-            this._geometry.setDrawRange(0, this._highWater * VERTICES_PER_LINE);
-        }
-
-        this._writeSlot(handle);
-
-        return handle;
-    }
-
-    /**
-     * Moves an existing line.
-     *
-     * @param handle - The line to move.
+     * @param key - Whatever the caller identifies this line by.
      * @param start - Where the line begins.
      * @param end - Where the line ends.
      */
-    public setLine(
-        handle: DIVELineHandle,
+    public setLineFor(
+        key: DIVELineKey,
         start: Vector3Like,
         end: Vector3Like,
     ): void {
-        const endpoints = this._endpoints.get(handle);
-        if (!endpoints) return;
+        const existing = this._byKey.get(key);
 
-        endpoints[0].set(start.x, start.y, start.z);
-        endpoints[1].set(end.x, end.y, end.z);
+        if (existing) {
+            existing.start.set(start.x, start.y, start.z);
+            existing.end.set(end.x, end.y, end.z);
+            this._writeLine(existing);
+            return;
+        }
 
-        this._writeSlot(handle);
+        const slot = this._freeSlots.pop() ?? this._byKey.size;
+        if (slot >= this._capacity) this._grow();
+
+        const line: DIVELine = {
+            slot,
+            start: new Vector3(start.x, start.y, start.z),
+            end: new Vector3(end.x, end.y, end.z),
+            visible: true,
+        };
+        this._byKey.set(key, line);
+
+        if (slot + 1 > this._highWater) {
+            this._highWater = slot + 1;
+            this._geometry.setDrawRange(0, this._highWater * VERTICES_PER_LINE);
+        }
+
+        this._writeLine(line);
     }
 
     /**
-     * Removes a line and frees its slot for reuse.
+     * Removes the line for a key and frees its slot for reuse. Does nothing if
+     * there is no such line.
      *
-     * @param handle - The line to remove.
+     * @param key - Whatever the caller identifies this line by.
      */
-    public removeLine(handle: DIVELineHandle): void {
-        if (!this._used.has(handle)) return;
+    public removeLineFor(key: DIVELineKey): void {
+        const line = this._byKey.get(key);
+        if (!line) return;
 
-        this._used.delete(handle);
-        this._hidden.delete(handle);
-        this._endpoints.delete(handle);
-        this._freeSlots.push(handle);
+        this._byKey.delete(key);
+        this._freeSlots.push(line.slot);
 
         // collapse rather than repack: every other line keeps its slot, so none
         // of them has to be rewritten
-        this._collapseSlot(handle);
+        this._collapseSlot(line.slot);
+    }
+
+    /** Whether a line is currently drawn for this key. */
+    public hasLineFor(key: DIVELineKey): boolean {
+        return this._byKey.has(key);
     }
 
     /**
@@ -177,19 +210,15 @@ export class MultiLineComponent extends DIVEComponent {
      * A hidden line keeps its slot and is collapsed to zero length, so toggling
      * it back costs one range upload and never reshuffles the buffer.
      *
-     * @param handle - The line to change.
+     * @param key - Whatever the caller identifies this line by.
      * @param visible - Whether it should be drawn.
      */
-    public setLineVisible(handle: DIVELineHandle, visible: boolean): void {
-        if (!this._used.has(handle)) return;
+    public setLineVisibleFor(key: DIVELineKey, visible: boolean): void {
+        const line = this._byKey.get(key);
+        if (!line) return;
 
-        if (visible) {
-            this._hidden.delete(handle);
-        } else {
-            this._hidden.add(handle);
-        }
-
-        this._writeSlot(handle);
+        line.visible = visible;
+        this._writeLine(line);
     }
 
     /**
@@ -226,11 +255,9 @@ export class MultiLineComponent extends DIVEComponent {
      * children, and overriding it with a different meaning would be a trap.
      */
     public clearLines(): void {
-        this._used.forEach((handle) => this._collapseSlot(handle));
-        this._used.clear();
+        this._byKey.forEach((line) => this._collapseSlot(line.slot));
+        this._byKey.clear();
         this._freeSlots = [];
-        this._hidden.clear();
-        this._endpoints.clear();
         this._highWater = 0;
         this._geometry.setDrawRange(0, 0);
     }
@@ -238,10 +265,8 @@ export class MultiLineComponent extends DIVEComponent {
     public dispose(): void {
         this._geometry.dispose();
         this._material.dispose();
-        this._used.clear();
+        this._byKey.clear();
         this._freeSlots = [];
-        this._hidden.clear();
-        this._endpoints.clear();
     }
 
     private _createAttribute(
@@ -256,19 +281,16 @@ export class MultiLineComponent extends DIVEComponent {
         return attribute;
     }
 
-    /** Writes a slot's endpoints, or collapses it when hidden. */
-    private _writeSlot(handle: DIVELineHandle): void {
-        const endpoints = this._endpoints.get(handle);
-        if (!endpoints) return;
-
-        if (this._hidden.has(handle)) {
-            this._collapseSlot(handle);
+    /** Writes a line's endpoints into its slot, or collapses it when hidden. */
+    private _writeLine(line: DIVELine): void {
+        if (!line.visible) {
+            this._collapseSlot(line.slot);
             return;
         }
 
-        const [start, end] = endpoints;
+        const { slot, start, end } = line;
 
-        const offset = handle * FLOATS_PER_LINE;
+        const offset = slot * FLOATS_PER_LINE;
         const positions = this._positions.array as Float32Array;
         positions[offset] = start.x;
         positions[offset + 1] = start.y;
@@ -281,41 +303,38 @@ export class MultiLineComponent extends DIVEComponent {
         // computeLineDistances() accumulates across segments instead, which lets
         // a short line land entirely inside a gap and vanish.
         const distances = this._distances.array as Float32Array;
-        const distanceOffset = handle * DISTANCES_PER_LINE;
+        const distanceOffset = slot * DISTANCES_PER_LINE;
         distances[distanceOffset] = 0;
         distances[distanceOffset + 1] = _delta.subVectors(end, start).length();
 
-        this._markSlotDirty(handle);
+        this._markSlotDirty(slot);
     }
 
-    private _collapseSlot(handle: DIVELineHandle): void {
-        const offset = handle * FLOATS_PER_LINE;
+    private _collapseSlot(slot: number): void {
+        const offset = slot * FLOATS_PER_LINE;
         (this._positions.array as Float32Array).fill(
             0,
             offset,
             offset + FLOATS_PER_LINE,
         );
 
-        const distanceOffset = handle * DISTANCES_PER_LINE;
+        const distanceOffset = slot * DISTANCES_PER_LINE;
         (this._distances.array as Float32Array).fill(
             0,
             distanceOffset,
             distanceOffset + DISTANCES_PER_LINE,
         );
 
-        this._markSlotDirty(handle);
+        this._markSlotDirty(slot);
     }
 
     /** Uploads just this slot's range instead of the whole buffer. */
-    private _markSlotDirty(handle: DIVELineHandle): void {
-        this._positions.addUpdateRange(
-            handle * FLOATS_PER_LINE,
-            FLOATS_PER_LINE,
-        );
+    private _markSlotDirty(slot: number): void {
+        this._positions.addUpdateRange(slot * FLOATS_PER_LINE, FLOATS_PER_LINE);
         this._positions.needsUpdate = true;
 
         this._distances.addUpdateRange(
-            handle * DISTANCES_PER_LINE,
+            slot * DISTANCES_PER_LINE,
             DISTANCES_PER_LINE,
         );
         this._distances.needsUpdate = true;

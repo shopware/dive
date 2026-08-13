@@ -1,4 +1,6 @@
 import { EngineGateway } from '../EngineGateway.ts';
+import { Registry } from '../Registry.ts';
+import { watchEntity } from '../watchEntity.ts';
 import {
     DIVENode,
     DIVERoot,
@@ -160,9 +162,20 @@ describe('plugins/state/EngineGateway group links', () => {
     });
 
     it('should follow a member that is repositioned by a patch', async () => {
+        // the full chain: a patch moves the node, the node reports it, and the
+        // report redraws the line. The gateway no longer has to remember to.
         await addEntity(gateway, groupSchema('g'));
-        await addEntity(gateway, modelSchema('m', 'g'));
-        const setLine = vi.spyOn(linesOf('g'), 'setLine');
+        const schema = modelSchema('m', 'g');
+        const member = (await addEntity(gateway, schema))!;
+
+        const registry = new Registry();
+        registry.register(
+            schema,
+            member,
+            watchEntity(member, schema, { registry, dispatch: vi.fn() }),
+        );
+
+        const setLine = vi.spyOn(linesOf('g'), 'setLineFor');
 
         await gateway.updateEntity({
             id: 'm',
@@ -186,15 +199,14 @@ describe('plugins/state/EngineGateway group links', () => {
         expect(linesOf('g').lines.visible).toBe(false);
     });
 
-    it('should forget its bookkeeping on dispose', async () => {
-        await addEntity(gateway, groupSchema('g'));
-        await addEntity(gateway, modelSchema('m', 'g'));
+    it('should forget every scene object on dispose', async () => {
+        // there is no line bookkeeping left to forget here — the line component
+        // owns which member each line belongs to
+        const group = groupSchema('g');
+        await addEntity(gateway, group);
 
         gateway.dispose();
 
-        expect(
-            (gateway as unknown as { _lineHandles: Map<unknown, unknown> })
-                ._lineHandles.size,
-        ).toBe(0);
+        expect(gateway.findEntity(group)).toBeUndefined();
     });
 });

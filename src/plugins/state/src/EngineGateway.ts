@@ -1,4 +1,4 @@
-import { Color, MeshStandardMaterial, Vector3 } from 'three/webgpu';
+import { Color, MeshStandardMaterial } from 'three/webgpu';
 import {
     AmbientLightComponent,
     detachTransformControls,
@@ -7,7 +7,6 @@ import {
     DIVENode,
     HemisphereLightComponent,
     MultiLineComponent,
-    type DIVELineHandle,
     MeshComponent,
     PrimitiveMeshComponent,
     PointLightComponent,
@@ -29,9 +28,7 @@ import {
     type PartialSchema,
     type PrimitiveSchema,
 } from '../types/index.ts';
-
-/** Link lines start at the group's own origin. */
-const ORIGIN = new Vector3();
+import { removeParentLink, updateParentLink } from './groupLines.ts';
 
 /**
  * The scene properties that are not entities.
@@ -82,14 +79,6 @@ export class EngineGateway {
 
     /** id -> scene object, so lookups do not walk the tree. */
     private readonly _entities: Map<string, DIVESceneObject> = new Map();
-
-    /**
-     * Which link line belongs to which member.
-     *
-     * Only members of a node that carries a `MultiLineComponent` appear here.
-     */
-    private readonly _lineHandles: Map<DIVESceneObject, DIVELineHandle> =
-        new Map();
 
     constructor(engine: DIVE) {
         this._engine = engine;
@@ -180,7 +169,7 @@ export class EngineGateway {
         }
 
         this._entities.delete(entity.id);
-        this._unlinkFromParent(sceneObject);
+        removeParentLink(sceneObject);
 
         detachTransformControls(sceneObject);
 
@@ -201,7 +190,6 @@ export class EngineGateway {
     /** Forgets every scene object. Listener teardown belongs to the registry. */
     public dispose(): void {
         this._entities.clear();
-        this._lineHandles.clear();
     }
 
     // ----------------------------------------------------------------- scene
@@ -319,19 +307,15 @@ export class EngineGateway {
                 return;
             case 'light':
                 this._applyLight(sceneObject as DIVENode, patch);
-                this.refreshParentLink(sceneObject);
                 return;
             case 'model':
                 await this._applyModel(sceneObject as DIVENode, patch);
-                this.refreshParentLink(sceneObject);
                 return;
             case 'primitive':
                 this._applyPrimitive(sceneObject as DIVENode, patch);
-                this.refreshParentLink(sceneObject);
                 return;
             case 'group':
                 this._applyGroup(sceneObject as DIVENode, patch);
-                this.refreshParentLink(sceneObject);
                 return;
             default:
                 throw new Error(
@@ -454,7 +438,7 @@ export class EngineGateway {
             return;
         }
 
-        this._unlinkFromParent(sceneObject);
+        removeParentLink(sceneObject);
 
         if (entity.parentId === null) {
             this.root.attach(sceneObject);
@@ -473,63 +457,6 @@ export class EngineGateway {
         }
 
         parent.attach(sceneObject);
-        this._linkToParent(sceneObject);
-    }
-
-    // ------------------------------------------------------------ group links
-
-    /**
-     * Draws a link from a group to a member it just gained.
-     *
-     * Grouping is a state-level idea: the engine only knows that some node holds
-     * a `MultiLineComponent`. So the knowledge that "a member gets a line from
-     * its parent's origin" lives here, and the line component stays a plain
-     * drawing primitive that watches nothing.
-     */
-    private _linkToParent(sceneObject: DIVESceneObject): void {
-        const lines = this._parentLines(sceneObject);
-        if (!lines) return;
-
-        this._lineHandles.set(
-            sceneObject,
-            lines.addLine(ORIGIN, sceneObject.position),
-        );
-    }
-
-    /** Drops the link a member had to its previous parent. */
-    private _unlinkFromParent(sceneObject: DIVESceneObject): void {
-        const handle = this._lineHandles.get(sceneObject);
-        if (handle === undefined) return;
-
-        this._lineHandles.delete(sceneObject);
-        this._parentLines(sceneObject)?.removeLine(handle);
-    }
-
-    /**
-     * Redraws a member's link after it moved.
-     *
-     * Called after a patch writes a position, and from the transform report in
-     * `watchEntity` — which is why it is public. That call goes away once the
-     * line follows its member through a listener on the node itself.
-     */
-    public refreshParentLink(sceneObject: DIVESceneObject): void {
-        const handle = this._lineHandles.get(sceneObject);
-        if (handle === undefined) return;
-
-        this._parentLines(sceneObject)?.setLine(
-            handle,
-            ORIGIN,
-            sceneObject.position,
-        );
-    }
-
-    /** The line component of this object's parent, if it has one. */
-    private _parentLines(
-        sceneObject: DIVESceneObject,
-    ): MultiLineComponent | undefined {
-        const parent = sceneObject.parent;
-        if (!parent || !('isDIVENode' in parent)) return undefined;
-
-        return (parent as unknown as DIVENode).getComponent(MultiLineComponent);
+        updateParentLink(sceneObject);
     }
 }

@@ -1,8 +1,11 @@
 import { Object3D, Vector3 } from 'three/webgpu';
-import { type DIVESceneObject } from '@shopware-ag/dive';
+import {
+    DIVENode,
+    MultiLineComponent,
+    type DIVESceneObject,
+} from '@shopware-ag/dive';
 import { watchEntity } from '../watchEntity.ts';
 import { Registry } from '../Registry.ts';
-import { type EngineGateway } from '../EngineGateway.ts';
 import { type EntitySchema, type ModelSchema } from '../../types/index.ts';
 
 /** Fresh per test, because the listeners write into it. */
@@ -23,7 +26,6 @@ describe('plugins/state/watchEntity', () => {
     let node: Object3D;
     let registry: Registry;
     let dispatch: ReturnType<typeof vi.fn>;
-    let gateway: EngineGateway;
     let unwatch: () => void;
 
     /**
@@ -38,11 +40,7 @@ describe('plugins/state/watchEntity', () => {
     /** Watches and registers in the order `ADD_OBJECT` does. */
     const watch = (entity: EntitySchema = modelData()): void => {
         const sceneObject = node as unknown as DIVESceneObject;
-        unwatch = watchEntity(sceneObject, entity, {
-            registry,
-            dispatch,
-            gateway,
-        });
+        unwatch = watchEntity(sceneObject, entity, { registry, dispatch });
         registry.register(entity, sceneObject, unwatch);
     };
 
@@ -50,7 +48,6 @@ describe('plugins/state/watchEntity', () => {
         node = new Object3D();
         registry = new Registry();
         dispatch = vi.fn();
-        gateway = { refreshParentLink: vi.fn() } as unknown as EngineGateway;
     });
 
     describe('a reported transform', () => {
@@ -121,11 +118,21 @@ describe('plugins/state/watchEntity', () => {
         });
 
         it('should redraw the link to the group it belongs to', () => {
+            const group = new DIVENode();
+            const lines = group.addComponent(new MultiLineComponent());
+            group.add(node);
             watch();
 
             fire('object-transform', transform);
 
-            expect(gateway.refreshParentLink).toHaveBeenCalledWith(node);
+            expect(lines.hasLineFor(node)).toBe(true);
+        });
+
+        it('should leave a parent that draws no lines alone', () => {
+            new DIVENode().add(node);
+            watch();
+
+            expect(() => fire('object-transform', transform)).not.toThrow();
         });
     });
 
