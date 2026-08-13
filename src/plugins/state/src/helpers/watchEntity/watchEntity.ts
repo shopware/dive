@@ -6,12 +6,9 @@ import {
     type ActionDependencies,
     type EntitySchema,
     type PartialSchema,
-} from '../types/index.ts';
-import { copyVectors } from './copyVectors.ts';
-import { updateParentLink } from './groupLines.ts';
-
-/** What a listener needs to record and announce what it heard. */
-type WatchDependencies = Pick<ActionDependencies, 'registry' | 'dispatch'>;
+} from '../../../types/index.ts';
+import { copyVectors } from '../copyVectors/copyVectors.ts';
+import { updateParentLink } from '../parentLink/parentLink.ts';
 
 /**
  * Listens to what a scene object reports about itself and records it.
@@ -43,7 +40,7 @@ type WatchDependencies = Pick<ActionDependencies, 'registry' | 'dispatch'>;
 export const watchEntity = (
     node: DIVESceneObject,
     entity: EntitySchema,
-    { registry, dispatch }: WatchDependencies,
+    { registry, dispatch }: Pick<ActionDependencies, 'registry' | 'dispatch'>,
 ): (() => void) => {
     const { id, entityType } = entity;
 

@@ -10,7 +10,7 @@ import { HELPER_LAYER_MASK } from '../../../constants/VisibilityLayerMask.ts';
 
 /**
  * Tests the drawing primitive only. It has no idea what a member or a group is;
- * `groupLines` in the state plugin owns that and is tested separately.
+ * `parentLink` in the state plugin owns that and is tested separately.
  */
 
 const ORIGIN = { x: 0, y: 0, z: 0 };

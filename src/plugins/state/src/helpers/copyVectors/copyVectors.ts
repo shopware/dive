@@ -1,4 +1,4 @@
-import { type PartialSchema } from '../types/index.ts';
+import { type PartialSchema } from '../../../types/index.ts';
 
 /** The schema fields that carry a vector. */
 const VECTOR_FIELDS = ['position', 'rotation', 'scale', 'target'] as const;

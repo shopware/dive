@@ -1,6 +1,6 @@
 import { EngineGateway } from '../EngineGateway.ts';
 import { Registry } from '../Registry.ts';
-import { watchEntity } from '../watchEntity.ts';
+import { watchEntity } from '../helpers/watchEntity/watchEntity.ts';
 import {
     DIVENode,
     DIVERoot,

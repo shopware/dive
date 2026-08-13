@@ -28,7 +28,10 @@ import {
     type PartialSchema,
     type PrimitiveSchema,
 } from '../types/index.ts';
-import { removeParentLink, updateParentLink } from './groupLines.ts';
+import {
+    removeParentLink,
+    updateParentLink,
+} from './helpers/parentLink/parentLink.ts';
 
 /**
  * The scene properties that are not entities.

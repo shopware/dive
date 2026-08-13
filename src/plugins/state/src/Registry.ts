@@ -5,7 +5,7 @@ import {
     type PartialSchema,
     type RegisteredEntity,
 } from '../types/index.ts';
-import { copyVectors } from './copyVectors.ts';
+import { copyVectors } from './helpers/copyVectors/copyVectors.ts';
 
 /**
  * Holds every entity the state knows: its data, its scene object, and the
