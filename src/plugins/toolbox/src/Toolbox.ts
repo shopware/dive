@@ -1,4 +1,4 @@
-import { Raycaster, Vector2, type Intersection, Layers } from 'three/webgpu';
+import { Raycaster, Vector2, type Intersection } from 'three/webgpu';
 import {
     type DIVEScene,
     isVisibleInHierarchy,
@@ -44,8 +44,6 @@ export class Toolbox {
     // Raycasting (shared, computed once per event)
     private _raycaster: Raycaster;
     private _pointer: Vector2;
-    private _productLayerMask: Layers;
-    private _uiLayerMask: Layers;
 
     // Pointer state
     private _pointerPrimaryDown: boolean = false;
@@ -70,13 +68,6 @@ export class Toolbox {
         this._raycaster = new Raycaster();
         this._pointer = new Vector2();
         this._lastPointerDown = new Vector2();
-
-        // Setup layer masks for filtering
-        this._productLayerMask = new Layers();
-        this._productLayerMask.set(Math.log2(PRODUCT_LAYER_MASK));
-
-        this._uiLayerMask = new Layers();
-        this._uiLayerMask.set(Math.log2(UI_LAYER_MASK));
 
         // Create and register all tools
         this._tools = new Map<ToolType, Tool>([

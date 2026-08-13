@@ -429,7 +429,7 @@ describe('plugins/state/EngineGateway', () => {
                 position: { x: 1, y: 2, z: 3 },
                 rotation: { x: 0, y: 0, z: 0 },
                 scale: { x: 1, y: 1, z: 1 },
-                bbVisible: true,
+                linksVisible: true,
                 parentId: null,
             };
 
@@ -445,7 +445,7 @@ describe('plugins/state/EngineGateway', () => {
             // all member lines share one LineSegments, so one flag covers them
             expect(
                 group?.requireComponent(MultiLineComponent).lines.visible,
-            ).toBe(groupData.bbVisible);
+            ).toBe(groupData.linksVisible);
         });
 
         it('should add a model object', async () => {
@@ -680,7 +680,7 @@ describe('plugins/state/EngineGateway', () => {
             const updatedData = {
                 ...groupData,
                 visible: false,
-                bbVisible: true,
+                linksVisible: true,
             };
 
             await gateway.updateEntity(updatedData);
