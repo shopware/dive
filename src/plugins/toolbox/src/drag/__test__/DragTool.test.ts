@@ -55,6 +55,7 @@ const createMockContext = (
     pointer: new Vector2(0, 0),
     intersects: [],
     modelIntersects: [],
+    entityIntersects: [],
     uiIntersects: [],
     pointerPrimaryDown: false,
     pointerMiddleDown: false,

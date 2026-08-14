@@ -21,6 +21,12 @@ export interface PointerContext {
     /** Intersections filtered to PRODUCT_LAYER (models only) */
     readonly modelIntersects: Intersection[];
 
+    /**
+     * Intersections that stand for an entity: real geometry, or a proxy for
+     * something that has none, such as a light's handle. What selecting reads.
+     */
+    readonly entityIntersects: Intersection[];
+
     /** Intersections filtered to UI_LAYER (gizmo, UI elements) */
     readonly uiIntersects: Intersection[];
 
@@ -54,6 +60,9 @@ export interface WheelContext {
 
     /** Intersections filtered to PRODUCT_LAYER (models only) */
     readonly modelIntersects: Intersection[];
+
+    /** Intersections that stand for an entity. See {@link PointerContext}. */
+    readonly entityIntersects: Intersection[];
 
     /** Intersections filtered to UI_LAYER (gizmo, UI elements) */
     readonly uiIntersects: Intersection[];

@@ -37,8 +37,9 @@ export class HoverTool implements Tool {
     }
 
     public onPointerMove(ctx: PointerContext): void {
-        // Only use modelIntersects (PRODUCT_LAYER), ignore gizmo/UI
-        const intersect = ctx.modelIntersects[0];
+        // Every hit, whatever layer: hovering is feedback, and anything the
+        // pointer can reach may want to respond to it.
+        const intersect = ctx.intersects[0];
         const hoverable = findInterface<DIVEHoverable>(
             intersect?.object,
             'isHoverable',

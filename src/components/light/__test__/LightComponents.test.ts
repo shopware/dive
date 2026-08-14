@@ -13,6 +13,7 @@ import { DIVELightComponent } from '../LightComponent.ts';
 import { DIVENode } from '../../node/Node.ts';
 import {
     PRODUCT_LAYER_MASK,
+    PROXY_LAYER_MASK,
     UI_LAYER_MASK,
 } from '../../../constants/VisibilityLayerMask.ts';
 
@@ -187,11 +188,14 @@ describe('dive/light components', () => {
             expect(component.light.castShadow).toBe(true);
         });
 
-        it('should own an editor handle on the ui layer', () => {
+        it('should own an editor handle on the proxy layer', () => {
+            // a proxy, not UI: the light has no geometry of its own, so this
+            // sphere is what a click has to be able to reach. UI is the gizmo,
+            // which must not be selectable as an object.
             const component = new PointLightComponent();
 
             expect(component.children).toContain(component.handle);
-            expect(component.handle.layers.mask).toBe(UI_LAYER_MASK);
+            expect(component.handle.layers.mask).toBe(PROXY_LAYER_MASK);
         });
 
         it('should mirror the colour on its handle', () => {

@@ -16,11 +16,18 @@ class MockPointerEvent extends MouseEvent {
 }
 globalThis.PointerEvent = MockPointerEvent as unknown as typeof PointerEvent;
 
-const createMockContext = (modelIntersects: any[] = []): PointerContext => ({
+/**
+ * A context as the toolbox builds one: `intersects` holds every hit, and the
+ * other two are filtered views of it.
+ *
+ * Selecting reads `modelIntersects`, so these hits count as product geometry.
+ */
+const createMockContext = (intersects: any[] = []): PointerContext => ({
     event: new PointerEvent('click'),
     pointer: new Vector2(0, 0),
-    intersects: [],
-    modelIntersects,
+    intersects,
+    modelIntersects: intersects,
+    entityIntersects: intersects,
     uiIntersects: [],
     pointerPrimaryDown: false,
     pointerMiddleDown: false,
@@ -57,6 +64,33 @@ describe('SelectTool', () => {
     });
 
     describe('click behavior', () => {
+        it('should select through a proxy for an entity without geometry', () => {
+            // a point light is nothing but a position; the sphere on the proxy
+            // layer is the only thing a pointer can hit. Reading a product-only
+            // list meant that hit never arrived and the click deselected instead.
+            const light = {
+                uuid: 'light',
+                isSelectable: true,
+                onSelect: vi.fn(),
+            } as unknown as Object3D & DIVESelectable;
+            const proxy = {
+                uuid: 'proxy',
+                parent: light,
+            } as unknown as Object3D;
+
+            const ctx = {
+                ...createMockContext(),
+                // where the toolbox puts it: an entity hit, but not a model one
+                modelIntersects: [],
+                entityIntersects: [{ object: proxy }],
+            } as unknown as PointerContext;
+
+            selectTool.onClick(ctx);
+
+            expect(selectTool.selected).toBe(light);
+            expect(light.onSelect).toHaveBeenCalled();
+        });
+
         it('should select object on click', () => {
             const mockSelectable = {
                 uuid: 'test',

@@ -15,11 +15,18 @@ class MockPointerEvent extends MouseEvent {
 }
 globalThis.PointerEvent = MockPointerEvent as unknown as typeof PointerEvent;
 
-const createMockContext = (modelIntersects: any[] = []): PointerContext => ({
+/**
+ * A context as the toolbox builds one: `intersects` holds every hit, and the
+ * other two are filtered views of it.
+ *
+ * Hovering reads `intersects`, so it sees these hits whatever layer they are on.
+ */
+const createMockContext = (intersects: any[] = []): PointerContext => ({
     event: new PointerEvent('pointermove'),
     pointer: new Vector2(0, 0),
-    intersects: [],
-    modelIntersects,
+    intersects,
+    modelIntersects: intersects,
+    entityIntersects: intersects,
     uiIntersects: [],
     pointerPrimaryDown: false,
     pointerMiddleDown: false,

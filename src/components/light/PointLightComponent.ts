@@ -6,7 +6,7 @@ import {
     SphereGeometry,
     type Color,
 } from 'three/webgpu';
-import { UI_LAYER_MASK } from '../../constants/VisibilityLayerMask.ts';
+import { PROXY_LAYER_MASK } from '../../constants/VisibilityLayerMask.ts';
 import { DIVELightComponent } from './LightComponent.ts';
 
 const HANDLE_RADIUS = 0.1;
@@ -51,7 +51,9 @@ export class PointLightComponent extends DIVELightComponent {
             new SphereGeometry(HANDLE_RADIUS, 32, 32),
             this._handleMaterial,
         );
-        this._handle.layers.mask = UI_LAYER_MASK;
+        // a proxy, not UI: the light has no geometry, and this sphere is what
+        // stands in for it. UI is the gizmo, which must not be selectable.
+        this._handle.layers.mask = PROXY_LAYER_MASK;
         this.add(this._handle);
     }
 
