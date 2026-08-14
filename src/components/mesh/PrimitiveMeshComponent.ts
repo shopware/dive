@@ -13,6 +13,20 @@ import { MeshComponent } from './MeshComponent.ts';
 import { type DIVEGeometry } from '../../types/geometry/DIVEGeometry.ts';
 
 /**
+ * How round a sphere gets.
+ *
+ * `256 × 256` built 130 560 triangles, and `Mesh.raycast` has no acceleration
+ * structure: once the pointer is over the sphere it tests every one of them. That
+ * measured 8 ms per raycast, and the toolbox raycasts on every `pointermove` — so
+ * dragging the camera across a sphere saturated the main thread.
+ *
+ * `64 × 32` is 3 968 triangles and 0.24 ms, thirty times cheaper, and at product
+ * scale not tellable apart from the old one.
+ */
+const SPHERE_WIDTH_SEGMENTS = 64;
+const SPHERE_HEIGHT_SEGMENTS = 32;
+
+/**
  * Procedurally generated geometry, built from a {@link DIVEGeometry} descriptor.
  *
  * Extends {@link MeshComponent} so material handling is shared -- and so
@@ -99,7 +113,11 @@ export class PrimitiveMeshComponent extends MeshComponent {
     }
 
     private _createSphereGeometry(geometry: DIVEGeometry): BufferGeometry {
-        return new SphereGeometry(geometry.width / 2, 256, 256);
+        return new SphereGeometry(
+            geometry.width / 2,
+            SPHERE_WIDTH_SEGMENTS,
+            SPHERE_HEIGHT_SEGMENTS,
+        );
     }
 
     private _createPyramidGeometry(geometry: DIVEGeometry): BufferGeometry {
