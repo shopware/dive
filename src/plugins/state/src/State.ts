@@ -25,76 +25,79 @@ export class State {
     /** The only way from here into the engine, see {@link EngineGateway}. */
     private gateway: EngineGateway;
 
-    // modules
-    private _mediaCreator:
-        import('@shopware-ag/dive/mediacreator').MediaCreator | null = null;
+    // Modules, each loaded on first use.
+    //
+    // The **promise** is what gets cached, not the instance, and it is stored
+    // before anything is awaited. Assigning after the await left the field empty
+    // for as long as the import took, so two callers in the same tick each built
+    // their own -- and the toolbox builds a gizmo into the scene and listens on
+    // the canvas from its constructor, so a second one meant two gizmos and every
+    // pointer event handled twice.
 
-    private async getMediaCreator(): Promise<
+    private _mediaCreator?: Promise<
+        import('@shopware-ag/dive/mediacreator').MediaCreator
+    >;
+
+    private getMediaCreator(): Promise<
         import('@shopware-ag/dive/mediacreator').MediaCreator
     > {
-        if (!this._mediaCreator) {
-            this._mediaCreator = new (
-                await import('@shopware-ag/dive/mediacreator')
-            ).MediaCreator(
-                this.engine.mainView.renderer,
-                this.engine.scene,
-                this.controller,
-            );
-        }
+        this._mediaCreator ??= import('@shopware-ag/dive/mediacreator').then(
+            (module) =>
+                new module.MediaCreator(
+                    this.engine.mainView.renderer,
+                    this.engine.scene,
+                    this.controller,
+                ),
+        );
+
         return this._mediaCreator;
     }
 
-    private _arSystem: import('@shopware-ag/dive/ar').ARSystem | null = null;
+    private _arSystem?: Promise<import('@shopware-ag/dive/ar').ARSystem>;
 
-    private async getARSystem(): Promise<
-        import('@shopware-ag/dive/ar').ARSystem
-    > {
-        if (!this._arSystem) {
-            this._arSystem = new (
-                await import('@shopware-ag/dive/ar')
-            ).ARSystem();
-        }
+    private getARSystem(): Promise<import('@shopware-ag/dive/ar').ARSystem> {
+        this._arSystem ??= import('@shopware-ag/dive/ar').then(
+            (module) => new module.ARSystem(),
+        );
+
         return this._arSystem;
     }
 
-    private _assetExplorer:
-        import('@shopware-ag/dive/assetexporter').AssetExporter | null = null;
+    private _assetExplorer?: Promise<
+        import('@shopware-ag/dive/assetexporter').AssetExporter
+    >;
 
-    private async getAssetExporter(): Promise<
+    private getAssetExporter(): Promise<
         import('@shopware-ag/dive/assetexporter').AssetExporter
     > {
-        if (!this._assetExplorer) {
-            this._assetExplorer = new (
-                await import('@shopware-ag/dive/assetexporter')
-            ).AssetExporter();
-        }
+        this._assetExplorer ??= import('@shopware-ag/dive/assetexporter').then(
+            (module) => new module.AssetExporter(),
+        );
+
         return this._assetExplorer;
     }
 
-    private _animationSystem:
-        import('@shopware-ag/dive/animation').AnimationSystem | null = null;
+    private _animationSystem?: Promise<
+        import('@shopware-ag/dive/animation').AnimationSystem
+    >;
 
-    private async getAnimationSystem(): Promise<
+    private getAnimationSystem(): Promise<
         import('@shopware-ag/dive/animation').AnimationSystem
     > {
-        if (!this._animationSystem) {
-            this._animationSystem = new (
-                await import('@shopware-ag/dive/animation')
-            ).AnimationSystem();
-        }
+        this._animationSystem ??= import('@shopware-ag/dive/animation').then(
+            (module) => new module.AnimationSystem(),
+        );
+
         return this._animationSystem;
     }
 
-    private _toolbox: import('@shopware-ag/dive/toolbox').Toolbox | null = null;
+    private _toolbox?: Promise<import('@shopware-ag/dive/toolbox').Toolbox>;
 
-    private async getToolbox(): Promise<
-        import('@shopware-ag/dive/toolbox').Toolbox
-    > {
-        if (!this._toolbox) {
-            this._toolbox = new (
-                await import('@shopware-ag/dive/toolbox')
-            ).Toolbox(this.engine.scene, this.controller);
-        }
+    private getToolbox(): Promise<import('@shopware-ag/dive/toolbox').Toolbox> {
+        this._toolbox ??= import('@shopware-ag/dive/toolbox').then(
+            (module) => new module.Toolbox(this.engine.scene, this.controller),
+        );
+
         return this._toolbox;
     }
 
