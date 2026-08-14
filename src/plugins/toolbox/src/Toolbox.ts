@@ -224,50 +224,61 @@ export class Toolbox {
     // ============ Context Creation ============
 
     private createPointerContext(e: PointerEvent): PointerContext {
-        const intersects = this.raycast();
-
-        return {
+        // Object.assign, not a spread: `{ ...lazy }` would read every getter and
+        // raycast on the spot, which is the thing this avoids.
+        return Object.assign(this.createLazyIntersects(), {
             event: e,
             pointer: this._pointer.clone(),
-            intersects,
-            modelIntersects: this.filterIntersectsByLayer(
-                intersects,
-                PRODUCT_LAYER_MASK,
-            ),
-            entityIntersects: this.filterIntersectsByLayer(
-                intersects,
-                PRODUCT_LAYER_MASK | PROXY_LAYER_MASK,
-            ),
-            uiIntersects: this.filterIntersectsByLayer(
-                intersects,
-                UI_LAYER_MASK,
-            ),
             pointerPrimaryDown: this._pointerPrimaryDown,
             pointerMiddleDown: this._pointerMiddleDown,
             pointerSecondaryDown: this._pointerSecondaryDown,
             lastPointerDown: this._lastPointerDown.clone(),
-        };
+        }) as PointerContext;
     }
 
     private createWheelContext(e: WheelEvent): WheelContext {
-        const intersects = this.raycast();
-
-        return {
+        return Object.assign(this.createLazyIntersects(), {
             event: e,
             pointer: this._pointer.clone(),
-            intersects,
-            modelIntersects: this.filterIntersectsByLayer(
-                intersects,
-                PRODUCT_LAYER_MASK,
-            ),
-            entityIntersects: this.filterIntersectsByLayer(
-                intersects,
-                PRODUCT_LAYER_MASK | PROXY_LAYER_MASK,
-            ),
-            uiIntersects: this.filterIntersectsByLayer(
-                intersects,
-                UI_LAYER_MASK,
-            ),
+        }) as WheelContext;
+    }
+
+    /**
+     * The four intersect lists, each raycast on first read and then kept.
+     *
+     * Still one raycast per event shared by every tool -- but only if a tool
+     * actually looks. It used to run eagerly, so a pointer move cost a full
+     * raycast even with no tool enabled at all, and while the camera was being
+     * orbited that was a raycast per frame against every mesh in the scene.
+     */
+    private createLazyIntersects(): Pick<
+        PointerContext,
+        'intersects' | 'modelIntersects' | 'entityIntersects' | 'uiIntersects'
+    > {
+        const raycast = (): Intersection[] => (all ??= this.raycast());
+        const byLayer = (mask: number): Intersection[] =>
+            this.filterIntersectsByLayer(raycast(), mask);
+
+        let all: Intersection[] | undefined;
+        let model: Intersection[] | undefined;
+        let entity: Intersection[] | undefined;
+        let ui: Intersection[] | undefined;
+
+        return {
+            get intersects() {
+                return raycast();
+            },
+            get modelIntersects() {
+                return (model ??= byLayer(PRODUCT_LAYER_MASK));
+            },
+            get entityIntersects() {
+                return (entity ??= byLayer(
+                    PRODUCT_LAYER_MASK | PROXY_LAYER_MASK,
+                ));
+            },
+            get uiIntersects() {
+                return (ui ??= byLayer(UI_LAYER_MASK));
+            },
         };
     }
 

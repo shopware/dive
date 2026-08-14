@@ -114,14 +114,25 @@ export class TransformTool
             return true;
         }
 
-        // Check if pointer is over gizmo UI elements
-        if (ctx.uiIntersects.length > 0) {
-            const isGizmoHit = ctx.uiIntersects.some((i) =>
-                this.isGizmoChild(i.object),
-            );
-            if (isGizmoHit) {
-                return true; // Block model hover when hovering gizmo
-            }
+        // Nothing to block while a button is held: the pointer is moving the
+        // camera, and the hover tool steps aside then too. Checked before the
+        // intersects are read, because reading them is what costs a raycast.
+        if (
+            ctx.pointerPrimaryDown ||
+            ctx.pointerMiddleDown ||
+            ctx.pointerSecondaryDown
+        ) {
+            return;
+        }
+
+        // `intersects`, not `uiIntersects`: three's TransformControls never sets a
+        // layer, so the gizmo sits on the default one. Looking for it among the UI
+        // hits could not find it, and cost a full raycast to fail.
+        const overGizmo = ctx.intersects.some((intersect) =>
+            this.isGizmoChild(intersect.object),
+        );
+        if (overGizmo) {
+            return true; // Block model hover when hovering gizmo
         }
     }
 

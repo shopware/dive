@@ -1,4 +1,4 @@
-import { Vector2 } from 'three/webgpu';
+import { Vector2, type Object3D } from 'three/webgpu';
 import { HoverTool } from '../HoverTool.ts';
 import { type PointerContext } from '../../PointerContext.ts';
 import { type DIVEHoverable } from '@shopware-ag/dive';
@@ -83,6 +83,61 @@ describe('HoverTool', () => {
     });
 
     describe('hover behavior', () => {
+        it('should stand aside while a button is held', () => {
+            // the pointer is moving the camera then, not aiming at anything, and
+            // reading the intersects is what costs a raycast per event
+            const mockHoverable = {
+                uuid: 'test',
+                isHoverable: true,
+                onPointerEnter: vi.fn(),
+            } as unknown as Object3D & DIVEHoverable;
+
+            (
+                [
+                    'pointerPrimaryDown',
+                    'pointerMiddleDown',
+                    'pointerSecondaryDown',
+                ] as const
+            ).forEach((button) => {
+                const ctx = {
+                    ...createMockContext([
+                        { object: mockHoverable, point: { x: 0, y: 0, z: 0 } },
+                    ]),
+                    [button]: true,
+                } as unknown as PointerContext;
+
+                hoverTool.onPointerMove(ctx);
+
+                expect(
+                    mockHoverable.onPointerEnter,
+                    button,
+                ).not.toHaveBeenCalled();
+            });
+        });
+
+        it('should keep the object it was hovering while a button is held', () => {
+            // left as it was rather than cleared, so releasing does not blink
+            const mockHoverable = {
+                uuid: 'test',
+                isHoverable: true,
+                onPointerEnter: vi.fn(),
+                onPointerLeave: vi.fn(),
+                onPointerOver: vi.fn(),
+            } as unknown as Object3D & DIVEHoverable;
+            const hit = [
+                { object: mockHoverable, point: { x: 0, y: 0, z: 0 } },
+            ];
+            hoverTool.onPointerMove(createMockContext(hit));
+
+            hoverTool.onPointerMove({
+                ...createMockContext(hit),
+                pointerPrimaryDown: true,
+            } as unknown as PointerContext);
+
+            expect(mockHoverable.onPointerLeave).not.toHaveBeenCalled();
+            expect(hoverTool.hovered).toBe(mockHoverable);
+        });
+
         it('should call onPointerEnter when hovering new object', () => {
             const mockHoverable = {
                 uuid: 'test',

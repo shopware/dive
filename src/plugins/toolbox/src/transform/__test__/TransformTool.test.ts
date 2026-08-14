@@ -180,10 +180,14 @@ const createMockController = () =>
         },
     }) as unknown as OrbitController;
 
+/**
+ * A context as the toolbox builds one: `intersects` holds every hit, and the
+ * other lists are filtered views of it. A UI hit is therefore in both.
+ */
 const createMockContext = (uiIntersects: any[] = []): PointerContext => ({
     event: new PointerEvent('pointermove'),
     pointer: new Vector2(0, 0),
-    intersects: [],
+    intersects: uiIntersects,
     modelIntersects: [],
     entityIntersects: [],
     uiIntersects,
