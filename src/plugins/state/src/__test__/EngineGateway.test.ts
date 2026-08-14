@@ -1,6 +1,7 @@
 import { EngineGateway } from '../EngineGateway.ts';
 import {
     detachTransformControls,
+    AmbientLightComponent,
     DirectionalLightComponent,
     DIVELightComponent,
     DIVENode,
@@ -282,6 +283,35 @@ describe('plugins/state/EngineGateway', () => {
             expect(node.getComponents(DIVELightComponent)).toHaveLength(2);
             expect(node.getComponent(HemisphereLightComponent)).toBeDefined();
             expect(node.getComponent(DirectionalLightComponent)).toBeDefined();
+        });
+
+        it('should give an ambient light one ambient component', async () => {
+            // the one light type no test had reached through the gateway
+            const lightData: LightSchema = {
+                id: 'light-ambient',
+                entityType: 'light',
+                type: 'ambient',
+                name: 'Ambient',
+                visible: true,
+                position: { x: 0, y: 0, z: 0 },
+                intensity: 0.5,
+                enabled: true,
+                color: '#ff0000',
+                parentId: null,
+            };
+
+            const gateway = makeGateway();
+            await addEntity(gateway, lightData);
+            expect(spyConsoleWarn).not.toHaveBeenCalled();
+
+            const node = findEntity(gateway, lightData) as DIVENode;
+            expect(node.getComponents(DIVELightComponent)).toHaveLength(1);
+
+            const component = node.requireComponent(AmbientLightComponent);
+            expect(component.light.intensity).toBe(0.5);
+            expect((component.light.color as Color).getHexString()).toBe(
+                'ff0000',
+            );
         });
 
         it('should apply intensity to every light component with its own factor', () => {
