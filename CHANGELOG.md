@@ -1,5 +1,16 @@
 # Changelog
 
+## [4.0.0](https://github.com/shopware/dive/compare/v3.1.0...v4.0.0) (2026-08-17)
+
+
+### ⚠ BREAKING CHANGES
+
+* State plugin refactor ([#227](https://github.com/shopware/dive/issues/227))
+
+### 🚀 Features
+
+* State plugin refactor ([#227](https://github.com/shopware/dive/issues/227)) ([053f333](https://github.com/shopware/dive/commit/053f3332d95f4326370756265688babd0b1280b3))
+
 ## [3.1.0](https://github.com/shopware/dive/compare/v3.0.11...v3.1.0) (2026-08-06)
 
 
