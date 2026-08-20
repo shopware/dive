@@ -6,8 +6,8 @@ import {
     SphereGeometry,
     type Color,
 } from 'three/webgpu';
-import { PROXY_LAYER_MASK } from '../../constants/VisibilityLayerMask.ts';
-import { DIVELightComponent } from './LightComponent.ts';
+import { PROXY_LAYER_MASK } from '../../../constants/VisibilityLayerMask.ts';
+import { DIVELightComponent } from '../LightComponent.ts';
 
 const HANDLE_RADIUS = 0.1;
 const MAX_HANDLE_OPACITY = 0.8;

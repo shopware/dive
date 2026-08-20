@@ -1,5 +1,5 @@
 import { DirectionalLight, Vector3, type Vector3Like } from 'three/webgpu';
-import { DIVELightComponent } from './LightComponent.ts';
+import { DIVELightComponent } from '../LightComponent.ts';
 
 /** Matches the sun direction the previous DIVESceneLight used. */
 const DEFAULT_DIRECTION = new Vector3(1, 1.75, 1).multiplyScalar(30);

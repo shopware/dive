@@ -3,8 +3,8 @@ import { Object3D } from 'three/webgpu';
 import { type DIVEScene } from '../../Scene.ts';
 import { DIVERoot } from '../../../../components/root/Root.ts';
 import { DIVENode } from '../../../../components/node/Node.ts';
-import { HemisphereLightComponent } from '../../../../components/light/HemisphereLightComponent.ts';
-import { DirectionalLightComponent } from '../../../../components/light/DirectionalLightComponent.ts';
+import { HemisphereLightComponent } from '../../../../components/light/hemi/HemisphereLightComponent.ts';
+import { DirectionalLightComponent } from '../../../../components/light/directional/DirectionalLightComponent.ts';
 
 export class DIVEXRLightRoot extends Object3D {
     private _scene: DIVEScene;
