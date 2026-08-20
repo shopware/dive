@@ -3,7 +3,7 @@
  */
 
 import { vi } from 'vitest';
-import { DIVE, DIVENode, MeshComponent } from '@shopware-ag/dive';
+import { DIVE, DIVENode, ModelComponent } from '@shopware-ag/dive';
 import { OrbitController } from '@shopware-ag/dive/orbitcontroller';
 import { QuickViewUri } from '../QuickViewUri.ts';
 
@@ -45,7 +45,7 @@ vi.mock('@shopware-ag/dive', () => {
             this.addComponent = vi.fn((component) => component);
             return this;
         }),
-        MeshComponent: vi.fn(function (this: MeshComponent) {
+        ModelComponent: vi.fn(function (this: ModelComponent) {
             this.setFromURL = setFromURL.mockImplementation(async () => this);
             return this;
         }),

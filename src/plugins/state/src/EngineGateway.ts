@@ -8,7 +8,8 @@ import {
     HemisphereLightComponent,
     MultiLineComponent,
     MeshComponent,
-    PrimitiveMeshComponent,
+    ModelComponent,
+    PrimitiveComponent,
     PointLightComponent,
     type DIVE,
     type DIVERoot,
@@ -251,13 +252,13 @@ export class EngineGateway {
             model.name = 'DIVEModel';
             // marks the semantic root for a later re-import of an exported scene
             model.userData.isDIVEModel = true;
-            model.addComponent(new MeshComponent());
+            model.addComponent(new ModelComponent());
             return model;
         }
         if (isPrimitiveSchema(entity)) {
             const primitive = new DIVENode();
             primitive.name = 'DIVEPrimitive';
-            primitive.addComponent(new PrimitiveMeshComponent());
+            primitive.addComponent(new PrimitiveComponent());
             return primitive;
         }
         if (isGroupSchema(entity)) {
@@ -386,7 +387,7 @@ export class EngineGateway {
         // moves the model does not fetch the asset again.
         if (model.uri !== undefined && model.uri !== sceneObject.userData.uri) {
             await sceneObject
-                .requireComponent(MeshComponent)
+                .requireComponent(ModelComponent)
                 .setFromURL(model.uri);
             sceneObject.userData.uri = model.uri;
         }
@@ -404,7 +405,7 @@ export class EngineGateway {
     ): void {
         if (primitive.geometry !== undefined && primitive.geometry !== null)
             sceneObject
-                .requireComponent(PrimitiveMeshComponent)
+                .requireComponent(PrimitiveComponent)
                 .setGeometry(primitive.geometry);
 
         // after the geometry, so it lands on the mesh that was just built

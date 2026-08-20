@@ -6,7 +6,7 @@ import {
     Object3D,
 } from 'three/webgpu';
 import { DIVERoot } from '../Root.ts';
-import { FloorComponent } from '../../floor/FloorComponent.ts';
+import { FloorComponent } from '../../mesh/floor/FloorComponent.ts';
 import {
     HELPER_LAYER_MASK,
     PRODUCT_LAYER_MASK,

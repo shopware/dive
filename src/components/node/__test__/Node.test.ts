@@ -7,8 +7,9 @@ import {
 } from 'three/webgpu';
 import { DIVENode } from '../Node.ts';
 import { DIVEComponent } from '../../component/Component.ts';
-import { FloorComponent } from '../../floor/FloorComponent.ts';
+import { FloorComponent } from '../../mesh/floor/FloorComponent.ts';
 import { MeshComponent } from '../../mesh/MeshComponent.ts';
+import { ModelComponent } from '../../mesh/model/ModelComponent.ts';
 import { DIVEScene } from '../../../engine/scene/Scene.ts';
 import {
     HELPER_LAYER_MASK,
@@ -44,7 +45,7 @@ const createCube = (): Mesh => {
 const createModel = (): DIVENode => {
     const model = new DIVENode();
     // geometry lives in a component, exactly as the gateway composes it
-    model.addComponent(new MeshComponent()).add(createCube());
+    model.addComponent(new ModelComponent()).add(createCube());
     return model;
 };
 class AlphaComponent extends DIVEComponent {}
@@ -552,7 +553,7 @@ describe('dive/node/DIVENode components', () => {
 
         it('should find a subclass through its base class', () => {
             // this is what lets one code path serve both MeshComponent and
-            // PrimitiveMeshComponent
+            // PrimitiveComponent
             const component = node.addComponent(new SpecialAlphaComponent());
 
             expect(node.getComponent(AlphaComponent)).toBe(component);

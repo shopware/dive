@@ -1,16 +1,16 @@
 import { Mesh, MeshStandardMaterial } from 'three/webgpu';
-import { MeshComponent } from '../MeshComponent.ts';
-import { PrimitiveMeshComponent } from '../PrimitiveMeshComponent.ts';
-import { DIVENode } from '../../node/Node.ts';
-import { type DIVEGeometryType } from '../../../types/geometry/DIVEGeometryType.ts';
+import { MeshComponent } from '../../MeshComponent.ts';
+import { PrimitiveComponent } from '../PrimitiveComponent.ts';
+import { DIVENode } from '../../../node/Node.ts';
+import { type DIVEGeometryType } from '../../../../types/geometry/DIVEGeometryType.ts';
 
-describe('dive/mesh/PrimitiveMeshComponent', () => {
+describe('dive/mesh/PrimitiveComponent', () => {
     let node: DIVENode;
-    let primitive: PrimitiveMeshComponent;
+    let primitive: PrimitiveComponent;
 
     beforeEach(() => {
         node = new DIVENode();
-        primitive = node.addComponent(new PrimitiveMeshComponent());
+        primitive = node.addComponent(new PrimitiveComponent());
     });
 
     it('should be findable as a MeshComponent', () => {

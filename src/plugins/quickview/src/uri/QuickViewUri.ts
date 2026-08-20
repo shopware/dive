@@ -1,4 +1,4 @@
-import { DIVE, DIVENode, MeshComponent } from '@shopware-ag/dive';
+import { DIVE, DIVENode, ModelComponent } from '@shopware-ag/dive';
 import { OrbitController } from '@shopware-ag/dive/orbitcontroller';
 import { QuickViewSettings } from '../../types/QuickViewSettings.ts';
 import { type QuickViewWithModel } from '../../types/index.ts';
@@ -17,7 +17,7 @@ export const QuickViewUri = async (
         // a model is a node carrying mesh geometry
         const model = new DIVENode();
         model.name = 'QuickViewModel';
-        const mesh = model.addComponent(new MeshComponent());
+        const mesh = model.addComponent(new ModelComponent());
         dive.scene.root.add(model);
         await mesh.setFromURL(uri);
         model.dropIt();

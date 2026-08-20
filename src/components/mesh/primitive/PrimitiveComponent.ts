@@ -8,9 +8,9 @@ import {
     MeshStandardMaterial,
 } from 'three/webgpu';
 import { SphereGeometry } from 'three/webgpu';
-import { PRODUCT_LAYER_MASK } from '../../constants/VisibilityLayerMask.ts';
-import { MeshComponent } from './MeshComponent.ts';
-import { type DIVEGeometry } from '../../types/geometry/DIVEGeometry.ts';
+import { PRODUCT_LAYER_MASK } from '../../../constants/VisibilityLayerMask.ts';
+import { MeshComponent } from '../MeshComponent.ts';
+import { type DIVEGeometry } from '../../../types/geometry/DIVEGeometry.ts';
 
 /**
  * How round a sphere gets.
@@ -35,13 +35,13 @@ const SPHERE_HEIGHT_SEGMENTS = 32;
  *
  * @module
  */
-export class PrimitiveMeshComponent extends MeshComponent {
-    readonly isPrimitiveMeshComponent: true = true;
+export class PrimitiveComponent extends MeshComponent {
+    readonly isPrimitiveComponent: true = true;
 
     constructor() {
         super();
 
-        this.name = 'PrimitiveMeshComponent';
+        this.name = 'PrimitiveComponent';
 
         this._material = new MeshStandardMaterial();
 
@@ -93,7 +93,7 @@ export class PrimitiveMeshComponent extends MeshComponent {
                 return this._createWallGeometry(geometry);
             default: {
                 console.warn(
-                    'PrimitiveMeshComponent.setGeometry: Invalid geometry type:',
+                    'PrimitiveComponent.setGeometry: Invalid geometry type:',
                     geometry.name.toLowerCase(),
                 );
                 return null;

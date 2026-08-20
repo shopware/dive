@@ -1,12 +1,12 @@
 import { Color, MeshStandardMaterial } from 'three/webgpu';
 import { FloorComponent } from '../FloorComponent.ts';
-import { MeshComponent } from '../../mesh/MeshComponent.ts';
-import { DIVENode } from '../../node/Node.ts';
-import { computeProductBounds } from '../../../helpers/computeProductBounds/computeProductBounds.ts';
+import { MeshComponent } from '../../../mesh/MeshComponent.ts';
+import { DIVENode } from '../../../node/Node.ts';
+import { computeProductBounds } from '../../../../helpers/computeProductBounds/computeProductBounds.ts';
 import {
     FLOOR_LAYER_MASK,
     PRODUCT_LAYER_MASK,
-} from '../../../constants/VisibilityLayerMask.ts';
+} from '../../../../constants/VisibilityLayerMask.ts';
 
 describe('dive/floor/FloorComponent', () => {
     let floor: FloorComponent;
