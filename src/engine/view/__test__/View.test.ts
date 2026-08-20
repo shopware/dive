@@ -7,7 +7,8 @@ vi.mock('three/webgpu', async (importOriginal) => {
 
 import { DIVEView } from '../View.ts';
 import { DIVEScene } from '../../scene/Scene.ts';
-import { DIVEPerspectiveCamera } from '../../camera/PerspectiveCamera.ts';
+import { DIVENode } from '../../../components/node/Node.ts';
+import { PerspectiveCameraComponent } from '../../../components/camera/PerspectiveCameraComponent.ts';
 import { DIVERenderer } from '../../renderer/Renderer.ts';
 import {
     DIVECanvasLifecycleManager,
@@ -15,6 +16,7 @@ import {
 } from '../../canvas/CanvasLifecycleManager.ts';
 
 const mockRenderer = {
+    activeCamera: null as unknown,
     initialized: false,
     initAsync: vi.fn(async () => {
         mockRenderer.initialized = true;
@@ -82,10 +84,11 @@ const mockScene = {
 
 vi.mock('../../renderer/Renderer.ts');
 vi.mock('../../canvas/CanvasLifecycleManager.ts');
-vi.mock('../../camera/PerspectiveCamera.ts');
 vi.mock('../../scene/Scene.ts');
 
 describe('DIVEView', () => {
+    let cameraComponent: PerspectiveCameraComponent;
+    let cameraResize: ReturnType<typeof vi.spyOn>;
     let view: DIVEView;
 
     beforeEach(() => {
@@ -100,21 +103,30 @@ describe('DIVEView', () => {
             height: 600,
         });
 
-        vi.mocked(DIVERenderer).mockImplementation(() => mockRenderer as any);
+        // stores what it is constructed with, as the real renderer does: the view
+        // reads the camera back off it rather than keeping its own copy
+        vi.mocked(DIVERenderer).mockImplementation((_scene, camera) => {
+            mockRenderer.activeCamera = camera;
+            return mockRenderer as any;
+        });
         vi.mocked(DIVECanvasLifecycleManager).mockImplementation(
             (_canvas, onResize) => {
                 lifecycleResizeHandler = onResize;
                 return mockCanvasLifecycleManager as any;
             },
         );
-        vi.mocked(DIVEPerspectiveCamera).mockImplementation(
-            () => mockCamera as any,
-        );
         vi.mocked(DIVEScene).mockImplementation(() => mockScene as any);
 
         const scene = new DIVEScene();
-        const camera = new DIVEPerspectiveCamera();
-        view = new DIVEView(scene, camera, {});
+
+        // a real node with a real component: the view asks it for the camera it
+        // hands to the renderer, and both work in jsdom
+        const cameraNode = new DIVENode();
+        cameraComponent = cameraNode.addComponent(
+            new PerspectiveCameraComponent(),
+        );
+        cameraResize = vi.spyOn(cameraComponent, 'onResize');
+        view = new DIVEView(scene, cameraComponent, {});
     });
 
     afterEach(() => {
@@ -147,7 +159,7 @@ describe('DIVEView', () => {
             lifecycleResizeHandler?.(640, 480);
 
             expect(mockRenderer.onResize).toHaveBeenCalledWith(640, 480);
-            expect(mockCamera.onResize).toHaveBeenCalledWith(640, 480);
+            expect(cameraResize).toHaveBeenCalledWith(640, 480);
             expect(mockRenderer.tick).toHaveBeenCalledTimes(1);
         });
     });
@@ -157,8 +169,33 @@ describe('DIVEView', () => {
             expect(view.renderer).toBe(mockRenderer);
         });
 
-        it('should return camera', () => {
-            expect(view.camera).toBe(mockCamera);
+        it('should return what it looks through', () => {
+            // one handle: the camera, the transform and onResize all hang off it
+            expect(view.cameraComponent).toBe(cameraComponent);
+        });
+
+        it('should follow the renderer when the active camera is swapped', () => {
+            // `activeCamera` is settable, so a copy held here would report the
+            // camera the renderer has already stopped drawing through
+            const other = new DIVENode().addComponent(
+                new PerspectiveCameraComponent(),
+            );
+            mockRenderer.activeCamera = other;
+
+            expect(view.cameraComponent).toBe(other);
+        });
+
+        it('should resize the camera the renderer draws through', () => {
+            const other = new DIVENode().addComponent(
+                new PerspectiveCameraComponent(),
+            );
+            const otherResize = vi.spyOn(other, 'onResize');
+            mockRenderer.activeCamera = other;
+
+            view.onResize(320, 240);
+
+            expect(otherResize).toHaveBeenCalledWith(320, 240);
+            expect(cameraResize).not.toHaveBeenCalled();
         });
 
         it('should return canvas from renderer', () => {
@@ -375,14 +412,14 @@ describe('DIVEView', () => {
             view.onResize(1024, 768);
 
             expect(mockRenderer.onResize).toHaveBeenCalledWith(1024, 768);
-            expect(mockCamera.onResize).toHaveBeenCalledWith(1024, 768);
+            expect(cameraResize).toHaveBeenCalledWith(1024, 768);
         });
 
         it('should handle zero dimensions', () => {
             view.onResize(0, 0);
 
             expect(mockRenderer.onResize).toHaveBeenCalledWith(0, 0);
-            expect(mockCamera.onResize).toHaveBeenCalledWith(0, 0);
+            expect(cameraResize).toHaveBeenCalledWith(0, 0);
         });
     });
 

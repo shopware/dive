@@ -100,7 +100,7 @@ describe('Toolbox raycast', () => {
 
         const controller = {
             domElement: createMockCanvas(),
-            object: camera,
+            object: { camera },
         } as unknown as OrbitController;
 
         toolbox = new Toolbox(scene as unknown as DIVEScene, controller);

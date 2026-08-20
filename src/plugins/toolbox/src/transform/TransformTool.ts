@@ -209,7 +209,7 @@ export class TransformTool
 
     private initGizmo(): TransformControls {
         const g = new TransformControls(
-            this._controller.object,
+            this._controller.object.camera,
             this._controller.domElement,
         );
         g.mode = 'translate';

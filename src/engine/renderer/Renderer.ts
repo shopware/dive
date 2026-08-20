@@ -7,7 +7,7 @@ import {
     WebGPURenderer,
 } from 'three/webgpu';
 import { DIVEScene } from '../scene/Scene.ts';
-import { DIVEPerspectiveCamera } from '../camera/PerspectiveCamera.ts';
+import { type DIVECameraComponent } from '../../components/camera/CameraComponent.ts';
 import { DIVEEnvironment } from '../environment/Environment.ts';
 import { DIVEAbortablePromise } from '../promise/abortable/AbortablePromise.ts';
 
@@ -101,11 +101,29 @@ export class DIVERenderer {
 
     private _settings: DIVERendererSettings;
 
+    /**
+     * Whose eyes the next frame is drawn through.
+     *
+     * The component, not the bare camera: a camera is reached through the
+     * component that owns it everywhere else, and taking the camera here would
+     * make the renderer the one place holding a handle that cannot be asked for
+     * its layers or resized. `tick` reads `.camera` off it per frame, so a
+     * component that swaps its camera is followed rather than remembered wrongly.
+     *
+     * Settable rather than fixed at construction: cameras are nodes now, so a
+     * caller may want to render through a camera entity or a preview and back
+     * again. Welding one in meant rebuilding the renderer -- and with it the WebGPU
+     * context -- to look somewhere else.
+     */
+    public activeCamera: DIVECameraComponent;
+
     constructor(
         private _scene: DIVEScene,
-        private _camera: DIVEPerspectiveCamera,
+        camera: DIVECameraComponent,
         settings?: Partial<DIVERendererSettings>,
     ) {
+        this.activeCamera = camera;
+
         this._settings = {
             ...DIVERendererDefaultSettings,
             ...(settings ?? {}),
@@ -166,7 +184,7 @@ export class DIVERenderer {
     public tick(): void {
         if (!this._webgpurenderer.initialized) return;
 
-        this._webgpurenderer.render(this._scene, this._camera);
+        this._webgpurenderer.render(this._scene, this.activeCamera.camera);
     }
 
     public onResize(width: number, height: number): void {

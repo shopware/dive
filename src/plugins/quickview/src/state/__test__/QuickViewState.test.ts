@@ -28,6 +28,8 @@ vi.mock('@shopware-ag/dive', () => {
                             set: vi.fn(),
                         },
                     },
+                    // the controller drives the component, not the camera
+                    cameraComponent: { owner: { position: { set: vi.fn() } } },
                 },
                 clock: {
                     addTicker: vi.fn(),
@@ -87,7 +89,7 @@ describe('QuickViewState', () => {
         const quickView = await QuickViewState(sceneData);
 
         expect(OrbitController).toHaveBeenCalledWith(
-            quickView.mainView.camera,
+            quickView.mainView.cameraComponent,
             quickView.mainView.canvas,
         );
         expect(quickView.clock.addTicker).toHaveBeenCalledWith(

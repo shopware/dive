@@ -29,7 +29,7 @@ export const GetAllSceneDataAction = Action.define<
             floorEnabled: settings.floorEnabled,
             floorColor: settings.floorColor,
             userCamera: {
-                position: controller.object.position.clone(),
+                position: controller.object.owner.position.clone(),
                 target: controller.target.clone(),
             },
             spotmarks: [],

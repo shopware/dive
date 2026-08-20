@@ -14,9 +14,9 @@ import {
     Vector3Like,
 } from 'three/webgpu';
 import {
-    DIVEPerspectiveCamera,
     DIVETicker,
     BoundsComponent,
+    type DIVECameraComponent,
 } from '@shopware-ag/dive';
 import { OrbitControllerState } from '../types/index.ts';
 
@@ -114,7 +114,24 @@ export class OrbitController
     public static readonly DEFAULT_ZOOM_FACTOR = 1;
 
     // public API
-    public object: DIVEPerspectiveCamera | OrthographicCamera;
+    /**
+     * The camera component this controller drives.
+     *
+     * The component rather than the camera: `setCameraLayer` and `onResize` live
+     * there, and handing out the bare camera meant every caller had to search its
+     * way back. What orbiting moves is `object.owner`, the node it sits on.
+     */
+    public object: DIVECameraComponent;
+
+    /**
+     * The camera, narrowed to the two kinds whose projection this can pan.
+     *
+     * `DIVECameraComponent` types its camera as the base `Camera`, which has no
+     * `zoom` or `fov`; the branches below narrow it further.
+     */
+    private get _camera(): PerspectiveCamera | OrthographicCamera {
+        return this.object.camera as PerspectiveCamera | OrthographicCamera;
+    }
     public get domElement(): HTMLCanvasElement {
         return this.domElements[0];
     }
@@ -207,13 +224,20 @@ export class OrbitController
     private readonly lastTarget = new Vector3();
 
     constructor(
-        camera: DIVEPerspectiveCamera | OrthographicCamera,
+        cameraComponent: DIVECameraComponent,
         domElements: HTMLCanvasElement | HTMLCanvasElement[],
         settings?: OrbitControllerSettings,
     ) {
         super();
 
-        this.object = camera;
+        this.object = cameraComponent;
+
+        // fail here rather than on the first frame
+        if (!cameraComponent.isAttached) {
+            throw new Error(
+                'OrbitController: the camera component must be attached to a node, because that is what gets moved.',
+            );
+        }
         this.domElements = Array.isArray(domElements)
             ? domElements
             : [domElements];
@@ -223,11 +247,11 @@ export class OrbitController
 
         // for reset
         this.target0 = this.target.clone();
-        this.position0 = this.object.position.clone();
-        this.zoom0 = this.object.zoom;
+        this.position0 = this.object.owner.position.clone();
+        this.zoom0 = this._camera.zoom;
 
         this.quat = new Quaternion().setFromUnitVectors(
-            camera.up,
+            this.object.camera.up,
             new Vector3(0, 1, 0),
         );
         this.quatInverse = this.quat.clone().invert();
@@ -253,21 +277,21 @@ export class OrbitController
     }
 
     public getDistance(): number {
-        return this.object.position.distanceTo(this.target);
+        return this.object.owner.position.distanceTo(this.target);
     }
 
     public saveState(): void {
         this.target0.copy(this.target);
-        this.position0.copy(this.object.position);
-        this.zoom0 = this.object.zoom;
+        this.position0.copy(this.object.owner.position);
+        this.zoom0 = this._camera.zoom;
     }
 
     public reset(): void {
         this.target.copy(this.target0);
-        this.object.position.copy(this.position0);
-        this.object.zoom = this.zoom0;
+        this.object.owner.position.copy(this.position0);
+        this._camera.zoom = this.zoom0;
 
-        this.object.updateProjectionMatrix();
+        this._camera.updateProjectionMatrix();
         this.dispatchEvent({ type: 'change' });
 
         this.update();
@@ -276,7 +300,7 @@ export class OrbitController
     }
 
     public update(): boolean {
-        this.offset.copy(this.object.position).sub(this.target);
+        this.offset.copy(this.object.owner.position).sub(this.target);
         this.offset.applyQuaternion(this.quat);
         this.spherical.setFromVector3(this.offset);
 
@@ -318,9 +342,9 @@ export class OrbitController
         this.offset.setFromSpherical(this.spherical);
         this.offset.applyQuaternion(this.quatInverse);
 
-        this.object.position.copy(this.target).add(this.offset);
+        this.object.owner.position.copy(this.target).add(this.offset);
 
-        this.object.lookAt(this.target);
+        this.object.aimAt(this.target);
 
         if (this.enableDamping === true) {
             this.sphericalDelta.theta *= 1 - this.dampingFactor;
@@ -335,15 +359,15 @@ export class OrbitController
 
         if (
             this.zoomChanged ||
-            this.lastPosition.distanceToSquared(this.object.position) >
+            this.lastPosition.distanceToSquared(this.object.owner.position) >
                 this.EPS ||
-            8 * (1 - this.lastQuaternion.dot(this.object.quaternion)) >
+            8 * (1 - this.lastQuaternion.dot(this.object.owner.quaternion)) >
                 this.EPS ||
             this.lastTarget.distanceToSquared(this.target) > this.EPS
         ) {
             this.dispatchEvent({ type: 'change' });
-            this.lastPosition.copy(this.object.position);
-            this.lastQuaternion.copy(this.object.quaternion);
+            this.lastPosition.copy(this.object.owner.position);
+            this.lastQuaternion.copy(this.object.owner.quaternion);
             this.lastTarget.copy(this.target);
             this.zoomChanged = false;
             return true;
@@ -394,8 +418,9 @@ export class OrbitController
         const sphere = bb.sphere;
         const radius = sphere.radius;
 
-        const fov = (this.object as PerspectiveCamera).fov * (Math.PI / 180);
-        const aspect = (this.object as PerspectiveCamera).aspect;
+        const perspective = this._camera as PerspectiveCamera;
+        const fov = perspective.fov * (Math.PI / 180);
+        const aspect = perspective.aspect;
         const verticalTheta = fov / 2;
         const horizontalTheta = Math.atan(Math.tan(verticalTheta) * aspect);
 
@@ -403,7 +428,7 @@ export class OrbitController
         const distanceH = radius / Math.sin(horizontalTheta);
         const distance = Math.max(distanceV, distanceH) * (1.0 + padding);
 
-        const currentDirection = this.object.position
+        const currentDirection = this.object.owner.position
             .clone()
             .sub(this.target)
             .normalize();
@@ -423,7 +448,7 @@ export class OrbitController
         const bb = new BoundsComponent().setTarget(objects);
         const transform = this.computeEncompassingView(bb, padding);
 
-        this.object.position.copy(transform.position as Vector3);
+        this.object.owner.position.copy(transform.position as Vector3);
         this.target.copy(transform.target as Vector3);
         this.update();
     }
@@ -446,15 +471,15 @@ export class OrbitController
             azimuthalAngle: this.getAzimuthalAngle(),
             polarAngle: this.getPolarAngle(),
             distance: this.getDistance(),
-            position: this.object.position.clone(),
-            quaternion: this.object.quaternion.clone(),
+            position: this.object.owner.position.clone(),
+            quaternion: this.object.owner.quaternion.clone(),
         };
     }
 
     public setState(state: OrbitControllerState): void {
         this.target.copy(state.target);
-        this.object.position.copy(state.position);
-        this.object.quaternion.copy(state.quaternion);
+        this.object.owner.position.copy(state.position);
+        this.object.owner.quaternion.copy(state.quaternion);
         this.update();
     }
 
@@ -517,7 +542,7 @@ export class OrbitController
                 v.setFromMatrixColumn(objectMatrix, 1);
             } else {
                 v.setFromMatrixColumn(objectMatrix, 0);
-                v.crossVectors(this.object.up, v);
+                v.crossVectors(this.object.camera.up, v);
             }
             v.multiplyScalar(distance);
             this.panOffset.add(v);
@@ -531,33 +556,33 @@ export class OrbitController
     ): void {
         const offset = new Vector3();
 
-        if ('isPerspectiveCamera' in this.object) {
-            const position = this.object.position;
+        if ('isPerspectiveCamera' in this._camera) {
+            const position = this.object.owner.position;
             offset.copy(position).sub(this.target);
             let targetDistance = offset.length();
             targetDistance *= Math.tan(
-                ((this.object.fov / 2) * Math.PI) / 180.0,
+                ((this._camera.fov / 2) * Math.PI) / 180.0,
             );
             this.panLeft(
                 (2 * deltaX * targetDistance) / element.clientHeight,
-                this.object.matrix,
+                this.object.owner.matrix,
             );
             this.panUp(
                 (2 * deltaY * targetDistance) / element.clientHeight,
-                this.object.matrix,
+                this.object.owner.matrix,
             );
-        } else if ('isOrthographicCamera' in this.object) {
+        } else if ('isOrthographicCamera' in this._camera) {
             this.panLeft(
-                (deltaX * (this.object.right - this.object.left)) /
-                    this.object.zoom /
+                (deltaX * (this._camera.right - this._camera.left)) /
+                    this._camera.zoom /
                     element.clientWidth,
-                this.object.matrix,
+                this.object.owner.matrix,
             );
             this.panUp(
-                (deltaY * (this.object.top - this.object.bottom)) /
-                    this.object.zoom /
+                (deltaY * (this._camera.top - this._camera.bottom)) /
+                    this._camera.zoom /
                     element.clientHeight,
-                this.object.matrix,
+                this.object.owner.matrix,
             );
         } else {
             console.warn(
@@ -569,8 +594,8 @@ export class OrbitController
 
     private dollyIn(dollyScale: number): void {
         if (
-            'isPerspectiveCamera' in this.object ||
-            'isOrthographicCamera' in this.object
+            'isPerspectiveCamera' in this._camera ||
+            'isOrthographicCamera' in this._camera
         ) {
             this.scale *= dollyScale;
         } else {
@@ -583,8 +608,8 @@ export class OrbitController
 
     private dollyOut(dollyScale: number): void {
         if (
-            'isPerspectiveCamera' in this.object ||
-            'isOrthographicCamera' in this.object
+            'isPerspectiveCamera' in this._camera ||
+            'isOrthographicCamera' in this._camera
         ) {
             this.scale /= dollyScale;
         } else {

@@ -13,7 +13,7 @@ export const SetCameraTransformAction = Action.define<
 >({
     description: 'Sets the camera position and target.',
     execute: (payload, { controller }) => {
-        controller.object.position.copy(payload.position);
+        controller.object.owner.position.copy(payload.position);
         controller.target.copy(payload.target);
         controller.update();
     },

@@ -1,9 +1,9 @@
-import { MathUtils, Vector4, OrthographicCamera } from 'three/webgpu';
+import { MathUtils, OrthographicCamera, Vector4 } from 'three/webgpu';
 import {
+    type DIVECameraComponent,
     type DIVERenderer,
     DIVETicker,
     DIVEScene,
-    DIVEPerspectiveCamera,
     COORDINATE_LAYER_MASK,
 } from '@shopware-ag/dive';
 import { OrientationDisplayAxes } from './axes/Axes.ts';
@@ -24,7 +24,7 @@ export class OrientationDisplay implements DIVETicker {
     constructor(
         private _renderer: DIVERenderer,
         private _scene: DIVEScene,
-        private _camera: DIVEPerspectiveCamera,
+        private _cameraComponent: DIVECameraComponent,
     ) {
         this._orthographicCamera = new OrthographicCamera(
             -1,
@@ -66,7 +66,11 @@ export class OrientationDisplay implements DIVETicker {
         this._renderer.webgpurenderer.autoClear = false;
 
         // set axes rotation to camera rotation
-        this._axes.setFromCameraMatrix(this._camera.matrix);
+        // matrixWorld, not matrix: the camera sits at its node's transform, so its
+        // own local matrix is identity and carries no orientation at all
+        this._axes.setFromCameraMatrix(
+            this._cameraComponent.camera.matrixWorld,
+        );
 
         // render scene to orthographic camera
         this._renderer.webgpurenderer.render(

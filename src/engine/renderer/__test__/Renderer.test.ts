@@ -67,12 +67,15 @@ describe('DIVERenderPipeline', () => {
     let renderer: DIVERenderer;
     let scene: any;
     let camera: any;
+    let cameraComponent: any;
 
     beforeEach(() => {
         vi.clearAllMocks();
         scene = { isScene: true };
+        // the renderer is handed the component and pulls the camera out itself
         camera = { isCamera: true };
-        renderer = new DIVERenderer(scene, camera);
+        cameraComponent = { camera };
+        renderer = new DIVERenderer(scene, cameraComponent);
     });
 
     it('should instantiate with default settings', () => {
@@ -116,7 +119,7 @@ describe('DIVERenderPipeline', () => {
             shadowQuality: 'low' as const,
         };
 
-        renderer = new DIVERenderer(scene, camera, customSettings);
+        renderer = new DIVERenderer(scene, cameraComponent, customSettings);
         const instance = WebGPURenderer.mock.results.at(-1)?.value;
 
         expect(WebGPURenderer).toHaveBeenLastCalledWith(
@@ -129,7 +132,7 @@ describe('DIVERenderPipeline', () => {
     it('should create a renderer with a supplied canvas', () => {
         const canvas = document.createElement('canvas');
 
-        renderer = new DIVERenderer(scene, camera, { canvas });
+        renderer = new DIVERenderer(scene, cameraComponent, { canvas });
 
         expect(WebGPURenderer).toHaveBeenLastCalledWith(
             expect.objectContaining({ canvas }),
@@ -210,6 +213,30 @@ describe('DIVERenderPipeline', () => {
         instance.initialized = true;
         renderer.tick();
         expect(instance.render).toHaveBeenCalledWith(scene, camera);
+    });
+
+    it('should render through whichever component is active', () => {
+        const instance = WebGPURenderer.mock.results[0].value;
+        instance.initialized = true;
+        const other = { isCamera: true, other: true };
+
+        renderer.activeCamera = { camera: other } as never;
+        renderer.tick();
+
+        expect(instance.render).toHaveBeenCalledWith(scene, other);
+    });
+
+    it('should follow a component that swaps its camera', () => {
+        // read per frame rather than unpacked once, so a component that replaces
+        // its camera is not left behind
+        const instance = WebGPURenderer.mock.results[0].value;
+        instance.initialized = true;
+        const replacement = { isCamera: true, replacement: true };
+
+        cameraComponent.camera = replacement;
+        renderer.tick();
+
+        expect(instance.render).toHaveBeenCalledWith(scene, replacement);
     });
 
     it('should handle resize', () => {
@@ -297,7 +324,7 @@ describe('DIVERenderPipeline', () => {
     });
 
     it('should map medium shadow quality to PCFShadowMap', () => {
-        renderer = new DIVERenderer(scene, camera, {
+        renderer = new DIVERenderer(scene, cameraComponent, {
             shadowQuality: 'medium',
         });
 

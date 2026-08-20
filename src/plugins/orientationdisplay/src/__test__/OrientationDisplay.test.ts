@@ -1,10 +1,10 @@
 import { Matrix4, Vector4, Color, Material } from 'three/webgpu';
 import { OrientationDisplay } from '../OrientationDisplay.ts';
 import {
+    type DIVECameraComponent,
     DIVERenderer,
     DIVEScene,
     COORDINATE_LAYER_MASK,
-    DIVEPerspectiveCamera,
 } from '@shopware-ag/dive';
 
 // jsdom has no 2D canvas context, so the axes labels cannot rasterize their text
@@ -16,9 +16,11 @@ const mockScene = {
     background: null,
 } as unknown as DIVEScene;
 
-const mockCamera = {
-    matrix: new Matrix4(),
-} as unknown as DIVEPerspectiveCamera;
+// the axes follow the main camera's world matrix, which is where its orientation
+// lives now that the camera sits on a node
+const mockCameraComponent = {
+    camera: { matrixWorld: new Matrix4() },
+} as unknown as DIVECameraComponent;
 
 const mockCanvas = document.createElement('canvas');
 Object.defineProperty(mockCanvas, 'clientHeight', {
@@ -49,7 +51,7 @@ describe('OrientationDisplay', () => {
         orientationDisplay = new OrientationDisplay(
             mockRenderer,
             mockScene,
-            mockCamera,
+            mockCameraComponent,
         );
     });
 
@@ -160,8 +162,10 @@ describe('OrientationDisplay', () => {
 
             orientationDisplay.tick();
 
+            // the world matrix: the camera's own local one is identity, because it
+            // sits at its node's transform
             expect(setFromCameraMatrixSpy).toHaveBeenCalledWith(
-                mockCamera.matrix,
+                mockCameraComponent.camera.matrixWorld,
             );
         });
 
