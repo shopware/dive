@@ -209,4 +209,83 @@ describe('DIVEClock', () => {
         expect(clock['_tickers']).toHaveLength(1);
         expect(clock['_tickers'][0]).toBe(ticker1);
     });
+
+    it('should say whether it holds a ticker', () => {
+        const clock = new DIVEClock();
+        const ticker = { uuid: 'known', tick: vi.fn() };
+
+        expect(clock.hasTicker(ticker)).toBe(false);
+
+        clock.addTicker(ticker);
+
+        expect(clock.hasTicker(ticker)).toBe(true);
+    });
+
+    describe('a ticker that throws', () => {
+        beforeEach(() => {
+            console.error = vi.fn();
+        });
+
+        const throwing = (uuid = 'boom'): DIVETicker => ({
+            uuid,
+            tick: vi.fn(() => {
+                throw new Error('ticker exploded');
+            }),
+        });
+
+        it('should keep running', () => {
+            // the booking sits behind the work, so an escaping throw would never
+            // reach it and rendering would stop for good
+            const clock = new DIVEClock();
+            const boom = throwing();
+            clock.addTicker(boom);
+
+            void clock.startAsync();
+            vi.advanceTimersByTime(20);
+            const framesSoFar = vi.mocked(requestAnimationFrame).mock.calls
+                .length;
+            vi.advanceTimersByTime(48);
+
+            expect(
+                vi.mocked(requestAnimationFrame).mock.calls.length,
+            ).toBeGreaterThan(framesSoFar);
+        });
+
+        it('should still run the tickers behind it', () => {
+            // one try per ticker rather than one around the loop -- the view that
+            // draws the frame is a ticker too, and must not be skipped
+            const clock = new DIVEClock();
+            const behind = { uuid: 'behind', tick: vi.fn() };
+            clock.addTicker(throwing());
+            clock.addTicker(behind);
+
+            void clock.startAsync();
+            vi.advanceTimersByTime(20);
+
+            expect(behind.tick).toHaveBeenCalled();
+        });
+
+        it('should report it rather than swallow it', () => {
+            const clock = new DIVEClock();
+            clock.addTicker(throwing());
+
+            void clock.startAsync();
+            vi.advanceTimersByTime(20);
+
+            expect(console.error).toHaveBeenCalledWith(
+                expect.stringContaining('a ticker threw'),
+                expect.any(Error),
+            );
+        });
+
+        it('should not leave startAsync pending', () => {
+            const clock = new DIVEClock();
+            clock.addTicker(throwing());
+
+            const started = clock.startAsync();
+            vi.advanceTimersByTime(20);
+
+            return expect(started).resolves.toBeUndefined();
+        });
+    });
 });
