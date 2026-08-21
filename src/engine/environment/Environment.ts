@@ -39,29 +39,11 @@ export type DIVEEnvironmentSettings = {
      */
     useAsBackground: boolean;
     /**
-     * The intensity of the environment lighting.
-     *
-     * @default 1
-     */
-    globalEnvIntensity: number;
-    /**
-     * The exposure of the HDR image.
-     *
-     * @default 1
-     */
-    exposure: number;
-    /**
      * The rotation of the HDR image in radians.
      *
      * @default 0
      */
     rotateY: number;
-    /**
-     * Whether to replace the existing lights (can be restored via `restoreLights`).
-     *
-     * @default false
-     */
-    replaceLights?: boolean;
 };
 
 export const DIVEEnvironmentDefaultSettings: DIVEEnvironmentSettings = {
@@ -69,9 +51,6 @@ export const DIVEEnvironmentDefaultSettings: DIVEEnvironmentSettings = {
     imageUrl: defaultEnvUrl,
     useAsBackground: false,
     rotateY: 0,
-    globalEnvIntensity: 1.0, // deprecated
-    exposure: 1.0, // deprecated
-    replaceLights: false, // deprecated
 };
 
 /**

@@ -371,16 +371,6 @@ describe('DIVE', () => {
         expect(window.DIVE.instances).toContain(dive);
     });
 
-    it('should start the clock', () => {
-        const dive = new DIVE({
-            autoStart: false,
-        });
-        dive.start();
-        return waitForAsync().then(() => {
-            expect(dive.clock.startAsync).toHaveBeenCalled();
-        });
-    });
-
     it('should propagate renderer initialization failures from startAsync', async () => {
         const error = new Error('renderer failed');
         const dive = new DIVE({

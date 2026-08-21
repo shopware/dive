@@ -13,11 +13,11 @@ import { DIVE } from '@shopware-ag/dive';
 
 const dive = new DIVE();
 
-dive.State.subscribe('GET_ALL_SCENE_DATA', () => {
+dive.State.subscribe('GET_STATE', () => {
   // do something
 });
 
-dive.State.performAction('GET_ALL_SCENE_DATA', {});
+dive.State.performAction('GET_STATE', {});
 ```
 
 ## Available Actions
