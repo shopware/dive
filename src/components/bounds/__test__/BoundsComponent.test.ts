@@ -36,8 +36,13 @@ describe('dive/bounds/BoundsComponent', () => {
     it('should keep its helpers on the helper layer and hidden', () => {
         const bounds = new BoundsComponent();
 
-        expect(bounds.children).toHaveLength(2);
-        bounds.children.forEach((helper) => {
+        // named rather than indexed out of `children`: the helpers go into the
+        // node now, where they sit beside whatever else is attached
+        expect(bounds.contributions).toEqual([
+            bounds.boxHelper,
+            bounds.sphereHelper,
+        ]);
+        [bounds.boxHelper, bounds.sphereHelper].forEach((helper) => {
             expect(helper.layers.mask).toBe(HELPER_LAYER_MASK);
             expect(helper.visible).toBe(false);
         });
@@ -112,11 +117,13 @@ describe('dive/bounds/BoundsComponent', () => {
 
         bounds.setBoxHelperVisible(true);
         bounds.setSphereHelperVisible(true);
-        expect(bounds.children.every((helper) => helper.visible)).toBe(true);
+        expect(bounds.boxHelper.visible).toBe(true);
+        expect(bounds.sphereHelper.visible).toBe(true);
 
         bounds.setBoxHelperVisible(false);
         bounds.setSphereHelperVisible(false);
-        expect(bounds.children.every((helper) => !helper.visible)).toBe(true);
+        expect(bounds.boxHelper.visible).toBe(false);
+        expect(bounds.sphereHelper.visible).toBe(false);
     });
 
     it('should set the helper colour', () => {
@@ -124,7 +131,7 @@ describe('dive/bounds/BoundsComponent', () => {
 
         bounds.setHelperColor(0xff0000);
 
-        const helper = bounds.children[0] as Box3Helper;
+        const helper = bounds.boxHelper;
         expect(
             (helper.material as MeshBasicMaterial).color.getHexString(),
         ).toBe('ff0000');
@@ -133,7 +140,7 @@ describe('dive/bounds/BoundsComponent', () => {
     it('should scale the sphere helper to the measured radius', () => {
         const bounds = new BoundsComponent().setTarget(createCube(4));
 
-        const sphereHelper = bounds.children[1];
+        const sphereHelper = bounds.sphereHelper;
         expect(sphereHelper.scale.x).toBeCloseTo(bounds.radius);
     });
 
@@ -145,11 +152,22 @@ describe('dive/bounds/BoundsComponent', () => {
 
     it('should dispose its helpers', () => {
         const bounds = new BoundsComponent();
-        const sphereHelper = bounds.children[1] as Mesh;
+        const sphereHelper = bounds.sphereHelper;
         const geometry = vi.spyOn(sphereHelper.geometry, 'dispose');
 
         bounds.dispose();
 
         expect(geometry).toHaveBeenCalled();
+    });
+
+    it('should give a clone its own helpers, not a second pair', () => {
+        // `Object3D.copy` used to add clones of the source children on top of
+        // the pair the constructor made
+        const source = new BoundsComponent();
+
+        const copy = source.clone();
+
+        expect(copy.contributions).toEqual([copy.boxHelper, copy.sphereHelper]);
+        expect(copy.boxHelper).not.toBe(source.boxHelper);
     });
 });

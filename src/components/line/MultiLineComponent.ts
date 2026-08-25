@@ -128,7 +128,7 @@ export class MultiLineComponent extends DIVEComponent {
         this._lines = new LineSegments(this._geometry, this._material);
         this._lines.layers.mask = HELPER_LAYER_MASK;
         this._lines.frustumCulled = false;
-        this.add(this._lines);
+        this.contribute(this._lines);
     }
 
     /** The single object all lines are drawn by. */
