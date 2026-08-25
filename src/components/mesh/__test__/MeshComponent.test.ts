@@ -75,7 +75,6 @@ describe('dive/mesh/MeshComponent', () => {
 
                 const copy = source.clone();
 
-                expect(copy.children).toHaveLength(0);
                 copy.contributions.forEach((object) =>
                     expect(source.contributions).not.toContain(object),
                 );

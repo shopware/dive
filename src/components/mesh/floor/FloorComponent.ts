@@ -45,21 +45,19 @@ export class FloorComponent extends MeshComponent {
         this.contribute(this._mesh);
     }
 
+    /** Whether the floor is drawn. */
+    public get visible(): boolean {
+        return this._mesh!.visible;
+    }
+
     /**
-     * Both, and neither is redundant while this is still an `Object3D`.
-     *
-     * The plane is what three reads when it draws, and it is a child of the node
-     * now -- setting `visible` on the component stopped reaching it. The
-     * component's own flag stays because callers read it back (`EngineGateway`
-     * reports the scene's `floorEnabled` from it), and it cannot become a getter
-     * over the plane while `Object3D` declares it as a field. Once the component
-     * is no longer an `Object3D`, this collapses into one accessor.
+     * On the plane, which is what three reads when it draws. There is nothing
+     * else to set: a component carries no visibility of its own.
      *
      * @param visible - Whether the floor is drawn.
      */
     public setVisibility(visible: boolean): void {
         this._mesh!.visible = visible;
-        this.visible = visible;
     }
 
     /**

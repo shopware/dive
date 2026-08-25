@@ -1,4 +1,9 @@
-import { Mesh, MeshStandardMaterial, type Object3D } from 'three/webgpu';
+import {
+    type AnimationClip,
+    Mesh,
+    MeshStandardMaterial,
+    type Object3D,
+} from 'three/webgpu';
 import { PRODUCT_LAYER_MASK } from '../../../constants/VisibilityLayerMask.ts';
 import { MeshComponent } from '../MeshComponent.ts';
 
@@ -14,6 +19,15 @@ import { MeshComponent } from '../MeshComponent.ts';
  */
 export class ModelComponent extends MeshComponent {
     readonly isModelComponent: true = true;
+
+    /**
+     * The clips the asset came with.
+     *
+     * Its own field, not `Object3D.animations`: they belong to the asset, and the
+     * mixer takes a root and its clips separately, so nothing needs them to sit
+     * on a graph object.
+     */
+    public animations: AnimationClip[] = [];
 
     constructor() {
         super();

@@ -32,7 +32,13 @@ describe('SetCameraTransformAction', () => {
             { controller },
         ).execute();
 
-        expect(controller.object.position).toMatchObject({ x: 0, y: 0, z: 0 });
+        // the camera sits at its node's origin, and the component has no
+        // transform at all to be written by mistake
+        expect(controller.object.camera.position).toMatchObject({
+            x: 0,
+            y: 0,
+            z: 0,
+        });
     });
 
     it('should tell the controller that the position moved', () => {
