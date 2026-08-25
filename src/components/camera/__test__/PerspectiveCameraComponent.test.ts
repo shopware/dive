@@ -43,13 +43,25 @@ describe('dive/camera/PerspectiveCameraComponent', () => {
         );
     });
 
-    it('should keep its camera as a child', () => {
-        // a component cannot be a camera -- both are Object3D -- so it holds one,
-        // and the renderer is handed that
-        const component = new PerspectiveCameraComponent();
+    it('should contribute its camera to the node', () => {
+        // a component cannot be a camera -- both are Object3D -- so it holds one
+        // and puts it on the node. It has to be in the graph at all, because
+        // three only updates a camera's world matrix itself while it has no
+        // parent.
+        const node = new DIVENode();
+        const component = node.addComponent(new PerspectiveCameraComponent());
 
-        expect(component.children).toContain(component.camera);
-        expect(component.camera.parent).toBe(component);
+        expect(component.contributions).toEqual([component.camera]);
+        expect(component.camera.parent).toBe(node);
+    });
+
+    it('should give a clone its own camera', () => {
+        const source = new PerspectiveCameraComponent();
+
+        const copy = source.clone();
+
+        expect(copy.contributions).toEqual([copy.camera]);
+        expect(copy.camera).not.toBe(source.camera);
     });
 
     it('should take no constructor arguments', () => {

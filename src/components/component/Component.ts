@@ -299,6 +299,11 @@ export function isDIVEComponent(object: Object3D): object is DIVEComponent {
  * `OrbitController` hands out its camera, and `setCameraLayer` lives on the
  * camera's component.
  *
+ * Walks up from `object`, asking at each step which component contributed it --
+ * a component owns its content but does not parent it, so it is not an ancestor.
+ * Going up as well as asking means this still finds a component from something
+ * nested deep inside what it contributed.
+ *
  * Matches with `instanceof`, so an abstract base finds its subclasses.
  *
  * @param object - Where to start, typically something a component owns.
@@ -311,6 +316,12 @@ export function findComponent<T extends DIVEComponent>(
     let current: Object3D | null = object;
     while (current) {
         if (current instanceof Ctor) return current;
+
+        // Through the registry, not through `parent`: what a component owns sits
+        // in the *node's* children, so the component is not an ancestor of it.
+        const contributor = contributors.get(current);
+        if (contributor instanceof Ctor) return contributor;
+
         current = current.parent;
     }
     return undefined;

@@ -96,7 +96,7 @@ export abstract class DIVECameraComponent extends DIVEComponent {
 
         this._camera = camera;
         this._camera.layers.mask = DIVECameraComponent.EDITOR_VIEW_LAYER_MASK;
-        this.add(this._camera);
+        this.contribute(this._camera);
     }
 
     /** The three camera this component owns. */

@@ -40,7 +40,7 @@ export abstract class DIVELightComponent extends DIVEComponent {
         this._intensityFactor = intensityFactor;
 
         this._light.layers.mask = PRODUCT_LAYER_MASK;
-        this.add(this._light);
+        this.contribute(this._light);
     }
 
     /**

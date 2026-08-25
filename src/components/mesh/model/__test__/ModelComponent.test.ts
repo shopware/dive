@@ -1,8 +1,11 @@
 import {
     BoxGeometry,
+    Matrix4,
     Mesh,
     MeshStandardMaterial,
     Object3D,
+    Quaternion,
+    Vector3,
 } from 'three/webgpu';
 import { ModelComponent } from '../ModelComponent.ts';
 import { DIVENode } from '../../../node/Node.ts';
@@ -17,12 +20,29 @@ vi.mock('@shopware-ag/dive/assetloader', () => ({
     }),
 }));
 
-/** A glTF-shaped hierarchy: a root wrapper holding one mesh. */
-const makeGltf = (): Object3D => {
-    const root = new Object3D();
-    root.position.set(1, 2, 3);
-    root.add(new Mesh(new BoxGeometry(1, 1, 1), new MeshStandardMaterial()));
-    return root;
+/**
+ * What the asset loader hands over: `gltf.scene`.
+ *
+ * An identity Group whose children are the file's own root nodes -- that is how
+ * GLTFLoader builds it, and a scene cannot carry a transform of its own.
+ *
+ * @param roots - How many root nodes the file has. One is the ordinary case for a
+ * single-object export; several means there is no one transform to lift.
+ */
+const makeGltf = (roots = 1): Object3D => {
+    const scene = new Object3D();
+
+    for (let index = 0; index < roots; index++) {
+        const fileRoot = new Object3D();
+        fileRoot.name = `root-${index}`;
+        fileRoot.position.set(1 + index, 2, 3);
+        fileRoot.add(
+            new Mesh(new BoxGeometry(1, 1, 1), new MeshStandardMaterial()),
+        );
+        scene.add(fileRoot);
+    }
+
+    return scene;
 };
 
 describe('dive/mesh/ModelComponent', () => {
@@ -60,50 +80,89 @@ describe('dive/mesh/ModelComponent', () => {
         expect(node.components).toContain(model);
     });
 
-    it('should hand the root transform to the node', () => {
-        model.setFromGLTF(makeGltf());
+    it('should take every root of the file as content', () => {
+        // every glTF is treated the same: a scene has no transform of its own, so
+        // its root nodes and their placements are what the model is made of
+        model.setFromGLTF(makeGltf(2));
 
-        expect(node.position.x).toBe(1);
-        expect(node.position.z).toBe(3);
-        // the component itself stays at its owner's transform
-        expect(model.position.lengthSq()).toBe(0);
+        expect(model.children.map((child) => child.name)).toEqual([
+            'root-0',
+            'root-1',
+        ]);
+        expect(model.children[0].position.toArray()).toEqual([1, 2, 3]);
     });
 
-    it('should find the first mesh and its material', () => {
+    it('should treat a single-root file no differently', () => {
+        // lifting one root's transform would put an exporter's axis conversion in
+        // front of the user as a rotation they never set
         model.setFromGLTF(makeGltf());
 
-        expect(model.mesh).toBeInstanceOf(Mesh);
-        expect(model.material).toBeInstanceOf(MeshStandardMaterial);
+        expect(model.children).toHaveLength(1);
+        expect(model.children[0].position.toArray()).toEqual([1, 2, 3]);
+        expect(node.position.lengthSq()).toBe(0);
     });
 
-    it('should adopt the owner layer for the content', () => {
-        node.layers.mask = HELPER_LAYER_MASK;
-
-        model.setFromGLTF(makeGltf());
-
-        expect(model.children[0].layers.mask).toBe(HELPER_LAYER_MASK);
-    });
-
-    it('should replace previous content on a second load', () => {
-        model.setFromGLTF(makeGltf());
-        const first = model.children[0];
-
-        model.setFromGLTF(makeGltf());
-
-        expect(model.children).not.toContain(first);
-    });
-
-    it('should honour a semantic root marker', () => {
+    it('should keep a marked transform root as content', () => {
+        // DIVE's own save format writes one, and the side that wrote it is the
+        // side that recognises it -- dropping it here would discard its transform
         const gltf = new Object3D();
-        const semantic = new Object3D();
-        semantic.userData.isDIVEModel = true;
-        semantic.position.set(7, 0, 0);
-        semantic.add(new Mesh(new BoxGeometry(), new MeshStandardMaterial()));
-        gltf.add(semantic);
+        const marked = new Object3D();
+        marked.name = 'TransformRoot';
+        marked.userData.isDIVEModel = true;
+        marked.position.set(4, 5, 6);
+        marked.add(new Mesh(new BoxGeometry(), new MeshStandardMaterial()));
+        gltf.add(marked);
 
         model.setFromGLTF(gltf);
 
-        expect(node.position.x).toBe(7);
+        expect(model.children).toHaveLength(1);
+        expect(model.children[0].name).toBe('TransformRoot');
+        expect(model.children[0].position.toArray()).toEqual([4, 5, 6]);
+        expect(model.children[0].userData.isDIVEModel).toBe(true);
+    });
+
+    it('should move nothing by itself', () => {
+        // not the node, and not the component: a placement belongs to whoever owns
+        // the entity, and writing it here shifted every other component on the node
+        const sibling = node.addComponent(new ModelComponent());
+        model.setFromGLTF(makeGltf());
+
+        expect(node.position.lengthSq()).toBe(0);
+        expect(model.position.lengthSq()).toBe(0);
+        expect(sibling.position.lengthSq()).toBe(0);
+    });
+
+    it('should keep the animations of a load with no owner', () => {
+        // they used to sit inside the `isAttached` branch and vanish silently
+        const gltf = makeGltf();
+        gltf.animations = ['clip'] as never;
+        const detached = new ModelComponent();
+
+        detached.setFromGLTF(gltf);
+
+        expect(detached.animations).toEqual(['clip']);
+    });
+
+    it('should not put the animations on the node', () => {
+        // they belong to the asset, and the mixer is handed a root and its clips
+        // separately -- so there is no reason for them to sit anywhere else
+        const gltf = makeGltf();
+        gltf.animations = ['clip'] as never;
+
+        model.setFromGLTF(gltf);
+
+        expect(model.animations).toEqual(['clip']);
+        expect(node.animations).toEqual([]);
+    });
+
+    it('should take the animations along to another node', () => {
+        const gltf = makeGltf();
+        gltf.animations = ['clip'] as never;
+        model.setFromGLTF(gltf);
+
+        new DIVENode().addComponent(model);
+
+        expect(model.animations).toEqual(['clip']);
     });
 
     it('should work without an owner', () => {
