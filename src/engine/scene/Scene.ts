@@ -6,10 +6,8 @@ import {
 } from 'three/webgpu';
 import { DIVERoot } from '../../components/root/Root.ts';
 import { DIVEGrid } from '../../components/grid/Grid.ts';
-import {
-    type DIVEComponent,
-    isDIVEComponent,
-} from '../../components/component/Component.ts';
+import { type DIVEComponent } from '../../components/component/Component.ts';
+import { type DIVENode } from '../../components/node/Node.ts';
 import { type DIVETicker } from '../clock/Clock.ts';
 
 export type DIVESceneSettings = {
@@ -215,13 +213,18 @@ export class DIVEScene extends Scene implements DIVETicker {
      * the canvas's WebGL context, which is not something DIVE may do to a canvas
      * it was handed.
      *
-     * Traversal collects first and disposes afterwards, because a component is
-     * free to change the tree it sits in while being disposed.
+     * Found through the nodes rather than by looking for components in the graph:
+     * a component is not in the graph -- only what it contributed is -- so
+     * `node.components` is the only place they can be reached.
+     *
+     * Collects first and disposes afterwards, because a component is free to
+     * change the tree it sits in while being disposed.
      */
     public dispose(): void {
         const components: DIVEComponent[] = [];
         this.traverse((object) => {
-            if (isDIVEComponent(object)) components.push(object);
+            if (!('isDIVENode' in object)) return;
+            components.push(...(object as unknown as DIVENode).components);
         });
         components.forEach((component) => component.dispose());
 

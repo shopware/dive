@@ -1,5 +1,6 @@
 import { Color, Object3D } from 'three/webgpu';
 import { DIVEComponent } from '../../../components/component/Component.ts';
+import { DIVENode } from '../../../components/node/Node.ts';
 import { DIVEScene, DIVESceneDefaultSettings } from '../Scene.ts';
 
 const mock_GetSceneObject = vi.fn();
@@ -202,9 +203,12 @@ describe('DIVEScene', () => {
             // the point of the pass: three frees a geometry, material or texture
             // when its own `dispose` fires, and nothing else in a teardown does
             // that -- `Renderer.dispose` only drops its bookkeeping
-            const component = new (class extends DIVEComponent {})();
+            const node = new DIVENode();
+            const component = node.addComponent(
+                new (class extends DIVEComponent {})(),
+            );
             const disposed = vi.spyOn(component, 'dispose');
-            scene.add(component);
+            scene.add(node);
 
             scene.dispose();
 
@@ -212,11 +216,16 @@ describe('DIVEScene', () => {
         });
 
         it('should dispose a component sitting deeper in the tree', () => {
-            const component = new (class extends DIVEComponent {})();
+            // reached through the nodes, not by looking for components in the
+            // graph: a component is not in the graph, only what it contributed is
+            const deep = new DIVENode();
+            const component = deep.addComponent(
+                new (class extends DIVEComponent {})(),
+            );
             const disposed = vi.spyOn(component, 'dispose');
-            const node = new Object3D();
-            node.add(component);
-            scene.add(node);
+            const branch = new DIVENode();
+            branch.add(deep);
+            scene.add(branch);
 
             scene.dispose();
 

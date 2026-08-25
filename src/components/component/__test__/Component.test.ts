@@ -407,15 +407,38 @@ describe('dive/component/DIVEComponent', () => {
             expect(node.nodes).toHaveLength(0);
         });
 
-        it('should not clone it', () => {
-            // a clone would hold ownerless geometry beside a fresh, unaware
-            // component
+        it('should clone the component but not its content', () => {
+            // a cloned contribution would be ownerless geometry beside a
+            // component that knows nothing about it; the clone brings its own
             const source = new DIVENode();
             source.addComponent(new TestComponent()).give(content());
 
             const copy = source.clone();
 
-            expect(copy.children).toHaveLength(0);
+            const cloned = copy.getComponent(TestComponent);
+            expect(cloned).toBeDefined();
+            expect(cloned).not.toBe(source.getComponent(TestComponent));
+            expect(copy.children.filter((child) => componentOf(child))).toEqual(
+                [],
+            );
+        });
+
+        it('should replace components the copy already had', () => {
+            // a node that attaches components in its constructor would otherwise
+            // end up with two of each
+            class Rooted extends DIVENode {
+                constructor() {
+                    super();
+                    this.addComponent(new TestComponent());
+                }
+            }
+            const target = new Rooted();
+            const replaced = target.requireComponent(TestComponent);
+
+            target.copy(new Rooted());
+
+            expect(target.getComponents(TestComponent)).toHaveLength(1);
+            expect(replaced.disposed).toBe(true);
         });
     });
 });
