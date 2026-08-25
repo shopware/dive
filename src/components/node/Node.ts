@@ -12,6 +12,7 @@ import { DIVESelectable } from '../../interfaces/Selectable.ts';
 import { type TransformControls } from 'three/examples/jsm/controls/TransformControls.ts';
 import { type DIVEEntityEventMap } from '../../types/events/index.ts';
 import {
+    componentOf,
     type DIVEComponent,
     type DIVEComponentClass,
 } from '../component/Component.ts';
@@ -166,14 +167,16 @@ export class DIVENode
     }
 
     /**
-     * Removes all child nodes and raw children, keeping components attached.
+     * Removes all child nodes and raw children, keeping what components own.
      *
-     * `Object3D.clear()` would detach the components too, which would silently
-     * strip a node of its geometry or its light.
+     * `Object3D.clear()` would take the components with it, and what they
+     * contributed -- which would silently strip a node of its geometry or its
+     * light. A component gives up its own content through `withdraw`, never
+     * through the node.
      */
     public clear(): this {
         const detachable = this.children.filter(
-            (child) => !('isDIVEComponent' in child),
+            (child) => !('isDIVEComponent' in child) && !componentOf(child),
         );
         this.remove(...detachable);
         return this;
@@ -184,7 +187,8 @@ export class DIVENode
      *
      * `Object3D.copy` re-adds clones of every source child. Since a node's
      * components are attached by its own constructor, that would leave the copy
-     * with two of each.
+     * with two of each -- and cloning what a component contributed would leave
+     * the copy with ownerless geometry beside a fresh, unaware component.
      *
      * @param source - The node to copy from.
      * @param recursive - Whether to copy children.
@@ -194,7 +198,10 @@ export class DIVENode
 
         if (recursive) {
             source.children
-                .filter((child) => !('isDIVEComponent' in child))
+                .filter(
+                    (child) =>
+                        !('isDIVEComponent' in child) && !componentOf(child),
+                )
                 .forEach((child) => this.add(child.clone()));
         }
 

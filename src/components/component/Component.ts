@@ -62,6 +62,25 @@ export abstract class DIVEComponent extends Object3D {
     }
 
     /**
+     * What this component put into its owner's children.
+     *
+     * A component owns renderables -- a mesh, a light, a camera, a helper -- but
+     * they belong in the *node's* children, not in its own. `children` is three's
+     * render queue, so the content has to be in the graph; the component holding
+     * it does not, and an exporter writes every graph node it walks. One level
+     * per component per save is what that costs.
+     *
+     * Contribute through {@link contribute}, take back through {@link withdraw}.
+     * Both work whether or not the component is attached: while it has no owner
+     * this is a list and nothing more, and everything on it is added the moment
+     * one arrives.
+     */
+    public get contributions(): readonly Object3D[] {
+        return this._contributed;
+    }
+    private _contributed: Object3D[] = [];
+
+    /**
      * Whether this component is attached to a node.
      */
     public get isAttached(): boolean {
@@ -141,17 +160,80 @@ export abstract class DIVEComponent extends Object3D {
     }
 
     /**
+     * Puts objects into the owner's children, and remembers them.
+     *
+     * Safe to call from a constructor: with no owner yet this only records them,
+     * and {@link contributions} is applied as soon as one arrives. Safe to call
+     * twice with the same object -- the second time is ignored rather than
+     * producing a duplicate, which would send a spurious `childremoved` /
+     * `childadded` pair through the owner.
+     *
+     * @param objects - What this component contributes to its owner.
+     */
+    protected contribute(...objects: Object3D[]): void {
+        const added = objects.filter(
+            (object) => !this._contributed.includes(object),
+        );
+        if (added.length === 0) return;
+
+        added.forEach((object) => contributors.set(object, this));
+        this._contributed.push(...added);
+
+        if (this._owner) this._owner.add(...added);
+    }
+
+    /**
+     * Takes objects back out of the owner's children.
+     *
+     * Only unparents them. Disposing is a separate concern: a component that is
+     * merely moving to another node must not destroy what it carries.
+     *
+     * @param objects - What to take back. Anything not contributed is ignored.
+     */
+    protected withdraw(...objects: Object3D[]): void {
+        objects.forEach((object) => {
+            const index = this._contributed.indexOf(object);
+            if (index === -1) return;
+
+            this._contributed.splice(index, 1);
+            contributors.delete(object);
+            object.removeFromParent();
+        });
+    }
+
+    /**
      * Releases GPU resources held by this component.
      *
      * Subclasses owning geometries, materials or textures must override this.
      */
     public dispose(): void {}
 
+    /**
+     * Hands the contributions to a new owner.
+     *
+     * Adds only what is not already there, so a stray direct assignment to
+     * `node.children` cannot leave this out of step -- and so re-attaching a
+     * component that never left is a no-op.
+     */
+    private _adopt(owner: DIVENode): void {
+        const orphaned = this._contributed.filter(
+            (object) => object.parent !== owner,
+        );
+        if (orphaned.length > 0) owner.add(...orphaned);
+    }
+
     private _handleAdded(): void {
         const parent = this.parent;
         if (!parent || !('isDIVENode' in parent)) return;
 
         this._owner = parent as unknown as DIVENode;
+
+        // Content first, hook second: `onAttach` is a hook subclasses override,
+        // and one that forgot `super` would silently leave its content out of the
+        // scene. Moving the contributions here makes that impossible -- and the
+        // hook sees them already in place.
+        this._adopt(this._owner);
+
         this.onAttach(this._owner);
     }
 
@@ -159,9 +241,34 @@ export abstract class DIVEComponent extends Object3D {
         const previousOwner = this._owner;
         if (!previousOwner) return;
 
-        this._owner = null;
+        // Hook first, content second -- the mirror of _handleAdded, so `onDetach`
+        // still finds its content where it was.
         this.onDetach(previousOwner);
+
+        previousOwner.remove(...this._contributed);
+
+        this._owner = null;
     }
+}
+
+/**
+ * Which component put an object into a node's children.
+ *
+ * A `WeakMap` rather than a flag on the object: `Object3D.copy` sends `userData`
+ * through `JSON.parse(JSON.stringify(...))`, and `GLTFExporter` writes it out as
+ * `extras` -- a marker there would end up in exported files. This is invisible to
+ * both, and it is what lets `DIVENode.clear` and `DIVENode.copy` tell contributed
+ * content from real child nodes.
+ */
+const contributors = new WeakMap<Object3D, DIVEComponent>();
+
+/**
+ * The component that contributed `object`, if any.
+ *
+ * @param object - Something found in a node's children.
+ */
+export function componentOf(object: Object3D): DIVEComponent | undefined {
+    return contributors.get(object);
 }
 
 /**
