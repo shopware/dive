@@ -50,7 +50,7 @@ export class PrimitiveComponent extends MeshComponent {
         this._mesh.layers.mask = PRODUCT_LAYER_MASK;
         this._mesh.castShadow = true;
         this._mesh.receiveShadow = true;
-        this.add(this._mesh);
+        this.contribute(this._mesh);
     }
 
     /**

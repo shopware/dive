@@ -63,7 +63,18 @@ export class ModelComponent extends MeshComponent {
      * the file's root nodes.
      */
     public setFromGLTF(gltf: Object3D): this {
-        this.clear();
+        // Exactly what this component put there, so the node's child nodes and
+        // whatever other components contributed are untouched. Disposed on the
+        // way out, which `clear()` never did -- the old geometries used to sit
+        // around until the whole component was disposed.
+        const replaced = [...this.contributions];
+        this.withdraw(...replaced);
+        replaced.forEach((object) =>
+            object.traverse((child) => {
+                (child as Mesh).geometry?.dispose();
+            }),
+        );
+
         this._mesh = null;
 
         // The owner's layer decides what this geometry counts as. There may be no
@@ -96,7 +107,7 @@ export class ModelComponent extends MeshComponent {
         // Nothing here looks for a transform root, and nothing here drops one. A
         // transform root is a save format, and the side that wrote it is the side
         // that recognises it again.
-        this.add(...gltf.children);
+        this.contribute(...gltf.children);
 
         return this;
     }

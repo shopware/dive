@@ -61,8 +61,24 @@ describe('dive/mesh/MeshComponent', () => {
             });
 
             it('should be constructible with no arguments', () => {
-                // Object3D.clone() calls new this.constructor()
+                // clone() calls new this.constructor()
                 expect(() => make().clone()).not.toThrow();
+            });
+
+            it('should give a clone its own content, not a second copy', () => {
+                // `Object3D.copy` added a clone of the source child on top of the
+                // one the constructor made, leaving two and a `_mesh` pointing at
+                // the empty one. With the content in the node there is nothing
+                // left for it to duplicate.
+                const source = make();
+                withContent(source);
+
+                const copy = source.clone();
+
+                expect(copy.children).toHaveLength(0);
+                copy.contributions.forEach((object) =>
+                    expect(source.contributions).not.toContain(object),
+                );
             });
 
             it('should have a material after setMaterial', () => {

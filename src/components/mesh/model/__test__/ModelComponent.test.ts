@@ -61,12 +61,42 @@ describe('dive/mesh/ModelComponent', () => {
         expect(model.name).toBe('ModelComponent');
     });
 
-    it('should take the content as its own children', () => {
+    it('should put the content into the node', () => {
         model.setFromGLTF(makeGltf());
 
-        // the content must NOT land in the node's children
-        expect(model.children.length).toBeGreaterThan(0);
-        expect(node.children).toEqual([model]);
+        // `children` is three's render queue, so the content has to be in the
+        // graph -- the component holding it does not, and an exporter writes
+        // every graph node it walks
+        expect(model.contributions.length).toBeGreaterThan(0);
+        expect(node.children).toContain(model.contributions[0]);
+        expect(model.children).toHaveLength(0);
+    });
+
+    it('should replace only its own content on a reload', () => {
+        // the node's child nodes and whatever other components contributed have
+        // to survive -- this used to be `clear()` on the node and wiped them
+        const sibling = node.addComponent(new ModelComponent());
+        sibling.setFromGLTF(makeGltf());
+        const child = new DIVENode();
+        node.add(child);
+
+        model.setFromGLTF(makeGltf());
+        model.setFromGLTF(makeGltf());
+
+        expect(model.contributions).toHaveLength(1);
+        expect(node.children).toContain(sibling.contributions[0]);
+        expect(node.children).toContain(child);
+    });
+
+    it('should dispose the geometry it replaces', () => {
+        // `clear()` never did: the old geometries used to sit around until the
+        // whole component was disposed
+        model.setFromGLTF(makeGltf());
+        const geometry = vi.spyOn(model.mesh!.geometry, 'dispose');
+
+        model.setFromGLTF(makeGltf());
+
+        expect(geometry).toHaveBeenCalled();
     });
 
     it('should survive an asset load with other components attached', () => {
@@ -85,11 +115,11 @@ describe('dive/mesh/ModelComponent', () => {
         // its root nodes and their placements are what the model is made of
         model.setFromGLTF(makeGltf(2));
 
-        expect(model.children.map((child) => child.name)).toEqual([
+        expect(model.contributions.map((child) => child.name)).toEqual([
             'root-0',
             'root-1',
         ]);
-        expect(model.children[0].position.toArray()).toEqual([1, 2, 3]);
+        expect(model.contributions[0].position.toArray()).toEqual([1, 2, 3]);
     });
 
     it('should treat a single-root file no differently', () => {
@@ -97,8 +127,8 @@ describe('dive/mesh/ModelComponent', () => {
         // front of the user as a rotation they never set
         model.setFromGLTF(makeGltf());
 
-        expect(model.children).toHaveLength(1);
-        expect(model.children[0].position.toArray()).toEqual([1, 2, 3]);
+        expect(model.contributions).toHaveLength(1);
+        expect(model.contributions[0].position.toArray()).toEqual([1, 2, 3]);
         expect(node.position.lengthSq()).toBe(0);
     });
 
@@ -115,10 +145,11 @@ describe('dive/mesh/ModelComponent', () => {
 
         model.setFromGLTF(gltf);
 
-        expect(model.children).toHaveLength(1);
-        expect(model.children[0].name).toBe('TransformRoot');
-        expect(model.children[0].position.toArray()).toEqual([4, 5, 6]);
-        expect(model.children[0].userData.isDIVEModel).toBe(true);
+        expect(model.contributions).toHaveLength(1);
+        const root = model.contributions[0];
+        expect(root.name).toBe('TransformRoot');
+        expect(root.position.toArray()).toEqual([4, 5, 6]);
+        expect(root.userData.isDIVEModel).toBe(true);
     });
 
     it('should move nothing by itself', () => {
