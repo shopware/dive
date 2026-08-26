@@ -1,8 +1,8 @@
 import { Action } from '../action.ts';
 import { registerAction } from '../../ActionRegistry.ts';
-import { type Vector3Like } from 'three/webgpu';
+import { Sphere, type Vector3Like } from 'three/webgpu';
 import { type ActionDependencies } from '../../../types/index.ts';
-import { BoundsComponent } from '@shopware-ag/dive';
+import { computeProductBounds } from '@shopware-ag/dive';
 
 export const ComputeEncompassingViewAction = Action.define<
     void,
@@ -15,8 +15,10 @@ export const ComputeEncompassingViewAction = Action.define<
     description:
         'Calculates the camera position and target to view the whole scene. (experimental).',
     execute: (_payload, { gateway, controller }) => {
-        const sceneBB = new BoundsComponent().setTarget(gateway.root);
-        return controller.computeEncompassingView(sceneBB);
+        const scene = computeProductBounds(gateway.root).getBoundingSphere(
+            new Sphere(),
+        );
+        return controller.computeEncompassingView(scene);
     },
 });
 

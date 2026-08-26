@@ -1,4 +1,5 @@
 import { type Object3DEventMap, type Vector3Like } from 'three/webgpu';
+import { type DIVEComponent } from '../../components/component/Component.ts';
 
 /**
  * The transform an entity reports about itself.
@@ -35,8 +36,15 @@ export type DIVEEntityTransformEvent = {
 /** Carries nothing beyond the fact that it happened. */
 type DIVEEntityBareEvent = object;
 
+/** Which component joined or left. */
+export type DIVENodeComponentEvent = {
+    component: DIVEComponent;
+};
+
 export type DIVEEntityEventMap = Object3DEventMap & {
     'object-transform': DIVEEntityTransformEvent;
     'object-select': DIVEEntityBareEvent;
     'object-deselect': DIVEEntityBareEvent;
+    componentadded: DIVENodeComponentEvent;
+    componentremoved: DIVENodeComponentEvent;
 };

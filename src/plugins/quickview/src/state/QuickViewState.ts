@@ -46,12 +46,16 @@ export const QuickViewState = async (
         // scene, so what comes back is everything that made it in
         const objects = await state.performAction('SET_STATE', sceneData);
 
-        const objectsToFocus = objects.filter(
+        // the root, because framing takes one node and the root is the parent of
+        // everything the state created
+        // whether there is anything to look at is a different question: an empty
+        // scene measures to a negative radius and would put the camera behind
+        // its own target
+        const worthLookingAt = objects.some(
             (object) => 'isDIVEModel' in object || 'isDIVEPrimitive' in object,
         );
-        // an empty list would give the bounding box a negative radius
-        if (objectsToFocus.length > 0) {
-            orbitController.focusObject(objectsToFocus);
+        if (worthLookingAt) {
+            orbitController.focusObject(dive.scene.root);
         }
 
         if (settings?.autoStart ?? true) {
