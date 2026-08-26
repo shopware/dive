@@ -64,12 +64,11 @@ export class DIVEClock {
         const deltaTime = (currentTime - this._lastTime) / 1000;
         this._lastTime = currentTime;
 
-        // One try per ticker, not one around the loop: a throw would otherwise
-        // take every ticker behind it with it, and the view that draws the frame
-        // is one of them. Reported rather than swallowed, so a broken ticker is
-        // still findable -- and because nothing escapes, the next frame below is
-        // always booked. Without that, a single bad frame stopped rendering for
-        // good, since the booking sits after the work.
+        /**
+         * one try per ticker, or a throw takes every ticker behind it with it,
+         * the view that draws the frame among them
+         * reported rather than swallowed, so a broken ticker stays findable
+         */
         this._tickers.forEach((ticker) => {
             try {
                 ticker.tick(deltaTime);

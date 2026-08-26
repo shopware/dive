@@ -25,11 +25,7 @@ export class DIVEXRLightRoot extends Object3D {
         // add scene
         this._lightRoot = new DIVERoot();
 
-        // This used to go through updateSceneObject on a freshly built root,
-        // which found nothing to update and warned — the XR light root has
-        // been shipping without a light. A hemisphere plus a directional
-        // component is what the old scene light was, and their defaults are
-        // white, intensity 1 and enabled, which is what the old call asked for.
+        // a hemisphere plus a directional component is what a scene light is
         const light = new DIVENode();
         light.name = 'XRSceneLight';
         light.userData.id = 'XRSceneLight';

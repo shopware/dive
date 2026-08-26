@@ -108,8 +108,10 @@ describe('dive/line/MultiLineComponent', () => {
         });
 
         it('should restart the dash pattern for every line', () => {
-            // LineSegments.computeLineDistances() accumulates across segments,
-            // which can drop a short line entirely into a gap
+            /**
+             * LineSegments.computeLineDistances() accumulates across segments,
+             * which can drop a short line entirely into a gap
+             */
             addLine(ORIGIN, { x: 1, y: 0, z: 0 });
             addLine(ORIGIN, { x: 2, y: 0, z: 0 });
 
@@ -139,8 +141,10 @@ describe('dive/line/MultiLineComponent', () => {
         });
 
         it('should add a line for a key it does not know yet', () => {
-            // placing and moving are one call, so a caller redrawing a line
-            // cannot get the two cases the wrong way round
+            /**
+             * placing and moving are one call, so a caller redrawing a line
+             * cannot get the two cases the wrong way round
+             */
             lines.setLineFor('fresh', ORIGIN, { x: 1, y: 0, z: 0 });
 
             expect(lines.lineCount).toBe(1);
@@ -162,9 +166,10 @@ describe('dive/line/MultiLineComponent', () => {
     });
 
     describe('keys', () => {
-        // A key is opaque to the component: it never inspects one, only compares
-        // them. This is what replaced handing out a line handle the caller had to
-        // keep beside whatever the line belonged to.
+        /**
+         * a key is opaque to the component, it never inspects one, only compares
+         * them
+         */
         const member = { name: 'a member' };
         const other = { name: 'another member' };
 
@@ -395,9 +400,10 @@ describe('dive/line/MultiLineComponent', () => {
 
     describe('cloning', () => {
         it('should give the clone its own geometry, not a second one', () => {
-            // `Object3D.copy` used to add a clone of the source child on top of
-            // the one the constructor made, leaving two and a `_lines` that
-            // pointed at the empty one
+            /**
+             * Object3D.copy used to add a clone of the source child on top of the
+             * constructor's, leaving a _lines that pointed at the empty one
+             */
             const source = new MultiLineComponent();
             source.setLineFor('a', ORIGIN, { x: 1, y: 0, z: 0 });
 

@@ -295,12 +295,6 @@ export class DIVEWebXRController extends Object3D {
 
         // initialize crosshair
         this._scene.add(this._crosshair);
-
-        // Cloning the scene onto the hand node used to be prepared here, but the
-        // line that consumed the clones has always been commented out, so the
-        // work was discarded every time. Removed rather than left in place:
-        // `Object3D.copy` also deep-copies `userData`, so those clones carried
-        // live entity ids that `findEntity` would have resolved to a throwaway.
     }
 
     private restoreScene(): void {

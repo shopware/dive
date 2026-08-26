@@ -23,8 +23,10 @@ describe('dive/light/DirectionalLightComponent', () => {
     });
 
     it('should ask for a shadow map big enough for a sun', () => {
-        // a directional light covers the whole scene from one angle, so its map
-        // is stretched much further than a point light's
+        /**
+         * a directional light covers the whole scene from one angle, so its map
+         * is stretched much further than a point light's
+         */
         const shadow = lightOf(new DirectionalLightComponent()).shadow;
 
         expect(shadow.mapSize.width).toBe(2048);
@@ -48,8 +50,10 @@ describe('dive/light/DirectionalLightComponent', () => {
     });
 
     it('should default to shining from above', () => {
-        // the sun sits higher than it is far, which is what the previous
-        // DIVESceneLight did
+        /**
+         * the sun sits higher than it is far, which is what the previous
+         * DIVESceneLight did
+         */
         const position = new DirectionalLightComponent().light.position;
 
         expect(position.y).toBeGreaterThan(position.x);

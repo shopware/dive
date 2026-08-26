@@ -25,14 +25,11 @@ export class State {
     /** The only way from here into the engine, see {@link EngineGateway}. */
     private gateway: EngineGateway;
 
-    // Modules, each loaded on first use.
-    //
-    // The **promise** is what gets cached, not the instance, and it is stored
-    // before anything is awaited. Assigning after the await left the field empty
-    // for as long as the import took, so two callers in the same tick each built
-    // their own -- and the toolbox builds a gizmo into the scene and listens on
-    // the canvas from its constructor, so a second one meant two gizmos and every
-    // pointer event handled twice.
+    /**
+     * modules, each loaded on first use
+     * the promise is cached, not the instance, and stored before anything is
+     * awaited, or two callers in the same tick each build their own
+     */
 
     private _mediaCreator?: Promise<
         import('@shopware-ag/dive/mediacreator').MediaCreator

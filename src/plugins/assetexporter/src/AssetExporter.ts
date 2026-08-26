@@ -46,9 +46,10 @@ export class AssetExporter {
         // ensure normals are computed before export
         this._computeNormals(object);
 
-        // Both exporters honour `onlyVisible`, which is on by default, so hiding
-        // everything that is not real geometry is enough to keep the ground
-        // plane, gizmo handles and helper visualisations out of the file.
+        /**
+         * both exporters honour onlyVisible, so hiding everything that is not
+         * real geometry keeps it out of the file
+         */
         const restore = this._hideNonProductGeometry(object);
 
         try {
@@ -151,8 +152,10 @@ export class AssetExporter {
         const hidden: Object3D[] = [];
 
         object.traverse((child) => {
-            // only leaves carry geometry; hiding a container would take its
-            // whole subtree with it, since `visible` is inherited
+            /**
+             * only leaves carry geometry, and visible is inherited, so hiding a
+             * container would take its whole subtree with it
+             */
             if (!(child instanceof Mesh)) return;
             if (contributesToBounds(child)) return;
             if (!child.visible) return;

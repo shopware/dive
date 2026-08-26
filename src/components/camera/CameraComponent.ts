@@ -123,9 +123,8 @@ export abstract class DIVECameraComponent extends DIVEComponent {
      *
      * Not `owner.lookAt`: three's `Object3D.lookAt` swaps eye and target unless the
      * object reports `isCamera`, so a plain node comes out oriented 180 degrees the
-     * other way -- its `+Z` at the target instead of its `-Z`. A camera hits the
-     * other branch, which is why this worked while the camera was the thing being
-     * turned. What follows is that branch, applied to the node.
+     * other way -- its `+Z` at the target instead of its `-Z`. What follows is the
+     * camera branch, applied to the node.
      *
      * @param target - The point to face, in world space.
      */
@@ -135,12 +134,11 @@ export abstract class DIVECameraComponent extends DIVEComponent {
         node.updateWorldMatrix(true, false);
         _position.setFromMatrixPosition(node.matrixWorld);
 
-        // the camera's up, not the node's: it is the camera whose roll this decides
+        // the camera's up, not the node's, it is the camera whose roll this sets
         _matrix.lookAt(_position, _target.copy(target), this._camera.up);
         node.quaternion.setFromRotationMatrix(_matrix);
 
-        // a rotated parent would otherwise tilt the result, as Object3D.lookAt
-        // guards against too
+        // in world space, a rotated parent would otherwise tilt the result
         if (node.parent) {
             _matrix.extractRotation(node.parent.matrixWorld);
             _quaternion.setFromRotationMatrix(_matrix);

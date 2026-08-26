@@ -109,8 +109,7 @@ export abstract class MeshComponent extends DIVEComponent {
     }
 
     public dispose(): void {
-        // Over what this component put into the node, not over itself: the content
-        // is no longer below it, so `this.traverse` would find nothing.
+        // over what this component put into the node, this.traverse finds nothing
         this.contributions.forEach((object) =>
             object.traverse((child) => {
                 (child as Mesh).geometry?.dispose();

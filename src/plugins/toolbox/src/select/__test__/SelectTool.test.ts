@@ -65,9 +65,10 @@ describe('SelectTool', () => {
 
     describe('click behavior', () => {
         it('should select through a proxy for an entity without geometry', () => {
-            // a point light is nothing but a position; the sphere on the proxy
-            // layer is the only thing a pointer can hit. Reading a product-only
-            // list meant that hit never arrived and the click deselected instead.
+            /**
+             * a point light is nothing but a position, the sphere on the proxy layer
+             * is the only thing a pointer can hit
+             */
             const light = {
                 uuid: 'light',
                 isSelectable: true,

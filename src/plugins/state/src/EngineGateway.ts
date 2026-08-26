@@ -127,7 +127,7 @@ export class EngineGateway {
             return existing;
         }
 
-        // A camera is state-only, there is nothing to put in the scene.
+        // a camera is state-only, there is nothing to put in the scene
         if (isCameraSchema(entity)) return undefined;
 
         const sceneObject = this._instantiate(entity);
@@ -173,10 +173,10 @@ export class EngineGateway {
 
         detachTransformControls(sceneObject);
 
-        // Child nodes outlive their parent at the root -- deleting a group must
-        // not take its members with it. Their own wiring is keyed by their own id
-        // and stays untouched. No group special case needed: every node's child
-        // nodes are simply its `nodes`.
+        /**
+         * re-parent the child nodes to the root so deleting a group does not
+         * take its members with it
+         */
         if ('isDIVENode' in sceneObject) {
             const children = (sceneObject as DIVENode).nodes;
             for (let i = children.length - 1; i >= 0; i--) {
@@ -266,16 +266,12 @@ export class EngineGateway {
             group.name = 'DIVEGroup';
             const lines = group.addComponent(new MultiLineComponent());
 
-            // A member that leaves has to lose its link, and the group is the
-            // only one who can tell: `Object3D.remove` nulls `child.parent`
-            // before announcing anything, so a departing member can no longer
-            // reach the line drawn for it. `childremoved` fires here and carries
-            // the child, and `attach` removes from the old parent first -- so
-            // re-parenting comes through here too, even straight through three.
-            // A detached component lands here as well, harmlessly, and so does
-            // anything a component contributed -- the group's own line geometry
-            // included. None of them ever had a line, and `removeLineFor` with an
-            // unknown key does nothing.
+            /**
+             * the group has to drop the line itself, because Object3D.remove
+             * nulls child.parent before announcing anything
+             * childremoved also covers re-parenting and contributed content;
+             * removeLineFor with an unknown child does nothing
+             */
             group.addEventListener('childremoved', (event) =>
                 lines.removeLineFor(event.child),
             );
@@ -322,10 +318,10 @@ export class EngineGateway {
 
         const node = sceneObject as DIVENode;
 
-        // What only this kind of entity has -- and first, for two reasons: an
-        // unknown type is rejected before anything gets written, and loading a
-        // model overwrites the node's transform with the glTF root's, so a
-        // transform written before the asset arrives would be thrown away.
+        /**
+         * what only this kind of entity has, and first, so an unknown type is
+         * rejected before anything gets written
+         */
         switch (patch.entityType) {
             case 'light':
                 this._applyLight(node, patch);
@@ -345,23 +341,19 @@ export class EngineGateway {
                 );
         }
 
-        // What every entity with a body in the scene has. This used to be copied
-        // into all four branches above -- and `applyTransform`, not `position.set`,
-        // because a schema position is a world position: setting the local vector
-        // directly put an object inside a group in group space.
+        /**
+         * what every entity with a body in the scene has
+         * applyTransform, not position.set: a schema position is a world position
+         */
         if (patch.name !== undefined) node.name = patch.name;
         node.applyTransform(patch);
         if (patch.visible !== undefined) node.setVisibility(patch.visible);
 
-        // Re-parenting last, so the object is fully written before it moves, and
-        // so the link below is drawn to where it ends up.
+        // re-parent last, so the object is fully written before it moves
         if (patch.parentId !== undefined)
             this._setParent({ ...patch, parentId: patch.parentId });
 
-        // A member a patch moved needs its link to the group redrawn. The gizmo
-        // path gets that from the member's own transform report, but
-        // `applyTransform` is deliberately silent -- so the write path says it
-        // here, once, instead of in each of the four branches above.
+        // redraw the link to the group, since applyTransform reports nothing
         updateParentLink(node);
     }
 
@@ -384,9 +376,7 @@ export class EngineGateway {
         sceneObject: DIVENode,
         model: PartialSchema<ModelSchema>,
     ): Promise<void> {
-        // awaited, so callers can tell when the model is actually in the scene.
-        // userData.uri holds what is currently loaded, so an update that only
-        // moves the model does not fetch the asset again.
+        // userData.uri holds what is loaded, so moving a model does not refetch it
         if (model.uri !== undefined && model.uri !== sceneObject.userData.uri) {
             await sceneObject
                 .requireComponent(ModelComponent)

@@ -91,13 +91,11 @@ export class DIVENode
      * @returns The component, for chaining.
      */
     public addComponent<T extends DIVEComponent>(component: T): T {
-        // `isAttached` first: `owner` throws while a component has none, and a
-        // fresh one is the ordinary case here.
+        // isAttached first, because owner throws while a component has none
         if (component.isAttached) {
             if (component.owner === this) return component;
 
-            // Stealing is explicit now. `Object3D.add` did it for us by calling
-            // `removeFromParent`, and a component is no longer a child.
+            // steal explicitly, a component is not a child that add() re-parents
             component.owner.removeComponent(component);
         }
 
@@ -317,17 +315,14 @@ export class DIVENode
             // if there is no parent, the object will be attached later and keep it's world position
             if (!this.parent) {
                 this.position.set(position.x, position.y, position.z);
-                // Not a change to report: without a parent there is no world
-                // position yet, and attaching will produce the real one.
+                // nothing to report, attaching produces the real world position
             } else {
                 // if we have a parent, we have to calculate the position in the parent's coordinate system to keep the world position
                 const target = this.parent.worldToLocal(
                     new Vector3(position.x, position.y, position.z),
                 );
 
-                // A tolerance rather than `equals`, because the target came
-                // through a matrix: an unchanged world position does not map back
-                // to a bit-identical local one.
+                // a tolerance rather than equals, the target came through a matrix
                 if (this.position.distanceToSquared(target) >= 1e-12) {
                     this.position.copy(target);
                     changed = true;
@@ -335,8 +330,7 @@ export class DIVENode
             }
         }
 
-        // Exact, unlike the position: these are written straight through with no
-        // matrix in between.
+        // exact, unlike the position, these go straight through
         if (rotation !== undefined && rotation !== null) {
             if (
                 this.rotation.x !== rotation.x ||
@@ -401,8 +395,10 @@ export class DIVENode
         const box = computeProductBounds(this);
         if (box.isEmpty()) return;
 
-        // cast down from the bottom centre, which keeps this node's own geometry
-        // out of the results
+        /**
+         * cast down from the bottom centre, which keeps this node's own geometry
+         * out of the results
+         */
         const bottomCenter = box.getCenter(new Vector3());
         bottomCenter.y = box.min.y;
 
@@ -454,8 +450,10 @@ export class DIVENode
         const scene = findSceneRecursive(this);
         if (!scene) return;
 
-        // three dispatches `added` only on the object that was added, not on its
-        // descendants, so a pre-built subtree arrives as a single event.
+        /**
+         * three dispatches added only on the object itself, so a pre-built
+         * subtree arrives as one event
+         */
         this.traverse((object) => {
             if (!('isDIVENode' in object)) return;
             (object as unknown as DIVENode)._attachToScene(scene);

@@ -16,8 +16,10 @@ const mockScene = {
     background: null,
 } as unknown as DIVEScene;
 
-// the axes follow the main camera's world matrix, which is where its orientation
-// lives now that the camera sits on a node
+/**
+ * the axes follow the main camera's world matrix, which is where its orientation
+ * lives now that the camera sits on a node
+ */
 const mockCameraComponent = {
     camera: { matrixWorld: new Matrix4() },
 } as unknown as DIVECameraComponent;
@@ -162,8 +164,10 @@ describe('OrientationDisplay', () => {
 
             orientationDisplay.tick();
 
-            // the world matrix: the camera's own local one is identity, because it
-            // sits at its node's transform
+            /**
+             * the world matrix: the camera's own local one is identity, because it
+             * sits at its node's transform
+             */
             expect(setFromCameraMatrixSpy).toHaveBeenCalledWith(
                 mockCameraComponent.camera.matrixWorld,
             );

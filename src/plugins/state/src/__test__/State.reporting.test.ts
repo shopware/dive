@@ -82,8 +82,10 @@ describe('plugins/state/State reporting to subscribers', () => {
         State['__instances'] = [];
 
         root = new DIVERoot();
-        // enough of a scene and a controller for the toolbox to build on, which
-        // the selection actions need
+        /**
+         * enough of a scene and a controller for the toolbox to build on, which
+         * the selection actions need
+         */
         state = new State(
             {
                 scene: Object.assign(new Object3D(), { root }),
@@ -126,8 +128,10 @@ describe('plugins/state/State reporting to subscribers', () => {
             expect(report.id).toBe('model-1');
             expect(report.entityType).toBe('model');
             expect(report.position).toEqual({ x: 1, y: 2, z: 3 });
-            // by component: a euler off a matrix carries -0, which deep equality
-            // tells apart from 0 and nothing else does
+            /**
+             * by component: a euler off a matrix carries -0, which deep equality
+             * tells apart from 0 and nothing else does
+             */
             expectVec(report.rotation, { x: 0, y: 0, z: 0 });
             expectVec(report.scale, { x: 1, y: 1, z: 1 });
         });
@@ -152,8 +156,10 @@ describe('plugins/state/State reporting to subscribers', () => {
         });
 
         it('should leave the object where the gizmo put it', () => {
-            // a report that ran UPDATE_OBJECT used to write the position back
-            // through worldToLocal onto this very node, once per frame
+            /**
+             * a report that ran UPDATE_OBJECT used to write the position back
+             * through worldToLocal onto this very node, once per frame
+             */
             state.subscribe('UPDATE_OBJECT', vi.fn());
 
             node.position.set(1, 2, 3);
@@ -214,9 +220,10 @@ describe('plugins/state/State reporting to subscribers', () => {
     });
 
     describe('a finished asset load', () => {
-        // reported by the component that loads, not by the node: fetching is the
-        // component's business, and it used to have to be attached to a node to
-        // say anything at all
+        /**
+         * reported by the component that loads, not by the node, fetching an asset
+         * is not the node's business
+         */
         const reportLoad = (): void => {
             node.getComponent(ModelComponent)!.dispatchEvent({
                 type: 'object-load',
@@ -242,11 +249,10 @@ describe('plugins/state/State reporting to subscribers', () => {
     });
 
     describe('how many notifications one action produces', () => {
-        // One per object that actually changed, and no more. The write path used
-        // to go through setPosition, setRotation and setScale, each reporting for
-        // itself, on top of the one performAction sends at the end -- so a patch
-        // carrying all three transform fields announced itself four times, and a
-        // group with two members nineteen.
+        /**
+         * one per object that actually changed, and no more, the write path used to
+         * report once per transform field on top of performAction's own
+         */
         const fullPatch = {
             id: 'model-1',
             entityType: 'model' as const,
@@ -283,8 +289,10 @@ describe('plugins/state/State reporting to subscribers', () => {
         });
 
         it('should send one for a patch carrying nothing but a name', async () => {
-            // no transform changes, so nothing reports -- the one performAction
-            // sends is what keeps this from going unannounced
+            /**
+             * no transform changes, so nothing reports -- the one performAction
+             * sends is what keeps this from going unannounced
+             */
             const onUpdate = vi.fn();
             state.subscribe('UPDATE_OBJECT', onUpdate);
 
@@ -328,8 +336,10 @@ describe('plugins/state/State reporting to subscribers', () => {
             groupNode.position.set(9, 0, 0);
             groupNode.onMove();
 
-            // the member used to be left out here, so its reported position went
-            // stale as soon as anyone dragged the group
+            /**
+             * the member used to be left out here, so its reported position went
+             * stale as soon as anyone dragged the group
+             */
             expect(reported.sort()).toEqual(['g', 'model-1']);
         });
 
@@ -344,10 +354,10 @@ describe('plugins/state/State reporting to subscribers', () => {
     });
 
     describe('how many notifications a selection produces', () => {
-        // One per object whose selection actually changed. An action used to
-        // announce itself twice: `performAction` reports it when it returns, and
-        // the object reported it as well, because the action drove the selection
-        // through the same call a click does.
+        /**
+         * one per object whose selection actually changed, an action used to
+         * announce itself twice because the object reported it as well
+         */
         const otherModel = async (): Promise<DIVENode> => {
             const added = (await state.performAction('ADD_OBJECT', {
                 ...modelData(),
@@ -386,8 +396,10 @@ describe('plugins/state/State reporting to subscribers', () => {
         });
 
         it('should announce the object a selection displaced', async () => {
-            // the only source for that news: nobody asked for it, so the object
-            // reports it even on the silent path
+            /**
+             * the only source for that news: nobody asked for it, so the object
+             * reports it even on the silent path
+             */
             await otherModel();
             await state.performAction('SELECT_OBJECT', { id: 'model-1' });
             selects.length = 0;
@@ -399,8 +411,10 @@ describe('plugins/state/State reporting to subscribers', () => {
         });
 
         it('should still send one when the same object is selected again', async () => {
-            // SelectionState stops early, so nothing reports -- the one
-            // performAction sends is what keeps this from going unanswered
+            /**
+             * SelectionState stops early, so nothing reports -- the one
+             * performAction sends is what keeps this from going unanswered
+             */
             await state.performAction('SELECT_OBJECT', { id: 'model-1' });
             selects.length = 0;
 

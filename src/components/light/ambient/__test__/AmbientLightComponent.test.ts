@@ -15,8 +15,10 @@ describe('dive/light/AmbientLightComponent', () => {
     });
 
     it('should not pretend to have a direction', () => {
-        // an ambient light lights everything equally; three ignores its position,
-        // so leaving it at the origin is the honest state
+        /**
+         * an ambient light lights everything equally; three ignores its position,
+         * so leaving it at the origin is the honest state
+         */
         expect(new AmbientLightComponent().light.position.length()).toBe(0);
     });
 

@@ -42,9 +42,10 @@ vi.mock('three/webgpu', async (importOriginal) => {
             this.setPixelRatio = vi.fn();
             this.render = vi.fn();
 
-            // Enough of WebGLBackend to show the behaviour that matters: the
-            // extension cache, and a dispose that ends the canvas's context
-            // through it -- which is what makes a supplied canvas unusable.
+            /**
+             * enough of WebGLBackend for what matters, the extension cache and a
+             * dispose that ends the canvas's context through it
+             */
             const cache: Record<string, unknown> = {};
             this.backend = {
                 extensions: {
@@ -61,8 +62,10 @@ vi.mock('three/webgpu', async (importOriginal) => {
                 },
             };
             this.dispose = vi.fn(() => {
-                // optional, so a test that stands in for "three moved its
-                // internals" can remove them without this throwing instead
+                /**
+                 * optional, so a test that stands in for "three moved its
+                 * internals" can remove them without this throwing instead
+                 */
                 const extension =
                     this.backend?.extensions?.get('WEBGL_lose_context');
                 if (extension) extension.loseContext();
@@ -255,8 +258,10 @@ describe('DIVERenderPipeline', () => {
     });
 
     it('should follow a component that swaps its camera', () => {
-        // read per frame rather than unpacked once, so a component that replaces
-        // its camera is not left behind
+        /**
+         * read per frame rather than unpacked once, so a component that replaces
+         * its camera is not left behind
+         */
         const instance = WebGPURenderer.mock.results[0].value;
         instance.initialized = true;
         const replacement = { isCamera: true, replacement: true };
@@ -363,10 +368,10 @@ describe('DIVERenderPipeline', () => {
 
     describe('the canvas after a dispose', () => {
         it('should leave a supplied canvas usable', () => {
-            // three's dispose ends the *canvas's* context, not just the
-            // renderer's. On a canvas the caller owns and still has in their
-            // document that is fatal: every later renderer on it gets the lost
-            // context back and throws while reading it.
+            /**
+             * three's dispose ends the canvas's context, not just the renderer's,
+             * so every later renderer on that canvas gets the lost one back
+             */
             const canvas = document.createElement('canvas');
             renderer = new DIVERenderer(scene, cameraComponent, { canvas });
 
@@ -376,9 +381,10 @@ describe('DIVERenderPipeline', () => {
         });
 
         it('should keep a canvas it created itself usable too', () => {
-            // no reason to treat it differently: DIVEScene.dispose releases the
-            // GPU resources, so ending the context buys nothing and only makes the
-            // canvas unusable
+            /**
+             * no reason to treat it differently, DIVEScene.dispose releases the GPU
+             * resources and ending the context only makes the canvas unusable
+             */
             renderer = new DIVERenderer(scene, cameraComponent);
 
             renderer.dispose();

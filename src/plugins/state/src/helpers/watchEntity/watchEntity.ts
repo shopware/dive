@@ -46,8 +46,10 @@ export const watchEntity = (
     const { id, entityType } = entity;
 
     const onTransform = (event: DIVEEntityTransformEvent): void => {
-        // Copied once, then used for both the schema and the subscribers: the
-        // event carries live references into a buffer the next frame overwrites.
+        /**
+         * copied once for both the schema and the subscribers, the event carries
+         * live references into a buffer the next frame overwrites
+         */
         const report = copyVectors({
             id,
             entityType,
@@ -58,17 +60,13 @@ export const watchEntity = (
 
         registry.write(id, report);
 
-        // A member that moved needs its link to the group redrawn. Stateless on
-        // purpose: the node knows its own parent, so nothing here has to be told
-        // which group it belongs to, or kept up to date when that changes.
+        // redraw the link to the group, stateless because the node knows its parent
         updateParentLink(node);
 
         dispatch('UPDATE_OBJECT', report);
     };
 
-    // No guard against re-entry here, unlike the version that performed
-    // actions: `SELECT_OBJECT` called `selectionState.select()`, which called
-    // back into this listener. Announcing does not reach the toolbox at all.
+    // no re-entry guard needed, announcing does not reach the toolbox
     const onSelect = (): void => {
         dispatch('SELECT_OBJECT', { id, entityType });
     };
@@ -86,14 +84,11 @@ export const watchEntity = (
     node.addEventListener('object-select', onSelect);
     node.addEventListener('object-deselect', onDeselect);
 
-    // On the component, because that is what loads. Transform, selection and
-    // deselection are the node's business; fetching an asset is not, and the node
-    // only ever heard about it because the component had nowhere else to report.
-    //
-    // The component that exists now, not whichever one is attached later: an
-    // entity is composed once, in `createEntity`, before this runs. A model whose
-    // mesh component were swapped afterwards would stop reporting -- nothing does
-    // that today.
+    /**
+     * on the component, because that is what loads
+     * the component that exists now: an entity is composed in createEntity,
+     * before this runs, and a mesh component swapped later would stop reporting
+     */
     const model = node.getComponent(ModelComponent);
     model?.addEventListener('object-load', onLoad);
 

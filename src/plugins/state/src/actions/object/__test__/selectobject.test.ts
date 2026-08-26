@@ -11,8 +11,10 @@ const mockSceneObject = {
 } as unknown as Object3D & DIVESelectable;
 
 const mockSelectionState = {
-    // the silent variants: the action announces the change itself, through
-    // performAction, so the object must not announce it as well
+    /**
+     * the silent variants: the action announces the change itself, through
+     * performAction, so the object must not announce it as well
+     */
     applySelection: vi.fn(),
     applyDeselection: vi.fn(),
 } as unknown as SelectionState;

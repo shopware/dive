@@ -76,10 +76,7 @@ export class ModelComponent extends MeshComponent {
      * the file's root nodes.
      */
     public setFromGLTF(gltf: Object3D): this {
-        // Exactly what this component put there, so the node's child nodes and
-        // whatever other components contributed are untouched. Disposed on the
-        // way out, which `clear()` never did -- the old geometries used to sit
-        // around until the whole component was disposed.
+        // only what this component put there, and dispose it on the way out
         const replaced = [...this.contributions];
         this.withdraw(...replaced);
         replaced.forEach((object) =>
@@ -90,9 +87,10 @@ export class ModelComponent extends MeshComponent {
 
         this._mesh = null;
 
-        // The owner's layer decides what this geometry counts as. There may be no
-        // owner yet when a caller builds the component before attaching it, in
-        // which case product geometry is the sensible default.
+        /**
+         * the owner's layer decides what this geometry counts as, and a component
+         * built before it is attached has none yet
+         */
         const layerMask = this.isAttached
             ? this.owner.layers.mask
             : PRODUCT_LAYER_MASK;
@@ -106,10 +104,10 @@ export class ModelComponent extends MeshComponent {
             if (!this._mesh && 'isMesh' in child) {
                 this._mesh = child as Mesh;
 
-                // A configured material wins over the asset's. Adopting the
-                // asset's used to discard it, and `setMaterial` before the file
-                // arrives is the ordinary order -- the caller has the schema
-                // first. Without one, the asset's material is what there is.
+                /**
+                 * a configured material wins over the asset's, since the caller
+                 * has the schema before the file
+                 */
                 if (this._materialIsOwn) {
                     (child as Mesh).material = this._material!;
                 } else {
@@ -121,13 +119,12 @@ export class ModelComponent extends MeshComponent {
 
         this.animations = gltf.animations;
 
-        // Every root node of the file, with whatever transform it carries. A glTF
-        // has none of its own -- the format gives a scene no such field -- so its
-        // roots and their placements are simply what the model is made of.
-        //
-        // Nothing here looks for a transform root, and nothing here drops one. A
-        // transform root is a save format, and the side that wrote it is the side
-        // that recognises it again.
+        /**
+         * every root node of the file, with whatever transform it carries
+         * a glTF scene has no transform of its own, so there is nothing to lift
+         * a marked transform root is a save format and stays as it is; the side
+         * that wrote it recognises it again
+         */
         this.contribute(...gltf.children);
 
         return this;

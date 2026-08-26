@@ -11,8 +11,10 @@ export const QuickViewState = async (
     try {
         const dive = new DIVE({ ...settings, autoStart: false });
 
-        // the node, not the camera: the camera sits at its node's origin, and the
-        // controller below moves the node
+        /**
+         * the node, not the camera: the camera sits at its node's origin, and the
+         * controller below moves the node
+         */
         dive.mainView.cameraComponent.owner.position.set(0, 1, 2);
 
         const orbitController = new OrbitController(

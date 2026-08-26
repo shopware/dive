@@ -14,8 +14,10 @@ describe('SetCameraTransformAction', () => {
             { controller },
         ).execute();
 
-        // the node, not the component: a component carries no transform, so a write
-        // that landed there would be silently lost
+        /**
+         * the node, not the component: a component carries no transform, so a write
+         * that landed there would be silently lost
+         */
         expect(controller.object.owner!.position).toMatchObject({
             x: 1,
             y: 2,
@@ -32,8 +34,10 @@ describe('SetCameraTransformAction', () => {
             { controller },
         ).execute();
 
-        // the camera sits at its node's origin, and the component has no
-        // transform at all to be written by mistake
+        /**
+         * the camera sits at its node's origin, and the component has no
+         * transform at all to be written by mistake
+         */
         expect(controller.object.camera.position).toMatchObject({
             x: 0,
             y: 0,
@@ -42,8 +46,10 @@ describe('SetCameraTransformAction', () => {
     });
 
     it('should tell the controller that the position moved', () => {
-        // without this the controller keeps deriving from the old position and the
-        // next frame pulls the camera back
+        /**
+         * without this the controller keeps deriving from the old position and the
+         * next frame pulls the camera back
+         */
         const controller = makeCameraController();
 
         new SetCameraTransformAction(

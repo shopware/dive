@@ -20,10 +20,11 @@ export const DeselectObjectAction = Action.define<
             throw new Error('Object is not selectable.');
 
         const instance = await getToolbox();
-        // applyDeselection, not deselect: performAction announces this action when
-        // it returns, and having the object announce it too would reach
-        // subscribers twice. TransformTool still detaches the gizmo -- it listens
-        // through onChange, which fires either way.
+        /**
+         * applyDeselection, not deselect, performAction announces this action
+         * when it returns and the object announcing it too would reach
+         * subscribers twice
+         */
         instance.selectionState.applyDeselection();
     },
 });

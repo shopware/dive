@@ -99,9 +99,10 @@ describe('plugins/state/watchEntity', () => {
         });
 
         it('should never command the object that reported', () => {
-            // this is the whole point of dispatching instead of performing: the
-            // position used to travel back onto the node it came from, once per
-            // frame of a gizmo drag
+            /**
+             * the whole point of dispatching instead of performing, the position used
+             * to travel back onto the node it came from, once per gizmo frame
+             */
             watch();
 
             fire('object-transform', transform);
@@ -177,10 +178,10 @@ describe('plugins/state/watchEntity', () => {
         });
 
         it('should announce every report, without deduplicating', () => {
-            // The old code needed a guard here, because SELECT_OBJECT ran
-            // selectionState.select(), which called straight back into this
-            // listener. Announcing never reaches the toolbox, so two reports
-            // mean two selections actually happened.
+            /**
+             * announcing never reaches the toolbox, so two reports mean two
+             * selections actually happened
+             */
             watch();
 
             fire('object-select');
@@ -235,8 +236,10 @@ describe('plugins/state/watchEntity', () => {
         });
 
         it('should run when the entity is unregistered', () => {
-            // how a deleted object stops reporting: the registry holds the
-            // teardown and calls it
+            /**
+             * how a deleted object stops reporting: the registry holds the
+             * teardown and calls it
+             */
             watch();
 
             registry.unregister('model-1');

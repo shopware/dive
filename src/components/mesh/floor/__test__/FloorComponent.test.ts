@@ -24,8 +24,10 @@ describe('dive/floor/FloorComponent', () => {
     });
 
     it('should sit on its own layer, not the product layer', () => {
-        // this single difference is what keeps a 1000x1000 plane out of every
-        // bounding box, every export and every pick
+        /**
+         * this single difference is what keeps a 1000x1000 plane out of every
+         * bounding box, every export and every pick
+         */
         expect(floor.mesh!.layers.mask).toBe(FLOOR_LAYER_MASK);
         expect(floor.mesh!.layers.mask & PRODUCT_LAYER_MASK).toBe(0);
     });

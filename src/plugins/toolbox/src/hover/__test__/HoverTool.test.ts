@@ -84,8 +84,10 @@ describe('HoverTool', () => {
 
     describe('hover behavior', () => {
         it('should stand aside while a button is held', () => {
-            // the pointer is moving the camera then, not aiming at anything, and
-            // reading the intersects is what costs a raycast per event
+            /**
+             * the pointer is moving the camera then, not aiming at anything, and
+             * reading the intersects is what costs a raycast per event
+             */
             const mockHoverable = {
                 uuid: 'test',
                 isHoverable: true,

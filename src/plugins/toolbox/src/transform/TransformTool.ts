@@ -114,9 +114,10 @@ export class TransformTool
             return true;
         }
 
-        // Nothing to block while a button is held: the pointer is moving the
-        // camera, and the hover tool steps aside then too. Checked before the
-        // intersects are read, because reading them is what costs a raycast.
+        /**
+         * nothing to block while a button is held, the pointer is moving the camera
+         * checked before the intersects are read, reading them costs a raycast
+         */
         if (
             ctx.pointerPrimaryDown ||
             ctx.pointerMiddleDown ||
@@ -125,9 +126,10 @@ export class TransformTool
             return;
         }
 
-        // `intersects`, not `uiIntersects`: three's TransformControls never sets a
-        // layer, so the gizmo sits on the default one. Looking for it among the UI
-        // hits could not find it, and cost a full raycast to fail.
+        /**
+         * intersects, not uiIntersects, TransformControls never sets a layer so
+         * the gizmo sits on the default one
+         */
         const overGizmo = ctx.intersects.some((intersect) =>
             this.isGizmoChild(intersect.object),
         );

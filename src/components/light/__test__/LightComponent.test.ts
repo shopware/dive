@@ -46,8 +46,10 @@ describe('dive/light/DIVELightComponent', () => {
             });
 
             it('should put its light into the node', () => {
-                // the light has to be in the graph to illuminate anything, but
-                // the component holding it does not
+                /**
+                 * the light has to be in the graph to illuminate anything, but
+                 * the component holding it does not
+                 */
                 const node = new DIVENode();
                 const component = node.addComponent(make());
 
@@ -59,8 +61,10 @@ describe('dive/light/DIVELightComponent', () => {
 
                 const copy = source.clone();
 
-                // toContain, not toEqual: a point light also contributes its
-                // editor handle
+                /**
+                 * toContain, not toEqual: a point light also contributes its
+                 * editor handle
+                 */
                 expect(copy.contributions).toContain(copy.light);
                 expect(copy.light).not.toBe(source.light);
             });
@@ -74,8 +78,10 @@ describe('dive/light/DIVELightComponent', () => {
             });
 
             it('should start out at the intensity its factor implies', () => {
-                // the constructor hands three a value directly, so a factor that
-                // disagreed with it would make the first setIntensity jump
+                /**
+                 * the constructor hands three a value directly, so a factor that
+                 * disagreed with it would make the first setIntensity jump
+                 */
                 expect(make().light.intensity).toBe(factor);
             });
 
@@ -108,8 +114,10 @@ describe('dive/light/DIVELightComponent', () => {
             });
 
             it('should be findable through the abstract base', () => {
-                // what lets the state layer apply colour or intensity without
-                // knowing which kind of light a node carries
+                /**
+                 * what lets the state layer apply colour or intensity without
+                 * knowing which kind of light a node carries
+                 */
                 const node = new DIVENode();
                 const component = node.addComponent(make());
 

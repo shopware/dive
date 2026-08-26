@@ -23,9 +23,10 @@ const createCube = (size = 2, layerMask = PRODUCT_LAYER_MASK): Mesh => {
 
 describe('dive/bounds/BoundsComponent', () => {
     it('should declare no capability brands', () => {
-        // the old BoundingBox extended DIVENode and inherited isSelectable,
-        // which made it terminate the findInterface walk and get selected
-        // instead of the object it was measuring
+        /**
+         * the old BoundingBox inherited isSelectable and got selected instead
+         * of the object it was measuring
+         */
         const bounds = new BoundsComponent();
 
         expect('isSelectable' in bounds).toBe(false);
@@ -36,8 +37,10 @@ describe('dive/bounds/BoundsComponent', () => {
     it('should keep its helpers on the helper layer and hidden', () => {
         const bounds = new BoundsComponent();
 
-        // named rather than indexed out of `children`: the helpers go into the
-        // node now, where they sit beside whatever else is attached
+        /**
+         * named rather than indexed out of `children`: the helpers go into the
+         * node now, where they sit beside whatever else is attached
+         */
         expect(bounds.contributions).toEqual([
             bounds.boxHelper,
             bounds.sphereHelper,
@@ -161,8 +164,10 @@ describe('dive/bounds/BoundsComponent', () => {
     });
 
     it('should give a clone its own helpers, not a second pair', () => {
-        // `Object3D.copy` used to add clones of the source children on top of
-        // the pair the constructor made
+        /**
+         * `Object3D.copy` used to add clones of the source children on top of
+         * the pair the constructor made
+         */
         const source = new BoundsComponent();
 
         const copy = source.clone();

@@ -30,8 +30,10 @@ const mockGateway = {
     registerTicker: vi.fn(),
 } as unknown as EngineGateway;
 
-// a real node and camera component rather than a spy: what matters is where the
-// camera ends up looking, and a recorded call cannot tell that
+/**
+ * a real node and camera component rather than a spy: what matters is where the
+ * camera ends up looking, and a recorded call cannot tell that
+ */
 const mockController = Object.assign(
     makeCameraController(new Vector3(1, 1, 1), new Vector3(0, 0, 0)),
     { enabled: true },
@@ -252,8 +254,10 @@ describe('MoveCameraAction', () => {
             const options = mockFromTargets.mock.calls[0][2];
             options.onUpdate();
 
-            // the camera stands at (1,1,1) looking at the origin, so it faces
-            // down the diagonal -- and not the other way along it
+            /**
+             * the camera stands at (1,1,1) looking at the origin, so it faces
+             * down the diagonal -- and not the other way along it
+             */
             const direction = new Vector3(0, 0, -1).applyQuaternion(
                 mockController.object.owner.quaternion,
             );

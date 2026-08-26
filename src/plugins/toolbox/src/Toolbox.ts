@@ -224,8 +224,7 @@ export class Toolbox {
     // ============ Context Creation ============
 
     private createPointerContext(e: PointerEvent): PointerContext {
-        // Object.assign, not a spread: `{ ...lazy }` would read every getter and
-        // raycast on the spot, which is the thing this avoids.
+        // Object.assign, not a spread, which would read every getter and raycast
         return Object.assign(this.createLazyIntersects(), {
             event: e,
             pointer: this._pointer.clone(),
@@ -309,27 +308,25 @@ export class Toolbox {
     }
 
     private raycast(): Intersection[] {
-        // DEFAULT is in here for the same reason it is in every camera mask:
-        // three puts an object on layer 0 unless someone says otherwise, and the
-        // gizmo is one of them -- leaving it out made everything that never
-        // picked a layer unpickable.
-        //
-        // PROXY, or a point light would be unreachable: it has no geometry, and
-        // its handle is the only thing a pointer can hit.
-        //
-        // FLOOR and HELPER stay out on purpose: the ground plane and the group
-        // link lines are there to be looked at, not grabbed.
+        /**
+         * DEFAULT, because three puts an object on layer 0 unless someone says
+         * otherwise, the gizmo among them
+         * PROXY, or a point light would be unreachable, its handle is the only
+         * thing a pointer can hit
+         * FLOOR and HELPER stay out, the ground plane and the group link lines
+         * are there to be looked at, not grabbed
+         */
         this._raycaster.layers.mask =
             DEFAULT_LAYER_MASK |
             PRODUCT_LAYER_MASK |
             UI_LAYER_MASK |
             PROXY_LAYER_MASK;
 
-        // Recurse from the scene's direct children: none of them is a Mesh
-        // itself (they are the root, the grid and helper roots), so filtering
-        // this list for meshes would leave nothing to intersect at all.
-        // `layers` already prunes per object while recursing; `visible` does
-        // not, because Raycaster ignores it -- hence the hierarchy check.
+        /**
+         * recurse from the scene's direct children, none of which is a mesh itself
+         * layers prunes per object while recursing, visible does not because
+         * Raycaster ignores it, hence the hierarchy check
+         */
         return this._raycaster
             .intersectObjects(this._scene.children, true)
             .filter((intersection) =>

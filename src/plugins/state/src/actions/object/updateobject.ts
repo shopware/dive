@@ -16,8 +16,10 @@ export const UpdateObjectAction = Action.define<
         const objectToUpdate = registry.read(payload.id)?.schema;
         if (!objectToUpdate) throw new Error('Object not found.');
 
-        // EntityRegistry.write merges and copies vectors; this action no longer
-        // needs to know either rule
+        /**
+         * EntityRegistry.write merges and copies vectors; this action no longer
+         * needs to know either rule
+         */
         registry.write(payload.id, payload as PartialSchema);
 
         await gateway.updateEntity({

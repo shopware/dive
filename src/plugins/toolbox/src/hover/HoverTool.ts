@@ -37,11 +37,11 @@ export class HoverTool implements Tool {
     }
 
     public onPointerMove(ctx: PointerContext): void {
-        // While a button is held the pointer is moving the camera, not aiming at
-        // anything -- and OrbitControls uses all three. Following the hover there
-        // costs a raycast per event for feedback nobody asked for. The state is
-        // left as it was rather than cleared, so releasing does not make it blink;
-        // the next free move corrects it.
+        /**
+         * while a button is held the pointer is moving the camera, and
+         * OrbitControls uses all three
+         * left as it was rather than cleared, so releasing does not make it blink
+         */
         if (
             ctx.pointerPrimaryDown ||
             ctx.pointerMiddleDown ||
@@ -50,8 +50,7 @@ export class HoverTool implements Tool {
             return;
         }
 
-        // Every hit, whatever layer: hovering is feedback, and anything the
-        // pointer can reach may want to respond to it.
+        // every hit, whatever layer, anything the pointer reaches may respond
         const intersect = ctx.intersects[0];
         const hoverable = findInterface<DIVEHoverable>(
             intersect?.object,

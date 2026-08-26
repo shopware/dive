@@ -15,8 +15,7 @@ export function isVisibleInHierarchy(
 ): boolean {
     if (!object) return false;
 
-    // iterative on purpose: this runs per intersection per pointer event, and
-    // glTF hierarchies get deep.
+    // iterative, this runs per intersection per pointer event
     let current: Object3D | null = object;
     while (current) {
         if (!current.visible) return false;
