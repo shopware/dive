@@ -1,9 +1,8 @@
 # Component system
 
 A DIVE scene is a tree of **nodes**. A node carries a transform and an identity;
-everything it *does* comes from the **components** attached to it. This is the
-model Unity and Unreal use, and it is what replaced the class-per-entity design
-of DIVE 3.
+everything it *does* comes from the **components** attached to it, which is what
+replaced the class-per-entity design of DIVE 3.
 
 ```ts
 import { DIVENode, MeshComponent, PointLightComponent } from '@shopware-ag/dive';
@@ -24,7 +23,7 @@ dive.scene.root.add(lamp);
 A component is **not** in the scene graph. What it owns is.
 
 `Renderer._projectObject` walks the whole scene graph **every frame** to rebuild
-the render list — `children` *is* the render queue, and there is no persistent
+the render list - `children` *is* the render queue, and there is no persistent
 queue to register into. So a mesh, a light or a camera has to be in `children` to
 be drawn. It goes into the **node's** children, through `contribute`:
 
@@ -38,12 +37,12 @@ constructor() {
 }
 ```
 
-The component itself stays out, and that is not a detail: `GLTFExporter`
-writes a node for every graph object it walks, and has no skip for empty ones. A
-component in the graph therefore cost **one extra level per component, per save**
-— and on reload that level became content of a *new* component, so a saved scene
-grew a level every time it went round. `exportscene` hands over the whole scene
-root, so it was every entity at once.
+The component itself stays out, and that is not a detail: `GLTFExporter` writes a
+node for every graph object it walks, and has no skip for empty ones. A component
+in the graph would cost **one extra level per component, per save** - and on
+reload that level becomes content of a *new* component, so the tree grows by a
+level every time a scene goes round. `exportscene` hands over the whole scene
+root, so that would be every entity at once.
 
 The tree stays readable through the API rather than through the array:
 
@@ -77,55 +76,70 @@ Two rules, each with a reason:
 
 1. **Contribute your content, do not parent it.** `contribute` puts objects into
    the owner's children, takes them along when the component moves to another
-   node, and removes them when it is detached. `withdraw` takes them back —
+   node, and removes them when it is detached. `withdraw` takes them back -
    `ModelComponent` does that on every reload, which is how loading an asset
    replaces exactly its own content and leaves the node's child nodes and the
    other components' content alone.
 
-   Anything needing an internal offset carries it on the object contributed — a
+   Anything needing an internal offset carries it on the object contributed - a
    directional light's direction lives on the light, which is a property of the
-   light rather than a placement. A component has no transform of its own to
-   offer.
+   light rather than a placement.
 
-2. **Never attach another component.** Composing a node is the caller's job; see
-   the section below.
+2. **Never attach another component.** Contribute all the objects you like, but
+   never call `owner.addComponent`. Composing a node is the caller's job - see
+   the section below for what breaks.
+
+   The line between the two is where the object comes from, not how much of it
+   there is. `PointLightComponent` owns a light *and* a clickable proxy sphere,
+   and contributes both:
+
+   ```ts
+   this.contribute(this._light, this._handle);   // content: yours to own
+   ```
+
+   What it must not do is decide that its node also needs bounds:
+
+   ```ts
+   protected onAttach(owner: DIVENode): void {
+       owner.addComponent(new BoundsComponent());   // not yours to decide
+   }
+   ```
 
 Constructors take no arguments: `clone()` calls `new this.constructor()` and then
-`copy(source)`. A component holding state overrides `copy` — a clone that
+`copy(source)`. A component holding state overrides `copy` - a clone that
 silently drops the geometry descriptor or the intensity factor looks like it
 worked.
 
-Two rules died when components left the graph, and it is worth knowing why they
-were there:
+Two things a component does not have, both worth knowing before writing one:
 
-- *Never declare a capability brand.* `findInterface` walks up from a raycast hit
-  looking for `isSelectable` and friends, and a component in that chain carrying
-  one would have been handed back instead of the node. It is not in the chain any
-  more. **What a component contributes still is**, so a brand on a contributed
-  mesh would still cut the search short.
-- *Position the node, not the component.* There is no component transform left to
-  position.
+- **No transform.** Placement belongs to the node, and an internal offset belongs
+  to the object contributed. There is nothing on the component to position.
+- **No place in the `.parent` chain** - but what it contributes has one, and
+  `findInterface` walks that chain up from a raycast hit looking for
+  `isSelectable` and friends, stopping at the first match. A capability brand on
+  a contributed mesh therefore gets the *mesh* handed back instead of the node
+  behind it. Contribute plain objects and let the node carry the brands.
 
 ## Ticking
 
 Components that implement `tick(deltaTime)` are driven by `DIVEScene`, which is
 itself a `DIVETicker` on the engine clock. The scene keeps a **flat array of only
-the components that actually tick** — nothing walks the tree per frame, and a
+the components that actually tick** - nothing walks the tree per frame, and a
 component without a `tick` method is never visited.
 
 Enrolment happens when a node joins a tree that reaches the scene, and is undone
-when it leaves; `addComponent` and `removeComponent` do the bookkeeping, since a
-component is not a child and three's events no longer speak for it. This mirrors both engines: Unity enrols a `MonoBehaviour` when
-the script defines `Update`, Unreal registers an `FTickFunction` when
-`bCanEverTick` is set. Here, the presence of the method is the declaration.
+when it leaves; `addComponent` and `removeComponent` do the bookkeeping, because
+a component is not a child and three's `childadded`/`childremoved` never fire for
+one. The presence of the method is the whole declaration - there is no flag to
+set and no base call to remember.
 
-Unreal's second flag has an equivalent too:
+Enrolment is one question, participation another:
 
 ```ts
 component.setTickEnabled(false); // withdraw entirely, cost drops to zero
 ```
 
-Use it for work that only happens sometimes — an animation that finished, a
+Use it for work that only happens sometimes - an animation that finished, a
 helper that only recomputes while something is being dragged. Calling it from
 inside your own `tick` is expected and safe.
 
@@ -135,10 +149,26 @@ uses it to follow the camera.
 
 ## A component never attaches another component
 
-Composing a node is the *caller's* job. A component describes one capability and
-must not decide what else its owner is made of — attaching a sibling from
-`onAttach` breaks that contract and makes the node's component set depend on
-attachment order.
+A component describes one capability and does not decide what else its owner is
+made of. Composing a node is the *caller's* job - `EngineGateway._instantiate`
+does it for every entity type, and `DIVERoot` does it for itself by attaching a
+`FloorComponent` in its own constructor. A node composing itself is the caller.
+
+Three things break when a component attaches a sibling instead:
+
+- **The attachment order starts to matter.** What `getComponent` finds depends on
+  which component went on first, and attaching from inside `_attach` mutates
+  `_components` while the caller is still working through it.
+- **Removal stops being symmetric.** `removeComponent(model)` does not take the
+  bounds the model attached, and nothing records whose they were. Same separation
+  as `withdraw`, which unparents without disposing: ownership and lifetime are
+  not the same question.
+- **Cloning doubles.** `DIVENode.copy` clones the source's components, so a
+  component that attaches another on attach gives the copy two of them - one
+  cloned, one freshly attached.
+
+Underneath all three is the point the next section makes: "a model needs bounds"
+is knowledge about an entity type, and entity types live in the state plugin.
 
 If a component needs a sibling, the caller attaches both and hands one to the
 other, or the caller drives both itself.
@@ -146,7 +176,7 @@ other, or the caller drives both itself.
 ## What the engine does not know
 
 The engine has nodes and components. It has no idea what a *group*, a *model* or
-a *light* is — those are entity types, and entity types belong to the state
+a *light* is - those are entity types, and entity types belong to the state
 plugin. Anything shaped like "when X happens to this kind of entity, do Y"
 belongs in `EngineGateway`, never in a component.
 
@@ -159,8 +189,8 @@ holds all the group knowledge:
 - `_apply` redraws it when a patch writes a new position
 - `bbVisible` in the group schema toggles the line component's visibility
 
-So the drawing half is reusable for anything that needs many cheap lines —
-measurement overlays, debug rays — and no component ever learns what a group is.
+So the drawing half is reusable for anything that needs many cheap lines -
+measurement overlays, debug rays - and no component ever learns what a group is.
 
 ## Layers decide what geometry means
 
@@ -180,7 +210,7 @@ layer. Two things to know:
 
 - `layers` gates only the object it is set on, never a subtree. Set the mask on
   the leaf meshes you contribute; a component has no mask of its own that could
-  stand in for them, and no `visible` either — hide what you contributed.
+  stand in for them, and no `visible` either - hide what you contributed.
 - `Raycaster` checks `layers` but **never `visible`**. Layers, not visibility, are
   the picking contract.
 
@@ -195,7 +225,7 @@ findComponent(mesh, MeshComponent);     // from content back to its component
 componentOf(mesh);                      // whichever component contributed it
 ```
 
-`findComponent` is the way back in from something a component owns — an
+`findComponent` is the way back in from something a component owns - an
 `OrbitController` hands out its camera, and `setCameraLayer` lives on the
 camera's component. It walks up from the object, asking the contribution registry
 at each step, because a component owns its content without parenting it and so is
@@ -204,7 +234,7 @@ never an ancestor of it.
 Matching is by `instanceof`, so a base class finds its subclasses. That is what
 lets one code path serve both models and primitives (`PrimitiveComponent
 extends MeshComponent`), and what lets the state layer apply colour and intensity
-to every light on a node without knowing which kinds are there — a scene light is
+to every light on a node without knowing which kinds are there - a scene light is
 a node with a hemisphere *and* a directional component.
 
 Prefer `requireComponent` wherever the component is part of the node's contract.

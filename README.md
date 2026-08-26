@@ -36,8 +36,9 @@ in a Shopware frontend such as Storefront or in any other frontend you want to u
 tied to Shopware.
 
 DIVE supplies your frontend application with all needed tooling to set up a basic 3D application.
-A scene is a tree of nodes, and what a node *does* comes from the components attached to it — the
-model Unity and Unreal use. Driving a scene from data is the job of the
+A scene is a tree of nodes, and what a node *does* comes from the components attached to it - the
+model common game engines use.
+Driving a scene from data is the job of the
 [state plugin](src/plugins/state/README.md), which adds event-based controls called "Actions".
 
 ## Installation

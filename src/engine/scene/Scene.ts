@@ -76,10 +76,10 @@ export class DIVEScene extends Scene implements DIVETicker {
     /**
      * Components that asked for a per-frame callback.
      *
-     * Flat and enrolment-based, the way Unity and Unreal do it: nothing walks the
-     * scene tree per frame, and components without a `tick` never appear here at
-     * all. Nodes enrol and withdraw their components as they enter and leave the
-     * tree, so the only per-frame cost is iterating this array.
+     * Flat and enrolment-based: nothing walks the scene tree per frame, and
+     * components without a `tick` never appear here at all. Nodes enrol and
+     * withdraw their components as they enter and leave the tree, so the only
+     * per-frame cost is iterating this array.
      */
     private _tickingComponents: DIVEComponent[] = [];
 

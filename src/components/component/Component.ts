@@ -10,8 +10,8 @@ import { type DIVEComponentEventMap } from '../../types/events/DIVEComponentEven
  * its render list by walking the graph every single frame, so a mesh or a light
  * has to be in `children` to be drawn -- but it goes into the *node's* children,
  * through {@link contribute}. The component itself stays out, because an exporter
- * writes a node for everything it walks, and a component in the graph cost one
- * level per save.
+ * writes a node for everything it walks, so a component in the graph would cost
+ * one level per component per save.
  *
  * The two rules worth knowing before writing one:
  *
@@ -20,7 +20,9 @@ import { type DIVEComponentEventMap } from '../../types/events/DIVEComponentEven
  *    `withdraw` takes them back. Anything that needs an internal offset carries
  *    it on the object contributed -- a directional light's direction lives on the
  *    light. A component has no transform of its own to offer.
- * 2. **Never attach another component.** A component describes one capability
+ * 2. **Never attach another component.** Contribute all the objects you like --
+ *    `PointLightComponent` contributes a light and a clickable proxy sphere --
+ *    but never call `owner.addComponent`. A component describes one capability
  *    and does not decide what else its owner is made of; composing a node is the
  *    caller's job. A component that needs a sibling should be handed it, or the
  *    caller should attach both.
@@ -28,18 +30,16 @@ import { type DIVEComponentEventMap } from '../../types/events/DIVEComponentEven
  * Constructors take no arguments: {@link clone} calls `new this.constructor()`.
  * Configure through setters instead.
  *
- * An `EventDispatcher`, so a component reports what happens to it on itself. It
- * used to have no voice and had to borrow its owner's, which meant a component
- * with no owner yet dropped its events -- `ModelComponent` guarded its load
- * report with `isAttached`, so whether a load was announced depended on the
- * delivery route rather than on the load.
+ * An `EventDispatcher`, so a component reports what happens to it on itself. A
+ * detached one can speak too, which is why nothing here guards a report with
+ * {@link isAttached}: whether an event fires says something about the event, never
+ * about the delivery route.
  *
- * Two rules died with the graph. A component used to be forbidden from declaring
- * a capability brand, because `findInterface` walks up from a raycast hit and
- * would have handed back the component instead of the node -- it is not in that
- * chain any more. And "position the node, not the component" has nothing left to
- * warn about. What a component *contributes* is still in the chain, so a brand on
- * that would still cut the search short.
+ * A component is not in the `.parent` chain, but what it contributes is, and
+ * `findInterface` walks that chain up from a raycast hit looking for
+ * `isSelectable` and friends. A capability brand on a contributed mesh therefore
+ * gets the mesh handed back instead of the node behind it. Contribute plain
+ * objects and let the node carry the brands.
  *
  * @module
  */
@@ -53,13 +53,10 @@ export abstract class DIVEComponent extends EventDispatcher<DIVEComponentEventMa
      * The node this component is attached to.
      *
      * Throws while the component is detached, rather than handing out a `null`
-     * that every consumer has to rule out. This is Unreal's `check(GetOwner())`:
-     * there, too, a component can exist before it is registered, and code that
-     * needs the owner asserts instead of branching. Unity's route -- a
-     * non-nullable `Component.gameObject`, because `new MonoBehaviour()` is
-     * forbidden and `AddComponent` is the only way in -- is closed to us by rule
-     * 3 above: cloning needs a constructor that takes nothing, so a detached
-     * component has to be constructible.
+     * that every consumer has to rule out. A non-nullable owner is not available
+     * to us: {@link clone} builds a component before there is any node to put it
+     * on, so a detached one has to be constructible, and detached is therefore a
+     * real state rather than an impossible one.
      *
      * Ask {@link isAttached} when a detached component is a case to handle rather
      * than a mistake.
@@ -104,11 +101,11 @@ export abstract class DIVEComponent extends EventDispatcher<DIVEComponentEventMa
     /**
      * Whether this component currently participates in the per-frame tick.
      *
-     * Only meaningful for components that implement {@link tick}. Mirrors
-     * Unreal's split between "can ever tick" (here: does the method exist) and
-     * "is ticking right now": a component that only works some of the time can
-     * withdraw itself entirely instead of being called every frame to return
-     * immediately.
+     * Only meaningful for components that implement {@link tick}. Enrolment and
+     * participation are separate questions: whether a component can ever tick is
+     * decided by the method existing, while this decides whether it does right
+     * now, so one that only works some of the time can withdraw entirely instead
+     * of being called every frame to return immediately.
      */
     public get tickEnabled(): boolean {
         return this._tickEnabled;
