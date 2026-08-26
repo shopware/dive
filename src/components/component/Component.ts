@@ -1,5 +1,6 @@
-import { type Object3D } from 'three/webgpu';
+import { EventDispatcher, type Object3D } from 'three/webgpu';
 import { type DIVENode } from '../node/Node.ts';
+import { type DIVEComponentEventMap } from '../../types/events/DIVEComponentEventMap.ts';
 
 /**
  * Base class for everything that gives a node a capability: geometry, a light,
@@ -27,6 +28,12 @@ import { type DIVENode } from '../node/Node.ts';
  * Constructors take no arguments: {@link clone} calls `new this.constructor()`.
  * Configure through setters instead.
  *
+ * An `EventDispatcher`, so a component reports what happens to it on itself. It
+ * used to have no voice and had to borrow its owner's, which meant a component
+ * with no owner yet dropped its events -- `ModelComponent` guarded its load
+ * report with `isAttached`, so whether a load was announced depended on the
+ * delivery route rather than on the load.
+ *
  * Two rules died with the graph. A component used to be forbidden from declaring
  * a capability brand, because `findInterface` walks up from a raycast hit and
  * would have handed back the component instead of the node -- it is not in that
@@ -36,7 +43,7 @@ import { type DIVENode } from '../node/Node.ts';
  *
  * @module
  */
-export abstract class DIVEComponent {
+export abstract class DIVEComponent extends EventDispatcher<DIVEComponentEventMap> {
     readonly isDIVEComponent: true = true;
 
     /** For debugging: nothing reads it, since components are not in the graph. */

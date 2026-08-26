@@ -52,8 +52,10 @@ export class ModelComponent extends MeshComponent {
     /**
      * Loads an asset and takes its content as this component's geometry.
      *
-     * Reports the load on the owning node, because that is the entity a state
-     * layer knows about.
+     * Reports the load on itself. Whoever wants to hear about an entity being
+     * loaded listens to the component that loads it -- the node has nothing to
+     * do with fetching, and a component with no owner yet had nowhere to report
+     * before, which silently dropped the event.
      *
      * @param url - The asset to load.
      */
@@ -62,10 +64,7 @@ export class ModelComponent extends MeshComponent {
         const gltf = await assetLoader.load(url);
         this.setFromGLTF(gltf);
 
-        // a component nobody has attached yet has nobody to tell
-        if (this.isAttached) {
-            this.owner.dispatchEvent({ type: 'object-load' });
-        }
+        this.dispatchEvent({ type: 'object-load' });
 
         return this;
     }

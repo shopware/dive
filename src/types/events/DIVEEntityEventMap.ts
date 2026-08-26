@@ -21,8 +21,13 @@ export type DIVEEntityTransformEvent = {
  * What a scene object announces about itself.
  *
  * The engine only states facts here — that something moved, was selected, or
- * finished loading. Whether any of it means something is for a listener to
+ * was deselected. Whether any of it means something is for a listener to
  * decide, which is what keeps the engine free of state knowledge.
+ *
+ * A finished asset load is not on this list. Fetching is a component's business,
+ * and a component says so itself — see {@link DIVEComponentEventMap}. A node used
+ * to announce it only because a component had no way to speak for itself, which
+ * also meant a component with no owner yet dropped the event silently.
  *
  * No event carries an id: whoever attached the listener knows which object it
  * belongs to, and `event.target` is available for anyone who does not.
@@ -34,5 +39,4 @@ export type DIVEEntityEventMap = Object3DEventMap & {
     'object-transform': DIVEEntityTransformEvent;
     'object-select': DIVEEntityBareEvent;
     'object-deselect': DIVEEntityBareEvent;
-    'object-load': DIVEEntityBareEvent;
 };
