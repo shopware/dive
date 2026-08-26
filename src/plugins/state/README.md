@@ -35,7 +35,6 @@ The following table lists all available actions in DIVE:
 | [ExportSceneAction](src/actions/scene/exportscene.ts) | Exports the current scene to a blob and returns the URL. |
 | [GenerateMediaAction](src/actions/media/generatemedia.ts) | Generates a screenshot, stores it in a Blob and returns a Promise of a valid URI. |
 | [GetAllObjectsAction](src/actions/object/getallobjects.ts) | Retrieves all objects in the state. |
-| [GetAllSceneDataAction](src/actions/scene/getallscenedata.ts) | Retrieves all current scene data. |
 | [GetCameraTransformAction](src/actions/camera/getcameratransform.ts) | Gets the current camera position and target. |
 | [GetObjectsAction](src/actions/object/getobjects.ts) | Returns a list of objects of given IDs. |
 | [GetStateAction](src/actions/state/getstate.ts) | Retrieves complete state data. |
