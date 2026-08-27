@@ -5,7 +5,7 @@ import {
     PerspectiveCameraComponent,
 } from '../PerspectiveCameraComponent.ts';
 import { DIVENode } from '../../../engine/node/Node.ts';
-import { findComponent } from '../../component/Component.ts';
+import { findComponent } from '../../../engine/component/Component.ts';
 import {
     COORDINATE_LAYER_MASK,
     DEFAULT_LAYER_MASK,

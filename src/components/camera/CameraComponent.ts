@@ -13,7 +13,7 @@ import {
     PROXY_LAYER_MASK,
     UI_LAYER_MASK,
 } from '../../constants/VisibilityLayerMask.ts';
-import { DIVEComponent } from '../component/Component.ts';
+import { DIVEComponent } from '../../engine/component/Component.ts';
 
 /**
  * Base class for every camera a node can carry.

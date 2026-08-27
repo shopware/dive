@@ -1,5 +1,5 @@
 import { Mesh, MeshStandardMaterial } from 'three/webgpu';
-import { DIVEComponent } from '../component/Component.ts';
+import { DIVEComponent } from '../../engine/component/Component.ts';
 import { type DIVEMaterial } from '../../types/material/DIVEMaterial.ts';
 
 /**

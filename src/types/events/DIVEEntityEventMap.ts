@@ -1,5 +1,5 @@
 import { type Object3DEventMap, type Vector3Like } from 'three/webgpu';
-import { type DIVEComponent } from '../../components/component/Component.ts';
+import { type DIVEComponent } from '../../engine/component/Component.ts';
 
 /**
  * The transform an entity reports about itself.

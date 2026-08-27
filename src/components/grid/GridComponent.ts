@@ -12,7 +12,7 @@ import {
     PlaneGeometry,
 } from 'three/webgpu';
 import { uniform } from 'three/tsl';
-import { DIVEComponent } from '../component/Component.ts';
+import { DIVEComponent } from '../../engine/component/Component.ts';
 
 const PLANE_SIZE = 50;
 const GRID_SIZE = 1;

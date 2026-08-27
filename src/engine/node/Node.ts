@@ -15,7 +15,7 @@ import {
     contributedBy,
     type DIVEComponent,
     type DIVEComponentClass,
-} from '../../components/component/Component.ts';
+} from '../component/Component.ts';
 import { findSceneRecursive } from '../../helpers/findSceneRecursive/findSceneRecursive.ts';
 import { computeProductBounds } from '../../helpers/computeProductBounds/computeProductBounds.ts';
 import { type DIVEScene } from '../scene/Scene.ts';
