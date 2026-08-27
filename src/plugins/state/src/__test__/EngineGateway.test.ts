@@ -62,23 +62,6 @@ vi.mock('@shopware-ag/dive/assetloader', () => ({
  * machinery silently breaks both. The spies are kept so assertions can still
  * observe which setters the gateway called.
  */
-vi.mock('../../../../components/grid/Grid', async () => {
-    // stays mocked regardless: the real grid pulls in the shader plugin
-    const { Object3D } =
-        await vi.importActual<typeof import('three/webgpu')>('three/webgpu');
-    return {
-        DIVEGrid: vi.fn(function () {
-            const self = new Object3D() as any;
-            self.isDIVEGrid = true;
-            self.setVisibility = vi.fn((visible: boolean) => {
-                self.visible = visible;
-            });
-            self.dispose = vi.fn();
-            return self;
-        }),
-    };
-});
-
 /**
  * Puts an object into the gateway's entity registry by hand.
  *

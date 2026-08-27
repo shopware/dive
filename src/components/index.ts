@@ -1,6 +1,6 @@
 export * from './camera/index.ts';
 export * from './component/Component.ts';
-export * from './grid/Grid.ts';
+export * from './grid/GridComponent.ts';
 export * from './gizmo/Gizmo.ts';
 export * from './line/index.ts';
 export * from './light/index.ts';
