@@ -2,7 +2,7 @@ import { vi, describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { DIVEGizmo, DIVEGizmoMode } from '../Gizmo.ts';
 import { OrbitController } from '@shopware-ag/dive/orbitcontroller';
 import { Object3D, Vector3, Euler } from 'three/webgpu';
-import { DIVESelectable } from '../../../interfaces/Selectable.ts';
+import { DIVESelectable } from '../../../../../interfaces/Selectable.ts';
 
 // Mock the OrbitController
 const mockAddEventListener = vi.fn();

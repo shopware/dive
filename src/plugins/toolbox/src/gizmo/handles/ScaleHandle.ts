@@ -8,11 +8,9 @@ import {
     Object3D,
     Vector3,
 } from 'three/webgpu';
-import { UI_LAYER_MASK } from '../../../constants/VisibilityLayerMask.ts';
-import { DIVEHoverable } from '../../../interfaces/Hoverable.ts';
+import { UI_LAYER_MASK, DIVEHoverable, DIVEDraggable } from '@shopware-ag/dive';
 import { DIVEScaleGizmo } from '../scale/ScaleGizmo.ts';
-import { DIVEDraggable } from '../../../interfaces/Draggable.ts';
-import { DraggableEvent } from '@shopware-ag/dive/toolbox';
+import { type DraggableEvent } from '../../drag/DraggableEvent.ts';
 
 export class DIVEScaleHandle
     extends Object3D
