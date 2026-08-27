@@ -16,7 +16,7 @@ import {
 import { HELPER_LAYER_MASK } from '../../constants/VisibilityLayerMask.ts';
 import { BoundingBox } from '../../engine/boundingbox/BoundingBox.ts';
 import { DIVEComponent } from '../component/Component.ts';
-import { type DIVENode } from '../node/Node.ts';
+import { type DIVENode } from '../../engine/node/Node.ts';
 
 /** scratch for placing the helpers, so a measurement allocates nothing */
 const _inverse = new Matrix4();

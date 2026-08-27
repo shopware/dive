@@ -1,4 +1,4 @@
-import { DIVENode } from '../../components/node/Node.ts';
+import { DIVENode } from '../../engine/node/Node.ts';
 
 /**
  * Anything the engine can put in the scene tree.

@@ -1,4 +1,5 @@
 export * from './Dive.ts';
+export * from './node/Node.ts';
 export * from './boundingbox/BoundingBox.ts';
 export * from './clock/Clock.ts';
 export * from './renderer/Renderer.ts';

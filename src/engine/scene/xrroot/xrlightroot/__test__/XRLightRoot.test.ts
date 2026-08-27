@@ -1,5 +1,5 @@
 import { DIVEXRLightRoot } from '../XRLightRoot.ts';
-import { DIVENode } from '../../../../../components/node/Node.ts';
+import { DIVENode } from '../../../../node/Node.ts';
 import { DIVELightComponent } from '../../../../../components/light/LightComponent.ts';
 import { HemisphereLightComponent } from '../../../../../components/light/hemi/HemisphereLightComponent.ts';
 import { DirectionalLightComponent } from '../../../../../components/light/directional/DirectionalLightComponent.ts';

@@ -5,7 +5,7 @@ import {
     LineSegments,
 } from 'three/webgpu';
 import { MultiLineComponent } from '../MultiLineComponent.ts';
-import { DIVENode } from '../../node/Node.ts';
+import { DIVENode } from '../../../engine/node/Node.ts';
 import { HELPER_LAYER_MASK } from '../../../constants/VisibilityLayerMask.ts';
 
 /**

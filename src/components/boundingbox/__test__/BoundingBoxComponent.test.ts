@@ -7,7 +7,7 @@ import {
     Vector3,
 } from 'three/webgpu';
 import { BoundingBoxComponent } from '../BoundingBoxComponent.ts';
-import { DIVENode } from '../../node/Node.ts';
+import { DIVENode } from '../../../engine/node/Node.ts';
 import { PrimitiveComponent } from '../../mesh/primitive/PrimitiveComponent.ts';
 import {
     HELPER_LAYER_MASK,

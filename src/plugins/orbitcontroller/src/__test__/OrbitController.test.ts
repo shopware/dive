@@ -11,7 +11,7 @@ import {
     TOUCH,
 } from 'three/webgpu';
 
-import { DIVENode } from '../../../../components/node/Node.ts';
+import { DIVENode } from '../../../../engine/node/Node.ts';
 import { DIVECameraComponent } from '../../../../components/camera/CameraComponent.ts';
 import { PerspectiveCameraComponent } from '../../../../components/camera/PerspectiveCameraComponent.ts';
 

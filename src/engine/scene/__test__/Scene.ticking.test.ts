@@ -1,5 +1,5 @@
 import { DIVEScene } from '../Scene.ts';
-import { DIVENode } from '../../../components/node/Node.ts';
+import { DIVENode } from '../../node/Node.ts';
 import { DIVEComponent } from '../../../components/component/Component.ts';
 
 /**

@@ -1,6 +1,6 @@
 import { BoxGeometry, Mesh, MeshBasicMaterial, Object3D } from 'three/webgpu';
 import { contributedBy, DIVEComponent, isDIVEComponent } from '../Component.ts';
-import { DIVENode } from '../../node/Node.ts';
+import { DIVENode } from '../../../engine/node/Node.ts';
 
 class TestComponent extends DIVEComponent {
     public attachedTo: DIVENode | null = null;

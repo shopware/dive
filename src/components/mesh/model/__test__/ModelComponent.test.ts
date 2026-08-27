@@ -8,7 +8,7 @@ import {
     Vector3,
 } from 'three/webgpu';
 import { ModelComponent } from '../ModelComponent.ts';
-import { DIVENode } from '../../../node/Node.ts';
+import { DIVENode } from '../../../../engine/node/Node.ts';
 import { HELPER_LAYER_MASK } from '../../../../constants/VisibilityLayerMask.ts';
 
 const loadAsset = vi.fn();
