@@ -6,12 +6,12 @@ import {
     Object3D,
 } from 'three/webgpu';
 import { DIVERoot } from '../Root.ts';
-import { FloorComponent } from '../../mesh/floor/FloorComponent.ts';
+import { FloorComponent } from '../../../../components/mesh/floor/FloorComponent.ts';
 import {
     HELPER_LAYER_MASK,
     PRODUCT_LAYER_MASK,
     UI_LAYER_MASK,
-} from '../../../constants/VisibilityLayerMask.ts';
+} from '../../../../constants/VisibilityLayerMask.ts';
 
 /**
  * Uses real three: `computeSceneBB` now measures actual geometry through
@@ -27,7 +27,7 @@ const createCube = (layerMask: number): Mesh => {
     return mesh;
 };
 
-describe('components/root/DIVERoot', () => {
+describe('dive/engine/DIVERoot', () => {
     let root: DIVERoot;
 
     beforeEach(() => {

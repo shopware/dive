@@ -9,7 +9,7 @@ const mock_ComputeSceneBB = vi.fn();
 let mock_FloorSetVisibility: ReturnType<typeof vi.fn>;
 let mock_GridSetVisibility: ReturnType<typeof vi.fn>;
 
-vi.mock('../../../components/root/Root', () => {
+vi.mock('../root/Root', () => {
     return {
         DIVERoot: vi.fn(function (this: any) {
             this.isObject3D = true;
