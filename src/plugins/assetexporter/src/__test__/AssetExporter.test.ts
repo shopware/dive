@@ -102,16 +102,24 @@ describe('AssetExporter', () => {
         it('should pass options to exporter', async () => {
             mockGltfParseAsync.mockResolvedValue(mockArrayBuffer);
 
-            const options = { trs: true, onlyVisible: false };
-
-            await exporter.export(mockObject, 'glb', options);
+            await exporter.export(mockObject, 'glb', { trs: true });
 
             expect(mockGltfParseAsync).toHaveBeenCalledWith(
                 mockObject,
-                expect.objectContaining({
-                    ...options,
-                    binary: true,
-                }),
+                expect.objectContaining({ trs: true, binary: true }),
+            );
+        });
+
+        it('should override an option the pruning depends on', async () => {
+            // the geometry filter works by hiding, so onlyVisible: false would
+            // serialize exactly what was hidden
+            mockGltfParseAsync.mockResolvedValue(mockArrayBuffer);
+
+            await exporter.export(mockObject, 'glb', { onlyVisible: false });
+
+            expect(mockGltfParseAsync).toHaveBeenCalledWith(
+                mockObject,
+                expect.objectContaining({ onlyVisible: true }),
             );
         });
 
@@ -167,16 +175,22 @@ describe('AssetExporter', () => {
         it('should pass options to exporter', async () => {
             mockGltfParseAsync.mockResolvedValue(mockJson);
 
-            const options = { trs: true, onlyVisible: false };
-
-            await exporter.export(mockObject, 'gltf', options);
+            await exporter.export(mockObject, 'gltf', { trs: true });
 
             expect(mockGltfParseAsync).toHaveBeenCalledWith(
                 mockObject,
-                expect.objectContaining({
-                    ...options,
-                    binary: false,
-                }),
+                expect.objectContaining({ trs: true, binary: false }),
+            );
+        });
+
+        it('should override an option the pruning depends on', async () => {
+            mockGltfParseAsync.mockResolvedValue(mockJson);
+
+            await exporter.export(mockObject, 'gltf', { onlyVisible: false });
+
+            expect(mockGltfParseAsync).toHaveBeenCalledWith(
+                mockObject,
+                expect.objectContaining({ onlyVisible: true }),
             );
         });
 
@@ -217,7 +231,8 @@ describe('AssetExporter', () => {
 
             expect(mockUsdzParseAsync).toHaveBeenCalledWith(
                 mockObject,
-                undefined,
+                // the usdz exporter honours onlyVisible too
+                { onlyVisible: true },
             );
             expect(result).toBeInstanceOf(ArrayBuffer);
         });
@@ -247,7 +262,7 @@ describe('AssetExporter', () => {
 
             expect(mockUsdzParseAsync).toHaveBeenCalledWith(
                 mockObject,
-                options,
+                expect.objectContaining(options),
             );
         });
 
