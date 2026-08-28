@@ -264,6 +264,28 @@ export class MultiLineComponent extends DIVEComponent {
         this._geometry.setDrawRange(0, 0);
     }
 
+    /**
+     * Takes on how the lines look, never which lines there are.
+     *
+     * A key is whatever the caller identifies a line by, usually one of its own
+     * objects -- copying the set would leave the clone drawing lines to the
+     * source's members. Placing lines is the caller's job here as everywhere.
+     *
+     * @param source - The component to copy from.
+     */
+    public copy(source: this): this {
+        super.copy(source);
+
+        this.setColor(source._material.color);
+        this.setDashPattern(
+            source._material.dashSize,
+            source._material.gapSize,
+        );
+        this.setVisible(source._lines.visible);
+
+        return this;
+    }
+
     public dispose(): void {
         this._geometry.dispose();
         this._material.dispose();

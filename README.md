@@ -75,12 +75,12 @@ myCanvasWrapper.appendChild(dive.canvas);
 Everything in a scene is a `DIVENode`. Geometry, lights and behaviour are components you attach:
 
 ```ts
-import { DIVENode, MeshComponent, PointLightComponent } from '@shopware-ag/dive';
+import { DIVENode, ModelComponent, PointLightComponent } from '@shopware-ag/dive';
 
 const model = new DIVENode();
-model.addComponent(new MeshComponent());
+model.addComponent(new ModelComponent());
 dive.scene.root.add(model);
-await model.requireComponent(MeshComponent).setFromURL('your/asset/uri.glb');
+await model.requireComponent(ModelComponent).setFromURL('your/asset/uri.glb');
 model.dropIt();
 
 const lamp = new DIVENode();

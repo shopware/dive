@@ -401,4 +401,20 @@ describe('dive/boundingbox/BoundingBoxComponent', () => {
         expect(copy.contributions).toEqual([copy.boxHelper, copy.sphereHelper]);
         expect(copy.boxHelper).not.toBe(source.boxHelper);
     });
+
+    it('should carry the helper state along to a clone', () => {
+        const source = new BoundingBoxComponent();
+        source.setHelperColor(0xff0000);
+        source.setBoxHelperVisible(true);
+
+        const copy = source.clone();
+
+        expect(
+            (copy.boxHelper.material as LineBasicMaterial).color.getHexString(),
+        ).toBe('ff0000');
+        expect(copy.boxHelper.visible).toBe(true);
+        expect(copy.sphereHelper.visible).toBe(false);
+        // and therefore ticks, like the source
+        expect(copy.tickEnabled).toBe(true);
+    });
 });

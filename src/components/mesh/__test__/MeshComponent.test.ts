@@ -82,6 +82,31 @@ describe('dive/mesh/MeshComponent', () => {
                 );
             });
 
+            it('should carry a configured material along to a clone', () => {
+                const source = make();
+                source.setMaterial({ color: 0xff0000, roughness: 0.25 });
+
+                const copy = source.clone();
+
+                expect(copy.material?.color.getHexString()).toBe('ff0000');
+                expect(copy.material?.roughness).toBe(0.25);
+                // its own, so disposing either does not free the other's
+                expect(copy.material).not.toBe(source.material);
+            });
+
+            it('should not push an adopted material onto a clone', () => {
+                /**
+                 * a material that came from loaded content belongs to that
+                 * content, and the clone gets its own when it loads
+                 */
+                const source = make();
+                withContent(source);
+
+                const copy = source.clone();
+
+                expect(copy.material).not.toBe(source.material);
+            });
+
             it('should have a material after setMaterial', () => {
                 const component = make();
 

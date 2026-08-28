@@ -29,6 +29,9 @@ export class ModelComponent extends MeshComponent {
      */
     public animations: AnimationClip[] = [];
 
+    /** What {@link setFromURL} last loaded, so a clone can load it again. */
+    private _url: string | null = null;
+
     constructor() {
         super();
 
@@ -63,6 +66,8 @@ export class ModelComponent extends MeshComponent {
         const assetLoader = await this._getAssetLoader();
         const gltf = await assetLoader.load(url);
         this.setFromGLTF(gltf);
+
+        this._url = url;
 
         this.dispatchEvent({ type: 'object-load' });
 
@@ -126,6 +131,40 @@ export class ModelComponent extends MeshComponent {
          * that wrote it recognises it again
          */
         this.contribute(...gltf.children);
+
+        return this;
+    }
+
+    /** The asset {@link setFromURL} last loaded, if any. */
+    public get url(): string | null {
+        return this._url;
+    }
+
+    /**
+     * Carries over what identifies the content, not the content itself.
+     *
+     * The one component whose state a copy cannot reproduce on its own: a load is
+     * asynchronous, and `copy` is not. So the clone comes back with the same
+     * {@link url} and clips but no geometry, and the caller finishes it:
+     *
+     * ```ts
+     * const clone = source.clone();
+     * if (clone.url) await clone.setFromURL(clone.url);
+     * ```
+     *
+     * Spelled out because the alternative is worse: cloning the loaded hierarchy
+     * would share every geometry and material with the source, and either
+     * component's `dispose` would then free what the other still draws.
+     *
+     * @param source - The component to copy from.
+     */
+    public copy(source: this): this {
+        super.copy(source);
+
+        this._url = source.url;
+
+        // clips are read-only playback data, so sharing them costs nothing
+        this.animations = source.animations;
 
         return this;
     }

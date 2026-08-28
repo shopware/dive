@@ -2,6 +2,7 @@ import { Mesh, MeshStandardMaterial } from 'three/webgpu';
 import { MeshComponent } from '../../MeshComponent.ts';
 import { PrimitiveComponent } from '../PrimitiveComponent.ts';
 import { DIVENode } from '../../../../engine/node/Node.ts';
+import { type DIVEGeometry } from '../../../../types/geometry/DIVEGeometry.ts';
 import { type DIVEGeometryType } from '../../../../types/geometry/DIVEGeometryType.ts';
 
 describe('dive/mesh/PrimitiveComponent', () => {
@@ -82,6 +83,56 @@ describe('dive/mesh/PrimitiveComponent', () => {
         primitive.setGeometry({ name: 'wall', width: 1, height: 2, depth: 0 });
 
         expect(primitive.mesh?.geometry.boundingBox?.max.z).toBeCloseTo(0.025);
+    });
+
+    it('should remember the shape it was built from', () => {
+        const descriptor: DIVEGeometry = {
+            name: 'cube',
+            width: 2,
+            height: 3,
+            depth: 4,
+        };
+
+        primitive.setGeometry(descriptor);
+
+        expect(primitive.geometry).toEqual(descriptor);
+    });
+
+    it('should not remember a shape it could not build', () => {
+        console.warn = vi.fn();
+
+        primitive.setGeometry({
+            name: 'dodecahedron' as DIVEGeometryType,
+            width: 1,
+            height: 1,
+            depth: 1,
+        });
+
+        expect(primitive.geometry).toBeNull();
+    });
+
+    it('should rebuild its shape in a clone rather than share it', () => {
+        // sharing the built geometry would have both components dispose it
+        primitive.setGeometry({ name: 'cube', width: 2, height: 3, depth: 4 });
+
+        const copy = primitive.clone();
+
+        expect(copy.geometry).toEqual(primitive.geometry);
+        expect(copy.mesh?.geometry).not.toBe(primitive.mesh?.geometry);
+        expect(copy.mesh?.geometry.boundingBox?.max.x).toBeCloseTo(1);
+        expect(copy.mesh?.geometry.boundingBox?.max.y).toBeCloseTo(3);
+    });
+
+    it('should carry flat shading along to a clone', () => {
+        // the descriptor decides it, so rebuilding has to decide it again
+        primitive.setGeometry({
+            name: 'pyramid',
+            width: 1,
+            height: 1,
+            depth: 1,
+        });
+
+        expect(primitive.clone().material?.flatShading).toBe(true);
     });
 
     it('should warn and keep the geometry for an unknown shape', () => {

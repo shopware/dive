@@ -94,4 +94,18 @@ describe('dive/floor/FloorComponent', () => {
     it('should be constructible with no arguments', () => {
         expect(() => new FloorComponent().clone()).not.toThrow();
     });
+
+    it('should carry colour and visibility along to a clone', () => {
+        // the floor's material never comes from setMaterial, so the base copies
+        // nothing and this has to be its own override
+        floor.setColor(0x123456);
+        floor.setVisibility(false);
+
+        const copy = floor.clone();
+
+        expect(
+            (copy.material as MeshStandardMaterial).color.getHexString(),
+        ).toBe('123456');
+        expect(copy.visible).toBe(false);
+    });
 });

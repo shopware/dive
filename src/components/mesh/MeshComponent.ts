@@ -108,6 +108,30 @@ export abstract class MeshComponent extends DIVEComponent {
         }
     }
 
+    /**
+     * Takes on the source's material, if the source configured one itself.
+     *
+     * Only a material from {@link setMaterial} is copied: one adopted from loaded
+     * content belongs to that content, and the clone gets its own when it loads.
+     * Copied into a fresh material rather than shared, so disposing either
+     * component cannot take the other's material with it.
+     *
+     * @param source - The component to copy from.
+     */
+    public copy(source: this): this {
+        super.copy(source);
+
+        if (!source._materialIsOwn || !source._material) return this;
+
+        if (!this._material) this._material = new MeshStandardMaterial();
+        this._material.copy(source._material);
+        this._materialIsOwn = true;
+
+        if (this._mesh) this._mesh.material = this._material;
+
+        return this;
+    }
+
     public dispose(): void {
         // over what this component put into the node, this.traverse finds nothing
         this.contributions.forEach((object) =>

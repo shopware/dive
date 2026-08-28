@@ -71,6 +71,33 @@ export abstract class DIVELightComponent extends DIVEComponent {
         this._light.visible = enabled;
     }
 
+    /**
+     * Takes on the source's colour, brightness, direction and on/off state.
+     *
+     * Goes through the setters rather than writing the light, so a subclass that
+     * mirrors them onto a proxy -- `PointLightComponent` and its handle -- keeps
+     * up. {@link setIntensity} applies the factor, so the stored value has to be
+     * divided back out first; both components are the same class and therefore
+     * carry the same factor.
+     *
+     * The light's position is direction rather than placement for a hemisphere or
+     * a directional light, and unused for the others, so copying it is right in
+     * every case.
+     *
+     * @param source - The component to copy from.
+     */
+    public copy(source: this): this {
+        super.copy(source);
+
+        this.setColor(source._light.color.clone());
+        this.setIntensity(source._light.intensity / source._intensityFactor);
+        this.setEnabled(source._light.visible);
+
+        this._light.position.copy(source._light.position);
+
+        return this;
+    }
+
     public dispose(): void {
         this._light.dispose?.();
     }

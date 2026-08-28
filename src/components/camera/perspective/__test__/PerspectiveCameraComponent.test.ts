@@ -120,4 +120,25 @@ describe('dive/camera/PerspectiveCameraComponent', () => {
             expect(updated).toHaveBeenCalled();
         });
     });
+
+    describe('copy', () => {
+        it('should carry its settings along to a clone', () => {
+            const source = new PerspectiveCameraComponent();
+            source.applySettings({ fov: 35, near: 0.5, far: 250 });
+
+            const copy = source.clone();
+
+            expect(copy.camera.fov).toBe(35);
+            expect(copy.camera.near).toBe(0.5);
+            expect(copy.camera.far).toBe(250);
+        });
+
+        it('should leave the aspect of a clone to the viewport', () => {
+            // aspect comes from onResize, not from whoever configured the camera
+            const source = new PerspectiveCameraComponent();
+            source.onResize(800, 600);
+
+            expect(source.clone().camera.aspect).toBe(1);
+        });
+    });
 });
