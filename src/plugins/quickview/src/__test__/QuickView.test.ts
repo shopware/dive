@@ -333,6 +333,124 @@ describe('QuickView', () => {
             );
         });
 
+        describe('two loads at once', () => {
+            /** A load that only settles when the returned resolver is called. */
+            const suspend = () => {
+                let release: () => void = () => {};
+                const gate = new Promise<void>((resolve) => {
+                    release = resolve;
+                });
+                setFromURL.mockImplementationOnce(async () => {
+                    await gate;
+                });
+
+                return release;
+            };
+
+            it('should not touch a model a newer load already took away', async () => {
+                const quickView = await started();
+                const release = suspend();
+
+                const slow = quickView.load('slow_uri');
+                await quickView.load(sceneData);
+                release();
+
+                await expect(slow).resolves.toBeUndefined();
+                expect(quickView.model).toBeNull();
+                expect(quickView.state).not.toBeNull();
+            });
+
+            it('should let the newest source win', async () => {
+                const quickView = await started();
+                const release = suspend();
+
+                const slow = quickView.load('slow_uri');
+                const fast = quickView.load('fast_uri');
+                release();
+                await Promise.all([slow, fast]);
+
+                expect(setFromURL).toHaveBeenLastCalledWith('fast_uri');
+            });
+
+            it('should skip a load that was superseded before it ran', async () => {
+                // three in flight, only the newest is worth doing
+                const quickView = await started();
+                const release = suspend();
+
+                const first = quickView.load('first_uri');
+                const second = quickView.load('second_uri');
+                const third = quickView.load('third_uri');
+                release();
+                await Promise.all([first, second, third]);
+
+                expect(setFromURL).not.toHaveBeenCalledWith('second_uri');
+                expect(setFromURL).toHaveBeenLastCalledWith('third_uri');
+            });
+
+            it('should drop a queued load once the view is disposed', async () => {
+                // rejected at the queue, so the asset is never fetched at all
+                const quickView = await started();
+                const release = suspend();
+
+                const slow = quickView.load('slow_uri');
+                await quickView.disposeAsync();
+                release();
+                await slow;
+
+                expect(setFromURL).not.toHaveBeenCalled();
+                expect(quickView.model).toBeNull();
+            });
+
+            it('should free a model that arrives after disposal', async () => {
+                /**
+                 * the asset was already in flight, so it lands in a node nobody
+                 * owns any more -- and its geometry has to be freed there
+                 */
+                const quickView = await started();
+                const release = suspend();
+
+                const slow = quickView.load('slow_uri');
+                await vi.waitFor(() =>
+                    expect(setFromURL).toHaveBeenCalledWith('slow_uri'),
+                );
+                const node = quickView.model!;
+                const freed = vi.mocked(node.components[0].dispose);
+                freed.mockClear();
+
+                await quickView.disposeAsync();
+                release();
+                await slow;
+
+                expect(freed).toHaveBeenCalled();
+                expect(node.removeFromParent).toHaveBeenCalled();
+            });
+
+            it('should free scene state that arrives after disposal', async () => {
+                const quickView = await started();
+                let release: () => void = () => {};
+                const gate = new Promise<void>((resolve) => {
+                    release = resolve;
+                });
+                statePerformAction.mockImplementationOnce(async () => {
+                    await gate;
+                    return [];
+                });
+
+                const slow = quickView.load(sceneData);
+                await vi.waitFor(() =>
+                    expect(statePerformAction).toHaveBeenCalled(),
+                );
+
+                await quickView.disposeAsync();
+                stateDestroyInstance.mockClear();
+                release();
+                await slow;
+
+                expect(stateDestroyInstance).toHaveBeenCalledTimes(1);
+                expect(quickView.state).toBeNull();
+            });
+        });
+
         it('should apply scene data to a view built from a uri', async () => {
             const quickView = await started();
             const node = quickView.model!;
