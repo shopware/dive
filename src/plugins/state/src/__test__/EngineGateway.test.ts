@@ -2,6 +2,7 @@ import { EngineGateway } from '../EngineGateway.ts';
 import {
     detachTransformControls,
     AmbientLightComponent,
+    BoundingBoxComponent,
     DirectionalLightComponent,
     DIVELightComponent,
     DIVENode,
@@ -930,6 +931,123 @@ describe('plugins/state/EngineGateway', () => {
             gateway.removeEntity(groupData);
             // members are re-parented to the root rather than deleted with the group
             expect(member!.parent).toBe(gateway.root);
+        });
+
+        it('should free the GPU resources its components held', async () => {
+            /**
+             * unparenting alone leaks: the detached node is out of the graph, so
+             * the final Scene.dispose can no longer find it to dispose it
+             */
+            const modelData: ModelSchema = {
+                id: 'model-1',
+                entityType: 'model',
+                name: 'Test Model',
+                visible: true,
+                uri: 'test.glb',
+                position: { x: 0, y: 0, z: 0 },
+                rotation: { x: 0, y: 0, z: 0 },
+                scale: { x: 1, y: 1, z: 1 },
+                loaded: false,
+            };
+
+            const gateway = makeGateway();
+            await addEntity(gateway, modelData);
+            const model = findEntity(gateway, modelData) as unknown as DIVENode;
+            const disposals = model.components.map((component) =>
+                vi.spyOn(component, 'dispose'),
+            );
+            expect(disposals.length).toBeGreaterThan(0);
+
+            gateway.removeEntity(modelData);
+
+            disposals.forEach((dispose) => expect(dispose).toHaveBeenCalled());
+        });
+
+        it('should free the resources of nodes it takes down with it', async () => {
+            /**
+             * direct child nodes are re-parented to the root and survive, so what
+             * goes down with the entity is whatever hangs below a plain Object3D
+             * -- and its components have to be disposed too
+             */
+            const modelData: ModelSchema = {
+                id: 'model-1',
+                entityType: 'model',
+                name: 'Test Model',
+                visible: true,
+                uri: 'test.glb',
+                position: { x: 0, y: 0, z: 0 },
+                rotation: { x: 0, y: 0, z: 0 },
+                scale: { x: 1, y: 1, z: 1 },
+                loaded: false,
+            };
+
+            const gateway = makeGateway();
+            await addEntity(gateway, modelData);
+            const model = findEntity(gateway, modelData) as unknown as DIVENode;
+
+            const wrapper = new Object3D();
+            const nested = new DIVENode();
+            const nestedComponent = nested.addComponent(
+                new BoundingBoxComponent(),
+            );
+            wrapper.add(nested);
+            model.add(wrapper);
+            const disposed = vi.spyOn(nestedComponent, 'dispose');
+
+            gateway.removeEntity(modelData);
+
+            expect(disposed).toHaveBeenCalled();
+        });
+
+        it('should keep the resources of the child nodes it hands to the root', async () => {
+            // they survive the deletion, so disposing them would break them
+            const groupData = {
+                id: 'group-1',
+                entityType: 'group' as const,
+                name: 'Test Group',
+                visible: true,
+                position: { x: 0, y: 0, z: 0 },
+                rotation: { x: 0, y: 0, z: 0 },
+                scale: { x: 1, y: 1, z: 1 },
+            } as unknown as EntitySchema;
+
+            const gateway = makeGateway();
+            await addEntity(gateway, groupData);
+            const group = findEntity(gateway, groupData) as unknown as DIVENode;
+
+            const member = new DIVENode();
+            const memberComponent = member.addComponent(
+                new BoundingBoxComponent(),
+            );
+            group.add(member);
+            const disposed = vi.spyOn(memberComponent, 'dispose');
+
+            gateway.removeEntity(groupData);
+
+            expect(member.parent).toBe(gateway.root);
+            expect(disposed).not.toHaveBeenCalled();
+        });
+
+        it('should cope with a node that was already unparented', async () => {
+            // `parent!.remove(...)` threw on a node someone detached elsewhere
+            const modelData: ModelSchema = {
+                id: 'model-1',
+                entityType: 'model',
+                name: 'Test Model',
+                visible: true,
+                uri: 'test.glb',
+                position: { x: 0, y: 0, z: 0 },
+                rotation: { x: 0, y: 0, z: 0 },
+                scale: { x: 1, y: 1, z: 1 },
+                loaded: false,
+            };
+
+            const gateway = makeGateway();
+            await addEntity(gateway, modelData);
+            const model = findEntity(gateway, modelData)!;
+            model.removeFromParent();
+
+            expect(() => gateway.removeEntity(modelData)).not.toThrow();
         });
 
         it('should handle transform controls detachment', async () => {

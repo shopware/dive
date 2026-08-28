@@ -3,6 +3,7 @@ import {
     AmbientLightComponent,
     detachTransformControls,
     DirectionalLightComponent,
+    disposeComponents,
     DIVELightComponent,
     DIVENode,
     HemisphereLightComponent,
@@ -176,6 +177,8 @@ export class EngineGateway {
         /**
          * re-parent the child nodes to the root so deleting a group does not
          * take its members with it
+         * they have to leave before the teardown below, or their components
+         * would be disposed along with the entity that merely contained them
          */
         if ('isDIVENode' in sceneObject) {
             const children = (sceneObject as DIVENode).nodes;
@@ -184,7 +187,15 @@ export class EngineGateway {
             }
         }
 
-        sceneObject.parent!.remove(sceneObject);
+        /**
+         * unparenting frees nothing, and a detached node is out of reach of the
+         * final `Scene.dispose`, so an add/delete cycle would leak every geometry
+         * the entity held
+         */
+        disposeComponents(sceneObject);
+
+        // removeFromParent, because a node someone else detached has no parent
+        sceneObject.removeFromParent();
     }
 
     /** Forgets every scene object. Listener teardown belongs to the registry. */

@@ -2,6 +2,7 @@ import {
     DIVE,
     DIVEDefaultSettings,
     DIVENode,
+    disposeComponents,
     ModelComponent,
 } from '@shopware-ag/dive';
 import { OrbitController } from '@shopware-ag/dive/orbitcontroller';
@@ -62,14 +63,7 @@ export const QuickViewDefaultSettings: Omit<
 
 /** Frees the GPU resources of every component below a node, and unparents it. */
 const disposeNode = (node: DIVENode): void => {
-    node.traverse((object) => {
-        if (!('isDIVENode' in object)) return;
-
-        (object as unknown as DIVENode).components.forEach((component) =>
-            component.dispose(),
-        );
-    });
-
+    disposeComponents(node);
     node.removeFromParent();
 };
 

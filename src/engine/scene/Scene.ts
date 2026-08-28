@@ -7,6 +7,7 @@ import {
 import { DIVERoot } from './root/Root.ts';
 import { GridComponent } from '../../components/grid/GridComponent.ts';
 import { type DIVEComponent } from '../component/Component.ts';
+import { disposeComponents } from '../../helpers/disposeComponents/disposeComponents.ts';
 import { DIVENode } from '../node/Node.ts';
 import { type DIVETicker } from '../clock/Clock.ts';
 
@@ -253,12 +254,7 @@ export class DIVEScene extends Scene implements DIVETicker {
      * change the tree it sits in while being disposed.
      */
     public dispose(): void {
-        const components: DIVEComponent[] = [];
-        this.traverse((object) => {
-            if (!('isDIVENode' in object)) return;
-            components.push(...(object as unknown as DIVENode).components);
-        });
-        components.forEach((component) => component.dispose());
+        disposeComponents(this);
 
         this.remove(this._root);
 
