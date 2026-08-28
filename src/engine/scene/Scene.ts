@@ -85,7 +85,17 @@ export class DIVEScene extends Scene implements DIVETicker {
 
     /** Set while `tick` is iterating, so mutations are deferred. */
     private _isTicking: boolean = false;
-    private _tickListDirty: boolean = false;
+
+    /**
+     * What was withdrawn while `tick` was iterating.
+     *
+     * Splicing under the loop would shift the indices, so a withdrawal that
+     * arrives mid-frame is recorded and applied afterwards. Recorded by identity,
+     * not derived from `tick`/`tickEnabled` state: a component that is removed
+     * from its node still has both, so a state-based compaction kept it enrolled
+     * and it went on ticking with no owner -- and, after a move, in two scenes.
+     */
+    private _withdrawn: Set<DIVEComponent> | null = null;
 
     constructor(settings?: Partial<DIVESceneSettings>) {
         super();
@@ -166,15 +176,20 @@ export class DIVEScene extends Scene implements DIVETicker {
         for (let i = 0; i < this._tickingComponents.length; i++) {
             const component = this._tickingComponents[i];
             if (!component.tickEnabled) continue;
+
+            // withdrawn earlier in this very frame, so it is already gone
+            if (this._withdrawn?.has(component)) continue;
+
             component.tick?.(deltaTime);
         }
 
         this._isTicking = false;
 
-        if (this._tickListDirty) {
-            this._tickListDirty = false;
+        if (this._withdrawn) {
+            const withdrawn = this._withdrawn;
+            this._withdrawn = null;
             this._tickingComponents = this._tickingComponents.filter(
-                (component) => component.tick && component.tickEnabled,
+                (component) => !withdrawn.has(component),
             );
         }
     }
@@ -190,6 +205,11 @@ export class DIVEScene extends Scene implements DIVETicker {
      */
     public enlistComponent(component: DIVEComponent): void {
         if (!component.tick || !component.tickEnabled) return;
+
+        // enrolled again after being withdrawn in the same frame, so the pending
+        // withdrawal no longer applies
+        this._withdrawn?.delete(component);
+
         if (this._tickingComponents.includes(component)) return;
 
         this._tickingComponents.push(component);
@@ -207,7 +227,7 @@ export class DIVEScene extends Scene implements DIVETicker {
 
         if (this._isTicking) {
             // compacted after the loop finishes
-            this._tickListDirty = true;
+            (this._withdrawn ??= new Set()).add(component);
             return;
         }
 
