@@ -13,7 +13,7 @@ import {
 
 import { DIVENode } from '../../../../engine/node/Node.ts';
 import { DIVECameraComponent } from '../../../../components/camera/CameraComponent.ts';
-import { PerspectiveCameraComponent } from '../../../../components/camera/PerspectiveCameraComponent.ts';
+import { PerspectiveCameraComponent } from '../../../../components/camera/perspective/PerspectiveCameraComponent.ts';
 
 // Add a real canvas for the controls domElement
 const canvas = document.createElement('canvas');

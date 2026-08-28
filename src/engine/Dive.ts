@@ -10,7 +10,7 @@ import {
     DIVEPerspectiveCameraDefaultSettings,
     DIVEPerspectiveCameraSettings,
     PerspectiveCameraComponent,
-} from '../components/camera/PerspectiveCameraComponent.ts';
+} from '../components/camera/perspective/PerspectiveCameraComponent.ts';
 import { DIVENode } from './node/Node.ts';
 import {
     DIVERendererDefaultSettings,

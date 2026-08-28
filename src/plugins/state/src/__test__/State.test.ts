@@ -13,7 +13,7 @@ import { Action } from '../actions/action.ts';
 import { type ActionDependencies } from '../../types/index.ts';
 import { PerspectiveCamera, type Vector3Like } from 'three/webgpu';
 import { DIVENode } from '../../../../engine/node/Node.ts';
-import { PerspectiveCameraComponent } from '../../../../components/camera/PerspectiveCameraComponent.ts';
+import { PerspectiveCameraComponent } from '../../../../components/camera/perspective/PerspectiveCameraComponent.ts';
 
 // Extend the global ActionTypes interface for our tests
 declare global {
