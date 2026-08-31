@@ -1,3 +1,7 @@
+import {
+    makeActionDeps,
+    makeCameraController,
+} from '../../../__test__/actionDeps.ts';
 import { type EngineGateway } from '../../../EngineGateway.ts';
 import { MoveCameraAction } from '../movecamera.ts';
 import { EntitySchema } from '../../../../types/index.ts';
@@ -26,14 +30,14 @@ const mockGateway = {
     registerTicker: vi.fn(),
 } as unknown as EngineGateway;
 
-const mockController = {
-    object: {
-        position: new Vector3(1, 1, 1),
-        lookAt: vi.fn(),
-    },
-    target: new Vector3(0, 0, 0),
-    enabled: true,
-} as unknown as OrbitController;
+/**
+ * a real node and camera component rather than a spy: what matters is where the
+ * camera ends up looking, and a recorded call cannot tell that
+ */
+const mockController = Object.assign(
+    makeCameraController(new Vector3(1, 1, 1), new Vector3(0, 0, 0)),
+    { enabled: true },
+) as unknown as OrbitController;
 
 describe('MoveCameraAction', () => {
     beforeEach(() => {
@@ -43,7 +47,7 @@ describe('MoveCameraAction', () => {
 
     describe('Direct Position Movement', () => {
         it('should move camera to a new position and target', async () => {
-            const mockRegistered = new Map<string, EntitySchema>();
+            const deps = makeActionDeps();
 
             const action = new MoveCameraAction(
                 {
@@ -54,7 +58,7 @@ describe('MoveCameraAction', () => {
                 },
                 {
                     controller: mockController,
-                    registered: mockRegistered,
+                    ...deps,
                     getAnimationSystem: mockGetAnimationSystem,
                     gateway: mockGateway,
                 },
@@ -68,7 +72,7 @@ describe('MoveCameraAction', () => {
             expect(mockFromTargets).toHaveBeenCalledWith(
                 expect.arrayContaining([
                     expect.objectContaining({
-                        object: mockController.object.position,
+                        object: mockController.object.owner!.position,
                         to: expect.objectContaining({ x: 1, y: 1, z: 1 }),
                     }),
                     expect.objectContaining({
@@ -90,7 +94,7 @@ describe('MoveCameraAction', () => {
         });
 
         it('should handle unlocked camera movement', async () => {
-            const mockRegistered = new Map<string, EntitySchema>();
+            const deps = makeActionDeps();
 
             const action = new MoveCameraAction(
                 {
@@ -101,7 +105,7 @@ describe('MoveCameraAction', () => {
                 },
                 {
                     controller: mockController,
-                    registered: mockRegistered,
+                    ...deps,
                     getAnimationSystem: mockGetAnimationSystem,
                     gateway: mockGateway,
                 },
@@ -119,7 +123,7 @@ describe('MoveCameraAction', () => {
 
     describe('CAMERA-based Movement', () => {
         it('should move camera to a CAMERA position and target', async () => {
-            const mockRegistered = new Map<string, EntitySchema>();
+            const deps = makeActionDeps();
 
             const testCAMERA: EntitySchema = {
                 id: 'test-camera',
@@ -132,7 +136,7 @@ describe('MoveCameraAction', () => {
                 visible: true,
             } as unknown as EntitySchema;
 
-            mockRegistered.set(testCAMERA.id, testCAMERA);
+            deps.registry.register(testCAMERA);
 
             const action = new MoveCameraAction(
                 {
@@ -142,7 +146,7 @@ describe('MoveCameraAction', () => {
                 },
                 {
                     controller: mockController,
-                    registered: mockRegistered,
+                    ...deps,
                     getAnimationSystem: mockGetAnimationSystem,
                     gateway: mockGateway,
                 },
@@ -153,7 +157,7 @@ describe('MoveCameraAction', () => {
             expect(mockFromTargets).toHaveBeenCalledWith(
                 expect.arrayContaining([
                     expect.objectContaining({
-                        object: mockController.object.position,
+                        object: mockController.object.owner!.position,
                     }),
                     expect.objectContaining({
                         object: mockController.target,
@@ -171,7 +175,7 @@ describe('MoveCameraAction', () => {
         });
 
         it('should throw error if CAMERA is not registered', async () => {
-            const mockRegistered = new Map<string, EntitySchema>();
+            const deps = makeActionDeps();
 
             const action = new MoveCameraAction(
                 {
@@ -181,7 +185,7 @@ describe('MoveCameraAction', () => {
                 },
                 {
                     controller: mockController,
-                    registered: mockRegistered,
+                    ...deps,
                     getAnimationSystem: mockGetAnimationSystem,
                     gateway: mockGateway,
                 },
@@ -193,7 +197,7 @@ describe('MoveCameraAction', () => {
         });
 
         it('should throw error if object is not a CAMERA', async () => {
-            const mockRegistered = new Map<string, EntitySchema>();
+            const deps = makeActionDeps();
 
             const testObject: EntitySchema = {
                 id: 'test-object',
@@ -204,7 +208,7 @@ describe('MoveCameraAction', () => {
                 scale: { x: 1, y: 1, z: 1 },
             } as unknown as EntitySchema;
 
-            mockRegistered.set(testObject.id, testObject);
+            deps.registry.register(testObject);
 
             const action = new MoveCameraAction(
                 {
@@ -214,7 +218,7 @@ describe('MoveCameraAction', () => {
                 },
                 {
                     controller: mockController,
-                    registered: mockRegistered,
+                    ...deps,
                     getAnimationSystem: mockGetAnimationSystem,
                     gateway: mockGateway,
                 },
@@ -227,8 +231,8 @@ describe('MoveCameraAction', () => {
     });
 
     describe('Animation Callbacks', () => {
-        it('should call lookAt on update', async () => {
-            const mockRegistered = new Map<string, EntitySchema>();
+        it('should turn the camera towards the target on update', async () => {
+            const deps = makeActionDeps();
 
             const action = new MoveCameraAction(
                 {
@@ -239,7 +243,7 @@ describe('MoveCameraAction', () => {
                 },
                 {
                     controller: mockController,
-                    registered: mockRegistered,
+                    ...deps,
                     getAnimationSystem: mockGetAnimationSystem,
                     gateway: mockGateway,
                 },
@@ -250,13 +254,20 @@ describe('MoveCameraAction', () => {
             const options = mockFromTargets.mock.calls[0][2];
             options.onUpdate();
 
-            expect(mockController.object.lookAt).toHaveBeenCalledWith(
-                mockController.target,
+            /**
+             * the camera stands at (1,1,1) looking at the origin, so it faces
+             * down the diagonal -- and not the other way along it
+             */
+            const direction = new Vector3(0, 0, -1).applyQuaternion(
+                mockController.object.owner.quaternion,
             );
+            expect(direction.x).toBeCloseTo(-1 / Math.sqrt(3), 5);
+            expect(direction.y).toBeCloseTo(-1 / Math.sqrt(3), 5);
+            expect(direction.z).toBeCloseTo(-1 / Math.sqrt(3), 5);
         });
 
         it('should handle animation stop', async () => {
-            const mockRegistered = new Map<string, EntitySchema>();
+            const deps = makeActionDeps();
 
             const action = new MoveCameraAction(
                 {
@@ -267,7 +278,7 @@ describe('MoveCameraAction', () => {
                 },
                 {
                     controller: mockController,
-                    registered: mockRegistered,
+                    ...deps,
                     getAnimationSystem: mockGetAnimationSystem,
                     gateway: mockGateway,
                 },

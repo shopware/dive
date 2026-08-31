@@ -9,20 +9,18 @@ import {
 
 export const GenerateMediaAction = Action.define<
     MediaGenerationByPosition | MediaGenerationById,
-    Pick<ActionDependencies, 'registered' | 'getMediaCreator'>,
+    Pick<ActionDependencies, 'getMediaCreator' | 'registry'>,
     Promise<string>
 >({
     description:
         'Generates a screenshot, stores it in a Blob and returns a Promise of a valid URI.',
-    execute: async (payload, { registered, getMediaCreator }) => {
+    execute: async (payload, { getMediaCreator, registry }) => {
         const mediaCreator = await getMediaCreator();
 
         if ('id' in payload) {
-            const object = registered.get(payload.id);
+            const object = registry.read(payload.id)?.schema;
             if (!object) {
-                throw new Error(
-                    `Object with id ${payload.id} not registered. Registered: ${registered}`,
-                );
+                throw new Error(`Object with id ${payload.id} not registered.`);
             }
 
             if (!isCameraSchema(object)) {

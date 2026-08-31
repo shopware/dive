@@ -1,7 +1,10 @@
-import { Raycaster, Vector2, type Intersection, Layers } from 'three/webgpu';
+import { Raycaster, Vector2, type Intersection } from 'three/webgpu';
 import {
+    DEFAULT_LAYER_MASK,
     type DIVEScene,
+    isVisibleInHierarchy,
     PRODUCT_LAYER_MASK,
+    PROXY_LAYER_MASK,
     UI_LAYER_MASK,
 } from '@shopware-ag/dive';
 import { type OrbitController } from '@shopware-ag/dive/orbitcontroller';
@@ -43,8 +46,6 @@ export class Toolbox {
     // Raycasting (shared, computed once per event)
     private _raycaster: Raycaster;
     private _pointer: Vector2;
-    private _productLayerMask: Layers;
-    private _uiLayerMask: Layers;
 
     // Pointer state
     private _pointerPrimaryDown: boolean = false;
@@ -69,13 +70,6 @@ export class Toolbox {
         this._raycaster = new Raycaster();
         this._pointer = new Vector2();
         this._lastPointerDown = new Vector2();
-
-        // Setup layer masks for filtering
-        this._productLayerMask = new Layers();
-        this._productLayerMask.set(Math.log2(PRODUCT_LAYER_MASK));
-
-        this._uiLayerMask = new Layers();
-        this._uiLayerMask.set(Math.log2(UI_LAYER_MASK));
 
         // Create and register all tools
         this._tools = new Map<ToolType, Tool>([
@@ -230,42 +224,60 @@ export class Toolbox {
     // ============ Context Creation ============
 
     private createPointerContext(e: PointerEvent): PointerContext {
-        const intersects = this.raycast();
-
-        return {
+        // Object.assign, not a spread, which would read every getter and raycast
+        return Object.assign(this.createLazyIntersects(), {
             event: e,
             pointer: this._pointer.clone(),
-            intersects,
-            modelIntersects: this.filterIntersectsByLayer(
-                intersects,
-                PRODUCT_LAYER_MASK,
-            ),
-            uiIntersects: this.filterIntersectsByLayer(
-                intersects,
-                UI_LAYER_MASK,
-            ),
             pointerPrimaryDown: this._pointerPrimaryDown,
             pointerMiddleDown: this._pointerMiddleDown,
             pointerSecondaryDown: this._pointerSecondaryDown,
             lastPointerDown: this._lastPointerDown.clone(),
-        };
+        }) as PointerContext;
     }
 
     private createWheelContext(e: WheelEvent): WheelContext {
-        const intersects = this.raycast();
-
-        return {
+        return Object.assign(this.createLazyIntersects(), {
             event: e,
             pointer: this._pointer.clone(),
-            intersects,
-            modelIntersects: this.filterIntersectsByLayer(
-                intersects,
-                PRODUCT_LAYER_MASK,
-            ),
-            uiIntersects: this.filterIntersectsByLayer(
-                intersects,
-                UI_LAYER_MASK,
-            ),
+        }) as WheelContext;
+    }
+
+    /**
+     * The four intersect lists, each raycast on first read and then kept.
+     *
+     * Still one raycast per event shared by every tool -- but only if a tool
+     * actually looks. It used to run eagerly, so a pointer move cost a full
+     * raycast even with no tool enabled at all, and while the camera was being
+     * orbited that was a raycast per frame against every mesh in the scene.
+     */
+    private createLazyIntersects(): Pick<
+        PointerContext,
+        'intersects' | 'modelIntersects' | 'entityIntersects' | 'uiIntersects'
+    > {
+        const raycast = (): Intersection[] => (all ??= this.raycast());
+        const byLayer = (mask: number): Intersection[] =>
+            this.filterIntersectsByLayer(raycast(), mask);
+
+        let all: Intersection[] | undefined;
+        let model: Intersection[] | undefined;
+        let entity: Intersection[] | undefined;
+        let ui: Intersection[] | undefined;
+
+        return {
+            get intersects() {
+                return raycast();
+            },
+            get modelIntersects() {
+                return (model ??= byLayer(PRODUCT_LAYER_MASK));
+            },
+            get entityIntersects() {
+                return (entity ??= byLayer(
+                    PRODUCT_LAYER_MASK | PROXY_LAYER_MASK,
+                ));
+            },
+            get uiIntersects() {
+                return (ui ??= byLayer(UI_LAYER_MASK));
+            },
         };
     }
 
@@ -275,7 +287,10 @@ export class Toolbox {
         this._pointer.x = (e.offsetX / this._canvas.clientWidth) * 2 - 1;
         this._pointer.y = -(e.offsetY / this._canvas.clientHeight) * 2 + 1;
 
-        this._raycaster.setFromCamera(this._pointer, this._controller.object);
+        this._raycaster.setFromCamera(
+            this._pointer,
+            this._controller.object.camera,
+        );
     }
 
     private updatePointerState(e: PointerEvent, isDown: boolean): void {
@@ -293,11 +308,30 @@ export class Toolbox {
     }
 
     private raycast(): Intersection[] {
-        this._raycaster.layers.mask = PRODUCT_LAYER_MASK | UI_LAYER_MASK;
-        const filteredObjects = this._scene.children.filter(
-            (i) => i.visible && 'isMesh' in i && i.isMesh,
-        );
-        return this._raycaster.intersectObjects(filteredObjects, true);
+        /**
+         * DEFAULT, because three puts an object on layer 0 unless someone says
+         * otherwise, the gizmo among them
+         * PROXY, or a point light would be unreachable, its handle is the only
+         * thing a pointer can hit
+         * FLOOR and HELPER stay out, the ground plane and the group link lines
+         * are there to be looked at, not grabbed
+         */
+        this._raycaster.layers.mask =
+            DEFAULT_LAYER_MASK |
+            PRODUCT_LAYER_MASK |
+            UI_LAYER_MASK |
+            PROXY_LAYER_MASK;
+
+        /**
+         * recurse from the scene's direct children, none of which is a mesh itself
+         * layers prunes per object while recursing, visible does not because
+         * Raycaster ignores it, hence the hierarchy check
+         */
+        return this._raycaster
+            .intersectObjects(this._scene.children, true)
+            .filter((intersection) =>
+                isVisibleInHierarchy(intersection.object),
+            );
     }
 
     private filterIntersectsByLayer(

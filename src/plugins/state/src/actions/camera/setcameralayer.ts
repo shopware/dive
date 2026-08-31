@@ -9,10 +9,7 @@ export const SetCameraLayerAction = Action.define<
 >({
     description: 'Sets the camera layer to a certain layer.',
     execute: (payload, { controller }) => {
-        // will be removed in the future when DIVEOrthographicCamera will be implemented
-        if ('setCameraLayer' in controller.object) {
-            controller.object.setCameraLayer(payload.layer);
-        }
+        controller.object.setCameraLayer(payload.layer);
     },
 });
 

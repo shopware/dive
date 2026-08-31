@@ -1,7 +1,9 @@
 import { RenderTarget, SRGBColorSpace } from 'three/webgpu';
-import { DIVEPerspectiveCamera } from '../../../engine/camera/PerspectiveCamera.ts';
-import { type DIVEScene } from '../../../engine/scene/Scene.ts';
-import { type DIVERenderer } from '../../../engine/renderer/Renderer.ts';
+import {
+    DIVECameraComponent,
+    type DIVEScene,
+    type DIVERenderer,
+} from '@shopware-ag/dive';
 import { type OrbitController } from '@shopware-ag/dive/orbitcontroller';
 import {
     type MediaGenerationByPosition,
@@ -31,18 +33,14 @@ export class MediaCreator {
     ): Promise<string> {
         const { position, target, resolution } = options;
         const { width, height } = resolution;
-        const resetPosition = this._controller.object.position.clone();
-        const resetRotation = this._controller.object.quaternion.clone();
-        const resetTarget = this._controller.target.clone();
+        const restorePosition = this._controller.object.owner.position.clone();
+        const restoreTarget = this._controller.target.clone();
         const restoreWidth = this._renderer.canvas.clientWidth || width;
         const restoreHeight = this._renderer.canvas.clientHeight || height;
 
         try {
-            if ('onResize' in this._controller.object) {
-                this._controller.object.onResize(width, height);
-            }
-
-            this._controller.object.position.copy(position);
+            this._controller.object.onResize(width, height);
+            this._controller.object.owner.position.copy(position);
             this._controller.target.copy(target);
             this._controller.update();
 
@@ -52,14 +50,11 @@ export class MediaCreator {
 
             return dataUri;
         } finally {
-            this._controller.object.position.copy(resetPosition);
-            this._controller.object.quaternion.copy(resetRotation);
-            this._controller.target.copy(resetTarget);
+            this._controller.object.owner.position.copy(restorePosition);
+            this._controller.target.copy(restoreTarget);
             this._controller.update();
 
-            if ('onResize' in this._controller.object) {
-                this._controller.object.onResize(restoreWidth, restoreHeight);
-            }
+            this._controller.object.onResize(restoreWidth, restoreHeight);
         }
     }
 
@@ -88,13 +83,13 @@ export class MediaCreator {
             colorSpace: SRGBColorSpace,
         });
         const restoreRenderTarget = renderer.getRenderTarget();
-        const restoreLayerMask = this._controller.object.layers.mask;
+        const camera = this._controller.object.camera;
+        const restoreLayerMask = camera.layers.mask;
 
         try {
             renderer.setRenderTarget(renderTarget);
-            this._controller.object.layers.mask =
-                DIVEPerspectiveCamera.LIVE_VIEW_LAYER_MASK;
-            renderer.render(this._scene, this._controller.object);
+            camera.layers.mask = DIVECameraComponent.LIVE_VIEW_LAYER_MASK;
+            renderer.render(this._scene, camera);
 
             const pixels = await renderer.readRenderTargetPixelsAsync(
                 renderTarget,
@@ -112,7 +107,7 @@ export class MediaCreator {
 
             return outputCanvas;
         } finally {
-            this._controller.object.layers.mask = restoreLayerMask;
+            camera.layers.mask = restoreLayerMask;
             renderer.setRenderTarget(restoreRenderTarget);
             renderTarget.dispose();
         }

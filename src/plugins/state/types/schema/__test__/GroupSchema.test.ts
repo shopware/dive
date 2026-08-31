@@ -18,7 +18,7 @@ describe('GroupSchema', () => {
             expect(isGroupSchema(groupEntity)).toBe(true);
         });
 
-        it('should return true for group schema with bbVisible property', () => {
+        it('should return true for group schema with linksVisible property', () => {
             const groupEntity: EntitySchema = {
                 id: 'test-group',
                 name: 'Test Group',
@@ -27,7 +27,7 @@ describe('GroupSchema', () => {
                 position: { x: 0, y: 0, z: 0 },
                 rotation: { x: 0, y: 0, z: 0 },
                 scale: { x: 1, y: 1, z: 1 },
-                bbVisible: true,
+                linksVisible: true,
             };
 
             expect(isGroupSchema(groupEntity)).toBe(true);

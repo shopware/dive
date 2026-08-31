@@ -14,7 +14,7 @@ export const GetCameraTransformAction = Action.define<
     description: 'Gets the current camera position and target.',
     execute: (_payload, { controller }) => {
         return {
-            position: controller.object.position.clone(),
+            position: controller.object.owner.position.clone(),
             target: controller.target.clone(),
         };
     },

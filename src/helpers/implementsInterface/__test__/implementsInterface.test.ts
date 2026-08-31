@@ -16,4 +16,24 @@ describe('dive/helper/implementsInterface', () => {
         const obj = { isInterface: true } as unknown as Object3D;
         expect(implementsInterface(obj, 'isInterface')).toBe(true);
     });
+
+    it('should not find the interface when the brand is explicitly false', () => {
+        const obj = { isInterface: false } as unknown as Object3D;
+        expect(implementsInterface(obj, 'isInterface')).toBe(false);
+    });
+
+    it('should not find the interface for truthy non-true brands', () => {
+        expect(
+            implementsInterface(
+                { isInterface: 'yes' } as unknown as Object3D,
+                'isInterface',
+            ),
+        ).toBe(false);
+        expect(
+            implementsInterface(
+                { isInterface: undefined } as unknown as Object3D,
+                'isInterface',
+            ),
+        ).toBe(false);
+    });
 });

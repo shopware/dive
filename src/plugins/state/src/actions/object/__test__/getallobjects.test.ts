@@ -1,11 +1,12 @@
+import { makeActionDeps } from '../../../__test__/actionDeps.ts';
 import { GetAllObjectsAction } from '../getallobjects.ts';
 import { type EntitySchema } from '../../../../types/index.ts';
 
 describe('GetAllObjectsAction', () => {
-    const mockRegistered = new Map<string, EntitySchema>();
+    const deps = makeActionDeps();
 
     beforeEach(() => {
-        mockRegistered.clear();
+        deps.registry.clear();
     });
 
     it('should return all registered objects', () => {
@@ -38,17 +39,16 @@ describe('GetAllObjectsAction', () => {
             scale: { x: 1, y: 1, z: 1 },
         };
 
-        mockRegistered.set(object1.id, object1);
-        mockRegistered.set(object2.id, object2);
+        deps.registry.register(object1);
+        deps.registry.register(object2);
 
         // Act
         const action = new GetAllObjectsAction(undefined, {
-            registered: mockRegistered,
+            ...deps,
         });
         const result = action.execute();
 
         // Assert
-        expect(result).toBe(mockRegistered);
         expect(result.size).toBe(2);
         expect(result.get('object1')).toBe(object1);
         expect(result.get('object2')).toBe(object2);
@@ -57,12 +57,11 @@ describe('GetAllObjectsAction', () => {
     it('should return empty map when no objects are registered', () => {
         // Act
         const action = new GetAllObjectsAction(undefined, {
-            registered: mockRegistered,
+            ...deps,
         });
         const result = action.execute();
 
         // Assert
-        expect(result).toBe(mockRegistered);
         expect(result.size).toBe(0);
     });
 });

@@ -1,15 +1,18 @@
 import { Color, MeshStandardMaterial } from 'three/webgpu';
 import {
+    AmbientLightComponent,
     detachTransformControls,
-    DIVEAmbientLight,
-    DIVEGroup,
-    DIVEModel,
-    DIVEPointLight,
-    DIVEPrimitive,
-    DIVESceneLight,
+    DirectionalLightComponent,
+    disposeComponents,
+    DIVELightComponent,
+    DIVENode,
+    HemisphereLightComponent,
+    MultiLineComponent,
+    MeshComponent,
+    ModelComponent,
+    PrimitiveComponent,
+    PointLightComponent,
     type DIVE,
-    type DIVELight,
-    type DIVEEntityTransformEvent,
     type DIVERoot,
     type DIVESceneObject,
 } from '@shopware-ag/dive';
@@ -27,7 +30,7 @@ import {
     type PartialSchema,
     type PrimitiveSchema,
 } from '../types/index.ts';
-import { type State } from './State.ts';
+import { updateParentLink } from './helpers/updateParentLink/updateParentLink.ts';
 
 /**
  * The scene properties that are not entities.
@@ -57,29 +60,16 @@ export type SceneSettingsPatch = Partial<
 >;
 
 /**
- * Vectors arrive as live references into the emitting object, including a
- * scratch buffer the next frame overwrites. `UpdateObjectAction` merges the
- * payload into the registered schema, and lodash assigns by reference when the
- * target key is absent — so without this copy a moving object would keep
- * rewriting its own stored transform.
- */
-const copyVec = (v: {
-    x: number;
-    y: number;
-    z: number;
-}): { x: number; y: number; z: number } => ({
-    x: v.x,
-    y: v.y,
-    z: v.z,
-});
-
-/**
  * #### EngineGateway
  * is the single seam between the state plugin and the engine.
  *
  * The engine holds objects; it does not know what an entity, an action or a
- * state is. Everything that turns entity data into scene objects — and every
- * report travelling back the other way — passes through here.
+ * state is. Everything that turns entity data into scene objects passes through
+ * here.
+ *
+ * One direction only. Reports coming back the other way are `watchEntity`'s
+ * business — which is why this class holds no reference to the state and has no
+ * way to command it.
  *
  * It is not a facade over the engine API. It offers what the state layer
  * needs, in the state layer's vocabulary: entities, scene settings, rendering.
@@ -88,28 +78,12 @@ const copyVec = (v: {
  */
 export class EngineGateway {
     private readonly _engine: DIVE;
-    private readonly _state: State;
 
-    /**
-     * One teardown per entity id, so an object that leaves the scene stops
-     * reporting. Keyed by id rather than held on the object because
-     * `_deleteGroup` re-parents members to the root — those stay registered
-     * and have to stay wired.
-     */
-    private readonly _unsubscribes: Map<string, () => void> = new Map();
+    /** id -> scene object, so lookups do not walk the tree. */
+    private readonly _entities: Map<string, DIVESceneObject> = new Map();
 
-    /**
-     * The id the toolbox currently holds selected.
-     *
-     * `SELECT_OBJECT` runs `selectionState.select()`, which calls back into
-     * `onSelect()` — this breaks that one loop without silencing the events in
-     * general, which would also kill the wanted group cascade.
-     */
-    private _selectedId: string | null = null;
-
-    constructor(engine: DIVE, state: State) {
+    constructor(engine: DIVE) {
         this._engine = engine;
-        this._state = state;
     }
 
     /** The scene root, for everything that needs the subtree as a whole. */
@@ -119,47 +93,60 @@ export class EngineGateway {
 
     // ---------------------------------------------------------------- entities
 
+    /**
+     * Resolves an entity id to its scene object.
+     *
+     * Backed by a map rather than a tree walk: this runs on every frame a gizmo
+     * is dragged, via `object-transform` -> `UPDATE_OBJECT` -> `updateEntity`,
+     * and a `traverse` visits every mesh of every loaded asset on the way.
+     */
     public findEntity(
         entity: MinimalSchema<EntitySchema>,
     ): DIVESceneObject | undefined {
-        let found: DIVESceneObject | undefined;
-        this.root.traverse((object3D) => {
-            if (found) return;
-            if (object3D.userData.id === entity.id) {
-                found = object3D as DIVESceneObject;
-            }
-        });
-        return found;
+        return this._entities.get(entity.id);
     }
 
-    public async addEntity(
-        entity: EntitySchema,
-    ): Promise<DIVESceneObject | undefined> {
+    /**
+     * Puts an empty scene object for this entity into the scene.
+     *
+     * Separate from {@link applyEntity} because of what happens in between:
+     * applying a model schema awaits the asset load, and `object-load` fires
+     * inside that await. Whoever wants to hear it has to be listening — and
+     * registered, or the report writes to an id the state does not know yet.
+     * One combined call left no moment for that.
+     *
+     * Synchronous, so nothing can slip in front of the caller either.
+     *
+     * @returns The scene object, or `undefined` for a state-only entity.
+     */
+    public createEntity(entity: EntitySchema): DIVESceneObject | undefined {
         const existing = this.findEntity(entity);
         if (existing) {
             console.warn(
-                `EngineGateway.addEntity: Scene object with id ${entity.id} already exists`,
+                `EngineGateway.createEntity: Scene object with id ${entity.id} already exists`,
             );
             return existing;
         }
 
-        // A camera is state-only, there is nothing to put in the scene.
+        // a camera is state-only, there is nothing to put in the scene
         if (isCameraSchema(entity)) return undefined;
 
         const sceneObject = this._instantiate(entity);
 
         sceneObject.name = entity.name;
         sceneObject.userData.id = entity.id;
+        this._entities.set(entity.id, sceneObject);
         this.root.add(sceneObject);
 
-        // Wired before the schema is applied, not after: applying a model
-        // schema awaits `setFromURL`, and that is exactly where `object-load`
-        // fires. Listening afterwards would miss it.
-        this._wire(entity, sceneObject);
-
-        await this._apply(sceneObject, entity);
-
         return sceneObject;
+    }
+
+    /** Writes an entity's data onto the scene object created for it. */
+    public async applyEntity(
+        sceneObject: DIVESceneObject,
+        entity: PartialSchema,
+    ): Promise<void> {
+        await this._apply(sceneObject, entity);
     }
 
     public async updateEntity(patch: PartialSchema): Promise<void> {
@@ -183,26 +170,37 @@ export class EngineGateway {
             return;
         }
 
-        this._unsubscribes.get(entity.id)?.();
-        this._unsubscribes.delete(entity.id);
+        this._entities.delete(entity.id);
 
         detachTransformControls(sceneObject);
 
-        // A group only ever held its members, so they outlive it at the root.
-        // Their own wiring is keyed by their own id and stays untouched.
-        if (sceneObject instanceof DIVEGroup) {
-            for (let i = sceneObject.members.length - 1; i >= 0; i--) {
-                this.root.attach(sceneObject.members[i]);
+        /**
+         * re-parent the child nodes to the root so deleting a group does not
+         * take its members with it
+         * they have to leave before the teardown below, or their components
+         * would be disposed along with the entity that merely contained them
+         */
+        if ('isDIVENode' in sceneObject) {
+            const children = (sceneObject as DIVENode).nodes;
+            for (let i = children.length - 1; i >= 0; i--) {
+                this.root.attach(children[i]);
             }
         }
 
-        sceneObject.parent!.remove(sceneObject);
+        /**
+         * unparenting frees nothing, and a detached node is out of reach of the
+         * final `Scene.dispose`, so an add/delete cycle would leak every geometry
+         * the entity held
+         */
+        disposeComponents(sceneObject);
+
+        // removeFromParent, because a node someone else detached has no parent
+        sceneObject.removeFromParent();
     }
 
-    /** Drops every listener this gateway ever attached. */
+    /** Forgets every scene object. Listener teardown belongs to the registry. */
     public dispose(): void {
-        this._unsubscribes.forEach((unsubscribe) => unsubscribe());
-        this._unsubscribes.clear();
+        this._entities.clear();
     }
 
     // ----------------------------------------------------------------- scene
@@ -251,139 +249,183 @@ export class EngineGateway {
 
     // --------------------------------------------------------------- private
 
+    /**
+     * Builds the node for an entity by composing the components its type needs.
+     *
+     * This is the whole "which entity type means which capabilities" mapping.
+     * Note a `scene` light is not one component but two: a hemisphere and a
+     * directional one, each carrying its own intensity factor, which is what
+     * lets {@link _applyLight} stay free of per-type branching.
+     */
     private _instantiate(entity: EntitySchema): DIVESceneObject {
-        if (isModelSchema(entity)) return new DIVEModel();
-        if (isPrimitiveSchema(entity)) return new DIVEPrimitive();
-        if (isGroupSchema(entity)) return new DIVEGroup();
-        if (isLightSchema(entity)) {
-            switch (entity.type) {
-                case 'scene':
-                    return new DIVESceneLight();
-                case 'ambient':
-                    return new DIVEAmbientLight();
-                case 'point':
-                    return new DIVEPointLight();
-                default:
-                    throw new Error(
-                        `EngineGateway.addEntity: Unknown light type: ${(entity as LightSchema).type}`,
-                    );
-            }
+        if (isModelSchema(entity)) {
+            const model = new DIVENode();
+            model.name = 'DIVEModel';
+            // marks the semantic root for a later re-import of an exported scene
+            model.userData.isDIVEModel = true;
+            model.addComponent(new ModelComponent());
+            return model;
         }
+        if (isPrimitiveSchema(entity)) {
+            const primitive = new DIVENode();
+            primitive.name = 'DIVEPrimitive';
+            primitive.addComponent(new PrimitiveComponent());
+            return primitive;
+        }
+        if (isGroupSchema(entity)) {
+            const group = new DIVENode();
+            group.name = 'DIVEGroup';
+            const lines = group.addComponent(new MultiLineComponent());
+
+            /**
+             * the group has to drop the line itself, because Object3D.remove
+             * nulls child.parent before announcing anything
+             * childremoved also covers re-parenting and contributed content;
+             * removeLineFor with an unknown child does nothing
+             */
+            group.addEventListener('childremoved', (event) =>
+                lines.removeLineFor(event.child),
+            );
+
+            return group;
+        }
+        if (isLightSchema(entity)) return this._instantiateLight(entity);
 
         throw new Error(
             `EngineGateway.addEntity: Unknown entity type: ${(entity as EntitySchema).entityType}`,
         );
     }
 
+    private _instantiateLight(entity: LightSchema): DIVESceneObject {
+        const node = new DIVENode();
+        node.name = 'DIVELight';
+
+        switch (entity.type) {
+            case 'scene':
+                node.addComponent(new HemisphereLightComponent());
+                node.addComponent(new DirectionalLightComponent());
+                break;
+            case 'ambient':
+                node.addComponent(new AmbientLightComponent());
+                break;
+            case 'point':
+                node.addComponent(new PointLightComponent());
+                break;
+            default:
+                throw new Error(
+                    `EngineGateway.addEntity: Unknown light type: ${(entity as LightSchema).type}`,
+                );
+        }
+
+        return node;
+    }
+
     private async _apply(
         sceneObject: DIVESceneObject,
         patch: PartialSchema,
     ): Promise<void> {
+        // state-only: there is nothing in the scene to write to
+        if (patch.entityType === 'camera') return;
+
+        const node = sceneObject as DIVENode;
+
+        /**
+         * what only this kind of entity has, and first, so an unknown type is
+         * rejected before anything gets written
+         */
         switch (patch.entityType) {
-            case 'camera':
-                return;
             case 'light':
-                this._applyLight(sceneObject as DIVELight, patch);
-                return;
+                this._applyLight(node, patch);
+                break;
             case 'model':
-                await this._applyModel(sceneObject as DIVEModel, patch);
-                return;
+                await this._applyModel(node, patch);
+                break;
             case 'primitive':
-                this._applyPrimitive(sceneObject as DIVEPrimitive, patch);
-                return;
+                this._applyPrimitive(node, patch);
+                break;
             case 'group':
-                this._applyGroup(sceneObject as DIVEGroup, patch);
-                return;
+                this._applyGroup(node, patch);
+                break;
             default:
                 throw new Error(
                     `EngineGateway.updateEntity: Unknown entity type: ${(patch as EntitySchema).entityType}`,
                 );
         }
+
+        /**
+         * what every entity with a body in the scene has
+         * applyTransform, not position.set: a schema position is a world position
+         */
+        if (patch.name !== undefined) node.name = patch.name;
+        node.applyTransform(patch);
+        if (patch.visible !== undefined) node.setVisibility(patch.visible);
+
+        // re-parent last, so the object is fully written before it moves
+        if (patch.parentId !== undefined)
+            this._setParent({ ...patch, parentId: patch.parentId });
+
+        // redraw the link to the group, since applyTransform reports nothing
+        updateParentLink(node);
     }
 
     private _applyLight(
-        sceneObject: DIVELight,
+        sceneObject: DIVENode,
         props: PartialSchema<LightSchema>,
     ): void {
-        if (props.name !== undefined) sceneObject.name = props.name;
-        if (props.position !== undefined)
-            sceneObject.position.set(
-                props.position.x,
-                props.position.y,
-                props.position.z,
-            );
-        if (props.intensity !== undefined)
-            sceneObject.setIntensity(props.intensity);
-        if (props.enabled !== undefined) sceneObject.setEnabled(props.enabled);
-        if (props.color !== undefined)
-            sceneObject.setColor(new Color(props.color));
-        if (props.visible !== undefined) sceneObject.visible = props.visible;
-        if (props.parentId !== undefined)
-            this._setParent({ ...props, parentId: props.parentId });
+        // every light component on the node, whatever kind: a scene light has two
+        const lights = sceneObject.getComponents(DIVELightComponent);
+        lights.forEach((light) => {
+            if (props.intensity !== undefined)
+                light.setIntensity(props.intensity);
+            if (props.enabled !== undefined) light.setEnabled(props.enabled);
+            if (props.color !== undefined)
+                light.setColor(new Color(props.color));
+        });
     }
 
     private async _applyModel(
-        sceneObject: DIVEModel,
+        sceneObject: DIVENode,
         model: PartialSchema<ModelSchema>,
     ): Promise<void> {
-        // awaited, so callers can tell when the model is actually in the scene.
-        // userData.uri holds what is currently loaded, so an update that only
-        // moves the model does not fetch the asset again.
+        // userData.uri holds what is loaded, so moving a model does not refetch it
         if (model.uri !== undefined && model.uri !== sceneObject.userData.uri) {
-            await sceneObject.setFromURL(model.uri);
+            await sceneObject
+                .requireComponent(ModelComponent)
+                .setFromURL(model.uri);
             sceneObject.userData.uri = model.uri;
         }
-        if (model.name !== undefined) sceneObject.name = model.name;
-        if (model.position !== undefined)
-            sceneObject.setPosition(model.position);
-        if (model.rotation !== undefined)
-            sceneObject.setRotation(model.rotation);
-        if (model.scale !== undefined) sceneObject.setScale(model.scale);
-        if (model.visible !== undefined)
-            sceneObject.setVisibility(model.visible);
-        if (model.material !== undefined)
-            sceneObject.setMaterial(model.material);
-        if (model.parentId !== undefined)
-            this._setParent({ ...model, parentId: model.parentId });
+
+        // after the asset, so it lands on the mesh that was just loaded
+        if (model.material !== undefined && model.material !== null)
+            sceneObject
+                .requireComponent(MeshComponent)
+                .setMaterial(model.material);
     }
 
     private _applyPrimitive(
-        sceneObject: DIVEPrimitive,
+        sceneObject: DIVENode,
         primitive: PartialSchema<PrimitiveSchema>,
     ): void {
-        if (primitive.name !== undefined) sceneObject.name = primitive.name;
-        if (primitive.geometry !== undefined)
-            sceneObject.setGeometry(primitive.geometry);
-        if (primitive.position !== undefined)
-            sceneObject.setPosition(primitive.position);
-        if (primitive.rotation !== undefined)
-            sceneObject.setRotation(primitive.rotation);
-        if (primitive.scale !== undefined)
-            sceneObject.setScale(primitive.scale);
-        if (primitive.visible !== undefined)
-            sceneObject.setVisibility(primitive.visible);
-        if (primitive.material !== undefined)
-            sceneObject.setMaterial(primitive.material);
-        if (primitive.parentId !== undefined)
-            this._setParent({ ...primitive, parentId: primitive.parentId });
+        if (primitive.geometry !== undefined && primitive.geometry !== null)
+            sceneObject
+                .requireComponent(PrimitiveComponent)
+                .setGeometry(primitive.geometry);
+
+        // after the geometry, so it lands on the mesh that was just built
+        if (primitive.material !== undefined && primitive.material !== null)
+            sceneObject
+                .requireComponent(MeshComponent)
+                .setMaterial(primitive.material);
     }
 
     private _applyGroup(
-        sceneObject: DIVEGroup,
+        sceneObject: DIVENode,
         props: PartialSchema<GroupSchema>,
     ): void {
-        if (props.name !== undefined) sceneObject.name = props.name;
-        if (props.position !== undefined)
-            sceneObject.setPosition(props.position);
-        if (props.rotation !== undefined)
-            sceneObject.setRotation(props.rotation);
-        if (props.scale !== undefined) sceneObject.setScale(props.scale);
-        if (props.visible !== undefined)
-            sceneObject.setVisibility(props.visible);
-        if (props.bbVisible !== undefined)
-            sceneObject.setLinesVisibility(props.bbVisible);
-        if (props.parentId !== undefined)
-            this._setParent({ ...props, parentId: props.parentId });
+        if (props.linksVisible !== undefined)
+            sceneObject
+                .requireComponent(MultiLineComponent)
+                .setVisible(props.linksVisible);
     }
 
     private _setParent(
@@ -414,56 +456,6 @@ export class EngineGateway {
         }
 
         parent.attach(sceneObject);
-    }
-
-    /**
-     * Subscribe to what the object reports about itself.
-     *
-     * This closure is the routing: the id comes from the entity that was just
-     * created, so nothing has to search for it later. The engine never learns
-     * that any of this happens.
-     */
-    private _wire(entity: EntitySchema, sceneObject: DIVESceneObject): void {
-        const { id, entityType } = entity;
-        const state = this._state;
-
-        const onTransform = (event: DIVEEntityTransformEvent): void => {
-            void state.performAction('UPDATE_OBJECT', {
-                id,
-                entityType,
-                position: copyVec(event.position),
-                rotation: copyVec(event.rotation),
-                scale: copyVec(event.scale),
-            });
-        };
-
-        const onSelect = (): void => {
-            if (this._selectedId === id) return;
-            this._selectedId = id;
-            void state.performAction('SELECT_OBJECT', { id, entityType });
-        };
-
-        const onDeselect = (): void => {
-            if (this._selectedId !== id) return;
-            this._selectedId = null;
-            void state.performAction('DESELECT_OBJECT', { id, entityType });
-        };
-
-        const onLoad = (): void => {
-            state.performAction('MODEL_LOADED', { id });
-        };
-
-        sceneObject.addEventListener('object-transform', onTransform);
-        sceneObject.addEventListener('object-select', onSelect);
-        sceneObject.addEventListener('object-deselect', onDeselect);
-        sceneObject.addEventListener('object-load', onLoad);
-
-        this._unsubscribes.set(id, () => {
-            sceneObject.removeEventListener('object-transform', onTransform);
-            sceneObject.removeEventListener('object-select', onSelect);
-            sceneObject.removeEventListener('object-deselect', onDeselect);
-            sceneObject.removeEventListener('object-load', onLoad);
-            if (this._selectedId === id) this._selectedId = null;
-        });
+        updateParentLink(sceneObject);
     }
 }

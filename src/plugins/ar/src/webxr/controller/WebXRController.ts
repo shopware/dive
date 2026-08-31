@@ -1,6 +1,5 @@
 import {
     Matrix4,
-    Mesh,
     Object3D,
     Quaternion,
     Vector3,
@@ -296,22 +295,6 @@ export class DIVEWebXRController extends Object3D {
 
         // initialize crosshair
         this._scene.add(this._crosshair);
-
-        // hang current scene children to hand node
-        const children: Object3D[] = [];
-        this._scene.root.children.forEach((child) => {
-            const clone = child.clone();
-            clone.layers.enableAll();
-            clone.traverse((obj) => {
-                obj.layers.enableAll();
-                if (obj instanceof Mesh) {
-                    obj.scale.set(0.1, 0.1, 0.1);
-                }
-            });
-            clone.position.set(0, 0, 0);
-            children.push(clone);
-        });
-        // this._scene.XRRoot.XRHandNode.add(...children);
     }
 
     private restoreScene(): void {
@@ -331,11 +314,12 @@ export class DIVEWebXRController extends Object3D {
 
         // check if successful
         if (!this._xrRaycaster) {
-            console.error(
-                'Raycaster not initialized successfully. Aborting WebXR...',
-            );
             this.dispose();
-            return Promise.reject();
+            return Promise.reject(
+                new Error(
+                    'DIVEWebXRController: the raycaster failed to initialize',
+                ),
+            );
         }
     }
 }

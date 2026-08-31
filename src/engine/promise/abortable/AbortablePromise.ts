@@ -49,6 +49,14 @@ export class DIVEAbortablePromise<T> implements Promise<T> {
         this._abortController.abort(reason);
     }
 
+    /**
+     * Runs the executor and hands back its promise.
+     *
+     * The `catch` is not redundant, unlike one inside an `async` function: this
+     * method is synchronous, so an executor that throws before its first `await`
+     * would throw at whoever called this rather than reject the promise they
+     * were handed.
+     */
     private _execute(signal: AbortSignal): Promise<T> {
         try {
             return Promise.resolve(this._executor(signal));

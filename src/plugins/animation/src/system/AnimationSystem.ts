@@ -82,9 +82,10 @@ export class AnimationSystem implements DIVETicker {
      *
      * @example
      * // Animate a single clip (e.g. a single animation) at once.
+     * // The clips belong to the ModelComponent that loaded them, not to the node.
      * const animator = await animationSystem.fromClips(
-     *     model,
-     *     model.animations,
+     *     node,
+     *     node.requireComponent(ModelComponent).animations,
      * );
      * // plays first clip by default
      * animator.play();

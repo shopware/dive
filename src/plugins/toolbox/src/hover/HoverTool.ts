@@ -37,8 +37,21 @@ export class HoverTool implements Tool {
     }
 
     public onPointerMove(ctx: PointerContext): void {
-        // Only use modelIntersects (PRODUCT_LAYER), ignore gizmo/UI
-        const intersect = ctx.modelIntersects[0];
+        /**
+         * while a button is held the pointer is moving the camera, and
+         * OrbitControls uses all three
+         * left as it was rather than cleared, so releasing does not make it blink
+         */
+        if (
+            ctx.pointerPrimaryDown ||
+            ctx.pointerMiddleDown ||
+            ctx.pointerSecondaryDown
+        ) {
+            return;
+        }
+
+        // every hit, whatever layer, anything the pointer reaches may respond
+        const intersect = ctx.intersects[0];
         const hoverable = findInterface<DIVEHoverable>(
             intersect?.object,
             'isHoverable',

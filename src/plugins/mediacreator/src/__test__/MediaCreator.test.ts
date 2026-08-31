@@ -102,8 +102,6 @@ vi.mock('@shopware-ag/dive', () => {
         this.onResize = vi.fn();
         return this;
     });
-    (MockPerspectiveCamera as any).LIVE_VIEW_LAYER_MASK = 1;
-    (MockPerspectiveCamera as any).EDITOR_VIEW_LAYER_MASK = 2;
 
     const MockScene = vi.fn(function (this: any) {
         this.add = vi.fn();
@@ -116,34 +114,30 @@ vi.mock('@shopware-ag/dive', () => {
 
     return {
         DIVERenderer: MockDIVERenderer,
-        DIVEPerspectiveCamera: MockPerspectiveCamera,
         DIVEScene: MockScene,
+        DIVECameraComponent: {
+            LIVE_VIEW_LAYER_MASK: 1,
+            EDITOR_VIEW_LAYER_MASK: 2,
+        },
     };
 });
 
-vi.mock('@shopware-ag/dive/orbitcontroller', () => {
+vi.mock('@shopware-ag/dive/orbitcontroller', async () => {
+    const { Vector3 } = await import('three/webgpu');
+
     return {
         OrbitController: vi.fn(function (this: any) {
+            /**
+             * the camera component is the whole interface, camera is what three renders
+             * with, owner carries the transform and onResize sets the aspect
+             */
             this.object = {
-                position: {
-                    clone: vi.fn(() => ({ copy: vi.fn() })),
-                    copy: vi.fn(),
-                },
-                quaternion: {
-                    clone: vi.fn(() => ({ copy: vi.fn() })),
-                    copy: vi.fn(),
-                },
-                layers: {
-                    mask: 0,
-                },
+                camera: { layers: { mask: 0 } },
+                owner: { position: new Vector3() },
                 onResize: vi.fn(),
             };
 
-            this.target = {
-                clone: vi.fn(() => ({ copy: vi.fn() })),
-                copy: vi.fn(),
-            };
-
+            this.target = new Vector3();
             this.update = vi.fn();
 
             return this;
@@ -152,19 +146,19 @@ vi.mock('@shopware-ag/dive/orbitcontroller', () => {
 });
 
 import { MediaCreator } from '../MediaCreator.ts';
-import {
-    DIVEPerspectiveCamera,
-    DIVERenderer,
-    DIVEScene,
-} from '@shopware-ag/dive';
+import { DIVERenderer, DIVEScene } from '@shopware-ag/dive';
 import { OrbitController } from '@shopware-ag/dive/orbitcontroller';
 import { type MediaGenerationByPosition } from '../../types/index.ts';
 
 const mockScene = new DIVEScene();
-const mockCamera = new DIVEPerspectiveCamera();
-const mockRenderer = new DIVERenderer(mockScene, mockCamera);
+/** Enough of a camera for the renderer and the controller stand-ins. */
+/** Enough of a camera component for the renderer and the controller stand-ins. */
+const mockCameraComponent = {
+    camera: { layers: { mask: 0 } },
+} as never;
+const mockRenderer = new DIVERenderer(mockScene, mockCameraComponent);
 const mockOrbitController = new OrbitController(
-    mockCamera,
+    mockCameraComponent,
     mockRenderer.webgpurenderer.domElement,
 );
 

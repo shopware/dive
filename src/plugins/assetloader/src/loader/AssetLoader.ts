@@ -7,7 +7,7 @@ import {
     FileTypeError,
     ParseError,
     getFileTypeFromUri,
-    isFileTypeSupported,
+    isFileExtensionSupported,
 } from '@shopware-ag/dive';
 import { DracoLoader } from '../draco/DracoLoader.ts';
 import { STEPLoader } from '../step/STEPLoader.ts';
@@ -58,7 +58,7 @@ export class AssetLoader {
             }
         }
 
-        if (!isFileTypeSupported(extension)) {
+        if (!isFileExtensionSupported(extension)) {
             throw new FileTypeError(
                 `Unsupported file type: ${extension}. Supported types: ${SUPPORTED_FILE_TYPES.join(', ')}`,
                 extension,

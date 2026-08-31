@@ -4,29 +4,21 @@ import { type ActionDependencies } from '../../../types/index.ts';
 
 export const DropItAction = Action.define<
     { id: string },
-    Pick<ActionDependencies, 'gateway' | 'registered'>,
+    Pick<ActionDependencies, 'registry'>,
     void
 >({
     description:
         'Places an object on top of an underlying object or the floor.',
-    execute: (payload, { gateway, registered }) => {
-        const object = registered.get(payload.id);
-        if (!object) {
-            throw new Error(
-                `Object with id ${payload.id} not registered. Registered: ${registered}`,
-            );
+    execute: (payload, { registry }) => {
+        const entry = registry.read(payload.id);
+        if (!entry) {
+            throw new Error(`Object with id ${payload.id} not registered.`);
         }
 
-        const model = gateway.findEntity(object);
+        const model = entry.node;
         if (!model) {
             throw new Error(
-                `Object with id ${payload.id} is not found in the scene.`,
-            );
-        }
-
-        if (!('isDIVEModel' in model)) {
-            throw new Error(
-                `Object with id ${payload.id} is not a DIVEModel. Object: ${model}`,
+                `Object with id ${payload.id} is not in the scene.`,
             );
         }
 

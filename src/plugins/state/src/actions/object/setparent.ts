@@ -9,16 +9,17 @@ export const SetParentAction = Action.define<
         object: Partial<EntitySchema> & { id: string };
         parent: (Partial<EntitySchema> & { id: string }) | null;
     },
-    Pick<ActionDependencies, 'gateway' | 'registered'>,
+    Pick<ActionDependencies, 'gateway' | 'registry'>,
     void
 >({
     description: 'Attach an object to another object.',
-    execute: (payload, { gateway, registered }) => {
-        const object = registered.get(payload.object.id);
-        if (!object) throw new Error('Object not found.');
+    execute: (payload, { gateway, registry }) => {
+        const entry = registry.read(payload.object.id);
+        if (!entry) throw new Error('Object not found.');
 
-        const sceneObject = gateway.findEntity(object);
-        if (!sceneObject) throw new Error('Object not found in scene.');
+        const object = entry.schema;
+        const sceneObject = entry.node;
+        if (!sceneObject) throw new Error('Object is not in the scene.');
 
         if (payload.parent === null) {
             // detach from current parent
@@ -29,7 +30,7 @@ export const SetParentAction = Action.define<
                     id: object.id,
                     parentId: null,
                 },
-                { gateway, registered },
+                { gateway, registry },
             ).execute();
             return;
         }
@@ -40,16 +41,16 @@ export const SetParentAction = Action.define<
             return;
         }
 
-        const parent = registered.get(payload.parent.id);
-        if (!parent) {
+        const parentEntry = registry.read(payload.parent.id);
+        if (!parentEntry) {
             console.warn('Parent object not found.');
             return;
         }
 
-        // attach to new parent
-        const parentObject = gateway.findEntity(parent);
+        const parent = parentEntry.schema;
+        const parentObject = parentEntry.node;
         if (!parentObject) {
-            console.warn('Parent object not found in scene.');
+            console.warn('Parent object is not in the scene.');
             return;
         }
 
@@ -61,7 +62,7 @@ export const SetParentAction = Action.define<
                 id: object.id,
                 parentId: parent.id,
             },
-            { gateway, registered },
+            { gateway, registry },
         ).execute();
     },
 });

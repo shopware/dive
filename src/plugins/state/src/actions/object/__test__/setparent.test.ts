@@ -1,3 +1,4 @@
+import { makeActionDeps } from '../../../__test__/actionDeps.ts';
 import { SetParentAction } from '../setparent.ts';
 import { DIVESceneObject } from '@shopware-ag/dive';
 import { type EngineGateway } from '../../../EngineGateway.ts';
@@ -15,23 +16,14 @@ describe('SetParentAction', () => {
     } as unknown as Object3D;
 
     const mockGateway = {
-        findEntity: vi
-            .fn()
-            .mockImplementation(
-                (obj: Partial<EntitySchema> & { id: string }) => {
-                    if (obj.id === 'test-object') return mockSceneObject;
-                    if (obj.id === 'parent-object') return mockParentObject;
-                    return null;
-                },
-            ),
         root: { attach: vi.fn() },
         updateEntity: vi.fn(),
     } as unknown as EngineGateway;
 
-    const mockRegistered = new Map<string, EntitySchema>();
+    const deps = makeActionDeps();
 
     beforeEach(() => {
-        mockRegistered.clear();
+        deps.registry.clear();
         vi.clearAllMocks();
     });
 
@@ -65,8 +57,11 @@ describe('SetParentAction', () => {
             scale: { x: 1, y: 1, z: 1 },
         };
 
-        mockRegistered.set(testObject.id, testObject);
-        mockRegistered.set(parentObject.id, parentObject);
+        deps.registry.register(testObject, mockSceneObject);
+        deps.registry.register(
+            parentObject,
+            mockParentObject as unknown as DIVESceneObject,
+        );
 
         // Act
         const action = new SetParentAction(
@@ -74,10 +69,7 @@ describe('SetParentAction', () => {
                 object: { id: 'test-object' },
                 parent: { id: 'parent-object' },
             },
-            {
-                gateway: mockGateway,
-                registered: mockRegistered,
-            },
+            { gateway: mockGateway, ...deps },
         );
         action.execute();
 
@@ -104,7 +96,7 @@ describe('SetParentAction', () => {
             },
         };
 
-        mockRegistered.set(testObject.id, testObject);
+        deps.registry.register(testObject, mockSceneObject);
 
         // Act
         const action = new SetParentAction(
@@ -112,10 +104,7 @@ describe('SetParentAction', () => {
                 object: { id: 'test-object' },
                 parent: null,
             },
-            {
-                gateway: mockGateway,
-                registered: mockRegistered,
-            },
+            { gateway: mockGateway, ...deps },
         );
 
         // Assert
@@ -132,10 +121,7 @@ describe('SetParentAction', () => {
                 object: { id: 'non-existent-object' },
                 parent: { id: 'parent-object' },
             },
-            {
-                gateway: mockGateway,
-                registered: mockRegistered,
-            },
+            { gateway: mockGateway, ...deps },
         );
 
         expect(() => action.execute()).toThrow('Object not found.');
@@ -160,8 +146,8 @@ describe('SetParentAction', () => {
             },
         };
 
-        mockRegistered.set(testObject.id, testObject);
-        vi.mocked(mockGateway.findEntity).mockReturnValueOnce(undefined);
+        // registered, but with no scene object of its own
+        deps.registry.register(testObject);
 
         // Act & Assert
         const action = new SetParentAction(
@@ -169,13 +155,10 @@ describe('SetParentAction', () => {
                 object: { id: 'test-object' },
                 parent: { id: 'parent-object' },
             },
-            {
-                gateway: mockGateway,
-                registered: mockRegistered,
-            },
+            { gateway: mockGateway, ...deps },
         );
 
-        expect(() => action.execute()).toThrow('Object not found in scene.');
+        expect(() => action.execute()).toThrow('Object is not in the scene.');
     });
 
     it('should warn if parent does not exist', () => {
@@ -199,7 +182,7 @@ describe('SetParentAction', () => {
 
         const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
 
-        mockRegistered.set(testObject.id, testObject);
+        deps.registry.register(testObject, mockSceneObject);
 
         // Act & Assert
         const action = new SetParentAction(
@@ -207,10 +190,7 @@ describe('SetParentAction', () => {
                 object: { id: 'test-object' },
                 parent: { id: 'non-existent-parent' },
             },
-            {
-                gateway: mockGateway,
-                registered: mockRegistered,
-            },
+            { gateway: mockGateway, ...deps },
         );
 
         action.execute();
@@ -249,15 +229,9 @@ describe('SetParentAction', () => {
 
         const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
 
-        mockRegistered.set(testObject.id, testObject);
-        mockRegistered.set(parentObject.id, parentObject);
-        vi.mocked(mockGateway.findEntity).mockImplementation(
-            (obj: Partial<EntitySchema> & { id: string }) => {
-                if (obj.id === 'test-object') return mockSceneObject;
-                if (obj.id === 'parent-object') return undefined;
-                return undefined;
-            },
-        );
+        deps.registry.register(testObject, mockSceneObject);
+        // the parent is registered, but has no scene object
+        deps.registry.register(parentObject);
 
         // Act & Assert
         const action = new SetParentAction(
@@ -265,15 +239,12 @@ describe('SetParentAction', () => {
                 object: { id: 'test-object' },
                 parent: { id: 'parent-object' },
             },
-            {
-                gateway: mockGateway,
-                registered: mockRegistered,
-            },
+            { gateway: mockGateway, ...deps },
         );
 
         action.execute();
         expect(warnSpy).toHaveBeenCalledWith(
-            'Parent object not found in scene.',
+            'Parent object is not in the scene.',
         );
     });
 
@@ -298,7 +269,7 @@ describe('SetParentAction', () => {
 
         const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
 
-        mockRegistered.set(testObject.id, testObject);
+        deps.registry.register(testObject, mockSceneObject);
 
         // Act & Assert
         const action = new SetParentAction(
@@ -306,10 +277,7 @@ describe('SetParentAction', () => {
                 object: { id: 'test-object' },
                 parent: { id: 'test-object' },
             },
-            {
-                gateway: mockGateway,
-                registered: mockRegistered,
-            },
+            { gateway: mockGateway, ...deps },
         );
 
         action.execute();

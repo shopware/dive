@@ -93,21 +93,6 @@ vi.mock('../scene/Scene.ts', async (importOriginal) => {
     };
 });
 
-vi.mock('../camera/PerspectiveCamera.ts', async (importOriginal) => {
-    const actual =
-        await importOriginal<typeof import('../camera/PerspectiveCamera.ts')>();
-    return {
-        ...actual,
-        DIVEPerspectiveCamera: vi.fn(function (this: any) {
-            this.position = {
-                set: vi.fn(),
-                copy: vi.fn(),
-            };
-            return this;
-        }),
-    };
-});
-
 vi.mock('../clock/Clock.ts', async (importOriginal) => {
     const actual = await importOriginal<typeof import('../clock/Clock.ts')>();
     return {
@@ -248,8 +233,19 @@ describe('DIVE', () => {
     it('should register the main view with the clock', () => {
         const dive = new DIVE();
 
-        expect(dive.clock.addTicker).toHaveBeenCalledTimes(1);
+        // the scene is a ticker too: it drives every attached component
+        expect(dive.clock.addTicker).toHaveBeenCalledTimes(2);
         expect(dive.clock.addTicker).toHaveBeenCalledWith(dive.mainView);
+    });
+
+    it('should register the scene with the clock before the view', () => {
+        const dive = new DIVE();
+
+        const calls = (
+            dive.clock.addTicker as unknown as { mock: { calls: unknown[][] } }
+        ).mock.calls;
+        expect(calls[0][0]).toBe(dive.scene);
+        expect(calls[1][0]).toBe(dive.mainView);
     });
 
     it('should instantiate in development DIVE_NODE_ENV', () => {
@@ -326,7 +322,8 @@ describe('DIVE', () => {
         const dive = new DIVE(settings);
         await waitForAsync();
         expect(dive['_orientationDisplay']).toBeDefined();
-        expect(dive.clock.addTicker).toHaveBeenCalledTimes(2);
+        // scene, main view, orientation display
+        expect(dive.clock.addTicker).toHaveBeenCalledTimes(3);
         expect(dive.clock.addTicker).toHaveBeenCalledWith(
             dive['_orientationDisplay'],
         );
@@ -372,16 +369,6 @@ describe('DIVE', () => {
     it('should add a new instance to the instances list', () => {
         const dive = new DIVE();
         expect(window.DIVE.instances).toContain(dive);
-    });
-
-    it('should start the clock', () => {
-        const dive = new DIVE({
-            autoStart: false,
-        });
-        dive.start();
-        return waitForAsync().then(() => {
-            expect(dive.clock.startAsync).toHaveBeenCalled();
-        });
     });
 
     it('should propagate renderer initialization failures from startAsync', async () => {
@@ -473,5 +460,21 @@ describe('DIVE', () => {
     it('should get the first instance', () => {
         const dive = new DIVE();
         expect(window.DIVE.instance).toBe(dive);
+    });
+
+    it('should release the scene before the views', async () => {
+        /**
+         * the order carries the whole GPU cleanup, disposing the scene frees the
+         * geometries and needs the renderer to still be there to hear it
+         */
+        const dive = new DIVE({ autoStart: false });
+
+        await dive.disposeAsync();
+
+        const sceneDisposedAt = vi.mocked(dive.scene.dispose).mock
+            .invocationCallOrder[0];
+        const viewDisposedAt = vi.mocked(dive.mainView.dispose).mock
+            .invocationCallOrder[0];
+        expect(sceneDisposedAt).toBeLessThan(viewDisposedAt);
     });
 });

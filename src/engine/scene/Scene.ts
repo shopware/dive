@@ -4,8 +4,12 @@ import {
     type Box3,
     type ColorRepresentation,
 } from 'three/webgpu';
-import { DIVERoot } from '../../components/root/Root.ts';
-import { DIVEGrid } from '../../components/grid/Grid.ts';
+import { DIVERoot } from './root/Root.ts';
+import { GridComponent } from '../../components/grid/GridComponent.ts';
+import { type DIVEComponent } from '../component/Component.ts';
+import { disposeComponents } from '../../helpers/disposeComponents/disposeComponents.ts';
+import { DIVENode } from '../node/Node.ts';
+import { type DIVETicker } from '../clock/Clock.ts';
 
 export type DIVESceneSettings = {
     /**
@@ -56,13 +60,43 @@ export const DIVESceneDefaultSettings: Required<DIVESceneSettings> = {
  * @module
  */
 
-export class DIVEScene extends Scene {
+/**
+ * A basic scene class.
+ *
+ * Comes with a root object that contains all the scene objects, and drives the
+ * per-frame tick of every component attached anywhere below it.
+ */
+export class DIVEScene extends Scene implements DIVETicker {
     public readonly isDIVEScene: true = true;
 
     private _settings: DIVESceneSettings;
 
     private _root: DIVERoot;
-    private _grid: DIVEGrid | null = null;
+    private _grid: GridComponent | null = null;
+
+    /**
+     * Components that asked for a per-frame callback.
+     *
+     * Flat and enrolment-based: nothing walks the scene tree per frame, and
+     * components without a `tick` never appear here at all. Nodes enrol and
+     * withdraw their components as they enter and leave the tree, so the only
+     * per-frame cost is iterating this array.
+     */
+    private _tickingComponents: DIVEComponent[] = [];
+
+    /** Set while `tick` is iterating, so mutations are deferred. */
+    private _isTicking: boolean = false;
+
+    /**
+     * What was withdrawn while `tick` was iterating.
+     *
+     * Splicing under the loop would shift the indices, so a withdrawal that
+     * arrives mid-frame is recorded and applied afterwards. Recorded by identity,
+     * not derived from `tick`/`tickEnabled` state: a component that is removed
+     * from its node still has both, so a state-based compaction kept it enrolled
+     * and it went on ticking with no owner -- and, after a move, in two scenes.
+     */
+    private _withdrawn: Set<DIVEComponent> | null = null;
 
     constructor(settings?: Partial<DIVESceneSettings>) {
         super();
@@ -75,32 +109,43 @@ export class DIVEScene extends Scene {
         this._root.floor.setVisibility(this._settings.displayFloor);
         this.add(this._root);
 
-        if (this._settings.displayGrid) {
-            this._grid = new DIVEGrid({
-                gridSize: this._settings.gridSize,
-                majorLineEvery: this._settings.gridMajorLineEvery,
-            });
-            this._grid.setVisibility(this._settings.displayGrid);
-            this.add(this._grid);
-        }
+        if (this._settings.displayGrid) this._buildGrid();
     }
 
     public get root(): DIVERoot {
         return this._root;
     }
 
-    public get grid(): DIVEGrid {
-        if (!this._grid) {
-            this._grid = new DIVEGrid({
-                gridSize: this._settings.gridSize,
-                majorLineEvery: this._settings.gridMajorLineEvery,
-            });
+    /**
+     * The grid, built on first use.
+     *
+     * Lazy because a scene without one should not pay for the plane, the shader
+     * material and its uniforms.
+     */
+    public get grid(): GridComponent {
+        if (!this._grid) this._buildGrid();
 
-            this._grid.setVisibility(this._settings.displayGrid);
-            this.add(this._grid);
-        }
+        return this._grid!;
+    }
 
-        return this._grid;
+    /**
+     * Puts the grid on its own node in the scene.
+     *
+     * Its own node, and not the root: the grid is furniture the viewer sees, not
+     * scene content, so it must stay out of everything that walks the root --
+     * bounds, exports, the entity tree.
+     */
+    private _buildGrid(): void {
+        const node = new DIVENode();
+        node.name = 'DIVEGrid';
+
+        this._grid = node
+            .addComponent(new GridComponent())
+            .setGridSize(this._settings.gridSize)
+            .setMajorLineEvery(this._settings.gridMajorLineEvery)
+            .setVisibility(this._settings.displayGrid);
+
+        this.add(node);
     }
 
     public setBackground(value: ColorRepresentation): void {
@@ -117,11 +162,106 @@ export class DIVEScene extends Scene {
         return this._root.computeSceneBB();
     }
 
+    /**
+     * Drives every enrolled component once per frame.
+     *
+     * @param deltaTime - Seconds since the previous frame.
+     */
+    public tick(deltaTime: number): void {
+        this._isTicking = true;
+
+        /**
+         * index-based and length-checked, so a component that disables itself
+         * from inside its own tick cannot make the loop skip its neighbour
+         */
+        for (let i = 0; i < this._tickingComponents.length; i++) {
+            const component = this._tickingComponents[i];
+            if (!component.tickEnabled) continue;
+
+            // withdrawn earlier in this very frame, so it is already gone
+            if (this._withdrawn?.has(component)) continue;
+
+            component.tick?.(deltaTime);
+        }
+
+        this._isTicking = false;
+
+        if (this._withdrawn) {
+            const withdrawn = this._withdrawn;
+            this._withdrawn = null;
+            this._tickingComponents = this._tickingComponents.filter(
+                (component) => !withdrawn.has(component),
+            );
+        }
+    }
+
+    /**
+     * Registers a component for the per-frame tick.
+     *
+     * Called by {@link DIVENode} when a component becomes live; not part of the
+     * component-authoring surface.
+     *
+     * @param component - The component to enrol.
+     * @internal
+     */
+    public enlistComponent(component: DIVEComponent): void {
+        if (!component.tick || !component.tickEnabled) return;
+
+        // enrolled again after being withdrawn in the same frame, so the pending
+        // withdrawal no longer applies
+        this._withdrawn?.delete(component);
+
+        if (this._tickingComponents.includes(component)) return;
+
+        this._tickingComponents.push(component);
+    }
+
+    /**
+     * Removes a component from the per-frame tick.
+     *
+     * @param component - The component to withdraw.
+     * @internal
+     */
+    public withdrawComponent(component: DIVEComponent): void {
+        const index = this._tickingComponents.indexOf(component);
+        if (index === -1) return;
+
+        if (this._isTicking) {
+            // compacted after the loop finishes
+            (this._withdrawn ??= new Set()).add(component);
+            return;
+        }
+
+        this._tickingComponents.splice(index, 1);
+    }
+
+    /**
+     * Gives up everything in the scene, GPU resources included.
+     *
+     * Every component gets its `dispose` called, which is what actually frees
+     * geometries, materials and textures: three hangs a `dispose` listener on each
+     * of those and destroys the GPU object when it fires. Its own
+     * `Renderer.dispose` does not do this -- it only drops its bookkeeping -- so
+     * without this pass the only thing that ever released GPU memory was ending
+     * the canvas's WebGL context, which is not something DIVE may do to a canvas
+     * it was handed.
+     *
+     * Found through the nodes rather than by looking for components in the graph:
+     * a component is not in the graph -- only what it contributed is -- so
+     * `node.components` is the only place they can be reached.
+     *
+     * Collects first and disposes afterwards, because a component is free to
+     * change the tree it sits in while being disposed.
+     */
     public dispose(): void {
+        disposeComponents(this);
+
         this.remove(this._root);
 
-        if (this._grid) {
-            this.remove(this._grid);
-        }
+        // already disposed by the traverse above, since it sits on a node
+        // kept rather than nulled, the getter would build a fresh one on demand
+        if (this._grid) this.remove(this._grid.owner);
+
+        this._tickingComponents = [];
     }
 }

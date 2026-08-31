@@ -55,17 +55,15 @@ export class DIVEWebXRRaycaster extends EventDispatcher<DIVEWebXRRaycasterEvents
 
     public async init(): Promise<this> {
         if (!this._session) {
-            console.error(
-                'DIVEWebXRRaycaster: No session set in init()! Aborting initialization...',
+            return Promise.reject(
+                new Error('DIVEWebXRRaycaster: no session set in init()'),
             );
-            return Promise.reject();
         }
 
         if (this._initialized) {
-            console.error(
-                'DIVEWebXRRaycaster: Already initialized! Aborting initialization...',
+            return Promise.reject(
+                new Error('DIVEWebXRRaycaster: already initialized'),
             );
-            return Promise.reject();
         }
 
         await this._threeRaycaster.init();

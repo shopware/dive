@@ -1,5 +1,5 @@
-import { Vector3 } from 'three/webgpu';
 import { OrbitController } from '@shopware-ag/dive/orbitcontroller';
+import { Vector3 } from 'three/webgpu';
 import { type DIVERenderer, type DIVEScene, DIVE } from '@shopware-ag/dive';
 import { Overlay } from './overlay/Overlay.ts';
 import { DIVEWebXRController } from './controller/WebXRController.ts';
@@ -10,9 +10,15 @@ export class DIVEWebXR {
     private static _scene: DIVEScene;
     private static _controller: OrbitController;
 
-    // camera reset members
-    private static _cameraPosition: Vector3;
-    private static _cameraTarget: Vector3;
+    /**
+     * Where the camera stood before the session, to be put back afterwards.
+     *
+     * Position and target are the whole transform -- the controller rebuilds the
+     * orientation from them -- and the position belongs to the node the camera
+     * component is attached to, not to the camera.
+     */
+    private static _cameraPosition = new Vector3();
+    private static _cameraTarget = new Vector3();
 
     // render loop members
     private static _renderCallbackId: string | null = null;
@@ -46,13 +52,12 @@ export class DIVEWebXR {
         this._scene = engine.scene;
         this._controller = controller;
 
-        // setting camera reset values
-        this._cameraPosition = this._controller.object.position.clone();
-        this._cameraTarget = this._controller.target.clone();
+        // what to put back when the session ends
+        this._cameraPosition.copy(this._controller.object.owner.position);
+        this._cameraTarget.copy(this._controller.target);
 
         if (!navigator.xr) {
-            console.error('WebXR not supported');
-            return Promise.reject();
+            return Promise.reject(new Error('WebXR is not supported'));
         }
 
         // setup current instance
@@ -153,20 +158,13 @@ export class DIVEWebXR {
             const { clientWidth, clientHeight } = canvasWrapper;
             this._renderer.onResize(clientWidth, clientHeight);
 
-            // will be removed in the future when DIVEOrthographicCamera will be implemented
-            if ('onResize' in this._controller.object) {
-                // resize camera
-                this._controller.object.onResize(clientWidth, clientHeight);
-            }
+            this._controller.object.onResize(clientWidth, clientHeight);
         }
 
         // reset camera
-        this._controller.object.position.copy(this._cameraPosition);
+        this._controller.object.owner.position.copy(this._cameraPosition);
         this._controller.target.copy(this._cameraTarget);
-
-        // reset camera values
-        this._cameraPosition.set(0, 0, 0);
-        this._cameraTarget.set(0, 0, 0);
+        this._controller.update();
 
         // dispose xr scene
         // this._scene.DisposeXR();
