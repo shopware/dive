@@ -246,7 +246,17 @@ describe('QuickView', () => {
         await expect(QuickView('test_uri')).rejects.toThrow(
             'DIVE initialization error',
         );
-        expect(console.error).toHaveBeenCalled();
+    });
+
+    it('should not log what it rethrows', async () => {
+        // the caller chose the channel by catching, and would log it twice
+        vi.mocked(DIVE).mockImplementationOnce(() => {
+            throw new Error('DIVE initialization error');
+        });
+
+        await expect(QuickView('test_uri')).rejects.toThrow();
+
+        expect(console.error).not.toHaveBeenCalled();
     });
 
     describe('from a model uri', () => {

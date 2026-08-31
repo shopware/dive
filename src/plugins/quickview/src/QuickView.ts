@@ -305,7 +305,12 @@ export async function QuickView(
             }
         }
 
-        console.error('Failed to initialize QuickView:', error);
+        /**
+         * rethrown untouched, and not logged: the caller knows it asked for a
+         * QuickView, so "during initialization" adds nothing the error does not
+         * already say -- and a library that logs what it rethrows makes the same
+         * failure appear twice, in a channel the caller did not choose
+         */
         return Promise.reject(error);
     }
 }
