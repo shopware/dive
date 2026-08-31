@@ -249,6 +249,41 @@ describe('dive/mesh/ModelComponent', () => {
         expect(model.mesh?.material).toBe(model.material);
     });
 
+    it('should dispose a mesh that carries several materials', () => {
+        /**
+         * three allows `Material[]` per mesh, and a cast to a single material
+         * made dispose() call a method an array does not have -- which threw and
+         * took the rest of the engine teardown down with it
+         */
+        const gltf = new Object3D();
+        const mesh = new Mesh(new BoxGeometry(), [
+            new MeshStandardMaterial(),
+            new MeshStandardMaterial(),
+        ]);
+        gltf.add(mesh);
+
+        model.setFromGLTF(gltf);
+
+        expect(() => model.dispose()).not.toThrow();
+    });
+
+    it('should release every material of the asset, not just the first', () => {
+        const gltf = new Object3D();
+        const first = new MeshStandardMaterial();
+        const second = new MeshStandardMaterial();
+        gltf.add(new Mesh(new BoxGeometry(), first));
+        gltf.add(new Mesh(new BoxGeometry(), second));
+        const disposals = [
+            vi.spyOn(first, 'dispose'),
+            vi.spyOn(second, 'dispose'),
+        ];
+
+        model.setFromGLTF(gltf);
+        model.dispose();
+
+        disposals.forEach((dispose) => expect(dispose).toHaveBeenCalled());
+    });
+
     it('should dispose the geometry it loaded', () => {
         model.setFromGLTF(makeGltf());
         const geometry = vi.spyOn(model.mesh!.geometry, 'dispose');

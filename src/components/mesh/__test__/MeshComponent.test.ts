@@ -1,4 +1,4 @@
-import { Mesh } from 'three/webgpu';
+import { Mesh, MeshStandardMaterial, Texture } from 'three/webgpu';
 import { MeshComponent } from '../MeshComponent.ts';
 import { FloorComponent } from '../floor/FloorComponent.ts';
 import { ModelComponent } from '../model/ModelComponent.ts';
@@ -172,6 +172,36 @@ describe('dive/mesh/MeshComponent', () => {
                 component.setMaterial({ color: 0x0000ff });
 
                 expect(component.mesh?.material).toBe(component.material);
+            });
+
+            it('should dispose the textures its materials reference', () => {
+                /**
+                 * a material's dispose does not free its maps, and a load
+                 * produces its own -- the asset cache holds file bytes, not
+                 * parsed results, so nothing here is shared
+                 */
+                const component = make();
+                withContent(component);
+                const texture = new Texture();
+                const material = component.material as MeshStandardMaterial;
+                material.map = texture;
+                const disposed = vi.spyOn(texture, 'dispose');
+
+                component.dispose();
+
+                expect(disposed).toHaveBeenCalled();
+            });
+
+            it('should dispose a shared resource exactly once', () => {
+                // one glTF can point several meshes at the same material
+                const component = make();
+                withContent(component);
+                const material = component.material as MeshStandardMaterial;
+                const disposed = vi.spyOn(material, 'dispose');
+
+                component.dispose();
+
+                expect(disposed).toHaveBeenCalledTimes(1);
             });
 
             it('should dispose its material', () => {
