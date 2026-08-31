@@ -219,6 +219,33 @@ describe('modules/state/State', () => {
             const result = state.destroyInstance();
             expect(result).toBe(false);
         });
+
+        it('should take down the modules it built', async () => {
+            /**
+             * they are this state's to take down because they are this state's to
+             * build: a Toolbox listens on the canvas and puts a gizmo in the
+             * scene from its constructor
+             */
+            const toolbox = await state['getToolbox']();
+            const animation = await state['getAnimationSystem']();
+
+            state.destroyInstance();
+            await Promise.resolve();
+
+            expect(toolbox.dispose).toHaveBeenCalledTimes(1);
+            expect(animation.dispose).toHaveBeenCalledTimes(1);
+        });
+
+        it('should take down a module that was still being imported', async () => {
+            // awaited rather than checked, so it is torn down when it arrives
+            const pending = state['getToolbox']();
+
+            state.destroyInstance();
+            const toolbox = await pending;
+            await Promise.resolve();
+
+            expect(toolbox.dispose).toHaveBeenCalledTimes(1);
+        });
     });
 
     describe('Action Performance', () => {
@@ -492,12 +519,14 @@ describe('modules/state/State', () => {
             vi.mock('@shopware-ag/dive/animation', () => ({
                 AnimationSystem: vi.fn().mockImplementation(() => ({
                     uuid: 'mock-animation-system-uuid',
+                    dispose: vi.fn(),
                 })),
             }));
 
             vi.mock('@shopware-ag/dive/toolbox', () => ({
                 Toolbox: vi.fn().mockImplementation(() => ({
                     uuid: 'mock-toolbox-uuid',
+                    dispose: vi.fn(),
                 })),
             }));
         });
