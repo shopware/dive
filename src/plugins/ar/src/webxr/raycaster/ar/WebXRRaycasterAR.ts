@@ -30,24 +30,21 @@ export class DIVEWebXRRaycasterAR {
 
     public async init(): Promise<this> {
         if (!this._session) {
-            console.error(
-                'DIVEWebXRRaycaster: No session set in init()! Aborting initialization...',
+            return Promise.reject(
+                new Error('DIVEWebXRRaycasterAR: no session set in init()'),
             );
-            return Promise.reject();
         }
 
         if (this._requesting) {
-            console.error(
-                'DIVEWebXRRaycaster: Currently initializing! Aborting initialization...',
+            return Promise.reject(
+                new Error('DIVEWebXRRaycasterAR: already initializing'),
             );
-            return Promise.reject();
         }
 
         if (this._initialized) {
-            console.error(
-                'DIVEWebXRRaycaster: Already initialized! Aborting initialization...',
+            return Promise.reject(
+                new Error('DIVEWebXRRaycasterAR: already initialized'),
             );
-            return Promise.reject();
         }
 
         this._requesting = true;
@@ -60,7 +57,11 @@ export class DIVEWebXRRaycasterAR {
         this._requesting = false;
 
         if (!this._transientHitTestSource) {
-            return Promise.reject();
+            return Promise.reject(
+                new Error(
+                    'DIVEWebXRRaycasterAR: the session returned no transient hit test source',
+                ),
+            );
         }
 
         this._initialized = true;

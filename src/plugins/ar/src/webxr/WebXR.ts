@@ -57,8 +57,7 @@ export class DIVEWebXR {
         this._cameraTarget.copy(this._controller.target);
 
         if (!navigator.xr) {
-            console.error('WebXR not supported');
-            return Promise.reject();
+            return Promise.reject(new Error('WebXR is not supported'));
         }
 
         // setup current instance

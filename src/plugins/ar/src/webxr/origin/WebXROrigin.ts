@@ -91,17 +91,15 @@ export class DIVEWebXROrigin {
         }
 
         if (!this._session) {
-            console.error(
-                'DIVEWebXROrigin: No session set in init()! Aborting initialization...',
+            return Promise.reject(
+                new Error('DIVEWebXROrigin: no session set in init()'),
             );
-            return Promise.reject();
         }
 
         if (this._requesting) {
-            console.error(
-                'DIVEWebXROrigin: Currently initializing! Aborting initialization...',
+            return Promise.reject(
+                new Error('DIVEWebXROrigin: already initializing'),
             );
-            return Promise.reject();
         }
 
         this._requesting = true;
@@ -115,7 +113,11 @@ export class DIVEWebXROrigin {
         this._requesting = false;
 
         if (!this._hitTestSource) {
-            return Promise.reject();
+            return Promise.reject(
+                new Error(
+                    'DIVEWebXROrigin: the session returned no hit test source',
+                ),
+            );
         }
 
         this._initialized = true;
