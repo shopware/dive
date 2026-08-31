@@ -15,6 +15,7 @@ import { QuickView, QuickViewDefaultSettings } from '../QuickView.ts';
  */
 const {
     diveDisposeAsync,
+    diveStartAsync,
     setFromURL,
     statePerformAction,
     stateDestroyInstance,
@@ -23,6 +24,7 @@ const {
     bounds,
 } = vi.hoisted(() => ({
     diveDisposeAsync: vi.fn(async () => {}),
+    diveStartAsync: vi.fn(async () => {}),
     setFromURL: vi.fn(),
     statePerformAction: vi.fn(async () => [] as object[]),
     stateDestroyInstance: vi.fn(),
@@ -50,7 +52,7 @@ vi.mock('@shopware-ag/dive', () => {
                     },
                 },
                 clock: { addTicker: vi.fn() },
-                startAsync: vi.fn(async () => {}),
+                startAsync: diveStartAsync,
                 disposeAsync: diveDisposeAsync,
             };
         }),
@@ -113,6 +115,7 @@ describe('QuickView', () => {
         rootNodes.length = 0;
         bounds.isEmpty = false;
         setFromURL.mockImplementation(async () => {});
+        diveStartAsync.mockImplementation(async () => {});
         statePerformAction.mockImplementation(async () => []);
         vi.spyOn(console, 'error').mockImplementation(() => {});
     });
@@ -152,6 +155,87 @@ describe('QuickView', () => {
 
         expect(first).not.toBe(second);
         expect(DIVE).toHaveBeenCalledTimes(2);
+    });
+
+    describe('a failed setup', () => {
+        /**
+         * a DIVE registers itself in a global list when it is constructed and is
+         * only removed by its own dispose, so anything left behind eats an
+         * instance slot for good -- and may keep rendering
+         */
+        it('should take the engine down when the asset fails', async () => {
+            setFromURL.mockRejectedValueOnce(new Error('asset load failed'));
+
+            await expect(QuickView('broken.glb')).rejects.toThrow(
+                'asset load failed',
+            );
+
+            expect(diveDisposeAsync).toHaveBeenCalledTimes(1);
+        });
+
+        it('should take the controller down before the engine', async () => {
+            setFromURL.mockRejectedValueOnce(new Error('asset load failed'));
+
+            await expect(QuickView('broken.glb')).rejects.toThrow();
+
+            const controller = vi.mocked(OrbitController).mock.results[0]
+                .value as { dispose: ReturnType<typeof vi.fn> };
+            expect(controller.dispose).toHaveBeenCalledTimes(1);
+            expect(controller.dispose.mock.invocationCallOrder[0]).toBeLessThan(
+                diveDisposeAsync.mock.invocationCallOrder[0],
+            );
+        });
+
+        it('should take the engine down when the state fails', async () => {
+            statePerformAction.mockRejectedValueOnce(
+                new Error('SET_STATE failed'),
+            );
+
+            await expect(QuickView(sceneData)).rejects.toThrow(
+                'SET_STATE failed',
+            );
+
+            expect(stateDestroyInstance).toHaveBeenCalledTimes(1);
+            expect(diveDisposeAsync).toHaveBeenCalledTimes(1);
+        });
+
+        it('should take the engine down when it fails to start', async () => {
+            diveStartAsync.mockRejectedValueOnce(new Error('start failed'));
+
+            await expect(QuickView('test_uri')).rejects.toThrow('start failed');
+
+            expect(diveDisposeAsync).toHaveBeenCalledTimes(1);
+        });
+
+        it('should surface the original error when the cleanup fails too', async () => {
+            // a broken teardown must not replace the reason we are here
+            setFromURL.mockRejectedValueOnce(new Error('asset load failed'));
+            diveDisposeAsync.mockRejectedValueOnce(
+                new Error('teardown failed'),
+            );
+
+            await expect(QuickView('broken.glb')).rejects.toThrow(
+                'asset load failed',
+            );
+
+            expect(console.error).toHaveBeenCalledWith(
+                'Failed to clean up a QuickView:',
+                expect.objectContaining({ message: 'teardown failed' }),
+            );
+        });
+
+        it('should leave nothing behind when the model failed', async () => {
+            setFromURL.mockRejectedValueOnce(new Error('asset load failed'));
+
+            await expect(QuickView('broken.glb')).rejects.toThrow();
+
+            const node = vi.mocked(DIVENode).mock.results[0].value as {
+                components: { dispose: ReturnType<typeof vi.fn> }[];
+                removeFromParent: ReturnType<typeof vi.fn>;
+            };
+            expect(node.components[0].dispose).toHaveBeenCalled();
+            expect(node.removeFromParent).toHaveBeenCalled();
+        });
     });
 
     it('should reject when the DIVE instance cannot be created', async () => {
