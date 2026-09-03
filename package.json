@@ -147,7 +147,7 @@
         "lodash": "4.18.1",
         "vite-plugin-dts/@microsoft/api-extractor/minimatch": "3.1.5",
         "minimatch/brace-expansion": "1.1.16",
-        "fast-uri": "^3.1.5"
+        "fast-uri": "^3.1.7"
     },
     "scripts": {
         "build": "vite build",
