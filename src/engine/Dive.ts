@@ -16,10 +16,6 @@ import {
     DIVERendererDefaultSettings,
     DIVERendererSettings,
 } from './renderer/Renderer.ts';
-import {
-    OrbitControllerDefaultSettings,
-    OrbitControllerSettings,
-} from '@shopware-ag/dive/orbitcontroller';
 import { DIVE_ASCII_ART } from './AsciiArt.ts';
 
 declare global {
@@ -66,8 +62,7 @@ export type DIVESettings = {
     displayAxes: boolean;
 } & DIVESceneSettings &
     DIVEPerspectiveCameraSettings &
-    DIVERendererSettings &
-    OrbitControllerSettings;
+    DIVERendererSettings;
 
 export const DIVEDefaultSettings: Required<DIVESettings> = {
     autoStart: true,
@@ -75,7 +70,6 @@ export const DIVEDefaultSettings: Required<DIVESettings> = {
     ...DIVESceneDefaultSettings,
     ...DIVEPerspectiveCameraDefaultSettings,
     ...DIVERendererDefaultSettings,
-    ...OrbitControllerDefaultSettings,
 };
 
 /**
