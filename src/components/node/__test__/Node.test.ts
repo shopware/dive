@@ -1,5 +1,58 @@
+import {
+    BoxGeometry,
+    Mesh,
+    MeshStandardMaterial,
+    Object3D,
+    Vector3,
+} from 'three/webgpu';
 import { DIVENode } from '../Node.ts';
-import { Vector3 } from 'three/webgpu';
+import { DIVEComponent } from '../../component/Component.ts';
+import { FloorComponent } from '../../floor/FloorComponent.ts';
+import { MeshComponent } from '../../mesh/MeshComponent.ts';
+import { DIVEScene } from '../../../engine/scene/Scene.ts';
+import {
+    HELPER_LAYER_MASK,
+    PRODUCT_LAYER_MASK,
+} from '../../../constants/VisibilityLayerMask.ts';
+/**
+ * Uses real three throughout. The previous grounding tests drove `Box3` through
+ * a queue of `mockImplementationOnce` calls, which meant they asserted the order
+ * of the mocks rather than where the model actually ends up.
+ */
+
+/**
+ * Uses the real DIVEScene rather than a stand-in: `isDIVEScene` is a contract
+ * that includes the component tick registry, and a fake carrying the brand
+ * without the methods breaks node attachment.
+ */
+vi.mock('../../grid/Grid.ts', () => ({
+    DIVEGrid: vi.fn(function (this: Record<string, unknown>) {
+        this.isDIVEGrid = true;
+        this.setVisibility = vi.fn();
+        this.dispose = vi.fn();
+        return this;
+    }),
+}));
+
+/** A 1x1x1 product-layer cube centred on its own origin. */
+const createCube = (): Mesh => {
+    const mesh = new Mesh(new BoxGeometry(1, 1, 1), new MeshStandardMaterial());
+    mesh.layers.mask = PRODUCT_LAYER_MASK;
+    return mesh;
+};
+
+const createModel = (): DIVENode => {
+    const model = new DIVENode();
+    // geometry lives in a component, exactly as the gateway composes it
+    model.addComponent(new MeshComponent()).add(createCube());
+    return model;
+};
+class AlphaComponent extends DIVEComponent {}
+class BetaComponent extends DIVEComponent {}
+class SpecialAlphaComponent extends AlphaComponent {}
+
+abstract class AbstractBase extends DIVEComponent {}
+class ConcreteFromAbstract extends AbstractBase {}
 
 let node: DIVENode;
 
@@ -393,5 +446,394 @@ describe('dive/node/DIVENode', () => {
                 expect(onGrandMemberTransform).toHaveBeenCalledTimes(1);
             });
         });
+    });
+});
+describe('dive/node/DIVENode components', () => {
+    let node: DIVENode;
+
+    beforeEach(() => {
+        node = new DIVENode();
+    });
+
+    describe('addComponent', () => {
+        it('should attach the component and return it', () => {
+            const component = new AlphaComponent();
+
+            const returned = node.addComponent(component);
+
+            expect(returned).toBe(component);
+            expect(node.components).toContain(component);
+            expect(node.children).toContain(component);
+        });
+
+        it('should use add rather than attach', () => {
+            // attach would apply an inverse world matrix, meaningless for a
+            // component that has no transform of its own
+            node.position.set(5, 5, 5);
+            node.updateMatrixWorld(true);
+            const component = new AlphaComponent();
+
+            node.addComponent(component);
+
+            expect(component.position.x).toBe(0);
+            expect(component.position.y).toBe(0);
+        });
+
+        it('should accept multiple components of the same type', () => {
+            const first = node.addComponent(new AlphaComponent());
+            const second = node.addComponent(new AlphaComponent());
+
+            expect(node.getComponents(AlphaComponent)).toEqual([first, second]);
+        });
+    });
+
+    describe('removeComponent', () => {
+        it('should detach the component', () => {
+            const component = node.addComponent(new AlphaComponent());
+
+            node.removeComponent(component);
+
+            expect(node.components).not.toContain(component);
+            expect(node.children).not.toContain(component);
+        });
+
+        it('should be chainable', () => {
+            const component = node.addComponent(new AlphaComponent());
+
+            expect(node.removeComponent(component)).toBe(node);
+        });
+    });
+
+    describe('registry maintenance', () => {
+        it('should track components added with the raw three api', () => {
+            const component = new AlphaComponent();
+
+            node.add(component);
+
+            expect(node.components).toContain(component);
+        });
+
+        it('should untrack components removed with removeFromParent', () => {
+            const component = node.addComponent(new AlphaComponent());
+
+            component.removeFromParent();
+
+            expect(node.components).not.toContain(component);
+        });
+
+        it('should untrack components stolen by another node', () => {
+            const other = new DIVENode();
+            const component = node.addComponent(new AlphaComponent());
+
+            other.add(component);
+
+            expect(node.components).not.toContain(component);
+            expect(other.components).toContain(component);
+        });
+
+        it('should not track plain children as components', () => {
+            node.add(new Object3D());
+
+            expect(node.components).toHaveLength(0);
+        });
+    });
+
+    describe('getComponent', () => {
+        it('should find a component by its exact type', () => {
+            const component = node.addComponent(new AlphaComponent());
+            node.addComponent(new BetaComponent());
+
+            expect(node.getComponent(AlphaComponent)).toBe(component);
+        });
+
+        it('should return undefined when absent', () => {
+            expect(node.getComponent(AlphaComponent)).toBeUndefined();
+        });
+
+        it('should find a subclass through its base class', () => {
+            // this is what lets one code path serve both MeshComponent and
+            // PrimitiveMeshComponent
+            const component = node.addComponent(new SpecialAlphaComponent());
+
+            expect(node.getComponent(AlphaComponent)).toBe(component);
+        });
+
+        it('should find a concrete component through an abstract base', () => {
+            const component = node.addComponent(new ConcreteFromAbstract());
+
+            expect(node.getComponent(AbstractBase)).toBe(component);
+        });
+    });
+
+    describe('getComponents', () => {
+        it('should return every match', () => {
+            const first = node.addComponent(new AlphaComponent());
+            const second = node.addComponent(new SpecialAlphaComponent());
+            node.addComponent(new BetaComponent());
+
+            expect(node.getComponents(AlphaComponent)).toEqual([first, second]);
+        });
+
+        it('should return an empty array when none match', () => {
+            expect(node.getComponents(AlphaComponent)).toEqual([]);
+        });
+    });
+
+    describe('requireComponent', () => {
+        it('should return the component when present', () => {
+            const component = node.addComponent(new AlphaComponent());
+
+            expect(node.requireComponent(AlphaComponent)).toBe(component);
+        });
+
+        it('should throw a named error when absent', () => {
+            node.name = 'MyNode';
+
+            expect(() => node.requireComponent(AlphaComponent)).toThrow(
+                /has no AlphaComponent attached/,
+            );
+            expect(() => node.requireComponent(AlphaComponent)).toThrow(
+                /MyNode/,
+            );
+        });
+    });
+
+    describe('nodes', () => {
+        it('should report child nodes only', () => {
+            const child = new DIVENode();
+            node.add(child);
+            node.addComponent(new AlphaComponent());
+            node.add(new Object3D());
+
+            expect(node.nodes).toEqual([child]);
+        });
+
+        it('should be empty for a leaf node', () => {
+            node.addComponent(new AlphaComponent());
+
+            expect(node.nodes).toEqual([]);
+        });
+
+        it('should stay correct after direct children assignment', () => {
+            // gizmo code and several tests assign `children` directly, which
+            // bypasses three's events -- an uncached getter cannot go stale
+            const child = new DIVENode();
+            node.children = [child, new AlphaComponent()];
+
+            expect(node.nodes).toEqual([child]);
+        });
+    });
+
+    describe('clear', () => {
+        it('should remove child nodes but keep components', () => {
+            const component = node.addComponent(new AlphaComponent());
+            const child = new DIVENode();
+            node.add(child, new Object3D());
+
+            node.clear();
+
+            expect(node.components).toContain(component);
+            expect(node.children).toContain(component);
+            expect(node.children).not.toContain(child);
+        });
+
+        it('should be chainable', () => {
+            expect(node.clear()).toBe(node);
+        });
+
+        it('should leave a node holding only components untouched', () => {
+            node.addComponent(new AlphaComponent());
+
+            node.clear();
+
+            expect(node.children).toHaveLength(1);
+        });
+    });
+
+    describe('copy', () => {
+        it('should not duplicate components', () => {
+            const source = new DIVENode();
+            source.addComponent(new AlphaComponent());
+
+            const target = new DIVENode();
+            target.addComponent(new AlphaComponent());
+            target.copy(source);
+
+            expect(target.getComponents(AlphaComponent)).toHaveLength(1);
+        });
+
+        it('should copy child nodes', () => {
+            const source = new DIVENode();
+            source.add(new DIVENode());
+
+            const target = new DIVENode();
+            target.copy(source);
+
+            expect(target.nodes).toHaveLength(1);
+        });
+
+        it('should skip children when not recursive', () => {
+            const source = new DIVENode();
+            source.add(new DIVENode());
+
+            const target = new DIVENode();
+            target.copy(source, false);
+
+            expect(target.children).toHaveLength(0);
+        });
+
+        it('should not throw when cloning a node with components', () => {
+            node.addComponent(new AlphaComponent());
+
+            expect(() => node.clone()).not.toThrow();
+        });
+    });
+});
+describe('dive/node/DIVENode dropIt', () => {
+    let scene: DIVEScene;
+    let model: DIVENode;
+
+    beforeEach(() => {
+        scene = new DIVEScene();
+        model = createModel();
+        scene.root.add(model);
+        scene.updateMatrixWorld(true);
+    });
+
+    it('should warn and do nothing when the model has no parent', () => {
+        const detached = createModel();
+        console.warn = vi.fn();
+
+        expect(() => detached.dropIt()).not.toThrow();
+        expect(console.warn).toHaveBeenCalledTimes(1);
+    });
+
+    it('should do nothing when the model is not in a scene', () => {
+        const orphanRoot = new Object3D();
+        const orphan = createModel();
+        orphanRoot.add(orphan);
+        orphan.position.set(0, 5, 0);
+
+        orphan.dropIt();
+
+        expect(orphan.position.y).toBe(5);
+    });
+
+    it('should drop a floating model onto the ground plane', () => {
+        model.position.set(0, 5, 0);
+        scene.updateMatrixWorld(true);
+
+        model.dropIt();
+
+        // cube half-height is 0.5, so the origin rests at 0.5
+        expect(model.position.y).toBeCloseTo(0.5);
+    });
+
+    it('should lift a model that has sunk below the ground plane', () => {
+        model.position.set(0, -3, 0);
+        scene.updateMatrixWorld(true);
+
+        model.dropIt();
+
+        expect(model.position.y).toBeCloseTo(0.5);
+    });
+
+    it('should rest a model on top of another model', () => {
+        const other = createModel();
+        // occupies y = 0 .. 1
+        other.position.set(0, 0.5, 0);
+        scene.root.add(other);
+
+        model.position.set(0, 6, 0);
+        scene.updateMatrixWorld(true);
+
+        model.dropIt();
+
+        // top of the other cube is at y = 1, plus this cube's half-height
+        expect(model.position.y).toBeCloseTo(1.5);
+    });
+
+    it('should not drop below the ground plane onto sunken geometry', () => {
+        const sunken = createModel();
+        // entirely below the floor: y = -5 .. -4
+        sunken.position.set(0, -4.5, 0);
+        scene.root.add(sunken);
+
+        model.position.set(0, 5, 0);
+        scene.updateMatrixWorld(true);
+
+        model.dropIt();
+
+        expect(model.position.y).toBeCloseTo(0.5);
+    });
+
+    it('should still land on the ground plane outside the floor extent', () => {
+        // the floor plane spans +-500; this is well beyond it
+        model.position.set(5000, 5, 0);
+        scene.updateMatrixWorld(true);
+
+        model.dropIt();
+
+        expect(model.position.y).toBeCloseTo(0.5);
+    });
+
+    it('should not report a move when the model already rests correctly', () => {
+        model.position.set(0, 0.5, 0);
+        scene.updateMatrixWorld(true);
+
+        const onMove = vi.spyOn(model, 'onMove');
+        model.dropIt();
+
+        expect(onMove).not.toHaveBeenCalled();
+    });
+
+    it('should report exactly one transform event when it moves', () => {
+        model.position.set(0, 5, 0);
+        scene.updateMatrixWorld(true);
+
+        const onTransform = vi.fn();
+        model.addEventListener('object-transform', onTransform);
+
+        model.dropIt();
+
+        expect(onTransform).toHaveBeenCalledTimes(1);
+        expect(onTransform).toHaveBeenCalledWith(
+            expect.objectContaining({
+                position: expect.objectContaining({ y: expect.closeTo(0.5) }),
+            }),
+        );
+    });
+
+    it('should ignore helper geometry when measuring itself', () => {
+        // a helper hanging far below must not drag the model upwards
+        const helper = createCube();
+        helper.layers.mask = HELPER_LAYER_MASK;
+        helper.position.set(0, -10, 0);
+        model.requireComponent(MeshComponent).add(helper);
+
+        model.position.set(0, 5, 0);
+        scene.updateMatrixWorld(true);
+
+        model.dropIt();
+
+        expect(model.position.y).toBeCloseTo(0.5);
+    });
+
+    it('should not be blocked by the floor being a raycast target', () => {
+        // the floor is on its own layer, so it is never a hit candidate
+        const floor = scene.root.floor;
+        expect(floor).toBeInstanceOf(FloorComponent);
+        expect(floor.mesh!.layers.mask & PRODUCT_LAYER_MASK).toBe(0);
+    });
+
+    it('should do nothing when the model holds no product geometry', () => {
+        const empty = new DIVENode();
+        scene.root.add(empty);
+        empty.position.set(0, 5, 0);
+        scene.updateMatrixWorld(true);
+
+        empty.dropIt();
+
+        expect(empty.position.y).toBe(5);
     });
 });
