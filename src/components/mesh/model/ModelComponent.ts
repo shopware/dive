@@ -106,8 +106,16 @@ export class ModelComponent extends MeshComponent {
             if (!this._mesh && 'isMesh' in child) {
                 this._mesh = child as Mesh;
 
-                this._material = (child as Mesh)
-                    .material as MeshStandardMaterial;
+                // A configured material wins over the asset's. Adopting the
+                // asset's used to discard it, and `setMaterial` before the file
+                // arrives is the ordinary order -- the caller has the schema
+                // first. Without one, the asset's material is what there is.
+                if (this._materialIsOwn) {
+                    (child as Mesh).material = this._material!;
+                } else {
+                    this._material = (child as Mesh)
+                        .material as MeshStandardMaterial;
+                }
             }
         });
 

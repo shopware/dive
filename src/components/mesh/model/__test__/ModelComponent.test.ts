@@ -210,6 +210,19 @@ describe('dive/mesh/ModelComponent', () => {
         expect(model.mesh?.material).toBe(material);
     });
 
+    it('should let the next asset bring its own material', () => {
+        // only a configured material outranks an asset's -- one adopted from an
+        // earlier load is that asset's, and pushing it onto the next one would
+        // paint every model a component ever loads with the first one's material
+        model.setFromGLTF(makeGltf());
+        const adopted = model.material;
+
+        model.setFromGLTF(makeGltf());
+
+        expect(model.material).not.toBe(adopted);
+        expect(model.material).toBe(model.mesh?.material);
+    });
+
     it('should push a material onto content that is already there', () => {
         model.setFromGLTF(makeGltf());
 

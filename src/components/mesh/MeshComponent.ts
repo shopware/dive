@@ -28,6 +28,17 @@ export abstract class MeshComponent extends DIVEComponent {
     protected _mesh: Mesh | null = null;
     protected _material: MeshStandardMaterial | null = null;
 
+    /**
+     * Whether the material came from {@link setMaterial} rather than from content.
+     *
+     * A configured material outranks whatever an asset brings, and it has to
+     * survive a load that happens afterwards -- `setMaterial` before `setFromURL`
+     * is the ordinary case, since the caller has the schema before the file. Only
+     * the origin distinguishes the two: a material adopted from a previous load
+     * must not be pushed onto the next one.
+     */
+    protected _materialIsOwn: boolean = false;
+
     /** The first mesh found in the content, if any. */
     public get mesh(): Mesh | null {
         return this._mesh;
@@ -47,6 +58,8 @@ export abstract class MeshComponent extends DIVEComponent {
         if (!this._material) {
             this._material = new MeshStandardMaterial();
         }
+
+        this._materialIsOwn = true;
 
         if (material.vertexColors !== undefined) {
             this._material.vertexColors = material.vertexColors;
