@@ -1,5 +1,5 @@
 import { PerspectiveCamera } from 'three/webgpu';
-import { DIVECameraComponent } from './CameraComponent.ts';
+import { DIVECameraComponent } from '../CameraComponent.ts';
 
 export type DIVEPerspectiveCameraSettings = {
     /** Field of view in degrees */

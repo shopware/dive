@@ -8,7 +8,7 @@ vi.mock('three/webgpu', async (importOriginal) => {
 import { DIVEView } from '../View.ts';
 import { DIVEScene } from '../../scene/Scene.ts';
 import { DIVENode } from '../../node/Node.ts';
-import { PerspectiveCameraComponent } from '../../../components/camera/PerspectiveCameraComponent.ts';
+import { PerspectiveCameraComponent } from '../../../components/camera/perspective/PerspectiveCameraComponent.ts';
 import { DIVERenderer } from '../../renderer/Renderer.ts';
 import {
     DIVECanvasLifecycleManager,
