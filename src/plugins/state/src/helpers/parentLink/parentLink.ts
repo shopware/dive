@@ -5,11 +5,26 @@ import {
     type DIVESceneObject,
 } from '@shopware-ag/dive';
 
+/**
+ * A member's link to the group it belongs to.
+ *
+ * Grouping is a state-level idea: the engine only knows that some node holds a
+ * `MultiLineComponent`. So the knowledge that "a member gets a line from its
+ * parent's origin" lives here, and the line component stays a plain drawing
+ * primitive that watches nothing.
+ *
+ * These take the **member**, not the group -- the whole point is walking up to
+ * whatever its parent happens to be, so no caller has to know which group an
+ * object is in, or notice when that changes.
+ *
+ * @module
+ */
+
 /** Link lines start at the group's own origin. */
 const ORIGIN = new Vector3();
 
 /** The line component of this object's parent, if it has one. */
-const parentLines = (
+const getParentMultiLineComponent = (
     sceneObject: DIVESceneObject,
 ): MultiLineComponent | undefined => {
     const parent = sceneObject.parent;
@@ -21,11 +36,6 @@ const parentLines = (
 /**
  * Draws the link from a group to one of its members, wherever the member is now.
  *
- * Grouping is a state-level idea: the engine only knows that some node holds a
- * `MultiLineComponent`. So the knowledge that "a member gets a line from its
- * parent's origin" lives here, and the line component stays a plain drawing
- * primitive that watches nothing.
- *
  * Adding and moving are the same call, keyed by the member itself. The gateway
  * used to keep a handle per member and had one method to add, one to remove and
  * one to redraw — and the redraw had to be remembered at four call sites, where
@@ -35,11 +45,9 @@ const parentLines = (
  * Does nothing when the parent draws no lines, which is the normal case.
  *
  * @param sceneObject - The member whose link should be drawn.
- *
- * @module
  */
 export const updateParentLink = (sceneObject: DIVESceneObject): void => {
-    parentLines(sceneObject)?.setLineFor(
+    getParentMultiLineComponent(sceneObject)?.setLineFor(
         sceneObject,
         ORIGIN,
         sceneObject.position,
@@ -56,5 +64,5 @@ export const updateParentLink = (sceneObject: DIVESceneObject): void => {
  * @param sceneObject - The member that is leaving.
  */
 export const removeParentLink = (sceneObject: DIVESceneObject): void => {
-    parentLines(sceneObject)?.removeLineFor(sceneObject);
+    getParentMultiLineComponent(sceneObject)?.removeLineFor(sceneObject);
 };

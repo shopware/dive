@@ -5,8 +5,11 @@ import {
     type DIVESceneObject,
 } from '@shopware-ag/dive';
 import { watchEntity } from '../watchEntity.ts';
-import { Registry } from '../Registry.ts';
-import { type EntitySchema, type ModelSchema } from '../../types/index.ts';
+import { Registry } from '../../../Registry.ts';
+import {
+    type EntitySchema,
+    type ModelSchema,
+} from '../../../../types/index.ts';
 
 /** Fresh per test, because the listeners write into it. */
 const modelData = (): ModelSchema => ({

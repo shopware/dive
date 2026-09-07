@@ -3,7 +3,7 @@ import { registerAction } from '../../ActionRegistry.ts';
 import { type ActionDependencies } from '../../../types/index.ts';
 import { type DIVESceneObject } from '@shopware-ag/dive';
 import { type EntitySchema } from '../../../types/index.ts';
-import { watchEntity } from '../../watchEntity.ts';
+import { watchEntity } from '../../helpers/watchEntity/watchEntity.ts';
 
 export const AddObjectAction = Action.define<
     EntitySchema,
