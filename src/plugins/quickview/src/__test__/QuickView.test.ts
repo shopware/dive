@@ -4,16 +4,16 @@
 
 import { vi } from 'vitest';
 import type { StateData } from '@shopware-ag/dive/state';
+import type { State } from '@shopware-ag/dive/state';
 import { QuickView, QuickViewDefaultSettings } from '../QuickView.ts';
 import { QuickViewUri } from '../uri/QuickViewUri.ts';
 import { QuickViewState } from '../state/QuickViewState.ts';
-import {
-    type QuickViewWithModel,
-    type QuickViewWithState,
-} from '../../types/index.ts';
 
-const uriResult = { source: 'uri' } as unknown as QuickViewWithModel;
-const stateResult = { source: 'state' } as unknown as QuickViewWithState;
+// the one import carries both the factory and its instance type
+const uriResult = { source: 'uri' } as unknown as QuickView;
+const stateResult = {
+    source: 'state',
+} as unknown as QuickView<{ state: State }>;
 
 vi.mock('../uri/QuickViewUri.ts', () => ({
     QuickViewUri: vi.fn(async () => uriResult),

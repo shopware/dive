@@ -1,12 +1,12 @@
 import { DIVE, DIVENode, ModelComponent } from '@shopware-ag/dive';
 import { OrbitController } from '@shopware-ag/dive/orbitcontroller';
 import { QuickViewSettings } from '../../types/QuickViewSettings.ts';
-import { type QuickViewWithModel } from '../../types/index.ts';
+import { type QuickView } from '../QuickView.ts';
 
 export const QuickViewUri = async (
     uri: string,
     settings?: Partial<QuickViewSettings>,
-): Promise<QuickViewWithModel> => {
+): Promise<QuickView> => {
     try {
         const dive = new DIVE({ ...settings, autoStart: false });
 

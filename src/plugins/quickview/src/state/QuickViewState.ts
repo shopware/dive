@@ -1,13 +1,13 @@
 import { DIVE } from '@shopware-ag/dive';
 import { OrbitController } from '@shopware-ag/dive/orbitcontroller';
-import type { StateData } from '@shopware-ag/dive/state';
+import type { State, StateData } from '@shopware-ag/dive/state';
 import { QuickViewSettings } from '../../types/QuickViewSettings.ts';
-import { type QuickViewWithState } from '../../types/index.ts';
+import { type QuickView } from '../QuickView.ts';
 
 export const QuickViewState = async (
     sceneData: StateData,
     settings?: Partial<QuickViewSettings>,
-): Promise<QuickViewWithState> => {
+): Promise<QuickView<{ state: State }>> => {
     try {
         const dive = new DIVE({ ...settings, autoStart: false });
 
