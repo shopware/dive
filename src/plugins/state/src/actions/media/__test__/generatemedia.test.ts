@@ -1,3 +1,4 @@
+import { makeActionDeps } from '../../../__test__/actionDeps.ts';
 import { GenerateMediaAction } from '../generatemedia.ts';
 import { type EntitySchema } from '../../../../types/index.ts';
 import { Vector3 } from 'three/webgpu';
@@ -14,7 +15,7 @@ const mockGetMediaCreator = vi.fn().mockResolvedValue({
 });
 
 describe('GenerateMediaAction', () => {
-    const mockRegistered = new Map<string, EntitySchema>();
+    const deps = makeActionDeps();
 
     it('should generate media from position and target', async () => {
         const action = new GenerateMediaAction(
@@ -28,7 +29,7 @@ describe('GenerateMediaAction', () => {
             } as MediaGenerationByPosition,
             {
                 getMediaCreator: mockGetMediaCreator,
-                registered: mockRegistered,
+                ...deps,
             },
         );
 
@@ -61,7 +62,7 @@ describe('GenerateMediaAction', () => {
         } as unknown as EntitySchema;
 
         // Add the CAMERA first
-        mockRegistered.set(testCAMERA.id, testCAMERA);
+        deps.registry.register(testCAMERA);
 
         const action = new GenerateMediaAction(
             {
@@ -73,7 +74,7 @@ describe('GenerateMediaAction', () => {
             } as MediaGenerationById,
             {
                 getMediaCreator: mockGetMediaCreator,
-                registered: mockRegistered,
+                ...deps,
             },
         );
 
@@ -104,7 +105,7 @@ describe('GenerateMediaAction', () => {
             } as MediaGenerationById,
             {
                 getMediaCreator: mockGetMediaCreator,
-                registered: mockRegistered,
+                ...deps,
             },
         );
 
@@ -127,7 +128,7 @@ describe('GenerateMediaAction', () => {
         } as unknown as EntitySchema;
 
         // Add the object first
-        mockRegistered.set(testObject.id, testObject);
+        deps.registry.register(testObject);
 
         const action = new GenerateMediaAction(
             {
@@ -139,7 +140,7 @@ describe('GenerateMediaAction', () => {
             } as MediaGenerationById,
             {
                 getMediaCreator: mockGetMediaCreator,
-                registered: mockRegistered,
+                ...deps,
             },
         );
 

@@ -1,4 +1,4 @@
-import { type EngineGateway } from '../../../EngineGateway.ts';
+import { makeActionDeps } from '../../../__test__/actionDeps.ts';
 import { DIVE, DIVESceneObject, DIVESelectable } from '@shopware-ag/dive';
 import { type EntitySchema } from '../../../../types/index.ts';
 import { SelectObjectAction } from '../selectobject.ts';
@@ -9,10 +9,6 @@ const mockSceneObject = {
     attach: vi.fn(),
     isSelectable: true,
 } as unknown as Object3D & DIVESelectable;
-
-const mockGateway = {
-    findEntity: vi.fn().mockReturnValue(mockSceneObject),
-} as unknown as EngineGateway;
 
 const mockSelectionState = {
     select: vi.fn(),
@@ -25,11 +21,11 @@ const mockGetToolbox = () => {
     } as unknown as Toolbox);
 };
 
-const mockRegistered = new Map<string, EntitySchema>();
+const deps = makeActionDeps();
 
 describe('SelectObjectAction', () => {
     beforeEach(() => {
-        mockRegistered.clear();
+        deps.registry.clear();
         vi.clearAllMocks();
     });
 
@@ -52,15 +48,17 @@ describe('SelectObjectAction', () => {
             },
         };
 
-        mockRegistered.set(testObject.id, testObject);
+        deps.registry.register(
+            testObject,
+            mockSceneObject as unknown as DIVESceneObject,
+        );
 
         // Act
         const action = new SelectObjectAction(
             { id: 'test-object' },
             {
-                gateway: mockGateway,
                 getToolbox: mockGetToolbox,
-                registered: mockRegistered,
+                ...deps,
             },
         );
         await action.execute();
@@ -74,9 +72,8 @@ describe('SelectObjectAction', () => {
         const action = new SelectObjectAction(
             { id: 'non-existent-object' },
             {
-                gateway: mockGateway,
                 getToolbox: mockGetToolbox,
-                registered: mockRegistered,
+                ...deps,
             },
         );
         await expect(action.execute()).rejects.toThrow('Object not found.');
@@ -101,20 +98,19 @@ describe('SelectObjectAction', () => {
             },
         };
 
-        mockRegistered.set(testObject.id, testObject);
-        vi.mocked(mockGateway.findEntity).mockReturnValueOnce(undefined);
+        // registered, but with no scene object of its own
+        deps.registry.register(testObject);
 
         // Act
         const action = new SelectObjectAction(
             { id: 'test-object' },
             {
-                gateway: mockGateway,
                 getToolbox: mockGetToolbox,
-                registered: mockRegistered,
+                ...deps,
             },
         );
         await expect(action.execute()).rejects.toThrow(
-            'Object not found in scene.',
+            'Object is not in the scene.',
         );
     });
 
@@ -137,18 +133,14 @@ describe('SelectObjectAction', () => {
             },
         };
 
-        mockRegistered.set(testObject.id, testObject);
-        vi.mocked(mockGateway.findEntity).mockReturnValueOnce(
-            {} as DIVESceneObject,
-        );
+        deps.registry.register(testObject, {} as DIVESceneObject);
 
         // Act
         const action = new SelectObjectAction(
             { id: 'test-object' },
             {
-                gateway: mockGateway,
                 getToolbox: mockGetToolbox,
-                registered: mockRegistered,
+                ...deps,
             },
         );
 

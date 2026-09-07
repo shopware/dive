@@ -5,16 +5,16 @@ import { type EntitySchema } from '../../../types/index.ts';
 
 export const DeselectObjectAction = Action.define<
     Partial<EntitySchema> & { id: string },
-    Pick<ActionDependencies, 'gateway' | 'getToolbox' | 'registered'>,
+    Pick<ActionDependencies, 'getToolbox' | 'registry'>,
     Promise<void>
 >({
     description: 'Deselects an existing object.',
-    execute: async (payload, { gateway, getToolbox, registered }) => {
-        const object = registered.get(payload.id);
-        if (!object) throw new Error('Object not found.');
+    execute: async (payload, { getToolbox, registry }) => {
+        const entry = registry.read(payload.id);
+        if (!entry) throw new Error('Object not found.');
 
-        const sceneObject = gateway.findEntity(object);
-        if (!sceneObject) throw new Error('Object not found in scene.');
+        const sceneObject = entry.node;
+        if (!sceneObject) throw new Error('Object is not in the scene.');
 
         if (!('isSelectable' in sceneObject))
             throw new Error('Object is not selectable.');

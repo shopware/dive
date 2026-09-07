@@ -1,3 +1,4 @@
+import { makeActionDeps } from '../../../__test__/actionDeps.ts';
 import { type EngineGateway } from '../../../EngineGateway.ts';
 import { MoveCameraAction } from '../movecamera.ts';
 import { EntitySchema } from '../../../../types/index.ts';
@@ -43,7 +44,7 @@ describe('MoveCameraAction', () => {
 
     describe('Direct Position Movement', () => {
         it('should move camera to a new position and target', async () => {
-            const mockRegistered = new Map<string, EntitySchema>();
+            const deps = makeActionDeps();
 
             const action = new MoveCameraAction(
                 {
@@ -54,7 +55,7 @@ describe('MoveCameraAction', () => {
                 },
                 {
                     controller: mockController,
-                    registered: mockRegistered,
+                    ...deps,
                     getAnimationSystem: mockGetAnimationSystem,
                     gateway: mockGateway,
                 },
@@ -90,7 +91,7 @@ describe('MoveCameraAction', () => {
         });
 
         it('should handle unlocked camera movement', async () => {
-            const mockRegistered = new Map<string, EntitySchema>();
+            const deps = makeActionDeps();
 
             const action = new MoveCameraAction(
                 {
@@ -101,7 +102,7 @@ describe('MoveCameraAction', () => {
                 },
                 {
                     controller: mockController,
-                    registered: mockRegistered,
+                    ...deps,
                     getAnimationSystem: mockGetAnimationSystem,
                     gateway: mockGateway,
                 },
@@ -119,7 +120,7 @@ describe('MoveCameraAction', () => {
 
     describe('CAMERA-based Movement', () => {
         it('should move camera to a CAMERA position and target', async () => {
-            const mockRegistered = new Map<string, EntitySchema>();
+            const deps = makeActionDeps();
 
             const testCAMERA: EntitySchema = {
                 id: 'test-camera',
@@ -132,7 +133,7 @@ describe('MoveCameraAction', () => {
                 visible: true,
             } as unknown as EntitySchema;
 
-            mockRegistered.set(testCAMERA.id, testCAMERA);
+            deps.registry.register(testCAMERA);
 
             const action = new MoveCameraAction(
                 {
@@ -142,7 +143,7 @@ describe('MoveCameraAction', () => {
                 },
                 {
                     controller: mockController,
-                    registered: mockRegistered,
+                    ...deps,
                     getAnimationSystem: mockGetAnimationSystem,
                     gateway: mockGateway,
                 },
@@ -171,7 +172,7 @@ describe('MoveCameraAction', () => {
         });
 
         it('should throw error if CAMERA is not registered', async () => {
-            const mockRegistered = new Map<string, EntitySchema>();
+            const deps = makeActionDeps();
 
             const action = new MoveCameraAction(
                 {
@@ -181,7 +182,7 @@ describe('MoveCameraAction', () => {
                 },
                 {
                     controller: mockController,
-                    registered: mockRegistered,
+                    ...deps,
                     getAnimationSystem: mockGetAnimationSystem,
                     gateway: mockGateway,
                 },
@@ -193,7 +194,7 @@ describe('MoveCameraAction', () => {
         });
 
         it('should throw error if object is not a CAMERA', async () => {
-            const mockRegistered = new Map<string, EntitySchema>();
+            const deps = makeActionDeps();
 
             const testObject: EntitySchema = {
                 id: 'test-object',
@@ -204,7 +205,7 @@ describe('MoveCameraAction', () => {
                 scale: { x: 1, y: 1, z: 1 },
             } as unknown as EntitySchema;
 
-            mockRegistered.set(testObject.id, testObject);
+            deps.registry.register(testObject);
 
             const action = new MoveCameraAction(
                 {
@@ -214,7 +215,7 @@ describe('MoveCameraAction', () => {
                 },
                 {
                     controller: mockController,
-                    registered: mockRegistered,
+                    ...deps,
                     getAnimationSystem: mockGetAnimationSystem,
                     gateway: mockGateway,
                 },
@@ -228,7 +229,7 @@ describe('MoveCameraAction', () => {
 
     describe('Animation Callbacks', () => {
         it('should call lookAt on update', async () => {
-            const mockRegistered = new Map<string, EntitySchema>();
+            const deps = makeActionDeps();
 
             const action = new MoveCameraAction(
                 {
@@ -239,7 +240,7 @@ describe('MoveCameraAction', () => {
                 },
                 {
                     controller: mockController,
-                    registered: mockRegistered,
+                    ...deps,
                     getAnimationSystem: mockGetAnimationSystem,
                     gateway: mockGateway,
                 },
@@ -256,7 +257,7 @@ describe('MoveCameraAction', () => {
         });
 
         it('should handle animation stop', async () => {
-            const mockRegistered = new Map<string, EntitySchema>();
+            const deps = makeActionDeps();
 
             const action = new MoveCameraAction(
                 {
@@ -267,7 +268,7 @@ describe('MoveCameraAction', () => {
                 },
                 {
                     controller: mockController,
-                    registered: mockRegistered,
+                    ...deps,
                     getAnimationSystem: mockGetAnimationSystem,
                     gateway: mockGateway,
                 },

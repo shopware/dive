@@ -15,11 +15,11 @@ import {
  */
 export const GetAllSceneDataAction = Action.define<
     object,
-    Pick<ActionDependencies, 'gateway' | 'controller' | 'registered'>,
+    Pick<ActionDependencies, 'controller' | 'gateway' | 'registry'>,
     StateData
 >({
     description: 'Retrieves all current scene data.',
-    execute: (_payload, { gateway, controller, registered }) => {
+    execute: (_payload, { controller, gateway, registry }) => {
         const settings = gateway.readSceneSettings();
 
         return {
@@ -33,21 +33,36 @@ export const GetAllSceneDataAction = Action.define<
                 target: controller.target.clone(),
             },
             spotmarks: [],
-            lights: Array.from(registered.values()).filter(
-                (object) => object.entityType === 'light',
-            ) as LightSchema[],
-            objects: Array.from(registered.values()).filter(
-                (object) => object.entityType === 'model',
-            ) as ModelSchema[],
-            cameras: Array.from(registered.values()).filter(
-                (object) => object.entityType === 'camera',
-            ) as CameraSchema[],
-            primitives: Array.from(registered.values()).filter(
-                (object) => object.entityType === 'primitive',
-            ) as PrimitiveSchema[],
-            groups: Array.from(registered.values()).filter(
-                (object) => object.entityType === 'group',
-            ) as GroupSchema[],
+            lights: registry
+                .read()
+                .map((entry) => entry.schema)
+                .filter(
+                    (object) => object.entityType === 'light',
+                ) as LightSchema[],
+            objects: registry
+                .read()
+                .map((entry) => entry.schema)
+                .filter(
+                    (object) => object.entityType === 'model',
+                ) as ModelSchema[],
+            cameras: registry
+                .read()
+                .map((entry) => entry.schema)
+                .filter(
+                    (object) => object.entityType === 'camera',
+                ) as CameraSchema[],
+            primitives: registry
+                .read()
+                .map((entry) => entry.schema)
+                .filter(
+                    (object) => object.entityType === 'primitive',
+                ) as PrimitiveSchema[],
+            groups: registry
+                .read()
+                .map((entry) => entry.schema)
+                .filter(
+                    (object) => object.entityType === 'group',
+                ) as GroupSchema[],
         };
     },
 });

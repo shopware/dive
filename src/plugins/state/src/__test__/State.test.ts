@@ -234,20 +234,9 @@ describe('modules/state/State', () => {
     });
 
     describe('Instance Management', () => {
-        it('should create a new instance with unique ID', () => {
-            expect(state.id).toBeDefined();
-            expect(typeof state.id).toBe('string');
-        });
-
-        it('should be able to get instance by ID', () => {
-            const foundState = State.get(state.id);
-            expect(foundState).toBe(state);
-        });
-
         it('should destroy instance correctly', () => {
             const result = state.destroyInstance();
             expect(result).toBe(true);
-            expect(State.get(state.id)).toBeUndefined();
         });
 
         it('should return false when destroying non-existent instance', () => {
@@ -504,27 +493,6 @@ describe('modules/state/State', () => {
         });
     });
 
-    describe('Static Methods', () => {
-        it('should get instance by ID', () => {
-            const foundState = State.get(state.id);
-            expect(foundState).toBe(state);
-        });
-
-        it('should get instance by registered object ID', () => {
-            const mockEntity = {
-                id: 'test-entity-id',
-            };
-            state['registered'].set('test-entity-id', mockEntity as any);
-            const foundState = State.get('test-entity-id');
-            expect(foundState).toBe(state);
-        });
-
-        it('should return undefined when instance not found', () => {
-            const foundState = State.get('non-existent-id');
-            expect(foundState).toBeUndefined();
-        });
-    });
-
     describe('Lazy Loading Module Getters', () => {
         beforeEach(() => {
             // Mock the dynamic imports for each module
@@ -734,15 +702,28 @@ describe('modules/state/State', () => {
         it('should pass the live registry rather than a copy of it', () => {
             const deps = performCapture();
 
-            expect(deps.registered).toBe(state['registered']);
+            expect(deps.registry).toBe(state['registry']);
 
             // the action sees entities that are registered afterwards
-            state['registered'].set('added-later', {
+            state['registry'].register({
                 id: 'added-later',
                 entityType: 'model',
             } as never);
 
-            expect(deps.registered.get('added-later')).toBeDefined();
+            expect(deps.registry.read('added-later')).toBeDefined();
+        });
+
+        it('should pass a dispatch that notifies without performing an action', () => {
+            const deps = performCapture();
+            const listener = vi.fn();
+            state.subscribe('UPDATE_OBJECT', listener);
+
+            deps.dispatch('UPDATE_OBJECT', { id: 'reported' } as never);
+
+            // reaches subscribers, but never runs UpdateObjectAction — which is
+            // what an engine-to-state report needs
+            expect(listener).toHaveBeenCalledWith({ id: 'reported' });
+            expect(getActionClass).not.toHaveBeenCalledWith('UPDATE_OBJECT');
         });
 
         it('should expose the lazy module getters as functions', () => {
@@ -761,7 +742,7 @@ describe('modules/state/State', () => {
 
             expect(second).not.toBe(first);
             expect(second.gateway).toBe(first.gateway);
-            expect(second.registered).toBe(first.registered);
+            expect(second.registry).toBe(first.registry);
         });
 
         it('should scope the dependencies to the instance performing the action', () => {
@@ -785,7 +766,7 @@ describe('modules/state/State', () => {
 
             expect(other.gateway).not.toBe(own.gateway);
             expect(other.controller).toBe(otherController);
-            expect(other.registered).not.toBe(own.registered);
+            expect(other.registry).not.toBe(own.registry);
         });
     });
 });

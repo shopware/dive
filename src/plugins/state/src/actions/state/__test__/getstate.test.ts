@@ -1,3 +1,4 @@
+import { makeActionDeps } from '../../../__test__/actionDeps.ts';
 import { type EngineGateway } from '../../../EngineGateway.ts';
 import { GetStateAction } from '../getstate.ts';
 import {
@@ -30,33 +31,38 @@ describe('GetStateAction', () => {
             target: new Vector3(0, 0, 0),
         } as unknown as OrbitController;
 
-        const mockRegistered = new Map();
+        const deps = makeActionDeps();
 
-        mockRegistered.set('light', {
+        deps.registry.register({
+            id: 'light',
             entityType: 'light',
             position: new Vector3(0, 0, 0),
             target: new Vector3(0, 0, 0),
         } as unknown as LightSchema);
 
-        mockRegistered.set('model', {
+        deps.registry.register({
+            id: 'model',
             entityType: 'model',
             position: new Vector3(0, 0, 0),
             target: new Vector3(0, 0, 0),
         } as unknown as ModelSchema);
 
-        mockRegistered.set('camera', {
+        deps.registry.register({
+            id: 'camera',
             entityType: 'camera',
             position: new Vector3(0, 0, 0),
             target: new Vector3(0, 0, 0),
         } as unknown as CameraSchema);
 
-        mockRegistered.set('primitive', {
+        deps.registry.register({
+            id: 'primitive',
             entityType: 'primitive',
             position: new Vector3(0, 0, 0),
             target: new Vector3(0, 0, 0),
         } as unknown as PrimitiveSchema);
 
-        mockRegistered.set('group', {
+        deps.registry.register({
+            id: 'group',
             entityType: 'group',
             position: new Vector3(0, 0, 0),
             target: new Vector3(0, 0, 0),
@@ -65,7 +71,7 @@ describe('GetStateAction', () => {
         const action = new GetStateAction(undefined, {
             gateway: mockGateway,
             controller: mockController,
-            registered: mockRegistered,
+            ...deps,
         });
 
         // Execute action

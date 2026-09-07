@@ -19,6 +19,7 @@ import {
 import { Color, MeshStandardMaterial, Vector3 } from 'three/webgpu';
 import { OrbitController } from '@shopware-ag/dive/orbitcontroller';
 import { type StateData } from '../../../../types/index.ts';
+import { Registry } from '../../../Registry.ts';
 
 // SET_STATE builds these actions itself, so both the constructor arguments and
 // the executions are recorded. Payload and dependencies are handed to the
@@ -42,21 +43,21 @@ vi.mock('@shopware-ag/dive/state', () => ({
     })),
 }));
 
-type MockDeps = { registered: Map<string, EntitySchema> };
+type MockDeps = { registry: Registry };
 
 /** Restores the default behaviour, since single tests override it. */
 const resetActionMocks = (): void => {
     addExecute
         .mockReset()
         .mockImplementation(async (entity: EntitySchema, deps: MockDeps) => {
-            deps.registered.set(entity.id, entity);
+            deps.registry.register(entity);
             // no scene object by default, tests that need one opt in
             return undefined;
         });
     deleteExecute
         .mockReset()
         .mockImplementation((entity: EntitySchema, deps: MockDeps) => {
-            deps.registered.delete(entity.id);
+            deps.registry.unregister(entity.id);
         });
     setParentExecute.mockReset();
 };
@@ -73,11 +74,10 @@ const createDependencies = (
 ): {
     gateway: EngineGateway;
     controller: OrbitController;
-    registered: Map<string, EntitySchema>;
+    registry: Registry;
 } => {
-    const registered = new Map<string, EntitySchema>(
-        alreadyRegistered.map((entity) => [entity.id, entity]),
-    );
+    const registry = new Registry();
+    alreadyRegistered.forEach((entity) => registry.register(entity));
 
     // what the scene ends up holding is the gateway's own business, tested
     // there; here it only matters that the state is handed over in one piece
@@ -90,7 +90,7 @@ const createDependencies = (
         getState: vi.fn(() => controllerState),
     } as unknown as OrbitController;
 
-    return { gateway, controller, registered };
+    return { gateway, controller, registry };
 };
 
 /** Scene data with everything left out unless explicitly given. */
@@ -472,7 +472,7 @@ describe('SetStateAction', () => {
         gateway: EngineGateway;
         controller: OrbitController;
         state: State;
-        registered: Map<string, EntitySchema>;
+        registry: Registry;
         scene: { name: string; background: Color };
         floor: { visible: boolean; material: MeshStandardMaterial };
     } => {
@@ -510,9 +510,8 @@ describe('SetStateAction', () => {
             target: Vector3;
         };
 
-        const registered = new Map<string, EntitySchema>(
-            entities.map((entity) => [entity.id, entity]),
-        );
+        const registry = new Registry();
+        entities.forEach((entity) => registry.register(entity));
 
         // stands in for the real action dispatch: ADD_OBJECT registers,
         // DELETE_OBJECT unregisters, both without touching a real scene graph
@@ -520,11 +519,11 @@ describe('SetStateAction', () => {
             performAction: vi.fn(
                 async (action: string, payload: EntitySchema) => {
                     if (action === 'ADD_OBJECT') {
-                        registered.set(payload.id, payload);
+                        registry.register(payload);
                         return { name: payload.id };
                     }
                     if (action === 'DELETE_OBJECT')
-                        registered.delete(payload.id);
+                        registry.unregister(payload.id);
                     return undefined;
                 },
             ),
@@ -534,7 +533,7 @@ describe('SetStateAction', () => {
         // write path the application uses
         const gateway = new EngineGateway({ scene } as unknown as DIVE, state);
 
-        return { gateway, controller, state, registered, scene, floor };
+        return { gateway, controller, state, registry, scene, floor };
     };
 
     const entity = <T>(id: string, entityType: string): T =>
@@ -600,7 +599,12 @@ describe('SetStateAction', () => {
             const target = createInstance();
             await new SetStateAction(exported, target).execute();
 
-            expect([...target.registered.keys()].sort()).toEqual([
+            expect(
+                target.registry
+                    .read()
+                    .map((e) => e.schema.id)
+                    .sort(),
+            ).toEqual([
                 'camera-1',
                 'group-1',
                 'light-1',
@@ -623,7 +627,9 @@ describe('SetStateAction', () => {
             ]);
             await new SetStateAction(exported, target).execute();
 
-            expect([...target.registered.keys()]).toEqual(['new']);
+            expect(target.registry.read().map((e) => e.schema.id)).toEqual([
+                'new',
+            ]);
         });
 
         it('should stay stable when applied twice', async () => {

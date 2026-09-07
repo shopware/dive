@@ -18,24 +18,22 @@ export const MoveCameraAction = Action.define<
       },
     Pick<
         ActionDependencies,
-        'registered' | 'controller' | 'getAnimationSystem' | 'gateway'
+        'registry' | 'controller' | 'getAnimationSystem' | 'gateway'
     >,
     Promise<{ stop: () => void }>
 >({
     description: 'Moves the camera to a new position and target.',
     execute: async (
         payload,
-        { controller, registered, getAnimationSystem, gateway },
+        { controller, registry, getAnimationSystem, gateway },
     ) => {
         const animationSystem = await getAnimationSystem();
         let position = { x: 0, y: 0, z: 0 };
         let target = { x: 0, y: 0, z: 0 };
         if ('id' in payload) {
-            const object = registered.get(payload.id);
+            const object = registry.read(payload.id)?.schema;
             if (!object) {
-                throw new Error(
-                    `CAMERA with id ${payload.id} not registered. Registered: ${registered}`,
-                );
+                throw new Error(`CAMERA with id ${payload.id} not registered.`);
             }
 
             if (!isCameraSchema(object)) {

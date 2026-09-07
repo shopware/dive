@@ -1,8 +1,5 @@
-import { MathUtils } from 'three/webgpu';
-
 // type imports
 import { type DIVE } from '@shopware-ag/dive';
-import { type EntitySchema } from '../types/index.ts';
 import { type OrbitController } from '@shopware-ag/dive/orbitcontroller';
 import {
     ActionDependencies,
@@ -10,6 +7,7 @@ import {
     ActionReturn,
 } from '../types/index.ts';
 import { getActionClass } from './ActionRegistry.ts';
+import { Registry } from './Registry.ts';
 import { EngineGateway } from './EngineGateway.ts';
 
 export type ActionSubscriber<ActionType extends keyof ActionTypes> = (
@@ -20,33 +18,6 @@ export type ActionUnsubscribe = () => void;
 
 export class State {
     private static __instances: State[] = [];
-
-    /**
-     * Find the instance that owns an id, either the state's own or one of the
-     * entities it holds.
-     *
-     * @deprecated Nothing inside DIVE uses this any more. It existed so scene
-     * objects could look up their state at runtime; they now report through
-     * events and the {@link EngineGateway} routes them without a search. Hold
-     * on to the instance you created instead. Will be removed in a future
-     * major release.
-     */
-    public static get(id: string): State | undefined {
-        const fromComID = this.__instances.find(
-            (instance) => instance.id === id,
-        );
-        if (fromComID) return fromComID;
-        return this.__instances.find((instance) =>
-            Array.from(instance.registered.values()).find(
-                (object) => object.id === id,
-            ),
-        );
-    }
-
-    private _id: string;
-    public get id(): string {
-        return this._id;
-    }
 
     private engine: DIVE;
     private controller: OrbitController;
@@ -128,7 +99,8 @@ export class State {
     }
 
     // registered entities
-    private registered: Map<string, EntitySchema> = new Map();
+    /** Every entity this state holds. See {@link Registry}. */
+    private registry: Registry = new Registry();
 
     private listeners: Map<
         keyof ActionTypes,
@@ -136,7 +108,6 @@ export class State {
     > = new Map();
 
     constructor(dive: DIVE, controller: OrbitController) {
-        this._id = MathUtils.generateUUID();
         this.engine = dive;
         this.controller = controller;
         this.gateway = new EngineGateway(dive, this);
@@ -144,10 +115,13 @@ export class State {
         State.__instances.push(this);
     }
 
+    /**
+     * Tears this state down and forgets it.
+     *
+     * @returns Whether it was still registered.
+     */
     public destroyInstance(): boolean {
-        const existingIndex = State.__instances.findIndex(
-            (entry) => entry.id === this.id,
-        );
+        const existingIndex = State.__instances.indexOf(this);
         if (existingIndex === -1) return false;
         State.__instances.splice(existingIndex, 1);
         this.gateway.dispose();
@@ -237,7 +211,8 @@ export class State {
 
     private getDependencies(): ActionDependencies {
         return {
-            registered: this.registered,
+            registry: this.registry,
+            dispatch: (type, payload) => this.dispatch(type, payload),
             gateway: this.gateway,
             controller: this.controller,
             getARSystem: () => this.getARSystem(),

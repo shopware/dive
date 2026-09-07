@@ -1,6 +1,6 @@
 import { type OrbitController } from '@shopware-ag/dive/orbitcontroller';
-import { type EntitySchema } from './schema/index.ts';
 import { type EngineGateway } from '../src/EngineGateway.ts';
+import { type Registry } from '../src/Registry.ts';
 
 // Extracted types for performAction_new
 export type ActionPayload<T> = T extends new (
@@ -29,7 +29,26 @@ export type ActionDeps<T> = T extends new (
     : never;
 
 export interface ActionDependencies {
-    registered: Map<string, EntitySchema>;
+    /**
+     * Every entity the state holds: data, scene object, listener teardown.
+     *
+     * Handed out as an object rather than as a map, so that how an entity is
+     * stored stays the registry's business — and so `write` stays the only way
+     * into a schema, which is what makes the vector-copy rule enforceable.
+     */
+    registry: Registry;
+
+    /**
+     * Notifies subscribers without performing an action.
+     *
+     * This is what an engine-to-state report uses: the state already changed, so
+     * running a command would write it back into the engine it came from.
+     */
+    dispatch: <ActionType extends keyof ActionTypes>(
+        type: ActionType,
+        payload: ActionPayload<ActionTypes[ActionType]>,
+    ) => void;
+
     gateway: EngineGateway;
     controller: OrbitController;
     getAnimationSystem: () => Promise<

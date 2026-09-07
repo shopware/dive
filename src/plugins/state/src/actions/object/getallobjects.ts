@@ -5,12 +5,16 @@ import { type EntitySchema } from '../../../types/index.ts';
 
 export const GetAllObjectsAction = Action.define<
     void,
-    Pick<ActionDependencies, 'registered'>,
+    Pick<ActionDependencies, 'registry'>,
     Map<string, EntitySchema>
 >({
     description: 'Retrieves all objects in the state.',
-    execute: (_, { registered }) => {
-        return registered;
+    execute: (_, { registry }) => {
+        // schemas only: the nodes beside them are engine objects and have no
+        // business leaving the state layer
+        return new Map(
+            registry.read().map(({ schema }) => [schema.id, schema]),
+        );
     },
 });
 

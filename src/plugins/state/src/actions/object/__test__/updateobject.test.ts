@@ -1,3 +1,4 @@
+import { makeActionDeps } from '../../../__test__/actionDeps.ts';
 import { type EngineGateway } from '../../../EngineGateway.ts';
 import { DIVE, DIVEScene } from '@shopware-ag/dive';
 import { type EntitySchema } from '../../../../types/index.ts';
@@ -8,12 +9,12 @@ const mockGateway = {
     updateEntity: vi.fn(),
 } as unknown as EngineGateway;
 
-const mockRegistered = new Map<string, EntitySchema>();
+const deps = makeActionDeps();
 
 describe('UpdateObjectAction', () => {
     beforeEach(() => {
         vi.clearAllMocks();
-        mockRegistered.clear();
+        deps.registry.clear();
     });
 
     it('should update an existing object', async () => {
@@ -33,11 +34,11 @@ describe('UpdateObjectAction', () => {
         };
 
         // Add the original object first
-        mockRegistered.set(originalObject.id, originalObject);
+        deps.registry.register(originalObject);
 
         const action = new UpdateObjectAction(updatePayload, {
             gateway: mockGateway,
-            registered: mockRegistered,
+            ...deps,
         });
 
         // Execute action
@@ -48,7 +49,7 @@ describe('UpdateObjectAction', () => {
             ...updatePayload,
             entityType: 'model',
         });
-        expect(mockRegistered.get('test-object')).toEqual({
+        expect(deps.registry.read('test-object')?.schema).toEqual({
             ...originalObject,
             ...updatePayload,
         });
@@ -62,7 +63,7 @@ describe('UpdateObjectAction', () => {
 
         const action = new UpdateObjectAction(updatePayload, {
             gateway: mockGateway,
-            registered: mockRegistered,
+            ...deps,
         });
 
         // the action is async now, so the error surfaces as a rejection
