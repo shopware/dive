@@ -1,5 +1,6 @@
 import { Toolbox } from '../Toolbox.ts';
 import { type Tool } from '../Tool.ts';
+import { type PointerContext } from '../PointerContext.ts';
 import { type DIVEScene } from '@shopware-ag/dive';
 import { type OrbitController } from '@shopware-ag/dive/orbitcontroller';
 
@@ -418,6 +419,69 @@ describe('Toolbox', () => {
 
             expect(transformTool.onWheel).toHaveBeenCalled();
             expect(hoverTool.onWheel).not.toHaveBeenCalled();
+        });
+    });
+
+    describe('raycasting only when a tool looks', () => {
+        // The intersect lists are computed on first read and then kept. They used
+        // to be computed eagerly, so a pointer move cost a full raycast even with
+        // no tool enabled -- and while the camera was being orbited that was one
+        // raycast per frame against every mesh in the scene.
+        let move: (event: PointerEvent) => void;
+        let raycasts: number;
+
+        beforeEach(() => {
+            const listeners = new Map<string, (event: PointerEvent) => void>();
+            (
+                mockController.domElement.addEventListener as any
+            ).mockImplementation(
+                (type: string, handler: (event: PointerEvent) => void) => {
+                    listeners.set(type, handler);
+                },
+            );
+            toolbox.dispose();
+            toolbox = new Toolbox(mockScene, mockController);
+            move = listeners.get('pointermove')!;
+
+            raycasts = 0;
+            (
+                toolbox as unknown as {
+                    _raycaster: { intersectObjects: () => unknown[] };
+                }
+            )._raycaster.intersectObjects = () => {
+                raycasts++;
+                return [];
+            };
+        });
+
+        it('should not raycast when no tool reads the intersects', () => {
+            move(new PointerEvent('pointermove'));
+
+            expect(raycasts).toBe(0);
+        });
+
+        it('should raycast once however many lists are read', () => {
+            const greedy = {
+                name: 'greedy',
+                priority: 1,
+                onPointerMove: (ctx: PointerContext) => {
+                    void ctx.intersects;
+                    void ctx.modelIntersects;
+                    void ctx.entityIntersects;
+                    void ctx.uiIntersects;
+                    void ctx.intersects;
+                },
+            } as unknown as Tool;
+            (toolbox as unknown as { _tools: Map<string, Tool> })._tools.set(
+                'greedy',
+                greedy,
+            );
+            toolbox.enableTool('greedy' as never);
+
+            move(new PointerEvent('pointermove'));
+
+            // still one per event, shared by every list and every reader
+            expect(raycasts).toBe(1);
         });
     });
 
