@@ -1,5 +1,6 @@
 export * from './applyMixins/applyMixins.ts';
 export * from './computeProductBounds/computeProductBounds.ts';
+export * from './disposeComponents/disposeComponents.ts';
 export * from './contributesToBounds/contributesToBounds.ts';
 export * from './deepClone/deepClone.ts';
 export * from './detachTransformControls/detachTransformControls.ts';

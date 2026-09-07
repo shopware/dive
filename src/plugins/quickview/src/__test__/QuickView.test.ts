@@ -52,6 +52,9 @@ vi.mock('@shopware-ag/dive', () => {
             };
         }),
         DIVEDefaultSettings: { displayGrid: false },
+        // the real one, so the teardown assertions below exercise it
+        disposeComponents: (object: { components?: { dispose(): void }[] }) =>
+            object.components?.forEach((component) => component.dispose()),
         DIVENode: vi.fn(function (this: Record<string, unknown>) {
             const mesh = { setFromURL, dispose: vi.fn() };
             this.components = [mesh];
