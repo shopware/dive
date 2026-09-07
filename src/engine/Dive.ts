@@ -155,8 +155,8 @@ export class DIVE {
         // The camera is a node with a component, like everything else in the
         // scene, and it is added to the scene rather than left dangling: three
         // only updates a camera's world matrix itself while the camera has no
-        // parent, and this one's parent is its component. Outside the graph
-        // nobody would ever compute where it is.
+        // parent, and this one's parent is the node its component put it on.
+        // Outside the graph nobody would ever compute where it is.
         //
         // Added to the scene and not to `root`, which is where entities live: this
         // camera belongs to the viewer, not to the scene's content.

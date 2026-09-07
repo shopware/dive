@@ -59,7 +59,8 @@ export class ModelComponent extends MeshComponent {
     /**
      * Replaces the content with a loaded glTF hierarchy.
      *
-     * @param gltf - The loaded object hierarchy.
+     * @param gltf - What the loader returned: a glTF *scene*, whose children are
+     * the file's root nodes.
      */
     public setFromGLTF(gltf: Object3D): this {
         this.clear();
@@ -72,14 +73,7 @@ export class ModelComponent extends MeshComponent {
             ? this.owner.layers.mask
             : PRODUCT_LAYER_MASK;
 
-        let root: Object3D | null = null;
-
         gltf.traverse((child) => {
-            // check if we have a semantic root already
-            if (!root && child.userData.isDIVEModel) {
-                root = child;
-            }
-
             child.castShadow = true;
             child.receiveShadow = true;
             child.layers.mask = layerMask;
@@ -88,31 +82,21 @@ export class ModelComponent extends MeshComponent {
             if (!this._mesh && 'isMesh' in child) {
                 this._mesh = child as Mesh;
 
-                // if the material is already set, use it, otherwise set it from the model's material
-                if (this._material) {
-                    this._mesh.material = this._material;
-                } else {
-                    this._material = (child as Mesh)
-                        .material as MeshStandardMaterial;
-                }
+                this._material = (child as Mesh)
+                    .material as MeshStandardMaterial;
             }
         });
 
-        if (!root) {
-            root = gltf;
-        }
+        this.animations = gltf.animations;
 
-        // The glTF root's own transform belongs to the node, not to this
-        // component: components sit at their owner's transform.
-        if (this.isAttached) {
-            const owner = this.owner;
-            owner.position.copy(root.position);
-            owner.quaternion.copy(root.quaternion);
-            owner.scale.copy(root.scale);
-            owner.animations = gltf.animations;
-        }
-
-        this.add(...root.children);
+        // Every root node of the file, with whatever transform it carries. A glTF
+        // has none of its own -- the format gives a scene no such field -- so its
+        // roots and their placements are simply what the model is made of.
+        //
+        // Nothing here looks for a transform root, and nothing here drops one. A
+        // transform root is a save format, and the side that wrote it is the side
+        // that recognises it again.
+        this.add(...gltf.children);
 
         return this;
     }

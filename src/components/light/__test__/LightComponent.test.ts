@@ -41,8 +41,28 @@ describe('dive/light/DIVELightComponent', () => {
             it('should own its light on the product layer', () => {
                 const component = make();
 
-                expect(component.children).toContain(component.light);
+                expect(component.contributions).toContain(component.light);
                 expect(component.light.layers.mask).toBe(PRODUCT_LAYER_MASK);
+            });
+
+            it('should put its light into the node', () => {
+                // the light has to be in the graph to illuminate anything, but
+                // the component holding it does not
+                const node = new DIVENode();
+                const component = node.addComponent(make());
+
+                expect(node.children).toContain(component.light);
+            });
+
+            it('should give a clone its own light', () => {
+                const source = make();
+
+                const copy = source.clone();
+
+                // toContain, not toEqual: a point light also contributes its
+                // editor handle
+                expect(copy.contributions).toContain(copy.light);
+                expect(copy.light).not.toBe(source.light);
             });
 
             it('should scale intensity by its factor', () => {

@@ -36,7 +36,7 @@ describe('dive/light/PointLightComponent', () => {
         // selectable as an object.
         const component = new PointLightComponent();
 
-        expect(component.children).toContain(component.handle);
+        expect(component.contributions).toContain(component.handle);
         expect(component.handle.layers.mask).toBe(PROXY_LAYER_MASK);
     });
 
