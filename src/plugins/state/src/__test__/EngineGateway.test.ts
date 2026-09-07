@@ -351,6 +351,41 @@ describe('plugins/state/EngineGateway', () => {
             ).toBe('ffffff');
         });
 
+        it('should write the transform after the asset, not before', async () => {
+            // setFromGLTF copies the glTF root's transform onto the node, so a
+            // transform written before the asset arrives is thrown away
+            const { Object3D } =
+                await vi.importActual<typeof import('three/webgpu')>(
+                    'three/webgpu',
+                );
+            const gltf = new Object3D();
+            gltf.position.set(9, 9, 9);
+            loadAsset.mockResolvedValueOnce(gltf);
+
+            const modelData: ModelSchema = {
+                id: 'model-late',
+                entityType: 'model',
+                name: 'M',
+                visible: true,
+                uri: 'test.glb',
+                position: { x: 1, y: 2, z: 3 },
+                rotation: { x: 0, y: 0, z: 0 },
+                scale: { x: 1, y: 1, z: 1 },
+                loaded: false,
+                parentId: null,
+            };
+
+            const gateway = makeGateway();
+            await addEntity(gateway, modelData);
+
+            // the schema wins, not the asset
+            expectVec(findEntity(gateway, modelData)?.position, {
+                x: 1,
+                y: 2,
+                z: 3,
+            });
+        });
+
         it('should update all primitive properties', async () => {
             const primitiveData: PrimitiveSchema = {
                 id: 'primitive-1',

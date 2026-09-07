@@ -314,21 +314,27 @@ export class EngineGateway {
         sceneObject: DIVESceneObject,
         patch: PartialSchema,
     ): Promise<void> {
+        // state-only: there is nothing in the scene to write to
+        if (patch.entityType === 'camera') return;
+
+        const node = sceneObject as DIVENode;
+
+        // What only this kind of entity has -- and first, for two reasons: an
+        // unknown type is rejected before anything gets written, and loading a
+        // model overwrites the node's transform with the glTF root's, so a
+        // transform written before the asset arrives would be thrown away.
         switch (patch.entityType) {
-            case 'camera':
-                // state-only: there is nothing in the scene to write to
-                return;
             case 'light':
-                this._applyLight(sceneObject as DIVENode, patch);
+                this._applyLight(node, patch);
                 break;
             case 'model':
-                await this._applyModel(sceneObject as DIVENode, patch);
+                await this._applyModel(node, patch);
                 break;
             case 'primitive':
-                this._applyPrimitive(sceneObject as DIVENode, patch);
+                this._applyPrimitive(node, patch);
                 break;
             case 'group':
-                this._applyGroup(sceneObject as DIVENode, patch);
+                this._applyGroup(node, patch);
                 break;
             default:
                 throw new Error(
@@ -336,24 +342,30 @@ export class EngineGateway {
                 );
         }
 
+        // What every entity with a body in the scene has. This used to be copied
+        // into all four branches above -- and `applyTransform`, not `position.set`,
+        // because a schema position is a world position: setting the local vector
+        // directly put an object inside a group in group space.
+        if (patch.name !== undefined) node.name = patch.name;
+        node.applyTransform(patch);
+        if (patch.visible !== undefined) node.setVisibility(patch.visible);
+
+        // Re-parenting last, so the object is fully written before it moves, and
+        // so the link below is drawn to where it ends up.
+        if (patch.parentId !== undefined)
+            this._setParent({ ...patch, parentId: patch.parentId });
+
         // A member a patch moved needs its link to the group redrawn. The gizmo
         // path gets that from the member's own transform report, but
         // `applyTransform` is deliberately silent -- so the write path says it
         // here, once, instead of in each of the four branches above.
-        updateParentLink(sceneObject);
+        updateParentLink(node);
     }
 
     private _applyLight(
         sceneObject: DIVENode,
         props: PartialSchema<LightSchema>,
     ): void {
-        if (props.name !== undefined) sceneObject.name = props.name;
-
-        // applyTransform, not position.set: a light is a node like any other
-        // entity, so its schema position is a world position. Setting the local
-        // vector directly put a light inside a group in group space.
-        sceneObject.applyTransform(props);
-
         // every light component on the node, whatever kind: a scene light has two
         const lights = sceneObject.getComponents(DIVELightComponent);
         lights.forEach((light) => {
@@ -363,10 +375,6 @@ export class EngineGateway {
             if (props.color !== undefined)
                 light.setColor(new Color(props.color));
         });
-
-        if (props.visible !== undefined) sceneObject.visible = props.visible;
-        if (props.parentId !== undefined)
-            this._setParent({ ...props, parentId: props.parentId });
     }
 
     private async _applyModel(
@@ -382,52 +390,38 @@ export class EngineGateway {
                 .setFromURL(model.uri);
             sceneObject.userData.uri = model.uri;
         }
-        if (model.name !== undefined) sceneObject.name = model.name;
-        sceneObject.applyTransform(model);
-        if (model.visible !== undefined)
-            sceneObject.setVisibility(model.visible);
+
+        // after the asset, so it lands on the mesh that was just loaded
         if (model.material !== undefined && model.material !== null)
             sceneObject
                 .requireComponent(MeshComponent)
                 .setMaterial(model.material);
-        if (model.parentId !== undefined)
-            this._setParent({ ...model, parentId: model.parentId });
     }
 
     private _applyPrimitive(
         sceneObject: DIVENode,
         primitive: PartialSchema<PrimitiveSchema>,
     ): void {
-        if (primitive.name !== undefined) sceneObject.name = primitive.name;
         if (primitive.geometry !== undefined && primitive.geometry !== null)
             sceneObject
                 .requireComponent(PrimitiveMeshComponent)
                 .setGeometry(primitive.geometry);
-        sceneObject.applyTransform(primitive);
-        if (primitive.visible !== undefined)
-            sceneObject.setVisibility(primitive.visible);
+
+        // after the geometry, so it lands on the mesh that was just built
         if (primitive.material !== undefined && primitive.material !== null)
             sceneObject
                 .requireComponent(MeshComponent)
                 .setMaterial(primitive.material);
-        if (primitive.parentId !== undefined)
-            this._setParent({ ...primitive, parentId: primitive.parentId });
     }
 
     private _applyGroup(
         sceneObject: DIVENode,
         props: PartialSchema<GroupSchema>,
     ): void {
-        if (props.name !== undefined) sceneObject.name = props.name;
-        sceneObject.applyTransform(props);
-        if (props.visible !== undefined)
-            sceneObject.setVisibility(props.visible);
         if (props.bbVisible !== undefined)
             sceneObject
                 .requireComponent(MultiLineComponent)
                 .setVisible(props.bbVisible);
-        if (props.parentId !== undefined)
-            this._setParent({ ...props, parentId: props.parentId });
     }
 
     private _setParent(
