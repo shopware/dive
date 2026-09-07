@@ -2,18 +2,6 @@ import { DIVEScene } from '../Scene.ts';
 import { DIVENode } from '../../node/Node.ts';
 import { DIVEComponent } from '../../../components/component/Component.ts';
 
-/**
- * Mocks the grid away: it pulls in the shader plugin, which is irrelevant here.
- */
-vi.mock('../../../components/grid/Grid.ts', () => ({
-    DIVEGrid: vi.fn(function (this: Record<string, unknown>) {
-        this.isDIVEGrid = true;
-        this.setVisibility = vi.fn();
-        this.dispose = vi.fn();
-        return this;
-    }),
-}));
-
 class Ticker extends DIVEComponent {
     public ticks = 0;
     public deltas: number[] = [];

@@ -123,6 +123,14 @@ vi.mock('three/webgpu', () => {
         }
     }
 
+    /** DIVEComponent extends this, so the mock has to carry it. */
+    class MockEventDispatcher {
+        addEventListener = vi.fn();
+        removeEventListener = vi.fn();
+        hasEventListener = vi.fn();
+        dispatchEvent = vi.fn();
+    }
+
     class MockPerspectiveCamera extends MockObject3D {
         isPerspectiveCamera = true;
         fov = 50;
@@ -131,6 +139,7 @@ vi.mock('three/webgpu', () => {
     }
 
     return {
+        EventDispatcher: MockEventDispatcher,
         Object3D: MockObject3D,
         Mesh: MockMesh,
         MeshBasicNodeMaterial: MockMeshBasicNodeMaterial,
@@ -146,106 +155,119 @@ vi.mock('three/tsl', () => ({
 }));
 
 import { GridNode } from '@shopware-ag/dive/shader';
-import { DIVEGrid } from '../Grid.ts';
+import { GridComponent } from '../GridComponent.ts';
 import { HELPER_LAYER_MASK } from '../../../constants/VisibilityLayerMask.ts';
 import { Mesh, MeshBasicNodeMaterial, PerspectiveCamera } from 'three/webgpu';
 
-let grid: DIVEGrid;
+let grid: GridComponent;
 
-describe('dive/grid/DIVEGrid', () => {
+/** The uniforms the shader node was built with. */
+const uniformsOf = (component: GridComponent) =>
+    (component.mesh.material as any).outputNode.uniforms;
+
+/** Renders once with a camera at the given position. */
+const renderAt = (component: GridComponent, x: number, z: number) => {
+    const camera = new PerspectiveCamera();
+    camera.position.set(x, 10, z);
+
+    component.mesh.onBeforeRender(
+        null as any,
+        null as any,
+        camera,
+        null as any,
+        null as any,
+        null as any,
+    );
+};
+
+describe('dive/grid/GridComponent', () => {
     beforeEach(() => {
-        grid = new DIVEGrid();
+        // cleared before constructing, so call counts are about this component
+        vi.clearAllMocks();
+        grid = new GridComponent();
     });
 
-    it('should instantiate', () => {
-        expect(grid).toBeDefined();
-        expect(grid.name).toBe('Grid');
-        expect(grid.children.length).toBe(1);
+    it('should brand and name itself', () => {
+        expect(grid.isGridComponent).toBe(true);
+        expect(grid.name).toBe('GridComponent');
+    });
 
-        const mesh = grid.children[0] as Mesh;
-        expect(mesh).toBeInstanceOf(Mesh);
-        expect(mesh.material).toBeInstanceOf(MeshBasicNodeMaterial as any);
-        expect((mesh.material as any).depthWrite).toBe(false);
-        expect((mesh.material as any).transparent).toBe(true);
+    it('should contribute the plane it draws on', () => {
+        expect(grid.contributions).toEqual([grid.mesh]);
+        expect(grid.mesh).toBeInstanceOf(Mesh);
+        expect(grid.mesh.material).toBeInstanceOf(MeshBasicNodeMaterial as any);
+        expect((grid.mesh.material as any).depthWrite).toBe(false);
+        expect((grid.mesh.material as any).transparent).toBe(true);
         expect(GridNode).toHaveBeenCalledTimes(1);
-        expect(mesh.layers.mask).toBe(HELPER_LAYER_MASK);
-        expect(mesh.frustumCulled).toBe(false);
+        expect(grid.mesh.layers.mask).toBe(HELPER_LAYER_MASK);
+        expect(grid.mesh.frustumCulled).toBe(false);
     });
 
-    it('should accept custom settings', () => {
-        const customGrid = new DIVEGrid({ gridSize: 2, majorLineEvery: 10 });
-        const mesh = customGrid.children[0] as Mesh;
-        const uniforms = (mesh.material as any).outputNode.uniforms;
-        expect(uniforms.uGridSize.value).toBe(2);
-        expect(uniforms.uMajorLineEvery.value).toBe(10);
+    it('should be constructible with no arguments', () => {
+        // the old class took a settings object and therefore threw on clone()
+        expect(() => new GridComponent().clone()).not.toThrow();
     });
 
-    it('should set visibility', () => {
+    it('should hide the mesh rather than a node', () => {
+        // a component has no visible of its own, and hiding a node would take
+        // whatever else it carries with it
         grid.setVisibility(false);
         expect(grid.visible).toBe(false);
+        expect(grid.mesh.visible).toBe(false);
+
         grid.setVisibility(true);
         expect(grid.visible).toBe(true);
     });
 
     it('should update grid size via setter', () => {
         grid.setGridSize(3);
-        const mesh = grid.children[0] as Mesh;
-        const uniforms = (mesh.material as any).outputNode.uniforms;
-        expect(uniforms.uGridSize.value).toBe(3);
+
+        expect(grid.gridSize).toBe(3);
+        expect(uniformsOf(grid).uGridSize.value).toBe(3);
     });
 
     it('should update major line interval via setter', () => {
         grid.setMajorLineEvery(10);
-        const mesh = grid.children[0] as Mesh;
-        const uniforms = (mesh.material as any).outputNode.uniforms;
-        expect(uniforms.uMajorLineEvery.value).toBe(10);
+
+        expect(grid.majorLineEvery).toBe(10);
+        expect(uniformsOf(grid).uMajorLineEvery.value).toBe(10);
     });
 
     it('should snap position to camera in onBeforeRender', () => {
-        const mesh = grid.children[0] as Mesh;
-        const camera = new PerspectiveCamera();
-        camera.position.set(5.7, 10, -3.2);
+        renderAt(grid, 5.7, -3.2);
 
-        mesh.onBeforeRender(
-            null as any,
-            null as any,
-            camera,
-            null as any,
-            null as any,
-            null as any,
-        );
-
-        expect(mesh.position.x).toBe(6);
-        expect(mesh.position.z).toBe(-3);
+        expect(grid.mesh.position.x).toBe(6);
+        expect(grid.mesh.position.z).toBe(-3);
     });
 
     it('should snap to custom grid size', () => {
-        const customGrid = new DIVEGrid({ gridSize: 5 });
-        const mesh = customGrid.children[0] as Mesh;
-        const camera = new PerspectiveCamera();
-        camera.position.set(7, 10, 13);
+        grid.setGridSize(5);
 
-        mesh.onBeforeRender(
-            null as any,
-            null as any,
-            camera,
-            null as any,
-            null as any,
-            null as any,
-        );
+        renderAt(grid, 7, 13);
 
-        expect(mesh.position.x).toBe(5);
-        expect(mesh.position.z).toBe(15);
+        expect(grid.mesh.position.x).toBe(5);
+        expect(grid.mesh.position.z).toBe(15);
+    });
+
+    it('should carry its settings along to a clone', () => {
+        grid.setGridSize(2).setMajorLineEvery(4).setVisibility(false);
+
+        const copy = grid.clone();
+
+        expect(copy.gridSize).toBe(2);
+        expect(copy.majorLineEvery).toBe(4);
+        expect(copy.visible).toBe(false);
+        expect(copy.mesh).not.toBe(grid.mesh);
+        expect(uniformsOf(copy).uGridSize.value).toBe(2);
     });
 
     it('should dispose geometry and material', () => {
-        const mesh = grid.children[0] as Mesh;
-        const geometryDispose = vi.spyOn(mesh.geometry, 'dispose');
-        const materialDispose = vi.spyOn(mesh.material as any, 'dispose');
+        const geometry = vi.spyOn(grid.mesh.geometry, 'dispose');
+        const material = vi.spyOn(grid.mesh.material as any, 'dispose');
 
         grid.dispose();
 
-        expect(geometryDispose).toHaveBeenCalled();
-        expect(materialDispose).toHaveBeenCalled();
+        expect(geometry).toHaveBeenCalled();
+        expect(material).toHaveBeenCalled();
     });
 });

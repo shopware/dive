@@ -144,7 +144,7 @@ helper that only recomputes while something is being dragged. Calling it from
 inside your own `tick` is expected and safe.
 
 **Need the camera?** `tick` has no view context. Put an `onBeforeRender` on a mesh
-the component contributed; that is the sanctioned escape hatch, and `DIVEGrid`
+the component contributed; that is the sanctioned escape hatch, and `GridComponent`
 uses it to follow the camera.
 
 ## A component never attaches another component

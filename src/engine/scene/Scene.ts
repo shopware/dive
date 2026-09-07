@@ -5,9 +5,9 @@ import {
     type ColorRepresentation,
 } from 'three/webgpu';
 import { DIVERoot } from './root/Root.ts';
-import { DIVEGrid } from '../../components/grid/Grid.ts';
+import { GridComponent } from '../../components/grid/GridComponent.ts';
 import { type DIVEComponent } from '../../components/component/Component.ts';
-import { type DIVENode } from '../node/Node.ts';
+import { DIVENode } from '../node/Node.ts';
 import { type DIVETicker } from '../clock/Clock.ts';
 
 export type DIVESceneSettings = {
@@ -71,7 +71,7 @@ export class DIVEScene extends Scene implements DIVETicker {
     private _settings: DIVESceneSettings;
 
     private _root: DIVERoot;
-    private _grid: DIVEGrid | null = null;
+    private _grid: GridComponent | null = null;
 
     /**
      * Components that asked for a per-frame callback.
@@ -98,32 +98,43 @@ export class DIVEScene extends Scene implements DIVETicker {
         this._root.floor.setVisibility(this._settings.displayFloor);
         this.add(this._root);
 
-        if (this._settings.displayGrid) {
-            this._grid = new DIVEGrid({
-                gridSize: this._settings.gridSize,
-                majorLineEvery: this._settings.gridMajorLineEvery,
-            });
-            this._grid.setVisibility(this._settings.displayGrid);
-            this.add(this._grid);
-        }
+        if (this._settings.displayGrid) this._buildGrid();
     }
 
     public get root(): DIVERoot {
         return this._root;
     }
 
-    public get grid(): DIVEGrid {
-        if (!this._grid) {
-            this._grid = new DIVEGrid({
-                gridSize: this._settings.gridSize,
-                majorLineEvery: this._settings.gridMajorLineEvery,
-            });
+    /**
+     * The grid, built on first use.
+     *
+     * Lazy because a scene without one should not pay for the plane, the shader
+     * material and its uniforms.
+     */
+    public get grid(): GridComponent {
+        if (!this._grid) this._buildGrid();
 
-            this._grid.setVisibility(this._settings.displayGrid);
-            this.add(this._grid);
-        }
+        return this._grid!;
+    }
 
-        return this._grid;
+    /**
+     * Puts the grid on its own node in the scene.
+     *
+     * Its own node, and not the root: the grid is furniture the viewer sees, not
+     * scene content, so it must stay out of everything that walks the root --
+     * bounds, exports, the entity tree.
+     */
+    private _buildGrid(): void {
+        const node = new DIVENode();
+        node.name = 'DIVEGrid';
+
+        this._grid = node
+            .addComponent(new GridComponent())
+            .setGridSize(this._settings.gridSize)
+            .setMajorLineEvery(this._settings.gridMajorLineEvery)
+            .setVisibility(this._settings.displayGrid);
+
+        this.add(node);
     }
 
     public setBackground(value: ColorRepresentation): void {
@@ -231,11 +242,9 @@ export class DIVEScene extends Scene implements DIVETicker {
 
         this.remove(this._root);
 
+        // already disposed by the traverse above, since it sits on a node
         // kept rather than nulled, the getter would build a fresh one on demand
-        if (this._grid) {
-            this._grid.dispose();
-            this.remove(this._grid);
-        }
+        if (this._grid) this.remove(this._grid.owner);
 
         this._tickingComponents = [];
     }

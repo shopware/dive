@@ -26,15 +26,6 @@ import {
  * that includes the component tick registry, and a fake carrying the brand
  * without the methods breaks node attachment.
  */
-vi.mock('../../grid/Grid.ts', () => ({
-    DIVEGrid: vi.fn(function (this: Record<string, unknown>) {
-        this.isDIVEGrid = true;
-        this.setVisibility = vi.fn();
-        this.dispose = vi.fn();
-        return this;
-    }),
-}));
-
 /** A 1x1x1 product-layer cube centred on its own origin. */
 const createCube = (): Mesh => {
     const mesh = new Mesh(new BoxGeometry(1, 1, 1), new MeshStandardMaterial());
