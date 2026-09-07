@@ -1,4 +1,10 @@
-import { Mesh, MeshStandardMaterial } from 'three/webgpu';
+import {
+    Mesh,
+    MeshStandardMaterial,
+    type BufferGeometry,
+    type Material,
+    type Texture,
+} from 'three/webgpu';
 import { DIVEComponent } from '../../engine/component/Component.ts';
 import { type DIVEMaterial } from '../../types/material/DIVEMaterial.ts';
 
@@ -132,14 +138,54 @@ export abstract class MeshComponent extends DIVEComponent {
         return this;
     }
 
+    /**
+     * Frees everything the content this component contributed is made of.
+     *
+     * The policy, because releasing GPU memory needs one: a mesh component owns
+     * the geometries, materials and textures of what it put into the node. Those
+     * are produced per load -- the asset cache holds file bytes, not parsed
+     * results -- so nothing here is shared with another component and there is
+     * nothing to leave behind for someone else.
+     *
+     * Collected before anything is freed, and collected in sets: three allows a
+     * mesh to carry `Material[]`, one glTF can point several meshes at the same
+     * material, and several materials at the same texture. Disposing twice is
+     * harmless in three, but counting once makes the intent checkable.
+     */
     public dispose(): void {
+        const geometries = new Set<BufferGeometry>();
+        const materials = new Set<Material>();
+
         // over what this component put into the node, this.traverse finds nothing
         this.contributions.forEach((object) =>
             object.traverse((child) => {
-                (child as Mesh).geometry?.dispose();
+                const mesh = child as Mesh;
+
+                if (mesh.geometry) geometries.add(mesh.geometry);
+                if (Array.isArray(mesh.material)) {
+                    mesh.material.forEach((material) =>
+                        materials.add(material),
+                    );
+                } else if (mesh.material) {
+                    materials.add(mesh.material);
+                }
             }),
         );
 
-        this._material?.dispose();
+        // a material set before any content arrived sits on no mesh yet
+        if (this._material) materials.add(this._material);
+
+        const textures = new Set<Texture>();
+        materials.forEach((material) => {
+            Object.values(material).forEach((value: unknown) => {
+                if ((value as Texture | null)?.isTexture) {
+                    textures.add(value as Texture);
+                }
+            });
+        });
+
+        geometries.forEach((geometry) => geometry.dispose());
+        materials.forEach((material) => material.dispose());
+        textures.forEach((texture) => texture.dispose());
     }
 }

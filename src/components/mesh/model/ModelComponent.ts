@@ -115,7 +115,13 @@ export class ModelComponent extends MeshComponent {
                  */
                 if (this._materialIsOwn) {
                     (child as Mesh).material = this._material!;
-                } else {
+                } else if (!Array.isArray((child as Mesh).material)) {
+                    /**
+                     * only a single material becomes "the" material: three allows
+                     * `Material[]` per mesh, and there is no one answer to pick
+                     * from it -- `setMaterial` would then build one and collapse
+                     * the array, which is what the caller asked for
+                     */
                     this._material = (child as Mesh)
                         .material as MeshStandardMaterial;
                 }
