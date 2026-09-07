@@ -22,9 +22,11 @@ export const SelectObjectAction = Action.define<
             throw new Error('Object is not selectable.');
 
         const instance = await getToolbox();
-        // Use SelectionState to select the object
-        // TransformTool will automatically attach gizmo via selection change listener
-        instance.selectionState.select(
+        // applySelection, not select: performAction announces this action when it
+        // returns, and having the object announce it too would reach subscribers
+        // twice. TransformTool still attaches the gizmo -- it listens through
+        // onChange, which fires either way.
+        instance.selectionState.applySelection(
             sceneObject as Object3D & DIVESelectable,
         );
     },
