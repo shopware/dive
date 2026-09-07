@@ -6,6 +6,7 @@ import type { USDZExporterOptions as THREEUSDZExporterOptions } from 'three/exam
 import { type FileType } from '../../../types/file/FileTypes.ts';
 import { FileTypeError } from '../../../error/file-type/file-type-error.ts';
 import { ParseError } from '../../../error/parse/parse-error.ts';
+import { contributesToBounds } from '../../../helpers/contributesToBounds/contributesToBounds.ts';
 
 export type USDZExporterOptions = THREEUSDZExporterOptions & {
     ar?: {
@@ -45,6 +46,23 @@ export class AssetExporter {
         // ensure normals are computed before export
         this._computeNormals(object);
 
+        // Both exporters honour `onlyVisible`, which is on by default, so hiding
+        // everything that is not real geometry is enough to keep the ground
+        // plane, gizmo handles and helper visualisations out of the file.
+        const restore = this._hideNonProductGeometry(object);
+
+        try {
+            return await this._exportByType(object, type, options);
+        } finally {
+            restore();
+        }
+    }
+
+    private async _exportByType<T extends FileType>(
+        object: Object3D,
+        type: T,
+        options?: FileTypeToExporterOptions[T],
+    ): Promise<ArrayBuffer> {
         switch (type) {
             case 'glb': {
                 return this._exportGlb(object, options);
@@ -125,6 +143,32 @@ export class AssetExporter {
             }
             throw new ParseError('Failed to export USDZ', error);
         }
+    }
+
+    /**
+     * Temporarily hides every mesh that does not count as real geometry.
+     *
+     * @returns A function that restores the previous visibility.
+     */
+    private _hideNonProductGeometry(object: Object3D): () => void {
+        const hidden: Object3D[] = [];
+
+        object.traverse((child) => {
+            // only leaves carry geometry; hiding a container would take its
+            // whole subtree with it, since `visible` is inherited
+            if (!(child instanceof Mesh)) return;
+            if (contributesToBounds(child)) return;
+            if (!child.visible) return;
+
+            child.visible = false;
+            hidden.push(child);
+        });
+
+        return () => {
+            hidden.forEach((child) => {
+                child.visible = true;
+            });
+        };
     }
 
     private _computeNormals(object: Object3D): void {

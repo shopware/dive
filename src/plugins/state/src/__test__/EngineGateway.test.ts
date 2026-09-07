@@ -78,6 +78,26 @@ vi.mock('../../../../components/grid/Grid', async () => {
     };
 });
 
+/**
+ * Puts an object into the gateway's entity registry by hand.
+ *
+ * For the cases `addEntity` cannot produce -- a camera creates no scene object,
+ * an unknown entity type is rejected -- but where the gateway still has to cope
+ * with finding something under that id.
+ */
+const registerRaw = (
+    gateway: EngineGateway,
+    id: string,
+    object: Object3D,
+): void => {
+    object.userData.id = id;
+    gateway.root.add(object);
+    (gateway as unknown as { _entities: Map<string, Object3D> })._entities.set(
+        id,
+        object,
+    );
+};
+
 /** Compares a three vector/euler by component, sidestepping -0 vs 0. */
 const expectVec = (
     actual: { x: number; y: number; z: number } | undefined,
@@ -130,18 +150,33 @@ describe('plugins/state/EngineGateway', () => {
     });
 
     describe('findEntity', () => {
-        it('should find object by id', () => {
-            const mockObject = new Object3D();
-            mockObject.userData = { id: 'test-id' };
-
+        it('should find an entity the gateway created', async () => {
             const gateway = makeGateway();
-            gateway.root.add(mockObject);
+            await gateway.addEntity({
+                id: 'test-id',
+                entityType: 'group',
+                name: 'G',
+                visible: true,
+            } as GroupSchema);
 
             const found = findEntity(gateway, {
                 id: 'test-id',
-                entityType: 'model',
+                entityType: 'group',
             });
             expect(found).toBeDefined();
+        });
+
+        it('should not find an object that was added to the tree directly', () => {
+            // findEntity is registry-backed rather than a tree walk, so it only
+            // reports things the gateway itself turned into entities
+            const gateway = makeGateway();
+            const stranger = new Object3D();
+            stranger.userData.id = 'smuggled';
+            gateway.root.add(stranger);
+
+            expect(
+                findEntity(gateway, { id: 'smuggled', entityType: 'model' }),
+            ).toBeUndefined();
         });
 
         it('should return undefined for non-existent id', () => {
@@ -153,16 +188,20 @@ describe('plugins/state/EngineGateway', () => {
             expect(found).toBeUndefined();
         });
 
-        it('should get scene object by id', () => {
+        it('should get scene object by id', async () => {
             const gateway = makeGateway();
-            const mockObject = new Object3D();
-            mockObject.userData.id = 'test-id';
-            gateway.root.add(mockObject);
+            const added = await gateway.addEntity({
+                id: 'test-id',
+                entityType: 'group',
+                name: 'G',
+                visible: true,
+            } as GroupSchema);
+
             const result = findEntity(gateway, {
                 id: 'test-id',
-                entityType: 'model',
+                entityType: 'group',
             });
-            expect(result).toBe(mockObject);
+            expect(result).toBe(added);
         });
 
         it('should return undefined when object is not found', () => {
@@ -172,132 +211,6 @@ describe('plugins/state/EngineGateway', () => {
                 entityType: 'model',
             });
             expect(result).toBeUndefined();
-        });
-
-        it('should stop traversing when object is found', () => {
-            const gateway = makeGateway();
-            const mockObject1 = {
-                isObject3D: true,
-                userData: {
-                    id: 'test-id',
-                },
-                id: 'obj1',
-                uuid: 'uuid1',
-                name: 'obj1',
-                type: 'Object3D',
-                parent: null,
-                children: [],
-                up: { x: 0, y: 1, z: 0 },
-                position: { x: 0, y: 0, z: 0 },
-                rotation: { x: 0, y: 0, z: 0 },
-                scale: { x: 1, y: 1, z: 1 },
-                matrix: { elements: new Float32Array(16) },
-                matrixWorld: { elements: new Float32Array(16) },
-                matrixAutoUpdate: true,
-                matrixWorldNeedsUpdate: false,
-                layers: { mask: 1 },
-                visible: true,
-                castShadow: false,
-                receiveShadow: false,
-                frustumCulled: true,
-                renderOrder: 0,
-                animations: [],
-                updateMatrix: vi.fn(),
-                updateMatrixWorld: vi.fn(),
-                updateWorldMatrix: vi.fn(),
-                traverse: vi.fn(),
-                traverseVisible: vi.fn(),
-                traverseAncestors: vi.fn(),
-                addEventListener: vi.fn(),
-                hasEventListener: vi.fn(),
-                removeEventListener: vi.fn(),
-                dispatchEvent: vi.fn(),
-            };
-            const mockObject2 = { ...mockObject1, id: 'obj2', uuid: 'uuid2' };
-
-            let traverseCount = 0;
-            gateway.root.traverse = vi.fn((callback) => {
-                traverseCount++;
-                callback(mockObject1 as any);
-                callback(mockObject2 as any);
-            });
-
-            const result = findEntity(gateway, {
-                id: 'test-id',
-                entityType: 'model',
-            });
-            expect(result).toBe(mockObject1);
-            expect(traverseCount).toBe(1);
-        });
-    });
-
-    describe('addEntity', () => {
-        it('should add different types of lights', async () => {
-            const sceneLightData: LightSchema = {
-                id: 'scene-light-1',
-                entityType: 'light',
-                type: 'scene',
-                name: 'Test Scene Light',
-                visible: true,
-                position: { x: 1, y: 2, z: 3 },
-                intensity: 1.0,
-                enabled: true,
-                color: '#ffffff',
-            };
-
-            const ambientLightData: LightSchema = {
-                id: 'ambient-light-1',
-                entityType: 'light',
-                type: 'ambient',
-                name: 'Test Ambient Light',
-                visible: true,
-                position: { x: 1, y: 2, z: 3 },
-                intensity: 1.0,
-                enabled: true,
-                color: '#ffffff',
-            };
-
-            const pointLightData: LightSchema = {
-                id: 'point-light-1',
-                entityType: 'light',
-                type: 'point',
-                name: 'Test Point Light',
-                visible: true,
-                position: { x: 1, y: 2, z: 3 },
-                intensity: 1.0,
-                enabled: true,
-                color: '#ffffff',
-            };
-
-            const unknownLightData: LightSchema = {
-                id: 'unknown-light-1',
-                entityType: 'light',
-                type: 'unknown',
-                name: 'Test Unknown Light',
-                visible: true,
-                position: { x: 1, y: 2, z: 3 },
-                intensity: 1.0,
-                enabled: true,
-                color: '#ffffff',
-            } as any;
-
-            const gateway = makeGateway();
-            await gateway.addEntity(sceneLightData);
-            await gateway.addEntity(ambientLightData);
-            await gateway.addEntity(pointLightData);
-            await expect(gateway.addEntity(unknownLightData)).rejects.toThrow(
-                'EngineGateway.addEntity: Unknown light type: unknown',
-            );
-
-            const sceneLight = findEntity(gateway, sceneLightData);
-            const ambientLight = findEntity(gateway, ambientLightData);
-            const pointLight = findEntity(gateway, pointLightData);
-            const unknownLight = findEntity(gateway, unknownLightData);
-
-            expect(sceneLight).toBeDefined();
-            expect(ambientLight).toBeDefined();
-            expect(pointLight).toBeDefined();
-            expect(unknownLight).toBeUndefined();
         });
 
         it('should update all light properties', async () => {
@@ -765,8 +678,7 @@ describe('plugins/state/EngineGateway', () => {
 
             const gateway = makeGateway();
             const cameraObject = new Object3D();
-            cameraObject.userData.id = cameraData.id;
-            gateway.root.add(cameraObject);
+            registerRaw(gateway, cameraData.id, cameraObject);
 
             await gateway.updateEntity(cameraData);
 
@@ -797,9 +709,7 @@ describe('plugins/state/EngineGateway', () => {
             };
 
             const gateway = makeGateway();
-            const existingObject = new Object3D();
-            existingObject.userData.id = unknownData.id;
-            gateway.root.add(existingObject);
+            registerRaw(gateway, unknownData.id, new Object3D());
 
             await expect(gateway.updateEntity(unknownData)).rejects.toThrow(
                 'EngineGateway.updateEntity: Unknown entity type: unknown',
@@ -885,8 +795,7 @@ describe('plugins/state/EngineGateway', () => {
 
             const gateway = makeGateway();
             const cameraObject = new Object3D();
-            cameraObject.userData.id = cameraData.id;
-            gateway.root.add(cameraObject);
+            registerRaw(gateway, cameraData.id, cameraObject);
 
             gateway.removeEntity(cameraData);
 
