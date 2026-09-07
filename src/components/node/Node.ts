@@ -5,7 +5,6 @@ import { DIVEMovable } from '../../interfaces/Movable.ts';
 import { DIVESelectable } from '../../interfaces/Selectable.ts';
 import { type TransformControls } from 'three/examples/jsm/controls/TransformControls.ts';
 import { type DIVEEntityEventMap } from '../../types/events/index.ts';
-import { type DIVEGroup } from '../group/Group.ts';
 import {
     type DIVEComponent,
     type DIVEComponentClass,
@@ -223,6 +222,11 @@ export class DIVENode
         this.position.copy(this.parent.worldToLocal(newPosition));
 
         this._notifyTransformChanged();
+
+        // Child nodes just moved in world space, and the state layer tracks
+        // world positions, so they have to report it themselves. This used to be
+        // DIVEGroup's job; it is not group-specific at all.
+        this.nodes.forEach((node) => node.onMove());
     }
 
     public setRotation(rotation: Vector3Like): void {
@@ -275,13 +279,6 @@ export class DIVENode
         (parent as unknown as DIVENode)._components.forEach((component) =>
             component.onChildNodeTransform?.(this),
         );
-
-        // Transitional: DIVEGroup still keeps its member links itself. Once they
-        // move into a component this branch goes away, since that component gets
-        // the notification above.
-        if ('isDIVEGroup' in parent) {
-            (parent as unknown as DIVEGroup).updateLineTo(this);
-        }
     }
 
     private _handleChildAdded(child: Object3D): void {
