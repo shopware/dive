@@ -147,6 +147,16 @@ export abstract class DIVEComponent extends Object3D {
 }
 
 /**
+ * Any component class, for `instanceof` lookups.
+ *
+ * Uses `never[]` parameters so abstract bases that take constructor arguments
+ * still match -- only the class identity matters here, never its signature.
+ * Concrete components must still be zero-argument so `clone()` works.
+ */
+export type DIVEComponentClass<T extends DIVEComponent = DIVEComponent> =
+    abstract new (...args: never[]) => T;
+
+/**
  * Type guard for components, without importing the class.
  *
  * @param object - The object to test.
