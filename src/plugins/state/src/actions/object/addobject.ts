@@ -33,7 +33,7 @@ export const AddObjectAction = Action.define<
         registry.register(
             payload,
             node,
-            watchEntity(node, payload, { registry, dispatch, gateway }),
+            watchEntity(node, payload, { registry, dispatch }),
         );
 
         try {

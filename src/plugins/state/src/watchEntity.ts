@@ -8,12 +8,10 @@ import {
     type PartialSchema,
 } from '../types/index.ts';
 import { copyVectors } from './copyVectors.ts';
+import { updateParentLink } from './groupLines.ts';
 
 /** What a listener needs to record and announce what it heard. */
-type WatchDependencies = Pick<
-    ActionDependencies,
-    'registry' | 'dispatch' | 'gateway'
->;
+type WatchDependencies = Pick<ActionDependencies, 'registry' | 'dispatch'>;
 
 /**
  * Listens to what a scene object reports about itself and records it.
@@ -45,7 +43,7 @@ type WatchDependencies = Pick<
 export const watchEntity = (
     node: DIVESceneObject,
     entity: EntitySchema,
-    { registry, dispatch, gateway }: WatchDependencies,
+    { registry, dispatch }: WatchDependencies,
 ): (() => void) => {
     const { id, entityType } = entity;
 
@@ -62,8 +60,10 @@ export const watchEntity = (
 
         registry.write(id, report);
 
-        // a member that moved needs its link to the group redrawn
-        gateway.refreshParentLink(node);
+        // A member that moved needs its link to the group redrawn. Stateless on
+        // purpose: the node knows its own parent, so nothing here has to be told
+        // which group it belongs to, or kept up to date when that changes.
+        updateParentLink(node);
 
         dispatch('UPDATE_OBJECT', report);
     };
