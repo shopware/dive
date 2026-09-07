@@ -527,6 +527,40 @@ describe('modules/state/State', () => {
             }));
         });
 
+        it('should build each module once, even for callers in the same tick', async () => {
+            // The promise is cached, not the instance, and before anything is
+            // awaited. Assigning after the await left the field empty for as long
+            // as the import took, so two actions fired back to back each built
+            // their own module -- and a second Toolbox puts a second gizmo into
+            // the scene and listens on the canvas all over again.
+            const [first, second] = await Promise.all([
+                state['getToolbox'](),
+                state['getToolbox'](),
+            ]);
+
+            expect(first).toBe(second);
+        });
+
+        it('should build each of the other modules once as well', async () => {
+            const pairs = await Promise.all([
+                Promise.all([
+                    state['getMediaCreator'](),
+                    state['getMediaCreator'](),
+                ]),
+                Promise.all([state['getARSystem'](), state['getARSystem']()]),
+                Promise.all([
+                    state['getAssetExporter'](),
+                    state['getAssetExporter'](),
+                ]),
+                Promise.all([
+                    state['getAnimationSystem'](),
+                    state['getAnimationSystem'](),
+                ]),
+            ]);
+
+            pairs.forEach(([first, second]) => expect(first).toBe(second));
+        });
+
         it('should lazy load MediaCreator when getMediaCreator is called', async () => {
             vi.mocked(getActionClass).mockReturnValue(
                 MediaCreatorActionClass as any,
