@@ -183,18 +183,31 @@ export class DIVENode
     }
 
     /**
-     * Copies another node, without duplicating components.
+     * Copies another node, its components included.
      *
-     * `Object3D.copy` re-adds clones of every source child. Since a node's
-     * components are attached by its own constructor, that would leave the copy
-     * with two of each -- and cloning what a component contributed would leave
-     * the copy with ownerless geometry beside a fresh, unaware component.
+     * Child nodes are cloned, contributed content is not: a component brings its
+     * own along, and cloning it here as well would leave the copy with ownerless
+     * geometry beside a component that knows nothing about it.
+     *
+     * **Replaces the components this node already has, disposing them.** A node
+     * that attaches components in its constructor -- `DIVERoot` and its floor --
+     * would otherwise end up with two of each, and the ones being replaced hold
+     * GPU resources that nobody else will ever release. Unexpected for a copy
+     * operation, hence spelled out here.
      *
      * @param source - The node to copy from.
      * @param recursive - Whether to copy children.
      */
     public copy(source: this, recursive: boolean = true): this {
         super.copy(source, false);
+
+        [...this._components].forEach((component) => {
+            this.removeComponent(component);
+            component.dispose();
+        });
+        source.components.forEach((component) =>
+            this.addComponent(component.clone()),
+        );
 
         if (recursive) {
             source.children
