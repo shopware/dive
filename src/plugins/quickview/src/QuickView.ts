@@ -96,6 +96,21 @@ export async function QuickView(
         let state: State | null = null;
 
         /**
+         * Which load is the current one, and the tail of the ones before it.
+         *
+         * Loads are serialized rather than allowed to interleave: both kinds
+         * mutate `model` and `state`, and an asset that settles late would
+         * otherwise write into what a newer load already took away. Queued loads
+         * that a newer one has overtaken are skipped entirely -- latest wins,
+         * and nothing in between is fetched for nothing.
+         */
+        let generation = 0;
+        let queue: Promise<void> = Promise.resolve();
+
+        /** Set by `disposeAsync`, so a load in flight has something to check. */
+        let disposed = false;
+
+        /**
          * Whether what is loaded is worth pointing a camera at.
          *
          * A model always is. A scene state only if it created something visible:
@@ -142,10 +157,26 @@ export async function QuickView(
                 dive.scene.root.add(model);
             }
 
-            await model.requireComponent(ModelComponent).setFromURL(uri);
+            /**
+             * Held locally across the await. The shared `model` is what a later
+             * load or a disposal writes to, so reading it again afterwards is
+             * reading someone else's answer.
+             */
+            const node = model;
+
+            await node.requireComponent(ModelComponent).setFromURL(uri);
+
+            if (disposed) {
+                // it arrived after the view was thrown away, so nobody owns it
+                disposeComponents(node);
+                node.removeFromParent();
+
+                return;
+            }
+
             framable = true;
 
-            if (loadSettings?.dropToFloor ?? true) model.dropIt();
+            if (loadSettings?.dropToFloor ?? true) node.dropIt();
             if (loadSettings?.focus ?? true) frame();
         };
 
@@ -155,10 +186,10 @@ export async function QuickView(
         ): Promise<void> => {
             clear();
 
-            state = new (await import('@shopware-ag/dive/state')).State(
-                dive,
-                orbitController,
-            );
+            const instance = new (
+                await import('@shopware-ag/dive/state')
+            ).State(dive, orbitController);
+            state = instance;
 
             /**
              * SET_STATE settles once every model is loaded, so there is nothing
@@ -166,7 +197,17 @@ export async function QuickView(
              * a single broken asset is warned about rather than dropping the
              * whole scene, so what comes back is everything that made it in
              */
-            const objects = await state.performAction('SET_STATE', sceneData);
+            const objects = await instance.performAction(
+                'SET_STATE',
+                sceneData,
+            );
+
+            if (disposed) {
+                instance.destroyInstance();
+                dive.scene.root.nodes.forEach(disposeNode);
+
+                return;
+            }
 
             framable = objects.some(
                 (object) =>
@@ -179,10 +220,30 @@ export async function QuickView(
         const load = (
             nextSource: string | StateData,
             loadSettings?: Partial<QuickViewLoadSettings>,
-        ): Promise<void> =>
-            typeof nextSource === 'string'
-                ? loadUri(nextSource, loadSettings)
-                : loadState(nextSource, loadSettings);
+        ): Promise<void> => {
+            const ticket = ++generation;
+
+            const run = queue.then(() => {
+                // overtaken while it waited, or there is no view left to fill
+                if (ticket !== generation || disposed) return;
+
+                return typeof nextSource === 'string'
+                    ? loadUri(nextSource, loadSettings)
+                    : loadState(nextSource, loadSettings);
+            });
+
+            /**
+             * The caller gets `run` and therefore this load's own outcome, while
+             * the queue continues on a tail that never rejects -- a failed load
+             * must not block the next one.
+             */
+            queue = run.then(
+                () => {},
+                () => {},
+            );
+
+            return run;
+        };
 
         /**
          * Getters rather than fields, because `load` swaps what is there and
@@ -196,6 +257,10 @@ export async function QuickView(
 
         const originalDispose = dive.disposeAsync.bind(dive);
         quickView.disposeAsync = async () => {
+            // before clear(), so a load in flight sees it and frees what it got
+            disposed = true;
+            generation++;
+
             orbitController.dispose();
             clear();
 
