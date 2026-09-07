@@ -1,5 +1,5 @@
 import { HemisphereLight, Vector3, type Vector3Like } from 'three/webgpu';
-import { DIVELightComponent } from './LightComponent.ts';
+import { DIVELightComponent } from '../LightComponent.ts';
 
 /** Matches the sky axis the previous DIVESceneLight used. */
 const DEFAULT_DIRECTION = new Vector3(0, 50, 0);

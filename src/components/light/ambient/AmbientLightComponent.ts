@@ -1,5 +1,5 @@
 import { AmbientLight } from 'three/webgpu';
-import { DIVELightComponent } from './LightComponent.ts';
+import { DIVELightComponent } from '../LightComponent.ts';
 
 /**
  * Uniform light from every direction, with no position or direction.

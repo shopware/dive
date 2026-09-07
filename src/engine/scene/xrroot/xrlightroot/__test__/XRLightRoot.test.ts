@@ -1,8 +1,8 @@
 import { DIVEXRLightRoot } from '../XRLightRoot.ts';
 import { DIVENode } from '../../../../../components/node/Node.ts';
 import { DIVELightComponent } from '../../../../../components/light/LightComponent.ts';
-import { HemisphereLightComponent } from '../../../../../components/light/HemisphereLightComponent.ts';
-import { DirectionalLightComponent } from '../../../../../components/light/DirectionalLightComponent.ts';
+import { HemisphereLightComponent } from '../../../../../components/light/hemi/HemisphereLightComponent.ts';
+import { DirectionalLightComponent } from '../../../../../components/light/directional/DirectionalLightComponent.ts';
 import { type DIVEScene } from '../../../Scene.ts';
 
 const mockScene = { environment: null } as unknown as DIVEScene;
