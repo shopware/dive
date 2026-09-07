@@ -7,7 +7,7 @@ import {
     DIVERoot,
     DIVEGeometryType,
     HemisphereLightComponent,
-    MemberLinksComponent,
+    MultiLineComponent,
     MeshComponent,
     PointLightComponent,
     PrimitiveMeshComponent,
@@ -392,10 +392,9 @@ describe('plugins/state/EngineGateway', () => {
             expectVec(group?.rotation, groupData.rotation);
             expectVec(group?.scale, groupData.scale);
             expect(group?.visible).toBe(groupData.visible);
+            // all member lines share one LineSegments, so one flag covers them
             expect(
-                group
-                    ?.requireComponent(MemberLinksComponent)
-                    .children.every((line: Object3D) => line.visible),
+                group?.requireComponent(MultiLineComponent).lines.visible,
             ).toBe(groupData.bbVisible);
         });
 
