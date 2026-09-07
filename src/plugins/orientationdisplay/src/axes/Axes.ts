@@ -6,9 +6,42 @@ import {
     AxesColorRed,
     AxesColorRedLetter,
     COORDINATE_LAYER_MASK,
-    DIVESpriteText,
+    DIVENode,
+    SpriteTextComponent,
 } from '@shopware-ag/dive';
-import { AxesHelper, Color, Material, Matrix4, Object3D } from 'three/webgpu';
+import {
+    AxesHelper,
+    Color,
+    Material,
+    Matrix4,
+    Object3D,
+    type ColorRepresentation,
+    type Vector3Like,
+} from 'three/webgpu';
+
+/**
+ * One axis letter, on its own node.
+ *
+ * The node carries the placement and the layer, the component carries the label:
+ * position the node, not what a component contributed. The mask is set before
+ * attaching, because that is where the component reads it from.
+ */
+const letter = (
+    text: string,
+    color: ColorRepresentation,
+    position: Vector3Like,
+): DIVENode => {
+    const node = new DIVENode();
+    node.position.set(position.x, position.y, position.z);
+    node.layers.mask = COORDINATE_LAYER_MASK;
+
+    node.addComponent(new SpriteTextComponent())
+        .setText(text)
+        .setTextHeight(0.2)
+        .setColor(color);
+
+    return node;
+};
 
 export class OrientationDisplayAxes extends Object3D {
     private _axesHelper: AxesHelper;
@@ -27,18 +60,11 @@ export class OrientationDisplayAxes extends Object3D {
             new Color(AxesColorBlue),
         );
 
-        const x = new DIVESpriteText('X', 0.2, AxesColorRedLetter);
-        const y = new DIVESpriteText('Y', 0.2, AxesColorGreenLetter);
-        const z = new DIVESpriteText('Z', 0.2, AxesColorBlueLetter);
-        x.layers.mask = COORDINATE_LAYER_MASK;
-        y.layers.mask = COORDINATE_LAYER_MASK;
-        z.layers.mask = COORDINATE_LAYER_MASK;
-        x.position.set(0.7, 0, 0);
-        y.position.set(0, 0.7, 0);
-        z.position.set(0, 0, 0.7);
-        this._axesHelper.add(x);
-        this._axesHelper.add(y);
-        this._axesHelper.add(z);
+        this._axesHelper.add(
+            letter('X', AxesColorRedLetter, { x: 0.7, y: 0, z: 0 }),
+            letter('Y', AxesColorGreenLetter, { x: 0, y: 0.7, z: 0 }),
+            letter('Z', AxesColorBlueLetter, { x: 0, y: 0, z: 0.7 }),
+        );
 
         this.add(this._axesHelper);
     }
