@@ -1,4 +1,4 @@
-import { DIVE, DIVEModel } from '@shopware-ag/dive';
+import { DIVE, DIVENode } from '@shopware-ag/dive';
 import { OrbitController } from '@shopware-ag/dive/orbitcontroller';
 import type { State } from '@shopware-ag/dive/state';
 
@@ -7,7 +7,7 @@ export * from './QuickViewSettings.ts';
 /** A QuickView built from a single model URI. */
 export type QuickViewWithModel = DIVE & {
     orbitController: OrbitController;
-    model: DIVEModel;
+    model: DIVENode;
 };
 
 /**

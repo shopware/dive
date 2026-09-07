@@ -4,11 +4,11 @@ import {
     detachTransformControls,
     DirectionalLightComponent,
     DIVELightComponent,
-    DIVEModel,
     DIVENode,
-    DIVEPrimitive,
     HemisphereLightComponent,
     MemberLinksComponent,
+    MeshComponent,
+    PrimitiveMeshComponent,
     PointLightComponent,
     type DIVE,
     type DIVEEntityTransformEvent,
@@ -265,8 +265,20 @@ export class EngineGateway {
      * lets {@link _applyLight} stay free of per-type branching.
      */
     private _instantiate(entity: EntitySchema): DIVESceneObject {
-        if (isModelSchema(entity)) return new DIVEModel();
-        if (isPrimitiveSchema(entity)) return new DIVEPrimitive();
+        if (isModelSchema(entity)) {
+            const model = new DIVENode();
+            model.name = 'DIVEModel';
+            // marks the semantic root for a later re-import of an exported scene
+            model.userData.isDIVEModel = true;
+            model.addComponent(new MeshComponent());
+            return model;
+        }
+        if (isPrimitiveSchema(entity)) {
+            const primitive = new DIVENode();
+            primitive.name = 'DIVEPrimitive';
+            primitive.addComponent(new PrimitiveMeshComponent());
+            return primitive;
+        }
         if (isGroupSchema(entity)) {
             const group = new DIVENode();
             group.name = 'DIVEGroup';
@@ -315,10 +327,10 @@ export class EngineGateway {
                 this._applyLight(sceneObject as DIVENode, patch);
                 return;
             case 'model':
-                await this._applyModel(sceneObject as DIVEModel, patch);
+                await this._applyModel(sceneObject as DIVENode, patch);
                 return;
             case 'primitive':
-                this._applyPrimitive(sceneObject as DIVEPrimitive, patch);
+                this._applyPrimitive(sceneObject as DIVENode, patch);
                 return;
             case 'group':
                 this._applyGroup(sceneObject as DIVENode, patch);
@@ -358,14 +370,16 @@ export class EngineGateway {
     }
 
     private async _applyModel(
-        sceneObject: DIVEModel,
+        sceneObject: DIVENode,
         model: PartialSchema<ModelSchema>,
     ): Promise<void> {
         // awaited, so callers can tell when the model is actually in the scene.
         // userData.uri holds what is currently loaded, so an update that only
         // moves the model does not fetch the asset again.
         if (model.uri !== undefined && model.uri !== sceneObject.userData.uri) {
-            await sceneObject.setFromURL(model.uri);
+            await sceneObject
+                .requireComponent(MeshComponent)
+                .setFromURL(model.uri);
             sceneObject.userData.uri = model.uri;
         }
         if (model.name !== undefined) sceneObject.name = model.name;
@@ -377,19 +391,23 @@ export class EngineGateway {
             sceneObject.setScale(model.scale);
         if (model.visible !== undefined)
             sceneObject.setVisibility(model.visible);
-        if (model.material !== undefined)
-            sceneObject.setMaterial(model.material);
+        if (model.material !== undefined && model.material !== null)
+            sceneObject
+                .requireComponent(MeshComponent)
+                .setMaterial(model.material);
         if (model.parentId !== undefined)
             this._setParent({ ...model, parentId: model.parentId });
     }
 
     private _applyPrimitive(
-        sceneObject: DIVEPrimitive,
+        sceneObject: DIVENode,
         primitive: PartialSchema<PrimitiveSchema>,
     ): void {
         if (primitive.name !== undefined) sceneObject.name = primitive.name;
-        if (primitive.geometry !== undefined)
-            sceneObject.setGeometry(primitive.geometry);
+        if (primitive.geometry !== undefined && primitive.geometry !== null)
+            sceneObject
+                .requireComponent(PrimitiveMeshComponent)
+                .setGeometry(primitive.geometry);
         if (primitive.position !== undefined && primitive.position !== null)
             sceneObject.setPosition(primitive.position);
         if (primitive.rotation !== undefined && primitive.rotation !== null)
@@ -398,8 +416,10 @@ export class EngineGateway {
             sceneObject.setScale(primitive.scale);
         if (primitive.visible !== undefined)
             sceneObject.setVisibility(primitive.visible);
-        if (primitive.material !== undefined)
-            sceneObject.setMaterial(primitive.material);
+        if (primitive.material !== undefined && primitive.material !== null)
+            sceneObject
+                .requireComponent(MeshComponent)
+                .setMaterial(primitive.material);
         if (primitive.parentId !== undefined)
             this._setParent({ ...primitive, parentId: primitive.parentId });
     }

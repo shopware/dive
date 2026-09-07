@@ -1,12 +1,12 @@
 import { type EngineGateway } from '../../../EngineGateway.ts';
 import { DropItAction } from '../dropit.ts';
-import { DIVEModel, DIVE } from '@shopware-ag/dive';
+import { DIVENode, DIVE } from '@shopware-ag/dive';
 import { type EntitySchema } from '../../../../types/index.ts';
 
 const mockModel = {
-    isDIVEModel: true,
+    isDIVENode: true,
     dropIt: vi.fn(),
-} as unknown as DIVEModel;
+} as unknown as DIVENode;
 
 const mockGateway = {
     findEntity: vi.fn().mockReturnValue(mockModel),
@@ -97,7 +97,7 @@ describe('DropItAction', () => {
         );
     });
 
-    it('should throw error if object is not a DIVEModel', async () => {
+    it('should throw error if object is not a DIVENode', async () => {
         const testObject: EntitySchema = {
             id: 'test-object',
             entityType: 'model',
@@ -113,11 +113,11 @@ describe('DropItAction', () => {
         // Add the object first
         mockRegistered.set(testObject.id, testObject);
 
-        const mockDIVEModel = {
-            // isDIVEModel: true <= specifically not set
+        const mockDIVENode = {
+            // isDIVENode: true <= specifically not set
             dropIt: vi.fn(),
-        } as unknown as DIVEModel;
-        vi.mocked(mockGateway.findEntity).mockReturnValue(mockDIVEModel);
+        } as unknown as DIVENode;
+        vi.mocked(mockGateway.findEntity).mockReturnValue(mockDIVENode);
 
         const action = new DropItAction(
             { id: 'test-object' },
@@ -129,7 +129,7 @@ describe('DropItAction', () => {
 
         // Execute action and expect error
         expect(() => action.execute()).toThrow(
-            `Object with id test-object is not a DIVEModel. Object: ${mockDIVEModel}`,
+            `Object with id test-object is not a DIVENode. Object: ${mockDIVENode}`,
         );
     });
 });

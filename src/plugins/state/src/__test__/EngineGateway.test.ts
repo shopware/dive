@@ -8,7 +8,9 @@ import {
     DIVEGeometryType,
     HemisphereLightComponent,
     MemberLinksComponent,
+    MeshComponent,
     PointLightComponent,
+    PrimitiveMeshComponent,
     type DIVE,
 } from '@shopware-ag/dive';
 import { type State } from '../State.ts';
@@ -31,6 +33,25 @@ import { Color, Object3D, Vector3 } from 'three/webgpu';
  * enrolment in sync -- and a hand-rolled stand-in with `addEventListener:
  * vi.fn()` silently drops all of it.
  */
+
+/**
+ * The asset loader is mocked, not the mesh component: model entities now use the
+ * real `MeshComponent`, and only the network fetch has to be replaced.
+ */
+const loadAsset = vi.fn(async () => {
+    const { Object3D, Mesh, BoxGeometry, MeshStandardMaterial } =
+        await vi.importActual<typeof import('three/webgpu')>('three/webgpu');
+    const gltf = new Object3D();
+    gltf.add(new Mesh(new BoxGeometry(1, 1, 1), new MeshStandardMaterial()));
+    return gltf;
+});
+
+vi.mock('@shopware-ag/dive/assetloader', () => ({
+    AssetLoader: vi.fn(function (this: Record<string, unknown>) {
+        this.load = loadAsset;
+        return this;
+    }),
+}));
 
 /**
  * The component mocks below all build on a REAL `Object3D` rather than a
@@ -69,46 +90,6 @@ vi.mock('../../../../components/grid/Grid', async () => {
                 self.visible = visible;
             });
             self.dispose = vi.fn();
-            return self;
-        }),
-    };
-});
-
-vi.mock('../../../../components/model/Model', async () => {
-    // built on the real DIVENode: `nodes`, the component registry and the tree
-    // events all have to behave, only the asset/material calls are spied
-    const { DIVENode } = await vi.importActual<
-        typeof import('../../../../components/node/Node.ts')
-    >('../../../../components/node/Node.ts');
-    return {
-        DIVEModel: vi.fn(function () {
-            const self = new DIVENode() as any;
-            self.isDIVEModel = true;
-            self.setFromGLTF = vi.fn();
-            // mirrors the real Model: the load is reported from inside
-            // setFromURL, which is why listeners must be wired up first
-            self.setFromURL = vi.fn(async () => {
-                self.dispatchEvent({ type: 'object-load' });
-                return self;
-            });
-            self.setMaterial = vi.fn();
-            self.dropIt = vi.fn();
-            return self;
-        }),
-    };
-});
-
-vi.mock('../../../../components/primitive/Primitive', async () => {
-    const { DIVENode } = await vi.importActual<
-        typeof import('../../../../components/node/Node.ts')
-    >('../../../../components/node/Node.ts');
-    return {
-        DIVEPrimitive: vi.fn(function () {
-            const self = new DIVENode() as any;
-            self.isDIVEPrimitive = true;
-            self.setGeometry = vi.fn();
-            self.setMaterial = vi.fn();
-            self.dropIt = vi.fn();
             return self;
         }),
     };
@@ -452,7 +433,11 @@ describe('plugins/state/EngineGateway', () => {
             expectVec(model?.rotation, modelData.rotation);
             expectVec(model?.scale, modelData.scale);
             expect(model?.visible).toBe(modelData.visible);
-            expect(model?.setMaterial).toHaveBeenCalledWith(modelData.material);
+            expect(
+                model
+                    ?.requireComponent(MeshComponent)
+                    .material?.color.getHexString(),
+            ).toBe('ffffff');
         });
 
         it('should update all primitive properties', async () => {
@@ -474,16 +459,19 @@ describe('plugins/state/EngineGateway', () => {
             const primitive = findEntity(gateway, primitiveData);
             expect(primitive).toBeDefined();
             expect(primitive?.name).toBe('Test Primitive');
-            expect(primitive?.setGeometry).toHaveBeenCalledWith(
-                primitiveData.geometry,
-            );
+            expect(
+                primitive?.requireComponent(PrimitiveMeshComponent).mesh
+                    ?.geometry.attributes.position,
+            ).toBeDefined();
             expectVec(primitive?.position, primitiveData.position);
             expectVec(primitive?.rotation, primitiveData.rotation);
             expectVec(primitive?.scale, primitiveData.scale);
             expect(primitive?.visible).toBe(primitiveData.visible);
-            expect(primitive?.setMaterial).toHaveBeenCalledWith(
-                primitiveData.material,
-            );
+            expect(
+                primitive
+                    ?.requireComponent(MeshComponent)
+                    .material?.color.getHexString(),
+            ).toBe('ffffff');
         });
 
         it('should update all group properties', async () => {
@@ -722,9 +710,10 @@ describe('plugins/state/EngineGateway', () => {
             };
 
             await gateway.updateEntity(updatedData);
-            expect((primitive as any).setGeometry).toHaveBeenCalledWith(
-                updatedData.geometry,
-            );
+            expect(
+                (primitive as DIVENode).requireComponent(PrimitiveMeshComponent)
+                    .mesh?.geometry.attributes.position,
+            ).toBeDefined();
         });
 
         it('should update existing group properties', async () => {
@@ -1297,14 +1286,14 @@ describe('plugins/state/EngineGateway', () => {
             const gateway = makeGateway();
             const model = await addModel(gateway, 'a.glb');
 
-            expect(model.setFromURL).toHaveBeenCalledWith('a.glb');
+            expect(loadAsset).toHaveBeenCalledWith('a.glb');
             expect(model.userData.uri).toBe('a.glb');
         });
 
         it('should not fetch the asset again when the uri is unchanged', async () => {
             const gateway = makeGateway();
             const model = await addModel(gateway, 'a.glb');
-            model.setFromURL.mockClear();
+            loadAsset.mockClear();
 
             await gateway.updateEntity({
                 id: 'model-1',
@@ -1313,7 +1302,7 @@ describe('plugins/state/EngineGateway', () => {
                 position: { x: 1, y: 2, z: 3 },
             });
 
-            expect(model.setFromURL).not.toHaveBeenCalled();
+            expect(loadAsset).not.toHaveBeenCalled();
             // the rest of the patch still applies
             expectVec(model.position, { x: 1, y: 2, z: 3 });
         });
@@ -1321,7 +1310,7 @@ describe('plugins/state/EngineGateway', () => {
         it('should fetch the asset when the uri changed', async () => {
             const gateway = makeGateway();
             const model = await addModel(gateway, 'a.glb');
-            model.setFromURL.mockClear();
+            loadAsset.mockClear();
 
             await gateway.updateEntity({
                 id: 'model-1',
@@ -1329,7 +1318,7 @@ describe('plugins/state/EngineGateway', () => {
                 uri: 'b.glb',
             });
 
-            expect(model.setFromURL).toHaveBeenCalledWith('b.glb');
+            expect(loadAsset).toHaveBeenCalledWith('b.glb');
             expect(model.userData.uri).toBe('b.glb');
         });
     });
