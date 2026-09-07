@@ -124,7 +124,30 @@ export class State {
         const existingIndex = State.__instances.indexOf(this);
         if (existingIndex === -1) return false;
         State.__instances.splice(existingIndex, 1);
+
+        /**
+         * every watchEntity teardown lives in the registry, and dropping the
+         * gateway's map does not run them: the listeners would stay on the nodes
+         * and go on reporting into a state nobody uses any more
+         */
+        this.registry.clear();
+
+        // and the subscribers, which are consumer closures this no longer serves
+        this.listeners.clear();
+
+        /**
+         * the lazy modules are this state's to take down, because they are this
+         * state's to build: a Toolbox listens on the canvas and puts a gizmo in
+         * the scene from its constructor, and an AnimationSystem holds animators
+         *
+         * awaited rather than checked, so a module still being imported is torn
+         * down as soon as it arrives
+         */
+        void this._toolbox?.then((toolbox) => toolbox.dispose());
+        void this._animationSystem?.then((system) => system.dispose());
+
         this.gateway.dispose();
+
         return true;
     }
 

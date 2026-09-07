@@ -248,6 +248,47 @@ describe('plugins/state/State reporting to subscribers', () => {
         });
     });
 
+    describe('after the state is destroyed', () => {
+        it('should stop reporting to subscribers', async () => {
+            /**
+             * the registry holds every watchEntity teardown, so a state that
+             * forgets to clear it leaves the listeners on the nodes -- reporting
+             * into a state nobody uses any more
+             */
+            const onUpdate = vi.fn();
+            state.subscribe('UPDATE_OBJECT', onUpdate);
+
+            state.destroyInstance();
+            node.onMove();
+
+            expect(onUpdate).not.toHaveBeenCalled();
+        });
+
+        it('should leave no listener on the nodes it watched', async () => {
+            // the consequence above, seen directly on the node
+            state.destroyInstance();
+
+            const listeners = (
+                node as unknown as {
+                    _listeners?: Record<string, unknown[] | undefined>;
+                }
+            )._listeners;
+            expect(listeners?.['object-transform']?.length ?? 0).toBe(0);
+        });
+
+        it('should forget its subscribers', async () => {
+            const onUpdate = vi.fn();
+            state.subscribe('UPDATE_OBJECT', onUpdate);
+
+            state.destroyInstance();
+
+            expect(
+                (state as unknown as { listeners: Map<string, unknown[]> })
+                    .listeners.size,
+            ).toBe(0);
+        });
+    });
+
     describe('how many notifications one action produces', () => {
         /**
          * one per object that actually changed, and no more, the write path used to
