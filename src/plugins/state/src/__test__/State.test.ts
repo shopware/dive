@@ -5,18 +5,15 @@ vi.mock('three/webgpu', async (importOriginal) => {
 });
 
 import { State } from '../State.ts';
-import {
-    DIVE,
-    DIVEPerspectiveCamera,
-    DIVEScene,
-    DIVESettings,
-} from '@shopware-ag/dive';
+import { DIVE, DIVEScene, DIVESettings } from '@shopware-ag/dive';
 import { OrbitController } from '@shopware-ag/dive/orbitcontroller';
 import { Toolbox } from '@shopware-ag/dive/toolbox';
 import { getActionClass } from '../ActionRegistry.ts';
 import { Action } from '../actions/action.ts';
 import { type ActionDependencies } from '../../types/index.ts';
-import { type Vector3Like } from 'three/webgpu';
+import { PerspectiveCamera, type Vector3Like } from 'three/webgpu';
+import { DIVENode } from '../../../../components/node/Node.ts';
+import { PerspectiveCameraComponent } from '../../../../components/camera/PerspectiveCameraComponent.ts';
 
 // Extend the global ActionTypes interface for our tests
 declare global {
@@ -169,44 +166,14 @@ vi.mock('../../toolbox/Toolbox.ts', () => ({
     })),
 }));
 vi.mock('../ActionRegistry');
-vi.mock(
-    import('../../../../engine/camera/PerspectiveCamera.ts'),
-    async (importOriginal) => {
-        const actual = await importOriginal();
-        const MockDIVEPerspectiveCamera = vi.fn().mockImplementation(() => ({
-            uuid: 'mock-perspective-camera-uuid',
-        }));
-
-        // Explicitly define static properties
-        (MockDIVEPerspectiveCamera as any).EDITOR_VIEW_LAYER_MASK = (
-            actual.DIVEPerspectiveCamera as any
-        ).EDITOR_VIEW_LAYER_MASK;
-        (MockDIVEPerspectiveCamera as any).LIVE_VIEW_LAYER_MASK = (
-            actual.DIVEPerspectiveCamera as any
-        ).LIVE_VIEW_LAYER_MASK;
-        (MockDIVEPerspectiveCamera as any).DEFAULT_UP = (
-            actual.DIVEPerspectiveCamera as any
-        ).DEFAULT_UP;
-        (MockDIVEPerspectiveCamera as any).DEFAULT_MATRIX_AUTO_UPDATE = (
-            actual.DIVEPerspectiveCamera as any
-        ).DEFAULT_MATRIX_AUTO_UPDATE;
-        (MockDIVEPerspectiveCamera as any).DEFAULT_MATRIX_WORLD_AUTO_UPDATE = (
-            actual.DIVEPerspectiveCamera as any
-        ).DEFAULT_MATRIX_WORLD_AUTO_UPDATE;
-
-        return {
-            ...actual,
-            DIVEPerspectiveCamera:
-                MockDIVEPerspectiveCamera as unknown as typeof actual.DIVEPerspectiveCamera,
-        };
-    },
-);
 describe('modules/state/State', () => {
     let state: State;
     let mockDive: DIVE;
     let mockController: OrbitController;
     let mockToolbox: Toolbox;
-    let mockCamera: DIVEPerspectiveCamera;
+    let mockCamera: PerspectiveCamera;
+    let cameraNode: DIVENode;
+    let cameraComponent: PerspectiveCameraComponent;
     let mockScene: DIVEScene;
 
     beforeEach(() => {
@@ -219,12 +186,18 @@ describe('modules/state/State', () => {
             displayAxes: false,
         };
 
-        mockCamera = new DIVEPerspectiveCamera();
+        // a camera component on a node, the way the engine builds it: the
+        // controller moves the node, so it has to be attached
+        cameraNode = new DIVENode();
+        cameraComponent = cameraNode.addComponent(
+            new PerspectiveCameraComponent(),
+        );
+        mockCamera = cameraComponent.camera;
         mockScene = new DIVEScene();
         mockDive = new DIVE(diveSettings);
 
         const mockCanvas = document.createElement('canvas');
-        mockController = new OrbitController(mockCamera, mockCanvas);
+        mockController = new OrbitController(cameraComponent, mockCanvas);
 
         state = new State(mockDive, mockController);
     });
@@ -785,7 +758,7 @@ describe('modules/state/State', () => {
                 displayAxes: false,
             });
             const otherController = new OrbitController(
-                new DIVEPerspectiveCamera(),
+                cameraComponent,
                 document.createElement('canvas'),
             );
             const otherState = new State(otherDive, otherController);

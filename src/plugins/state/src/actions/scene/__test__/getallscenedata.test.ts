@@ -1,4 +1,7 @@
-import { makeActionDeps } from '../../../__test__/actionDeps.ts';
+import {
+    makeActionDeps,
+    makeCameraController,
+} from '../../../__test__/actionDeps.ts';
 import { type EngineGateway } from '../../../EngineGateway.ts';
 import { GetAllSceneDataAction } from '../getallscenedata.ts';
 import {
@@ -24,12 +27,7 @@ describe('GetAllSceneDataAction', () => {
             })),
         } as unknown as EngineGateway;
 
-        const mockController = {
-            object: {
-                position: new Vector3(0, 0, 0),
-            },
-            target: new Vector3(0, 0, 0),
-        } as unknown as OrbitController;
+        const mockController = makeCameraController();
 
         const deps = makeActionDeps();
 

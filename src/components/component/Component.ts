@@ -37,10 +37,35 @@ export abstract class DIVEComponent extends Object3D {
     readonly isDIVEComponent: true = true;
 
     /**
-     * The node this component is attached to, or `null` while detached.
+     * The node this component is attached to.
+     *
+     * Throws while the component is detached, rather than handing out a `null`
+     * that every consumer has to rule out. This is Unreal's `check(GetOwner())`:
+     * there, too, a component can exist before it is registered, and code that
+     * needs the owner asserts instead of branching. Unity's route -- a
+     * non-nullable `Component.gameObject`, because `new MonoBehaviour()` is
+     * forbidden and `AddComponent` is the only way in -- is closed to us by rule
+     * 3 above: cloning needs a constructor that takes nothing, so a detached
+     * component has to be constructible.
+     *
+     * Ask {@link isAttached} when a detached component is a case to handle rather
+     * than a mistake.
      */
-    public get owner(): DIVENode | null {
+    public get owner(): DIVENode {
+        if (!this._owner) {
+            throw new Error(
+                `${this.constructor.name} is not attached to a node. Add it to one with DIVENode.addComponent before using it.`,
+            );
+        }
+
         return this._owner;
+    }
+
+    /**
+     * Whether this component is attached to a node.
+     */
+    public get isAttached(): boolean {
+        return this._owner !== null;
     }
     private _owner: DIVENode | null = null;
 
@@ -156,4 +181,30 @@ export type DIVEComponentClass<T extends DIVEComponent = DIVEComponent> =
  */
 export function isDIVEComponent(object: Object3D): object is DIVEComponent {
     return 'isDIVEComponent' in object;
+}
+
+/**
+ * Walks **up** from an object to the component that contains it.
+ *
+ * The counterpart to `DIVENode.getComponent`, which looks at a node's own
+ * components: this starts anywhere inside one and finds the component itself.
+ * That is how a caller holding only what a component owns gets back to it -- an
+ * `OrbitController` hands out its camera, and `setCameraLayer` lives on the
+ * camera's component.
+ *
+ * Matches with `instanceof`, so an abstract base finds its subclasses.
+ *
+ * @param object - Where to start, typically something a component owns.
+ * @param Ctor - The component class to look for.
+ */
+export function findComponent<T extends DIVEComponent>(
+    object: Object3D,
+    Ctor: DIVEComponentClass<T>,
+): T | undefined {
+    let current: Object3D | null = object;
+    while (current) {
+        if (current instanceof Ctor) return current;
+        current = current.parent;
+    }
+    return undefined;
 }

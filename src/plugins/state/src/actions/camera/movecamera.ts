@@ -56,7 +56,7 @@ export const MoveCameraAction = Action.define<
         const animator = await animationSystem.fromTargets(
             [
                 {
-                    object: controller.object.position,
+                    object: controller.object.owner.position,
                     to: position,
                 },
                 {
@@ -68,7 +68,7 @@ export const MoveCameraAction = Action.define<
             {
                 easing: animationSystem.Easing.Quadratic.Out,
                 onUpdate: () => {
-                    controller.object.lookAt(controller.target);
+                    controller.object.aimAt(controller.target);
                 },
                 onComplete: () => {
                     controller.enabled = !payload.locked;

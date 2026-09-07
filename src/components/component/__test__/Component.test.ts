@@ -56,7 +56,14 @@ describe('dive/component/DIVEComponent', () => {
     });
 
     it('should start without an owner', () => {
-        expect(new TestComponent().owner).toBeNull();
+        expect(new TestComponent().isAttached).toBe(false);
+    });
+
+    it('should refuse to hand out an owner it does not have', () => {
+        // rather than a null every consumer would have to rule out
+        expect(() => new TestComponent().owner).toThrow(
+            /TestComponent is not attached to a node/,
+        );
     });
 
     it('should report its owner once attached', () => {
@@ -77,7 +84,7 @@ describe('dive/component/DIVEComponent', () => {
         node.removeComponent(component);
 
         // three clears `parent` before dispatching `removed`, hence the argument
-        expect(component.owner).toBeNull();
+        expect(component.isAttached).toBe(false);
         expect(component.detachedFrom).toBe(node);
     });
 
@@ -87,8 +94,20 @@ describe('dive/component/DIVEComponent', () => {
 
         plain.add(component);
 
-        expect(component.owner).toBeNull();
+        expect(component.isAttached).toBe(false);
         expect(component.attachedTo).toBeNull();
+    });
+
+    it('should not report a detach it never attached for', () => {
+        // three fires `removed` whatever the parent was, so leaving a plain
+        // Object3D reaches the handler with no owner to report
+        const plain = new Object3D();
+        const component = new TestComponent();
+        plain.add(component);
+
+        plain.remove(component);
+
+        expect(component.detachedFrom).toBeNull();
     });
 
     it('should re-target its owner when moved between nodes', () => {

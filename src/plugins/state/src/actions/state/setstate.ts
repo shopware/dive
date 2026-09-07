@@ -7,6 +7,7 @@ import { type EntitySchema } from '../../../types/index.ts';
 import {
     AddObjectAction,
     DeleteObjectAction,
+    SetCameraTransformAction,
     SetParentAction,
 } from '@shopware-ag/dive/state';
 
@@ -37,15 +38,16 @@ export const SetStateAction = Action.define<
         // one call instead of a hand-written copy per property, which is how
         // gridEnabled went missing here while updatescene had it
         gateway.applySceneSettings(_payload);
+        // the same move SET_CAMERA_TRANSFORM makes, so it is that action rather
+        // than a second copy of it
         _payload.userCamera !== undefined &&
-            controller.setState({
-                position: _payload.userCamera.position,
-                target: _payload.userCamera.target,
-                azimuthalAngle: controller.getState().azimuthalAngle,
-                polarAngle: controller.getState().polarAngle,
-                distance: controller.getState().distance,
-                quaternion: controller.getState().quaternion,
-            });
+            new SetCameraTransformAction(
+                {
+                    position: _payload.userCamera.position,
+                    target: _payload.userCamera.target,
+                },
+                { controller },
+            ).execute();
 
         /** What was created, in the order the entities finished loading. Entity types without a scene object, currently cameras, contribute nothing. */
         const objects: DIVESceneObject[] = [];

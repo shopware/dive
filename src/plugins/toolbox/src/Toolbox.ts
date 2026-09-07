@@ -288,7 +288,10 @@ export class Toolbox {
         this._pointer.x = (e.offsetX / this._canvas.clientWidth) * 2 - 1;
         this._pointer.y = -(e.offsetY / this._canvas.clientHeight) * 2 + 1;
 
-        this._raycaster.setFromCamera(this._pointer, this._controller.object);
+        this._raycaster.setFromCamera(
+            this._pointer,
+            this._controller.object.camera,
+        );
     }
 
     private updatePointerState(e: PointerEvent, isDown: boolean): void {

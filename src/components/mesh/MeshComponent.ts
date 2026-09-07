@@ -53,7 +53,10 @@ export class MeshComponent extends DIVEComponent {
         const gltf = await assetLoader.load(url);
         this.setFromGLTF(gltf);
 
-        this.owner?.dispatchEvent({ type: 'object-load' });
+        // a component nobody has attached yet has nobody to tell
+        if (this.isAttached) {
+            this.owner.dispatchEvent({ type: 'object-load' });
+        }
 
         return this;
     }
@@ -80,7 +83,9 @@ export class MeshComponent extends DIVEComponent {
         // The owner's layer decides what this geometry counts as. There may be no
         // owner yet when a caller builds the component before attaching it, in
         // which case product geometry is the sensible default.
-        const layerMask = this.owner?.layers.mask ?? PRODUCT_LAYER_MASK;
+        const layerMask = this.isAttached
+            ? this.owner.layers.mask
+            : PRODUCT_LAYER_MASK;
 
         let root: Object3D | null = null;
 
@@ -114,8 +119,8 @@ export class MeshComponent extends DIVEComponent {
 
         // The glTF root's own transform belongs to the node, not to this
         // component: components sit at their owner's transform.
-        const owner = this.owner;
-        if (owner) {
+        if (this.isAttached) {
+            const owner = this.owner;
             owner.position.copy(root.position);
             owner.quaternion.copy(root.quaternion);
             owner.scale.copy(root.scale);

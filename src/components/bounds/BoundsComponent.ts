@@ -95,7 +95,7 @@ export class BoundsComponent extends DIVEComponent {
             ? Array.isArray(target)
                 ? target
                 : [target]
-            : this.owner
+            : this.isAttached
               ? [this.owner]
               : [];
 

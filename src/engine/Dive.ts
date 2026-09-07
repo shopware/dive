@@ -7,10 +7,11 @@ import {
     DIVESceneSettings,
 } from './scene/Scene.ts';
 import {
-    DIVEPerspectiveCamera,
     DIVEPerspectiveCameraDefaultSettings,
     DIVEPerspectiveCameraSettings,
-} from './camera/PerspectiveCamera.ts';
+    PerspectiveCameraComponent,
+} from '../components/camera/PerspectiveCameraComponent.ts';
+import { DIVENode } from '../components/node/Node.ts';
 import {
     DIVERendererDefaultSettings,
     DIVERendererSettings,
@@ -150,9 +151,26 @@ export class DIVE {
         this._clock.addTicker(this._scene);
 
         // set up main view
+        //
+        // The camera is a node with a component, like everything else in the
+        // scene, and it is added to the scene rather than left dangling: three
+        // only updates a camera's world matrix itself while the camera has no
+        // parent, and this one's parent is its component. Outside the graph
+        // nobody would ever compute where it is.
+        //
+        // Added to the scene and not to `root`, which is where entities live: this
+        // camera belongs to the viewer, not to the scene's content.
+        const cameraNode = new DIVENode();
+        cameraNode.name = 'DIVECamera';
+        const cameraComponent = cameraNode.addComponent(
+            new PerspectiveCameraComponent(),
+        );
+        cameraComponent.applySettings(this._settings);
+        this._scene.add(cameraNode);
+
         const mainView = new DIVEView(
             this._scene,
-            new DIVEPerspectiveCamera(),
+            cameraComponent,
             this._settings,
         );
         this._clock.addTicker(mainView);
@@ -169,7 +187,7 @@ export class DIVE {
                     this._orientationDisplay = new OrientationDisplay(
                         this.mainView.renderer,
                         this.scene,
-                        this.mainView.camera,
+                        this.mainView.cameraComponent,
                     );
                     this._clock.addTicker(this._orientationDisplay);
                 },

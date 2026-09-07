@@ -1,12 +1,8 @@
 import { OrbitController } from '../OrbitController.ts';
-import {
-    DIVEPerspectiveCamera,
-    DIVERenderer,
-    DIVEScene,
-    BoundsComponent,
-} from '@shopware-ag/dive';
+import { DIVERenderer, DIVEScene, BoundsComponent } from '@shopware-ag/dive';
 import {
     Box3,
+    Camera,
     Vector3,
     Object3D,
     Sphere,
@@ -16,24 +12,59 @@ import {
     TOUCH,
 } from 'three/webgpu';
 
+import { DIVENode } from '../../../../components/node/Node.ts';
+import { DIVECameraComponent } from '../../../../components/camera/CameraComponent.ts';
+import { PerspectiveCameraComponent } from '../../../../components/camera/PerspectiveCameraComponent.ts';
+
 // Add a real canvas for the controls domElement
 const canvas = document.createElement('canvas');
 
+/**
+ * Stands in for the orthographic component that does not exist yet.
+ *
+ * Also proves the base class carries a second kind of camera, which is what it
+ * exists for.
+ */
+class TestUnknownCameraComponent extends DIVECameraComponent {
+    constructor() {
+        super(new Camera());
+    }
+
+    public onResize(): void {}
+}
+
+class TestOrthographicCameraComponent extends DIVECameraComponent {
+    constructor() {
+        super(new OrthographicCamera(-1, 1, 1, -1, 0.1, 100));
+    }
+
+    public onResize(): void {}
+}
+
+/** A camera component on a node, the way the engine builds one. */
+function attach<T extends DIVECameraComponent>(component: T): T {
+    new DIVENode().addComponent(component);
+
+    return component;
+}
+
+/**
+ * A camera-shaped stand-in.
+ *
+ * The controller only reads and writes these few fields, and it takes a three
+ * camera now rather than a DIVE class -- the camera is a component, and what the
+ * controller drives is the camera the component owns.
+ */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function makeCamera(): PerspectiveCameraComponent {
+    const component = attach(new PerspectiveCameraComponent());
+    component.owner!.position.set(0, 2, 2);
+
+    return component;
+}
+
 vi.mock('@shopware-ag/dive', () => {
     return {
-        DIVEPerspectiveCamera: vi.fn(function (this: any) {
-            this.isPerspectiveCamera = true;
-            this.position = new Vector3(0, 2, 2);
-            this.up = new Vector3(0, 1, 0);
-            this.lookAt = vi.fn();
-            this.quaternion = new Quaternion();
-            this.zoom = 1;
-            this.fov = 75;
-            this.aspect = 1;
-            this.updateProjectionMatrix = vi.fn();
-            this.matrix = new Matrix4();
-            return this;
-        }),
         BoundsComponent: vi.fn(function (this: any) {
             this.center = new Vector3(0, 0, 0);
             this.sphere = {
@@ -79,7 +110,7 @@ vi.mock('@shopware-ag/dive', () => {
     };
 });
 
-const mockCamera = new DIVEPerspectiveCamera();
+const mockCamera = makeCamera();
 const mockRenderer = new DIVERenderer(new DIVEScene(), mockCamera);
 
 let controller: OrbitController;
@@ -162,10 +193,9 @@ describe('modules/controller/orbit/OrbitController', () => {
         });
 
         it('should work with OrthographicCamera', () => {
-            const orthoCamera = new OrthographicCamera(-1, 1, -1, 1, 0.1, 1000);
-            orthoCamera.lookAt = vi.fn(); // Add lookAt method to mock
-            controller = new OrbitController(orthoCamera, mockRenderer.canvas);
-            expect(controller.object).toBe(orthoCamera);
+            const ortho = attach(new TestOrthographicCameraComponent());
+            controller = new OrbitController(ortho, mockRenderer.canvas);
+            expect(controller.object).toBe(ortho);
         });
     });
 
@@ -293,9 +323,11 @@ describe('modules/controller/orbit/OrbitController', () => {
         it('should handle no changes', () => {
             controller.enabled = true;
             // Mock the lastPosition, lastQuaternion, and lastTarget to be the same
-            (controller as any).lastPosition.copy(controller.object.position);
+            (controller as any).lastPosition.copy(
+                controller.object.owner!.position,
+            );
             (controller as any).lastQuaternion.copy(
-                controller.object.quaternion,
+                controller.object.owner!.quaternion,
             );
             (controller as any).lastTarget.copy(controller.target);
             const result = controller.update();
@@ -419,7 +451,7 @@ describe('modules/controller/orbit/OrbitController', () => {
             const mockObject = new Object3D();
             const box = new BoundsComponent().setTarget(mockObject);
             // Set camera and target to same position to test zero length direction
-            controller.object.position.set(0, 0, 0);
+            controller.object.owner!.position.set(0, 0, 0);
             controller.target.set(0, 0, 0);
             const result = controller.computeEncompassingView(box);
             expect(result).toBeDefined();
@@ -471,11 +503,11 @@ describe('modules/controller/orbit/OrbitController', () => {
             const object = new Object3D();
 
             controller.focusObject([object]);
-            const fromList = controller.object.position.clone();
+            const fromList = controller.object.owner!.position.clone();
 
             controller.focusObject(object);
 
-            expect(controller.object.position).toEqual(fromList);
+            expect(controller.object.owner!.position).toEqual(fromList);
         });
 
         it('should move camera and target onto the computed view', () => {
@@ -490,9 +522,9 @@ describe('modules/controller/orbit/OrbitController', () => {
 
             // update() rebuilds the position from spherical coordinates, so it
             // only lands on the computed one within floating point tolerance
-            expect(controller.object.position.x).toBeCloseTo(position.x);
-            expect(controller.object.position.y).toBeCloseTo(position.y);
-            expect(controller.object.position.z).toBeCloseTo(position.z);
+            expect(controller.object.owner!.position.x).toBeCloseTo(position.x);
+            expect(controller.object.owner!.position.y).toBeCloseTo(position.y);
+            expect(controller.object.owner!.position.z).toBeCloseTo(position.z);
             expect(controller.target).toEqual(target);
         });
 
@@ -750,8 +782,7 @@ describe('modules/controller/orbit/OrbitController', () => {
             const consoleSpy = vi
                 .spyOn(console, 'warn')
                 .mockImplementation(() => {});
-            const unknownCamera = { someProperty: 'unknown' };
-            controller.object = unknownCamera as any;
+            controller.object = attach(new TestUnknownCameraComponent());
 
             (controller as any).dollyIn(1.5);
             expect(consoleSpy).toHaveBeenCalled();
@@ -763,9 +794,8 @@ describe('modules/controller/orbit/OrbitController', () => {
 
     describe('Camera Type Handling', () => {
         it('should handle PerspectiveCamera in pan method', () => {
-            const perspectiveCamera = new DIVEPerspectiveCamera();
-            perspectiveCamera.fov = 75;
-            perspectiveCamera.matrix = new Matrix4();
+            const perspectiveCamera = makeCamera();
+            perspectiveCamera.camera.fov = 75;
             controller.object = perspectiveCamera;
 
             const element = document.createElement('canvas');
@@ -782,15 +812,8 @@ describe('modules/controller/orbit/OrbitController', () => {
         });
 
         it('should handle OrthographicCamera in pan method', () => {
-            const orthoCamera = new OrthographicCamera(-1, 1, -1, 1, 0.1, 1000);
-            orthoCamera.right = 1;
-            orthoCamera.left = -1;
-            orthoCamera.top = 1;
-            orthoCamera.bottom = -1;
-            orthoCamera.zoom = 1;
-            orthoCamera.matrix = new Matrix4();
-            orthoCamera.lookAt = vi.fn(); // Add lookAt method
-            controller.object = orthoCamera;
+            const ortho = attach(new TestOrthographicCameraComponent());
+            controller.object = ortho;
 
             const element = document.createElement('canvas');
             Object.defineProperty(element, 'clientWidth', {
@@ -813,14 +836,7 @@ describe('modules/controller/orbit/OrbitController', () => {
             const consoleSpy = vi
                 .spyOn(console, 'warn')
                 .mockImplementation(() => {});
-            const unknownCamera = {
-                someProperty: 'unknown',
-                position: new Vector3(),
-                matrix: new Matrix4(),
-                lookAt: vi.fn(), // Add lookAt method
-                quaternion: new Quaternion(), // Add quaternion
-            };
-            controller.object = unknownCamera as any;
+            controller.object = attach(new TestUnknownCameraComponent());
 
             const element = document.createElement('canvas');
             Object.defineProperty(element, 'clientHeight', {
@@ -837,17 +853,14 @@ describe('modules/controller/orbit/OrbitController', () => {
         });
 
         it('should handle pan with orthographic camera', () => {
-            const orthoCamera = new OrthographicCamera(-1, 1, 1, -1, 0.1, 100);
-            (orthoCamera as any).isOrthographicCamera = true;
-            controller.object = orthoCamera;
+            controller.object = attach(new TestOrthographicCameraComponent());
             const panSpy = vi.spyOn(controller as any, 'pan');
             (controller as any).pan(10, 10, canvas);
             expect(panSpy).toHaveBeenCalled();
         });
 
         it('should handle pan with unknown camera', () => {
-            const unknownCamera = { position: new Vector3() };
-            controller.object = unknownCamera as any;
+            controller.object = attach(new TestUnknownCameraComponent());
             const spyWarn = vi
                 .spyOn(console, 'warn')
                 .mockImplementation(() => {});
@@ -858,17 +871,14 @@ describe('modules/controller/orbit/OrbitController', () => {
         });
 
         it('should handle dollyOut with orthographic camera', () => {
-            const orthoCamera = new OrthographicCamera(-1, 1, 1, -1, 0.1, 100);
-            (orthoCamera as any).isOrthographicCamera = true;
-            controller.object = orthoCamera;
+            controller.object = attach(new TestOrthographicCameraComponent());
             const dollyOutSpy = vi.spyOn(controller as any, 'dollyOut');
             (controller as any).dollyOut(2);
             expect(dollyOutSpy).toHaveBeenCalled();
         });
 
         it('should handle dollyOut with unknown camera', () => {
-            const unknownCamera = { position: new Vector3() };
-            controller.object = unknownCamera as any;
+            controller.object = attach(new TestUnknownCameraComponent());
             const spyWarn = vi
                 .spyOn(console, 'warn')
                 .mockImplementation(() => {});
@@ -1090,7 +1100,7 @@ describe('modules/controller/orbit/OrbitController', () => {
 
             // Test vector operations through the controller
             controller.target.copy(vector1);
-            controller.object.position.copy(vector2);
+            controller.object.owner!.position.copy(vector2);
 
             const distance = controller.getDistance();
             expect(typeof distance).toBe('number');
@@ -2436,7 +2446,7 @@ describe('modules/controller/orbit/OrbitController', () => {
         it('should handle complex spherical calculations', () => {
             controller.enabled = true;
             controller.target.set(1, 2, 3);
-            controller.object.position.set(4, 5, 6);
+            controller.object.owner!.position.set(4, 5, 6);
 
             const result = controller.update();
             expect(typeof result).toBe('boolean');
@@ -2444,7 +2454,7 @@ describe('modules/controller/orbit/OrbitController', () => {
 
         it('should handle quaternion operations', () => {
             controller.enabled = true;
-            controller.object.quaternion.setFromAxisAngle(
+            controller.object.owner!.quaternion.setFromAxisAngle(
                 new Vector3(0, 1, 0),
                 Math.PI / 4,
             );
@@ -2466,7 +2476,7 @@ describe('modules/controller/orbit/OrbitController', () => {
         it('should handle vector operations with extreme values', () => {
             controller.enabled = true;
             controller.target.set(1000, 2000, 3000);
-            controller.object.position.set(-1000, -2000, -3000);
+            controller.object.owner!.position.set(-1000, -2000, -3000);
 
             const result = controller.update();
             expect(typeof result).toBe('boolean');
@@ -2497,7 +2507,7 @@ describe('modules/controller/orbit/OrbitController', () => {
         it('should handle NaN values gracefully', () => {
             controller.enabled = true;
             controller.target.set(NaN, NaN, NaN);
-            controller.object.position.set(NaN, NaN, NaN);
+            controller.object.owner!.position.set(NaN, NaN, NaN);
 
             const result = controller.update();
             expect(typeof result).toBe('boolean');
@@ -2506,7 +2516,11 @@ describe('modules/controller/orbit/OrbitController', () => {
         it('should handle infinite values gracefully', () => {
             controller.enabled = true;
             controller.target.set(Infinity, -Infinity, Infinity);
-            controller.object.position.set(-Infinity, Infinity, -Infinity);
+            controller.object.owner!.position.set(
+                -Infinity,
+                Infinity,
+                -Infinity,
+            );
 
             const result = controller.update();
             expect(typeof result).toBe('boolean');
@@ -2515,7 +2529,7 @@ describe('modules/controller/orbit/OrbitController', () => {
         it('should handle zero values', () => {
             controller.enabled = true;
             controller.target.set(0, 0, 0);
-            controller.object.position.set(0, 0, 0);
+            controller.object.owner!.position.set(0, 0, 0);
 
             const result = controller.update();
             expect(typeof result).toBe('boolean');
@@ -2524,7 +2538,7 @@ describe('modules/controller/orbit/OrbitController', () => {
         it('should handle very small epsilon values', () => {
             controller.enabled = true;
             controller.target.set(0.000001, 0.000001, 0.000001);
-            controller.object.position.set(0.000001, 0.000001, 0.000001);
+            controller.object.owner!.position.set(0.000001, 0.000001, 0.000001);
 
             const result = controller.update();
             expect(typeof result).toBe('boolean');
@@ -2578,7 +2592,7 @@ describe('modules/controller/orbit/OrbitController', () => {
 
         it('should handle quaternion operations with extreme values', () => {
             controller.enabled = true;
-            controller.object.quaternion.set(Infinity, NaN, 0, 1);
+            controller.object.owner!.quaternion.set(Infinity, NaN, 0, 1);
 
             const result = controller.update();
             expect(typeof result).toBe('boolean');
@@ -2615,7 +2629,7 @@ describe('modules/controller/orbit/OrbitController', () => {
         it('should handle vector operations with extreme coordinates', () => {
             controller.enabled = true;
             controller.target.set(1e10, -1e10, 1e10);
-            controller.object.position.set(-1e10, 1e10, -1e10);
+            controller.object.owner!.position.set(-1e10, 1e10, -1e10);
 
             const result = controller.update();
             expect(typeof result).toBe('boolean');
@@ -2851,8 +2865,8 @@ describe('modules/controller/orbit/OrbitController', () => {
             };
 
             // Use the mock quaternion methods directly
-            controller.object.quaternion.copy = vi.fn().mockReturnThis();
-            controller.object.quaternion.setFromAxisAngle = vi
+            controller.object.owner!.quaternion.copy = vi.fn().mockReturnThis();
+            controller.object.owner!.quaternion.setFromAxisAngle = vi
                 .fn()
                 .mockReturnThis();
 
@@ -2866,8 +2880,8 @@ describe('modules/controller/orbit/OrbitController', () => {
 
         it('should handle state save and reset with extreme values', () => {
             controller.target.set(1e6, -1e6, 1e6);
-            controller.object.position.set(-1e6, 1e6, -1e6);
-            controller.object.zoom = 1e3;
+            controller.object.owner!.position.set(-1e6, 1e6, -1e6);
+            (controller.object as PerspectiveCameraComponent).camera.zoom = 1e3;
 
             controller.saveState();
             controller.reset();
@@ -2897,7 +2911,7 @@ describe('modules/controller/orbit/OrbitController', () => {
 
         it('should handle quaternion dot product edge cases', () => {
             controller.enabled = true;
-            controller.object.quaternion.set(0, 0, 0, 0);
+            controller.object.owner!.quaternion.set(0, 0, 0, 0);
 
             const result = controller.update();
             expect(typeof result).toBe('boolean');
@@ -2906,7 +2920,7 @@ describe('modules/controller/orbit/OrbitController', () => {
         it('should handle vector distance calculations with identical points', () => {
             controller.enabled = true;
             controller.target.set(1, 2, 3);
-            controller.object.position.set(1, 2, 3);
+            controller.object.owner!.position.set(1, 2, 3);
 
             const result = controller.update();
             expect(typeof result).toBe('boolean');
@@ -3041,8 +3055,8 @@ describe('modules/controller/orbit/OrbitController', () => {
         });
 
         it('should handle getState with modified camera properties', () => {
-            controller.object.position.set(5, 10, 15);
-            controller.object.quaternion.setFromAxisAngle(
+            controller.object.owner!.position.set(5, 10, 15);
+            controller.object.owner!.quaternion.setFromAxisAngle(
                 new Vector3(0, 1, 0),
                 Math.PI / 3,
             );
@@ -3071,8 +3085,8 @@ describe('modules/controller/orbit/OrbitController', () => {
             };
 
             // Use the mock quaternion methods directly
-            controller.object.quaternion.copy = vi.fn().mockReturnThis();
-            controller.object.quaternion.setFromAxisAngle = vi
+            controller.object.owner!.quaternion.copy = vi.fn().mockReturnThis();
+            controller.object.owner!.quaternion.setFromAxisAngle = vi
                 .fn()
                 .mockReturnThis();
 

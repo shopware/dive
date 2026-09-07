@@ -25,6 +25,8 @@ vi.mock('@shopware-ag/dive', () => {
                             set: vi.fn(),
                         },
                     },
+                    // the controller drives the component, not the camera
+                    cameraComponent: { owner: { position: { set: vi.fn() } } },
                 },
                 scene: {
                     root: {
@@ -92,7 +94,7 @@ describe('QuickViewUri', () => {
         const quickView = await QuickViewUri('test_uri');
 
         expect(OrbitController).toHaveBeenCalledWith(
-            quickView.mainView.camera,
+            quickView.mainView.cameraComponent,
             quickView.mainView.canvas,
         );
         expect(quickView.clock.addTicker).toHaveBeenCalledWith(

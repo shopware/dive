@@ -93,21 +93,6 @@ vi.mock('../scene/Scene.ts', async (importOriginal) => {
     };
 });
 
-vi.mock('../camera/PerspectiveCamera.ts', async (importOriginal) => {
-    const actual =
-        await importOriginal<typeof import('../camera/PerspectiveCamera.ts')>();
-    return {
-        ...actual,
-        DIVEPerspectiveCamera: vi.fn(function (this: any) {
-            this.position = {
-                set: vi.fn(),
-                copy: vi.fn(),
-            };
-            return this;
-        }),
-    };
-});
-
 vi.mock('../clock/Clock.ts', async (importOriginal) => {
     const actual = await importOriginal<typeof import('../clock/Clock.ts')>();
     return {
