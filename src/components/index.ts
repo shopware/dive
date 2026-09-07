@@ -2,6 +2,7 @@ export * from './component/Component.ts';
 export * from './floor/index.ts';
 export * from './grid/Grid.ts';
 export * from './gizmo/Gizmo.ts';
+export * from './group/index.ts';
 export * from './line/index.ts';
 export * from './light/index.ts';
 export * from './mesh/index.ts';

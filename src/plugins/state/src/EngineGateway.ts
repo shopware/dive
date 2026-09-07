@@ -6,7 +6,7 @@ import {
     DIVELightComponent,
     DIVENode,
     HemisphereLightComponent,
-    MultiLineComponent,
+    GroupLinksComponent,
     MeshComponent,
     PrimitiveMeshComponent,
     PointLightComponent,
@@ -288,7 +288,7 @@ export class EngineGateway {
         if (isGroupSchema(entity)) {
             const group = new DIVENode();
             group.name = 'DIVEGroup';
-            group.addComponent(new MultiLineComponent());
+            group.addComponent(new GroupLinksComponent());
             return group;
         }
         if (isLightSchema(entity)) return this._instantiateLight(entity);
@@ -445,7 +445,7 @@ export class EngineGateway {
             sceneObject.setVisibility(props.visible);
         if (props.bbVisible !== undefined)
             sceneObject
-                .requireComponent(MultiLineComponent)
+                .requireComponent(GroupLinksComponent)
                 .setVisible(props.bbVisible);
         if (props.parentId !== undefined)
             this._setParent({ ...props, parentId: props.parentId });

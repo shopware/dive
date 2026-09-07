@@ -1,7 +1,7 @@
 import { Object3D } from 'three/webgpu';
 import { DIVENode } from '../Node.ts';
 import { DIVEComponent } from '../../component/Component.ts';
-import { MultiLineComponent } from '../../line/MultiLineComponent.ts';
+import { GroupLinksComponent } from '../../group/GroupLinksComponent.ts';
 
 class WatchingComponent extends DIVEComponent {
     public moved: DIVENode[] = [];
@@ -67,7 +67,7 @@ describe('dive/node/DIVENode transform notification', () => {
 
     it('should let a link component follow a member', () => {
         const group = new DIVENode();
-        const links = group.addComponent(new MultiLineComponent());
+        const links = group.addComponent(new GroupLinksComponent());
         const member = new DIVENode();
         group.add(member);
         const updateLineTo = vi.spyOn(links, 'updateLineTo');

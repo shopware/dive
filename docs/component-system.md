@@ -109,6 +109,21 @@ inside your own `tick` is expected and safe.
 the component owns; that is the sanctioned escape hatch, and `DIVEGrid` uses it
 to follow the camera.
 
+## Splitting drawing from wiring
+
+Two components are better than one when a component would otherwise both *draw*
+something and *decide* when it changes. The group links are the worked example:
+
+- `MultiLineComponent` draws a set of line segments. It takes points and handles,
+  knows nothing about nodes, and never watches anything.
+- `GroupLinksComponent` watches the owner's child nodes and drives the line
+  component. It brings one along if the node does not already have one.
+
+The payoff is that the drawing half is reusable — measurement overlays, debug
+rays, anything that needs many cheap lines — and each half is testable without
+the other. Reach for this split whenever you notice a component subscribing to
+events *and* pushing vertices.
+
 ## Layers decide what geometry means
 
 `src/constants/VisibilityLayerMask.ts` is the contract for "what is this
