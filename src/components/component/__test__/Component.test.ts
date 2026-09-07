@@ -1,5 +1,5 @@
 import { BoxGeometry, Mesh, MeshBasicMaterial, Object3D } from 'three/webgpu';
-import { componentOf, DIVEComponent, isDIVEComponent } from '../Component.ts';
+import { contributedBy, DIVEComponent, isDIVEComponent } from '../Component.ts';
 import { DIVENode } from '../../node/Node.ts';
 
 class TestComponent extends DIVEComponent {
@@ -360,8 +360,8 @@ describe('dive/component/DIVEComponent', () => {
             const mesh = content();
             component.give(mesh);
 
-            expect(componentOf(mesh)).toBe(component);
-            expect(componentOf(new Object3D())).toBeUndefined();
+            expect(contributedBy(mesh)).toBe(component);
+            expect(contributedBy(new Object3D())).toBeUndefined();
         });
 
         it('should survive a node whose children were replaced wholesale', () => {
@@ -410,9 +410,9 @@ describe('dive/component/DIVEComponent', () => {
             const cloned = copy.getComponent(TestComponent);
             expect(cloned).toBeDefined();
             expect(cloned).not.toBe(source.getComponent(TestComponent));
-            expect(copy.children.filter((child) => componentOf(child))).toEqual(
-                [],
-            );
+            expect(
+                copy.children.filter((child) => contributedBy(child)),
+            ).toEqual([]);
         });
 
         it('should replace components the copy already had', () => {

@@ -299,7 +299,7 @@ const contributors = new WeakMap<Object3D, DIVEComponent>();
  *
  * @param object - Something found in a node's children.
  */
-export function componentOf(object: Object3D): DIVEComponent | undefined {
+export function contributedBy(object: Object3D): DIVEComponent | undefined {
     return contributors.get(object);
 }
 

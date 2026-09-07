@@ -12,7 +12,7 @@ import { DIVESelectable } from '../../interfaces/Selectable.ts';
 import { type TransformControls } from 'three/examples/jsm/controls/TransformControls.ts';
 import { type DIVEEntityEventMap } from '../../types/events/index.ts';
 import {
-    componentOf,
+    contributedBy,
     type DIVEComponent,
     type DIVEComponentClass,
 } from '../component/Component.ts';
@@ -184,7 +184,7 @@ export class DIVENode
      */
     public clear(): this {
         const detachable = this.children.filter(
-            (child) => !('isDIVEComponent' in child) && !componentOf(child),
+            (child) => !('isDIVEComponent' in child) && !contributedBy(child),
         );
         this.remove(...detachable);
         return this;
@@ -219,7 +219,7 @@ export class DIVENode
 
         if (recursive) {
             source.children
-                .filter((child) => !componentOf(child))
+                .filter((child) => !contributedBy(child))
                 .forEach((child) => this.add(child.clone()));
         }
 
