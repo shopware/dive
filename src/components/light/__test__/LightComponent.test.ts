@@ -113,6 +113,43 @@ describe('dive/light/DIVELightComponent', () => {
                 expect(dispose).toHaveBeenCalled();
             });
 
+            it('should carry its settings along to a clone', () => {
+                const source = make();
+                source.setColor(new Color(0xff8800));
+                source.setIntensity(0.5);
+                source.setEnabled(false);
+
+                const copy = source.clone();
+
+                expect(copy.light.color.getHexString()).toBe('ff8800');
+                // the factor is applied once, not twice
+                expect(copy.light.intensity).toBeCloseTo(0.5 * factor);
+                expect(copy.light.visible).toBe(false);
+            });
+
+            it('should give a clone its own colour instance', () => {
+                const source = make();
+                source.setColor(new Color(0xff0000));
+
+                const copy = source.clone();
+                copy.setColor(new Color(0x00ff00));
+
+                expect(source.light.color.getHexString()).toBe('ff0000');
+            });
+
+            it('should carry the light position along to a clone', () => {
+                /**
+                 * position is direction for a hemisphere or a directional light,
+                 * and unused for the others, so copying it is right either way
+                 */
+                const source = make();
+                source.light.position.set(1, 2, 3);
+
+                expect(source.clone().light.position.toArray()).toEqual([
+                    1, 2, 3,
+                ]);
+            });
+
             it('should be findable through the abstract base', () => {
                 /**
                  * what lets the state layer apply colour or intensity without

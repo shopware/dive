@@ -412,5 +412,34 @@ describe('dive/line/MultiLineComponent', () => {
             expect(copy.contributions).toEqual([copy.lines]);
             expect(copy.lines).not.toBe(source.lines);
         });
+
+        it('should carry how the lines look along to a clone', () => {
+            const source = new MultiLineComponent();
+            source.setColor(0xff0000);
+            source.setDashPattern(0.2, 0.1);
+            source.setVisible(false);
+
+            const copy = source.clone();
+            const material = copy.lines.material as LineDashedMaterial;
+
+            expect(material.color.getHexString()).toBe('ff0000');
+            expect(material.dashSize).toBe(0.2);
+            expect(material.gapSize).toBe(0.1);
+            expect(copy.lines.visible).toBe(false);
+        });
+
+        it('should not carry the lines themselves along to a clone', () => {
+            /**
+             * a key is whatever the caller identifies a line by, usually one of
+             * its own objects -- the clone would be drawing to the source's
+             */
+            const source = new MultiLineComponent();
+            source.setLineFor('a', ORIGIN, { x: 1, y: 0, z: 0 });
+
+            const copy = source.clone();
+
+            expect(copy.lineCount).toBe(0);
+            expect(copy.hasLineFor('a')).toBe(false);
+        });
     });
 });

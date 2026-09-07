@@ -297,6 +297,13 @@ export class BoundingBoxComponent extends DIVEComponent {
         this._oriented = source.oriented;
         this._stale = true;
 
+        // read off the source's helpers directly: the getters would measure it
+        this.setHelperColor(
+            (source._boxHelper.material as LineBasicMaterial).color,
+        );
+        this.setBoxHelperVisible(source._boxHelper.visible);
+        this.setSphereHelperVisible(source._sphereHelper.visible);
+
         return this;
     }
 

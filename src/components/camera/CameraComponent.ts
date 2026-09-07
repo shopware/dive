@@ -147,6 +147,23 @@ export abstract class DIVECameraComponent extends DIVEComponent {
     }
 
     /**
+     * Takes on what the source camera is allowed to see.
+     *
+     * The layer mask only; `onSetCameraLayer` is wiring a caller installed, not
+     * state, and a clone that inherited the callback would report to a listener
+     * that never asked for it.
+     *
+     * @param source - The component to copy from.
+     */
+    public copy(source: this): this {
+        super.copy(source);
+
+        this._camera.layers.mask = source.camera.layers.mask;
+
+        return this;
+    }
+
+    /**
      * Fits the camera to a new viewport.
      *
      * Abstract because what a viewport means differs: a perspective camera changes

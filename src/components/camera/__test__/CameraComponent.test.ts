@@ -270,6 +270,28 @@ describe('dive/camera/DIVECameraComponent', () => {
             expect(worldViewDirection(component).x).toBeCloseTo(-1, 5);
         });
 
+        it('should carry the layer mask along to a clone', () => {
+            const source = new TestCameraComponent();
+            source.setCameraLayer('LIVE');
+
+            const copy = source.clone();
+
+            expect(copy.camera.layers.mask).toBe(
+                DIVECameraComponent.LIVE_VIEW_LAYER_MASK,
+            );
+        });
+
+        it('should not hand a clone the layer listener of its source', () => {
+            // wiring a caller installed, not state the camera holds
+            const source = new TestCameraComponent();
+            const told = vi.fn();
+            source.onSetCameraLayer = told;
+
+            source.clone().setCameraLayer('LIVE');
+
+            expect(told).not.toHaveBeenCalled();
+        });
+
         it('should refuse to aim while it has no node', () => {
             // it turns its owner, and there is nothing else it could turn
             expect(() =>

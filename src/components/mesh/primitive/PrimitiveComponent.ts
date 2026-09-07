@@ -38,6 +38,14 @@ const SPHERE_HEIGHT_SEGMENTS = 32;
 export class PrimitiveComponent extends MeshComponent {
     readonly isPrimitiveComponent: true = true;
 
+    /**
+     * The shape this component was last built from.
+     *
+     * Kept because the built `BufferGeometry` cannot be handed to a clone -- both
+     * would dispose it -- while the descriptor rebuilds it for free.
+     */
+    private _geometry: DIVEGeometry | null = null;
+
     constructor() {
         super();
 
@@ -53,6 +61,11 @@ export class PrimitiveComponent extends MeshComponent {
         this.contribute(this._mesh);
     }
 
+    /** The shape this component was last built from, if any. */
+    public get geometry(): DIVEGeometry | null {
+        return this._geometry;
+    }
+
     /**
      * Rebuilds the geometry from a descriptor.
      *
@@ -62,12 +75,27 @@ export class PrimitiveComponent extends MeshComponent {
         const geo = this._assembleGeometry(geometry);
         if (!geo) return;
 
+        this._geometry = geometry;
+
         geo.computeVertexNormals();
         geo.computeBoundingBox();
         geo.computeBoundingSphere();
 
         this._mesh!.geometry.dispose();
         this._mesh!.geometry = geo;
+    }
+
+    /**
+     * Rebuilds the source's shape, rather than sharing the geometry it built.
+     *
+     * @param source - The component to copy from.
+     */
+    public copy(source: this): this {
+        super.copy(source);
+
+        if (source.geometry) this.setGeometry(source.geometry);
+
+        return this;
     }
 
     private _assembleGeometry(geometry: DIVEGeometry): BufferGeometry | null {

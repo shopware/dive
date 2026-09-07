@@ -66,4 +66,19 @@ export class FloorComponent extends MeshComponent {
     public setColor(color: ColorRepresentation): void {
         this._material!.color = new Color(color);
     }
+
+    /**
+     * The floor's own material never comes from {@link setMaterial}, so the base
+     * copies nothing: colour and visibility have to be carried over here.
+     *
+     * @param source - The component to copy from.
+     */
+    public copy(source: this): this {
+        super.copy(source);
+
+        this.setColor(source._material!.color);
+        this.setVisibility(source.visible);
+
+        return this;
+    }
 }

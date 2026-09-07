@@ -63,6 +63,24 @@ export class PerspectiveCameraComponent extends DIVECameraComponent {
         camera.updateProjectionMatrix();
     }
 
+    /**
+     * Takes on the source's settings. Aspect is left out: it comes from the
+     * viewport through {@link onResize}, not from whoever configured the camera.
+     *
+     * @param source - The component to copy from.
+     */
+    public copy(source: this): this {
+        super.copy(source);
+
+        this.applySettings({
+            fov: source.camera.fov,
+            near: source.camera.near,
+            far: source.camera.far,
+        });
+
+        return this;
+    }
+
     public onResize(width: number, height: number): void {
         this.camera.aspect = width / height;
         this.camera.updateProjectionMatrix();

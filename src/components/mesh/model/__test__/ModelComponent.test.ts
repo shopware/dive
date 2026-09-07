@@ -296,6 +296,31 @@ describe('dive/mesh/ModelComponent', () => {
             expect(AssetLoader).toHaveBeenCalledTimes(1);
         });
 
+        it('should remember what it loaded', async () => {
+            loadAsset.mockResolvedValue(makeGltf());
+
+            await model.setFromURL('a.glb');
+
+            expect(model.url).toBe('a.glb');
+        });
+
+        it('should carry url and clips to a clone, but not the content', async () => {
+            /**
+             * a load is async and copy is not, so the clone comes back
+             * loadable rather than loaded -- cloning the hierarchy would share
+             * every geometry with the source and have both dispose it
+             */
+            loadAsset.mockResolvedValue(makeGltf());
+            await model.setFromURL('a.glb');
+
+            const copy = model.clone();
+
+            expect(copy.url).toBe('a.glb');
+            expect(copy.animations).toBe(model.animations);
+            expect(copy.contributions).toHaveLength(0);
+            expect(copy.mesh).toBeNull();
+        });
+
         it('should not mind a load nobody listens to', async () => {
             loadAsset.mockResolvedValue(makeGltf());
             const detached = new ModelComponent();

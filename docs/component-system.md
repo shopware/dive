@@ -5,11 +5,11 @@ everything it *does* comes from the **components** attached to it, which is what
 replaced the class-per-entity design of DIVE 3.
 
 ```ts
-import { DIVENode, MeshComponent, PointLightComponent } from '@shopware-ag/dive';
+import { DIVENode, ModelComponent, PointLightComponent } from '@shopware-ag/dive';
 
 const model = new DIVENode();
-model.addComponent(new MeshComponent());
-await model.requireComponent(MeshComponent).setFromURL('chair.glb');
+model.addComponent(new ModelComponent());
+await model.requireComponent(ModelComponent).setFromURL('chair.glb');
 dive.scene.root.add(model);
 
 const lamp = new DIVENode();
@@ -22,10 +22,10 @@ dive.scene.root.add(lamp);
 
 A component is **not** in the scene graph. What it owns is.
 
-`Renderer._projectObject` walks the whole scene graph **every frame** to rebuild
-the render list - `children` *is* the render queue, and there is no persistent
-queue to register into. So a mesh, a light or a camera has to be in `children` to
-be drawn. It goes into the **node's** children, through `contribute`:
+three's renderer walks the whole scene graph **every frame** to rebuild the
+render list - `children` *is* the render queue, and there is no persistent queue
+to register into. So a mesh, a light or a camera has to be in `children` to be
+drawn. It goes into the **node's** children, through `contribute`:
 
 ```ts
 protected onAttach(): void { /* nothing to do -- contribute did it */ }
@@ -51,7 +51,7 @@ The tree stays readable through the API rather than through the array:
 | the logical child tree | `node.nodes` |
 | the attached capabilities | `node.components` |
 | what a component put there | `component.contributions` |
-| which component owns an object | `componentOf(object)` |
+| which component owns an object | `contributedBy(object)` |
 | everything three renders | `node.children` |
 
 ## Writing a component
@@ -107,8 +107,24 @@ Two rules, each with a reason:
 
 Constructors take no arguments: `clone()` calls `new this.constructor()` and then
 `copy(source)`. A component holding state overrides `copy` - a clone that
-silently drops the geometry descriptor or the intensity factor looks like it
-worked.
+silently drops the geometry descriptor or the light's brightness looks like it
+worked. Every component that holds any does: `MeshComponent` copies a material
+that came from `setMaterial`, `PrimitiveComponent` rebuilds from the descriptor,
+`DIVELightComponent` goes through its own setters so a subclass mirroring them
+onto a proxy keeps up.
+
+`ModelComponent` is the one that cannot finish the job, because a load is
+asynchronous and `copy` is not. It carries the `url` and the clips over and
+leaves the geometry to the caller:
+
+```ts
+const clone = source.clone();
+if (clone.url) await clone.setFromURL(clone.url);
+```
+
+Cloning the loaded hierarchy instead would share every geometry and material with
+the source, and either component's `dispose` would then free what the other still
+draws.
 
 Two things a component does not have, both worth knowing before writing one:
 
@@ -181,13 +197,17 @@ plugin. Anything shaped like "when X happens to this kind of entity, do Y"
 belongs in `EngineGateway`, never in a component.
 
 Group links are the worked example. A group node gets nothing but a
-`MultiLineComponent`, which draws line segments and watches nothing. The gateway
-holds all the group knowledge:
+`MultiLineComponent`, which draws line segments and watches nothing. The state
+plugin holds all the group knowledge:
 
-- `_setParent` adds a line when a member joins and removes it when it leaves
-- the `object-transform` listener redraws the line when a member is dragged
-- `_apply` redraws it when a patch writes a new position
-- `bbVisible` in the group schema toggles the line component's visibility
+- `updateParentLink(member)` draws the line, keyed by the member itself, so
+  adding and moving are the same call. `EngineGateway._setParent` calls it when a
+  member joins, `_apply` when a patch writes a new position, and `watchEntity`
+  from its `object-transform` listener when a member is dragged
+- the `childremoved` listener the gateway installs beside the component drops the
+  line again, because `Object3D.remove` nulls `child.parent` before announcing
+  anything
+- `linksVisible` in the group schema toggles the line component's visibility
 
 So the drawing half is reusable for anything that needs many cheap lines -
 measurement overlays, debug rays - and no component ever learns what a group is.
@@ -197,13 +217,23 @@ measurement overlays, debug rays - and no component ever learns what a group is.
 `src/constants/VisibilityLayerMask.ts` is the contract for "what is this
 geometry for?", and every consumer reads it instead of special-casing classes:
 
-| Layer | Meaning | Counts for bounds / export / picking |
-|---|---|---|
-| `PRODUCT` | real content | yes |
-| `FLOOR` | the ground plane | no (renders, receives shadows) |
-| `UI` | gizmo handles, light handles | no |
-| `HELPER` | visualisations, group links | no |
-| `COORDINATE` | orientation display | no |
+| Layer | Meaning | Counts for bounds / export | Picked |
+|---|---|---|---|
+| `PRODUCT` | real content | yes | yes |
+| `PROXY` | stands in for an entity with no geometry, e.g. a point light's handle | no | yes |
+| `FLOOR` | the ground plane | no (renders, receives shadows) | no |
+| `UI` | gizmo handles | no | no |
+| `HELPER` | visualisations, group links, the grid | no | no |
+| `COORDINATE` | orientation display | no | no |
+| `DEFAULT` | three's own bit, for anything that never chose a layer | no | no |
+
+`PROXY` is the row worth reading twice: a point light is nothing but a position,
+so the little sphere is what you click, and picking it means picking the light.
+`PRODUCT` would make that sphere count towards bounds and exports, and `UI` is
+the gizmo - which must never be selectable as an object.
+
+`DIVECameraComponent` composes two masks out of these: `EDITOR_VIEW_LAYER_MASK`
+is everything but `COORDINATE`, and `LIVE_VIEW_LAYER_MASK` is `PRODUCT | FLOOR`.
 
 Put your component's helper geometry on `HELPER` and its content on the owner's
 layer. Two things to know:
@@ -219,17 +249,18 @@ layer. Two things to know:
 ```ts
 node.getComponent(MeshComponent);       // first match, or undefined
 node.getComponents(DIVELightComponent); // every match
-node.requireComponent(MeshComponent);   // throws if missing
+node.requireComponent(ModelComponent);  // throws if missing
 
 findComponent(mesh, MeshComponent);     // from content back to its component
-componentOf(mesh);                      // whichever component contributed it
+contributedBy(mesh);                    // whichever component contributed it
 ```
 
-`findComponent` is the way back in from something a component owns - an
-`OrbitController` hands out its camera, and `setCameraLayer` lives on the
-camera's component. It walks up from the object, asking the contribution registry
-at each step, because a component owns its content without parenting it and so is
-never an ancestor of it.
+`findComponent` is the way back in from something a component owns, for a caller
+holding only a mesh or a camera and needing the component behind it. It walks up
+from the object, asking the contribution registry at each step, because a
+component owns its content without parenting it and so is never an ancestor of
+it. Nothing in DIVE needs it today - what used to, the `SET_CAMERA_LAYER` action,
+is handed a `DIVECameraComponent` outright - so it exists for consumers.
 
 Matching is by `instanceof`, so a base class finds its subclasses. That is what
 lets one code path serve both models and primitives (`PrimitiveComponent
