@@ -1,5 +1,5 @@
 import { BoxGeometry, Mesh, MeshBasicMaterial, Object3D } from 'three/webgpu';
-import { DIVEComponent, isDIVEComponent } from '../Component.ts';
+import { componentOf, DIVEComponent, isDIVEComponent } from '../Component.ts';
 import { DIVENode } from '../../node/Node.ts';
 
 class TestComponent extends DIVEComponent {
@@ -7,12 +7,27 @@ class TestComponent extends DIVEComponent {
     public detachedFrom: DIVENode | null = null;
     public disposed = false;
 
+    /** Where its content sat when the hooks ran, to pin the ordering. */
+    public contentParentOnAttach: Object3D | null | undefined;
+    public contentParentOnDetach: Object3D | null | undefined;
+
+    /** `contribute` is protected; tests drive it through this. */
+    public give(...objects: Object3D[]): void {
+        this.contribute(...objects);
+    }
+
+    public takeBack(...objects: Object3D[]): void {
+        this.withdraw(...objects);
+    }
+
     protected onAttach(owner: DIVENode): void {
         this.attachedTo = owner;
+        this.contentParentOnAttach = this.contributions[0]?.parent;
     }
 
     protected onDetach(previousOwner: DIVENode): void {
         this.detachedFrom = previousOwner;
+        this.contentParentOnDetach = this.contributions[0]?.parent;
     }
 
     public dispose(): void {
@@ -213,5 +228,194 @@ describe('dive/component/DIVEComponent', () => {
 
         expect(node.children).toContain(component);
         expect(component.children).toContain(mesh);
+    });
+
+    describe('contributing content', () => {
+        const content = (name = 'content'): Mesh => {
+            const mesh = new Mesh(new BoxGeometry(), new MeshBasicMaterial());
+            mesh.name = name;
+            return mesh;
+        };
+
+        it('should put content into the node, not into itself', () => {
+            // `children` is three's render queue, so the content has to be in the
+            // graph -- but the component holding it does not, and an exporter
+            // writes every graph node it walks
+            const node = new DIVENode();
+            const component = node.addComponent(new TestComponent());
+            const mesh = content();
+
+            component.give(mesh);
+
+            expect(node.children).toContain(mesh);
+            expect(component.children).not.toContain(mesh);
+        });
+
+        it('should hold content contributed before it had an owner', () => {
+            // the normal case: a component builds its renderable in its
+            // constructor, long before anyone attaches it
+            const component = new TestComponent();
+            const mesh = content();
+
+            component.give(mesh);
+
+            expect(component.contributions).toEqual([mesh]);
+            expect(mesh.parent).toBeNull();
+        });
+
+        it('should hand that content over on attach', () => {
+            const component = new TestComponent();
+            const mesh = content();
+            component.give(mesh);
+            const node = new DIVENode();
+
+            node.addComponent(component);
+
+            expect(node.children).toContain(mesh);
+        });
+
+        it('should take its content along to another node', () => {
+            const first = new DIVENode();
+            const component = first.addComponent(new TestComponent());
+            const mesh = content();
+            component.give(mesh);
+            const second = new DIVENode();
+
+            second.addComponent(component);
+
+            expect(second.children).toContain(mesh);
+            expect(first.children).not.toContain(mesh);
+        });
+
+        it('should leave nothing behind when detached', () => {
+            const node = new DIVENode();
+            const component = node.addComponent(new TestComponent());
+            const mesh = content();
+            component.give(mesh);
+
+            node.removeComponent(component);
+
+            expect(node.children).not.toContain(mesh);
+            expect(component.contributions).toEqual([mesh]);
+        });
+
+        it('should ignore a repeated contribution', () => {
+            // a duplicate would send a spurious childremoved/childadded pair
+            // through the node -- the events the group-line listener hangs on
+            const node = new DIVENode();
+            const component = node.addComponent(new TestComponent());
+            const mesh = content();
+
+            component.give(mesh);
+            component.give(mesh);
+
+            expect(component.contributions).toEqual([mesh]);
+            expect(
+                node.children.filter((child) => child === mesh),
+            ).toHaveLength(1);
+        });
+
+        it('should withdraw only what it contributed', () => {
+            const node = new DIVENode();
+            const component = node.addComponent(new TestComponent());
+            const mine = content('mine');
+            const foreign = content('foreign');
+            component.give(mine);
+            node.add(foreign);
+
+            component.takeBack(mine, foreign);
+
+            expect(node.children).not.toContain(mine);
+            expect(node.children).toContain(foreign);
+        });
+
+        it('should withdraw while detached', () => {
+            const component = new TestComponent();
+            const mesh = content();
+            component.give(mesh);
+
+            component.takeBack(mesh);
+
+            expect(component.contributions).toEqual([]);
+        });
+
+        it('should not re-add content it withdrew', () => {
+            const component = new TestComponent();
+            const mesh = content();
+            component.give(mesh);
+            component.takeBack(mesh);
+
+            new DIVENode().addComponent(component);
+
+            expect(mesh.parent).toBeNull();
+        });
+
+        it('should show the hooks their content in place', () => {
+            // attach adds before onAttach, detach removes after onDetach -- so a
+            // hook never sees a half-moved component
+            const node = new DIVENode();
+            const component = new TestComponent();
+            component.give(content());
+
+            node.addComponent(component);
+            expect(component.contentParentOnAttach).toBe(node);
+
+            node.removeComponent(component);
+            expect(component.contentParentOnDetach).toBe(node);
+        });
+
+        it('should say which component contributed an object', () => {
+            const node = new DIVENode();
+            const component = node.addComponent(new TestComponent());
+            const mesh = content();
+            component.give(mesh);
+
+            expect(componentOf(mesh)).toBe(component);
+            expect(componentOf(new Object3D())).toBeUndefined();
+        });
+
+        it('should survive a node whose children were replaced wholesale', () => {
+            // the gizmo does this, and Node.test.ts pins it as supported: the
+            // list is not the truth, so re-attaching heals it
+            const node = new DIVENode();
+            const component = node.addComponent(new TestComponent());
+            const mesh = content();
+            component.give(mesh);
+
+            node.children = [component];
+            new DIVENode().addComponent(component);
+
+            expect(component.owner.children).toContain(mesh);
+        });
+    });
+
+    describe('a node holding contributed content', () => {
+        const content = (): Mesh =>
+            new Mesh(new BoxGeometry(), new MeshBasicMaterial());
+
+        it('should keep it through clear()', () => {
+            // clear() means "drop the child nodes", not "strip the geometry"
+            const node = new DIVENode();
+            const component = node.addComponent(new TestComponent());
+            const mesh = content();
+            component.give(mesh);
+            node.add(new DIVENode());
+
+            node.clear();
+
+            expect(node.children).toContain(mesh);
+            expect(node.nodes).toHaveLength(0);
+        });
+
+        it('should not clone it', () => {
+            // a clone would hold ownerless geometry beside a fresh, unaware
+            // component
+            const source = new DIVENode();
+            source.addComponent(new TestComponent()).give(content());
+
+            const copy = source.clone();
+
+            expect(copy.children).toHaveLength(0);
+        });
     });
 });
