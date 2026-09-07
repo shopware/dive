@@ -47,7 +47,6 @@ export class BoundsComponent extends DIVEComponent {
         this._boxHelper = new Box3Helper(this._box, 0x00ff00);
         this._boxHelper.layers.mask = HELPER_LAYER_MASK;
         this._boxHelper.visible = false;
-        this.add(this._boxHelper);
 
         this._sphereHelper = new Mesh(
             new SphereGeometry(1, 32, 32),
@@ -55,7 +54,18 @@ export class BoundsComponent extends DIVEComponent {
         );
         this._sphereHelper.layers.mask = HELPER_LAYER_MASK;
         this._sphereHelper.visible = false;
-        this.add(this._sphereHelper);
+
+        this.contribute(this._boxHelper, this._sphereHelper);
+    }
+
+    /** The wireframe box, for anyone that wants to style or inspect it. */
+    public get boxHelper(): Box3Helper {
+        return this._boxHelper;
+    }
+
+    /** The wireframe sphere. */
+    public get sphereHelper(): Mesh {
+        return this._sphereHelper;
     }
 
     /** The measured bounding box, in world space. */

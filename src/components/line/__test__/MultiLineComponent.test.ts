@@ -66,8 +66,9 @@ describe('dive/line/MultiLineComponent', () => {
             addLine(ORIGIN, { x: 2, y: 0, z: 0 });
             addLine(ORIGIN, { x: 3, y: 0, z: 0 });
 
-            expect(lines.children).toHaveLength(1);
-            expect(lines.children[0]).toBeInstanceOf(LineSegments);
+            // one LineSegments for every line, contributed to the node
+            expect(lines.contributions).toEqual([lines.lines]);
+            expect(lines.lines).toBeInstanceOf(LineSegments);
             expect(lines.lineCount).toBe(3);
         });
 
@@ -290,9 +291,9 @@ describe('dive/line/MultiLineComponent', () => {
 
         it('should not shadow Object3D.clear', () => {
             // clear() removes children; clearLines() removes lines
-            expect(lines.children).toHaveLength(1);
+            expect(lines.contributions).toEqual([lines.lines]);
             lines.clearLines();
-            expect(lines.children).toHaveLength(1);
+            expect(lines.contributions).toEqual([lines.lines]);
         });
     });
 
@@ -390,5 +391,20 @@ describe('dive/line/MultiLineComponent', () => {
 
         expect(geometry).toHaveBeenCalled();
         expect(materialDispose).toHaveBeenCalled();
+    });
+
+    describe('cloning', () => {
+        it('should give the clone its own geometry, not a second one', () => {
+            // `Object3D.copy` used to add a clone of the source child on top of
+            // the one the constructor made, leaving two and a `_lines` that
+            // pointed at the empty one
+            const source = new MultiLineComponent();
+            source.setLineFor('a', ORIGIN, { x: 1, y: 0, z: 0 });
+
+            const copy = source.clone();
+
+            expect(copy.contributions).toEqual([copy.lines]);
+            expect(copy.lines).not.toBe(source.lines);
+        });
     });
 });

@@ -272,8 +272,10 @@ export class EngineGateway {
             // reach the line drawn for it. `childremoved` fires here and carries
             // the child, and `attach` removes from the old parent first -- so
             // re-parenting comes through here too, even straight through three.
-            // A detached component lands here as well, harmlessly: it never had
-            // a line.
+            // A detached component lands here as well, harmlessly, and so does
+            // anything a component contributed -- the group's own line geometry
+            // included. None of them ever had a line, and `removeLineFor` with an
+            // unknown key does nothing.
             group.addEventListener('childremoved', (event) =>
                 lines.removeLineFor(event.child),
             );
