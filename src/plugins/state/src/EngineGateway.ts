@@ -418,10 +418,10 @@ export class EngineGateway {
         sceneObject: DIVENode,
         props: PartialSchema<GroupSchema>,
     ): void {
-        if (props.bbVisible !== undefined)
+        if (props.linksVisible !== undefined)
             sceneObject
                 .requireComponent(MultiLineComponent)
-                .setVisible(props.bbVisible);
+                .setVisible(props.linksVisible);
     }
 
     private _setParent(

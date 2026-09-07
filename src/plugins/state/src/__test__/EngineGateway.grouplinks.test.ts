@@ -193,7 +193,7 @@ describe('plugins/state/EngineGateway group links', () => {
         await gateway.updateEntity({
             id: 'g',
             entityType: 'group',
-            bbVisible: false,
+            linksVisible: false,
         });
 
         expect(linesOf('g').lines.visible).toBe(false);
