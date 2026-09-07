@@ -78,8 +78,22 @@ export async function QuickView(
     source: string | StateData,
     settings?: Partial<QuickViewSettings>,
 ): Promise<QuickView> {
+    /**
+     * What to take back if the setup does not finish, newest first.
+     *
+     * Declared out here because the `catch` has to reach it: a DIVE registers
+     * itself in a global list when it is constructed and is only removed by its
+     * own dispose, so a failure that leaves one behind eats an instance slot for
+     * good -- and may leave a clock running.
+     */
+    const undo: (() => void | Promise<void>)[] = [];
+
+    /** Read by a load that settles after the setup gave up. */
+    let disposed = false;
+
     try {
         const dive = new DIVE({ ...settings, autoStart: false });
+        undo.push(() => dive.disposeAsync());
 
         /**
          * the node, not the camera: the camera sits at its node's origin, and the
@@ -92,6 +106,7 @@ export async function QuickView(
             dive.mainView.canvas,
         );
         dive.clock.addTicker(orbitController);
+        undo.push(() => orbitController.dispose());
 
         let model: DIVENode | null = null;
         let state: State | null = null;
@@ -107,9 +122,6 @@ export async function QuickView(
          */
         let generation = 0;
         let queue: Promise<void> = Promise.resolve();
-
-        /** Set by `disposeAsync`, so a load in flight has something to check. */
-        let disposed = false;
 
         /**
          * Frames whatever is loaded, if there is anything to frame.
@@ -143,6 +155,9 @@ export async function QuickView(
                 dive.scene.root.nodes.forEach(disposeNode);
             }
         };
+
+        // whatever a partial load managed to build
+        undo.push(clear);
 
         const loadUri = async (
             uri: string,
@@ -260,6 +275,13 @@ export async function QuickView(
         };
 
         /**
+         * From here the wrapped dispose is the entire teardown, so it replaces
+         * the pieces: keeping both would dispose the controller twice.
+         */
+        undo.length = 0;
+        undo.push(() => quickView.disposeAsync());
+
+        /**
          * The first load frames only after the scene runs: `focusObject` reads
          * the viewport, which has no size before then.
          */
@@ -272,6 +294,17 @@ export async function QuickView(
 
         return quickView as QuickView;
     } catch (error) {
+        disposed = true;
+
+        // newest first, and never in front of the error that brought us here
+        for (const step of undo.reverse()) {
+            try {
+                await step();
+            } catch (failure) {
+                console.error('Failed to clean up a QuickView:', failure);
+            }
+        }
+
         console.error('Failed to initialize QuickView:', error);
         return Promise.reject(error);
     }
