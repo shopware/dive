@@ -6,7 +6,10 @@ import {
 } from 'three/webgpu';
 import { DIVERoot } from '../../components/root/Root.ts';
 import { DIVEGrid } from '../../components/grid/Grid.ts';
-import { type DIVEComponent } from '../../components/component/Component.ts';
+import {
+    type DIVEComponent,
+    isDIVEComponent,
+} from '../../components/component/Component.ts';
 import { type DIVETicker } from '../clock/Clock.ts';
 
 export type DIVESceneSettings = {
@@ -201,10 +204,33 @@ export class DIVEScene extends Scene implements DIVETicker {
         this._tickingComponents.splice(index, 1);
     }
 
+    /**
+     * Gives up everything in the scene, GPU resources included.
+     *
+     * Every component gets its `dispose` called, which is what actually frees
+     * geometries, materials and textures: three hangs a `dispose` listener on each
+     * of those and destroys the GPU object when it fires. Its own
+     * `Renderer.dispose` does not do this -- it only drops its bookkeeping -- so
+     * without this pass the only thing that ever released GPU memory was ending
+     * the canvas's WebGL context, which is not something DIVE may do to a canvas
+     * it was handed.
+     *
+     * Traversal collects first and disposes afterwards, because a component is
+     * free to change the tree it sits in while being disposed.
+     */
     public dispose(): void {
+        const components: DIVEComponent[] = [];
+        this.traverse((object) => {
+            if (isDIVEComponent(object)) components.push(object);
+        });
+        components.forEach((component) => component.dispose());
+
         this.remove(this._root);
 
+        // kept rather than nulled: the getter builds one on demand, so dropping the
+        // reference would have a read after dispose put a fresh grid in the scene
         if (this._grid) {
+            this._grid.dispose();
             this.remove(this._grid);
         }
 

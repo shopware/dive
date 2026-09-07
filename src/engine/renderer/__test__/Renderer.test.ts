@@ -14,6 +14,9 @@ import {
 import { DIVEEnvironment } from '../../environment/Environment.ts';
 import { DIVERenderer, DIVERendererDefaultSettings } from '../Renderer.ts';
 
+/** Records whether disposing killed the canvas context, as three's does. */
+const { loseContext } = vi.hoisted(() => ({ loseContext: vi.fn() }));
+
 vi.mock('three/webgpu', async (importOriginal) => {
     const actual = await importOriginal<typeof import('three/webgpu')>();
 
@@ -38,7 +41,32 @@ vi.mock('three/webgpu', async (importOriginal) => {
             this.setSize = vi.fn();
             this.setPixelRatio = vi.fn();
             this.render = vi.fn();
-            this.dispose = vi.fn();
+
+            // Enough of WebGLBackend to show the behaviour that matters: the
+            // extension cache, and a dispose that ends the canvas's context
+            // through it -- which is what makes a supplied canvas unusable.
+            const cache: Record<string, unknown> = {};
+            this.backend = {
+                extensions: {
+                    extensions: cache,
+                    get: (name: string) => {
+                        if (cache[name] === undefined) {
+                            cache[name] =
+                                name === 'WEBGL_lose_context'
+                                    ? { loseContext }
+                                    : null;
+                        }
+                        return cache[name];
+                    },
+                },
+            };
+            this.dispose = vi.fn(() => {
+                // optional, so a test that stands in for "three moved its
+                // internals" can remove them without this throwing instead
+                const extension =
+                    this.backend?.extensions?.get('WEBGL_lose_context');
+                if (extension) extension.loseContext();
+            });
             this.init = vi.fn(async () => {
                 this.initialized = true;
             });
@@ -331,5 +359,57 @@ describe('DIVERenderPipeline', () => {
         const instance = WebGPURenderer.mock.results.at(-1)?.value;
 
         expect(instance.shadowMap.type).toBe(PCFShadowMap);
+    });
+
+    describe('the canvas after a dispose', () => {
+        it('should leave a supplied canvas usable', () => {
+            // three's dispose ends the *canvas's* context, not just the
+            // renderer's. On a canvas the caller owns and still has in their
+            // document that is fatal: every later renderer on it gets the lost
+            // context back and throws while reading it.
+            const canvas = document.createElement('canvas');
+            renderer = new DIVERenderer(scene, cameraComponent, { canvas });
+
+            renderer.dispose();
+
+            expect(loseContext).not.toHaveBeenCalled();
+        });
+
+        it('should keep a canvas it created itself usable too', () => {
+            // no reason to treat it differently: DIVEScene.dispose releases the
+            // GPU resources, so ending the context buys nothing and only makes the
+            // canvas unusable
+            renderer = new DIVERenderer(scene, cameraComponent);
+
+            renderer.dispose();
+
+            expect(loseContext).not.toHaveBeenCalled();
+        });
+
+        it('should leave the previous canvas usable when swapping to another', () => {
+            const first = document.createElement('canvas');
+            renderer = new DIVERenderer(scene, cameraComponent, {
+                canvas: first,
+            });
+
+            renderer.setCanvas(document.createElement('canvas'));
+
+            expect(loseContext).not.toHaveBeenCalled();
+        });
+
+        it('should say so when it cannot reach the internals it needs', () => {
+            const canvas = document.createElement('canvas');
+            renderer = new DIVERenderer(scene, cameraComponent, { canvas });
+            // as a three version that moved them would look
+            delete (renderer.webgpurenderer as unknown as { backend?: unknown })
+                .backend;
+            console.warn = vi.fn();
+
+            renderer.dispose();
+
+            expect(console.warn).toHaveBeenCalledWith(
+                expect.stringContaining('end this canvas context'),
+            );
+        });
     });
 });

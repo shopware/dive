@@ -1,4 +1,5 @@
-import { Color } from 'three/webgpu';
+import { Color, Object3D } from 'three/webgpu';
+import { DIVEComponent } from '../../../components/component/Component.ts';
 import { DIVEScene, DIVESceneDefaultSettings } from '../Scene.ts';
 
 const mock_GetSceneObject = vi.fn();
@@ -13,6 +14,12 @@ vi.mock('../../../components/root/Root', () => {
             this.isObject3D = true;
             this.parent = null;
             this.dispatchEvent = vi.fn();
+            // real Object3Ds, so the dispose pass below can walk them
+            this.children = [];
+            this.traverse = vi.fn((callback: (object: unknown) => void) =>
+                callback(this),
+            );
+            this.dispose = vi.fn();
             this.getSceneObject = mock_GetSceneObject;
             this.computeSceneBB = mock_ComputeSceneBB;
             this.removeFromParent = vi.fn();
@@ -37,6 +44,12 @@ vi.mock('../../../components/grid/Grid', () => {
             this.isObject3D = true;
             this.parent = null;
             this.dispatchEvent = vi.fn();
+            // real Object3Ds, so the dispose pass below can walk them
+            this.children = [];
+            this.traverse = vi.fn((callback: (object: unknown) => void) =>
+                callback(this),
+            );
+            this.dispose = vi.fn();
             mock_GridSetVisibility = vi.fn();
             this.setVisibility = mock_GridSetVisibility;
             this.removeFromParent = vi.fn();
@@ -185,6 +198,39 @@ describe('DIVEScene', () => {
     });
 
     describe('dispose', () => {
+        it('should dispose every component in the scene', () => {
+            // the point of the pass: three frees a geometry, material or texture
+            // when its own `dispose` fires, and nothing else in a teardown does
+            // that -- `Renderer.dispose` only drops its bookkeeping
+            const component = new (class extends DIVEComponent {})();
+            const disposed = vi.spyOn(component, 'dispose');
+            scene.add(component);
+
+            scene.dispose();
+
+            expect(disposed).toHaveBeenCalled();
+        });
+
+        it('should dispose a component sitting deeper in the tree', () => {
+            const component = new (class extends DIVEComponent {})();
+            const disposed = vi.spyOn(component, 'dispose');
+            const node = new Object3D();
+            node.add(component);
+            scene.add(node);
+
+            scene.dispose();
+
+            expect(disposed).toHaveBeenCalled();
+        });
+
+        it('should dispose the grid', () => {
+            const disposed = vi.spyOn(scene.grid, 'dispose');
+
+            scene.dispose();
+
+            expect(disposed).toHaveBeenCalled();
+        });
+
         it('should remove root and grid from scene', () => {
             expect(scene.children).toContain(scene.root);
             expect(scene.children).toContain(scene.grid);

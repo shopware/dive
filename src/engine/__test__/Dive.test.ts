@@ -461,4 +461,19 @@ describe('DIVE', () => {
         const dive = new DIVE();
         expect(window.DIVE.instance).toBe(dive);
     });
+
+    it('should release the scene before the views', async () => {
+        // the order carries the whole GPU cleanup: disposing the scene is what
+        // frees geometries, materials and textures, and it needs the renderer to
+        // still be there to hear it. Afterwards there is nothing left to tell.
+        const dive = new DIVE({ autoStart: false });
+
+        await dive.disposeAsync();
+
+        const sceneDisposedAt = vi.mocked(dive.scene.dispose).mock
+            .invocationCallOrder[0];
+        const viewDisposedAt = vi.mocked(dive.mainView.dispose).mock
+            .invocationCallOrder[0];
+        expect(sceneDisposedAt).toBeLessThan(viewDisposedAt);
+    });
 });

@@ -254,17 +254,17 @@ export class DIVE {
 
             this._clock.dispose();
 
-            this._views.forEach((view) => {
-                view.dispose();
-            });
-            this._views = [];
-
             if (this._orientationDisplay) {
                 this._orientationDisplay.dispose();
                 this._orientationDisplay = null;
             }
 
             this.scene.dispose();
+
+            this._views.forEach((view) => {
+                view.dispose();
+            });
+            this._views = [];
 
             window.DIVE.instances = window.DIVE.instances.filter(
                 (instance) => instance._instanceId !== this._instanceId,
