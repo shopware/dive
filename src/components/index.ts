@@ -1,3 +1,4 @@
+export * from './component/Component.ts';
 export * from './floor/Floor.ts';
 export * from './gizmo/Gizmo.ts';
 export * from './grid/Grid.ts';

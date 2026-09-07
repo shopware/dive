@@ -6,6 +6,8 @@ import {
 } from 'three/webgpu';
 import { DIVERoot } from '../../components/root/Root.ts';
 import { DIVEGrid } from '../../components/grid/Grid.ts';
+import { type DIVEComponent } from '../../components/component/Component.ts';
+import { type DIVETicker } from '../clock/Clock.ts';
 
 export type DIVESceneSettings = {
     /**
@@ -56,13 +58,33 @@ export const DIVESceneDefaultSettings: Required<DIVESceneSettings> = {
  * @module
  */
 
-export class DIVEScene extends Scene {
+/**
+ * A basic scene class.
+ *
+ * Comes with a root object that contains all the scene objects, and drives the
+ * per-frame tick of every component attached anywhere below it.
+ */
+export class DIVEScene extends Scene implements DIVETicker {
     public readonly isDIVEScene: true = true;
 
     private _settings: DIVESceneSettings;
 
     private _root: DIVERoot;
     private _grid: DIVEGrid | null = null;
+
+    /**
+     * Components that asked for a per-frame callback.
+     *
+     * Flat and enrolment-based, the way Unity and Unreal do it: nothing walks the
+     * scene tree per frame, and components without a `tick` never appear here at
+     * all. Nodes enrol and withdraw their components as they enter and leave the
+     * tree, so the only per-frame cost is iterating this array.
+     */
+    private _tickingComponents: DIVEComponent[] = [];
+
+    /** Set while `tick` is iterating, so mutations are deferred. */
+    private _isTicking: boolean = false;
+    private _tickListDirty: boolean = false;
 
     constructor(settings?: Partial<DIVESceneSettings>) {
         super();
@@ -117,11 +139,75 @@ export class DIVEScene extends Scene {
         return this._root.computeSceneBB();
     }
 
+    /**
+     * Drives every enrolled component once per frame.
+     *
+     * @param deltaTime - Seconds since the previous frame.
+     */
+    public tick(deltaTime: number): void {
+        this._isTicking = true;
+
+        // Index-based and length-checked so a component disabling itself from
+        // inside its own tick -- the expected way to stop -- cannot make the loop
+        // skip its neighbour.
+        for (let i = 0; i < this._tickingComponents.length; i++) {
+            const component = this._tickingComponents[i];
+            if (!component.tickEnabled) continue;
+            component.tick?.(deltaTime);
+        }
+
+        this._isTicking = false;
+
+        if (this._tickListDirty) {
+            this._tickListDirty = false;
+            this._tickingComponents = this._tickingComponents.filter(
+                (component) => component.tick && component.tickEnabled,
+            );
+        }
+    }
+
+    /**
+     * Registers a component for the per-frame tick.
+     *
+     * Called by {@link DIVENode} when a component becomes live; not part of the
+     * component-authoring surface.
+     *
+     * @param component - The component to enrol.
+     * @internal
+     */
+    public enlistComponent(component: DIVEComponent): void {
+        if (!component.tick || !component.tickEnabled) return;
+        if (this._tickingComponents.includes(component)) return;
+
+        this._tickingComponents.push(component);
+    }
+
+    /**
+     * Removes a component from the per-frame tick.
+     *
+     * @param component - The component to withdraw.
+     * @internal
+     */
+    public withdrawComponent(component: DIVEComponent): void {
+        const index = this._tickingComponents.indexOf(component);
+        if (index === -1) return;
+
+        if (this._isTicking) {
+            // compacted after the loop finishes
+            this._tickListDirty = true;
+            return;
+        }
+
+        this._tickingComponents.splice(index, 1);
+    }
+
     public dispose(): void {
         this.remove(this._root);
 
         if (this._grid) {
             this.remove(this._grid);
         }
+
+        this._tickingComponents = [];
     }
 }

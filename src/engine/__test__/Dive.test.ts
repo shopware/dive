@@ -248,8 +248,19 @@ describe('DIVE', () => {
     it('should register the main view with the clock', () => {
         const dive = new DIVE();
 
-        expect(dive.clock.addTicker).toHaveBeenCalledTimes(1);
+        // the scene is a ticker too: it drives every attached component
+        expect(dive.clock.addTicker).toHaveBeenCalledTimes(2);
         expect(dive.clock.addTicker).toHaveBeenCalledWith(dive.mainView);
+    });
+
+    it('should register the scene with the clock before the view', () => {
+        const dive = new DIVE();
+
+        const calls = (
+            dive.clock.addTicker as unknown as { mock: { calls: unknown[][] } }
+        ).mock.calls;
+        expect(calls[0][0]).toBe(dive.scene);
+        expect(calls[1][0]).toBe(dive.mainView);
     });
 
     it('should instantiate in development DIVE_NODE_ENV', () => {
@@ -326,7 +337,8 @@ describe('DIVE', () => {
         const dive = new DIVE(settings);
         await waitForAsync();
         expect(dive['_orientationDisplay']).toBeDefined();
-        expect(dive.clock.addTicker).toHaveBeenCalledTimes(2);
+        // scene, main view, orientation display
+        expect(dive.clock.addTicker).toHaveBeenCalledTimes(3);
         expect(dive.clock.addTicker).toHaveBeenCalledWith(
             dive['_orientationDisplay'],
         );

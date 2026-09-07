@@ -432,9 +432,18 @@ describe('BoundingBox', () => {
             // so the inherited call has to be inert rather than guarded away.
             const boundingBox = new BoundingBox(mockObject);
 
-            expect(
-                (boundingBox as unknown as { _listeners?: object })._listeners,
-            ).toBeUndefined();
+            const listeners = (
+                boundingBox as unknown as {
+                    _listeners?: Record<string, unknown[]>;
+                }
+            )._listeners;
+
+            // DIVENode subscribes to its own tree events to keep the component
+            // registry in sync; what must stay unsubscribed are the entity
+            // events the state layer listens for.
+            expect(listeners?.['object-transform']).toBeUndefined();
+            expect(listeners?.['object-select']).toBeUndefined();
+            expect(listeners?.['object-deselect']).toBeUndefined();
             expect(() => boundingBox.onMove()).not.toThrow();
         });
     });

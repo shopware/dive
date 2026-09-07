@@ -145,6 +145,10 @@ export class DIVE {
                 settings?.displayFloor ?? DIVEDefaultSettings.displayFloor,
         });
 
+        // the scene drives every component that asked for a per-frame callback.
+        // Registered before the view so components see the frame they affect.
+        this._clock.addTicker(this._scene);
+
         // set up main view
         const mainView = new DIVEView(
             this._scene,
