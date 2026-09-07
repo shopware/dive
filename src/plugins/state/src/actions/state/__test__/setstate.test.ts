@@ -75,6 +75,7 @@ const createDependencies = (
     gateway: EngineGateway;
     controller: OrbitController;
     registry: Registry;
+    dispatch: ReturnType<typeof vi.fn>;
 } => {
     const registry = new Registry();
     alreadyRegistered.forEach((entity) => registry.register(entity));
@@ -90,7 +91,7 @@ const createDependencies = (
         getState: vi.fn(() => controllerState),
     } as unknown as OrbitController;
 
-    return { gateway, controller, registry };
+    return { gateway, controller, registry, dispatch: vi.fn() };
 };
 
 /** Scene data with everything left out unless explicitly given. */
@@ -473,6 +474,7 @@ describe('SetStateAction', () => {
         controller: OrbitController;
         state: State;
         registry: Registry;
+        dispatch: ReturnType<typeof vi.fn>;
         scene: { name: string; background: Color };
         floor: { visible: boolean; material: MeshStandardMaterial };
     } => {
@@ -531,9 +533,17 @@ describe('SetStateAction', () => {
 
         // the real gateway, so the round trip goes through the same read and
         // write path the application uses
-        const gateway = new EngineGateway({ scene } as unknown as DIVE, state);
+        const gateway = new EngineGateway({ scene } as unknown as DIVE);
 
-        return { gateway, controller, state, registry, scene, floor };
+        return {
+            gateway,
+            controller,
+            state,
+            registry,
+            scene,
+            floor,
+            dispatch: vi.fn(),
+        };
     };
 
     const entity = <T>(id: string, entityType: string): T =>

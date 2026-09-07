@@ -110,7 +110,7 @@ export class State {
     constructor(dive: DIVE, controller: OrbitController) {
         this.engine = dive;
         this.controller = controller;
-        this.gateway = new EngineGateway(dive, this);
+        this.gateway = new EngineGateway(dive);
 
         State.__instances.push(this);
     }

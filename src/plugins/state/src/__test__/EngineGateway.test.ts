@@ -128,6 +128,22 @@ const findEntity = (
 ): MockedSceneObject | undefined =>
     gateway.findEntity(entity) as MockedSceneObject | undefined;
 
+/**
+ * Creates an entity and applies its data, which is what `ADD_OBJECT` does.
+ *
+ * The gateway splits the two so a listener can be attached in between; these
+ * tests only care about the result, so they do both at once.
+ */
+const addEntity = async (
+    gateway: EngineGateway,
+    entity: EntitySchema,
+): Promise<DIVESceneObject | undefined> => {
+    const node = gateway.createEntity(entity);
+    if (node) await gateway.applyEntity(node, entity);
+
+    return node;
+};
+
 const makeGateway = (): EngineGateway => {
     const scene = Object.assign(new Object3D(), {
         root: new DIVERoot(),
@@ -136,8 +152,7 @@ const makeGateway = (): EngineGateway => {
         setBackground: vi.fn(),
     });
     const engine = { scene } as unknown as DIVE;
-    const state = { performAction: vi.fn() } as unknown as State;
-    return new EngineGateway(engine, state);
+    return new EngineGateway(engine);
 };
 
 describe('plugins/state/EngineGateway', () => {
@@ -152,7 +167,7 @@ describe('plugins/state/EngineGateway', () => {
     describe('findEntity', () => {
         it('should find an entity the gateway created', async () => {
             const gateway = makeGateway();
-            await gateway.addEntity({
+            await addEntity(gateway, {
                 id: 'test-id',
                 entityType: 'group',
                 name: 'G',
@@ -190,7 +205,7 @@ describe('plugins/state/EngineGateway', () => {
 
         it('should get scene object by id', async () => {
             const gateway = makeGateway();
-            const added = await gateway.addEntity({
+            const added = await addEntity(gateway, {
                 id: 'test-id',
                 entityType: 'group',
                 name: 'G',
@@ -228,7 +243,7 @@ describe('plugins/state/EngineGateway', () => {
             };
 
             const gateway = makeGateway();
-            await gateway.addEntity(lightData);
+            await addEntity(gateway, lightData);
             expect(spyConsoleWarn).not.toHaveBeenCalled();
 
             const light = findEntity(gateway, lightData);
@@ -321,7 +336,7 @@ describe('plugins/state/EngineGateway', () => {
             };
 
             const gateway = makeGateway();
-            await gateway.addEntity(modelData);
+            await addEntity(gateway, modelData);
             const model = findEntity(gateway, modelData);
             expect(model).toBeDefined();
             expect(model?.name).toBe('Test Model');
@@ -351,7 +366,7 @@ describe('plugins/state/EngineGateway', () => {
             };
 
             const gateway = makeGateway();
-            await gateway.addEntity(primitiveData);
+            await addEntity(gateway, primitiveData);
             const primitive = findEntity(gateway, primitiveData);
             expect(primitive).toBeDefined();
             expect(primitive?.name).toBe('Test Primitive');
@@ -384,7 +399,7 @@ describe('plugins/state/EngineGateway', () => {
             };
 
             const gateway = makeGateway();
-            await gateway.addEntity(groupData);
+            await addEntity(gateway, groupData);
             const group = findEntity(gateway, groupData);
             expect(group).toBeDefined();
             expect(group?.name).toBe('Test Group');
@@ -412,7 +427,7 @@ describe('plugins/state/EngineGateway', () => {
             };
 
             const gateway = makeGateway();
-            await gateway.addEntity(modelData);
+            await addEntity(gateway, modelData);
             const model = findEntity(gateway, modelData);
             expect(model).toBeDefined();
             expect(model?.userData.uri).toBe('test.glb');
@@ -432,7 +447,7 @@ describe('plugins/state/EngineGateway', () => {
             };
 
             const gateway = makeGateway();
-            await gateway.addEntity(primitiveData);
+            await addEntity(gateway, primitiveData);
             const primitive = findEntity(gateway, primitiveData);
             expect(primitive).toBeDefined();
             expect(primitive?.userData.id).toBe('primitive-1');
@@ -450,7 +465,7 @@ describe('plugins/state/EngineGateway', () => {
             };
 
             const gateway = makeGateway();
-            await gateway.addEntity(groupData);
+            await addEntity(gateway, groupData);
             const group = findEntity(gateway, groupData);
             expect(group).toBeDefined();
             expect(group?.userData.id).toBe('group-1');
@@ -467,7 +482,7 @@ describe('plugins/state/EngineGateway', () => {
             };
 
             const gateway = makeGateway();
-            await gateway.addEntity(cameraData);
+            await addEntity(gateway, cameraData);
             // CAMERA objects are not added to the scene
             const camera = findEntity(gateway, cameraData);
             expect(camera).toBeUndefined();
@@ -485,7 +500,7 @@ describe('plugins/state/EngineGateway', () => {
             } as unknown as EntitySchema;
 
             const gateway = makeGateway();
-            await expect(gateway.addEntity(unknownData)).rejects.toThrow(
+            await expect(addEntity(gateway, unknownData)).rejects.toThrow(
                 'EngineGateway.addEntity: Unknown entity type: unknown',
             );
         });
@@ -504,12 +519,12 @@ describe('plugins/state/EngineGateway', () => {
             };
 
             const gateway = makeGateway();
-            const firstObject = await gateway.addEntity(modelData);
-            const duplicateObject = await gateway.addEntity(modelData);
+            const firstObject = await addEntity(gateway, modelData);
+            const duplicateObject = await addEntity(gateway, modelData);
 
             expect(duplicateObject).toBe(firstObject);
             expect(spyConsoleWarn).toHaveBeenCalledWith(
-                'EngineGateway.addEntity: Scene object with id model-duplicate already exists',
+                'EngineGateway.createEntity: Scene object with id model-duplicate already exists',
             );
         });
     });
@@ -529,7 +544,7 @@ describe('plugins/state/EngineGateway', () => {
             };
 
             const gateway = makeGateway();
-            await gateway.addEntity(modelData);
+            await addEntity(gateway, modelData);
             const model = findEntity(gateway, modelData);
             expect(model).toBeDefined();
 
@@ -556,7 +571,7 @@ describe('plugins/state/EngineGateway', () => {
             };
 
             const gateway = makeGateway();
-            await gateway.addEntity(lightData);
+            await addEntity(gateway, lightData);
             const light = findEntity(gateway, lightData);
             expect(light).toBeDefined();
 
@@ -590,7 +605,7 @@ describe('plugins/state/EngineGateway', () => {
             };
 
             const gateway = makeGateway();
-            await gateway.addEntity(primitiveData);
+            await addEntity(gateway, primitiveData);
             const primitive = findEntity(gateway, primitiveData);
             expect(primitive).toBeDefined();
 
@@ -623,7 +638,7 @@ describe('plugins/state/EngineGateway', () => {
             };
 
             const gateway = makeGateway();
-            await gateway.addEntity(groupData);
+            await addEntity(gateway, groupData);
             const group = findEntity(gateway, groupData);
             expect(group).toBeDefined();
 
@@ -731,7 +746,7 @@ describe('plugins/state/EngineGateway', () => {
             };
 
             const gateway = makeGateway();
-            await gateway.addEntity(modelData);
+            await addEntity(gateway, modelData);
             const model = findEntity(gateway, modelData);
             expect(model).toBeDefined();
 
@@ -844,8 +859,8 @@ describe('plugins/state/EngineGateway', () => {
             };
 
             const gateway = makeGateway();
-            await gateway.addEntity(groupData);
-            await gateway.addEntity(memberData);
+            await addEntity(gateway, groupData);
+            await addEntity(gateway, memberData);
 
             const group = findEntity(gateway, groupData);
             const member = findEntity(gateway, memberData);
@@ -887,7 +902,7 @@ describe('plugins/state/EngineGateway', () => {
             mockScene.children = [mockTransformControls];
 
             const gateway = makeGateway();
-            await gateway.addEntity(modelData);
+            await addEntity(gateway, modelData);
             const model = findEntity(gateway, modelData);
             expect(model).toBeDefined();
 
@@ -923,7 +938,7 @@ describe('plugins/state/EngineGateway', () => {
             mockScene.children = [mockTransformControls];
 
             const gateway = makeGateway();
-            await gateway.addEntity(primitiveData);
+            await addEntity(gateway, primitiveData);
             const primitive = findEntity(gateway, primitiveData);
             expect(primitive).toBeDefined();
 
@@ -958,7 +973,7 @@ describe('plugins/state/EngineGateway', () => {
             mockScene.children = [mockTransformControls];
 
             const gateway = makeGateway();
-            await gateway.addEntity(groupData);
+            await addEntity(gateway, groupData);
             const group = findEntity(gateway, groupData);
             expect(group).toBeDefined();
 
@@ -1017,8 +1032,8 @@ describe('plugins/state/EngineGateway', () => {
             };
 
             const gateway = makeGateway();
-            await gateway.addEntity(parentData);
-            await gateway.addEntity(childData);
+            await addEntity(gateway, parentData);
+            await addEntity(gateway, childData);
 
             const parent = findEntity(gateway, parentData);
             const child = findEntity(gateway, childData);
@@ -1043,7 +1058,7 @@ describe('plugins/state/EngineGateway', () => {
             };
 
             const gateway = makeGateway();
-            await gateway.addEntity(childData);
+            await addEntity(gateway, childData);
             const child = findEntity(gateway, childData);
             expect(child).toBeDefined();
             expect(child?.parent).toBe(gateway.root);
@@ -1064,7 +1079,7 @@ describe('plugins/state/EngineGateway', () => {
             };
 
             const gateway = makeGateway();
-            await gateway.addEntity(childData);
+            await addEntity(gateway, childData);
             const child = findEntity(gateway, childData);
             expect(child).toBeDefined();
             // When parent doesn't exist, the object should remain where it is
@@ -1116,14 +1131,14 @@ describe('plugins/state/EngineGateway', () => {
             };
 
             const gateway = makeGateway();
-            await gateway.addEntity(lightData as LightSchema);
+            await addEntity(gateway, lightData as LightSchema);
             const light = findEntity(gateway, lightData);
             expect(light).toBeDefined();
         });
 
         it('should only touch the fields a patch carries', async () => {
             const gateway = makeGateway();
-            await gateway.addEntity({
+            await addEntity(gateway, {
                 id: 'light-1',
                 entityType: 'light',
                 type: 'point',
@@ -1160,7 +1175,7 @@ describe('plugins/state/EngineGateway', () => {
             gateway: EngineGateway,
             uri: string,
         ): Promise<any> => {
-            await gateway.addEntity({
+            await addEntity(gateway, {
                 id: 'model-1',
                 entityType: 'model',
                 name: 'M',
@@ -1239,7 +1254,7 @@ describe('plugins/state/EngineGateway', () => {
             mockScene.children = [mockTransformControls];
 
             const gateway = makeGateway();
-            await gateway.addEntity(lightData);
+            await addEntity(gateway, lightData);
             const light = findEntity(gateway, lightData);
             expect(light).toBeDefined();
 
@@ -1296,7 +1311,7 @@ describe('plugins/state/EngineGateway', () => {
             mockScene.children = [mockTransformControls];
 
             const gateway = makeGateway();
-            await gateway.addEntity(groupData);
+            await addEntity(gateway, groupData);
             const group = findEntity(gateway, groupData);
             expect(group).toBeDefined();
 
@@ -1347,7 +1362,7 @@ describe('plugins/state/EngineGateway', () => {
             };
 
             const gateway = makeGateway();
-            await gateway.addEntity(modelData);
+            await addEntity(gateway, modelData);
             const model = findEntity(gateway, modelData);
             expect(model).toBeDefined();
             expect(model?.parent).toBe(gateway.root);
@@ -1368,7 +1383,7 @@ describe('plugins/state/EngineGateway', () => {
             };
 
             const gateway = makeGateway();
-            await gateway.addEntity(modelData);
+            await addEntity(gateway, modelData);
             const model = findEntity(gateway, modelData);
             expect(model).toBeDefined();
             expect(model?.parent).toBe(gateway.root);
@@ -1400,7 +1415,7 @@ describe('plugins/state/EngineGateway', () => {
             };
 
             const gateway = makeGateway();
-            await gateway.addEntity(modelData as ModelSchema);
+            await addEntity(gateway, modelData as ModelSchema);
             const model = findEntity(gateway, modelData);
             expect(model).toBeDefined();
         });
@@ -1431,7 +1446,7 @@ describe('plugins/state/EngineGateway', () => {
             };
 
             const gateway = makeGateway();
-            await gateway.addEntity(modelData as ModelSchema);
+            await addEntity(gateway, modelData as ModelSchema);
             const model = findEntity(gateway, modelData);
             expect(model).toBeDefined();
         });
@@ -1455,7 +1470,7 @@ describe('plugins/state/EngineGateway', () => {
             };
 
             const gateway = makeGateway();
-            await gateway.addEntity(primitiveData as PrimitiveSchema);
+            await addEntity(gateway, primitiveData as PrimitiveSchema);
             const primitive = findEntity(gateway, primitiveData);
             expect(primitive).toBeDefined();
         });
@@ -1490,7 +1505,7 @@ describe('plugins/state/EngineGateway', () => {
             };
 
             const gateway = makeGateway();
-            await gateway.addEntity(primitiveData as PrimitiveSchema);
+            await addEntity(gateway, primitiveData as PrimitiveSchema);
             const primitive = findEntity(gateway, primitiveData);
             expect(primitive).toBeDefined();
         });
@@ -1537,10 +1552,7 @@ describe('plugins/state/EngineGateway', () => {
                 setBackground: vi.fn(),
                 root: { floor },
             };
-            const gateway = new EngineGateway(
-                { scene } as unknown as DIVE,
-                { performAction: vi.fn() } as unknown as State,
-            );
+            const gateway = new EngineGateway({ scene } as unknown as DIVE);
             return { gateway, scene, floor };
         };
 
@@ -1599,246 +1611,6 @@ describe('plugins/state/EngineGateway', () => {
         });
     });
 
-    describe('wiring objects to the state', () => {
-        const modelData: ModelSchema = {
-            id: 'model-1',
-            entityType: 'model',
-            name: 'M',
-            visible: true,
-            uri: 'a.glb',
-            position: { x: 0, y: 0, z: 0 },
-            rotation: { x: 0, y: 0, z: 0 },
-            scale: { x: 1, y: 1, z: 1 },
-            loaded: false,
-            parentId: null,
-        };
-
-        /** A gateway whose listeners are the real ones, over a spying State. */
-        const makeWired = () => {
-            const performAction = vi.fn();
-            const gateway = new EngineGateway(
-                {
-                    scene: { root: new DIVERoot() },
-                } as unknown as DIVE,
-                { performAction } as unknown as State,
-            );
-            return { gateway, performAction };
-        };
-
-        /**
-         * Dispatches the event for real, rather than replaying captured
-         * `addEventListener` calls: the objects are real Object3Ds now, so this
-         * exercises the actual path from the engine to the state.
-         */
-        const fire = (
-            object: MockedSceneObject,
-            type: string,
-            payload: object = {},
-        ): void => {
-            object.dispatchEvent({ type, ...payload });
-        };
-
-        it('should subscribe before the schema is applied', async () => {
-            // applying a model schema awaits setFromURL, and object-load fires
-            // in there — listening afterwards would miss it
-            const { gateway, performAction } = makeWired();
-            await gateway.addEntity(modelData);
-
-            // setFromURL dispatches object-load while addEntity is still
-            // awaiting it; wiring up afterwards would drop it on the floor
-            expect(performAction).toHaveBeenCalledWith('MODEL_LOADED', {
-                id: 'model-1',
-            });
-        });
-
-        it('should turn a reported transform into one UPDATE_OBJECT', async () => {
-            const { gateway, performAction } = makeWired();
-            await gateway.addEntity(modelData);
-            const model = findEntity(gateway, modelData)!;
-
-            fire(model, 'object-transform', {
-                position: { x: 1, y: 2, z: 3 },
-                rotation: { x: 0, y: 0, z: 0 },
-                scale: { x: 1, y: 1, z: 1 },
-            });
-
-            const updates = performAction.mock.calls.filter(
-                (call) => call[0] === 'UPDATE_OBJECT',
-            );
-            expect(updates).toHaveLength(1);
-            expect(updates[0][1]).toEqual({
-                id: 'model-1',
-                entityType: 'model',
-                position: { x: 1, y: 2, z: 3 },
-                rotation: { x: 0, y: 0, z: 0 },
-                scale: { x: 1, y: 1, z: 1 },
-            });
-        });
-
-        it('should copy the reported vectors', async () => {
-            // the object hands out a scratch buffer it overwrites next frame,
-            // and UPDATE_OBJECT merges the payload straight into the registry
-            const { gateway, performAction } = makeWired();
-            await gateway.addEntity(modelData);
-            const model = findEntity(gateway, modelData)!;
-
-            const live = { x: 1, y: 2, z: 3 };
-            fire(model, 'object-transform', {
-                position: live,
-                rotation: live,
-                scale: live,
-            });
-
-            const sent = performAction.mock.calls.find(
-                (call) => call[0] === 'UPDATE_OBJECT',
-            )![1];
-            expect(sent.position).not.toBe(live);
-
-            live.x = 999;
-            expect(sent.position.x).toBe(1);
-        });
-
-        it('should report a model load', async () => {
-            const { gateway, performAction } = makeWired();
-            await gateway.addEntity(modelData);
-            const model = findEntity(gateway, modelData)!;
-
-            fire(model, 'object-load');
-
-            expect(performAction).toHaveBeenCalledWith('MODEL_LOADED', {
-                id: 'model-1',
-            });
-        });
-
-        it('should not select the same object twice', async () => {
-            // SELECT_OBJECT runs selectionState.select(), which calls back into
-            // onSelect() — without the guard that loops
-            const { gateway, performAction } = makeWired();
-            await gateway.addEntity(modelData);
-            const model = findEntity(gateway, modelData)!;
-
-            fire(model, 'object-select');
-            fire(model, 'object-select');
-
-            expect(
-                performAction.mock.calls.filter(
-                    (call) => call[0] === 'SELECT_OBJECT',
-                ),
-            ).toHaveLength(1);
-        });
-
-        it('should deselect only what is actually selected', async () => {
-            const { gateway, performAction } = makeWired();
-            await gateway.addEntity(modelData);
-            const model = findEntity(gateway, modelData)!;
-
-            fire(model, 'object-deselect');
-            expect(performAction).not.toHaveBeenCalledWith(
-                'DESELECT_OBJECT',
-                expect.anything(),
-            );
-
-            fire(model, 'object-select');
-            fire(model, 'object-deselect');
-            expect(performAction).toHaveBeenCalledWith('DESELECT_OBJECT', {
-                id: 'model-1',
-                entityType: 'model',
-            });
-        });
-
-        it('should allow selecting again after a deselect', async () => {
-            const { gateway, performAction } = makeWired();
-            await gateway.addEntity(modelData);
-            const model = findEntity(gateway, modelData)!;
-
-            fire(model, 'object-select');
-            fire(model, 'object-deselect');
-            fire(model, 'object-select');
-
-            expect(
-                performAction.mock.calls.filter(
-                    (call) => call[0] === 'SELECT_OBJECT',
-                ),
-            ).toHaveLength(2);
-        });
-
-        it('should stop listening once the object is removed', async () => {
-            const { gateway, performAction } = makeWired();
-            await gateway.addEntity(modelData);
-            const model = findEntity(gateway, modelData)!;
-
-            gateway.removeEntity(modelData);
-            performAction.mockClear();
-
-            // a detached object must no longer be able to drive the state
-            fire(model, 'object-transform', {
-                position: { x: 9, y: 9, z: 9 },
-                rotation: { x: 0, y: 0, z: 0 },
-                scale: { x: 1, y: 1, z: 1 },
-            });
-            fire(model, 'object-select');
-            fire(model, 'object-deselect');
-            fire(model, 'object-load');
-
-            expect(performAction).not.toHaveBeenCalled();
-        });
-
-        it('should forget the selection when the selected object is removed', async () => {
-            // otherwise the id stays in _selectedId and an object added again
-            // under the same id could never be selected
-            const { gateway, performAction } = makeWired();
-            await gateway.addEntity(modelData);
-            fire(findEntity(gateway, modelData)!, 'object-select');
-            findEntity(gateway, modelData)!.parent = gateway.root;
-
-            gateway.removeEntity(modelData);
-
-            await gateway.addEntity(modelData);
-            fire(findEntity(gateway, modelData)!, 'object-select');
-
-            expect(
-                performAction.mock.calls.filter(
-                    (call) => call[0] === 'SELECT_OBJECT',
-                ),
-            ).toHaveLength(2);
-        });
-
-        it('should drop every subscription on dispose', async () => {
-            const { gateway, performAction } = makeWired();
-            await gateway.addEntity(modelData);
-            const model = findEntity(gateway, modelData)!;
-
-            gateway.dispose();
-            performAction.mockClear();
-
-            fire(model, 'object-transform', {
-                position: { x: 1, y: 1, z: 1 },
-                rotation: { x: 0, y: 0, z: 0 },
-                scale: { x: 1, y: 1, z: 1 },
-            });
-            fire(model, 'object-select');
-            fire(model, 'object-deselect');
-            fire(model, 'object-load');
-
-            expect(performAction).not.toHaveBeenCalled();
-        });
-
-        it('should not wire a camera, because it never enters the scene', async () => {
-            const { gateway } = makeWired();
-
-            const result = await gateway.addEntity({
-                id: 'camera-1',
-                entityType: 'camera',
-                name: 'C',
-                visible: true,
-                position: { x: 0, y: 0, z: 0 },
-                target: { x: 0, y: 0, z: 0 },
-            } as CameraSchema);
-
-            expect(result).toBeUndefined();
-        });
-    });
-
     describe('engine control', () => {
         const makeControllable = () => {
             const clock = {
@@ -1846,14 +1618,11 @@ describe('plugins/state/EngineGateway', () => {
                 addTicker: vi.fn(),
             };
             const startAsync = vi.fn().mockResolvedValue(undefined);
-            const gateway = new EngineGateway(
-                {
-                    scene: { root: new DIVERoot() },
-                    clock,
-                    startAsync,
-                } as unknown as DIVE,
-                { performAction: vi.fn() } as unknown as State,
-            );
+            const gateway = new EngineGateway({
+                scene: { root: new DIVERoot() },
+                clock,
+                startAsync,
+            } as unknown as DIVE);
             return { gateway, clock, startAsync };
         };
 

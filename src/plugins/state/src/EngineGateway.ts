@@ -12,7 +12,6 @@ import {
     PrimitiveMeshComponent,
     PointLightComponent,
     type DIVE,
-    type DIVEEntityTransformEvent,
     type DIVERoot,
     type DIVESceneObject,
 } from '@shopware-ag/dive';
@@ -30,7 +29,6 @@ import {
     type PartialSchema,
     type PrimitiveSchema,
 } from '../types/index.ts';
-import { type State } from './State.ts';
 
 /** Link lines start at the group's own origin. */
 const ORIGIN = new Vector3();
@@ -63,29 +61,16 @@ export type SceneSettingsPatch = Partial<
 >;
 
 /**
- * Vectors arrive as live references into the emitting object, including a
- * scratch buffer the next frame overwrites. `UpdateObjectAction` merges the
- * payload into the registered schema, and lodash assigns by reference when the
- * target key is absent — so without this copy a moving object would keep
- * rewriting its own stored transform.
- */
-const copyVec = (v: {
-    x: number;
-    y: number;
-    z: number;
-}): { x: number; y: number; z: number } => ({
-    x: v.x,
-    y: v.y,
-    z: v.z,
-});
-
-/**
  * #### EngineGateway
  * is the single seam between the state plugin and the engine.
  *
  * The engine holds objects; it does not know what an entity, an action or a
- * state is. Everything that turns entity data into scene objects — and every
- * report travelling back the other way — passes through here.
+ * state is. Everything that turns entity data into scene objects passes through
+ * here.
+ *
+ * One direction only. Reports coming back the other way are `watchEntity`'s
+ * business — which is why this class holds no reference to the state and has no
+ * way to command it.
  *
  * It is not a facade over the engine API. It offers what the state layer
  * needs, in the state layer's vocabulary: entities, scene settings, rendering.
@@ -94,24 +79,6 @@ const copyVec = (v: {
  */
 export class EngineGateway {
     private readonly _engine: DIVE;
-    private readonly _state: State;
-
-    /**
-     * One teardown per entity id, so an object that leaves the scene stops
-     * reporting. Keyed by id rather than held on the object because
-     * `_deleteGroup` re-parents members to the root — those stay registered
-     * and have to stay wired.
-     */
-    private readonly _unsubscribes: Map<string, () => void> = new Map();
-
-    /**
-     * The id the toolbox currently holds selected.
-     *
-     * `SELECT_OBJECT` runs `selectionState.select()`, which calls back into
-     * `onSelect()` — this breaks that one loop without silencing the events in
-     * general, which would also kill the wanted group cascade.
-     */
-    private _selectedId: string | null = null;
 
     /** id -> scene object, so lookups do not walk the tree. */
     private readonly _entities: Map<string, DIVESceneObject> = new Map();
@@ -124,9 +91,8 @@ export class EngineGateway {
     private readonly _lineHandles: Map<DIVESceneObject, DIVELineHandle> =
         new Map();
 
-    constructor(engine: DIVE, state: State) {
+    constructor(engine: DIVE) {
         this._engine = engine;
-        this._state = state;
     }
 
     /** The scene root, for everything that needs the subtree as a whole. */
@@ -149,13 +115,24 @@ export class EngineGateway {
         return this._entities.get(entity.id);
     }
 
-    public async addEntity(
-        entity: EntitySchema,
-    ): Promise<DIVESceneObject | undefined> {
+    /**
+     * Puts an empty scene object for this entity into the scene.
+     *
+     * Separate from {@link applyEntity} because of what happens in between:
+     * applying a model schema awaits the asset load, and `object-load` fires
+     * inside that await. Whoever wants to hear it has to be listening — and
+     * registered, or the report writes to an id the state does not know yet.
+     * One combined call left no moment for that.
+     *
+     * Synchronous, so nothing can slip in front of the caller either.
+     *
+     * @returns The scene object, or `undefined` for a state-only entity.
+     */
+    public createEntity(entity: EntitySchema): DIVESceneObject | undefined {
         const existing = this.findEntity(entity);
         if (existing) {
             console.warn(
-                `EngineGateway.addEntity: Scene object with id ${entity.id} already exists`,
+                `EngineGateway.createEntity: Scene object with id ${entity.id} already exists`,
             );
             return existing;
         }
@@ -170,14 +147,15 @@ export class EngineGateway {
         this._entities.set(entity.id, sceneObject);
         this.root.add(sceneObject);
 
-        // Wired before the schema is applied, not after: applying a model
-        // schema awaits `setFromURL`, and that is exactly where `object-load`
-        // fires. Listening afterwards would miss it.
-        this._wire(entity, sceneObject);
-
-        await this._apply(sceneObject, entity);
-
         return sceneObject;
+    }
+
+    /** Writes an entity's data onto the scene object created for it. */
+    public async applyEntity(
+        sceneObject: DIVESceneObject,
+        entity: PartialSchema,
+    ): Promise<void> {
+        await this._apply(sceneObject, entity);
     }
 
     public async updateEntity(patch: PartialSchema): Promise<void> {
@@ -201,8 +179,6 @@ export class EngineGateway {
             return;
         }
 
-        this._unsubscribes.get(entity.id)?.();
-        this._unsubscribes.delete(entity.id);
         this._entities.delete(entity.id);
         this._unlinkFromParent(sceneObject);
 
@@ -222,10 +198,8 @@ export class EngineGateway {
         sceneObject.parent!.remove(sceneObject);
     }
 
-    /** Drops every listener this gateway ever attached. */
+    /** Forgets every scene object. Listener teardown belongs to the registry. */
     public dispose(): void {
-        this._unsubscribes.forEach((unsubscribe) => unsubscribe());
-        this._unsubscribes.clear();
         this._entities.clear();
         this._lineHandles.clear();
     }
@@ -345,19 +319,19 @@ export class EngineGateway {
                 return;
             case 'light':
                 this._applyLight(sceneObject as DIVENode, patch);
-                this._refreshParentLink(sceneObject);
+                this.refreshParentLink(sceneObject);
                 return;
             case 'model':
                 await this._applyModel(sceneObject as DIVENode, patch);
-                this._refreshParentLink(sceneObject);
+                this.refreshParentLink(sceneObject);
                 return;
             case 'primitive':
                 this._applyPrimitive(sceneObject as DIVENode, patch);
-                this._refreshParentLink(sceneObject);
+                this.refreshParentLink(sceneObject);
                 return;
             case 'group':
                 this._applyGroup(sceneObject as DIVENode, patch);
-                this._refreshParentLink(sceneObject);
+                this.refreshParentLink(sceneObject);
                 return;
             default:
                 throw new Error(
@@ -534,10 +508,11 @@ export class EngineGateway {
     /**
      * Redraws a member's link after it moved.
      *
-     * Called from the transform report and after a patch writes a position, so
-     * both a gizmo drag and an `UPDATE_OBJECT` keep the line attached.
+     * Called after a patch writes a position, and from the transform report in
+     * `watchEntity` — which is why it is public. That call goes away once the
+     * line follows its member through a listener on the node itself.
      */
-    private _refreshParentLink(sceneObject: DIVESceneObject): void {
+    public refreshParentLink(sceneObject: DIVESceneObject): void {
         const handle = this._lineHandles.get(sceneObject);
         if (handle === undefined) return;
 
@@ -556,60 +531,5 @@ export class EngineGateway {
         if (!parent || !('isDIVENode' in parent)) return undefined;
 
         return (parent as unknown as DIVENode).getComponent(MultiLineComponent);
-    }
-
-    /**
-     * Subscribe to what the object reports about itself.
-     *
-     * This closure is the routing: the id comes from the entity that was just
-     * created, so nothing has to search for it later. The engine never learns
-     * that any of this happens.
-     */
-    private _wire(entity: EntitySchema, sceneObject: DIVESceneObject): void {
-        const { id, entityType } = entity;
-        const state = this._state;
-
-        const onTransform = (event: DIVEEntityTransformEvent): void => {
-            // a member that moved needs its link to the group redrawn. This is
-            // the gizmo path: the object reports its own move.
-            this._refreshParentLink(sceneObject);
-
-            void state.performAction('UPDATE_OBJECT', {
-                id,
-                entityType,
-                position: copyVec(event.position),
-                rotation: copyVec(event.rotation),
-                scale: copyVec(event.scale),
-            });
-        };
-
-        const onSelect = (): void => {
-            if (this._selectedId === id) return;
-            this._selectedId = id;
-            void state.performAction('SELECT_OBJECT', { id, entityType });
-        };
-
-        const onDeselect = (): void => {
-            if (this._selectedId !== id) return;
-            this._selectedId = null;
-            void state.performAction('DESELECT_OBJECT', { id, entityType });
-        };
-
-        const onLoad = (): void => {
-            state.performAction('MODEL_LOADED', { id });
-        };
-
-        sceneObject.addEventListener('object-transform', onTransform);
-        sceneObject.addEventListener('object-select', onSelect);
-        sceneObject.addEventListener('object-deselect', onDeselect);
-        sceneObject.addEventListener('object-load', onLoad);
-
-        this._unsubscribes.set(id, () => {
-            sceneObject.removeEventListener('object-transform', onTransform);
-            sceneObject.removeEventListener('object-select', onSelect);
-            sceneObject.removeEventListener('object-deselect', onDeselect);
-            sceneObject.removeEventListener('object-load', onLoad);
-            if (this._selectedId === id) this._selectedId = null;
-        });
     }
 }
