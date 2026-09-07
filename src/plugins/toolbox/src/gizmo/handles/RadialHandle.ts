@@ -7,11 +7,9 @@ import {
     TorusGeometry,
     Vector3,
 } from 'three/webgpu';
-import { UI_LAYER_MASK } from '../../../constants/VisibilityLayerMask.ts';
-import { DIVEHoverable } from '../../../interfaces/Hoverable.ts';
-import { DraggableEvent } from '@shopware-ag/dive/toolbox';
+import { UI_LAYER_MASK, DIVEHoverable, DIVEDraggable } from '@shopware-ag/dive';
+import { type DraggableEvent } from '../../drag/DraggableEvent.ts';
 import { DIVERotateGizmo } from '../rotate/RotateGizmo.ts';
-import { DIVEDraggable } from '../../../interfaces/Draggable.ts';
 
 export class DIVERadialHandle
     extends Object3D

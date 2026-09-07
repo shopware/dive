@@ -1,7 +1,7 @@
 import { vi, describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { DIVEAxisHandle } from '../AxisHandle.ts';
 import { DIVETranslateGizmo } from '../../translate/TranslateGizmo.ts';
-import { DraggableEvent } from '@shopware-ag/dive/toolbox';
+import { type DraggableEvent } from '../../../drag/DraggableEvent.ts';
 import { Vector3, Color } from 'three/webgpu';
 
 // Mock the TranslateGizmo

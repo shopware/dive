@@ -1,10 +1,11 @@
 import { vi, describe, it, expect, beforeEach, afterEach } from 'vitest';
-import { DIVETranslateGizmo } from '../TranslateGizmo.ts';
+import { DIVERotateGizmo } from '../RotateGizmo.ts';
 import { OrbitController } from '@shopware-ag/dive/orbitcontroller';
-import { DIVEAxisHandle } from '../../handles/AxisHandle.ts';
+import { DIVERadialHandle } from '../../handles/RadialHandle.ts';
 import { DIVEGizmo } from '../../Gizmo.ts';
-import { DraggableEvent } from '@shopware-ag/dive/toolbox';
-import { Vector3 } from 'three/webgpu';
+import { type DraggableEvent } from '../../../drag/DraggableEvent.ts';
+import { Vector3, Euler } from 'three/webgpu';
+import { DIVEMath } from '../../../../../../helpers/math/index.ts';
 
 // Mock the OrbitController
 vi.mock('@shopware-ag/dive/orbitcontroller', () => ({
@@ -14,17 +15,18 @@ vi.mock('@shopware-ag/dive/orbitcontroller', () => ({
     })),
 }));
 
-// Mock the AxisHandle
-vi.mock('../../handles/AxisHandle', async () => {
+// Mock the RadialHandle
+vi.mock('../../handles/RadialHandle', async () => {
     const { Object3D } = await vi.importActual<typeof import('three')>('three');
 
     return {
-        DIVEAxisHandle: vi
+        DIVERadialHandle: vi
             .fn()
-            .mockImplementation((axis, length, direction, color) =>
+            .mockImplementation((axis, radius, arc, direction, color) =>
                 Object.assign(new Object3D(), {
                     axis,
-                    length,
+                    radius,
+                    arc,
                     direction,
                     color,
                     highlight: false,
@@ -44,34 +46,43 @@ vi.mock('../../Gizmo', () => ({
     DIVEGizmo: vi.fn(),
 }));
 
-describe('DIVETranslateGizmo', () => {
-    let translateGizmo: DIVETranslateGizmo;
+// Mock the math helper
+vi.mock('../../../../../../helpers/math/index', () => ({
+    DIVEMath: {
+        signedAngleTo: vi.fn(() => 0.5),
+    },
+}));
+
+describe('DIVERotateGizmo', () => {
+    let rotateGizmo: DIVERotateGizmo;
     let mockController: OrbitController;
     let mockGizmo: DIVEGizmo;
-    let mockHandle: DIVEAxisHandle;
+    let mockHandle: DIVERadialHandle;
 
     beforeEach(() => {
         vi.clearAllMocks();
 
         mockController = new OrbitController(null as any, null as any);
-        translateGizmo = new DIVETranslateGizmo(mockController);
+        rotateGizmo = new DIVERotateGizmo(mockController);
 
         mockGizmo = {
             object: {
-                position: { clone: vi.fn(() => new Vector3(0, 0, 0)) },
+                rotation: { clone: vi.fn(() => new Euler(0, 0, 0)) },
             },
             onHover: vi.fn(),
+            onChange: vi.fn(),
+            position: new Vector3(0, 0, 0),
         } as unknown as DIVEGizmo;
 
         mockHandle = {
             axis: 'x',
             highlight: false,
             forwardVector: new Vector3(1, 0, 0),
-        } as unknown as DIVEAxisHandle;
+        } as unknown as DIVERadialHandle;
 
         // Set up parent hierarchy
-        translateGizmo.parent = {} as any;
-        (translateGizmo.parent as any).parent = mockGizmo;
+        rotateGizmo.parent = {} as any;
+        (rotateGizmo.parent as any).parent = mockGizmo;
     });
 
     afterEach(() => {
@@ -80,15 +91,15 @@ describe('DIVETranslateGizmo', () => {
 
     describe('constructor', () => {
         it('should instantiate with correct properties', () => {
-            expect(translateGizmo).toBeDefined();
-            expect(translateGizmo.name).toBe('DIVETranslateGizmo');
-            expect(translateGizmo.children).toHaveLength(3);
+            expect(rotateGizmo).toBeDefined();
+            expect(rotateGizmo.name).toBe('DIVERotateGizmo');
+            expect(rotateGizmo.children).toHaveLength(3);
         });
 
-        it('should create axis handles for x, y, z axes', () => {
-            expect(DIVEAxisHandle).toHaveBeenCalledTimes(3);
+        it('should create radial handles for x, y, z axes', () => {
+            expect(DIVERadialHandle).toHaveBeenCalledTimes(3);
 
-            const calls = (DIVEAxisHandle as any).mock.calls;
+            const calls = (DIVERadialHandle as any).mock.calls;
             expect(calls[0][0]).toBe('x');
             expect(calls[1][0]).toBe('y');
             expect(calls[2][0]).toBe('z');
@@ -97,12 +108,12 @@ describe('DIVETranslateGizmo', () => {
 
     describe('debug property', () => {
         it('should set debug on all children', () => {
-            const children = translateGizmo.children as DIVEAxisHandle[];
+            const children = rotateGizmo.children as DIVERadialHandle[];
             children.forEach((child) => {
                 child.debug = false;
             });
 
-            translateGizmo.debug = true;
+            rotateGizmo.debug = true;
 
             children.forEach((child) => {
                 expect(child.debug).toBe(true);
@@ -112,9 +123,9 @@ describe('DIVETranslateGizmo', () => {
 
     describe('reset', () => {
         it('should reset all children', () => {
-            const children = translateGizmo.children as DIVEAxisHandle[];
+            const children = rotateGizmo.children as DIVERadialHandle[];
 
-            translateGizmo.reset();
+            rotateGizmo.reset();
 
             children.forEach((child) => {
                 expect(child.reset).toHaveBeenCalled();
@@ -124,9 +135,9 @@ describe('DIVETranslateGizmo', () => {
 
     describe('handleHighlight', () => {
         it('should highlight correct handle when not dragging', () => {
-            const children = translateGizmo.children as DIVEAxisHandle[];
+            const children = rotateGizmo.children as DIVERadialHandle[];
 
-            (translateGizmo as any).handleHighlight('x', true, false);
+            (rotateGizmo as any).handleHighlight('x', true, false);
 
             expect(children[0].highlight).toBe(true);
             expect(children[1].highlight).toBe(false);
@@ -134,9 +145,9 @@ describe('DIVETranslateGizmo', () => {
         });
 
         it('should highlight correct handle when dragging', () => {
-            const children = translateGizmo.children as DIVEAxisHandle[];
+            const children = rotateGizmo.children as DIVERadialHandle[];
 
-            (translateGizmo as any).handleHighlight('y', false, true);
+            (rotateGizmo as any).handleHighlight('y', false, true);
 
             expect(children[0].highlight).toBe(false);
             expect(children[1].highlight).toBe(true);
@@ -144,9 +155,9 @@ describe('DIVETranslateGizmo', () => {
         });
 
         it('should not highlight any handle when value is false and not dragging', () => {
-            const children = translateGizmo.children as DIVEAxisHandle[];
+            const children = rotateGizmo.children as DIVERadialHandle[];
 
-            (translateGizmo as any).handleHighlight('x', false, false);
+            (rotateGizmo as any).handleHighlight('x', false, false);
 
             children.forEach((child) => {
                 expect(child.highlight).toBe(false);
@@ -157,151 +168,147 @@ describe('DIVETranslateGizmo', () => {
     describe('onHandleHover', () => {
         it('should call parent gizmo onHover and handle highlight when not dragging', () => {
             const handleHighlightSpy = vi.spyOn(
-                translateGizmo as any,
+                rotateGizmo as any,
                 'handleHighlight',
             );
 
-            translateGizmo.onHandleHover(mockHandle, true);
+            rotateGizmo.onHandleHover(mockHandle, true);
 
-            expect(mockGizmo.onHover).toHaveBeenCalledWith(
-                'translate',
-                'x',
-                true,
-            );
+            expect(mockGizmo.onHover).toHaveBeenCalledWith('rotate', 'x', true);
             expect(handleHighlightSpy).toHaveBeenCalledWith('x', true, false);
         });
 
         it('should not change hover state when dragging', () => {
-            (translateGizmo as any)._startPos = new Vector3(1, 2, 3);
+            (rotateGizmo as any)._startRot = new Euler(0.1, 0.2, 0.3);
             const handleHighlightSpy = vi.spyOn(
-                translateGizmo as any,
+                rotateGizmo as any,
                 'handleHighlight',
             );
 
-            translateGizmo.onHandleHover(mockHandle, true);
+            rotateGizmo.onHandleHover(mockHandle, true);
 
             expect(mockGizmo.onHover).not.toHaveBeenCalled();
             expect(handleHighlightSpy).not.toHaveBeenCalled();
         });
 
         it('should not call parent methods when parent is missing', () => {
-            translateGizmo.parent = null;
+            rotateGizmo.parent = null;
 
             expect(() => {
-                translateGizmo.onHandleHover(mockHandle, true);
+                rotateGizmo.onHandleHover(mockHandle, true);
             }).not.toThrow();
         });
     });
 
     describe('onHandleDragStart', () => {
-        it('should set start position and highlight handle', () => {
+        it('should set start rotation and highlight handle', () => {
             const handleHighlightSpy = vi.spyOn(
-                translateGizmo as any,
+                rotateGizmo as any,
                 'handleHighlight',
             );
 
-            translateGizmo.onHandleDragStart(mockHandle);
+            rotateGizmo.onHandleDragStart(mockHandle);
 
-            expect((translateGizmo as any)._startPos).not.toBeNull();
+            expect((rotateGizmo as any)._startRot).not.toBeNull();
             expect(handleHighlightSpy).toHaveBeenCalledWith('x', true, true);
         });
 
-        it('should not set start position when parent is missing', () => {
-            translateGizmo.parent = null;
+        it('should not set start rotation when parent is missing', () => {
+            rotateGizmo.parent = null;
 
-            translateGizmo.onHandleDragStart(mockHandle);
+            rotateGizmo.onHandleDragStart(mockHandle);
 
-            expect((translateGizmo as any)._startPos).toBeNull();
+            expect((rotateGizmo as any)._startRot).toBeNull();
         });
 
-        it('should not set start position when object is missing', () => {
+        it('should not set start rotation when object is missing', () => {
             (mockGizmo as any).object = null;
 
-            translateGizmo.onHandleDragStart(mockHandle);
+            rotateGizmo.onHandleDragStart(mockHandle);
 
-            expect((translateGizmo as any)._startPos).toBeNull();
+            expect((rotateGizmo as any)._startRot).toBeNull();
         });
     });
 
     describe('onHandleDrag', () => {
         beforeEach(() => {
-            (translateGizmo as any)._startPos = new Vector3(1, 2, 3);
-            // Ensure mockGizmo.onChange is properly mocked
-            if (!mockGizmo.onChange) {
-                mockGizmo.onChange = vi.fn();
-            }
+            (rotateGizmo as any)._startRot = new Euler(0.1, 0.2, 0.3);
         });
 
-        it('should update position based on drag delta', () => {
+        it('should update rotation based on drag angle', () => {
             const dragEvent: DraggableEvent = {
-                dragDelta: new Vector3(0.5, 0, 0),
-                dragStart: new Vector3(0, 0, 0),
-                dragCurrent: new Vector3(0.5, 0, 0),
-                dragEnd: new Vector3(0.5, 0, 0),
+                dragCurrent: new Vector3(1, 0, 0),
+                dragStart: new Vector3(0, 1, 0),
+                dragDelta: new Vector3(1, -1, 0),
+                dragEnd: new Vector3(1, 0, 0),
             };
 
-            translateGizmo.onHandleDrag(mockHandle, dragEvent);
+            rotateGizmo.onHandleDrag(mockHandle, dragEvent);
 
-            expect(mockGizmo.onChange).toHaveBeenCalled();
+            expect(DIVEMath.signedAngleTo).toHaveBeenCalled();
+            expect(mockGizmo.onChange).toHaveBeenCalledWith(
+                undefined,
+                expect.any(Euler),
+            );
         });
 
-        it('should not update when start position is null', () => {
-            (translateGizmo as any)._startPos = null;
+        it('should not update when start rotation is null', () => {
+            (rotateGizmo as any)._startRot = null;
 
             const dragEvent: DraggableEvent = {
-                dragDelta: new Vector3(0.5, 0, 0),
-                dragStart: new Vector3(0, 0, 0),
-                dragCurrent: new Vector3(0.5, 0, 0),
-                dragEnd: new Vector3(0.5, 0, 0),
+                dragCurrent: new Vector3(1, 0, 0),
+                dragStart: new Vector3(0, 1, 0),
+                dragDelta: new Vector3(1, -1, 0),
+                dragEnd: new Vector3(1, 0, 0),
             };
 
-            translateGizmo.onHandleDrag(mockHandle, dragEvent);
+            rotateGizmo.onHandleDrag(mockHandle, dragEvent);
 
             expect(mockGizmo.onChange).not.toHaveBeenCalled();
         });
 
         it('should not update when parent is missing', () => {
-            translateGizmo.parent = null;
+            rotateGizmo.parent = null;
 
             const dragEvent: DraggableEvent = {
-                dragDelta: new Vector3(0.5, 0, 0),
-                dragStart: new Vector3(0, 0, 0),
-                dragCurrent: new Vector3(0.5, 0, 0),
-                dragEnd: new Vector3(0.5, 0, 0),
+                dragCurrent: new Vector3(1, 0, 0),
+                dragStart: new Vector3(0, 1, 0),
+                dragDelta: new Vector3(1, -1, 0),
+                dragEnd: new Vector3(1, 0, 0),
             };
 
-            translateGizmo.onHandleDrag(mockHandle, dragEvent);
+            rotateGizmo.onHandleDrag(mockHandle, dragEvent);
 
             expect(mockGizmo.onChange).not.toHaveBeenCalled();
         });
 
         it('should not update when parent parent is missing', () => {
-            (translateGizmo.parent as any).parent = null;
+            (rotateGizmo.parent as any).parent = null;
 
             const dragEvent: DraggableEvent = {
-                dragDelta: new Vector3(0.5, 0, 0),
-                dragStart: new Vector3(0, 0, 0),
-                dragCurrent: new Vector3(0.5, 0, 0),
-                dragEnd: new Vector3(0.5, 0, 0),
+                dragCurrent: new Vector3(1, 0, 0),
+                dragStart: new Vector3(0, 1, 0),
+                dragDelta: new Vector3(1, -1, 0),
+                dragEnd: new Vector3(1, 0, 0),
             };
 
-            translateGizmo.onHandleDrag(mockHandle, dragEvent);
+            rotateGizmo.onHandleDrag(mockHandle, dragEvent);
 
             expect(mockGizmo.onChange).not.toHaveBeenCalled();
         });
     });
 
     describe('onHandleDragEnd', () => {
-        it('should clear start position and reset highlight', () => {
-            (translateGizmo as any)._startPos = new Vector3(1, 2, 3);
+        it('should clear start rotation and reset highlight', () => {
+            (rotateGizmo as any)._startRot = new Euler(0.1, 0.2, 0.3);
             const handleHighlightSpy = vi.spyOn(
-                translateGizmo as any,
+                rotateGizmo as any,
                 'handleHighlight',
             );
 
-            translateGizmo.onHandleDragEnd(mockHandle);
+            rotateGizmo.onHandleDragEnd(mockHandle);
 
-            expect((translateGizmo as any)._startPos).toBeNull();
+            expect((rotateGizmo as any)._startRot).toBeNull();
             expect(handleHighlightSpy).toHaveBeenCalledWith('x', false, false);
         });
     });

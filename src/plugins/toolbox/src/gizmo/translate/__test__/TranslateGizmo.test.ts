@@ -1,9 +1,9 @@
 import { vi, describe, it, expect, beforeEach, afterEach } from 'vitest';
-import { DIVEScaleGizmo } from '../ScaleGizmo.ts';
+import { DIVETranslateGizmo } from '../TranslateGizmo.ts';
 import { OrbitController } from '@shopware-ag/dive/orbitcontroller';
-import { DIVEScaleHandle } from '../../handles/ScaleHandle.ts';
+import { DIVEAxisHandle } from '../../handles/AxisHandle.ts';
 import { DIVEGizmo } from '../../Gizmo.ts';
-import { DraggableEvent } from '@shopware-ag/dive/toolbox';
+import { type DraggableEvent } from '../../../drag/DraggableEvent.ts';
 import { Vector3 } from 'three/webgpu';
 
 // Mock the OrbitController
@@ -14,12 +14,12 @@ vi.mock('@shopware-ag/dive/orbitcontroller', () => ({
     })),
 }));
 
-// Mock the ScaleHandle
-vi.mock('../../handles/ScaleHandle', async () => {
+// Mock the AxisHandle
+vi.mock('../../handles/AxisHandle', async () => {
     const { Object3D } = await vi.importActual<typeof import('three')>('three');
 
     return {
-        DIVEScaleHandle: vi
+        DIVEAxisHandle: vi
             .fn()
             .mockImplementation((axis, length, direction, color) =>
                 Object.assign(new Object3D(), {
@@ -34,7 +34,6 @@ vi.mock('../../handles/ScaleHandle', async () => {
                         direction.z,
                     ),
                     reset: vi.fn(),
-                    update: vi.fn(),
                 }),
             ),
     };
@@ -45,35 +44,34 @@ vi.mock('../../Gizmo', () => ({
     DIVEGizmo: vi.fn(),
 }));
 
-describe('DIVEScaleGizmo', () => {
-    let scaleGizmo: DIVEScaleGizmo;
+describe('DIVETranslateGizmo', () => {
+    let translateGizmo: DIVETranslateGizmo;
     let mockController: OrbitController;
     let mockGizmo: DIVEGizmo;
-    let mockHandle: DIVEScaleHandle;
+    let mockHandle: DIVEAxisHandle;
 
     beforeEach(() => {
         vi.clearAllMocks();
 
         mockController = new OrbitController(null as any, null as any);
-        scaleGizmo = new DIVEScaleGizmo(mockController);
+        translateGizmo = new DIVETranslateGizmo(mockController);
 
         mockGizmo = {
             object: {
-                scale: { clone: vi.fn(() => new Vector3(1, 1, 1)) },
+                position: { clone: vi.fn(() => new Vector3(0, 0, 0)) },
             },
             onHover: vi.fn(),
-            onChange: vi.fn(),
         } as unknown as DIVEGizmo;
 
         mockHandle = {
             axis: 'x',
             highlight: false,
             forwardVector: new Vector3(1, 0, 0),
-        } as unknown as DIVEScaleHandle;
+        } as unknown as DIVEAxisHandle;
 
         // Set up parent hierarchy
-        scaleGizmo.parent = {} as any;
-        (scaleGizmo.parent as any).parent = mockGizmo;
+        translateGizmo.parent = {} as any;
+        (translateGizmo.parent as any).parent = mockGizmo;
     });
 
     afterEach(() => {
@@ -82,16 +80,15 @@ describe('DIVEScaleGizmo', () => {
 
     describe('constructor', () => {
         it('should instantiate with correct properties', () => {
-            expect(scaleGizmo).toBeDefined();
-            expect(scaleGizmo.name).toBe('DIVEScaleGizmo');
-            expect(scaleGizmo.children).toHaveLength(3);
-            expect(scaleGizmo.isHoverable).toBe(true);
+            expect(translateGizmo).toBeDefined();
+            expect(translateGizmo.name).toBe('DIVETranslateGizmo');
+            expect(translateGizmo.children).toHaveLength(3);
         });
 
-        it('should create scale handles for x, y, z axes', () => {
-            expect(DIVEScaleHandle).toHaveBeenCalledTimes(3);
+        it('should create axis handles for x, y, z axes', () => {
+            expect(DIVEAxisHandle).toHaveBeenCalledTimes(3);
 
-            const calls = (DIVEScaleHandle as any).mock.calls;
+            const calls = (DIVEAxisHandle as any).mock.calls;
             expect(calls[0][0]).toBe('x');
             expect(calls[1][0]).toBe('y');
             expect(calls[2][0]).toBe('z');
@@ -100,12 +97,12 @@ describe('DIVEScaleGizmo', () => {
 
     describe('debug property', () => {
         it('should set debug on all children', () => {
-            const children = scaleGizmo.children as DIVEScaleHandle[];
+            const children = translateGizmo.children as DIVEAxisHandle[];
             children.forEach((child) => {
                 child.debug = false;
             });
 
-            scaleGizmo.debug = true;
+            translateGizmo.debug = true;
 
             children.forEach((child) => {
                 expect(child.debug).toBe(true);
@@ -115,9 +112,9 @@ describe('DIVEScaleGizmo', () => {
 
     describe('reset', () => {
         it('should reset all children', () => {
-            const children = scaleGizmo.children as DIVEScaleHandle[];
+            const children = translateGizmo.children as DIVEAxisHandle[];
 
-            scaleGizmo.reset();
+            translateGizmo.reset();
 
             children.forEach((child) => {
                 expect(child.reset).toHaveBeenCalled();
@@ -125,24 +122,11 @@ describe('DIVEScaleGizmo', () => {
         });
     });
 
-    describe('update', () => {
-        it('should update all children with new scale', () => {
-            const children = scaleGizmo.children as DIVEScaleHandle[];
-            const newScale = new Vector3(2, 3, 4);
-
-            scaleGizmo.update(newScale);
-
-            children.forEach((child) => {
-                expect(child.update).toHaveBeenCalledWith(newScale);
-            });
-        });
-    });
-
     describe('handleHighlight', () => {
         it('should highlight correct handle when not dragging', () => {
-            const children = scaleGizmo.children as DIVEScaleHandle[];
+            const children = translateGizmo.children as DIVEAxisHandle[];
 
-            (scaleGizmo as any).handleHighlight('x', true, false);
+            (translateGizmo as any).handleHighlight('x', true, false);
 
             expect(children[0].highlight).toBe(true);
             expect(children[1].highlight).toBe(false);
@@ -150,9 +134,9 @@ describe('DIVEScaleGizmo', () => {
         });
 
         it('should highlight correct handle when dragging', () => {
-            const children = scaleGizmo.children as DIVEScaleHandle[];
+            const children = translateGizmo.children as DIVEAxisHandle[];
 
-            (scaleGizmo as any).handleHighlight('y', false, true);
+            (translateGizmo as any).handleHighlight('y', false, true);
 
             expect(children[0].highlight).toBe(false);
             expect(children[1].highlight).toBe(true);
@@ -160,9 +144,9 @@ describe('DIVEScaleGizmo', () => {
         });
 
         it('should not highlight any handle when value is false and not dragging', () => {
-            const children = scaleGizmo.children as DIVEScaleHandle[];
+            const children = translateGizmo.children as DIVEAxisHandle[];
 
-            (scaleGizmo as any).handleHighlight('x', false, false);
+            (translateGizmo as any).handleHighlight('x', false, false);
 
             children.forEach((child) => {
                 expect(child.highlight).toBe(false);
@@ -170,14 +154,14 @@ describe('DIVEScaleGizmo', () => {
         });
     });
 
-    describe('onHoverAxis', () => {
+    describe('onHandleHover', () => {
         it('should call parent gizmo onHover and handle highlight when not dragging', () => {
             const handleHighlightSpy = vi.spyOn(
-                scaleGizmo as any,
+                translateGizmo as any,
                 'handleHighlight',
             );
 
-            scaleGizmo.onHoverAxis(mockHandle, true);
+            translateGizmo.onHandleHover(mockHandle, true);
 
             expect(mockGizmo.onHover).toHaveBeenCalledWith(
                 'translate',
@@ -188,63 +172,67 @@ describe('DIVEScaleGizmo', () => {
         });
 
         it('should not change hover state when dragging', () => {
-            (scaleGizmo as any)._startScale = new Vector3(1, 2, 3);
+            (translateGizmo as any)._startPos = new Vector3(1, 2, 3);
             const handleHighlightSpy = vi.spyOn(
-                scaleGizmo as any,
+                translateGizmo as any,
                 'handleHighlight',
             );
 
-            scaleGizmo.onHoverAxis(mockHandle, true);
+            translateGizmo.onHandleHover(mockHandle, true);
 
             expect(mockGizmo.onHover).not.toHaveBeenCalled();
             expect(handleHighlightSpy).not.toHaveBeenCalled();
         });
 
         it('should not call parent methods when parent is missing', () => {
-            scaleGizmo.parent = null;
+            translateGizmo.parent = null;
 
             expect(() => {
-                scaleGizmo.onHoverAxis(mockHandle, true);
+                translateGizmo.onHandleHover(mockHandle, true);
             }).not.toThrow();
         });
     });
 
-    describe('onAxisDragStart', () => {
-        it('should set start scale and highlight handle', () => {
+    describe('onHandleDragStart', () => {
+        it('should set start position and highlight handle', () => {
             const handleHighlightSpy = vi.spyOn(
-                scaleGizmo as any,
+                translateGizmo as any,
                 'handleHighlight',
             );
 
-            scaleGizmo.onAxisDragStart(mockHandle);
+            translateGizmo.onHandleDragStart(mockHandle);
 
-            expect((scaleGizmo as any)._startScale).not.toBeNull();
+            expect((translateGizmo as any)._startPos).not.toBeNull();
             expect(handleHighlightSpy).toHaveBeenCalledWith('x', true, true);
         });
 
-        it('should not set start scale when parent is missing', () => {
-            scaleGizmo.parent = null;
+        it('should not set start position when parent is missing', () => {
+            translateGizmo.parent = null;
 
-            scaleGizmo.onAxisDragStart(mockHandle);
+            translateGizmo.onHandleDragStart(mockHandle);
 
-            expect((scaleGizmo as any)._startScale).toBeNull();
+            expect((translateGizmo as any)._startPos).toBeNull();
         });
 
-        it('should not set start scale when object is missing', () => {
+        it('should not set start position when object is missing', () => {
             (mockGizmo as any).object = null;
 
-            scaleGizmo.onAxisDragStart(mockHandle);
+            translateGizmo.onHandleDragStart(mockHandle);
 
-            expect((scaleGizmo as any)._startScale).toBeNull();
+            expect((translateGizmo as any)._startPos).toBeNull();
         });
     });
 
-    describe('onAxisDrag', () => {
+    describe('onHandleDrag', () => {
         beforeEach(() => {
-            (scaleGizmo as any)._startScale = new Vector3(1, 2, 3);
+            (translateGizmo as any)._startPos = new Vector3(1, 2, 3);
+            // Ensure mockGizmo.onChange is properly mocked
+            if (!mockGizmo.onChange) {
+                mockGizmo.onChange = vi.fn();
+            }
         });
 
-        it('should update scale based on drag delta', () => {
+        it('should update position based on drag delta', () => {
             const dragEvent: DraggableEvent = {
                 dragDelta: new Vector3(0.5, 0, 0),
                 dragStart: new Vector3(0, 0, 0),
@@ -252,17 +240,13 @@ describe('DIVEScaleGizmo', () => {
                 dragEnd: new Vector3(0.5, 0, 0),
             };
 
-            scaleGizmo.onAxisDrag(mockHandle, dragEvent);
+            translateGizmo.onHandleDrag(mockHandle, dragEvent);
 
-            expect(mockGizmo.onChange).toHaveBeenCalledWith(
-                undefined,
-                undefined,
-                expect.objectContaining({ x: 1.5, y: 2, z: 3 }),
-            );
+            expect(mockGizmo.onChange).toHaveBeenCalled();
         });
 
-        it('should not update when start scale is null', () => {
-            (scaleGizmo as any)._startScale = null;
+        it('should not update when start position is null', () => {
+            (translateGizmo as any)._startPos = null;
 
             const dragEvent: DraggableEvent = {
                 dragDelta: new Vector3(0.5, 0, 0),
@@ -271,13 +255,13 @@ describe('DIVEScaleGizmo', () => {
                 dragEnd: new Vector3(0.5, 0, 0),
             };
 
-            scaleGizmo.onAxisDrag(mockHandle, dragEvent);
+            translateGizmo.onHandleDrag(mockHandle, dragEvent);
 
             expect(mockGizmo.onChange).not.toHaveBeenCalled();
         });
 
         it('should not update when parent is missing', () => {
-            scaleGizmo.parent = null;
+            translateGizmo.parent = null;
 
             const dragEvent: DraggableEvent = {
                 dragDelta: new Vector3(0.5, 0, 0),
@@ -286,13 +270,13 @@ describe('DIVEScaleGizmo', () => {
                 dragEnd: new Vector3(0.5, 0, 0),
             };
 
-            scaleGizmo.onAxisDrag(mockHandle, dragEvent);
+            translateGizmo.onHandleDrag(mockHandle, dragEvent);
 
             expect(mockGizmo.onChange).not.toHaveBeenCalled();
         });
 
         it('should not update when parent parent is missing', () => {
-            (scaleGizmo.parent as any).parent = null;
+            (translateGizmo.parent as any).parent = null;
 
             const dragEvent: DraggableEvent = {
                 dragDelta: new Vector3(0.5, 0, 0),
@@ -301,23 +285,23 @@ describe('DIVEScaleGizmo', () => {
                 dragEnd: new Vector3(0.5, 0, 0),
             };
 
-            scaleGizmo.onAxisDrag(mockHandle, dragEvent);
+            translateGizmo.onHandleDrag(mockHandle, dragEvent);
 
             expect(mockGizmo.onChange).not.toHaveBeenCalled();
         });
     });
 
-    describe('onAxisDragEnd', () => {
-        it('should clear start scale and reset highlight', () => {
-            (scaleGizmo as any)._startScale = new Vector3(1, 2, 3);
+    describe('onHandleDragEnd', () => {
+        it('should clear start position and reset highlight', () => {
+            (translateGizmo as any)._startPos = new Vector3(1, 2, 3);
             const handleHighlightSpy = vi.spyOn(
-                scaleGizmo as any,
+                translateGizmo as any,
                 'handleHighlight',
             );
 
-            scaleGizmo.onAxisDragEnd(mockHandle);
+            translateGizmo.onHandleDragEnd(mockHandle);
 
-            expect((scaleGizmo as any)._startScale).toBeNull();
+            expect((translateGizmo as any)._startPos).toBeNull();
             expect(handleHighlightSpy).toHaveBeenCalledWith('x', false, false);
         });
     });

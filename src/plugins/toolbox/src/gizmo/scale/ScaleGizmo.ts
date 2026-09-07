@@ -3,11 +3,11 @@ import {
     AxesColorBlue,
     AxesColorGreen,
     AxesColorRed,
-} from '../../../constants/AxisHelperColors.ts';
-import { DIVEHoverable } from '../../../interfaces/Hoverable.ts';
-import { OrbitController } from '@shopware-ag/dive/orbitcontroller';
+    DIVEHoverable,
+} from '@shopware-ag/dive';
+import { type OrbitController } from '@shopware-ag/dive/orbitcontroller';
 import { DIVEScaleHandle } from '../handles/ScaleHandle.ts';
-import { DraggableEvent } from '@shopware-ag/dive/toolbox';
+import { type DraggableEvent } from '../../drag/DraggableEvent.ts';
 import { DIVEGizmoAxis, DIVEGizmo } from '../Gizmo.ts';
 
 export class DIVEScaleGizmo extends Object3D implements DIVEHoverable {

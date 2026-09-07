@@ -1,5 +1,5 @@
 import { Mesh, MeshBasicMaterial, Object3D, PlaneGeometry } from 'three/webgpu';
-import { UI_LAYER_MASK } from '../../../constants/VisibilityLayerMask.ts';
+import { UI_LAYER_MASK } from '@shopware-ag/dive';
 import { DIVEGizmoAxis, DIVEGizmoMode } from '../Gizmo.ts';
 
 export class DIVEGizmoPlane extends Object3D {

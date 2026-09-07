@@ -1,11 +1,10 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { DIVEScaleHandle } from '../ScaleHandle.ts';
 import { DIVEScaleGizmo } from '../../scale/ScaleGizmo.ts';
-import { DraggableEvent } from '@shopware-ag/dive/toolbox';
+import { type DraggableEvent } from '../../../drag/DraggableEvent.ts';
 import { Vector3 } from 'three/webgpu';
 import { vi } from 'vitest';
 
-vi.mock('../../../constants/VisibilityLayerMask', () => ({ UI_LAYER_MASK: 1 }));
 vi.mock('../../scale/ScaleGizmo', () => ({
     DIVEScaleGizmo: vi.fn().mockImplementation(() => ({
         onHoverAxis: vi.fn(),

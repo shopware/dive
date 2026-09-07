@@ -1,13 +1,9 @@
 import { Object3D, Vector3 } from 'three/webgpu';
-import {
-    AxesColorBlue,
-    AxesColorGreen,
-    AxesColorRed,
-} from '../../../constants/AxisHelperColors.ts';
-import { OrbitController } from '@shopware-ag/dive/orbitcontroller';
+import { AxesColorBlue, AxesColorGreen, AxesColorRed } from '@shopware-ag/dive';
+import { type OrbitController } from '@shopware-ag/dive/orbitcontroller';
 import { DIVEAxisHandle } from '../handles/AxisHandle.ts';
 import { DIVEGizmo, DIVEGizmoAxis } from '../Gizmo.ts';
-import { DraggableEvent } from '@shopware-ag/dive/toolbox';
+import { type DraggableEvent } from '../../drag/DraggableEvent.ts';
 
 export class DIVETranslateGizmo extends Object3D {
     private _controller: OrbitController;
