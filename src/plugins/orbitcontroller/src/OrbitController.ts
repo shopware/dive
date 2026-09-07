@@ -16,7 +16,7 @@ import {
 import {
     DIVEPerspectiveCamera,
     DIVETicker,
-    BoundingBox,
+    BoundsComponent,
 } from '@shopware-ag/dive';
 import { OrbitControllerState } from '../types/index.ts';
 
@@ -384,7 +384,7 @@ export class OrbitController
     }
 
     public computeEncompassingView(
-        bb: BoundingBox,
+        bb: BoundsComponent,
         padding = 0.0,
     ): {
         position: Vector3Like;
@@ -420,7 +420,7 @@ export class OrbitController
     }
 
     public focusObject(objects: Object3D | Object3D[], padding = 0.0): void {
-        const bb = new BoundingBox(objects);
+        const bb = new BoundsComponent().setTarget(objects);
         const transform = this.computeEncompassingView(bb, padding);
 
         this.object.position.copy(transform.position as Vector3);

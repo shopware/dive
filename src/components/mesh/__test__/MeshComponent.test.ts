@@ -8,6 +8,7 @@ import { MeshComponent } from '../MeshComponent.ts';
 import { PrimitiveMeshComponent } from '../PrimitiveMeshComponent.ts';
 import { DIVENode } from '../../node/Node.ts';
 import { HELPER_LAYER_MASK } from '../../../constants/VisibilityLayerMask.ts';
+import { type DIVEGeometryType } from '../../../types/geometry/DIVEGeometryType.ts';
 
 const loadAsset = vi.fn();
 
@@ -219,7 +220,7 @@ describe('dive/mesh/PrimitiveMeshComponent', () => {
         expect(primitive.material).toBeInstanceOf(MeshStandardMaterial);
     });
 
-    const shapes = [
+    const shapes: DIVEGeometryType[] = [
         'cylinder',
         'sphere',
         'pyramid',
@@ -264,7 +265,7 @@ describe('dive/mesh/PrimitiveMeshComponent', () => {
         const before = primitive.mesh?.geometry;
 
         primitive.setGeometry({
-            name: 'dodecahedron',
+            name: 'dodecahedron' as DIVEGeometryType,
             width: 1,
             height: 1,
             depth: 1,

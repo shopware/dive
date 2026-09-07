@@ -3,11 +3,8 @@ import {
     DIVEPerspectiveCamera,
     DIVERenderer,
     DIVEScene,
-    // the instance OrbitController itself constructs, which is a different
-    // module specifier than the BoundingBox imported below
-    BoundingBox as UsedBoundingBox,
+    BoundsComponent,
 } from '@shopware-ag/dive';
-import { BoundingBox } from 'src/components/boundingbox/BoundingBox.ts';
 import {
     Box3,
     Vector3,
@@ -21,19 +18,6 @@ import {
 
 // Add a real canvas for the controls domElement
 const canvas = document.createElement('canvas');
-
-// Mock BoundingBox class
-vi.mock('src/components/boundingbox/BoundingBox.ts', () => ({
-    BoundingBox: vi.fn().mockImplementation(() => ({
-        center: new Vector3(0, 0, 0),
-        sphere: {
-            radius: 1,
-        },
-        box: new Box3(),
-        size: new Vector3(2, 2, 2),
-        radius: 1,
-    })),
-}));
 
 vi.mock('@shopware-ag/dive', () => {
     return {
@@ -50,11 +34,12 @@ vi.mock('@shopware-ag/dive', () => {
             this.matrix = new Matrix4();
             return this;
         }),
-        BoundingBox: vi.fn(function (this: any) {
+        BoundsComponent: vi.fn(function (this: any) {
             this.center = new Vector3(0, 0, 0);
             this.sphere = {
                 radius: 1,
             };
+            this.setTarget = vi.fn(() => this);
             return this;
         }),
         DIVERenderer: vi.fn(function (this: any) {
@@ -405,7 +390,7 @@ describe('modules/controller/orbit/OrbitController', () => {
     describe('Compute Encompassing View', () => {
         it('should compute encompassing view', () => {
             const mockObject = new Object3D();
-            const box = new BoundingBox(mockObject);
+            const box = new BoundsComponent().setTarget(mockObject);
             const result = controller.computeEncompassingView(box);
             expect(result).toBeDefined();
             expect(result.position).toBeDefined();
@@ -416,7 +401,7 @@ describe('modules/controller/orbit/OrbitController', () => {
 
         it('should compute encompassing view with padding', () => {
             const mockObject = new Object3D();
-            const box = new BoundingBox(mockObject);
+            const box = new BoundsComponent().setTarget(mockObject);
             const result = controller.computeEncompassingView(box, 0.5);
             expect(result).toBeDefined();
             expect(result.position).toBeDefined();
@@ -425,14 +410,14 @@ describe('modules/controller/orbit/OrbitController', () => {
 
         it('should handle zero-size box', () => {
             const mockObject = new Object3D();
-            const box = new BoundingBox(mockObject);
+            const box = new BoundsComponent().setTarget(mockObject);
             const result = controller.computeEncompassingView(box);
             expect(result).toBeDefined();
         });
 
         it('should handle current direction with zero length', () => {
             const mockObject = new Object3D();
-            const box = new BoundingBox(mockObject);
+            const box = new BoundsComponent().setTarget(mockObject);
             // Set camera and target to same position to test zero length direction
             controller.object.position.set(0, 0, 0);
             controller.target.set(0, 0, 0);
@@ -455,7 +440,7 @@ describe('modules/controller/orbit/OrbitController', () => {
 
     describe('Focus Object targets', () => {
         beforeEach(() => {
-            vi.mocked(UsedBoundingBox).mockClear();
+            vi.mocked(BoundsComponent).mockClear();
         });
 
         it('should build the bounding box from a single object', () => {
@@ -463,8 +448,11 @@ describe('modules/controller/orbit/OrbitController', () => {
 
             controller.focusObject(object);
 
-            expect(UsedBoundingBox).toHaveBeenCalledTimes(1);
-            expect(UsedBoundingBox).toHaveBeenCalledWith(object);
+            // zero-arg constructor plus setTarget, so clone() keeps working
+            expect(BoundsComponent).toHaveBeenCalledTimes(1);
+            const instance = vi.mocked(BoundsComponent).mock.results[0]
+                .value as { setTarget: ReturnType<typeof vi.fn> };
+            expect(instance.setTarget).toHaveBeenCalledWith(object);
         });
 
         it('should hand a list of objects to the bounding box as a list', () => {
@@ -473,8 +461,10 @@ describe('modules/controller/orbit/OrbitController', () => {
 
             controller.focusObject([first, second]);
 
-            expect(UsedBoundingBox).toHaveBeenCalledTimes(1);
-            expect(UsedBoundingBox).toHaveBeenCalledWith([first, second]);
+            expect(BoundsComponent).toHaveBeenCalledTimes(1);
+            const instance = vi.mocked(BoundsComponent).mock.results[0]
+                .value as { setTarget: ReturnType<typeof vi.fn> };
+            expect(instance.setTarget).toHaveBeenCalledWith([first, second]);
         });
 
         it('should encompass a single element list just like the object', () => {
@@ -2992,7 +2982,7 @@ describe('modules/controller/orbit/OrbitController', () => {
     describe('Method Coverage - Additional', () => {
         it('should handle computeEncompassingView with very small bounding box', () => {
             const mockObject = new Object3D();
-            const box = new BoundingBox(mockObject);
+            const box = new BoundsComponent().setTarget(mockObject);
             // Mock a very small bounding box
             box.sphere.radius = 0.001;
             box.center.set(0, 0, 0);
@@ -3005,7 +2995,7 @@ describe('modules/controller/orbit/OrbitController', () => {
 
         it('should handle computeEncompassingView with very large bounding box', () => {
             const mockObject = new Object3D();
-            const box = new BoundingBox(mockObject);
+            const box = new BoundsComponent().setTarget(mockObject);
             // Mock a very large bounding box
             box.sphere.radius = 1000;
             box.center.set(0, 0, 0);

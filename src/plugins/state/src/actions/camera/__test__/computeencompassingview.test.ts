@@ -2,9 +2,16 @@ import { type EngineGateway } from '../../../EngineGateway.ts';
 import { OrbitController } from '@shopware-ag/dive/orbitcontroller';
 import { ComputeEncompassingViewAction } from '../computeencompassingview.ts';
 
-vi.mock('../../../../../../components/boundingbox/BoundingBox.ts', () => ({
-    BoundingBox: vi.fn(),
-}));
+vi.mock('@shopware-ag/dive', async (importOriginal) => {
+    const actual = await importOriginal<typeof import('@shopware-ag/dive')>();
+    return {
+        ...actual,
+        BoundsComponent: vi.fn(function (this: Record<string, unknown>) {
+            this.setTarget = vi.fn(() => this);
+            return this;
+        }),
+    };
+});
 import { Vector3 } from 'three/webgpu';
 
 describe('modules/state/actions/camera/computeEncompassingView', () => {
