@@ -1,4 +1,4 @@
-import { Color, MeshStandardMaterial } from 'three/webgpu';
+import { Color, MeshStandardMaterial, Vector3 } from 'three/webgpu';
 import {
     AmbientLightComponent,
     detachTransformControls,
@@ -6,7 +6,8 @@ import {
     DIVELightComponent,
     DIVENode,
     HemisphereLightComponent,
-    GroupLinksComponent,
+    MultiLineComponent,
+    type DIVELineHandle,
     MeshComponent,
     PrimitiveMeshComponent,
     PointLightComponent,
@@ -30,6 +31,9 @@ import {
     type PrimitiveSchema,
 } from '../types/index.ts';
 import { type State } from './State.ts';
+
+/** Link lines start at the group's own origin. */
+const ORIGIN = new Vector3();
 
 /**
  * The scene properties that are not entities.
@@ -112,6 +116,14 @@ export class EngineGateway {
     /** id -> scene object, so lookups do not walk the tree. */
     private readonly _entities: Map<string, DIVESceneObject> = new Map();
 
+    /**
+     * Which link line belongs to which member.
+     *
+     * Only members of a node that carries a `MultiLineComponent` appear here.
+     */
+    private readonly _lineHandles: Map<DIVESceneObject, DIVELineHandle> =
+        new Map();
+
     constructor(engine: DIVE, state: State) {
         this._engine = engine;
         this._state = state;
@@ -192,6 +204,7 @@ export class EngineGateway {
         this._unsubscribes.get(entity.id)?.();
         this._unsubscribes.delete(entity.id);
         this._entities.delete(entity.id);
+        this._unlinkFromParent(sceneObject);
 
         detachTransformControls(sceneObject);
 
@@ -214,6 +227,7 @@ export class EngineGateway {
         this._unsubscribes.forEach((unsubscribe) => unsubscribe());
         this._unsubscribes.clear();
         this._entities.clear();
+        this._lineHandles.clear();
     }
 
     // ----------------------------------------------------------------- scene
@@ -288,7 +302,7 @@ export class EngineGateway {
         if (isGroupSchema(entity)) {
             const group = new DIVENode();
             group.name = 'DIVEGroup';
-            group.addComponent(new GroupLinksComponent());
+            group.addComponent(new MultiLineComponent());
             return group;
         }
         if (isLightSchema(entity)) return this._instantiateLight(entity);
@@ -331,15 +345,19 @@ export class EngineGateway {
                 return;
             case 'light':
                 this._applyLight(sceneObject as DIVENode, patch);
+                this._refreshParentLink(sceneObject);
                 return;
             case 'model':
                 await this._applyModel(sceneObject as DIVENode, patch);
+                this._refreshParentLink(sceneObject);
                 return;
             case 'primitive':
                 this._applyPrimitive(sceneObject as DIVENode, patch);
+                this._refreshParentLink(sceneObject);
                 return;
             case 'group':
                 this._applyGroup(sceneObject as DIVENode, patch);
+                this._refreshParentLink(sceneObject);
                 return;
             default:
                 throw new Error(
@@ -445,7 +463,7 @@ export class EngineGateway {
             sceneObject.setVisibility(props.visible);
         if (props.bbVisible !== undefined)
             sceneObject
-                .requireComponent(GroupLinksComponent)
+                .requireComponent(MultiLineComponent)
                 .setVisible(props.bbVisible);
         if (props.parentId !== undefined)
             this._setParent({ ...props, parentId: props.parentId });
@@ -461,6 +479,8 @@ export class EngineGateway {
             );
             return;
         }
+
+        this._unlinkFromParent(sceneObject);
 
         if (entity.parentId === null) {
             this.root.attach(sceneObject);
@@ -479,6 +499,63 @@ export class EngineGateway {
         }
 
         parent.attach(sceneObject);
+        this._linkToParent(sceneObject);
+    }
+
+    // ------------------------------------------------------------ group links
+
+    /**
+     * Draws a link from a group to a member it just gained.
+     *
+     * Grouping is a state-level idea: the engine only knows that some node holds
+     * a `MultiLineComponent`. So the knowledge that "a member gets a line from
+     * its parent's origin" lives here, and the line component stays a plain
+     * drawing primitive that watches nothing.
+     */
+    private _linkToParent(sceneObject: DIVESceneObject): void {
+        const lines = this._parentLines(sceneObject);
+        if (!lines) return;
+
+        this._lineHandles.set(
+            sceneObject,
+            lines.addLine(ORIGIN, sceneObject.position),
+        );
+    }
+
+    /** Drops the link a member had to its previous parent. */
+    private _unlinkFromParent(sceneObject: DIVESceneObject): void {
+        const handle = this._lineHandles.get(sceneObject);
+        if (handle === undefined) return;
+
+        this._lineHandles.delete(sceneObject);
+        this._parentLines(sceneObject)?.removeLine(handle);
+    }
+
+    /**
+     * Redraws a member's link after it moved.
+     *
+     * Called from the transform report and after a patch writes a position, so
+     * both a gizmo drag and an `UPDATE_OBJECT` keep the line attached.
+     */
+    private _refreshParentLink(sceneObject: DIVESceneObject): void {
+        const handle = this._lineHandles.get(sceneObject);
+        if (handle === undefined) return;
+
+        this._parentLines(sceneObject)?.setLine(
+            handle,
+            ORIGIN,
+            sceneObject.position,
+        );
+    }
+
+    /** The line component of this object's parent, if it has one. */
+    private _parentLines(
+        sceneObject: DIVESceneObject,
+    ): MultiLineComponent | undefined {
+        const parent = sceneObject.parent;
+        if (!parent || !('isDIVENode' in parent)) return undefined;
+
+        return (parent as unknown as DIVENode).getComponent(MultiLineComponent);
     }
 
     /**
@@ -493,6 +570,10 @@ export class EngineGateway {
         const state = this._state;
 
         const onTransform = (event: DIVEEntityTransformEvent): void => {
+            // a member that moved needs its link to the group redrawn. This is
+            // the gizmo path: the object reports its own move.
+            this._refreshParentLink(sceneObject);
+
             void state.performAction('UPDATE_OBJECT', {
                 id,
                 entityType,

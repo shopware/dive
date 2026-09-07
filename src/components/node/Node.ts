@@ -228,8 +228,6 @@ export class DIVENode
         const newPosition = new Vector3(position.x, position.y, position.z);
         this.position.copy(this.parent.worldToLocal(newPosition));
 
-        this._notifyTransformChanged();
-
         // Child nodes just moved in world space, and the state layer tracks
         // world positions, so they have to report it themselves. This used to be
         // DIVEGroup's job; it is not group-specific at all.
@@ -238,12 +236,10 @@ export class DIVENode
 
     public setRotation(rotation: Vector3Like): void {
         this.rotation.set(rotation.x, rotation.y, rotation.z);
-        this._notifyTransformChanged();
     }
 
     public setScale(scale: Vector3Like): void {
         this.scale.set(scale.x, scale.y, scale.z);
-        this._notifyTransformChanged();
     }
 
     /**
@@ -335,19 +331,6 @@ export class DIVENode
 
     public onDeselect(): void {
         this.dispatchEvent({ type: 'object-deselect' });
-    }
-
-    /**
-     * Tells the parent's components that this node moved, so a group can redraw
-     * its member links without this node needing to know what a group is.
-     */
-    private _notifyTransformChanged(): void {
-        const parent = this.parent;
-        if (!parent || !('isDIVENode' in parent)) return;
-
-        (parent as unknown as DIVENode)._components.forEach((component) =>
-            component.onChildNodeTransform?.(this),
-        );
     }
 
     private _handleChildAdded(child: Object3D): void {

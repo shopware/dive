@@ -109,20 +109,34 @@ inside your own `tick` is expected and safe.
 the component owns; that is the sanctioned escape hatch, and `DIVEGrid` uses it
 to follow the camera.
 
-## Splitting drawing from wiring
+## A component never attaches another component
 
-Two components are better than one when a component would otherwise both *draw*
-something and *decide* when it changes. The group links are the worked example:
+Composing a node is the *caller's* job. A component describes one capability and
+must not decide what else its owner is made of — attaching a sibling from
+`onAttach` breaks that contract and makes the node's component set depend on
+attachment order.
 
-- `MultiLineComponent` draws a set of line segments. It takes points and handles,
-  knows nothing about nodes, and never watches anything.
-- `GroupLinksComponent` watches the owner's child nodes and drives the line
-  component. It brings one along if the node does not already have one.
+If a component needs a sibling, the caller attaches both and hands one to the
+other, or the caller drives both itself.
 
-The payoff is that the drawing half is reusable — measurement overlays, debug
-rays, anything that needs many cheap lines — and each half is testable without
-the other. Reach for this split whenever you notice a component subscribing to
-events *and* pushing vertices.
+## What the engine does not know
+
+The engine has nodes and components. It has no idea what a *group*, a *model* or
+a *light* is — those are entity types, and entity types belong to the state
+plugin. Anything shaped like "when X happens to this kind of entity, do Y"
+belongs in `EngineGateway`, never in a component.
+
+Group links are the worked example. A group node gets nothing but a
+`MultiLineComponent`, which draws line segments and watches nothing. The gateway
+holds all the group knowledge:
+
+- `_setParent` adds a line when a member joins and removes it when it leaves
+- the `object-transform` listener redraws the line when a member is dragged
+- `_apply` redraws it when a patch writes a new position
+- `bbVisible` in the group schema toggles the line component's visibility
+
+So the drawing half is reusable for anything that needs many cheap lines —
+measurement overlays, debug rays — and no component ever learns what a group is.
 
 ## Layers decide what geometry means
 

@@ -26,6 +26,10 @@ import { type DIVENode } from '../node/Node.ts';
  * 3. **Constructors take no arguments.** `Object3D.clone()` calls
  *    `new this.constructor()`, so a required parameter makes cloning throw.
  *    Configure through setters after attaching.
+ * 4. **Never attach another component.** A component describes one capability
+ *    and does not decide what else its owner is made of; composing a node is the
+ *    caller's job. A component that needs a sibling should be handed it, or the
+ *    caller should attach both.
  *
  * @module
  */
@@ -64,17 +68,6 @@ export abstract class DIVEComponent extends Object3D {
      * @param deltaTime - Seconds since the previous frame.
      */
     public tick?(deltaTime: number): void;
-
-    /**
-     * Implement to react when a child node of the owner is moved, rotated or
-     * scaled through its setters.
-     *
-     * Lets a component track its owner's children -- drawing links to them, for
-     * instance -- without those children knowing the component exists.
-     *
-     * @param node - The child node whose transform changed.
-     */
-    public onChildNodeTransform?(node: DIVENode): void;
 
     constructor() {
         super();
