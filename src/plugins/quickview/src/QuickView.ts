@@ -78,23 +78,19 @@ export async function QuickView(
     source: string | StateData,
     settings?: Partial<QuickViewSettings>,
 ): Promise<QuickView> {
-    /**
-     * What to take back if the setup does not finish, newest first.
-     *
-     * Declared out here because the `catch` has to reach it: a DIVE registers
-     * itself in a global list when it is constructed and is only removed by its
-     * own dispose, so a failure that leaves one behind eats an instance slot for
-     * good -- and may leave a clock running.
-     */
-    const undo: (() => void | Promise<void>)[] = [];
-
     /** Read by a load that settles after the setup gave up. */
     let disposed = false;
 
-    try {
-        const dive = new DIVE({ ...settings, autoStart: false });
-        undo.push(() => dive.disposeAsync());
+    /**
+     * Built before the `try`, so the `catch` can reach it without it being
+     * nullable. Nothing needs taking back if this line is what fails, and a
+     * failure after it must be cleaned up: a DIVE registers itself in a global
+     * list and is only removed by its own dispose, so one left behind eats an
+     * instance slot for good -- and may leave a clock running.
+     */
+    const dive = new DIVE({ ...settings, autoStart: false });
 
+    try {
         /**
          * the node, not the camera: the camera sits at its node's origin, and the
          * controller below moves the node
@@ -106,7 +102,6 @@ export async function QuickView(
             dive.mainView.canvas,
         );
         dive.clock.addTicker(orbitController);
-        undo.push(() => orbitController.dispose());
 
         let model: DIVENode | null = null;
         let state: State | null = null;
@@ -156,8 +151,24 @@ export async function QuickView(
             }
         };
 
-        // whatever a partial load managed to build
-        undo.push(clear);
+        /**
+         * Installed as soon as its pieces exist, so from here on there is one
+         * teardown and one only -- the `catch` below calls exactly what the
+         * caller would. It replaces `disposeAsync` on the DIVE itself, which is
+         * the object handed back.
+         */
+        const originalDispose = dive.disposeAsync.bind(dive);
+        dive.disposeAsync = async () => {
+            // before clear(), so a load in flight sees it and frees what it got
+            disposed = true;
+            generation++;
+
+            orbitController.dispose();
+            clear();
+
+            // dispose dive
+            await originalDispose();
+        };
 
         const loadUri = async (
             uri: string,
@@ -261,26 +272,6 @@ export async function QuickView(
             state: { get: () => state, enumerable: true },
         });
 
-        const originalDispose = dive.disposeAsync.bind(dive);
-        quickView.disposeAsync = async () => {
-            // before clear(), so a load in flight sees it and frees what it got
-            disposed = true;
-            generation++;
-
-            orbitController.dispose();
-            clear();
-
-            // dispose dive
-            await originalDispose();
-        };
-
-        /**
-         * From here the wrapped dispose is the entire teardown, so it replaces
-         * the pieces: keeping both would dispose the controller twice.
-         */
-        undo.length = 0;
-        undo.push(() => quickView.disposeAsync());
-
         /**
          * The first load frames only after the scene runs: `focusObject` reads
          * the viewport, which has no size before then.
@@ -296,13 +287,11 @@ export async function QuickView(
     } catch (error) {
         disposed = true;
 
-        // newest first, and never in front of the error that brought us here
-        for (const step of undo.reverse()) {
-            try {
-                await step();
-            } catch (failure) {
-                console.error('Failed to clean up a QuickView:', failure);
-            }
+        // never in front of the error that brought us here
+        try {
+            await dive.disposeAsync();
+        } catch (failure) {
+            console.error('Failed to clean up a QuickView:', failure);
         }
 
         /**
@@ -311,6 +300,6 @@ export async function QuickView(
          * already say -- and a library that logs what it rethrows makes the same
          * failure appear twice, in a channel the caller did not choose
          */
-        return Promise.reject(error);
+        throw error;
     }
 }
