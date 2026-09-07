@@ -8,4 +8,5 @@ export * from './canvas/CanvasLifecycleManager.ts';
 export * from './promise/deferred/DeferredPromise.ts';
 export * from './promise/abortable/AbortablePromise.ts';
 export * from './scene/Scene.ts';
+export * from './scene/root/Root.ts';
 export * from './view/View.ts';

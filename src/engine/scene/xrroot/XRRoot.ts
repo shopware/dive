@@ -1,5 +1,5 @@
 import { Mesh, Object3D, PlaneGeometry, ShadowMaterial } from 'three/webgpu';
-import { DIVERoot } from '../../../components/root/Root.ts';
+import { DIVERoot } from '../root/Root.ts';
 import { DIVEXRLightRoot } from './xrlightroot/XRLightRoot.ts';
 import { type DIVEScene } from '../Scene.ts';
 

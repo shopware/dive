@@ -1,7 +1,7 @@
 import { type Box3 } from 'three/webgpu';
-import { computeProductBounds } from '../../helpers/computeProductBounds/computeProductBounds.ts';
-import { FloorComponent } from '../mesh/floor/FloorComponent.ts';
-import { DIVENode } from '../../engine/node/Node.ts';
+import { computeProductBounds } from '../../../helpers/computeProductBounds/computeProductBounds.ts';
+import { FloorComponent } from '../../../components/mesh/floor/FloorComponent.ts';
+import { DIVENode } from '../../node/Node.ts';
 
 /**
  * The scene node every entity hangs off, and the owner of the ground plane.

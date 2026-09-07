@@ -4,7 +4,7 @@ import {
     type Box3,
     type ColorRepresentation,
 } from 'three/webgpu';
-import { DIVERoot } from '../../components/root/Root.ts';
+import { DIVERoot } from './root/Root.ts';
 import { DIVEGrid } from '../../components/grid/Grid.ts';
 import { type DIVEComponent } from '../../components/component/Component.ts';
 import { type DIVENode } from '../node/Node.ts';
