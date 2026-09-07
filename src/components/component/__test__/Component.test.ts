@@ -57,16 +57,20 @@ describe('dive/component/DIVEComponent', () => {
     it('should not declare capability brands', () => {
         const component = new TestComponent();
 
-        // A component carrying isSelectable/isMovable would terminate the
-        // findInterface walk and be selected instead of the node behind it.
+        /**
+         * A component carrying isSelectable/isMovable would terminate the
+         * findInterface walk and be selected instead of the node behind it.
+         */
         expect('isSelectable' in component).toBe(false);
         expect('isMovable' in component).toBe(false);
         expect('isDIVENode' in component).toBe(false);
     });
 
     it('should not be part of the scene graph', () => {
-        // an exporter writes a node for everything it walks, so a component in
-        // the graph cost one level per save
+        /**
+         * an exporter writes a node for everything it walks, so a component in
+         * the graph cost one level per save
+         */
         const node = new DIVENode();
         const component = node.addComponent(new TestComponent());
 
@@ -108,8 +112,10 @@ describe('dive/component/DIVEComponent', () => {
     });
 
     it('should only be attachable through a node', () => {
-        // there is no other way in any more: a component is not an Object3D, so
-        // `plainObject.add(component)` does not even compile
+        /**
+         * there is no other way in any more: a component is not an Object3D, so
+         * `plainObject.add(component)` does not even compile
+         */
         const component = new TestComponent();
 
         expect(component.isAttached).toBe(false);
@@ -208,8 +214,10 @@ describe('dive/component/DIVEComponent', () => {
     });
 
     it('should get its geometry rendered through the node', () => {
-        // three builds its render list from the graph, so the content has to be
-        // in it -- as a child of the node, which is where the component puts it
+        /**
+         * three builds its render list from the graph, so the content has to be
+         * in it -- as a child of the node, which is where the component puts it
+         */
         const node = new DIVENode();
         const component = new TestComponent();
         const mesh = new Mesh(new BoxGeometry(), new MeshBasicMaterial());
@@ -228,9 +236,10 @@ describe('dive/component/DIVEComponent', () => {
         };
 
         it('should put content into the node, not into itself', () => {
-            // `children` is three's render queue, so the content has to be in the
-            // graph -- but the component holding it does not, and an exporter
-            // writes every graph node it walks
+            /**
+             * children is three's render queue, so the content has to be in the graph,
+             * but the component holding it does not
+             */
             const node = new DIVENode();
             const component = node.addComponent(new TestComponent());
             const mesh = content();
@@ -242,8 +251,10 @@ describe('dive/component/DIVEComponent', () => {
         });
 
         it('should hold content contributed before it had an owner', () => {
-            // the normal case: a component builds its renderable in its
-            // constructor, long before anyone attaches it
+            /**
+             * the normal case: a component builds its renderable in its
+             * constructor, long before anyone attaches it
+             */
             const component = new TestComponent();
             const mesh = content();
 
@@ -290,8 +301,10 @@ describe('dive/component/DIVEComponent', () => {
         });
 
         it('should ignore a repeated contribution', () => {
-            // a duplicate would send a spurious childremoved/childadded pair
-            // through the node -- the events the group-line listener hangs on
+            /**
+             * a duplicate would send a spurious childremoved/childadded pair
+             * through the node -- the events the group-line listener hangs on
+             */
             const node = new DIVENode();
             const component = node.addComponent(new TestComponent());
             const mesh = content();
@@ -341,8 +354,10 @@ describe('dive/component/DIVEComponent', () => {
         });
 
         it('should show the hooks their content in place', () => {
-            // attach adds before onAttach, detach removes after onDetach -- so a
-            // hook never sees a half-moved component
+            /**
+             * attach adds before onAttach, detach removes after onDetach -- so a
+             * hook never sees a half-moved component
+             */
             const node = new DIVENode();
             const component = new TestComponent();
             component.give(content());
@@ -365,15 +380,19 @@ describe('dive/component/DIVEComponent', () => {
         });
 
         it('should survive a node whose children were replaced wholesale', () => {
-            // the gizmo does this, and Node.test.ts pins it as supported: the
-            // list is not the truth, so re-attaching heals it
+            /**
+             * the gizmo does this, and Node.test.ts pins it as supported: the
+             * list is not the truth, so re-attaching heals it
+             */
             const node = new DIVENode();
             const component = node.addComponent(new TestComponent());
             const mesh = content();
             component.give(mesh);
 
-            // as a direct assignment to `children` leaves it: the mesh is out of
-            // the graph while the list still points at it
+            /**
+             * as a direct assignment to `children` leaves it: the mesh is out of
+             * the graph while the list still points at it
+             */
             node.children = [];
             new DIVENode().addComponent(component);
 
@@ -400,8 +419,10 @@ describe('dive/component/DIVEComponent', () => {
         });
 
         it('should clone the component but not its content', () => {
-            // a cloned contribution would be ownerless geometry beside a
-            // component that knows nothing about it; the clone brings its own
+            /**
+             * a cloned contribution would be ownerless geometry beside a
+             * component that knows nothing about it; the clone brings its own
+             */
             const source = new DIVENode();
             source.addComponent(new TestComponent()).give(content());
 
@@ -416,8 +437,10 @@ describe('dive/component/DIVEComponent', () => {
         });
 
         it('should replace components the copy already had', () => {
-            // a node that attaches components in its constructor would otherwise
-            // end up with two of each
+            /**
+             * a node that attaches components in its constructor would otherwise
+             * end up with two of each
+             */
             class Rooted extends DIVENode {
                 constructor() {
                     super();

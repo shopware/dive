@@ -165,8 +165,10 @@ describe('dive/engine/scene/DIVEScene ticking', () => {
     });
 
     it('should not skip a neighbour when one component withdraws mid-tick', () => {
-        // the classic mutation-during-iteration bug: splicing inside forEach
-        // makes the loop jump over the following entry
+        /**
+         * the classic mutation-during-iteration bug: splicing inside forEach
+         * makes the loop jump over the following entry
+         */
         const selfStopping = new SelfStopping();
         const after = new Ticker();
         addNodeWith(selfStopping, after);
@@ -198,8 +200,10 @@ describe('dive/engine/scene/DIVEScene ticking', () => {
     });
 
     it('should skip a disabled component without removing it', () => {
-        // enrolled but switched off: the loop must skip it and leave the entry
-        // in place, so re-enabling does not need a re-enrolment
+        /**
+         * enrolled but switched off: the loop must skip it and leave the entry
+         * in place, so re-enabling does not need a re-enrolment
+         */
         const ticker = new Ticker();
         addNodeWith(ticker);
         scene['_tickingComponents'][0].setTickEnabled(false);

@@ -52,8 +52,10 @@ describe('dive/mesh/MeshComponent', () => {
             });
 
             it('should be findable through the abstract base', () => {
-                // what lets one code path apply a material to a model, a
-                // primitive and the floor alike
+                /**
+                 * what lets one code path apply a material to a model, a
+                 * primitive and the floor alike
+                 */
                 const node = new DIVENode();
                 const component = node.addComponent(make());
 
@@ -66,10 +68,10 @@ describe('dive/mesh/MeshComponent', () => {
             });
 
             it('should give a clone its own content, not a second copy', () => {
-                // `Object3D.copy` added a clone of the source child on top of the
-                // one the constructor made, leaving two and a `_mesh` pointing at
-                // the empty one. With the content in the node there is nothing
-                // left for it to duplicate.
+                /**
+                 * Object3D.copy used to add a clone of the source child on top of the
+                 * constructor's, leaving a _mesh that pointed at the empty one
+                 */
                 const source = make();
                 withContent(source);
 

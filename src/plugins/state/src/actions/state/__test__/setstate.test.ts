@@ -33,9 +33,10 @@ const { addExecute, deleteExecute, setParentExecute } = vi.hoisted(() => ({
 }));
 
 vi.mock('@shopware-ag/dive/state', async () => ({
-    // the real one, imported past the barrel this factory replaces: the round
-    // trip below has to actually move the camera, and there is nothing to record
-    // about it that the camera node does not already show
+    /**
+     * the real one, imported past the barrel this factory replaces, the round
+     * trip below has to actually move the camera
+     */
     SetCameraTransformAction: (
         await import('../../camera/setcameratransform.ts')
     ).SetCameraTransformAction,
@@ -159,8 +160,10 @@ describe('SetStateAction', () => {
 
             await new SetStateAction(stateData({ userCamera }), deps).execute();
 
-            // the orbit angles are derived from position and target, so there is
-            // nothing else for this action to preserve
+            /**
+             * the orbit angles are derived from position and target, so there is
+             * nothing else for this action to preserve
+             */
             expect(deps.controller.object.owner!.position).toMatchObject(
                 userCamera.position,
             );
@@ -494,8 +497,10 @@ describe('SetStateAction', () => {
             root: { floor },
         } as unknown as DIVEScene & { name: string; background: Color };
 
-        // a real node and camera component, so what SET_STATE writes is what
-        // GET_STATE reads back without a stub in between deciding it
+        /**
+         * a real node and camera component, so what SET_STATE writes is what
+         * GET_STATE reads back without a stub in between deciding it
+         */
         const controller = makeCameraController();
 
         const registry = new EntityRegistry();

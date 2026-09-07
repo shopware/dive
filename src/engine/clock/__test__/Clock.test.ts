@@ -234,8 +234,10 @@ describe('DIVEClock', () => {
         });
 
         it('should keep running', () => {
-            // the booking sits behind the work, so an escaping throw would never
-            // reach it and rendering would stop for good
+            /**
+             * the booking sits behind the work, so an escaping throw would never
+             * reach it and rendering would stop for good
+             */
             const clock = new DIVEClock();
             const boom = throwing();
             clock.addTicker(boom);
@@ -252,8 +254,10 @@ describe('DIVEClock', () => {
         });
 
         it('should still run the tickers behind it', () => {
-            // one try per ticker rather than one around the loop -- the view that
-            // draws the frame is a ticker too, and must not be skipped
+            /**
+             * one try per ticker rather than one around the loop -- the view that
+             * draws the frame is a ticker too, and must not be skipped
+             */
             const clock = new DIVEClock();
             const behind = { uuid: 'behind', tick: vi.fn() };
             clock.addTicker(throwing());

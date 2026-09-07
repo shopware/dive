@@ -19,17 +19,16 @@ export const AddObjectAction = Action.define<
 
         const node = gateway.createEntity(payload);
 
-        // A camera has no scene object, so there is nothing to listen to and
-        // nothing to apply.
+        // a camera has no scene object, nothing to listen to and nothing to apply
         if (!node) {
             registry.register(payload);
             return undefined;
         }
 
-        // Registered and listening before the data is applied. Applying a model
-        // awaits the asset load and `object-load` fires inside it, so a listener
-        // attached afterwards would miss it — and a report arriving before the
-        // entity is registered has nowhere to write.
+        /**
+         * registered and listening before the data is applied, because applying a
+         * model awaits the asset load and object-load fires inside it
+         */
         registry.register(
             payload,
             node,
@@ -39,8 +38,7 @@ export const AddObjectAction = Action.define<
         try {
             await gateway.applyEntity(node, payload);
         } catch (error) {
-            // Nothing half-created stays behind: a failed asset load used to
-            // leave a registered schema with no object in the scene.
+            // leave nothing half-created behind on a failed asset load
             registry.unregister(payload.id);
             gateway.removeEntity(payload);
             throw error;

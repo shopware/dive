@@ -44,8 +44,10 @@ const createCube = (): Mesh => {
 
 const createModel = (): DIVENode => {
     const model = new DIVENode();
-    // a mesh component and the geometry it contributes, exactly as the gateway
-    // composes it: the component owns the mesh, the node holds it
+    /**
+     * a mesh component and the geometry it contributes, exactly as the gateway
+     * composes it: the component owns the mesh, the node holds it
+     */
     model.addComponent(new ModelComponent());
     model.add(createCube());
     return model;
@@ -235,8 +237,10 @@ describe('dive/node/DIVENode', () => {
     });
 
     describe('applyTransform', () => {
-        // The silent write: for a caller that announces the change itself, so it
-        // does not get a second report on top of its own.
+        /**
+         * The silent write: for a caller that announces the change itself, so it
+         * does not get a second report on top of its own.
+         */
         let parent: DIVENode;
         let onTransform: ReturnType<typeof vi.fn>;
 
@@ -334,8 +338,10 @@ describe('dive/node/DIVENode', () => {
     });
 
     describe('reporting a transform it was told to make', () => {
-        // One event for every kind of move: a listener cannot tell a gizmo drag
-        // from a setPosition, and does not need to.
+        /**
+         * One event for every kind of move: a listener cannot tell a gizmo drag
+         * from a setPosition, and does not need to.
+         */
         let parent: DIVENode;
         let onTransform: ReturnType<typeof vi.fn>;
 
@@ -365,8 +371,10 @@ describe('dive/node/DIVENode', () => {
         });
 
         it('should stay silent when the position does not change', () => {
-            // a patch carrying all three transform fields must not report three
-            // moves for one changed value
+            /**
+             * a patch carrying all three transform fields must not report three
+             * moves for one changed value
+             */
             node.setPosition({ x: 1, y: 2, z: 3 });
             onTransform.mockClear();
 
@@ -430,8 +438,10 @@ describe('dive/node/DIVENode', () => {
             });
 
             it('should report when the group rotates', () => {
-                // used to fire for setPosition only, so a rotated group left its
-                // members' reported positions stale
+                /**
+                 * used to fire for setPosition only, so a rotated group left its
+                 * members' reported positions stale
+                 */
                 node.setRotation({ x: 0, y: 1, z: 0 });
 
                 expect(onMemberTransform).toHaveBeenCalledTimes(1);
@@ -511,8 +521,10 @@ describe('dive/node/DIVENode components', () => {
 
     describe('registry maintenance', () => {
         it('should hand a component over when another node takes it', () => {
-            // three's `add` used to do the stealing for us by calling
-            // `removeFromParent`; addComponent has to do it itself now
+            /**
+             * three's `add` used to do the stealing for us by calling
+             * `removeFromParent`; addComponent has to do it itself now
+             */
             const other = new DIVENode();
             const component = node.addComponent(new AlphaComponent());
 
@@ -551,8 +563,10 @@ describe('dive/node/DIVENode components', () => {
         });
 
         it('should find a subclass through its base class', () => {
-            // this is what lets one code path serve both MeshComponent and
-            // PrimitiveComponent
+            /**
+             * this is what lets one code path serve both MeshComponent and
+             * PrimitiveComponent
+             */
             const component = node.addComponent(new SpecialAlphaComponent());
 
             expect(node.getComponent(AlphaComponent)).toBe(component);
@@ -615,8 +629,10 @@ describe('dive/node/DIVENode components', () => {
         });
 
         it('should stay correct after direct children assignment', () => {
-            // gizmo code and several tests assign `children` directly, which
-            // bypasses three's events -- an uncached getter cannot go stale
+            /**
+             * gizmo code and several tests assign `children` directly, which
+             * bypasses three's events -- an uncached getter cannot go stale
+             */
             const child = new DIVENode();
             node.children = [child, new Object3D()];
 

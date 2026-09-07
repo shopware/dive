@@ -235,10 +235,10 @@ export abstract class DIVEComponent extends EventDispatcher<DIVEComponentEventMa
     public _attach(owner: DIVENode): void {
         this._owner = owner;
 
-        // Content first, hook second: `onAttach` is a hook subclasses override,
-        // and one that forgot `super` would silently leave its content out of the
-        // scene. Doing it here makes that impossible -- and the hook sees the
-        // content already in place.
+        /**
+         * content first, so a subclass that forgets super in onAttach cannot
+         * leave it out of the scene
+         */
         this._adopt(owner);
 
         this.onAttach(owner);
@@ -253,8 +253,7 @@ export abstract class DIVEComponent extends EventDispatcher<DIVEComponentEventMa
         const previousOwner = this._owner;
         if (!previousOwner) return;
 
-        // Hook first, content second -- the mirror of _attach, so `onDetach`
-        // still finds its content where it was.
+        // hook first, the mirror of _attach, so onDetach still finds its content
         this.onDetach(previousOwner);
 
         previousOwner.remove(...this._contributed);
@@ -360,8 +359,7 @@ export function findComponent<T extends DIVEComponent>(
     while (current) {
         if (current instanceof Ctor) return current;
 
-        // Through the registry, not through `parent`: what a component owns sits
-        // in the *node's* children, so the component is not an ancestor of it.
+        // ask the registry, since a component is not an ancestor of what it owns
         const contributor = contributors.get(current);
         if (contributor instanceof Ctor) return contributor;
 

@@ -103,8 +103,10 @@ describe('DIVEView', () => {
             height: 600,
         });
 
-        // stores what it is constructed with, as the real renderer does: the view
-        // reads the camera back off it rather than keeping its own copy
+        /**
+         * stores what it is constructed with, as the real renderer does: the view
+         * reads the camera back off it rather than keeping its own copy
+         */
         vi.mocked(DIVERenderer).mockImplementation((_scene, camera) => {
             mockRenderer.activeCamera = camera;
             return mockRenderer as any;
@@ -119,8 +121,10 @@ describe('DIVEView', () => {
 
         const scene = new DIVEScene();
 
-        // a real node with a real component: the view asks it for the camera it
-        // hands to the renderer, and both work in jsdom
+        /**
+         * a real node with a real component: the view asks it for the camera it
+         * hands to the renderer, and both work in jsdom
+         */
         const cameraNode = new DIVENode();
         cameraComponent = cameraNode.addComponent(
             new PerspectiveCameraComponent(),
@@ -175,8 +179,10 @@ describe('DIVEView', () => {
         });
 
         it('should follow the renderer when the active camera is swapped', () => {
-            // `activeCamera` is settable, so a copy held here would report the
-            // camera the renderer has already stopped drawing through
+            /**
+             * `activeCamera` is settable, so a copy held here would report the
+             * camera the renderer has already stopped drawing through
+             */
             const other = new DIVENode().addComponent(
                 new PerspectiveCameraComponent(),
             );

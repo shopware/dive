@@ -200,9 +200,10 @@ describe('DIVEScene', () => {
 
     describe('dispose', () => {
         it('should dispose every component in the scene', () => {
-            // the point of the pass: three frees a geometry, material or texture
-            // when its own `dispose` fires, and nothing else in a teardown does
-            // that -- `Renderer.dispose` only drops its bookkeeping
+            /**
+             * three frees a geometry, material or texture when its own dispose fires,
+             * and Renderer.dispose only drops its bookkeeping
+             */
             const node = new DIVENode();
             const component = node.addComponent(
                 new (class extends DIVEComponent {})(),
@@ -216,8 +217,10 @@ describe('DIVEScene', () => {
         });
 
         it('should dispose a component sitting deeper in the tree', () => {
-            // reached through the nodes, not by looking for components in the
-            // graph: a component is not in the graph, only what it contributed is
+            /**
+             * reached through the nodes, not by looking for components in the
+             * graph: a component is not in the graph, only what it contributed is
+             */
             const deep = new DIVENode();
             const component = deep.addComponent(
                 new (class extends DIVEComponent {})(),

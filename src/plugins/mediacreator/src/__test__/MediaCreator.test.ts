@@ -127,10 +127,10 @@ vi.mock('@shopware-ag/dive/orbitcontroller', async () => {
 
     return {
         OrbitController: vi.fn(function (this: any) {
-            // the camera component is the whole interface here: `camera` is what
-            // three renders with, `owner` carries the transform, and `onResize`
-            // sets the aspect. Real vectors, so a shot that put the position in
-            // the wrong place shows up as a wrong position.
+            /**
+             * the camera component is the whole interface, camera is what three renders
+             * with, owner carries the transform and onResize sets the aspect
+             */
             this.object = {
                 camera: { layers: { mask: 0 } },
                 owner: { position: new Vector3() },

@@ -24,8 +24,10 @@ describe('dive/light/HemisphereLightComponent', () => {
     });
 
     it('should default to a non-zero sky axis', () => {
-        // three derives the sky direction from the normalised world position, so
-        // the origin would leave it undefined
+        /**
+         * three derives the sky direction from the normalised world position, so
+         * the origin would leave it undefined
+         */
         expect(
             new HemisphereLightComponent().light.position.length(),
         ).toBeGreaterThan(0);

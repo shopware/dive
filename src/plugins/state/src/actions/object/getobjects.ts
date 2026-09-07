@@ -9,9 +9,7 @@ export const GetObjectsAction = Action.define<
     EntitySchema[]
 >({
     description: 'Returns a list of objects of given IDs.',
-    // Looks each id up instead of scanning every entity and filtering, which is
-    // what `read(id)` is for. Unknown ids drop out rather than throwing, as
-    // before.
+    // look each id up rather than scanning every entity, unknown ids drop out
     execute: (payload, { registry }) =>
         payload.ids
             .map((id) => registry.read(id)?.schema)

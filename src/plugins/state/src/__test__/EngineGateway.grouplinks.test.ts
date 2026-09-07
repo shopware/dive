@@ -162,8 +162,10 @@ describe('plugins/state/EngineGateway group links', () => {
     });
 
     it('should follow a member that is repositioned by a patch', async () => {
-        // the full chain: a patch moves the node, the node reports it, and the
-        // report redraws the line. The gateway no longer has to remember to.
+        /**
+         * the full chain: a patch moves the node, the node reports it, and the
+         * report redraws the line. The gateway no longer has to remember to.
+         */
         await addEntity(gateway, groupSchema('g'));
         const schema = modelSchema('m', 'g');
         const member = (await addEntity(gateway, schema))!;
@@ -200,11 +202,10 @@ describe('plugins/state/EngineGateway group links', () => {
     });
 
     describe('a member that leaves without the gateway', () => {
-        // The group listens for `childremoved`, so it drops the link whichever
-        // way a member goes. Callers used to have to remember this, and a line
-        // stayed behind -- still drawn, and still holding the departed member,
-        // its subtree and its geometry alive -- whenever anyone re-parented a
-        // node through the engine directly.
+        /**
+         * the group listens for childremoved, so it drops the link whichever way
+         * a member goes, including a re-parent straight through the engine
+         */
 
         it('should lose its line when re-parented straight through three', async () => {
             await addEntity(gateway, groupSchema('g'));
@@ -263,8 +264,10 @@ describe('plugins/state/EngineGateway group links', () => {
     });
 
     it('should forget every scene object on dispose', async () => {
-        // there is no line bookkeeping left to forget here — the line component
-        // owns which member each line belongs to
+        /**
+         * there is no line bookkeeping left to forget here — the line component
+         * owns which member each line belongs to
+         */
         const group = groupSchema('g');
         await addEntity(gateway, group);
 

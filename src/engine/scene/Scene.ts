@@ -148,9 +148,10 @@ export class DIVEScene extends Scene implements DIVETicker {
     public tick(deltaTime: number): void {
         this._isTicking = true;
 
-        // Index-based and length-checked so a component disabling itself from
-        // inside its own tick -- the expected way to stop -- cannot make the loop
-        // skip its neighbour.
+        /**
+         * index-based and length-checked, so a component that disables itself
+         * from inside its own tick cannot make the loop skip its neighbour
+         */
         for (let i = 0; i < this._tickingComponents.length; i++) {
             const component = this._tickingComponents[i];
             if (!component.tickEnabled) continue;
@@ -230,8 +231,7 @@ export class DIVEScene extends Scene implements DIVETicker {
 
         this.remove(this._root);
 
-        // kept rather than nulled: the getter builds one on demand, so dropping the
-        // reference would have a read after dispose put a fresh grid in the scene
+        // kept rather than nulled, the getter would build a fresh one on demand
         if (this._grid) {
             this._grid.dispose();
             this.remove(this._grid);

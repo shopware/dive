@@ -38,8 +38,10 @@ export const SetStateAction = Action.define<
         // one call instead of a hand-written copy per property, which is how
         // gridEnabled went missing here while updatescene had it
         gateway.applySceneSettings(_payload);
-        // the same move SET_CAMERA_TRANSFORM makes, so it is that action rather
-        // than a second copy of it
+        /**
+         * the same move SET_CAMERA_TRANSFORM makes, so it is that action rather
+         * than a second copy of it
+         */
         _payload.userCamera !== undefined &&
             new SetCameraTransformAction(
                 {

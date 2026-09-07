@@ -46,8 +46,10 @@ describe('helpers/detachTransformControls', () => {
     });
 
     it('should look past a scene child that is neither', () => {
-        // the empty scene above never runs the search at all; this is the case
-        // where it runs and finds nothing
+        /**
+         * the empty scene above never runs the search at all; this is the case
+         * where it runs and finds nothing
+         */
         const mockObject = new Object3D();
         const mockScene = Object.assign(new Object3D(), { isDIVEScene: true });
         mockScene.children = [new Object3D(), new Object3D()];
@@ -74,8 +76,10 @@ describe('helpers/detachTransformControls', () => {
     });
 
     it('should ignore a helper root that holds no controls', () => {
-        // both brands are checked with their payload, because a root without
-        // controls is a root that has nothing to release
+        /**
+         * both brands are checked with their payload, because a root without
+         * controls is a root that has nothing to release
+         */
         const mockObject = new Object3D();
         const mockHelperRoot = Object.assign(new Object3D(), {
             isTransformControlsRoot: true,

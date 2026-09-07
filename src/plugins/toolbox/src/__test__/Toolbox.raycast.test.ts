@@ -86,8 +86,10 @@ describe('Toolbox raycast', () => {
     const raycast = () => (toolbox as any).raycast();
 
     beforeEach(() => {
-        // Mirrors the real hierarchy: the scene's direct children are plain
-        // Object3Ds, never meshes.
+        /**
+         * Mirrors the real hierarchy: the scene's direct children are plain
+         * Object3Ds, never meshes.
+         */
         scene = new Scene();
         root = new Object3D();
         root.name = 'Root';

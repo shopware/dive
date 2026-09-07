@@ -10,8 +10,10 @@ export const GetAllObjectsAction = Action.define<
 >({
     description: 'Retrieves all objects in the state.',
     execute: (_, { registry }) => {
-        // schemas only: the nodes beside them are engine objects and have no
-        // business leaving the state layer
+        /**
+         * schemas only: the nodes beside them are engine objects and have no
+         * business leaving the state layer
+         */
         return new Map(
             registry.read().map(({ schema }) => [schema.id, schema]),
         );

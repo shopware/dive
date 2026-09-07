@@ -26,9 +26,10 @@ describe('AddObjectAction', () => {
     beforeEach(() => {
         vi.clearAllMocks();
         deps = makeActionDeps();
-        // real, and composed the way the gateway composes a model, so the
-        // listeners watchEntity attaches actually attach -- the load is reported
-        // by the ModelComponent, so a bare node would have nothing to listen to
+        /**
+         * real, and composed the way the gateway composes a model, so the listeners
+         * watchEntity attaches to the ModelComponent actually attach
+         */
         const entity = new DIVENode();
         entity.addComponent(new ModelComponent());
         node = entity as unknown as DIVESceneObject;
@@ -70,8 +71,10 @@ describe('AddObjectAction', () => {
     });
 
     it('should register and listen before the data is applied', async () => {
-        // applying a model awaits the asset load, and `object-load` fires inside
-        // it — so both have to be in place before applyEntity is called
+        /**
+         * applying a model awaits the asset load, and `object-load` fires inside
+         * it — so both have to be in place before applyEntity is called
+         */
         let seenDuringApply:
             { registered: boolean; watched: boolean } | undefined;
         vi.mocked(gateway.applyEntity).mockImplementation(async () => {
@@ -109,8 +112,10 @@ describe('AddObjectAction', () => {
     });
 
     it('should leave nothing behind when applying fails', async () => {
-        // a failed asset load used to leave a registered schema whose object was
-        // never finished
+        /**
+         * a failed asset load used to leave a registered schema whose object was
+         * never finished
+         */
         const failure = new Error('asset load failed');
         vi.mocked(gateway.applyEntity).mockRejectedValue(failure);
 

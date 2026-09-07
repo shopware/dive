@@ -194,8 +194,10 @@ export class MultiLineComponent extends DIVEComponent {
         this._byKey.delete(key);
         this._freeSlots.push(line.slot);
 
-        // collapse rather than repack: every other line keeps its slot, so none
-        // of them has to be rewritten
+        /**
+         * collapse rather than repack: every other line keeps its slot, so none
+         * of them has to be rewritten
+         */
         this._collapseSlot(line.slot);
     }
 
@@ -299,9 +301,10 @@ export class MultiLineComponent extends DIVEComponent {
         positions[offset + 4] = end.y;
         positions[offset + 5] = end.z;
 
-        // Each line restarts the dash pattern at 0. LineSegments'
-        // computeLineDistances() accumulates across segments instead, which lets
-        // a short line land entirely inside a gap and vanish.
+        /**
+         * each line restarts the dash pattern at 0, while LineSegments accumulates
+         * across segments and lets a short line vanish inside a gap
+         */
         const distances = this._distances.array as Float32Array;
         const distanceOffset = slot * DISTANCES_PER_LINE;
         distances[distanceOffset] = 0;

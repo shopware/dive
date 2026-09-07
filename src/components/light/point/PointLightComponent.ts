@@ -51,8 +51,10 @@ export class PointLightComponent extends DIVELightComponent {
             new SphereGeometry(HANDLE_RADIUS, 32, 32),
             this._handleMaterial,
         );
-        // a proxy, not UI: the light has no geometry, and this sphere is what
-        // stands in for it. UI is the gizmo, which must not be selectable.
+        /**
+         * a proxy, not UI, this sphere is what stands in for a light with no
+         * geometry, while UI is the gizmo and must not be selectable
+         */
         this._handle.layers.mask = PROXY_LAYER_MASK;
         this.contribute(this._handle);
     }

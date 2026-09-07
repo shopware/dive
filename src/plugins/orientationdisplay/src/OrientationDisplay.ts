@@ -66,8 +66,11 @@ export class OrientationDisplay implements DIVETicker {
         this._renderer.webgpurenderer.autoClear = false;
 
         // set axes rotation to camera rotation
-        // matrixWorld, not matrix: the camera sits at its node's transform, so its
-        // own local matrix is identity and carries no orientation at all
+
+        /**
+         * matrixWorld, not matrix: the camera sits at its node's transform, so its
+         * own local matrix is identity and carries no orientation at all
+         */
         this._axes.setFromCameraMatrix(
             this._cameraComponent.camera.matrixWorld,
         );

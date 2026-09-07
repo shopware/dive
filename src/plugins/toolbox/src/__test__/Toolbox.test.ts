@@ -423,10 +423,10 @@ describe('Toolbox', () => {
     });
 
     describe('raycasting only when a tool looks', () => {
-        // The intersect lists are computed on first read and then kept. They used
-        // to be computed eagerly, so a pointer move cost a full raycast even with
-        // no tool enabled -- and while the camera was being orbited that was one
-        // raycast per frame against every mesh in the scene.
+        /**
+         * the intersect lists are computed on first read and then kept, they used
+         * to cost a full raycast per pointer move even with no tool enabled
+         */
         let move: (event: PointerEvent) => void;
         let raycasts: number;
 

@@ -44,10 +44,10 @@ describe('dive/camera/PerspectiveCameraComponent', () => {
     });
 
     it('should contribute its camera to the node', () => {
-        // a component cannot be a camera -- both are Object3D -- so it holds one
-        // and puts it on the node. It has to be in the graph at all, because
-        // three only updates a camera's world matrix itself while it has no
-        // parent.
+        /**
+         * a component holds a camera and puts it on the node, because three
+         * only updates a camera's world matrix itself while it has no parent
+         */
         const node = new DIVENode();
         const component = node.addComponent(new PerspectiveCameraComponent());
 
@@ -65,8 +65,10 @@ describe('dive/camera/PerspectiveCameraComponent', () => {
     });
 
     it('should take no constructor arguments', () => {
-        // Object3D.clone() calls new this.constructor(), so a required parameter
-        // would make cloning a node throw
+        /**
+         * Object3D.clone() calls new this.constructor(), so a required parameter
+         * would make cloning a node throw
+         */
         const node = new DIVENode();
         node.addComponent(new PerspectiveCameraComponent());
 
@@ -108,8 +110,10 @@ describe('dive/camera/PerspectiveCameraComponent', () => {
     });
 
     it('should be findable from the camera it owns', () => {
-        // whoever only holds a camera -- an OrbitController hands out
-        // `controller.object` -- has to be able to get back to the component
+        /**
+         * whoever only holds a camera -- an OrbitController hands out
+         * `controller.object` -- has to be able to get back to the component
+         */
         const component = new PerspectiveCameraComponent();
 
         expect(findComponent(component.camera, DIVECameraComponent)).toBe(
@@ -209,10 +213,10 @@ describe('dive/camera/PerspectiveCameraComponent', () => {
     });
 
     it('should show the default layer in the editor but not live', () => {
-        // three puts an object on layer 0 unless someone says otherwise -- the
-        // gizmo among them -- so the editor has to show it. The live view is the
-        // opposite: whatever never chose a layer is nothing anyone decided to
-        // show an end user.
+        /**
+         * three puts an object on layer 0 unless someone says otherwise, the
+         * gizmo among them, so the editor shows it and the live view does not
+         */
         expect(
             DIVECameraComponent.EDITOR_VIEW_LAYER_MASK & DEFAULT_LAYER_MASK,
         ).not.toBe(0);
@@ -230,8 +234,10 @@ describe('dive/camera/PerspectiveCameraComponent', () => {
     });
 
     it('should leave the orientation display to its own camera', () => {
-        // the axes live in the same scene; having this bit would draw them a
-        // second time in the middle of the viewport
+        /**
+         * the axes live in the same scene; having this bit would draw them a
+         * second time in the middle of the viewport
+         */
         expect(
             DIVECameraComponent.EDITOR_VIEW_LAYER_MASK & COORDINATE_LAYER_MASK,
         ).toBe(0);
@@ -247,8 +253,10 @@ describe('dive/camera/PerspectiveCameraComponent', () => {
     });
 
     it('should render the floor in both views', () => {
-        // the floor sits on its own layer so it can be excluded from bounds and
-        // exports, but it still has to be visible in every view
+        /**
+         * the floor sits on its own layer so it can be excluded from bounds and
+         * exports, but it still has to be visible in every view
+         */
         expect(
             DIVECameraComponent.EDITOR_VIEW_LAYER_MASK & FLOOR_LAYER_MASK,
         ).not.toBe(0);
@@ -258,8 +266,10 @@ describe('dive/camera/PerspectiveCameraComponent', () => {
     });
 
     it('should aim the node at a target rather than away from it', () => {
-        // three's Object3D.lookAt points +Z at the target unless the object reports
-        // isCamera, which left the camera looking backwards once a node carried it
+        /**
+         * three's Object3D.lookAt points +Z at the target unless the object reports
+         * isCamera, which left the camera looking backwards once a node carried it
+         */
         const component = attached();
         component.owner.position.set(0, 0, 5);
 
@@ -287,8 +297,10 @@ describe('dive/camera/PerspectiveCameraComponent', () => {
     });
 
     it('should compensate for a rotated parent when aiming', () => {
-        // the quaternion written is local, so a turned parent would otherwise
-        // rotate the camera off the target on top of it
+        /**
+         * the quaternion written is local, so a turned parent would otherwise
+         * rotate the camera off the target on top of it
+         */
         const parent = new Object3D();
         parent.rotation.y = Math.PI / 2;
 
@@ -299,8 +311,10 @@ describe('dive/camera/PerspectiveCameraComponent', () => {
 
         component.aimAt(new Vector3(0, 0, 0));
 
-        // the parent's turn puts the node at world (5, 0, 0), so facing the origin
-        // means looking along -X
+        /**
+         * the parent's turn puts the node at world (5, 0, 0), so facing the origin
+         * means looking along -X
+         */
         expect(worldViewDirection(component).x).toBeCloseTo(-1, 5);
     });
 });

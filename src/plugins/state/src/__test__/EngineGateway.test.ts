@@ -183,8 +183,10 @@ describe('plugins/state/EngineGateway', () => {
         });
 
         it('should not find an object that was added to the tree directly', () => {
-            // findEntity is registry-backed rather than a tree walk, so it only
-            // reports things the gateway itself turned into entities
+            /**
+             * findEntity is registry-backed rather than a tree walk, so it only
+             * reports things the gateway itself turned into entities
+             */
             const gateway = makeGateway();
             const stranger = new Object3D();
             stranger.userData.id = 'smuggled';
@@ -255,8 +257,10 @@ describe('plugins/state/EngineGateway', () => {
             expect(light?.position.z).toBe(3);
             expect(light?.visible).toBe(true);
 
-            // a point light node carries one light component, and the schema
-            // values land on the three light it owns
+            /**
+             * a point light node carries one light component, and the schema
+             * values land on the three light it owns
+             */
             const component = (light as DIVENode).requireComponent(
                 PointLightComponent,
             );
@@ -382,8 +386,10 @@ describe('plugins/state/EngineGateway', () => {
         });
 
         it('should write the transform after the asset, not before', async () => {
-            // setFromGLTF copies the glTF root's transform onto the node, so a
-            // transform written before the asset arrives is thrown away
+            /**
+             * setFromGLTF copies the glTF root's transform onto the node, so a
+             * transform written before the asset arrives is thrown away
+             */
             const { Object3D } =
                 await vi.importActual<typeof import('three/webgpu')>(
                     'three/webgpu',

@@ -22,8 +22,10 @@ describe('dive/light/PointLightComponent', () => {
     });
 
     it('should keep its shadow map small', () => {
-        // a point light renders six faces, so the same resolution as the
-        // directional light would cost six times the memory
+        /**
+         * a point light renders six faces, so the same resolution as the
+         * directional light would cost six times the memory
+         */
         const shadow = (new PointLightComponent().light as PointLight).shadow;
 
         expect(shadow.mapSize.width).toBe(512);
@@ -31,9 +33,10 @@ describe('dive/light/PointLightComponent', () => {
     });
 
     it('should own an editor handle on the proxy layer', () => {
-        // a proxy, not UI: the light has no geometry of its own, so this sphere is
-        // what a click has to be able to reach. UI is the gizmo, which must not be
-        // selectable as an object.
+        /**
+         * a proxy, not UI, this sphere is what a click has to reach for a light
+         * with no geometry, while UI is the gizmo and must not be selectable
+         */
         const component = new PointLightComponent();
 
         expect(component.contributions).toContain(component.handle);
@@ -69,8 +72,10 @@ describe('dive/light/PointLightComponent', () => {
     });
 
     it('should cap the handle opacity', () => {
-        // the handle stands in for the light, but a bright light must not make it
-        // more than the 0.8 it starts at
+        /**
+         * the handle stands in for the light, but a bright light must not make it
+         * more than the 0.8 it starts at
+         */
         const component = new PointLightComponent();
 
         component.setIntensity(10);

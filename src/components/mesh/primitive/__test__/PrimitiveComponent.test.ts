@@ -35,10 +35,10 @@ describe('dive/mesh/PrimitiveComponent', () => {
     ];
 
     it('should keep every shape cheap enough to raycast per pointer move', () => {
-        // `Mesh.raycast` has no acceleration structure: once the pointer is over
-        // a shape it tests every triangle, and the toolbox raycasts on every
-        // `pointermove`. A sphere at 256 x 256 segments was 130 560 triangles and
-        // 8 ms per raycast, which saturated the main thread while orbiting.
+        /**
+         * Mesh.raycast tests every triangle and the toolbox raycasts on every
+         * pointermove, so a 130k triangle sphere cost 8 ms per pointer move
+         */
         const BUDGET = 10_000;
 
         shapes.forEach((name) => {

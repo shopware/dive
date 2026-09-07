@@ -7,8 +7,10 @@ import { DIVE, DIVENode, ModelComponent } from '@shopware-ag/dive';
 import { OrbitController } from '@shopware-ag/dive/orbitcontroller';
 import { QuickViewUri } from '../QuickViewUri.ts';
 
-// shared across instances, because QuickViewUri replaces disposeAsync on the
-// returned object and the mesh component's loader is created per instance
+/**
+ * shared across instances, because QuickViewUri replaces disposeAsync on the
+ * returned object and the mesh component's loader is created per instance
+ */
 const { setFromURL, diveDisposeAsync } = vi.hoisted(() => ({
     setFromURL: vi.fn(),
     diveDisposeAsync: vi.fn(async () => {}),

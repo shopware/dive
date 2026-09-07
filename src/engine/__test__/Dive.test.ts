@@ -463,9 +463,10 @@ describe('DIVE', () => {
     });
 
     it('should release the scene before the views', async () => {
-        // the order carries the whole GPU cleanup: disposing the scene is what
-        // frees geometries, materials and textures, and it needs the renderer to
-        // still be there to hear it. Afterwards there is nothing left to tell.
+        /**
+         * the order carries the whole GPU cleanup, disposing the scene frees the
+         * geometries and needs the renderer to still be there to hear it
+         */
         const dive = new DIVE({ autoStart: false });
 
         await dive.disposeAsync();

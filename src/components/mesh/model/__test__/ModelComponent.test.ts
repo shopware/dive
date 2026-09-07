@@ -64,16 +64,19 @@ describe('dive/mesh/ModelComponent', () => {
     it('should put the content into the node', () => {
         model.setFromGLTF(makeGltf());
 
-        // `children` is three's render queue, so the content has to be in the
-        // graph -- the component holding it does not, and an exporter writes
-        // every graph node it walks
+        /**
+         * children is three's render queue, so the content has to be in the graph,
+         * but the component holding it does not
+         */
         expect(model.contributions.length).toBeGreaterThan(0);
         expect(node.children).toContain(model.contributions[0]);
     });
 
     it('should replace only its own content on a reload', () => {
-        // the node's child nodes and whatever other components contributed have
-        // to survive -- this used to be `clear()` on the node and wiped them
+        /**
+         * the node's child nodes and whatever other components contributed have
+         * to survive -- this used to be `clear()` on the node and wiped them
+         */
         const sibling = node.addComponent(new ModelComponent());
         sibling.setFromGLTF(makeGltf());
         const child = new DIVENode();
@@ -88,8 +91,10 @@ describe('dive/mesh/ModelComponent', () => {
     });
 
     it('should dispose the geometry it replaces', () => {
-        // `clear()` never did: the old geometries used to sit around until the
-        // whole component was disposed
+        /**
+         * `clear()` never did: the old geometries used to sit around until the
+         * whole component was disposed
+         */
         model.setFromGLTF(makeGltf());
         const geometry = vi.spyOn(model.mesh!.geometry, 'dispose');
 
@@ -99,8 +104,10 @@ describe('dive/mesh/ModelComponent', () => {
     });
 
     it('should survive an asset load with other components attached', () => {
-        // the bug that made this design necessary: DIVEModel.setFromGLTF called
-        // this.clear() on the node and wiped every attached component
+        /**
+         * the bug that made this design necessary: DIVEModel.setFromGLTF called
+         * this.clear() on the node and wiped every attached component
+         */
         const sibling = node.addComponent(new ModelComponent());
 
         model.setFromGLTF(makeGltf());
@@ -110,8 +117,10 @@ describe('dive/mesh/ModelComponent', () => {
     });
 
     it('should take every root of the file as content', () => {
-        // every glTF is treated the same: a scene has no transform of its own, so
-        // its root nodes and their placements are what the model is made of
+        /**
+         * every glTF is treated the same: a scene has no transform of its own, so
+         * its root nodes and their placements are what the model is made of
+         */
         model.setFromGLTF(makeGltf(2));
 
         expect(model.contributions.map((child) => child.name)).toEqual([
@@ -122,8 +131,10 @@ describe('dive/mesh/ModelComponent', () => {
     });
 
     it('should treat a single-root file no differently', () => {
-        // lifting one root's transform would put an exporter's axis conversion in
-        // front of the user as a rotation they never set
+        /**
+         * lifting one root's transform would put an exporter's axis conversion in
+         * front of the user as a rotation they never set
+         */
         model.setFromGLTF(makeGltf());
 
         expect(model.contributions).toHaveLength(1);
@@ -132,8 +143,10 @@ describe('dive/mesh/ModelComponent', () => {
     });
 
     it('should keep a marked transform root as content', () => {
-        // DIVE's own save format writes one, and the side that wrote it is the
-        // side that recognises it -- dropping it here would discard its transform
+        /**
+         * DIVE's own save format writes one, and the side that wrote it is the
+         * side that recognises it -- dropping it here would discard its transform
+         */
         const gltf = new Object3D();
         const marked = new Object3D();
         marked.name = 'TransformRoot';
@@ -152,8 +165,10 @@ describe('dive/mesh/ModelComponent', () => {
     });
 
     it('should move nothing by itself', () => {
-        // not the node, and not the component: a placement belongs to whoever owns
-        // the entity, and writing it here shifted every other component on the node
+        /**
+         * not the node, and not the component: a placement belongs to whoever owns
+         * the entity, and writing it here shifted every other component on the node
+         */
         const sibling = node.addComponent(new ModelComponent());
         model.setFromGLTF(makeGltf());
 
@@ -173,8 +188,10 @@ describe('dive/mesh/ModelComponent', () => {
     });
 
     it('should not put the animations on the node', () => {
-        // they belong to the asset, and the mixer is handed a root and its clips
-        // separately -- so there is no reason for them to sit anywhere else
+        /**
+         * they belong to the asset, and the mixer is handed a root and its clips
+         * separately -- so there is no reason for them to sit anywhere else
+         */
         const gltf = makeGltf();
         gltf.animations = ['clip'] as never;
 
@@ -211,9 +228,10 @@ describe('dive/mesh/ModelComponent', () => {
     });
 
     it('should let the next asset bring its own material', () => {
-        // only a configured material outranks an asset's -- one adopted from an
-        // earlier load is that asset's, and pushing it onto the next one would
-        // paint every model a component ever loads with the first one's material
+        /**
+         * only a configured material outranks an asset's, one adopted from an
+         * earlier load is that asset's and stays with it
+         */
         model.setFromGLTF(makeGltf());
         const adopted = model.material;
 
@@ -253,8 +271,10 @@ describe('dive/mesh/ModelComponent', () => {
         });
 
         it('should report a load with no owner at all', async () => {
-            // it used to check `isAttached` and drop the event, which said
-            // something about the delivery route rather than about the load
+            /**
+             * it used to check `isAttached` and drop the event, which said
+             * something about the delivery route rather than about the load
+             */
             loadAsset.mockResolvedValue(makeGltf());
             const detached = new ModelComponent();
             const onLoad = vi.fn();

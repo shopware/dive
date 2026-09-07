@@ -186,8 +186,10 @@ describe('modules/state/State', () => {
             displayAxes: false,
         };
 
-        // a camera component on a node, the way the engine builds it: the
-        // controller moves the node, so it has to be attached
+        /**
+         * a camera component on a node, the way the engine builds it: the
+         * controller moves the node, so it has to be attached
+         */
         cameraNode = new DIVENode();
         cameraComponent = cameraNode.addComponent(
             new PerspectiveCameraComponent(),
@@ -501,11 +503,10 @@ describe('modules/state/State', () => {
         });
 
         it('should build each module once, even for callers in the same tick', async () => {
-            // The promise is cached, not the instance, and before anything is
-            // awaited. Assigning after the await left the field empty for as long
-            // as the import took, so two actions fired back to back each built
-            // their own module -- and a second Toolbox puts a second gizmo into
-            // the scene and listens on the canvas all over again.
+            /**
+             * the promise is cached, not the instance, and before anything is
+             * awaited, or two actions fired back to back each build their own
+             */
             const [first, second] = await Promise.all([
                 state['getToolbox'](),
                 state['getToolbox'](),
@@ -727,8 +728,10 @@ describe('modules/state/State', () => {
 
             deps.dispatch('UPDATE_OBJECT', { id: 'reported' } as never);
 
-            // reaches subscribers, but never runs UpdateObjectAction — which is
-            // what an engine-to-state report needs
+            /**
+             * reaches subscribers, but never runs UpdateObjectAction — which is
+             * what an engine-to-state report needs
+             */
             expect(listener).toHaveBeenCalledWith({ id: 'reported' });
             expect(getActionClass).not.toHaveBeenCalledWith('UPDATE_OBJECT');
         });

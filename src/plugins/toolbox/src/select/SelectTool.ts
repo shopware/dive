@@ -41,8 +41,10 @@ export class SelectTool implements Tool {
     public onDeactivate(): void {}
 
     public onClick(ctx: PointerContext): void {
-        // Entities only: real geometry, plus the proxies that stand in for what
-        // has none. The gizmo is on the UI layer and stays unselectable.
+        /**
+         * entities only, real geometry plus the proxies that stand in for what
+         * has none, while the gizmo is on the UI layer and stays unselectable
+         */
         const intersect = ctx.entityIntersects[0];
         const selectable = findInterface<DIVESelectable>(
             intersect?.object,

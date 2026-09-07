@@ -11,8 +11,10 @@ const controllerFor = (component: DIVECameraComponent): OrbitController =>
 
 describe('SetCameraLayerAction', () => {
     it('should set the layer on the component that owns the camera', () => {
-        // the controller only ever holds a camera; the layer lives on the
-        // component, which the action has to walk up to
+        /**
+         * the controller only ever holds a camera; the layer lives on the
+         * component, which the action has to walk up to
+         */
         const component = new PerspectiveCameraComponent();
         const setCameraLayer = vi.spyOn(component, 'setCameraLayer');
 
@@ -38,8 +40,10 @@ describe('SetCameraLayerAction', () => {
     });
 
     it('should reach the component without searching for it', () => {
-        // `controller.object` is the component: the action used to duck-type its
-        // way to `setCameraLayer` because the controller handed out a bare camera
+        /**
+         * `controller.object` is the component: the action used to duck-type its
+         * way to `setCameraLayer` because the controller handed out a bare camera
+         */
         const component = new PerspectiveCameraComponent();
 
         new SetCameraLayerAction(

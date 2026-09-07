@@ -20,8 +20,10 @@ describe('GetCameraTransformAction', () => {
     });
 
     it('should read the node rather than the component', () => {
-        // the camera and its component sit at the node's origin, so reading either
-        // of them would report (0,0,0) no matter where the camera actually is
+        /**
+         * the camera and its component sit at the node's origin, so reading either
+         * of them would report (0,0,0) no matter where the camera actually is
+         */
         const controller = makeCameraController(new Vector3(4, 5, 6));
 
         const result = new GetCameraTransformAction(undefined, {
