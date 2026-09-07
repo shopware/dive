@@ -89,10 +89,7 @@ export class AssetExporter {
     ): Promise<ArrayBuffer> {
         try {
             const result = await this._gltfExporter.parseAsync(object, {
-                animations:
-                    object.animations.length > 0
-                        ? object.animations
-                        : undefined,
+                animations: object.animations || [],
                 ...options,
                 binary: true,
             });

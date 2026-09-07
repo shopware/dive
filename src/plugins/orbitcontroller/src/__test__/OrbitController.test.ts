@@ -2466,8 +2466,8 @@ describe('modules/controller/orbit/OrbitController', () => {
         it('should handle matrix operations', () => {
             controller.enabled = true;
             const matrix = new Matrix4();
-            // Don't call makeRotationY since it's not available in the mock
-            controller.object.matrix = matrix;
+            // on the node: a camera component carries no transform of its own
+            controller.object.owner.matrix = matrix;
 
             const result = controller.update();
             expect(typeof result).toBe('boolean');
@@ -2620,7 +2620,7 @@ describe('modules/controller/orbit/OrbitController', () => {
                 0,
                 1,
             ];
-            controller.object.matrix = invalidMatrix;
+            controller.object.owner.matrix = invalidMatrix;
 
             const result = controller.update();
             expect(typeof result).toBe('boolean');
@@ -2791,7 +2791,7 @@ describe('modules/controller/orbit/OrbitController', () => {
 
         it('should handle panUp with zero distance', () => {
             const initialPanOffset = (controller as any).panOffset.clone();
-            (controller as any).panUp(0, controller.object.matrix);
+            (controller as any).panUp(0, controller.object.owner.matrix);
             // Check that the pan offset hasn't changed
             expect((controller as any).panOffset.x).toBe(initialPanOffset.x);
             expect((controller as any).panOffset.y).toBe(initialPanOffset.y);
@@ -2948,7 +2948,7 @@ describe('modules/controller/orbit/OrbitController', () => {
                 0,
                 1,
             ];
-            controller.object.matrix = matrix;
+            controller.object.owner.matrix = matrix;
 
             const result = controller.update();
             expect(typeof result).toBe('boolean');
@@ -2985,8 +2985,11 @@ describe('modules/controller/orbit/OrbitController', () => {
 
         it('should handle rapid pan operations', () => {
             for (let i = 0; i < 50; i++) {
-                (controller as any).panLeft(0.1, controller.object.matrix);
-                (controller as any).panUp(0.1, controller.object.matrix);
+                (controller as any).panLeft(
+                    0.1,
+                    controller.object.owner.matrix,
+                );
+                (controller as any).panUp(0.1, controller.object.owner.matrix);
             }
 
             expect(controller).toBeDefined();

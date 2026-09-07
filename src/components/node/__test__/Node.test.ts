@@ -44,8 +44,10 @@ const createCube = (): Mesh => {
 
 const createModel = (): DIVENode => {
     const model = new DIVENode();
-    // geometry lives in a component, exactly as the gateway composes it
-    model.addComponent(new ModelComponent()).add(createCube());
+    // a mesh component and the geometry it contributes, exactly as the gateway
+    // composes it: the component owns the mesh, the node holds it
+    model.addComponent(new ModelComponent());
+    model.add(createCube());
     return model;
 };
 class AlphaComponent extends DIVEComponent {}
@@ -464,20 +466,16 @@ describe('dive/node/DIVENode components', () => {
 
             expect(returned).toBe(component);
             expect(node.components).toContain(component);
-            expect(node.children).toContain(component);
+            // and not into the graph: a component is not an Object3D
+            expect(node.children).toHaveLength(0);
         });
 
-        it('should use add rather than attach', () => {
-            // attach would apply an inverse world matrix, meaningless for a
-            // component that has no transform of its own
-            node.position.set(5, 5, 5);
-            node.updateMatrixWorld(true);
-            const component = new AlphaComponent();
+        it('should ignore a component it already holds', () => {
+            const component = node.addComponent(new AlphaComponent());
 
             node.addComponent(component);
 
-            expect(component.position.x).toBe(0);
-            expect(component.position.y).toBe(0);
+            expect(node.getComponents(AlphaComponent)).toEqual([component]);
         });
 
         it('should accept multiple components of the same type', () => {
@@ -495,7 +493,13 @@ describe('dive/node/DIVENode components', () => {
             node.removeComponent(component);
 
             expect(node.components).not.toContain(component);
-            expect(node.children).not.toContain(component);
+        });
+
+        it('should ignore a component it does not hold', () => {
+            const foreign = new DIVENode().addComponent(new AlphaComponent());
+
+            expect(() => node.removeComponent(foreign)).not.toThrow();
+            expect(foreign.owner).not.toBe(node);
         });
 
         it('should be chainable', () => {
@@ -506,36 +510,31 @@ describe('dive/node/DIVENode components', () => {
     });
 
     describe('registry maintenance', () => {
-        it('should track components added with the raw three api', () => {
-            const component = new AlphaComponent();
-
-            node.add(component);
-
-            expect(node.components).toContain(component);
-        });
-
-        it('should untrack components removed with removeFromParent', () => {
-            const component = node.addComponent(new AlphaComponent());
-
-            component.removeFromParent();
-
-            expect(node.components).not.toContain(component);
-        });
-
-        it('should untrack components stolen by another node', () => {
+        it('should hand a component over when another node takes it', () => {
+            // three's `add` used to do the stealing for us by calling
+            // `removeFromParent`; addComponent has to do it itself now
             const other = new DIVENode();
             const component = node.addComponent(new AlphaComponent());
 
-            other.add(component);
+            other.addComponent(component);
 
             expect(node.components).not.toContain(component);
             expect(other.components).toContain(component);
+            expect(component.owner).toBe(other);
         });
 
         it('should not track plain children as components', () => {
             node.add(new Object3D());
 
             expect(node.components).toHaveLength(0);
+        });
+
+        it('should leave no owner behind after removal', () => {
+            const component = node.addComponent(new AlphaComponent());
+
+            node.removeComponent(component);
+
+            expect(component.isAttached).toBe(false);
         });
     });
 
@@ -619,7 +618,7 @@ describe('dive/node/DIVENode components', () => {
             // gizmo code and several tests assign `children` directly, which
             // bypasses three's events -- an uncached getter cannot go stale
             const child = new DIVENode();
-            node.children = [child, new AlphaComponent()];
+            node.children = [child, new Object3D()];
 
             expect(node.nodes).toEqual([child]);
         });
@@ -634,7 +633,6 @@ describe('dive/node/DIVENode components', () => {
             node.clear();
 
             expect(node.components).toContain(component);
-            expect(node.children).toContain(component);
             expect(node.children).not.toContain(child);
         });
 
@@ -642,12 +640,18 @@ describe('dive/node/DIVENode components', () => {
             expect(node.clear()).toBe(node);
         });
 
-        it('should leave a node holding only components untouched', () => {
-            node.addComponent(new AlphaComponent());
+        it('should keep what a component contributed', () => {
+            // clear() means "drop the child nodes", not "strip the geometry"
+            const model = new DIVENode();
+            const component = model.addComponent(new ModelComponent());
+            const gltf = new Object3D();
+            gltf.add(createCube());
+            component.setFromGLTF(gltf);
+            const contributed = component.contributions[0];
 
-            node.clear();
+            model.clear();
 
-            expect(node.children).toHaveLength(1);
+            expect(model.children).toContain(contributed);
         });
     });
 
@@ -810,7 +814,7 @@ describe('dive/node/DIVENode dropIt', () => {
         const helper = createCube();
         helper.layers.mask = HELPER_LAYER_MASK;
         helper.position.set(0, -10, 0);
-        model.requireComponent(MeshComponent).add(helper);
+        model.add(helper);
 
         model.position.set(0, 5, 0);
         scene.updateMatrixWorld(true);

@@ -1,40 +1,46 @@
-import { Object3D } from 'three/webgpu';
+import { type Object3D } from 'three/webgpu';
 import { type DIVENode } from '../node/Node.ts';
 
 /**
  * Base class for everything that gives a node a capability: geometry, a light,
  * a label, a helper visualisation, per-frame behaviour.
  *
- * A component *is* an `Object3D` and lives in its owner's `children`. That is
- * deliberate and load-bearing: three rebuilds its render list by walking the
- * scene graph every single frame, so being in `children` is the only way to be
- * rendered, and it costs nothing beyond one matrix multiply. The logical scene
- * tree stays readable through `DIVENode.nodes`, which reports child nodes only.
+ * A component is **not** part of the scene graph. What it owns is: three rebuilds
+ * its render list by walking the graph every single frame, so a mesh or a light
+ * has to be in `children` to be drawn -- but it goes into the *node's* children,
+ * through {@link contribute}. The component itself stays out, because an exporter
+ * writes a node for everything it walks, and a component in the graph cost one
+ * level per save.
  *
- * Three rules worth knowing before writing one:
+ * The two rules worth knowing before writing one:
  *
- * 1. **Position the node, not the component.** A component sits at its owner's
- *    transform, so its local matrix is identity and `matrixAutoUpdate` is off
- *    as a performance default. Anything that genuinely needs an internal offset
- *    puts it on its own children -- a directional light's direction, say. A
- *    component that really wants its own transform sets `matrixAutoUpdate`
- *    back to `true` itself.
- * 2. **Never declare a capability brand.** No `isSelectable`, not even as
- *    `false`: `findInterface` walks up from a raycast hit looking for those
- *    brands, and a component carrying one would be handed back as the owner
- *    instead of the node behind it.
- * 3. **Constructors take no arguments.** `Object3D.clone()` calls
- *    `new this.constructor()`, so a required parameter makes cloning throw.
- *    Configure through setters after attaching.
- * 4. **Never attach another component.** A component describes one capability
+ * 1. **Contribute your content, do not parent it.** `contribute` puts objects
+ *    into the owner's children and takes them along when the component moves;
+ *    `withdraw` takes them back. Anything that needs an internal offset carries
+ *    it on the object contributed -- a directional light's direction lives on the
+ *    light. A component has no transform of its own to offer.
+ * 2. **Never attach another component.** A component describes one capability
  *    and does not decide what else its owner is made of; composing a node is the
  *    caller's job. A component that needs a sibling should be handed it, or the
  *    caller should attach both.
  *
+ * Constructors take no arguments: {@link clone} calls `new this.constructor()`.
+ * Configure through setters instead.
+ *
+ * Two rules died with the graph. A component used to be forbidden from declaring
+ * a capability brand, because `findInterface` walks up from a raycast hit and
+ * would have handed back the component instead of the node -- it is not in that
+ * chain any more. And "position the node, not the component" has nothing left to
+ * warn about. What a component *contributes* is still in the chain, so a brand on
+ * that would still cut the search short.
+ *
  * @module
  */
-export abstract class DIVEComponent extends Object3D {
+export abstract class DIVEComponent {
     readonly isDIVEComponent: true = true;
+
+    /** For debugging: nothing reads it, since components are not in the graph. */
+    public name: string = '';
 
     /**
      * The node this component is attached to.
@@ -112,19 +118,6 @@ export abstract class DIVEComponent extends Object3D {
      * @param deltaTime - Seconds since the previous frame.
      */
     public tick?(deltaTime: number): void;
-
-    constructor() {
-        super();
-
-        // identity local matrix: skip the compose in updateMatrixWorld
-        this.matrixAutoUpdate = false;
-
-        // Self-managed rather than driven by DIVENode, so that every path into
-        // the tree converges here -- add(), attach(), clear(), removeFromParent()
-        // and re-parenting all end up dispatching these two events.
-        this.addEventListener('added', () => this._handleAdded());
-        this.addEventListener('removed', () => this._handleRemoved());
-    }
 
     /**
      * Enables or disables this component's per-frame tick.
@@ -222,32 +215,71 @@ export abstract class DIVEComponent extends Object3D {
         if (orphaned.length > 0) owner.add(...orphaned);
     }
 
-    private _handleAdded(): void {
-        const parent = this.parent;
-        if (!parent || !('isDIVENode' in parent)) return;
-
-        this._owner = parent as unknown as DIVENode;
+    /**
+     * Called by {@link DIVENode.addComponent}. Not for anyone else.
+     *
+     * three's `added`/`removed` events used to drive this, which caught every way
+     * into the graph -- `add`, `attach`, `clear`, re-parenting. A component is no
+     * longer in the graph, so the node is now the only way in, and that is what
+     * makes this reliable rather than what makes it fragile.
+     *
+     * @internal
+     */
+    public _attach(owner: DIVENode): void {
+        this._owner = owner;
 
         // Content first, hook second: `onAttach` is a hook subclasses override,
         // and one that forgot `super` would silently leave its content out of the
-        // scene. Moving the contributions here makes that impossible -- and the
-        // hook sees them already in place.
-        this._adopt(this._owner);
+        // scene. Doing it here makes that impossible -- and the hook sees the
+        // content already in place.
+        this._adopt(owner);
 
-        this.onAttach(this._owner);
+        this.onAttach(owner);
     }
 
-    private _handleRemoved(): void {
+    /**
+     * Called by {@link DIVENode.removeComponent}. Not for anyone else.
+     *
+     * @internal
+     */
+    public _detach(): void {
         const previousOwner = this._owner;
         if (!previousOwner) return;
 
-        // Hook first, content second -- the mirror of _handleAdded, so `onDetach`
+        // Hook first, content second -- the mirror of _attach, so `onDetach`
         // still finds its content where it was.
         this.onDetach(previousOwner);
 
         previousOwner.remove(...this._contributed);
 
         this._owner = null;
+    }
+
+    /**
+     * A component of the same kind, configured the same way.
+     *
+     * Calls `new this.constructor()`, which is why constructors take no
+     * arguments, and hands over to {@link copy}.
+     */
+    public clone(): this {
+        const Ctor = this.constructor as new () => this;
+        return new Ctor().copy(this);
+    }
+
+    /**
+     * Takes on another component's configuration.
+     *
+     * The base copies the name and nothing else. A component holding state --
+     * a geometry descriptor, a material, an intensity factor -- overrides this
+     * and copies it, because a clone that silently drops it looks like it worked.
+     *
+     * Never copies contributions: the clone builds or loads its own.
+     *
+     * @param source - The component to copy from.
+     */
+    public copy(source: this): this {
+        this.name = source.name;
+        return this;
     }
 }
 
@@ -286,8 +318,12 @@ export type DIVEComponentClass<T extends DIVEComponent = DIVEComponent> =
  *
  * @param object - The object to test.
  */
-export function isDIVEComponent(object: Object3D): object is DIVEComponent {
-    return 'isDIVEComponent' in object;
+export function isDIVEComponent(object: unknown): object is DIVEComponent {
+    return (
+        typeof object === 'object' &&
+        object !== null &&
+        'isDIVEComponent' in object
+    );
 }
 
 /**

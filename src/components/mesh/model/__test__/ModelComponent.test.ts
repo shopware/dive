@@ -69,7 +69,6 @@ describe('dive/mesh/ModelComponent', () => {
         // every graph node it walks
         expect(model.contributions.length).toBeGreaterThan(0);
         expect(node.children).toContain(model.contributions[0]);
-        expect(model.children).toHaveLength(0);
     });
 
     it('should replace only its own content on a reload', () => {
@@ -159,8 +158,7 @@ describe('dive/mesh/ModelComponent', () => {
         model.setFromGLTF(makeGltf());
 
         expect(node.position.lengthSq()).toBe(0);
-        expect(model.position.lengthSq()).toBe(0);
-        expect(sibling.position.lengthSq()).toBe(0);
+        expect(sibling.contributions).toEqual([]);
     });
 
     it('should keep the animations of a load with no owner', () => {

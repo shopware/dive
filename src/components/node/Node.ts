@@ -77,16 +77,6 @@ export class DIVENode
         this._positionWorldBuffer = new Vector3();
         this._boundingBox = new Box3();
 
-        // The component registry is maintained from three's own events rather
-        // than from addComponent/removeComponent, so that clear(), attach(),
-        // removeFromParent() and re-parenting cannot desync it.
-        this.addEventListener('childadded', (event) =>
-            this._handleChildAdded(event.child),
-        );
-        this.addEventListener('childremoved', (event) =>
-            this._handleChildRemoved(event.child),
-        );
-
         this.addEventListener('added', () => this._handleAddedToTree());
         this.addEventListener('removed', () => this._handleRemovedFromTree());
     }
@@ -101,7 +91,20 @@ export class DIVENode
      * @returns The component, for chaining.
      */
     public addComponent<T extends DIVEComponent>(component: T): T {
-        this.add(component);
+        // `isAttached` first: `owner` throws while a component has none, and a
+        // fresh one is the ordinary case here.
+        if (component.isAttached) {
+            if (component.owner === this) return component;
+
+            // Stealing is explicit now. `Object3D.add` did it for us by calling
+            // `removeFromParent`, and a component is no longer a child.
+            component.owner.removeComponent(component);
+        }
+
+        this._components.push(component);
+        component._attach(this);
+        this.refreshComponentTick(component);
+
         return component;
     }
 
@@ -111,7 +114,13 @@ export class DIVENode
      * @param component - The component to detach.
      */
     public removeComponent(component: DIVEComponent): this {
-        this.remove(component);
+        const index = this._components.indexOf(component);
+        if (index === -1) return this;
+
+        this._components.splice(index, 1);
+        component._detach();
+        this._scene?.withdrawComponent(component);
+
         return this;
     }
 
@@ -169,10 +178,9 @@ export class DIVENode
     /**
      * Removes all child nodes and raw children, keeping what components own.
      *
-     * `Object3D.clear()` would take the components with it, and what they
-     * contributed -- which would silently strip a node of its geometry or its
-     * light. A component gives up its own content through `withdraw`, never
-     * through the node.
+     * `Object3D.clear()` would take the contributions with it, which would
+     * silently strip a node of its geometry or its light. A component gives up
+     * its own content through `withdraw`, never through the node.
      */
     public clear(): this {
         const detachable = this.children.filter(
@@ -211,10 +219,7 @@ export class DIVENode
 
         if (recursive) {
             source.children
-                .filter(
-                    (child) =>
-                        !('isDIVEComponent' in child) && !componentOf(child),
-                )
+                .filter((child) => !componentOf(child))
                 .forEach((child) => this.add(child.clone()));
         }
 
@@ -443,24 +448,6 @@ export class DIVENode
 
     public onDeselect(): void {
         this.dispatchEvent({ type: 'object-deselect' });
-    }
-
-    private _handleChildAdded(child: Object3D): void {
-        if (!('isDIVEComponent' in child)) return;
-
-        const component = child as unknown as DIVEComponent;
-        this._components.push(component);
-        this.refreshComponentTick(component);
-    }
-
-    private _handleChildRemoved(child: Object3D): void {
-        if (!('isDIVEComponent' in child)) return;
-
-        const component = child as unknown as DIVEComponent;
-        const index = this._components.indexOf(component);
-        if (index !== -1) this._components.splice(index, 1);
-
-        this._scene?.withdrawComponent(component);
     }
 
     private _handleAddedToTree(): void {

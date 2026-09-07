@@ -19,28 +19,40 @@ lamp.setPosition({ x: 0, y: 2, z: 0 });
 dive.scene.root.add(lamp);
 ```
 
-## Why components live in `children`
+## Where a component's content lives
 
-A component **is** an `Object3D` and sits in its owner's `children`. That is
-deliberate, and it is forced by three's internals rather than chosen for
-convenience:
+A component is **not** in the scene graph. What it owns is.
 
-- `Renderer._projectObject` walks the whole scene graph **every frame** to rebuild
-  the render list. There is no persistent queue to register into — `children`
-  *is* the render queue.
-- `object.onBeforeRender` fires inside `_renderObjectDirect`, i.e. *after* that
-  list has been built, so it cannot be used to inject anything for that frame.
+`Renderer._projectObject` walks the whole scene graph **every frame** to rebuild
+the render list — `children` *is* the render queue, and there is no persistent
+queue to register into. So a mesh, a light or a camera has to be in `children` to
+be drawn. It goes into the **node's** children, through `contribute`:
 
-So the alternative — adding components to `children` before each render and
-removing them after — would need a second full traversal plus `add`/`remove`
-churn per frame, and buy nothing.
+```ts
+protected onAttach(): void { /* nothing to do -- contribute did it */ }
 
-Instead, the tree stays readable through the API rather than through the array:
+constructor() {
+    super();
+    this._mesh = new Mesh(geometry, material);
+    this.contribute(this._mesh);   // lands in the node, now or on attach
+}
+```
+
+The component itself stays out, and that is not a detail: `GLTFExporter`
+writes a node for every graph object it walks, and has no skip for empty ones. A
+component in the graph therefore cost **one extra level per component, per save**
+— and on reload that level became content of a *new* component, so a saved scene
+grew a level every time it went round. `exportscene` hands over the whole scene
+root, so it was every entity at once.
+
+The tree stays readable through the API rather than through the array:
 
 | You want | Use |
 |---|---|
 | the logical child tree | `node.nodes` |
 | the attached capabilities | `node.components` |
+| what a component put there | `component.contributions` |
+| which component owns an object | `componentOf(object)` |
 | everything three renders | `node.children` |
 
 ## Writing a component
@@ -61,27 +73,38 @@ export class SpinComponent extends DIVEComponent {
 }
 ```
 
-Four rules, each with a reason:
+Two rules, each with a reason:
 
-1. **Constructors take no arguments.** `Object3D.clone()` calls
-   `new this.constructor()`, so a required parameter makes cloning throw.
-   Configure through setters (`setTarget`, `setGeometry`, …) after attaching.
+1. **Contribute your content, do not parent it.** `contribute` puts objects into
+   the owner's children, takes them along when the component moves to another
+   node, and removes them when it is detached. `withdraw` takes them back —
+   `ModelComponent` does that on every reload, which is how loading an asset
+   replaces exactly its own content and leaves the node's child nodes and the
+   other components' content alone.
 
-2. **Position the node, not the component.** A component sits at its owner's
-   transform; its local matrix is identity and `matrixAutoUpdate` is off as a
-   performance default. Anything needing an internal offset puts it on its own
-   children — a directional light's direction, for instance, which is a property
-   of the light rather than a placement. A component that genuinely wants its own
-   transform sets `matrixAutoUpdate = true` itself.
+   Anything needing an internal offset carries it on the object contributed — a
+   directional light's direction lives on the light, which is a property of the
+   light rather than a placement. A component has no transform of its own to
+   offer.
 
-3. **Never declare a capability brand.** No `isSelectable`, `isMovable`,
-   `isHoverable` or `isDraggable` — not even set to `false`. `findInterface`
-   walks up from a raycast hit looking for those brands, and a component carrying
-   one would be handed back as the owner instead of the node behind it.
+2. **Never attach another component.** Composing a node is the caller's job; see
+   the section below.
 
-4. **Own your content.** Put geometry and helpers in the *component's* children,
-   not the node's. `MeshComponent.setFromGLTF` calls `clear()` on itself, which
-   is why loading an asset no longer wipes the node's other components.
+Constructors take no arguments: `clone()` calls `new this.constructor()` and then
+`copy(source)`. A component holding state overrides `copy` — a clone that
+silently drops the geometry descriptor or the intensity factor looks like it
+worked.
+
+Two rules died when components left the graph, and it is worth knowing why they
+were there:
+
+- *Never declare a capability brand.* `findInterface` walks up from a raycast hit
+  looking for `isSelectable` and friends, and a component in that chain carrying
+  one would have been handed back instead of the node. It is not in the chain any
+  more. **What a component contributes still is**, so a brand on a contributed
+  mesh would still cut the search short.
+- *Position the node, not the component.* There is no component transform left to
+  position.
 
 ## Ticking
 
@@ -91,7 +114,8 @@ the components that actually tick** — nothing walks the tree per frame, and a
 component without a `tick` method is never visited.
 
 Enrolment happens when a node joins a tree that reaches the scene, and is undone
-when it leaves. This mirrors both engines: Unity enrols a `MonoBehaviour` when
+when it leaves; `addComponent` and `removeComponent` do the bookkeeping, since a
+component is not a child and three's events no longer speak for it. This mirrors both engines: Unity enrols a `MonoBehaviour` when
 the script defines `Update`, Unreal registers an `FTickFunction` when
 `bCanEverTick` is set. Here, the presence of the method is the declaration.
 
@@ -106,8 +130,8 @@ helper that only recomputes while something is being dragged. Calling it from
 inside your own `tick` is expected and safe.
 
 **Need the camera?** `tick` has no view context. Put an `onBeforeRender` on a mesh
-the component owns; that is the sanctioned escape hatch, and `DIVEGrid` uses it
-to follow the camera.
+the component contributed; that is the sanctioned escape hatch, and `DIVEGrid`
+uses it to follow the camera.
 
 ## A component never attaches another component
 
@@ -154,21 +178,31 @@ geometry for?", and every consumer reads it instead of special-casing classes:
 Put your component's helper geometry on `HELPER` and its content on the owner's
 layer. Two things to know:
 
-- A component's own `layers.mask` does **not** hide its subtree; `layers` gates
-  only the object itself. Set the mask on leaf meshes, or `component.visible = false`.
+- `layers` gates only the object it is set on, never a subtree. Set the mask on
+  the leaf meshes you contribute; a component has no mask of its own that could
+  stand in for them, and no `visible` either — hide what you contributed.
 - `Raycaster` checks `layers` but **never `visible`**. Layers, not visibility, are
   the picking contract.
 
 ## Looking components up
 
 ```ts
-node.getComponent(MeshComponent);      // first match, or undefined
+node.getComponent(MeshComponent);       // first match, or undefined
 node.getComponents(DIVELightComponent); // every match
 node.requireComponent(MeshComponent);   // throws if missing
+
+findComponent(mesh, MeshComponent);     // from content back to its component
+componentOf(mesh);                      // whichever component contributed it
 ```
 
+`findComponent` is the way back in from something a component owns — an
+`OrbitController` hands out its camera, and `setCameraLayer` lives on the
+camera's component. It walks up from the object, asking the contribution registry
+at each step, because a component owns its content without parenting it and so is
+never an ancestor of it.
+
 Matching is by `instanceof`, so a base class finds its subclasses. That is what
-lets one code path serve both models and primitives (`PrimitiveMeshComponent
+lets one code path serve both models and primitives (`PrimitiveComponent
 extends MeshComponent`), and what lets the state layer apply colour and intensity
 to every light on a node without knowing which kinds are there — a scene light is
 a node with a hemisphere *and* a directional component.

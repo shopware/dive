@@ -64,10 +64,14 @@ describe('dive/component/DIVEComponent', () => {
         expect('isDIVENode' in component).toBe(false);
     });
 
-    it('should disable automatic matrix updates', () => {
-        // a component sits at its owner's transform, so the local matrix is
-        // identity and composing it every frame is wasted work
-        expect(new TestComponent().matrixAutoUpdate).toBe(false);
+    it('should not be part of the scene graph', () => {
+        // an exporter writes a node for everything it walks, so a component in
+        // the graph cost one level per save
+        const node = new DIVENode();
+        const component = node.addComponent(new TestComponent());
+
+        expect(node.components).toContain(component);
+        expect(node.children).toHaveLength(0);
     });
 
     it('should start without an owner', () => {
@@ -103,26 +107,13 @@ describe('dive/component/DIVEComponent', () => {
         expect(component.detachedFrom).toBe(node);
     });
 
-    it('should not claim a non-node parent as owner', () => {
-        const plain = new Object3D();
+    it('should only be attachable through a node', () => {
+        // there is no other way in any more: a component is not an Object3D, so
+        // `plainObject.add(component)` does not even compile
         const component = new TestComponent();
-
-        plain.add(component);
 
         expect(component.isAttached).toBe(false);
         expect(component.attachedTo).toBeNull();
-    });
-
-    it('should not report a detach it never attached for', () => {
-        // three fires `removed` whatever the parent was, so leaving a plain
-        // Object3D reaches the handler with no owner to report
-        const plain = new Object3D();
-        const component = new TestComponent();
-        plain.add(component);
-
-        plain.remove(component);
-
-        expect(component.detachedFrom).toBeNull();
     });
 
     it('should re-target its owner when moved between nodes', () => {
@@ -142,7 +133,7 @@ describe('dive/component/DIVEComponent', () => {
     it('should survive removal while never attached', () => {
         const component = new TestComponent();
 
-        expect(() => component.removeFromParent()).not.toThrow();
+        expect(() => new DIVENode().removeComponent(component)).not.toThrow();
         expect(component.detachedFrom).toBeNull();
     });
 
@@ -216,18 +207,17 @@ describe('dive/component/DIVEComponent', () => {
         });
     });
 
-    it('should render its own geometry as a child of the node', () => {
-        // the whole point of extending Object3D: the component's content is in
-        // the scene graph, which is what three builds the render list from
+    it('should get its geometry rendered through the node', () => {
+        // three builds its render list from the graph, so the content has to be
+        // in it -- as a child of the node, which is where the component puts it
         const node = new DIVENode();
         const component = new TestComponent();
         const mesh = new Mesh(new BoxGeometry(), new MeshBasicMaterial());
-        component.add(mesh);
+        component.give(mesh);
 
         node.addComponent(component);
 
-        expect(node.children).toContain(component);
-        expect(component.children).toContain(mesh);
+        expect(node.children).toContain(mesh);
     });
 
     describe('contributing content', () => {
@@ -248,7 +238,7 @@ describe('dive/component/DIVEComponent', () => {
             component.give(mesh);
 
             expect(node.children).toContain(mesh);
-            expect(component.children).not.toContain(mesh);
+            expect(node.components).toContain(component);
         });
 
         it('should hold content contributed before it had an owner', () => {
@@ -382,7 +372,9 @@ describe('dive/component/DIVEComponent', () => {
             const mesh = content();
             component.give(mesh);
 
-            node.children = [component];
+            // as a direct assignment to `children` leaves it: the mesh is out of
+            // the graph while the list still points at it
+            node.children = [];
             new DIVENode().addComponent(component);
 
             expect(component.owner.children).toContain(mesh);
