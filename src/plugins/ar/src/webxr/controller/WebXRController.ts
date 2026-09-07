@@ -314,11 +314,12 @@ export class DIVEWebXRController extends Object3D {
 
         // check if successful
         if (!this._xrRaycaster) {
-            console.error(
-                'Raycaster not initialized successfully. Aborting WebXR...',
-            );
             this.dispose();
-            return Promise.reject();
+            return Promise.reject(
+                new Error(
+                    'DIVEWebXRController: the raycaster failed to initialize',
+                ),
+            );
         }
     }
 }
