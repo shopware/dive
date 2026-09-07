@@ -203,7 +203,7 @@ export class DIVE {
         window.DIVE.instances.push(this);
 
         if (this._settings.autoStart) {
-            this.start();
+            this.startAsync();
         }
     }
 
@@ -225,13 +225,6 @@ export class DIVE {
 
     public get clock(): DIVEClock {
         return this._clock;
-    }
-
-    /**
-     * @deprecated Use startAsync() instead, which returns a promise that resolves when the engine is fully initialized.
-     */
-    public start(): void {
-        void this.startAsync();
     }
 
     public async startAsync(): Promise<void> {

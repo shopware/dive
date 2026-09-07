@@ -173,14 +173,6 @@ export class DIVERenderer {
         return this._initPromise;
     }
 
-    /**
-     * @deprecated Use {@link DIVERenderer.tick} instead.
-     */
-    public render(): void {
-        console.warn('DIVERenderer.render: Use DIVERenderer.tick instead.');
-        this.tick();
-    }
-
     public tick(): void {
         if (!this._webgpurenderer.initialized) return;
 
