@@ -77,11 +77,7 @@ export class DIVEView implements DIVETicker {
                     );
                 }
 
-                try {
-                    await this._canvasLifecycleManager.waitForHealthyCanvas();
-                } catch (error) {
-                    return Promise.reject(error);
-                }
+                await this._canvasLifecycleManager.waitForHealthyCanvas();
 
                 if (signal.aborted) {
                     return Promise.reject(
