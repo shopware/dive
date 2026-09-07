@@ -14,6 +14,24 @@ class Ticker extends DIVEComponent {
 
 class Passive extends DIVEComponent {}
 
+/** Removes another component from inside its own tick. */
+class Remover extends DIVEComponent {
+    public victim: DIVEComponent | null = null;
+
+    public tick(): void {
+        if (!this.victim?.isAttached) return;
+
+        this.victim.owner.removeComponent(this.victim);
+    }
+}
+
+/** Takes its own node out of the scene from inside its own tick. */
+class Detacher extends DIVEComponent {
+    public tick(): void {
+        if (this.isAttached) this.owner.removeFromParent();
+    }
+}
+
 /** Disables itself the first time it runs, the expected way to stop ticking. */
 class SelfStopping extends DIVEComponent {
     public ticks = 0;
@@ -37,6 +55,109 @@ describe('dive/engine/scene/DIVEScene ticking', () => {
         scene.root.add(node);
         return node;
     };
+
+    describe('a component withdrawn during a tick', () => {
+        it('should stop ticking once it is removed', () => {
+            const ticker = new Ticker();
+            const remover = new Remover();
+            remover.victim = ticker;
+            addNodeWith(remover, ticker);
+
+            scene.tick(0.1);
+            const afterRemoval = ticker.ticks;
+            scene.tick(0.1);
+            scene.tick(0.1);
+
+            expect(ticker.ticks).toBe(afterRemoval);
+        });
+
+        it('should leave the tick list without it', () => {
+            const ticker = new Ticker();
+            const remover = new Remover();
+            remover.victim = ticker;
+            addNodeWith(remover, ticker);
+
+            scene.tick(0.1);
+
+            expect(scene['_tickingComponents']).not.toContain(ticker);
+        });
+
+        it('should stop ticking when its node leaves the scene', () => {
+            const detacher = new Detacher();
+            addNodeWith(detacher);
+
+            scene.tick(0.1);
+            scene.tick(0.1);
+
+            expect(scene['_tickingComponents']).not.toContain(detacher);
+        });
+
+        it('should never tick a component that has lost its node', () => {
+            /**
+             * a tick that reads `owner` is the ordinary case, and the getter
+             * throws while detached -- so a withdrawal that does not take effect
+             * turns into an exception on the next frame
+             */
+            const reader = new (class extends DIVEComponent {
+                public ticks = 0;
+
+                public tick(): void {
+                    void this.owner;
+                    this.ticks++;
+                }
+            })();
+            const remover = new Remover();
+            remover.victim = reader;
+            addNodeWith(remover, reader);
+
+            expect(() => {
+                scene.tick(0.1);
+                scene.tick(0.1);
+            }).not.toThrow();
+        });
+
+        it('should keep ticking a component enrolled again in the same frame', () => {
+            // withdrawn and re-enlisted mid-frame, so the pending removal is void
+            const ticker = new Ticker();
+            const node = addNodeWith(ticker);
+            const rejoin = node.addComponent(
+                new (class extends DIVEComponent {
+                    public tick(): void {
+                        if (!ticker.isAttached) return;
+
+                        node.removeComponent(ticker);
+                        node.addComponent(ticker);
+                    }
+                })(),
+            );
+            void rejoin;
+
+            scene.tick(0.1);
+            const before = ticker.ticks;
+            scene.tick(0.1);
+
+            expect(ticker.ticks).toBe(before + 1);
+            expect(scene['_tickingComponents']).toContain(ticker);
+        });
+
+        it('should never end up enrolled in two scenes at once', () => {
+            // moving a node mid-tick withdraws from one scene and enlists in the
+            // other; a deferred withdrawal that never happens leaves both
+            const other = new DIVEScene();
+            const ticker = new Ticker();
+            const mover = new (class extends DIVEComponent {
+                public tick(): void {
+                    if (this.isAttached) other.root.add(this.owner);
+                }
+            })();
+            addNodeWith(mover, ticker);
+
+            scene.tick(0.1);
+
+            expect(scene['_tickingComponents']).not.toContain(ticker);
+            expect(other['_tickingComponents']).toContain(ticker);
+        });
+    });
 
     it('should tick an enrolled component', () => {
         const ticker = new Ticker();
