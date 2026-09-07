@@ -2,6 +2,7 @@ import { DIVEPerspectiveCamera } from '../PerspectiveCamera.ts';
 import { DIVEPerspectiveCameraDefaultSettings } from '../PerspectiveCamera.ts';
 import {
     DEFAULT_LAYER_MASK,
+    FLOOR_LAYER_MASK,
     HELPER_LAYER_MASK,
     PRODUCT_LAYER_MASK,
     UI_LAYER_MASK,
@@ -112,13 +113,25 @@ describe('dive/engine/camera/DIVEPerspectiveCamera', () => {
             DEFAULT_LAYER_MASK |
                 UI_LAYER_MASK |
                 HELPER_LAYER_MASK |
-                PRODUCT_LAYER_MASK,
+                PRODUCT_LAYER_MASK |
+                FLOOR_LAYER_MASK,
         );
     });
 
     it('should correctly define LIVE_VIEW_LAYER_MASK', () => {
         expect(DIVEPerspectiveCamera.LIVE_VIEW_LAYER_MASK).toBe(
-            PRODUCT_LAYER_MASK,
+            PRODUCT_LAYER_MASK | FLOOR_LAYER_MASK,
         );
+    });
+
+    it('should render the floor in both views', () => {
+        // the floor sits on its own layer so it can be excluded from bounds and
+        // exports, but it still has to be visible in every view
+        expect(
+            DIVEPerspectiveCamera.EDITOR_VIEW_LAYER_MASK & FLOOR_LAYER_MASK,
+        ).not.toBe(0);
+        expect(
+            DIVEPerspectiveCamera.LIVE_VIEW_LAYER_MASK & FLOOR_LAYER_MASK,
+        ).not.toBe(0);
     });
 });
