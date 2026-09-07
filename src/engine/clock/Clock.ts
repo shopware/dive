@@ -64,8 +64,24 @@ export class DIVEClock {
         const deltaTime = (currentTime - this._lastTime) / 1000;
         this._lastTime = currentTime;
 
-        this._tickers.forEach((ticker) => ticker.tick(deltaTime));
+        // One try per ticker, not one around the loop: a throw would otherwise
+        // take every ticker behind it with it, and the view that draws the frame
+        // is one of them. Reported rather than swallowed, so a broken ticker is
+        // still findable -- and because nothing escapes, the next frame below is
+        // always booked. Without that, a single bad frame stopped rendering for
+        // good, since the booking sits after the work.
+        this._tickers.forEach((ticker) => {
+            try {
+                ticker.tick(deltaTime);
+            } catch (error) {
+                console.error(
+                    'DIVEClock: a ticker threw and was skipped for this frame.',
+                    error,
+                );
+            }
+        });
 
+        // compute first, draw, then book the next frame
         this._animationRequestId = requestAnimationFrame(this._tick.bind(this));
     }
 }
