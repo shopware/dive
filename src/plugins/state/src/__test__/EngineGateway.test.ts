@@ -11,7 +11,7 @@ import {
     MultiLineComponent,
     MeshComponent,
     PointLightComponent,
-    PrimitiveMeshComponent,
+    PrimitiveComponent,
     type DIVE,
 } from '@shopware-ag/dive';
 import { type State } from '../State.ts';
@@ -436,8 +436,8 @@ describe('plugins/state/EngineGateway', () => {
             expect(primitive).toBeDefined();
             expect(primitive?.name).toBe('Test Primitive');
             expect(
-                primitive?.requireComponent(PrimitiveMeshComponent).mesh
-                    ?.geometry.attributes.position,
+                primitive?.requireComponent(PrimitiveComponent).mesh?.geometry
+                    .attributes.position,
             ).toBeDefined();
             expectVec(primitive?.position, primitiveData.position);
             expectVec(primitive?.rotation, primitiveData.rotation);
@@ -686,7 +686,7 @@ describe('plugins/state/EngineGateway', () => {
 
             await gateway.updateEntity(updatedData);
             expect(
-                (primitive as DIVENode).requireComponent(PrimitiveMeshComponent)
+                (primitive as DIVENode).requireComponent(PrimitiveComponent)
                     .mesh?.geometry.attributes.position,
             ).toBeDefined();
         });

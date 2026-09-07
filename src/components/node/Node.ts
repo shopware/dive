@@ -118,7 +118,7 @@ export class DIVENode
      * Finds the first attached component of the given type.
      *
      * Matches with `instanceof`, so a base class finds its subclasses -- asking
-     * for `MeshComponent` also returns a `PrimitiveMeshComponent`, and asking
+     * for `MeshComponent` also returns a `PrimitiveComponent`, and asking
      * for an abstract base such as `DIVELightComponent` works too.
      *
      * @param Ctor - The component class to look for.

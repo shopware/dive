@@ -6,8 +6,8 @@ import {
     FrontSide,
     type ColorRepresentation,
 } from 'three/webgpu';
-import { FLOOR_LAYER_MASK } from '../../constants/VisibilityLayerMask.ts';
-import { MeshComponent } from '../mesh/MeshComponent.ts';
+import { FLOOR_LAYER_MASK } from '../../../constants/VisibilityLayerMask.ts';
+import { MeshComponent } from '../MeshComponent.ts';
 
 const FLOOR_EXTENT = 1000;
 

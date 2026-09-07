@@ -1,6 +1,6 @@
 import { type Box3 } from 'three/webgpu';
 import { computeProductBounds } from '../../helpers/computeProductBounds/computeProductBounds.ts';
-import { FloorComponent } from '../floor/FloorComponent.ts';
+import { FloorComponent } from '../mesh/floor/FloorComponent.ts';
 import { DIVENode } from '../node/Node.ts';
 
 /**
