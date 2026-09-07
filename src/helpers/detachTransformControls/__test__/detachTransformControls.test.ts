@@ -9,7 +9,7 @@ describe('helpers/detachTransformControls', () => {
             detach: vi.fn(),
         });
 
-        const mockScene = new Object3D();
+        const mockScene = Object.assign(new Object3D(), { isDIVEScene: true });
         mockScene.children = [mockTransformControls];
         mockObject.parent = mockScene;
 
@@ -27,7 +27,7 @@ describe('helpers/detachTransformControls', () => {
             },
         });
 
-        const mockScene = new Object3D();
+        const mockScene = Object.assign(new Object3D(), { isDIVEScene: true });
         mockScene.children = [mockHelperRoot];
         mockObject.parent = mockScene;
 
@@ -37,7 +37,7 @@ describe('helpers/detachTransformControls', () => {
 
     it('should handle object without transform controls', () => {
         const mockObject = new Object3D();
-        const mockScene = new Object3D();
+        const mockScene = Object.assign(new Object3D(), { isDIVEScene: true });
         mockScene.children = [];
         mockObject.parent = mockScene;
 

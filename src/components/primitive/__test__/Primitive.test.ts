@@ -92,6 +92,7 @@ describe('dive/primitive/DIVEPrimitive', () => {
         );
 
         const scene = {
+            isDIVEScene: true,
             parent: null,
             root: {
                 children: [primitive],
@@ -153,6 +154,7 @@ describe('dive/primitive/DIVEPrimitive', () => {
         });
 
         const scene = {
+            isDIVEScene: true,
             parent: null,
             root: {
                 children: [primitive],
