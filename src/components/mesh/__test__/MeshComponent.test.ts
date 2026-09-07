@@ -3,7 +3,7 @@ import { MeshComponent } from '../MeshComponent.ts';
 import { FloorComponent } from '../floor/FloorComponent.ts';
 import { ModelComponent } from '../model/ModelComponent.ts';
 import { PrimitiveComponent } from '../primitive/PrimitiveComponent.ts';
-import { DIVENode } from '../../node/Node.ts';
+import { DIVENode } from '../../../engine/node/Node.ts';
 
 /**
  * Every mesh component, so the base's contract is checked against each one rather

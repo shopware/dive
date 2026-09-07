@@ -1,7 +1,7 @@
 import { Color, MeshStandardMaterial } from 'three/webgpu';
 import { FloorComponent } from '../FloorComponent.ts';
 import { MeshComponent } from '../../../mesh/MeshComponent.ts';
-import { DIVENode } from '../../../node/Node.ts';
+import { DIVENode } from '../../../../engine/node/Node.ts';
 import { computeProductBounds } from '../../../../helpers/computeProductBounds/computeProductBounds.ts';
 import {
     FLOOR_LAYER_MASK,

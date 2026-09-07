@@ -4,7 +4,7 @@ import {
     DIVEPerspectiveCameraDefaultSettings,
     PerspectiveCameraComponent,
 } from '../PerspectiveCameraComponent.ts';
-import { DIVENode } from '../../node/Node.ts';
+import { DIVENode } from '../../../engine/node/Node.ts';
 import { findComponent } from '../../component/Component.ts';
 import {
     COORDINATE_LAYER_MASK,

@@ -7,7 +7,7 @@ import {
 import { DIVERoot } from '../../components/root/Root.ts';
 import { DIVEGrid } from '../../components/grid/Grid.ts';
 import { type DIVEComponent } from '../../components/component/Component.ts';
-import { type DIVENode } from '../../components/node/Node.ts';
+import { type DIVENode } from '../node/Node.ts';
 import { type DIVETicker } from '../clock/Clock.ts';
 
 export type DIVESceneSettings = {

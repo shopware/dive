@@ -5,7 +5,6 @@ export * from './gizmo/Gizmo.ts';
 export * from './line/index.ts';
 export * from './light/index.ts';
 export * from './mesh/index.ts';
-export * from './node/Node.ts';
 export * from './root/Root.ts';
 export * from './spritetext/SpriteText.ts';
 export * from './boundingbox/index.ts';

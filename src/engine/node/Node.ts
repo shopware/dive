@@ -15,10 +15,10 @@ import {
     contributedBy,
     type DIVEComponent,
     type DIVEComponentClass,
-} from '../component/Component.ts';
+} from '../../components/component/Component.ts';
 import { findSceneRecursive } from '../../helpers/findSceneRecursive/findSceneRecursive.ts';
 import { computeProductBounds } from '../../helpers/computeProductBounds/computeProductBounds.ts';
-import { type DIVEScene } from '../../engine/scene/Scene.ts';
+import { type DIVEScene } from '../scene/Scene.ts';
 
 /**
  * A node in the scene tree.

@@ -1,6 +1,6 @@
 import { Color, Object3D } from 'three/webgpu';
 import { DIVEComponent } from '../../../components/component/Component.ts';
-import { DIVENode } from '../../../components/node/Node.ts';
+import { DIVENode } from '../../node/Node.ts';
 import { DIVEScene, DIVESceneDefaultSettings } from '../Scene.ts';
 
 const mock_GetSceneObject = vi.fn();

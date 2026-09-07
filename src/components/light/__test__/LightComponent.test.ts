@@ -4,7 +4,7 @@ import { DirectionalLightComponent } from '../directional/DirectionalLightCompon
 import { HemisphereLightComponent } from '../hemi/HemisphereLightComponent.ts';
 import { PointLightComponent } from '../point/PointLightComponent.ts';
 import { DIVELightComponent } from '../LightComponent.ts';
-import { DIVENode } from '../../node/Node.ts';
+import { DIVENode } from '../../../engine/node/Node.ts';
 import { PRODUCT_LAYER_MASK } from '../../../constants/VisibilityLayerMask.ts';
 
 /**

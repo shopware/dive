@@ -6,11 +6,11 @@ import {
     Vector3,
 } from 'three/webgpu';
 import { DIVENode } from '../Node.ts';
-import { DIVEComponent } from '../../component/Component.ts';
-import { FloorComponent } from '../../mesh/floor/FloorComponent.ts';
-import { MeshComponent } from '../../mesh/MeshComponent.ts';
-import { ModelComponent } from '../../mesh/model/ModelComponent.ts';
-import { DIVEScene } from '../../../engine/scene/Scene.ts';
+import { DIVEComponent } from '../../../components/component/Component.ts';
+import { FloorComponent } from '../../../components/mesh/floor/FloorComponent.ts';
+import { MeshComponent } from '../../../components/mesh/MeshComponent.ts';
+import { ModelComponent } from '../../../components/mesh/model/ModelComponent.ts';
+import { DIVEScene } from '../../scene/Scene.ts';
 import {
     HELPER_LAYER_MASK,
     PRODUCT_LAYER_MASK,
@@ -61,7 +61,7 @@ class ConcreteFromAbstract extends AbstractBase {}
 
 let node: DIVENode;
 
-describe('dive/node/DIVENode', () => {
+describe('dive/engine/DIVENode', () => {
     beforeEach(() => {
         node = new DIVENode();
         vi.spyOn(node, 'getWorldPosition').mockImplementation(

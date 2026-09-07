@@ -1,5 +1,5 @@
 import { EventDispatcher, type Object3D } from 'three/webgpu';
-import { type DIVENode } from '../node/Node.ts';
+import { type DIVENode } from '../../engine/node/Node.ts';
 import { type DIVEComponentEventMap } from '../../types/events/DIVEComponentEventMap.ts';
 
 /**

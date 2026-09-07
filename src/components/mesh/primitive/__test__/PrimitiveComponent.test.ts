@@ -1,7 +1,7 @@
 import { Mesh, MeshStandardMaterial } from 'three/webgpu';
 import { MeshComponent } from '../../MeshComponent.ts';
 import { PrimitiveComponent } from '../PrimitiveComponent.ts';
-import { DIVENode } from '../../../node/Node.ts';
+import { DIVENode } from '../../../../engine/node/Node.ts';
 import { type DIVEGeometryType } from '../../../../types/geometry/DIVEGeometryType.ts';
 
 describe('dive/mesh/PrimitiveComponent', () => {
