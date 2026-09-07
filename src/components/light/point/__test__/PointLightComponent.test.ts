@@ -95,6 +95,34 @@ describe('dive/light/PointLightComponent', () => {
         expect(materialOf(new PointLightComponent()).transparent).toBe(true);
     });
 
+    it('should fade a clone handle to match the intensity it copied', () => {
+        /**
+         * the base copy calls setIntensity, and this class overrides it to fade
+         * the handle -- so the handle follows without an override of its own, and
+         * that is only true as long as copy goes through the setter
+         */
+        const source = new PointLightComponent();
+        source.setIntensity(0.5);
+
+        const copy = source.clone();
+
+        expect(copy.light.intensity).toBeCloseTo(source.light.intensity);
+        expect(materialOf(copy).opacity).toBeCloseTo(
+            materialOf(source).opacity,
+        );
+        expect(materialOf(copy)).not.toBe(materialOf(source));
+    });
+
+    it('should give a clone its own handle', () => {
+        const source = new PointLightComponent();
+
+        const copy = source.clone();
+
+        expect(copy.handle).not.toBe(source.handle);
+        expect(copy.contributions).toContain(copy.handle);
+        expect(copy.contributions).not.toContain(source.handle);
+    });
+
     it('should dispose the handle resources as well as the light', () => {
         const component = new PointLightComponent();
         const geometry = vi.spyOn(component.handle.geometry, 'dispose');
