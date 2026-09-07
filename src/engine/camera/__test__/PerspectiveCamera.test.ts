@@ -1,10 +1,12 @@
 import { DIVEPerspectiveCamera } from '../PerspectiveCamera.ts';
 import { DIVEPerspectiveCameraDefaultSettings } from '../PerspectiveCamera.ts';
 import {
+    COORDINATE_LAYER_MASK,
     DEFAULT_LAYER_MASK,
     FLOOR_LAYER_MASK,
     HELPER_LAYER_MASK,
     PRODUCT_LAYER_MASK,
+    PROXY_LAYER_MASK,
     UI_LAYER_MASK,
 } from '../../../constants/VisibilityLayerMask.ts';
 
@@ -114,6 +116,7 @@ describe('dive/engine/camera/DIVEPerspectiveCamera', () => {
                 UI_LAYER_MASK |
                 HELPER_LAYER_MASK |
                 PRODUCT_LAYER_MASK |
+                PROXY_LAYER_MASK |
                 FLOOR_LAYER_MASK,
         );
     });
@@ -122,6 +125,45 @@ describe('dive/engine/camera/DIVEPerspectiveCamera', () => {
         expect(DIVEPerspectiveCamera.LIVE_VIEW_LAYER_MASK).toBe(
             PRODUCT_LAYER_MASK | FLOOR_LAYER_MASK,
         );
+    });
+
+    it('should show the default layer in the editor but not live', () => {
+        // three puts an object on layer 0 unless someone says otherwise -- the
+        // gizmo among them -- so the editor has to show it. The live view is the
+        // opposite: whatever never chose a layer is nothing anyone decided to
+        // show an end user.
+        expect(
+            DIVEPerspectiveCamera.EDITOR_VIEW_LAYER_MASK & DEFAULT_LAYER_MASK,
+        ).not.toBe(0);
+        expect(
+            DIVEPerspectiveCamera.LIVE_VIEW_LAYER_MASK & DEFAULT_LAYER_MASK,
+        ).toBe(0);
+    });
+
+    it('should keep what only helps while editing out of the live view', () => {
+        const live = DIVEPerspectiveCamera.LIVE_VIEW_LAYER_MASK;
+
+        expect(live & UI_LAYER_MASK).toBe(0);
+        expect(live & HELPER_LAYER_MASK).toBe(0);
+        expect(live & PROXY_LAYER_MASK).toBe(0);
+    });
+
+    it('should leave the orientation display to its own camera', () => {
+        // the axes live in the same scene; having this bit would draw them a
+        // second time in the middle of the viewport
+        expect(
+            DIVEPerspectiveCamera.EDITOR_VIEW_LAYER_MASK &
+                COORDINATE_LAYER_MASK,
+        ).toBe(0);
+        expect(
+            DIVEPerspectiveCamera.LIVE_VIEW_LAYER_MASK & COORDINATE_LAYER_MASK,
+        ).toBe(0);
+    });
+
+    it('should make the editor view a superset of the live view', () => {
+        const live = DIVEPerspectiveCamera.LIVE_VIEW_LAYER_MASK;
+
+        expect(DIVEPerspectiveCamera.EDITOR_VIEW_LAYER_MASK & live).toBe(live);
     });
 
     it('should render the floor in both views', () => {

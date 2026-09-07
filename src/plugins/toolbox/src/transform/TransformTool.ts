@@ -205,6 +205,7 @@ export class TransformTool
 
         // Apply custom colors to gizmo axes
         const helper = g.getHelper() as unknown as Object3D;
+        helper.name = 'TransformControlsRoot';
         helper.traverse((child: Object3D) => {
             if (!('isMesh' in child)) return;
 

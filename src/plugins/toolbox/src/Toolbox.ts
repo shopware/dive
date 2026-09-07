@@ -1,8 +1,10 @@
 import { Raycaster, Vector2, type Intersection } from 'three/webgpu';
 import {
+    DEFAULT_LAYER_MASK,
     type DIVEScene,
     isVisibleInHierarchy,
     PRODUCT_LAYER_MASK,
+    PROXY_LAYER_MASK,
     UI_LAYER_MASK,
 } from '@shopware-ag/dive';
 import { type OrbitController } from '@shopware-ag/dive/orbitcontroller';
@@ -232,6 +234,10 @@ export class Toolbox {
                 intersects,
                 PRODUCT_LAYER_MASK,
             ),
+            entityIntersects: this.filterIntersectsByLayer(
+                intersects,
+                PRODUCT_LAYER_MASK | PROXY_LAYER_MASK,
+            ),
             uiIntersects: this.filterIntersectsByLayer(
                 intersects,
                 UI_LAYER_MASK,
@@ -253,6 +259,10 @@ export class Toolbox {
             modelIntersects: this.filterIntersectsByLayer(
                 intersects,
                 PRODUCT_LAYER_MASK,
+            ),
+            entityIntersects: this.filterIntersectsByLayer(
+                intersects,
+                PRODUCT_LAYER_MASK | PROXY_LAYER_MASK,
             ),
             uiIntersects: this.filterIntersectsByLayer(
                 intersects,
@@ -285,7 +295,21 @@ export class Toolbox {
     }
 
     private raycast(): Intersection[] {
-        this._raycaster.layers.mask = PRODUCT_LAYER_MASK | UI_LAYER_MASK;
+        // DEFAULT is in here for the same reason it is in every camera mask:
+        // three puts an object on layer 0 unless someone says otherwise, and the
+        // gizmo is one of them -- leaving it out made everything that never
+        // picked a layer unpickable.
+        //
+        // PROXY, or a point light would be unreachable: it has no geometry, and
+        // its handle is the only thing a pointer can hit.
+        //
+        // FLOOR and HELPER stay out on purpose: the ground plane and the group
+        // link lines are there to be looked at, not grabbed.
+        this._raycaster.layers.mask =
+            DEFAULT_LAYER_MASK |
+            PRODUCT_LAYER_MASK |
+            UI_LAYER_MASK |
+            PROXY_LAYER_MASK;
 
         // Recurse from the scene's direct children: none of them is a Mesh
         // itself (they are the root, the grid and helper roots), so filtering
