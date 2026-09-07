@@ -76,24 +76,29 @@ export class DIVEGroup extends DIVENode {
     }
 
     /**
-     * Removes an object from the group.
-     * @param object - The object to remove.
+     * Removes objects from the group.
+     *
+     * Keeps `Object3D`'s variadic signature and always falls through to
+     * `super.remove`, member or not. Narrowing this to a single member-only
+     * argument used to break `clear()` (which calls `remove(...children)`) and
+     * made the group's own helper lines impossible to remove.
+     *
+     * @param objects - The objects to remove.
      * @returns The group instance.
      */
-    public remove(object: DIVESceneObject): this {
-        // remove line first
-        const index = this._members.indexOf(object);
-        if (index === -1) {
-            return this;
+    public remove(...objects: Object3D[]): this {
+        for (const object of objects) {
+            const index = this._members.indexOf(object as DIVESceneObject);
+
+            if (index !== -1) {
+                super.remove(this._lines[index]);
+                this._lines.splice(index, 1);
+                this._members.splice(index, 1);
+            }
+
+            // removes object from group while keeping it's world position
+            super.remove(object);
         }
-
-        const line = this._lines[index];
-        super.remove(line);
-        this._lines.splice(index, 1);
-
-        // removes object from group while keeping it's world position
-        super.remove(object);
-        this._members.splice(index, 1);
 
         return this;
     }
