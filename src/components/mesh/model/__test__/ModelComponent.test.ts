@@ -228,14 +228,27 @@ describe('dive/mesh/ModelComponent', () => {
     });
 
     describe('setFromURL', () => {
-        it('should load and report on the owner', async () => {
+        it('should load and report it on itself', async () => {
             loadAsset.mockResolvedValue(makeGltf());
             const onLoad = vi.fn();
-            node.addEventListener('object-load', onLoad);
+            model.addEventListener('object-load', onLoad);
 
             await model.setFromURL('a.glb');
 
             expect(loadAsset).toHaveBeenCalledWith('a.glb');
+            expect(onLoad).toHaveBeenCalledTimes(1);
+        });
+
+        it('should report a load with no owner at all', async () => {
+            // it used to check `isAttached` and drop the event, which said
+            // something about the delivery route rather than about the load
+            loadAsset.mockResolvedValue(makeGltf());
+            const detached = new ModelComponent();
+            const onLoad = vi.fn();
+            detached.addEventListener('object-load', onLoad);
+
+            await detached.setFromURL('a.glb');
+
             expect(onLoad).toHaveBeenCalledTimes(1);
         });
 
@@ -250,7 +263,7 @@ describe('dive/mesh/ModelComponent', () => {
             expect(AssetLoader).toHaveBeenCalledTimes(1);
         });
 
-        it('should say nothing when nobody is listening on a detached load', async () => {
+        it('should not mind a load nobody listens to', async () => {
             loadAsset.mockResolvedValue(makeGltf());
             const detached = new ModelComponent();
 

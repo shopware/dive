@@ -1,6 +1,7 @@
-import { Object3D, Vector3 } from 'three/webgpu';
+import { Vector3 } from 'three/webgpu';
 import {
     DIVENode,
+    ModelComponent,
     MultiLineComponent,
     type DIVESceneObject,
 } from '@shopware-ag/dive';
@@ -26,7 +27,8 @@ const modelData = (): ModelSchema => ({
 });
 
 describe('plugins/state/watchEntity', () => {
-    let node: Object3D;
+    let node: DIVENode;
+    let model: ModelComponent;
     let registry: EntityRegistry;
     let dispatch: ReturnType<typeof vi.fn>;
     let unwatch: () => void;
@@ -40,6 +42,17 @@ describe('plugins/state/watchEntity', () => {
         node.dispatchEvent({ type, ...payload } as never);
     };
 
+    /**
+     * A finished load, reported where it happens.
+     *
+     * On the component, not on the node: the node has nothing to do with
+     * fetching an asset, and it only ever heard about it because a component had
+     * no way to speak for itself.
+     */
+    const fireLoad = (): void => {
+        model.dispatchEvent({ type: 'object-load' });
+    };
+
     /** Watches and registers in the order `ADD_OBJECT` does. */
     const watch = (entity: EntitySchema = modelData()): void => {
         const sceneObject = node as unknown as DIVESceneObject;
@@ -48,7 +61,8 @@ describe('plugins/state/watchEntity', () => {
     };
 
     beforeEach(() => {
-        node = new Object3D();
+        node = new DIVENode();
+        model = node.addComponent(new ModelComponent());
         registry = new EntityRegistry();
         dispatch = vi.fn();
     });
@@ -184,7 +198,7 @@ describe('plugins/state/watchEntity', () => {
         it('should announce the load', () => {
             watch();
 
-            fire('object-load');
+            fireLoad();
 
             expect(dispatch).toHaveBeenCalledWith('MODEL_LOADED', {
                 id: 'model-1',
@@ -194,7 +208,7 @@ describe('plugins/state/watchEntity', () => {
         it('should mark the model loaded', () => {
             watch();
 
-            fire('object-load');
+            fireLoad();
 
             expect(
                 (registry.read('model-1')?.schema as ModelSchema).loaded,
@@ -215,7 +229,7 @@ describe('plugins/state/watchEntity', () => {
             });
             fire('object-select');
             fire('object-deselect');
-            fire('object-load');
+            fireLoad();
 
             expect(dispatch).not.toHaveBeenCalled();
         });

@@ -1,7 +1,10 @@
-import { Object3D } from 'three/webgpu';
 import { makeActionDeps } from '../../../__test__/actionDeps.ts';
 import { type EngineGateway } from '../../../EngineGateway.ts';
-import { type DIVESceneObject } from '@shopware-ag/dive';
+import {
+    DIVENode,
+    ModelComponent,
+    type DIVESceneObject,
+} from '@shopware-ag/dive';
 import { AddObjectAction } from '../addobject.ts';
 import { type EntitySchema } from '../../../../types/index.ts';
 
@@ -23,8 +26,12 @@ describe('AddObjectAction', () => {
     beforeEach(() => {
         vi.clearAllMocks();
         deps = makeActionDeps();
-        // real, so the listeners watchEntity attaches actually attach
-        node = new Object3D() as unknown as DIVESceneObject;
+        // real, and composed the way the gateway composes a model, so the
+        // listeners watchEntity attaches actually attach -- the load is reported
+        // by the ModelComponent, so a bare node would have nothing to listen to
+        const entity = new DIVENode();
+        entity.addComponent(new ModelComponent());
+        node = entity as unknown as DIVESceneObject;
         gateway = {
             createEntity: vi.fn(() => node),
             applyEntity: vi.fn(),

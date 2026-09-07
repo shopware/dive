@@ -1,6 +1,7 @@
 import {
     type DIVEEntityTransformEvent,
     type DIVESceneObject,
+    ModelComponent,
 } from '@shopware-ag/dive';
 import {
     type ActionDependencies,
@@ -84,12 +85,22 @@ export const watchEntity = (
     node.addEventListener('object-transform', onTransform);
     node.addEventListener('object-select', onSelect);
     node.addEventListener('object-deselect', onDeselect);
-    node.addEventListener('object-load', onLoad);
+
+    // On the component, because that is what loads. Transform, selection and
+    // deselection are the node's business; fetching an asset is not, and the node
+    // only ever heard about it because the component had nowhere else to report.
+    //
+    // The component that exists now, not whichever one is attached later: an
+    // entity is composed once, in `createEntity`, before this runs. A model whose
+    // mesh component were swapped afterwards would stop reporting -- nothing does
+    // that today.
+    const model = node.getComponent(ModelComponent);
+    model?.addEventListener('object-load', onLoad);
 
     return () => {
         node.removeEventListener('object-transform', onTransform);
         node.removeEventListener('object-select', onSelect);
         node.removeEventListener('object-deselect', onDeselect);
-        node.removeEventListener('object-load', onLoad);
+        model?.removeEventListener('object-load', onLoad);
     };
 };

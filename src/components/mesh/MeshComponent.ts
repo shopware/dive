@@ -16,8 +16,9 @@ import { type DIVEMaterial } from '../../types/material/DIVEMaterial.ts';
  * Abstract, because a mesh component that owns no mesh has nothing to offer: the
  * subclass is what puts one there.
  *
- * Owns its content as *its own* children rather than putting it in the node's, so
- * replacing the content leaves the node's other components alone.
+ * Contributes its content to the node rather than parenting it, and tracks
+ * exactly what it contributed -- so replacing the content leaves the node's child
+ * nodes and every other component's content alone.
  *
  * @module
  */

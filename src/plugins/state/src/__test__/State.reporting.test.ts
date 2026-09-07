@@ -2,6 +2,7 @@ import { Object3D } from 'three/webgpu';
 import {
     DIVENode,
     DIVERoot,
+    ModelComponent,
     type DIVE,
     type DIVESceneObject,
 } from '@shopware-ag/dive';
@@ -213,17 +214,26 @@ describe('plugins/state/State reporting to subscribers', () => {
     });
 
     describe('a finished asset load', () => {
+        // reported by the component that loads, not by the node: fetching is the
+        // component's business, and it used to have to be attached to a node to
+        // say anything at all
+        const reportLoad = (): void => {
+            node.getComponent(ModelComponent)!.dispatchEvent({
+                type: 'object-load',
+            });
+        };
+
         it('should reach a MODEL_LOADED subscriber', () => {
             const onLoaded = vi.fn();
             state.subscribe('MODEL_LOADED', onLoaded);
 
-            node.dispatchEvent({ type: 'object-load' } as never);
+            reportLoad();
 
             expect(onLoaded).toHaveBeenCalledWith({ id: 'model-1' });
         });
 
         it('should mark the model loaded in the state', () => {
-            node.dispatchEvent({ type: 'object-load' } as never);
+            reportLoad();
 
             const objects = state.performAction('GET_ALL_OBJECTS');
 
