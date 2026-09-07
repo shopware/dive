@@ -6,7 +6,7 @@ import {
 } from 'three/webgpu';
 import { DIVERoot } from './root/Root.ts';
 import { GridComponent } from '../../components/grid/GridComponent.ts';
-import { type DIVEComponent } from '../../components/component/Component.ts';
+import { type DIVEComponent } from '../component/Component.ts';
 import { DIVENode } from '../node/Node.ts';
 import { type DIVETicker } from '../clock/Clock.ts';
 

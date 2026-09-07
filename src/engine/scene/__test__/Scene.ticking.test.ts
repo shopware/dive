@@ -1,6 +1,6 @@
 import { DIVEScene } from '../Scene.ts';
 import { DIVENode } from '../../node/Node.ts';
-import { DIVEComponent } from '../../../components/component/Component.ts';
+import { DIVEComponent } from '../../component/Component.ts';
 
 class Ticker extends DIVEComponent {
     public ticks = 0;

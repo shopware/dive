@@ -6,7 +6,7 @@ import {
     Vector3,
 } from 'three/webgpu';
 import { DIVENode } from '../Node.ts';
-import { DIVEComponent } from '../../../components/component/Component.ts';
+import { DIVEComponent } from '../../component/Component.ts';
 import { FloorComponent } from '../../../components/mesh/floor/FloorComponent.ts';
 import { MeshComponent } from '../../../components/mesh/MeshComponent.ts';
 import { ModelComponent } from '../../../components/mesh/model/ModelComponent.ts';

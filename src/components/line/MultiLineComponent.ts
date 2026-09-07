@@ -9,7 +9,7 @@ import {
     type Vector3Like,
 } from 'three/webgpu';
 import { HELPER_LAYER_MASK } from '../../constants/VisibilityLayerMask.ts';
-import { DIVEComponent } from '../component/Component.ts';
+import { DIVEComponent } from '../../engine/component/Component.ts';
 
 /** Floats per line: two vertices, three components each. */
 const FLOATS_PER_LINE = 6;

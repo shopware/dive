@@ -6,7 +6,7 @@ import {
     SpriteMaterial,
     type ColorRepresentation,
 } from 'three/webgpu';
-import { DIVEComponent } from '../component/Component.ts';
+import { DIVEComponent } from '../../engine/component/Component.ts';
 import { type DIVENode } from '../../engine/node/Node.ts';
 
 /** Canvas height of one rasterized line in pixels. Defines the label's resolution. */

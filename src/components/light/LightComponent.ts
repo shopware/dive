@@ -1,6 +1,6 @@
 import { type Color, type Light } from 'three/webgpu';
 import { PRODUCT_LAYER_MASK } from '../../constants/VisibilityLayerMask.ts';
-import { DIVEComponent } from '../component/Component.ts';
+import { DIVEComponent } from '../../engine/component/Component.ts';
 
 /**
  * Base class for every light a node can carry.
