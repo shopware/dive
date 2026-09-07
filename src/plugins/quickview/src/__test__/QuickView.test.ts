@@ -20,6 +20,7 @@ const {
     stateDestroyInstance,
     rootAdd,
     rootNodes,
+    bounds,
 } = vi.hoisted(() => ({
     diveDisposeAsync: vi.fn(async () => {}),
     setFromURL: vi.fn(),
@@ -27,6 +28,8 @@ const {
     stateDestroyInstance: vi.fn(),
     rootAdd: vi.fn(),
     rootNodes: [] as unknown[],
+    // whether the thing being framed has any geometry to frame
+    bounds: { isEmpty: false },
 }));
 
 vi.mock('@shopware-ag/dive', () => {
@@ -52,6 +55,13 @@ vi.mock('@shopware-ag/dive', () => {
             };
         }),
         DIVEDefaultSettings: { displayGrid: false },
+        BoundingBox: vi.fn(function (this: Record<string, unknown>) {
+            this.enclose = vi.fn(() => this);
+            Object.defineProperty(this, 'isEmpty', {
+                get: () => bounds.isEmpty,
+            });
+            return this;
+        }),
         // the real one, so the teardown assertions below exercise it
         disposeComponents: (object: { components?: { dispose(): void }[] }) =>
             object.components?.forEach((component) => component.dispose()),
@@ -94,14 +104,14 @@ vi.mock('@shopware-ag/dive/state', () => {
 
 const sceneData = { name: 'scene' } as unknown as StateData;
 
-/** Scene objects as SET_STATE hands them back. */
-const aModel = { name: 'a-model', isDIVEModel: true };
+/** A scene object as SET_STATE hands it back. Nothing reads its shape. */
 const aLight = { name: 'a-light', isDIVELight: true };
 
 describe('QuickView', () => {
     beforeEach(() => {
         vi.clearAllMocks();
         rootNodes.length = 0;
+        bounds.isEmpty = false;
         setFromURL.mockImplementation(async () => {});
         statePerformAction.mockImplementation(async () => []);
         vi.spyOn(console, 'error').mockImplementation(() => {});
@@ -187,6 +197,17 @@ describe('QuickView', () => {
             ).not.toHaveBeenCalled();
         });
 
+        it('should not frame a model that loaded no geometry', async () => {
+            // the same geometric question, on the model path
+            bounds.isEmpty = true;
+
+            const quickView = await QuickView('empty.glb');
+
+            expect(
+                quickView.orbitController.focusObject,
+            ).not.toHaveBeenCalled();
+        });
+
         it('should hold no state', async () => {
             expect((await QuickView('test_uri')).state).toBeNull();
         });
@@ -206,8 +227,16 @@ describe('QuickView', () => {
             );
         });
 
-        it('should frame the root once there is something to look at', async () => {
-            statePerformAction.mockResolvedValue([aModel]);
+        it('should frame whatever the state put in the scene', async () => {
+            /**
+             * the decision is geometric, so it does not matter what the entities
+             * are: the gateway gives a model its marker in `userData` and a
+             * primitive none at all, and an entity-kind test therefore never
+             * framed a real scene
+             */
+            statePerformAction.mockResolvedValue([
+                { name: 'DIVEModel', userData: { isDIVEModel: true } },
+            ]);
 
             const quickView = await QuickView(sceneData);
 
@@ -216,11 +245,12 @@ describe('QuickView', () => {
             );
         });
 
-        it('should not frame a scene holding nothing focusable', async () => {
+        it('should not frame a scene with no geometry in it', async () => {
             /**
              * an empty scene measures to a negative radius, which would put the
              * camera behind its own target
              */
+            bounds.isEmpty = true;
             statePerformAction.mockResolvedValue([aLight]);
 
             const quickView = await QuickView(sceneData);

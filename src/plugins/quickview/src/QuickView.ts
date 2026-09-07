@@ -1,4 +1,5 @@
 import {
+    BoundingBox,
     DIVE,
     DIVEDefaultSettings,
     DIVENode,
@@ -111,19 +112,19 @@ export async function QuickView(
         let disposed = false;
 
         /**
-         * Whether what is loaded is worth pointing a camera at.
+         * Frames whatever is loaded, if there is anything to frame.
          *
-         * A model always is. A scene state only if it created something visible:
-         * an empty scene measures to a negative radius, which would put the
-         * camera behind its own target.
+         * Asks the geometry, because that is the question: an empty box measures
+         * a negative radius, which would put the camera behind its own target.
+         * Entity kinds cannot answer it -- a model's marker sits in `userData`
+         * and a primitive has none, so anything reading brands off what
+         * `SET_STATE` returns finds nothing and frames nothing.
          */
-        let framable = false;
-
-        /** Frames whatever is loaded, from wherever the decision is made. */
         const frame = (): void => {
-            if (!framable) return;
+            const target = model ?? dive.scene.root;
+            if (new BoundingBox().enclose(target).isEmpty) return;
 
-            orbitController.focusObject(model ?? dive.scene.root);
+            orbitController.focusObject(target);
         };
 
         /** Takes down whatever is loaded, so the two kinds never coexist. */
@@ -174,8 +175,6 @@ export async function QuickView(
                 return;
             }
 
-            framable = true;
-
             if (loadSettings?.dropToFloor ?? true) node.dropIt();
             if (loadSettings?.focus ?? true) frame();
         };
@@ -193,14 +192,11 @@ export async function QuickView(
 
             /**
              * SET_STATE settles once every model is loaded, so there is nothing
-             * left to wait for and the created objects come back with it
+             * left to wait for
              * a single broken asset is warned about rather than dropping the
-             * whole scene, so what comes back is everything that made it in
+             * whole scene, so what made it in is what is in the scene
              */
-            const objects = await instance.performAction(
-                'SET_STATE',
-                sceneData,
-            );
+            await instance.performAction('SET_STATE', sceneData);
 
             if (disposed) {
                 instance.destroyInstance();
@@ -208,11 +204,6 @@ export async function QuickView(
 
                 return;
             }
-
-            framable = objects.some(
-                (object) =>
-                    'isDIVEModel' in object || 'isDIVEPrimitive' in object,
-            );
 
             if (loadSettings?.focus ?? true) frame();
         };
