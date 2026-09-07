@@ -101,7 +101,7 @@ Two rules, each with a reason:
 
    ```ts
    protected onAttach(owner: DIVENode): void {
-       owner.addComponent(new BoundsComponent());   // not yours to decide
+       owner.addComponent(new BoundingBoxComponent());   // not yours to decide
    }
    ```
 

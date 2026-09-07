@@ -8,4 +8,4 @@ export * from './mesh/index.ts';
 export * from './node/Node.ts';
 export * from './root/Root.ts';
 export * from './spritetext/SpriteText.ts';
-export * from './bounds/index.ts';
+export * from './boundingbox/index.ts';

@@ -10,11 +10,14 @@ import { QuickViewState } from '../QuickViewState.ts';
 
 // shared across instances, because QuickViewState replaces disposeAsync on the
 // returned object, which hides the original mock
-const { diveDisposeAsync, statePerformAction, stateDestroyInstance } =
+const { diveDisposeAsync, statePerformAction, stateDestroyInstance, root } =
     vi.hoisted(() => ({
         diveDisposeAsync: vi.fn(async () => {}),
         statePerformAction: vi.fn(async () => [] as object[]),
         stateDestroyInstance: vi.fn(),
+        // framing takes one node, and the root is the parent of everything the
+        // state created
+        root: {},
     }));
 
 vi.mock('@shopware-ag/dive', () => {
@@ -34,6 +37,7 @@ vi.mock('@shopware-ag/dive', () => {
                 clock: {
                     addTicker: vi.fn(),
                 },
+                scene: { root },
                 startAsync: vi.fn(async () => {}),
                 disposeAsync: diveDisposeAsync,
             };
@@ -183,15 +187,14 @@ describe('QuickViewState', () => {
             );
         });
 
-        it('focuses the models and primitives SET_STATE created', async () => {
+        it('focuses the root once SET_STATE created something to look at', async () => {
             statePerformAction.mockResolvedValue([model, light, primitive]);
 
             const quickView = await QuickViewState(sceneData);
 
-            expect(quickView.orbitController.focusObject).toHaveBeenCalledWith([
-                model,
-                primitive,
-            ]);
+            expect(quickView.orbitController.focusObject).toHaveBeenCalledWith(
+                root,
+            );
         });
 
         it('does not focus when the scene holds nothing focusable', async () => {
@@ -199,7 +202,8 @@ describe('QuickViewState', () => {
 
             const quickView = await QuickViewState(sceneData);
 
-            // an empty list would give the bounding box a negative radius
+            // an empty scene measures to a negative radius, which would put the
+            // camera behind its own target
             expect(
                 quickView.orbitController.focusObject,
             ).not.toHaveBeenCalled();

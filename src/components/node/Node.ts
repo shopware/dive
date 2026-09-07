@@ -87,6 +87,11 @@ export class DIVENode
      * Uses `add`, never `attach`: a component has no meaningful transform of its
      * own, and `attach` would apply an inverse world matrix to it.
      *
+     * Announces itself with `componentadded`, named after three's `childadded`
+     * because it is the same kind of fact about the same node. A component is not
+     * a child, so three's own events say nothing about one, and without this
+     * nothing could observe what a node is made of.
+     *
      * @param component - The component to attach.
      * @returns The component, for chaining.
      */
@@ -103,11 +108,16 @@ export class DIVENode
         component._attach(this);
         this.refreshComponentTick(component);
 
+        this.dispatchEvent({ type: 'componentadded', component });
+
         return component;
     }
 
     /**
      * Detaches a component from this node.
+     *
+     * Announces itself with `componentremoved`, after the component is gone, so a
+     * listener that re-reads the node sees what is left rather than what was.
      *
      * @param component - The component to detach.
      */
@@ -118,6 +128,8 @@ export class DIVENode
         this._components.splice(index, 1);
         component._detach();
         this._scene?.withdrawComponent(component);
+
+        this.dispatchEvent({ type: 'componentremoved', component });
 
         return this;
     }

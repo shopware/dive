@@ -3,10 +3,10 @@ import {
     MathUtils,
     Matrix4,
     MOUSE,
-    Object3D,
     OrthographicCamera,
     PerspectiveCamera,
     Quaternion,
+    Sphere,
     Spherical,
     TOUCH,
     Vector2,
@@ -14,8 +14,9 @@ import {
     Vector3Like,
 } from 'three/webgpu';
 import {
+    BoundingBox,
+    DIVENode,
     DIVETicker,
-    BoundsComponent,
     type DIVECameraComponent,
 } from '@shopware-ag/dive';
 import { OrbitControllerState } from '../types/index.ts';
@@ -407,15 +408,24 @@ export class OrbitController
         this.addDomElements(...domElements);
     }
 
+    /**
+     * Where to put the camera so a sphere fills the view.
+     *
+     * Takes a `Sphere` rather than a bounding box: framing needs a centre and a
+     * radius, and nothing else. Build one with `new BoundingBox().enclose(...)`,
+     * or read `sphere` off a `BoundingBoxComponent` that already measures a node.
+     *
+     * @param sphere - What to frame, in world space.
+     * @param padding - Extra distance as a fraction of the fitted one.
+     */
     public computeEncompassingView(
-        bb: BoundsComponent,
+        sphere: Sphere,
         padding = 0.0,
     ): {
         position: Vector3Like;
         target: Vector3Like;
     } {
-        const center = bb.center;
-        const sphere = bb.sphere;
+        const center = sphere.center;
         const radius = sphere.radius;
 
         const perspective = this._camera as PerspectiveCamera;
@@ -444,9 +454,20 @@ export class OrbitController
         };
     }
 
-    public focusObject(objects: Object3D | Object3D[], padding = 0.0): void {
-        const bb = new BoundsComponent().setTarget(objects);
-        const transform = this.computeEncompassingView(bb, padding);
+    /**
+     * Puts the camera where the whole node fits in the view.
+     *
+     * One node, not a list: a node already is the handle for everything below it,
+     * so anything worth framing together belongs under a common parent.
+     *
+     * @param node - What to frame.
+     * @param padding - Extra distance as a fraction of the fitted one.
+     */
+    public focusObject(node: DIVENode, padding = 0.0): void {
+        const transform = this.computeEncompassingView(
+            new BoundingBox().enclose(node).sphere,
+            padding,
+        );
 
         this.object.owner.position.copy(transform.position as Vector3);
         this.target.copy(transform.target as Vector3);
