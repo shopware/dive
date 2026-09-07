@@ -221,25 +221,67 @@ export class DIVENode
         // if there is no parent, the object will be attached later and keep it's world position
         if (!this.parent) {
             this.position.set(position.x, position.y, position.z);
+            // Nothing to report: without a parent there is no world position
+            // yet, and attaching will produce the real one.
             return;
         }
 
         // if we have a parent, we have to calculate the position in the parent's coordinate system to keep the world position
         const newPosition = new Vector3(position.x, position.y, position.z);
-        this.position.copy(this.parent.worldToLocal(newPosition));
+        const target = this.parent.worldToLocal(newPosition);
 
-        // Child nodes just moved in world space, and the state layer tracks
-        // world positions, so they have to report it themselves. This used to be
-        // DIVEGroup's job; it is not group-specific at all.
-        this.nodes.forEach((node) => node.onMove());
+        // A tolerance rather than `equals`, because the target came through a
+        // matrix: an unchanged world position does not map back to a bit-identical
+        // local one. Without this, a patch carrying all three transform fields
+        // would report three moves for one changed value.
+        if (this.position.distanceToSquared(target) < 1e-12) return;
+
+        this.position.copy(target);
+        this._reportTransform();
     }
 
     public setRotation(rotation: Vector3Like): void {
+        // Exact, unlike setPosition: the value is written straight through with
+        // no matrix in between.
+        if (
+            this.rotation.x === rotation.x &&
+            this.rotation.y === rotation.y &&
+            this.rotation.z === rotation.z
+        )
+            return;
+
         this.rotation.set(rotation.x, rotation.y, rotation.z);
+        this._reportTransform();
     }
 
     public setScale(scale: Vector3Like): void {
+        if (
+            this.scale.x === scale.x &&
+            this.scale.y === scale.y &&
+            this.scale.z === scale.z
+        )
+            return;
+
         this.scale.set(scale.x, scale.y, scale.z);
+        this._reportTransform();
+    }
+
+    /**
+     * Reports this node's new transform, and its members' new world transforms.
+     *
+     * One event for every kind of move, so a listener never has to ask what
+     * caused it: a gizmo drag and a `setPosition` both arrive as
+     * `object-transform`.
+     *
+     * Members report too, and recursively. Their own local transform did not
+     * change, but their world transform did, and that is what gets reported.
+     * This used to happen for `setPosition` only, one level deep — so rotating a
+     * group left its members' reported positions stale, and a nested group never
+     * heard about anything.
+     */
+    private _reportTransform(): void {
+        this.onMove();
+        this.nodes.forEach((node) => node._reportTransform());
     }
 
     /**
@@ -299,9 +341,8 @@ export class DIVENode
         // skip any action when the position did not change
         if (worldPos.y === oldWorldPosY) return;
 
+        // setPosition reports the move itself now
         this.setPosition(worldPos);
-
-        this.onMove();
     }
 
     public setVisibility(visible: boolean): void {
