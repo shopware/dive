@@ -22,8 +22,8 @@ const isVector = (
  * target key is absent.
  *
  * This used to be `copyVec` at each call site in the gateway. It lives here
- * because `State.writeSchema` is now the only way into a schema, so copying can
- * happen once instead of being remembered every time.
+ * because `EntityRegistry.write` is now the only way into a schema, so copying
+ * can happen once instead of being remembered every time.
  *
  * @param patch - The patch to sanitise.
  */

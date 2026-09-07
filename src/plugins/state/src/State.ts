@@ -7,7 +7,7 @@ import {
     ActionReturn,
 } from '../types/index.ts';
 import { getActionClass } from './ActionRegistry.ts';
-import { Registry } from './Registry.ts';
+import { EntityRegistry } from './EntityRegistry.ts';
 import { EngineGateway } from './EngineGateway.ts';
 
 export type ActionSubscriber<ActionType extends keyof ActionTypes> = (
@@ -99,8 +99,8 @@ export class State {
     }
 
     // registered entities
-    /** Every entity this state holds. See {@link Registry}. */
-    private registry: Registry = new Registry();
+    /** Every entity this state holds. See {@link EntityRegistry}. */
+    private registry: EntityRegistry = new EntityRegistry();
 
     private listeners: Map<
         keyof ActionTypes,

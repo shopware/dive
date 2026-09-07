@@ -32,7 +32,7 @@ import { updateParentLink } from '../parentLink/parentLink.ts';
  *
  * @param node - The scene object to listen to.
  * @param entity - The entity it stands for.
- * @param deps - Registry to write, dispatch to announce.
+ * @param deps - EntityRegistry to write, dispatch to announce.
  * @returns Drops every listener again. Belongs in the registry entry.
  *
  * @module

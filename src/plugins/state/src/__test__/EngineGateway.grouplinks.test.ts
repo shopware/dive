@@ -1,5 +1,5 @@
 import { EngineGateway } from '../EngineGateway.ts';
-import { Registry } from '../Registry.ts';
+import { EntityRegistry } from '../EntityRegistry.ts';
 import { watchEntity } from '../helpers/watchEntity/watchEntity.ts';
 import {
     DIVENode,
@@ -168,7 +168,7 @@ describe('plugins/state/EngineGateway group links', () => {
         const schema = modelSchema('m', 'g');
         const member = (await addEntity(gateway, schema))!;
 
-        const registry = new Registry();
+        const registry = new EntityRegistry();
         registry.register(
             schema,
             member,

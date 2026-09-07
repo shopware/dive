@@ -10,8 +10,8 @@ import { type EntitySchema } from './schema/index.ts';
  * them to drift apart — and made every caller that needed two of them do two
  * lookups.
  *
- * This shape is a state-internal detail. Actions reach it through `readSchema`,
- * `readNode` and `writeSchema`, never through the map, so it can change without
+ * This shape is a state-internal detail. Actions reach it through
+ * {@link EntityRegistry}, never through the map, so it can change without
  * touching them.
  *
  * @module
@@ -25,6 +25,6 @@ export type RegisteredEntity = {
      */
     node?: DIVESceneObject;
 
-    /** Drops the listeners on {@link node}. Called by `unregisterEntity`. */
+    /** Drops the listeners on {@link node}. Called by `EntityRegistry.unregister`. */
     unwatch?: () => void;
 };

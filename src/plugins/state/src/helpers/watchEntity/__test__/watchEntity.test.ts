@@ -5,7 +5,7 @@ import {
     type DIVESceneObject,
 } from '@shopware-ag/dive';
 import { watchEntity } from '../watchEntity.ts';
-import { Registry } from '../../../Registry.ts';
+import { EntityRegistry } from '../../../EntityRegistry.ts';
 import {
     type EntitySchema,
     type ModelSchema,
@@ -27,7 +27,7 @@ const modelData = (): ModelSchema => ({
 
 describe('plugins/state/watchEntity', () => {
     let node: Object3D;
-    let registry: Registry;
+    let registry: EntityRegistry;
     let dispatch: ReturnType<typeof vi.fn>;
     let unwatch: () => void;
 
@@ -49,7 +49,7 @@ describe('plugins/state/watchEntity', () => {
 
     beforeEach(() => {
         node = new Object3D();
-        registry = new Registry();
+        registry = new EntityRegistry();
         dispatch = vi.fn();
     });
 

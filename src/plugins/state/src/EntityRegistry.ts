@@ -18,7 +18,7 @@ import { copyVectors } from './helpers/copyVectors/copyVectors.ts';
  *
  * @module
  */
-export class Registry {
+export class EntityRegistry {
     private readonly _entities: Map<string, RegisteredEntity> = new Map();
 
     /** How many entities are registered. */
