@@ -129,6 +129,18 @@ describe('modules/controller/orbit/OrbitController', () => {
             expect(controller).toBeDefined();
         });
 
+        it('should refuse a camera component with no node', () => {
+            // the controller moves object.owner, so a detached component leaves
+            // it nothing to drive
+            expect(
+                () =>
+                    new OrbitController(
+                        new PerspectiveCameraComponent(),
+                        mockRenderer.canvas,
+                    ),
+            ).toThrow();
+        });
+
         it('should instantiate with settings', () => {
             controller = new OrbitController(mockCamera, mockRenderer.canvas);
             expect(controller).toBeDefined();
@@ -870,6 +882,23 @@ describe('modules/controller/orbit/OrbitController', () => {
             expect(panSpy).toHaveBeenCalled();
         });
 
+        it('should pan along the world plane when screenSpacePanning is off', () => {
+            controller.screenSpacePanning = false;
+
+            // cross(camera up, the matrix's right) rather than the matrix's own up
+            (controller as any).panUp(1, new Matrix4());
+
+            expect((controller as any).panOffset.toArray()).toEqual([0, 0, -1]);
+        });
+
+        it('should pan along the camera plane when screenSpacePanning is on', () => {
+            controller.screenSpacePanning = true;
+
+            (controller as any).panUp(1, new Matrix4());
+
+            expect((controller as any).panOffset.toArray()).toEqual([0, 1, 0]);
+        });
+
         it('should handle dollyOut with orthographic camera', () => {
             controller.object = attach(new TestOrthographicCameraComponent());
             const dollyOutSpy = vi.spyOn(controller as any, 'dollyOut');
@@ -905,6 +934,26 @@ describe('modules/controller/orbit/OrbitController', () => {
 
             (controller as any).handleMouseWheel(wheelEvent);
             expect(spy).toHaveBeenCalled();
+        });
+
+        it('should dolly out on a downward wheel', () => {
+            const before = controller.getDistance();
+
+            (controller as any).handleMouseWheel(
+                new WheelEvent('wheel', { deltaY: 100 }),
+            );
+
+            expect(controller.getDistance()).toBeGreaterThan(before);
+        });
+
+        it('should dolly in on an upward wheel', () => {
+            const before = controller.getDistance();
+
+            (controller as any).handleMouseWheel(
+                new WheelEvent('wheel', { deltaY: -100 }),
+            );
+
+            expect(controller.getDistance()).toBeLessThan(before);
         });
 
         it('should handle key down events', () => {
