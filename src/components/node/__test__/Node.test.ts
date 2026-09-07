@@ -178,6 +178,105 @@ describe('dive/node/DIVENode', () => {
         });
     });
 
+    describe('applyTransform', () => {
+        // The silent write: for a caller that announces the change itself, so it
+        // does not get a second report on top of its own.
+        let parent: DIVENode;
+        let onTransform: ReturnType<typeof vi.fn>;
+
+        beforeEach(() => {
+            parent = new DIVENode();
+            parent.add(node);
+            onTransform = vi.fn();
+            node.addEventListener('object-transform', onTransform);
+        });
+
+        it('should not report for itself', () => {
+            node.applyTransform({
+                position: { x: 1, y: 2, z: 3 },
+                rotation: { x: 0, y: 1, z: 0 },
+                scale: { x: 2, y: 2, z: 2 },
+            });
+
+            expect(onTransform).not.toHaveBeenCalled();
+        });
+
+        it('should write everything the patch carries', () => {
+            node.applyTransform({
+                position: { x: 1, y: 2, z: 3 },
+                rotation: { x: 0, y: 1, z: 0 },
+                scale: { x: 2, y: 2, z: 2 },
+            });
+
+            expect(node.position.toArray()).toEqual([1, 2, 3]);
+            expect(node.rotation.y).toBe(1);
+            expect(node.scale.toArray()).toEqual([2, 2, 2]);
+        });
+
+        it('should leave out what the patch does not carry', () => {
+            node.applyTransform({ position: { x: 1, y: 0, z: 0 } });
+
+            expect(node.scale.toArray()).toEqual([1, 1, 1]);
+        });
+
+        it('should treat null like absent', () => {
+            // a schema may carry null for a field it does not set
+            node.applyTransform({
+                position: null,
+                rotation: null,
+                scale: null,
+            });
+
+            expect(node.position.toArray()).toEqual([0, 0, 0]);
+        });
+
+        it('should convert the position out of world space', () => {
+            parent.position.set(10, 0, 0);
+
+            node.applyTransform({ position: { x: 11, y: 0, z: 0 } });
+
+            // the schema speaks world, the node stores local
+            expect(node.position.x).toBeCloseTo(1);
+        });
+
+        describe('members', () => {
+            let member: DIVENode;
+            let onMemberTransform: ReturnType<typeof vi.fn>;
+
+            beforeEach(() => {
+                member = new DIVENode();
+                node.add(member);
+                onMemberTransform = vi.fn();
+                member.addEventListener('object-transform', onMemberTransform);
+            });
+
+            it('should still wake them, because nothing else does', () => {
+                node.applyTransform({ position: { x: 10, y: 0, z: 0 } });
+
+                expect(onMemberTransform).toHaveBeenCalledTimes(1);
+            });
+
+            it('should wake them once for a patch that changes all three', () => {
+                node.applyTransform({
+                    position: { x: 10, y: 0, z: 0 },
+                    rotation: { x: 0, y: 1, z: 0 },
+                    scale: { x: 2, y: 2, z: 2 },
+                });
+
+                expect(onMemberTransform).toHaveBeenCalledTimes(1);
+            });
+
+            it('should leave them alone when nothing changed', () => {
+                node.applyTransform({
+                    position: { x: 0, y: 0, z: 0 },
+                    scale: { x: 1, y: 1, z: 1 },
+                });
+
+                expect(onMemberTransform).not.toHaveBeenCalled();
+            });
+        });
+    });
+
     describe('reporting a transform it was told to make', () => {
         // One event for every kind of move: a listener cannot tell a gizmo drag
         // from a setPosition, and does not need to.

@@ -221,6 +221,108 @@ describe('plugins/state/State reporting to subscribers', () => {
         });
     });
 
+    describe('how many notifications one action produces', () => {
+        // One per object that actually changed, and no more. The write path used
+        // to go through setPosition, setRotation and setScale, each reporting for
+        // itself, on top of the one performAction sends at the end -- so a patch
+        // carrying all three transform fields announced itself four times, and a
+        // group with two members nineteen.
+        const fullPatch = {
+            id: 'model-1',
+            entityType: 'model' as const,
+            position: { x: 7, y: 0, z: 0 },
+            rotation: { x: 0, y: 1, z: 0 },
+            scale: { x: 2, y: 2, z: 2 },
+        };
+
+        /** Adds a group and puts the model in it. */
+        const group = async (): Promise<void> => {
+            await state.performAction('ADD_OBJECT', {
+                id: 'g',
+                entityType: 'group',
+                name: 'G',
+                visible: true,
+                parentId: null,
+                position: { x: 0, y: 0, z: 0 },
+                rotation: { x: 0, y: 0, z: 0 },
+                scale: { x: 1, y: 1, z: 1 },
+            } as never);
+            await state.performAction('SET_PARENT', {
+                object: { id: 'model-1' },
+                parent: { id: 'g' },
+            });
+        };
+
+        it('should send one for a patch carrying position, rotation and scale', async () => {
+            const onUpdate = vi.fn();
+            state.subscribe('UPDATE_OBJECT', onUpdate);
+
+            await state.performAction('UPDATE_OBJECT', fullPatch);
+
+            expect(onUpdate).toHaveBeenCalledTimes(1);
+        });
+
+        it('should send one for a patch carrying nothing but a name', async () => {
+            // no transform changes, so nothing reports -- the one performAction
+            // sends is what keeps this from going unannounced
+            const onUpdate = vi.fn();
+            state.subscribe('UPDATE_OBJECT', onUpdate);
+
+            await state.performAction('UPDATE_OBJECT', {
+                id: 'model-1',
+                entityType: 'model',
+                name: 'renamed',
+            });
+
+            expect(onUpdate).toHaveBeenCalledTimes(1);
+        });
+
+        it('should send one per object when a group moves', async () => {
+            await group();
+            const reported: string[] = [];
+            state.subscribe('UPDATE_OBJECT', (payload) =>
+                reported.push((payload as { id: string }).id),
+            );
+
+            await state.performAction('UPDATE_OBJECT', {
+                id: 'g',
+                entityType: 'group',
+                position: { x: 5, y: 0, z: 0 },
+                rotation: { x: 0, y: 1, z: 0 },
+                scale: { x: 2, y: 2, z: 2 },
+            } as never);
+
+            // the member moved in world space and is its own entity to a consumer
+            expect(reported.sort()).toEqual(['g', 'model-1']);
+        });
+
+        it('should send one per object when a group is dragged', async () => {
+            await group();
+            const reported: string[] = [];
+            state.subscribe('UPDATE_OBJECT', (payload) =>
+                reported.push((payload as { id: string }).id),
+            );
+
+            // what the gizmo does per frame, on the group
+            const groupNode = node.parent as DIVENode;
+            groupNode.position.set(9, 0, 0);
+            groupNode.onMove();
+
+            // the member used to be left out here, so its reported position went
+            // stale as soon as anyone dragged the group
+            expect(reported.sort()).toEqual(['g', 'model-1']);
+        });
+
+        it('should send one when the object is moved directly', async () => {
+            const onUpdate = vi.fn();
+            state.subscribe('UPDATE_OBJECT', onUpdate);
+
+            node.setPosition({ x: 3, y: 0, z: 0 });
+
+            expect(onUpdate).toHaveBeenCalledTimes(1);
+        });
+    });
+
     it('should keep two instances apart', () => {
         // a page may hold more than one DIVE; a report must reach its own state
         const other = new State(
