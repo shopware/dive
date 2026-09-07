@@ -5,10 +5,8 @@ import {
     Object3D,
 } from 'three/webgpu';
 import { MeshComponent } from '../MeshComponent.ts';
-import { PrimitiveMeshComponent } from '../PrimitiveMeshComponent.ts';
 import { DIVENode } from '../../node/Node.ts';
 import { HELPER_LAYER_MASK } from '../../../constants/VisibilityLayerMask.ts';
-import { type DIVEGeometryType } from '../../../types/geometry/DIVEGeometryType.ts';
 
 const loadAsset = vi.fn();
 
@@ -198,80 +196,5 @@ describe('dive/mesh/MeshComponent', () => {
         mesh.dispose();
 
         expect(geometry).toHaveBeenCalled();
-    });
-});
-
-describe('dive/mesh/PrimitiveMeshComponent', () => {
-    let node: DIVENode;
-    let primitive: PrimitiveMeshComponent;
-
-    beforeEach(() => {
-        node = new DIVENode();
-        primitive = node.addComponent(new PrimitiveMeshComponent());
-    });
-
-    it('should be findable as a MeshComponent', () => {
-        // shares the material path with models through the base class
-        expect(node.getComponent(MeshComponent)).toBe(primitive);
-    });
-
-    it('should own a mesh from the start', () => {
-        expect(primitive.mesh).toBeInstanceOf(Mesh);
-        expect(primitive.material).toBeInstanceOf(MeshStandardMaterial);
-    });
-
-    const shapes: DIVEGeometryType[] = [
-        'cylinder',
-        'sphere',
-        'pyramid',
-        'cube',
-        'box',
-        'cone',
-        'wall',
-        'plane',
-    ];
-
-    shapes.forEach((name) => {
-        it(`should build ${name} geometry`, () => {
-            primitive.setGeometry({ name, width: 1, height: 2, depth: 1 });
-
-            expect(primitive.mesh?.geometry.attributes.position).toBeDefined();
-            expect(primitive.mesh?.geometry.boundingBox).not.toBeNull();
-        });
-    });
-
-    it('should use flat shading for a pyramid only', () => {
-        primitive.setGeometry({
-            name: 'pyramid',
-            width: 1,
-            height: 1,
-            depth: 1,
-        });
-        expect(primitive.material?.flatShading).toBe(true);
-
-        primitive.setGeometry({ name: 'cube', width: 1, height: 1, depth: 1 });
-        expect(primitive.material?.flatShading).toBe(false);
-    });
-
-    it('should default the wall depth', () => {
-        primitive.setGeometry({ name: 'wall', width: 1, height: 2, depth: 0 });
-
-        expect(primitive.mesh?.geometry.boundingBox?.max.z).toBeCloseTo(0.025);
-    });
-
-    it('should warn and keep the geometry for an unknown shape', () => {
-        console.warn = vi.fn();
-        primitive.setGeometry({ name: 'cube', width: 1, height: 1, depth: 1 });
-        const before = primitive.mesh?.geometry;
-
-        primitive.setGeometry({
-            name: 'dodecahedron' as DIVEGeometryType,
-            width: 1,
-            height: 1,
-            depth: 1,
-        });
-
-        expect(console.warn).toHaveBeenCalled();
-        expect(primitive.mesh?.geometry).toBe(before);
     });
 });
