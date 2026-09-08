@@ -1,6 +1,6 @@
 import { AssetExporter } from '../AssetExporter.ts';
-import { Object3D, Mesh } from 'three/webgpu';
-import { ParseError } from '@shopware-ag/dive';
+import { AnimationClip, Object3D, Mesh } from 'three/webgpu';
+import { DIVEComponent, DIVENode, ParseError } from '@shopware-ag/dive';
 
 // Mock TextEncoder
 class MockTextEncoder {
@@ -134,8 +134,7 @@ describe('AssetExporter', () => {
         });
 
         it('should pass animations when object has animations', async () => {
-            const clip = { name: 'test', duration: 1, tracks: [] };
-            mockObject.animations = [clip as any];
+            mockObject.animations = [new AnimationClip('test', 1, [])];
             mockGltfParseAsync.mockResolvedValue(mockArrayBuffer);
 
             await exporter.export(mockObject, 'glb');
@@ -143,7 +142,7 @@ describe('AssetExporter', () => {
             expect(mockGltfParseAsync).toHaveBeenCalledWith(
                 mockObject,
                 expect.objectContaining({
-                    animations: [clip],
+                    animations: [expect.objectContaining({ name: 'test' })],
                     binary: true,
                 }),
             );
@@ -205,8 +204,7 @@ describe('AssetExporter', () => {
         });
 
         it('should pass animations when object has animations', async () => {
-            const clip = { name: 'test', duration: 1, tracks: [] };
-            mockObject.animations = [clip as any];
+            mockObject.animations = [new AnimationClip('test', 1, [])];
             mockGltfParseAsync.mockResolvedValue(mockJson);
 
             await exporter.export(mockObject, 'gltf');
@@ -214,11 +212,35 @@ describe('AssetExporter', () => {
             expect(mockGltfParseAsync).toHaveBeenCalledWith(
                 mockObject,
                 expect.objectContaining({
-                    animations: [clip],
+                    animations: [expect.objectContaining({ name: 'test' })],
                     binary: false,
                 }),
             );
         });
+    });
+
+    it('should find the clips a model component holds', async () => {
+        /**
+         * the reason this is the exporter's job and not a caller's: the clips of
+         * a loaded asset sit on the component, which is not in the graph, so
+         * whoever calls export directly would have to know to go looking
+         */
+        const node = new DIVENode();
+        class Animated extends DIVEComponent {
+            public animations = [new AnimationClip('walk', 1, [])];
+        }
+        node.addComponent(new Animated());
+        mockObject.add(node);
+        mockGltfParseAsync.mockResolvedValue(mockArrayBuffer);
+
+        await exporter.export(mockObject, 'glb');
+
+        expect(mockGltfParseAsync).toHaveBeenCalledWith(
+            mockObject,
+            expect.objectContaining({
+                animations: [expect.objectContaining({ name: 'walk' })],
+            }),
+        );
     });
 
     describe('_exportUsdz', () => {
@@ -232,9 +254,26 @@ describe('AssetExporter', () => {
             expect(mockUsdzParseAsync).toHaveBeenCalledWith(
                 mockObject,
                 // the usdz exporter honours onlyVisible too
-                { onlyVisible: true },
+                { animations: [], onlyVisible: true },
             );
             expect(result).toBeInstanceOf(ArrayBuffer);
+        });
+
+        it('should pass animations when object has animations', async () => {
+            // usdz bakes them into xformOp time samples, so they belong here too
+            mockObject.animations = [new AnimationClip('test', 1, [])];
+            mockUsdzParseAsync.mockResolvedValue(
+                new Uint8Array(mockArrayBuffer),
+            );
+
+            await exporter.export(mockObject, 'usdz');
+
+            expect(mockUsdzParseAsync).toHaveBeenCalledWith(
+                mockObject,
+                expect.objectContaining({
+                    animations: [expect.objectContaining({ name: 'test' })],
+                }),
+            );
         });
 
         it('should handle export errors', async () => {
