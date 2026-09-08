@@ -345,7 +345,7 @@ export class OrbitController
 
         this.object.owner.position.copy(this.target).add(this.offset);
 
-        this.object.aimAt(this.target);
+        this.object.lookAt(this.target);
 
         if (this.enableDamping === true) {
             this.sphericalDelta.theta *= 1 - this.dampingFactor;

@@ -128,7 +128,7 @@ export abstract class DIVECameraComponent extends DIVEComponent {
      *
      * @param target - The point to face, in world space.
      */
-    public aimAt(target: Vector3Like): void {
+    public lookAt(target: Vector3Like): void {
         const node = this.owner;
 
         node.updateWorldMatrix(true, false);
