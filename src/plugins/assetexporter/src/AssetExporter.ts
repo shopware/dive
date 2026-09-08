@@ -7,6 +7,7 @@ import { type FileType } from '../../../types/file/FileTypes.ts';
 import { FileTypeError } from '../../../error/file-type/file-type-error.ts';
 import { ParseError } from '../../../error/parse/parse-error.ts';
 import { contributesToBounds } from '../../../helpers/contributesToBounds/contributesToBounds.ts';
+import { collectAnimations } from '../../../helpers/collectAnimations/collectAnimations.ts';
 
 export type USDZExporterOptions = THREEUSDZExporterOptions & {
     ar?: {
@@ -100,7 +101,7 @@ export class AssetExporter {
     ): Promise<ArrayBuffer> {
         try {
             const result = await this._gltfExporter.parseAsync(object, {
-                animations: object.animations || [],
+                animations: collectAnimations(object),
                 ...options,
                 ...ENFORCED_OPTIONS,
                 binary: true,
@@ -123,7 +124,7 @@ export class AssetExporter {
     ): Promise<ArrayBuffer> {
         try {
             const json = await this._gltfExporter.parseAsync(object, {
-                animations: object.animations || [],
+                animations: collectAnimations(object),
                 ...options,
                 ...ENFORCED_OPTIONS,
                 binary: false,
@@ -146,6 +147,7 @@ export class AssetExporter {
     ): Promise<ArrayBuffer> {
         try {
             const result = await this._usdzExporter.parseAsync(object, {
+                animations: collectAnimations(object),
                 ...options,
                 ...ENFORCED_OPTIONS,
             });
