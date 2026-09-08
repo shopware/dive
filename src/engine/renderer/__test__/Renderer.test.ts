@@ -14,6 +14,9 @@ import {
 import { DIVEEnvironment } from '../../environment/Environment.ts';
 import { DIVERenderer, DIVERendererDefaultSettings } from '../Renderer.ts';
 
+/** Records whether disposing killed the canvas context, as three's does. */
+const { loseContext } = vi.hoisted(() => ({ loseContext: vi.fn() }));
+
 vi.mock('three/webgpu', async (importOriginal) => {
     const actual = await importOriginal<typeof import('three/webgpu')>();
 
@@ -38,7 +41,35 @@ vi.mock('three/webgpu', async (importOriginal) => {
             this.setSize = vi.fn();
             this.setPixelRatio = vi.fn();
             this.render = vi.fn();
-            this.dispose = vi.fn();
+
+            /**
+             * enough of WebGLBackend for what matters, the extension cache and a
+             * dispose that ends the canvas's context through it
+             */
+            const cache: Record<string, unknown> = {};
+            this.backend = {
+                extensions: {
+                    extensions: cache,
+                    get: (name: string) => {
+                        if (cache[name] === undefined) {
+                            cache[name] =
+                                name === 'WEBGL_lose_context'
+                                    ? { loseContext }
+                                    : null;
+                        }
+                        return cache[name];
+                    },
+                },
+            };
+            this.dispose = vi.fn(() => {
+                /**
+                 * optional, so a test that stands in for "three moved its
+                 * internals" can remove them without this throwing instead
+                 */
+                const extension =
+                    this.backend?.extensions?.get('WEBGL_lose_context');
+                if (extension) extension.loseContext();
+            });
             this.init = vi.fn(async () => {
                 this.initialized = true;
             });
@@ -67,12 +98,15 @@ describe('DIVERenderPipeline', () => {
     let renderer: DIVERenderer;
     let scene: any;
     let camera: any;
+    let cameraComponent: any;
 
     beforeEach(() => {
         vi.clearAllMocks();
         scene = { isScene: true };
+        // the renderer is handed the component and pulls the camera out itself
         camera = { isCamera: true };
-        renderer = new DIVERenderer(scene, camera);
+        cameraComponent = { camera };
+        renderer = new DIVERenderer(scene, cameraComponent);
     });
 
     it('should instantiate with default settings', () => {
@@ -116,7 +150,7 @@ describe('DIVERenderPipeline', () => {
             shadowQuality: 'low' as const,
         };
 
-        renderer = new DIVERenderer(scene, camera, customSettings);
+        renderer = new DIVERenderer(scene, cameraComponent, customSettings);
         const instance = WebGPURenderer.mock.results.at(-1)?.value;
 
         expect(WebGPURenderer).toHaveBeenLastCalledWith(
@@ -129,7 +163,7 @@ describe('DIVERenderPipeline', () => {
     it('should create a renderer with a supplied canvas', () => {
         const canvas = document.createElement('canvas');
 
-        renderer = new DIVERenderer(scene, camera, { canvas });
+        renderer = new DIVERenderer(scene, cameraComponent, { canvas });
 
         expect(WebGPURenderer).toHaveBeenLastCalledWith(
             expect.objectContaining({ canvas }),
@@ -210,6 +244,32 @@ describe('DIVERenderPipeline', () => {
         instance.initialized = true;
         renderer.tick();
         expect(instance.render).toHaveBeenCalledWith(scene, camera);
+    });
+
+    it('should render through whichever component is active', () => {
+        const instance = WebGPURenderer.mock.results[0].value;
+        instance.initialized = true;
+        const other = { isCamera: true, other: true };
+
+        renderer.activeCamera = { camera: other } as never;
+        renderer.tick();
+
+        expect(instance.render).toHaveBeenCalledWith(scene, other);
+    });
+
+    it('should follow a component that swaps its camera', () => {
+        /**
+         * read per frame rather than unpacked once, so a component that replaces
+         * its camera is not left behind
+         */
+        const instance = WebGPURenderer.mock.results[0].value;
+        instance.initialized = true;
+        const replacement = { isCamera: true, replacement: true };
+
+        cameraComponent.camera = replacement;
+        renderer.tick();
+
+        expect(instance.render).toHaveBeenCalledWith(scene, replacement);
     });
 
     it('should handle resize', () => {
@@ -297,12 +357,65 @@ describe('DIVERenderPipeline', () => {
     });
 
     it('should map medium shadow quality to PCFShadowMap', () => {
-        renderer = new DIVERenderer(scene, camera, {
+        renderer = new DIVERenderer(scene, cameraComponent, {
             shadowQuality: 'medium',
         });
 
         const instance = WebGPURenderer.mock.results.at(-1)?.value;
 
         expect(instance.shadowMap.type).toBe(PCFShadowMap);
+    });
+
+    describe('the canvas after a dispose', () => {
+        it('should leave a supplied canvas usable', () => {
+            /**
+             * three's dispose ends the canvas's context, not just the renderer's,
+             * so every later renderer on that canvas gets the lost one back
+             */
+            const canvas = document.createElement('canvas');
+            renderer = new DIVERenderer(scene, cameraComponent, { canvas });
+
+            renderer.dispose();
+
+            expect(loseContext).not.toHaveBeenCalled();
+        });
+
+        it('should keep a canvas it created itself usable too', () => {
+            /**
+             * no reason to treat it differently, DIVEScene.dispose releases the GPU
+             * resources and ending the context only makes the canvas unusable
+             */
+            renderer = new DIVERenderer(scene, cameraComponent);
+
+            renderer.dispose();
+
+            expect(loseContext).not.toHaveBeenCalled();
+        });
+
+        it('should leave the previous canvas usable when swapping to another', () => {
+            const first = document.createElement('canvas');
+            renderer = new DIVERenderer(scene, cameraComponent, {
+                canvas: first,
+            });
+
+            renderer.setCanvas(document.createElement('canvas'));
+
+            expect(loseContext).not.toHaveBeenCalled();
+        });
+
+        it('should say so when it cannot reach the internals it needs', () => {
+            const canvas = document.createElement('canvas');
+            renderer = new DIVERenderer(scene, cameraComponent, { canvas });
+            // as a three version that moved them would look
+            delete (renderer.webgpurenderer as unknown as { backend?: unknown })
+                .backend;
+            console.warn = vi.fn();
+
+            renderer.dispose();
+
+            expect(console.warn).toHaveBeenCalledWith(
+                expect.stringContaining('end this canvas context'),
+            );
+        });
     });
 });

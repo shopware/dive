@@ -114,14 +114,27 @@ export class TransformTool
             return true;
         }
 
-        // Check if pointer is over gizmo UI elements
-        if (ctx.uiIntersects.length > 0) {
-            const isGizmoHit = ctx.uiIntersects.some((i) =>
-                this.isGizmoChild(i.object),
-            );
-            if (isGizmoHit) {
-                return true; // Block model hover when hovering gizmo
-            }
+        /**
+         * nothing to block while a button is held, the pointer is moving the camera
+         * checked before the intersects are read, reading them costs a raycast
+         */
+        if (
+            ctx.pointerPrimaryDown ||
+            ctx.pointerMiddleDown ||
+            ctx.pointerSecondaryDown
+        ) {
+            return;
+        }
+
+        /**
+         * intersects, not uiIntersects, TransformControls never sets a layer so
+         * the gizmo sits on the default one
+         */
+        const overGizmo = ctx.intersects.some((intersect) =>
+            this.isGizmoChild(intersect.object),
+        );
+        if (overGizmo) {
+            return true; // Block model hover when hovering gizmo
         }
     }
 
@@ -198,13 +211,14 @@ export class TransformTool
 
     private initGizmo(): TransformControls {
         const g = new TransformControls(
-            this._controller.object,
+            this._controller.object.camera,
             this._controller.domElement,
         );
         g.mode = 'translate';
 
         // Apply custom colors to gizmo axes
         const helper = g.getHelper() as unknown as Object3D;
+        helper.name = 'TransformControlsRoot';
         helper.traverse((child: Object3D) => {
             if (!('isMesh' in child)) return;
 

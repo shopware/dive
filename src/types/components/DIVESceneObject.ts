@@ -1,13 +1,14 @@
-import { DIVEGroup } from '../../components/group/Group.ts';
-import { DIVEModel } from '../../components/model/Model.ts';
-import { DIVEPrimitive } from '../../components/primitive/Primitive.ts';
-import { DIVELight } from './DIVELight.ts';
+import { DIVENode } from '../../engine/node/Node.ts';
 
 /**
- * Everything that can sit in the scene as a thing of its own.
+ * Anything the engine can put in the scene tree.
  *
- * Deliberately a plain union: the engine knows these classes, not what any of
- * them mean to a state. Picking one of them for a given entity type is the
- * state plugin's job and lives in its gateway.
+ * Every entity is a `DIVENode`: what it *is* comes from the components attached
+ * to it, not from its class. Lights, models, primitives and groups are all
+ * plain nodes with different component sets, and the state plugin's gateway is
+ * what decides which set an entity type gets.
+ *
+ * Kept as a named type because it reads better at the boundary and leaves room
+ * to narrow again later.
  */
-export type DIVESceneObject = DIVEModel | DIVEGroup | DIVEPrimitive | DIVELight;
+export type DIVESceneObject = DIVENode;

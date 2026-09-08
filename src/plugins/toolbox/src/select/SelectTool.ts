@@ -41,8 +41,11 @@ export class SelectTool implements Tool {
     public onDeactivate(): void {}
 
     public onClick(ctx: PointerContext): void {
-        // Only use modelIntersects (PRODUCT_LAYER), ignore gizmo/UI
-        const intersect = ctx.modelIntersects[0];
+        /**
+         * entities only, real geometry plus the proxies that stand in for what
+         * has none, while the gizmo is on the UI layer and stays unselectable
+         */
+        const intersect = ctx.entityIntersects[0];
         const selectable = findInterface<DIVESelectable>(
             intersect?.object,
             'isSelectable',

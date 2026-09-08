@@ -1,18 +1,25 @@
-import { Color } from 'three/webgpu';
+import { Color, Object3D } from 'three/webgpu';
+import { DIVEComponent } from '../../component/Component.ts';
+import { DIVENode } from '../../node/Node.ts';
 import { DIVEScene, DIVESceneDefaultSettings } from '../Scene.ts';
 
 const mock_GetSceneObject = vi.fn();
 const mock_ComputeSceneBB = vi.fn();
 
 let mock_FloorSetVisibility: ReturnType<typeof vi.fn>;
-let mock_GridSetVisibility: ReturnType<typeof vi.fn>;
 
-vi.mock('../../../components/root/Root', () => {
+vi.mock('../root/Root', () => {
     return {
         DIVERoot: vi.fn(function (this: any) {
             this.isObject3D = true;
             this.parent = null;
             this.dispatchEvent = vi.fn();
+            // real Object3Ds, so the dispose pass below can walk them
+            this.children = [];
+            this.traverse = vi.fn((callback: (object: unknown) => void) =>
+                callback(this),
+            );
+            this.dispose = vi.fn();
             this.getSceneObject = mock_GetSceneObject;
             this.computeSceneBB = mock_ComputeSceneBB;
             this.removeFromParent = vi.fn();
@@ -28,20 +35,6 @@ vi.mock('../../../components/root/Root', () => {
 vi.mock('../../renderer/Renderer', () => {
     return {
         DIVERenderPipeline: vi.fn(function (this: any) {}),
-    };
-});
-
-vi.mock('../../../components/grid/Grid', () => {
-    return {
-        DIVEGrid: vi.fn(function (this: any) {
-            this.isObject3D = true;
-            this.parent = null;
-            this.dispatchEvent = vi.fn();
-            mock_GridSetVisibility = vi.fn();
-            this.setVisibility = mock_GridSetVisibility;
-            this.removeFromParent = vi.fn();
-            return this;
-        }),
     };
 });
 
@@ -61,8 +54,9 @@ describe('DIVEScene', () => {
     });
 
     it('should add root and grid to scene', () => {
+        // the grid sits on its own node, so what the scene holds is that node
         expect(scene.children).toContain(scene.root);
-        expect(scene.children).toContain(scene.grid);
+        expect(scene.children).toContain(scene.grid.owner);
     });
 
     it('should set background color', () => {
@@ -86,11 +80,9 @@ describe('DIVEScene', () => {
         });
 
         it('should not create the grid by default', () => {
-            expect(scene.children).not.toContainEqual(
-                expect.objectContaining({
-                    setVisibility: expect.any(Function),
-                }),
-            );
+            expect(
+                scene.children.some((child) => child.name === 'DIVEGrid'),
+            ).toBe(false);
         });
 
         it('should have correct default settings exported', () => {
@@ -113,8 +105,9 @@ describe('DIVEScene', () => {
 
         it('should show the grid when displayGrid is true', () => {
             const customScene = new DIVEScene({ displayGrid: true });
-            expect(mock_GridSetVisibility).toHaveBeenCalledWith(true);
-            expect(customScene.grid).toBeDefined();
+
+            expect(customScene.grid.visible).toBe(true);
+            expect(customScene.children).toContain(customScene.grid.owner);
         });
 
         it('should set a custom background color from a number', () => {
@@ -140,7 +133,7 @@ describe('DIVEScene', () => {
                 backgroundColor: 0x0000ff,
             });
             expect(mock_FloorSetVisibility).toHaveBeenCalledWith(true);
-            expect(mock_GridSetVisibility).toHaveBeenCalledWith(true);
+            expect(customScene.grid.visible).toBe(true);
             expect(customScene.background).toBeInstanceOf(Color);
             expect((customScene.background as Color).getHex()).toBe(0x0000ff);
         });
@@ -150,7 +143,9 @@ describe('DIVEScene', () => {
             // floor is explicitly set
             expect(mock_FloorSetVisibility).toHaveBeenCalledWith(true);
             // grid is not created when displayGrid defaults to false
-            expect(mock_GridSetVisibility).not.toHaveBeenCalled();
+            expect(
+                customScene.children.some((child) => child.name === 'DIVEGrid'),
+            ).toBe(false);
             // background falls back to default (transparent -> null)
             expect(customScene.background).toBeNull();
         });
@@ -185,14 +180,59 @@ describe('DIVEScene', () => {
     });
 
     describe('dispose', () => {
+        it('should dispose every component in the scene', () => {
+            /**
+             * three frees a geometry, material or texture when its own dispose fires,
+             * and Renderer.dispose only drops its bookkeeping
+             */
+            const node = new DIVENode();
+            const component = node.addComponent(
+                new (class extends DIVEComponent {})(),
+            );
+            const disposed = vi.spyOn(component, 'dispose');
+            scene.add(node);
+
+            scene.dispose();
+
+            expect(disposed).toHaveBeenCalled();
+        });
+
+        it('should dispose a component sitting deeper in the tree', () => {
+            /**
+             * reached through the nodes, not by looking for components in the
+             * graph: a component is not in the graph, only what it contributed is
+             */
+            const deep = new DIVENode();
+            const component = deep.addComponent(
+                new (class extends DIVEComponent {})(),
+            );
+            const disposed = vi.spyOn(component, 'dispose');
+            const branch = new DIVENode();
+            branch.add(deep);
+            scene.add(branch);
+
+            scene.dispose();
+
+            expect(disposed).toHaveBeenCalled();
+        });
+
+        it('should dispose the grid', () => {
+            const disposed = vi.spyOn(scene.grid, 'dispose');
+
+            scene.dispose();
+
+            expect(disposed).toHaveBeenCalled();
+        });
+
         it('should remove root and grid from scene', () => {
+            const gridNode = scene.grid.owner;
             expect(scene.children).toContain(scene.root);
-            expect(scene.children).toContain(scene.grid);
+            expect(scene.children).toContain(gridNode);
 
             scene.dispose();
 
             expect(scene.children).not.toContain(scene.root);
-            expect(scene.children).not.toContain(scene.grid);
+            expect(scene.children).not.toContain(gridNode);
         });
     });
 });

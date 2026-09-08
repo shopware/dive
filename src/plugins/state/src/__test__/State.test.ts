@@ -5,18 +5,15 @@ vi.mock('three/webgpu', async (importOriginal) => {
 });
 
 import { State } from '../State.ts';
-import {
-    DIVE,
-    DIVEPerspectiveCamera,
-    DIVEScene,
-    DIVESettings,
-} from '@shopware-ag/dive';
+import { DIVE, DIVEScene, DIVESettings } from '@shopware-ag/dive';
 import { OrbitController } from '@shopware-ag/dive/orbitcontroller';
 import { Toolbox } from '@shopware-ag/dive/toolbox';
 import { getActionClass } from '../ActionRegistry.ts';
 import { Action } from '../actions/action.ts';
 import { type ActionDependencies } from '../../types/index.ts';
-import { type Vector3Like } from 'three/webgpu';
+import { PerspectiveCamera, type Vector3Like } from 'three/webgpu';
+import { DIVENode } from '../../../../engine/node/Node.ts';
+import { PerspectiveCameraComponent } from '../../../../components/camera/perspective/PerspectiveCameraComponent.ts';
 
 // Extend the global ActionTypes interface for our tests
 declare global {
@@ -169,44 +166,14 @@ vi.mock('../../toolbox/Toolbox.ts', () => ({
     })),
 }));
 vi.mock('../ActionRegistry');
-vi.mock(
-    import('../../../../engine/camera/PerspectiveCamera.ts'),
-    async (importOriginal) => {
-        const actual = await importOriginal();
-        const MockDIVEPerspectiveCamera = vi.fn().mockImplementation(() => ({
-            uuid: 'mock-perspective-camera-uuid',
-        }));
-
-        // Explicitly define static properties
-        (MockDIVEPerspectiveCamera as any).EDITOR_VIEW_LAYER_MASK = (
-            actual.DIVEPerspectiveCamera as any
-        ).EDITOR_VIEW_LAYER_MASK;
-        (MockDIVEPerspectiveCamera as any).LIVE_VIEW_LAYER_MASK = (
-            actual.DIVEPerspectiveCamera as any
-        ).LIVE_VIEW_LAYER_MASK;
-        (MockDIVEPerspectiveCamera as any).DEFAULT_UP = (
-            actual.DIVEPerspectiveCamera as any
-        ).DEFAULT_UP;
-        (MockDIVEPerspectiveCamera as any).DEFAULT_MATRIX_AUTO_UPDATE = (
-            actual.DIVEPerspectiveCamera as any
-        ).DEFAULT_MATRIX_AUTO_UPDATE;
-        (MockDIVEPerspectiveCamera as any).DEFAULT_MATRIX_WORLD_AUTO_UPDATE = (
-            actual.DIVEPerspectiveCamera as any
-        ).DEFAULT_MATRIX_WORLD_AUTO_UPDATE;
-
-        return {
-            ...actual,
-            DIVEPerspectiveCamera:
-                MockDIVEPerspectiveCamera as unknown as typeof actual.DIVEPerspectiveCamera,
-        };
-    },
-);
 describe('modules/state/State', () => {
     let state: State;
     let mockDive: DIVE;
     let mockController: OrbitController;
     let mockToolbox: Toolbox;
-    let mockCamera: DIVEPerspectiveCamera;
+    let mockCamera: PerspectiveCamera;
+    let cameraNode: DIVENode;
+    let cameraComponent: PerspectiveCameraComponent;
     let mockScene: DIVEScene;
 
     beforeEach(() => {
@@ -219,12 +186,20 @@ describe('modules/state/State', () => {
             displayAxes: false,
         };
 
-        mockCamera = new DIVEPerspectiveCamera();
+        /**
+         * a camera component on a node, the way the engine builds it: the
+         * controller moves the node, so it has to be attached
+         */
+        cameraNode = new DIVENode();
+        cameraComponent = cameraNode.addComponent(
+            new PerspectiveCameraComponent(),
+        );
+        mockCamera = cameraComponent.camera;
         mockScene = new DIVEScene();
         mockDive = new DIVE(diveSettings);
 
         const mockCanvas = document.createElement('canvas');
-        mockController = new OrbitController(mockCamera, mockCanvas);
+        mockController = new OrbitController(cameraComponent, mockCanvas);
 
         state = new State(mockDive, mockController);
     });
@@ -234,26 +209,42 @@ describe('modules/state/State', () => {
     });
 
     describe('Instance Management', () => {
-        it('should create a new instance with unique ID', () => {
-            expect(state.id).toBeDefined();
-            expect(typeof state.id).toBe('string');
-        });
-
-        it('should be able to get instance by ID', () => {
-            const foundState = State.get(state.id);
-            expect(foundState).toBe(state);
-        });
-
         it('should destroy instance correctly', () => {
             const result = state.destroyInstance();
             expect(result).toBe(true);
-            expect(State.get(state.id)).toBeUndefined();
         });
 
         it('should return false when destroying non-existent instance', () => {
             state.destroyInstance();
             const result = state.destroyInstance();
             expect(result).toBe(false);
+        });
+
+        it('should take down the modules it built', async () => {
+            /**
+             * they are this state's to take down because they are this state's to
+             * build: a Toolbox listens on the canvas and puts a gizmo in the
+             * scene from its constructor
+             */
+            const toolbox = await state['getToolbox']();
+            const animation = await state['getAnimationSystem']();
+
+            state.destroyInstance();
+            await Promise.resolve();
+
+            expect(toolbox.dispose).toHaveBeenCalledTimes(1);
+            expect(animation.dispose).toHaveBeenCalledTimes(1);
+        });
+
+        it('should take down a module that was still being imported', async () => {
+            // awaited rather than checked, so it is torn down when it arrives
+            const pending = state['getToolbox']();
+
+            state.destroyInstance();
+            const toolbox = await pending;
+            await Promise.resolve();
+
+            expect(toolbox.dispose).toHaveBeenCalledTimes(1);
         });
     });
 
@@ -504,27 +495,6 @@ describe('modules/state/State', () => {
         });
     });
 
-    describe('Static Methods', () => {
-        it('should get instance by ID', () => {
-            const foundState = State.get(state.id);
-            expect(foundState).toBe(state);
-        });
-
-        it('should get instance by registered object ID', () => {
-            const mockEntity = {
-                id: 'test-entity-id',
-            };
-            state['registered'].set('test-entity-id', mockEntity as any);
-            const foundState = State.get('test-entity-id');
-            expect(foundState).toBe(state);
-        });
-
-        it('should return undefined when instance not found', () => {
-            const foundState = State.get('non-existent-id');
-            expect(foundState).toBeUndefined();
-        });
-    });
-
     describe('Lazy Loading Module Getters', () => {
         beforeEach(() => {
             // Mock the dynamic imports for each module
@@ -549,14 +519,49 @@ describe('modules/state/State', () => {
             vi.mock('@shopware-ag/dive/animation', () => ({
                 AnimationSystem: vi.fn().mockImplementation(() => ({
                     uuid: 'mock-animation-system-uuid',
+                    dispose: vi.fn(),
                 })),
             }));
 
             vi.mock('@shopware-ag/dive/toolbox', () => ({
                 Toolbox: vi.fn().mockImplementation(() => ({
                     uuid: 'mock-toolbox-uuid',
+                    dispose: vi.fn(),
                 })),
             }));
+        });
+
+        it('should build each module once, even for callers in the same tick', async () => {
+            /**
+             * the promise is cached, not the instance, and before anything is
+             * awaited, or two actions fired back to back each build their own
+             */
+            const [first, second] = await Promise.all([
+                state['getToolbox'](),
+                state['getToolbox'](),
+            ]);
+
+            expect(first).toBe(second);
+        });
+
+        it('should build each of the other modules once as well', async () => {
+            const pairs = await Promise.all([
+                Promise.all([
+                    state['getMediaCreator'](),
+                    state['getMediaCreator'](),
+                ]),
+                Promise.all([state['getARSystem'](), state['getARSystem']()]),
+                Promise.all([
+                    state['getAssetExporter'](),
+                    state['getAssetExporter'](),
+                ]),
+                Promise.all([
+                    state['getAnimationSystem'](),
+                    state['getAnimationSystem'](),
+                ]),
+            ]);
+
+            pairs.forEach(([first, second]) => expect(first).toBe(second));
         });
 
         it('should lazy load MediaCreator when getMediaCreator is called', async () => {
@@ -734,15 +739,30 @@ describe('modules/state/State', () => {
         it('should pass the live registry rather than a copy of it', () => {
             const deps = performCapture();
 
-            expect(deps.registered).toBe(state['registered']);
+            expect(deps.registry).toBe(state['registry']);
 
             // the action sees entities that are registered afterwards
-            state['registered'].set('added-later', {
+            state['registry'].register({
                 id: 'added-later',
                 entityType: 'model',
             } as never);
 
-            expect(deps.registered.get('added-later')).toBeDefined();
+            expect(deps.registry.read('added-later')).toBeDefined();
+        });
+
+        it('should pass a dispatch that notifies without performing an action', () => {
+            const deps = performCapture();
+            const listener = vi.fn();
+            state.subscribe('UPDATE_OBJECT', listener);
+
+            deps.dispatch('UPDATE_OBJECT', { id: 'reported' } as never);
+
+            /**
+             * reaches subscribers, but never runs UpdateObjectAction — which is
+             * what an engine-to-state report needs
+             */
+            expect(listener).toHaveBeenCalledWith({ id: 'reported' });
+            expect(getActionClass).not.toHaveBeenCalledWith('UPDATE_OBJECT');
         });
 
         it('should expose the lazy module getters as functions', () => {
@@ -761,7 +781,7 @@ describe('modules/state/State', () => {
 
             expect(second).not.toBe(first);
             expect(second.gateway).toBe(first.gateway);
-            expect(second.registered).toBe(first.registered);
+            expect(second.registry).toBe(first.registry);
         });
 
         it('should scope the dependencies to the instance performing the action', () => {
@@ -770,7 +790,7 @@ describe('modules/state/State', () => {
                 displayAxes: false,
             });
             const otherController = new OrbitController(
-                new DIVEPerspectiveCamera(),
+                cameraComponent,
                 document.createElement('canvas'),
             );
             const otherState = new State(otherDive, otherController);
@@ -785,7 +805,7 @@ describe('modules/state/State', () => {
 
             expect(other.gateway).not.toBe(own.gateway);
             expect(other.controller).toBe(otherController);
-            expect(other.registered).not.toBe(own.registered);
+            expect(other.registry).not.toBe(own.registry);
         });
     });
 });

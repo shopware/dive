@@ -19,6 +19,8 @@ import {
 import { Color, MeshStandardMaterial, Vector3 } from 'three/webgpu';
 import { OrbitController } from '@shopware-ag/dive/orbitcontroller';
 import { type StateData } from '../../../../types/index.ts';
+import { EntityRegistry } from '../../../EntityRegistry.ts';
+import { makeCameraController } from '../../../__test__/actionDeps.ts';
 
 // SET_STATE builds these actions itself, so both the constructor arguments and
 // the executions are recorded. Payload and dependencies are handed to the
@@ -30,7 +32,14 @@ const { addExecute, deleteExecute, setParentExecute } = vi.hoisted(() => ({
     setParentExecute: vi.fn(),
 }));
 
-vi.mock('@shopware-ag/dive/state', () => ({
+vi.mock('@shopware-ag/dive/state', async () => ({
+    /**
+     * the real one, imported past the barrel this factory replaces, the round
+     * trip below has to actually move the camera
+     */
+    SetCameraTransformAction: (
+        await import('../../camera/setcameratransform.ts')
+    ).SetCameraTransformAction,
     AddObjectAction: vi.fn((payload, deps) => ({
         execute: () => addExecute(payload, deps),
     })),
@@ -42,30 +51,23 @@ vi.mock('@shopware-ag/dive/state', () => ({
     })),
 }));
 
-type MockDeps = { registered: Map<string, EntitySchema> };
+type MockDeps = { registry: EntityRegistry };
 
 /** Restores the default behaviour, since single tests override it. */
 const resetActionMocks = (): void => {
     addExecute
         .mockReset()
         .mockImplementation(async (entity: EntitySchema, deps: MockDeps) => {
-            deps.registered.set(entity.id, entity);
+            deps.registry.register(entity);
             // no scene object by default, tests that need one opt in
             return undefined;
         });
     deleteExecute
         .mockReset()
         .mockImplementation((entity: EntitySchema, deps: MockDeps) => {
-            deps.registered.delete(entity.id);
+            deps.registry.unregister(entity.id);
         });
     setParentExecute.mockReset();
-};
-
-const controllerState = {
-    azimuthalAngle: 0.1,
-    polarAngle: 0.2,
-    distance: 3,
-    quaternion: { x: 0, y: 0, z: 0, w: 1 },
 };
 
 const createDependencies = (
@@ -73,11 +75,11 @@ const createDependencies = (
 ): {
     gateway: EngineGateway;
     controller: OrbitController;
-    registered: Map<string, EntitySchema>;
+    registry: EntityRegistry;
+    dispatch: ReturnType<typeof vi.fn>;
 } => {
-    const registered = new Map<string, EntitySchema>(
-        alreadyRegistered.map((entity) => [entity.id, entity]),
-    );
+    const registry = new EntityRegistry();
+    alreadyRegistered.forEach((entity) => registry.register(entity));
 
     // what the scene ends up holding is the gateway's own business, tested
     // there; here it only matters that the state is handed over in one piece
@@ -85,12 +87,9 @@ const createDependencies = (
         applySceneSettings: vi.fn(),
     } as unknown as EngineGateway;
 
-    const controller = {
-        setState: vi.fn(),
-        getState: vi.fn(() => controllerState),
-    } as unknown as OrbitController;
+    const controller = makeCameraController();
 
-    return { gateway, controller, registered };
+    return { gateway, controller, registry, dispatch: vi.fn() };
 };
 
 /** Scene data with everything left out unless explicitly given. */
@@ -145,10 +144,14 @@ describe('SetStateAction', () => {
             expect(deps.gateway.applySceneSettings).toHaveBeenCalledWith(
                 expect.not.objectContaining({ name: expect.anything() }),
             );
-            expect(deps.controller.setState).not.toHaveBeenCalled();
+            expect(deps.controller.object.owner!.position).toMatchObject({
+                x: 0,
+                y: 0,
+                z: 0,
+            });
         });
 
-        it('should move the camera but keep the current orbit angles', async () => {
+        it('should move the camera node and its target', async () => {
             const deps = createDependencies();
             const userCamera = {
                 position: { x: 1, y: 2, z: 3 },
@@ -157,11 +160,14 @@ describe('SetStateAction', () => {
 
             await new SetStateAction(stateData({ userCamera }), deps).execute();
 
-            expect(deps.controller.setState).toHaveBeenCalledWith({
-                position: userCamera.position,
-                target: userCamera.target,
-                ...controllerState,
-            });
+            /**
+             * the orbit angles are derived from position and target, so there is
+             * nothing else for this action to preserve
+             */
+            expect(deps.controller.object.owner!.position).toMatchObject(
+                userCamera.position,
+            );
+            expect(deps.controller.target).toMatchObject(userCamera.target);
         });
 
         it('should warn that spotmarks are ignored', async () => {
@@ -455,13 +461,6 @@ describe('SetStateAction', () => {
         });
     });
 
-    const orbitState = {
-        azimuthalAngle: 0.1,
-        polarAngle: 0.2,
-        distance: 3,
-        quaternion: { x: 0, y: 0, z: 0, w: 1 },
-    };
-
     /**
      * A DIVE instance whose setters actually write back, so what SET_STATE applies
      * is what a following GET_STATE reads.
@@ -472,7 +471,8 @@ describe('SetStateAction', () => {
         gateway: EngineGateway;
         controller: OrbitController;
         state: State;
-        registered: Map<string, EntitySchema>;
+        registry: EntityRegistry;
+        dispatch: ReturnType<typeof vi.fn>;
         scene: { name: string; background: Color };
         floor: { visible: boolean; material: MeshStandardMaterial };
     } => {
@@ -497,22 +497,14 @@ describe('SetStateAction', () => {
             root: { floor },
         } as unknown as DIVEScene & { name: string; background: Color };
 
-        const controller = {
-            object: { position: new Vector3(0, 0, 0) },
-            target: new Vector3(0, 0, 0),
-            getState: vi.fn(() => orbitState),
-            setState: vi.fn((next: { position: Vector3; target: Vector3 }) => {
-                controller.object.position = next.position;
-                controller.target = next.target;
-            }),
-        } as unknown as OrbitController & {
-            object: { position: Vector3 };
-            target: Vector3;
-        };
+        /**
+         * a real node and camera component, so what SET_STATE writes is what
+         * GET_STATE reads back without a stub in between deciding it
+         */
+        const controller = makeCameraController();
 
-        const registered = new Map<string, EntitySchema>(
-            entities.map((entity) => [entity.id, entity]),
-        );
+        const registry = new EntityRegistry();
+        entities.forEach((entity) => registry.register(entity));
 
         // stands in for the real action dispatch: ADD_OBJECT registers,
         // DELETE_OBJECT unregisters, both without touching a real scene graph
@@ -520,11 +512,11 @@ describe('SetStateAction', () => {
             performAction: vi.fn(
                 async (action: string, payload: EntitySchema) => {
                     if (action === 'ADD_OBJECT') {
-                        registered.set(payload.id, payload);
+                        registry.register(payload);
                         return { name: payload.id };
                     }
                     if (action === 'DELETE_OBJECT')
-                        registered.delete(payload.id);
+                        registry.unregister(payload.id);
                     return undefined;
                 },
             ),
@@ -532,9 +524,17 @@ describe('SetStateAction', () => {
 
         // the real gateway, so the round trip goes through the same read and
         // write path the application uses
-        const gateway = new EngineGateway({ scene } as unknown as DIVE, state);
+        const gateway = new EngineGateway({ scene } as unknown as DIVE);
 
-        return { gateway, controller, state, registered, scene, floor };
+        return {
+            gateway,
+            controller,
+            state,
+            registry,
+            scene,
+            floor,
+            dispatch: vi.fn(),
+        };
     };
 
     const entity = <T>(id: string, entityType: string): T =>
@@ -564,7 +564,7 @@ describe('SetStateAction', () => {
             source.scene.background = new Color('#123456');
             source.floor.visible = true;
             source.floor.material.color = new Color('#abcdef');
-            source.controller.object.position.set(1, 2, 3);
+            source.controller.object.owner!.position.set(1, 2, 3);
             source.controller.target.set(4, 5, 6);
 
             const exported = await new GetStateAction(
@@ -600,7 +600,12 @@ describe('SetStateAction', () => {
             const target = createInstance();
             await new SetStateAction(exported, target).execute();
 
-            expect([...target.registered.keys()].sort()).toEqual([
+            expect(
+                target.registry
+                    .read()
+                    .map((e) => e.schema.id)
+                    .sort(),
+            ).toEqual([
                 'camera-1',
                 'group-1',
                 'light-1',
@@ -623,7 +628,9 @@ describe('SetStateAction', () => {
             ]);
             await new SetStateAction(exported, target).execute();
 
-            expect([...target.registered.keys()]).toEqual(['new']);
+            expect(target.registry.read().map((e) => e.schema.id)).toEqual([
+                'new',
+            ]);
         });
 
         it('should stay stable when applied twice', async () => {

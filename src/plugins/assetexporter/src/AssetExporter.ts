@@ -6,6 +6,7 @@ import type { USDZExporterOptions as THREEUSDZExporterOptions } from 'three/exam
 import { type FileType } from '../../../types/file/FileTypes.ts';
 import { FileTypeError } from '../../../error/file-type/file-type-error.ts';
 import { ParseError } from '../../../error/parse/parse-error.ts';
+import { contributesToBounds } from '../../../helpers/contributesToBounds/contributesToBounds.ts';
 
 export type USDZExporterOptions = THREEUSDZExporterOptions & {
     ar?: {
@@ -28,6 +29,16 @@ export type FileTypeToExporterOptions = {
     igs: undefined;
 };
 
+/**
+ * What a caller does not get to decide.
+ *
+ * The pruning below works by hiding, and both exporters skip hidden objects only
+ * while `onlyVisible` is on. Passing it as `false` would therefore serialize
+ * exactly what was just hidden -- the ground plane, gizmo handles, helper lines --
+ * so the option is overridden rather than merged.
+ */
+const ENFORCED_OPTIONS = { onlyVisible: true } as const;
+
 export class AssetExporter {
     private _gltfExporter: GLTFExporter;
     private _usdzExporter: USDZExporter;
@@ -45,6 +56,24 @@ export class AssetExporter {
         // ensure normals are computed before export
         this._computeNormals(object);
 
+        /**
+         * both exporters honour onlyVisible, so hiding everything that is not
+         * real geometry keeps it out of the file
+         */
+        const restore = this._hideNonProductGeometry(object);
+
+        try {
+            return await this._exportByType(object, type, options);
+        } finally {
+            restore();
+        }
+    }
+
+    private async _exportByType<T extends FileType>(
+        object: Object3D,
+        type: T,
+        options?: FileTypeToExporterOptions[T],
+    ): Promise<ArrayBuffer> {
         switch (type) {
             case 'glb': {
                 return this._exportGlb(object, options);
@@ -71,11 +100,9 @@ export class AssetExporter {
     ): Promise<ArrayBuffer> {
         try {
             const result = await this._gltfExporter.parseAsync(object, {
-                animations:
-                    object.animations.length > 0
-                        ? object.animations
-                        : undefined,
+                animations: object.animations || [],
                 ...options,
+                ...ENFORCED_OPTIONS,
                 binary: true,
             });
             if (result instanceof ArrayBuffer) {
@@ -98,6 +125,7 @@ export class AssetExporter {
             const json = await this._gltfExporter.parseAsync(object, {
                 animations: object.animations || [],
                 ...options,
+                ...ENFORCED_OPTIONS,
                 binary: false,
             });
             const text = JSON.stringify(json);
@@ -117,7 +145,10 @@ export class AssetExporter {
         options?: USDZExporterOptions,
     ): Promise<ArrayBuffer> {
         try {
-            const result = await this._usdzExporter.parseAsync(object, options);
+            const result = await this._usdzExporter.parseAsync(object, {
+                ...options,
+                ...ENFORCED_OPTIONS,
+            });
             return result.buffer as ArrayBuffer;
         } catch (error) {
             if (error instanceof ParseError) {
@@ -125,6 +156,39 @@ export class AssetExporter {
             }
             throw new ParseError('Failed to export USDZ', error);
         }
+    }
+
+    /**
+     * Temporarily hides everything drawable that does not count as real geometry.
+     *
+     * Anything carrying a geometry, not just a `Mesh`: a group's link lines and a
+     * bounding box helper are `LineSegments`, and a class-based test left them in
+     * the file. The layer decides, so product lines and points are exported and
+     * helper meshes are not.
+     *
+     * @returns A function that restores the previous visibility.
+     */
+    private _hideNonProductGeometry(object: Object3D): () => void {
+        const hidden: Object3D[] = [];
+
+        object.traverse((child) => {
+            /**
+             * only what draws carries geometry, and visible is inherited, so
+             * hiding a container would take its whole subtree with it
+             */
+            if (!('geometry' in child)) return;
+            if (contributesToBounds(child)) return;
+            if (!child.visible) return;
+
+            child.visible = false;
+            hidden.push(child);
+        });
+
+        return () => {
+            hidden.forEach((child) => {
+                child.visible = true;
+            });
+        };
     }
 
     private _computeNormals(object: Object3D): void {

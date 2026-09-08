@@ -1,8 +1,18 @@
 import { EngineGateway } from '../EngineGateway.ts';
 import {
     detachTransformControls,
+    AmbientLightComponent,
+    BoundingBoxComponent,
+    DirectionalLightComponent,
+    DIVELightComponent,
+    DIVENode,
     DIVERoot,
     DIVEGeometryType,
+    HemisphereLightComponent,
+    MultiLineComponent,
+    MeshComponent,
+    PointLightComponent,
+    PrimitiveComponent,
     type DIVE,
 } from '@shopware-ag/dive';
 import { type State } from '../State.ts';
@@ -18,276 +28,70 @@ import {
 } from '../../types/index.ts';
 import { Color, Object3D, Vector3 } from 'three/webgpu';
 
-vi.mock('three/webgpu', async () => {
-    const actual =
+/**
+ * `three/webgpu` is deliberately NOT mocked. DIVENode and DIVEComponent both
+ * rely on real Object3D behaviour -- the `childadded`/`childremoved` and
+ * `added`/`removed` events are what keeps the component registry and the tick
+ * enrolment in sync -- and a hand-rolled stand-in with `addEventListener:
+ * vi.fn()` silently drops all of it.
+ */
+
+/**
+ * The asset loader is mocked, not the mesh component: model entities now use the
+ * real `MeshComponent`, and only the network fetch has to be replaced.
+ */
+const loadAsset = vi.fn(async () => {
+    const { Object3D, Mesh, BoxGeometry, MeshStandardMaterial } =
         await vi.importActual<typeof import('three/webgpu')>('three/webgpu');
+    const gltf = new Object3D();
+    gltf.add(new Mesh(new BoxGeometry(1, 1, 1), new MeshStandardMaterial()));
+    return gltf;
+});
 
-    const Object3D = vi.fn(function (this: any) {
-        this.isObject3D = true;
-        this.children = [];
-        this.parent = null;
-        this.name = '';
-        this.userData = {};
-        this.visible = true;
-        this.layers = { mask: 0 };
-        this.position = new actual.Vector3();
-        this.rotation = new actual.Euler();
-        this.quaternion = new actual.Quaternion();
-        this.scale = new actual.Vector3(1, 1, 1);
-        this.add = vi.fn((...objects: any[]) => {
-            objects.forEach((object) => {
-                this.children.push(object);
-                if (object && typeof object === 'object') {
-                    object.parent = this;
-                }
-            });
-            return this;
-        });
-        this.attach = vi.fn((object: any) => {
-            this.children.push(object);
-            if (object && typeof object === 'object') {
-                object.parent = this;
-            }
-            return this;
-        });
-        this.remove = vi.fn((object: any) => {
-            this.children = this.children.filter(
-                (child: any) => child !== object,
-            );
-            if (object && typeof object === 'object') {
-                object.parent = null;
-            }
-            return this;
-        });
-        this.removeFromParent = vi.fn(() => {
-            this.parent?.remove?.(this);
-        });
-        this.dispatchEvent = vi.fn();
-        this.addEventListener = vi.fn();
-        this.removeEventListener = vi.fn();
-        this.updateWorldMatrix = vi.fn();
-        this.applyMatrix4 = vi.fn();
-        this.worldToLocal = vi.fn((vector: any) => vector);
-        this.traverse = vi.fn((callback: (object: any) => void) => {
-            callback(this);
-            this.children.forEach((child: any) => {
-                if (child?.traverse && child !== this) {
-                    child.traverse(callback);
-                } else {
-                    callback(child);
-                }
-            });
-        });
+vi.mock('@shopware-ag/dive/assetloader', () => ({
+    AssetLoader: vi.fn(function (this: Record<string, unknown>) {
+        this.load = loadAsset;
         return this;
-    });
+    }),
+}));
 
-    return {
-        ...actual,
-        Object3D,
-    };
-});
+/**
+ * The component mocks below all build on a REAL `Object3D` rather than a
+ * hand-rolled object literal. DIVENode keeps its component registry and its tick
+ * enrolment in sync through three's own `childadded`/`added` events, and
+ * `findEntity` walks the tree with a real `traverse`, so a stand-in without that
+ * machinery silently breaks both. The spies are kept so assertions can still
+ * observe which setters the gateway called.
+ */
+/**
+ * Puts an object into the gateway's entity registry by hand.
+ *
+ * For the cases `addEntity` cannot produce -- a camera creates no scene object,
+ * an unknown entity type is rejected -- but where the gateway still has to cope
+ * with finding something under that id.
+ */
+const registerRaw = (
+    gateway: EngineGateway,
+    id: string,
+    object: Object3D,
+): void => {
+    object.userData.id = id;
+    gateway.root.add(object);
+    (gateway as unknown as { _entities: Map<string, Object3D> })._entities.set(
+        id,
+        object,
+    );
+};
 
-vi.mock('../../../../components/floor/Floor', () => {
-    return {
-        DIVEFloor: vi.fn(function (this: any) {
-            this.isDIVEFloor = true;
-            this.isObject3D = true;
-            this.parent = null;
-            this.dispatchEvent = vi.fn();
-            this.addEventListener = vi.fn();
-            this.removeEventListener = vi.fn();
-            this.removeFromParent = vi.fn();
-            this.userData = {
-                id: undefined,
-            };
-            return this;
-        }),
-    };
-});
-
-vi.mock('../../../../components/grid/Grid', () => {
-    return {
-        DIVEGrid: vi.fn(function (this: any) {
-            this.isObject3D = true;
-            this.parent = null;
-            this.dispatchEvent = vi.fn();
-            this.addEventListener = vi.fn();
-            this.removeEventListener = vi.fn();
-            this.removeFromParent = vi.fn();
-            this.updateMatrixWorld = vi.fn();
-            return this;
-        }),
-    };
-});
-
-vi.mock('../../../../components/light/AmbientLight', () => {
-    return {
-        DIVEAmbientLight: vi.fn(function (this: any) {
-            this.isObject3D = true;
-            this.name = '';
-            this.parent = null;
-            this.dispatchEvent = vi.fn();
-            this.addEventListener = vi.fn();
-            this.removeEventListener = vi.fn();
-            this.position = new Vector3();
-            this.attach = vi.fn();
-            this.applyMatrix4 = vi.fn();
-            this.updateWorldMatrix = vi.fn();
-            this.children = [];
-            this.setIntensity = vi.fn();
-            this.setEnabled = vi.fn();
-            this.setColor = vi.fn();
-            this.userData = {
-                id: undefined,
-            };
-            this.removeFromParent = vi.fn();
-            return this;
-        }),
-    };
-});
-
-vi.mock('../../../../components/light/PointLight', () => {
-    return {
-        DIVEPointLight: vi.fn(function (this: any) {
-            this.isObject3D = true;
-            this.name = '';
-            this.parent = null;
-            this.dispatchEvent = vi.fn();
-            this.addEventListener = vi.fn();
-            this.removeEventListener = vi.fn();
-            this.position = new Vector3();
-            this.attach = vi.fn();
-            this.applyMatrix4 = vi.fn();
-            this.updateWorldMatrix = vi.fn();
-            this.children = [];
-            this.setIntensity = vi.fn();
-            this.setEnabled = vi.fn();
-            this.setColor = vi.fn();
-            this.userData = {
-                id: undefined,
-            };
-            this.removeFromParent = vi.fn();
-            return this;
-        }),
-    };
-});
-
-vi.mock('../../../../components/light/SceneLight', () => {
-    return {
-        DIVESceneLight: vi.fn(function (this: any) {
-            this.isObject3D = true;
-            this.name = '';
-            this.parent = null;
-            this.dispatchEvent = vi.fn();
-            this.addEventListener = vi.fn();
-            this.removeEventListener = vi.fn();
-            this.position = new Vector3();
-            this.attach = vi.fn();
-            this.applyMatrix4 = vi.fn();
-            this.updateWorldMatrix = vi.fn();
-            this.children = [];
-            this.setIntensity = vi.fn();
-            this.setEnabled = vi.fn();
-            this.setColor = vi.fn();
-            this.userData = {
-                id: undefined,
-            };
-            this.removeFromParent = vi.fn();
-            return this;
-        }),
-    };
-});
-
-vi.mock('../../../../components/model/Model', () => {
-    return {
-        DIVEModel: vi.fn(function (this: any) {
-            this.isObject3D = true;
-            this.parent = null;
-            this.dispatchEvent = vi.fn();
-            this.addEventListener = vi.fn();
-            this.removeEventListener = vi.fn();
-            this.userData = {
-                id: undefined,
-            };
-            this.attach = vi.fn();
-            this.applyMatrix4 = vi.fn();
-            this.updateWorldMatrix = vi.fn();
-            this.children = [];
-            this.setFromGLTF = vi.fn();
-            this.setPosition = vi.fn();
-            this.setRotation = vi.fn();
-            this.setScale = vi.fn();
-            this.setVisibility = vi.fn();
-            this.setMaterial = vi.fn();
-            this.placeOnFloor = vi.fn();
-            this.removeFromParent = vi.fn();
-            this.position = new Vector3();
-            this.setFromURL = vi.fn().mockResolvedValue(void 0);
-            return this;
-        }),
-    };
-});
-
-vi.mock('../../../../components/primitive/Primitive', () => {
-    return {
-        DIVEPrimitive: vi.fn(function (this: any) {
-            this.isObject3D = true;
-            this.parent = null;
-            this.dispatchEvent = vi.fn();
-            this.addEventListener = vi.fn();
-            this.removeEventListener = vi.fn();
-            this.userData = {
-                id: undefined,
-            };
-            this.attach = vi.fn();
-            this.applyMatrix4 = vi.fn();
-            this.updateWorldMatrix = vi.fn();
-            this.children = [];
-            this.setGeometry = vi.fn();
-            this.setMaterial = vi.fn();
-            this.setPosition = vi.fn();
-            this.setRotation = vi.fn();
-            this.setScale = vi.fn();
-            this.setVisibility = vi.fn();
-            this.placeOnFloor = vi.fn();
-            this.removeFromParent = vi.fn();
-            this.position = new Vector3();
-            return this;
-        }),
-    };
-});
-
-vi.mock('../../../../components/group/Group', () => {
-    return {
-        DIVEGroup: vi.fn(function (this: any) {
-            this.isDIVEGroup = true;
-            this.isObject3D = true;
-            this.parent = null;
-            this.dispatchEvent = vi.fn();
-            this.addEventListener = vi.fn();
-            this.removeEventListener = vi.fn();
-            this.userData = {
-                id: undefined,
-            };
-            this.attach = vi.fn();
-            this.applyMatrix4 = vi.fn();
-            this.updateWorldMatrix = vi.fn();
-            this.children = [];
-            this.setGeometry = vi.fn();
-            this.setMaterial = vi.fn();
-            this.setPosition = vi.fn();
-            this.setRotation = vi.fn();
-            this.setScale = vi.fn();
-            this.setVisibility = vi.fn();
-            this.setLinesVisibility = vi.fn();
-            this.placeOnFloor = vi.fn();
-            this.removeFromParent = vi.fn();
-            this.position = new Vector3();
-            this.members = [];
-            return this;
-        }),
-    };
-});
+/** Compares a three vector/euler by component, sidestepping -0 vs 0. */
+const expectVec = (
+    actual: { x: number; y: number; z: number } | undefined,
+    expected: { x: number; y: number; z: number },
+): void => {
+    expect(actual?.x).toBeCloseTo(expected.x);
+    expect(actual?.y).toBeCloseTo(expected.y);
+    expect(actual?.z).toBeCloseTo(expected.z);
+};
 
 const spyConsoleWarn = vi.spyOn(console, 'warn').mockImplementation(() => {});
 /**
@@ -309,6 +113,22 @@ const findEntity = (
 ): MockedSceneObject | undefined =>
     gateway.findEntity(entity) as MockedSceneObject | undefined;
 
+/**
+ * Creates an entity and applies its data, which is what `ADD_OBJECT` does.
+ *
+ * The gateway splits the two so a listener can be attached in between; these
+ * tests only care about the result, so they do both at once.
+ */
+const addEntity = async (
+    gateway: EngineGateway,
+    entity: EntitySchema,
+): Promise<DIVESceneObject | undefined> => {
+    const node = gateway.createEntity(entity);
+    if (node) await gateway.applyEntity(node, entity);
+
+    return node;
+};
+
 const makeGateway = (): EngineGateway => {
     const scene = Object.assign(new Object3D(), {
         root: new DIVERoot(),
@@ -317,8 +137,7 @@ const makeGateway = (): EngineGateway => {
         setBackground: vi.fn(),
     });
     const engine = { scene } as unknown as DIVE;
-    const state = { performAction: vi.fn() } as unknown as State;
-    return new EngineGateway(engine, state);
+    return new EngineGateway(engine);
 };
 
 describe('plugins/state/EngineGateway', () => {
@@ -331,18 +150,35 @@ describe('plugins/state/EngineGateway', () => {
     });
 
     describe('findEntity', () => {
-        it('should find object by id', () => {
-            const mockObject = new Object3D();
-            mockObject.userData = { id: 'test-id' };
-
+        it('should find an entity the gateway created', async () => {
             const gateway = makeGateway();
-            gateway.root.add(mockObject);
+            await addEntity(gateway, {
+                id: 'test-id',
+                entityType: 'group',
+                name: 'G',
+                visible: true,
+            } as GroupSchema);
 
             const found = findEntity(gateway, {
                 id: 'test-id',
-                entityType: 'model',
+                entityType: 'group',
             });
             expect(found).toBeDefined();
+        });
+
+        it('should not find an object that was added to the tree directly', () => {
+            /**
+             * findEntity is registry-backed rather than a tree walk, so it only
+             * reports things the gateway itself turned into entities
+             */
+            const gateway = makeGateway();
+            const stranger = new Object3D();
+            stranger.userData.id = 'smuggled';
+            gateway.root.add(stranger);
+
+            expect(
+                findEntity(gateway, { id: 'smuggled', entityType: 'model' }),
+            ).toBeUndefined();
         });
 
         it('should return undefined for non-existent id', () => {
@@ -354,20 +190,20 @@ describe('plugins/state/EngineGateway', () => {
             expect(found).toBeUndefined();
         });
 
-        it('should get scene object by id', () => {
+        it('should get scene object by id', async () => {
             const gateway = makeGateway();
-            const mockObject = {
-                isObject3D: true,
-                userData: {
-                    id: 'test-id',
-                },
-            };
-            gateway.root.add(mockObject as any);
+            const added = await addEntity(gateway, {
+                id: 'test-id',
+                entityType: 'group',
+                name: 'G',
+                visible: true,
+            } as GroupSchema);
+
             const result = findEntity(gateway, {
                 id: 'test-id',
-                entityType: 'model',
+                entityType: 'group',
             });
-            expect(result).toBe(mockObject);
+            expect(result).toBe(added);
         });
 
         it('should return undefined when object is not found', () => {
@@ -377,132 +213,6 @@ describe('plugins/state/EngineGateway', () => {
                 entityType: 'model',
             });
             expect(result).toBeUndefined();
-        });
-
-        it('should stop traversing when object is found', () => {
-            const gateway = makeGateway();
-            const mockObject1 = {
-                isObject3D: true,
-                userData: {
-                    id: 'test-id',
-                },
-                id: 'obj1',
-                uuid: 'uuid1',
-                name: 'obj1',
-                type: 'Object3D',
-                parent: null,
-                children: [],
-                up: { x: 0, y: 1, z: 0 },
-                position: { x: 0, y: 0, z: 0 },
-                rotation: { x: 0, y: 0, z: 0 },
-                scale: { x: 1, y: 1, z: 1 },
-                matrix: { elements: new Float32Array(16) },
-                matrixWorld: { elements: new Float32Array(16) },
-                matrixAutoUpdate: true,
-                matrixWorldNeedsUpdate: false,
-                layers: { mask: 1 },
-                visible: true,
-                castShadow: false,
-                receiveShadow: false,
-                frustumCulled: true,
-                renderOrder: 0,
-                animations: [],
-                updateMatrix: vi.fn(),
-                updateMatrixWorld: vi.fn(),
-                updateWorldMatrix: vi.fn(),
-                traverse: vi.fn(),
-                traverseVisible: vi.fn(),
-                traverseAncestors: vi.fn(),
-                addEventListener: vi.fn(),
-                hasEventListener: vi.fn(),
-                removeEventListener: vi.fn(),
-                dispatchEvent: vi.fn(),
-            };
-            const mockObject2 = { ...mockObject1, id: 'obj2', uuid: 'uuid2' };
-
-            let traverseCount = 0;
-            gateway.root.traverse = vi.fn((callback) => {
-                traverseCount++;
-                callback(mockObject1 as any);
-                callback(mockObject2 as any);
-            });
-
-            const result = findEntity(gateway, {
-                id: 'test-id',
-                entityType: 'model',
-            });
-            expect(result).toBe(mockObject1);
-            expect(traverseCount).toBe(1);
-        });
-    });
-
-    describe('addEntity', () => {
-        it('should add different types of lights', async () => {
-            const sceneLightData: LightSchema = {
-                id: 'scene-light-1',
-                entityType: 'light',
-                type: 'scene',
-                name: 'Test Scene Light',
-                visible: true,
-                position: { x: 1, y: 2, z: 3 },
-                intensity: 1.0,
-                enabled: true,
-                color: '#ffffff',
-            };
-
-            const ambientLightData: LightSchema = {
-                id: 'ambient-light-1',
-                entityType: 'light',
-                type: 'ambient',
-                name: 'Test Ambient Light',
-                visible: true,
-                position: { x: 1, y: 2, z: 3 },
-                intensity: 1.0,
-                enabled: true,
-                color: '#ffffff',
-            };
-
-            const pointLightData: LightSchema = {
-                id: 'point-light-1',
-                entityType: 'light',
-                type: 'point',
-                name: 'Test Point Light',
-                visible: true,
-                position: { x: 1, y: 2, z: 3 },
-                intensity: 1.0,
-                enabled: true,
-                color: '#ffffff',
-            };
-
-            const unknownLightData: LightSchema = {
-                id: 'unknown-light-1',
-                entityType: 'light',
-                type: 'unknown',
-                name: 'Test Unknown Light',
-                visible: true,
-                position: { x: 1, y: 2, z: 3 },
-                intensity: 1.0,
-                enabled: true,
-                color: '#ffffff',
-            } as any;
-
-            const gateway = makeGateway();
-            await gateway.addEntity(sceneLightData);
-            await gateway.addEntity(ambientLightData);
-            await gateway.addEntity(pointLightData);
-            await expect(gateway.addEntity(unknownLightData)).rejects.toThrow(
-                'EngineGateway.addEntity: Unknown light type: unknown',
-            );
-
-            const sceneLight = findEntity(gateway, sceneLightData);
-            const ambientLight = findEntity(gateway, ambientLightData);
-            const pointLight = findEntity(gateway, pointLightData);
-            const unknownLight = findEntity(gateway, unknownLightData);
-
-            expect(sceneLight).toBeDefined();
-            expect(ambientLight).toBeDefined();
-            expect(pointLight).toBeDefined();
-            expect(unknownLight).toBeUndefined();
         });
 
         it('should update all light properties', async () => {
@@ -520,7 +230,7 @@ describe('plugins/state/EngineGateway', () => {
             };
 
             const gateway = makeGateway();
-            await gateway.addEntity(lightData);
+            await addEntity(gateway, lightData);
             expect(spyConsoleWarn).not.toHaveBeenCalled();
 
             const light = findEntity(gateway, lightData);
@@ -529,10 +239,103 @@ describe('plugins/state/EngineGateway', () => {
             expect(light?.position.x).toBe(1);
             expect(light?.position.y).toBe(2);
             expect(light?.position.z).toBe(3);
-            expect((light as any).setIntensity).toHaveBeenCalledWith(1.0);
-            expect((light as any).setEnabled).toHaveBeenCalledWith(true);
-            expect((light as any).setColor).toHaveBeenCalled();
             expect(light?.visible).toBe(true);
+
+            /**
+             * a point light node carries one light component, and the schema
+             * values land on the three light it owns
+             */
+            const component = (light as DIVENode).requireComponent(
+                PointLightComponent,
+            );
+            expect(component.light.intensity).toBe(1.0);
+            expect(component.light.visible).toBe(true);
+            expect((component.light.color as Color).getHexString()).toBe(
+                'ffffff',
+            );
+        });
+
+        it('should compose a scene light from two light components', () => {
+            const gateway = makeGateway();
+            const node = gateway['_instantiate']({
+                id: 'light-scene',
+                entityType: 'light',
+                type: 'scene',
+                name: 'Scene Light',
+                visible: true,
+                intensity: 1,
+                enabled: true,
+                color: '#ffffff',
+            } as LightSchema) as DIVENode;
+
+            expect(node.getComponents(DIVELightComponent)).toHaveLength(2);
+            expect(node.getComponent(HemisphereLightComponent)).toBeDefined();
+            expect(node.getComponent(DirectionalLightComponent)).toBeDefined();
+        });
+
+        it('should give an ambient light one ambient component', async () => {
+            // the one light type no test had reached through the gateway
+            const lightData: LightSchema = {
+                id: 'light-ambient',
+                entityType: 'light',
+                type: 'ambient',
+                name: 'Ambient',
+                visible: true,
+                position: { x: 0, y: 0, z: 0 },
+                intensity: 0.5,
+                enabled: true,
+                color: '#ff0000',
+                parentId: null,
+            };
+
+            const gateway = makeGateway();
+            await addEntity(gateway, lightData);
+            expect(spyConsoleWarn).not.toHaveBeenCalled();
+
+            const node = findEntity(gateway, lightData) as DIVENode;
+            expect(node.getComponents(DIVELightComponent)).toHaveLength(1);
+
+            const component = node.requireComponent(AmbientLightComponent);
+            expect(component.light.intensity).toBe(0.5);
+            expect((component.light.color as Color).getHexString()).toBe(
+                'ff0000',
+            );
+        });
+
+        it('should apply intensity to every light component with its own factor', () => {
+            const gateway = makeGateway();
+            const node = gateway['_instantiate']({
+                id: 'light-scene',
+                entityType: 'light',
+                type: 'scene',
+            } as LightSchema) as DIVENode;
+
+            gateway['_applyLight'](node, {
+                id: 'light-scene',
+                entityType: 'light',
+                intensity: 2,
+            } as never);
+
+            // the factors that used to be hard-coded in DIVESceneLight
+            expect(
+                node.requireComponent(HemisphereLightComponent).light.intensity,
+            ).toBe(4);
+            expect(
+                node.requireComponent(DirectionalLightComponent).light
+                    .intensity,
+            ).toBe(6);
+        });
+
+        it('should throw when the light type is unknown', () => {
+            const gateway = makeGateway();
+
+            expect(() =>
+                gateway['_instantiate']({
+                    id: 'light-bogus',
+                    entityType: 'light',
+                    type: 'sunbeam',
+                } as unknown as LightSchema),
+            ).toThrow(/Unknown light type/);
         });
 
         it('should update all model properties', async () => {
@@ -551,17 +354,56 @@ describe('plugins/state/EngineGateway', () => {
             };
 
             const gateway = makeGateway();
-            await gateway.addEntity(modelData);
+            await addEntity(gateway, modelData);
             const model = findEntity(gateway, modelData);
             expect(model).toBeDefined();
             expect(model?.name).toBe('Test Model');
-            expect(model?.setPosition).toHaveBeenCalledWith(modelData.position);
-            expect(model?.setRotation).toHaveBeenCalledWith(modelData.rotation);
-            expect(model?.setScale).toHaveBeenCalledWith(modelData.scale);
-            expect(model?.setVisibility).toHaveBeenCalledWith(
-                modelData.visible,
-            );
-            expect(model?.setMaterial).toHaveBeenCalledWith(modelData.material);
+            expectVec(model?.position, modelData.position);
+            expectVec(model?.rotation, modelData.rotation);
+            expectVec(model?.scale, modelData.scale);
+            expect(model?.visible).toBe(modelData.visible);
+            expect(
+                model
+                    ?.requireComponent(MeshComponent)
+                    .material?.color.getHexString(),
+            ).toBe('ffffff');
+        });
+
+        it('should write the transform after the asset, not before', async () => {
+            /**
+             * setFromGLTF copies the glTF root's transform onto the node, so a
+             * transform written before the asset arrives is thrown away
+             */
+            const { Object3D } =
+                await vi.importActual<typeof import('three/webgpu')>(
+                    'three/webgpu',
+                );
+            const gltf = new Object3D();
+            gltf.position.set(9, 9, 9);
+            loadAsset.mockResolvedValueOnce(gltf);
+
+            const modelData: ModelSchema = {
+                id: 'model-late',
+                entityType: 'model',
+                name: 'M',
+                visible: true,
+                uri: 'test.glb',
+                position: { x: 1, y: 2, z: 3 },
+                rotation: { x: 0, y: 0, z: 0 },
+                scale: { x: 1, y: 1, z: 1 },
+                loaded: false,
+                parentId: null,
+            };
+
+            const gateway = makeGateway();
+            await addEntity(gateway, modelData);
+
+            // the schema wins, not the asset
+            expectVec(findEntity(gateway, modelData)?.position, {
+                x: 1,
+                y: 2,
+                z: 3,
+            });
         });
 
         it('should update all primitive properties', async () => {
@@ -579,28 +421,23 @@ describe('plugins/state/EngineGateway', () => {
             };
 
             const gateway = makeGateway();
-            await gateway.addEntity(primitiveData);
+            await addEntity(gateway, primitiveData);
             const primitive = findEntity(gateway, primitiveData);
             expect(primitive).toBeDefined();
             expect(primitive?.name).toBe('Test Primitive');
-            expect(primitive?.setGeometry).toHaveBeenCalledWith(
-                primitiveData.geometry,
-            );
-            expect(primitive?.setPosition).toHaveBeenCalledWith(
-                primitiveData.position,
-            );
-            expect(primitive?.setRotation).toHaveBeenCalledWith(
-                primitiveData.rotation,
-            );
-            expect(primitive?.setScale).toHaveBeenCalledWith(
-                primitiveData.scale,
-            );
-            expect(primitive?.setVisibility).toHaveBeenCalledWith(
-                primitiveData.visible,
-            );
-            expect(primitive?.setMaterial).toHaveBeenCalledWith(
-                primitiveData.material,
-            );
+            expect(
+                primitive?.requireComponent(PrimitiveComponent).mesh?.geometry
+                    .attributes.position,
+            ).toBeDefined();
+            expectVec(primitive?.position, primitiveData.position);
+            expectVec(primitive?.rotation, primitiveData.rotation);
+            expectVec(primitive?.scale, primitiveData.scale);
+            expect(primitive?.visible).toBe(primitiveData.visible);
+            expect(
+                primitive
+                    ?.requireComponent(MeshComponent)
+                    .material?.color.getHexString(),
+            ).toBe('ffffff');
         });
 
         it('should update all group properties', async () => {
@@ -612,24 +449,23 @@ describe('plugins/state/EngineGateway', () => {
                 position: { x: 1, y: 2, z: 3 },
                 rotation: { x: 0, y: 0, z: 0 },
                 scale: { x: 1, y: 1, z: 1 },
-                bbVisible: true,
+                linksVisible: true,
                 parentId: null,
             };
 
             const gateway = makeGateway();
-            await gateway.addEntity(groupData);
+            await addEntity(gateway, groupData);
             const group = findEntity(gateway, groupData);
             expect(group).toBeDefined();
             expect(group?.name).toBe('Test Group');
-            expect(group?.setPosition).toHaveBeenCalledWith(groupData.position);
-            expect(group?.setRotation).toHaveBeenCalledWith(groupData.rotation);
-            expect(group?.setScale).toHaveBeenCalledWith(groupData.scale);
-            expect(group?.setVisibility).toHaveBeenCalledWith(
-                groupData.visible,
-            );
-            expect(group?.setLinesVisibility).toHaveBeenCalledWith(
-                groupData.bbVisible,
-            );
+            expectVec(group?.position, groupData.position);
+            expectVec(group?.rotation, groupData.rotation);
+            expectVec(group?.scale, groupData.scale);
+            expect(group?.visible).toBe(groupData.visible);
+            // all member lines share one LineSegments, so one flag covers them
+            expect(
+                group?.requireComponent(MultiLineComponent).lines.visible,
+            ).toBe(groupData.linksVisible);
         });
 
         it('should add a model object', async () => {
@@ -646,7 +482,7 @@ describe('plugins/state/EngineGateway', () => {
             };
 
             const gateway = makeGateway();
-            await gateway.addEntity(modelData);
+            await addEntity(gateway, modelData);
             const model = findEntity(gateway, modelData);
             expect(model).toBeDefined();
             expect(model?.userData.uri).toBe('test.glb');
@@ -666,7 +502,7 @@ describe('plugins/state/EngineGateway', () => {
             };
 
             const gateway = makeGateway();
-            await gateway.addEntity(primitiveData);
+            await addEntity(gateway, primitiveData);
             const primitive = findEntity(gateway, primitiveData);
             expect(primitive).toBeDefined();
             expect(primitive?.userData.id).toBe('primitive-1');
@@ -684,7 +520,7 @@ describe('plugins/state/EngineGateway', () => {
             };
 
             const gateway = makeGateway();
-            await gateway.addEntity(groupData);
+            await addEntity(gateway, groupData);
             const group = findEntity(gateway, groupData);
             expect(group).toBeDefined();
             expect(group?.userData.id).toBe('group-1');
@@ -701,7 +537,7 @@ describe('plugins/state/EngineGateway', () => {
             };
 
             const gateway = makeGateway();
-            await gateway.addEntity(cameraData);
+            await addEntity(gateway, cameraData);
             // CAMERA objects are not added to the scene
             const camera = findEntity(gateway, cameraData);
             expect(camera).toBeUndefined();
@@ -719,7 +555,7 @@ describe('plugins/state/EngineGateway', () => {
             } as unknown as EntitySchema;
 
             const gateway = makeGateway();
-            await expect(gateway.addEntity(unknownData)).rejects.toThrow(
+            await expect(addEntity(gateway, unknownData)).rejects.toThrow(
                 'EngineGateway.addEntity: Unknown entity type: unknown',
             );
         });
@@ -738,12 +574,12 @@ describe('plugins/state/EngineGateway', () => {
             };
 
             const gateway = makeGateway();
-            const firstObject = await gateway.addEntity(modelData);
-            const duplicateObject = await gateway.addEntity(modelData);
+            const firstObject = await addEntity(gateway, modelData);
+            const duplicateObject = await addEntity(gateway, modelData);
 
             expect(duplicateObject).toBe(firstObject);
             expect(spyConsoleWarn).toHaveBeenCalledWith(
-                'EngineGateway.addEntity: Scene object with id model-duplicate already exists',
+                'EngineGateway.createEntity: Scene object with id model-duplicate already exists',
             );
         });
     });
@@ -763,7 +599,7 @@ describe('plugins/state/EngineGateway', () => {
             };
 
             const gateway = makeGateway();
-            await gateway.addEntity(modelData);
+            await addEntity(gateway, modelData);
             const model = findEntity(gateway, modelData);
             expect(model).toBeDefined();
 
@@ -773,9 +609,7 @@ describe('plugins/state/EngineGateway', () => {
             };
 
             await gateway.updateEntity(updatedData);
-            expect(model?.setPosition).toHaveBeenCalledWith(
-                updatedData.position,
-            );
+            expectVec(model?.position, updatedData.position);
         });
 
         it('should update existing light properties', async () => {
@@ -792,7 +626,7 @@ describe('plugins/state/EngineGateway', () => {
             };
 
             const gateway = makeGateway();
-            await gateway.addEntity(lightData);
+            await addEntity(gateway, lightData);
             const light = findEntity(gateway, lightData);
             expect(light).toBeDefined();
 
@@ -803,8 +637,14 @@ describe('plugins/state/EngineGateway', () => {
             };
 
             await gateway.updateEntity(updatedData);
-            expect((light as any).setIntensity).toHaveBeenCalledWith(2.0);
-            expect((light as any).setColor).toHaveBeenCalled();
+
+            const component = (light as DIVENode).requireComponent(
+                PointLightComponent,
+            );
+            expect(component.light.intensity).toBe(2.0);
+            expect((component.light.color as Color).getHexString()).toBe(
+                'ff0000',
+            );
         });
 
         it('should update existing primitive properties', async () => {
@@ -820,7 +660,7 @@ describe('plugins/state/EngineGateway', () => {
             };
 
             const gateway = makeGateway();
-            await gateway.addEntity(primitiveData);
+            await addEntity(gateway, primitiveData);
             const primitive = findEntity(gateway, primitiveData);
             expect(primitive).toBeDefined();
 
@@ -835,9 +675,10 @@ describe('plugins/state/EngineGateway', () => {
             };
 
             await gateway.updateEntity(updatedData);
-            expect((primitive as any).setGeometry).toHaveBeenCalledWith(
-                updatedData.geometry,
-            );
+            expect(
+                (primitive as DIVENode).requireComponent(PrimitiveComponent)
+                    .mesh?.geometry.attributes.position,
+            ).toBeDefined();
         });
 
         it('should update existing group properties', async () => {
@@ -852,21 +693,18 @@ describe('plugins/state/EngineGateway', () => {
             };
 
             const gateway = makeGateway();
-            await gateway.addEntity(groupData);
+            await addEntity(gateway, groupData);
             const group = findEntity(gateway, groupData);
             expect(group).toBeDefined();
 
             const updatedData = {
                 ...groupData,
                 visible: false,
-                bbVisible: true,
+                linksVisible: true,
             };
 
             await gateway.updateEntity(updatedData);
-            expect((group as any).setVisibility).toHaveBeenCalledWith(false);
-            expect((group as any).setLinesVisibility).toHaveBeenCalledWith(
-                true,
-            );
+            expect((group as DIVENode).visible).toBe(false);
         });
 
         it('should handle update of non-existent object', async () => {
@@ -909,8 +747,7 @@ describe('plugins/state/EngineGateway', () => {
 
             const gateway = makeGateway();
             const cameraObject = new Object3D();
-            cameraObject.userData.id = cameraData.id;
-            gateway.root.add(cameraObject);
+            registerRaw(gateway, cameraData.id, cameraObject);
 
             await gateway.updateEntity(cameraData);
 
@@ -941,9 +778,7 @@ describe('plugins/state/EngineGateway', () => {
             };
 
             const gateway = makeGateway();
-            const existingObject = new Object3D();
-            existingObject.userData.id = unknownData.id;
-            gateway.root.add(existingObject);
+            registerRaw(gateway, unknownData.id, new Object3D());
 
             await expect(gateway.updateEntity(unknownData)).rejects.toThrow(
                 'EngineGateway.updateEntity: Unknown entity type: unknown',
@@ -966,7 +801,7 @@ describe('plugins/state/EngineGateway', () => {
             };
 
             const gateway = makeGateway();
-            await gateway.addEntity(modelData);
+            await addEntity(gateway, modelData);
             const model = findEntity(gateway, modelData);
             expect(model).toBeDefined();
 
@@ -1029,8 +864,7 @@ describe('plugins/state/EngineGateway', () => {
 
             const gateway = makeGateway();
             const cameraObject = new Object3D();
-            cameraObject.userData.id = cameraData.id;
-            gateway.root.add(cameraObject);
+            registerRaw(gateway, cameraData.id, cameraObject);
 
             gateway.removeEntity(cameraData);
 
@@ -1080,8 +914,8 @@ describe('plugins/state/EngineGateway', () => {
             };
 
             const gateway = makeGateway();
-            await gateway.addEntity(groupData);
-            await gateway.addEntity(memberData);
+            await addEntity(gateway, groupData);
+            await addEntity(gateway, memberData);
 
             const group = findEntity(gateway, groupData);
             const member = findEntity(gateway, memberData);
@@ -1095,7 +929,125 @@ describe('plugins/state/EngineGateway', () => {
             }
 
             gateway.removeEntity(groupData);
-            expect(gateway.root.attach).toHaveBeenCalledWith(member);
+            // members are re-parented to the root rather than deleted with the group
+            expect(member!.parent).toBe(gateway.root);
+        });
+
+        it('should free the GPU resources its components held', async () => {
+            /**
+             * unparenting alone leaks: the detached node is out of the graph, so
+             * the final Scene.dispose can no longer find it to dispose it
+             */
+            const modelData: ModelSchema = {
+                id: 'model-1',
+                entityType: 'model',
+                name: 'Test Model',
+                visible: true,
+                uri: 'test.glb',
+                position: { x: 0, y: 0, z: 0 },
+                rotation: { x: 0, y: 0, z: 0 },
+                scale: { x: 1, y: 1, z: 1 },
+                loaded: false,
+            };
+
+            const gateway = makeGateway();
+            await addEntity(gateway, modelData);
+            const model = findEntity(gateway, modelData) as unknown as DIVENode;
+            const disposals = model.components.map((component) =>
+                vi.spyOn(component, 'dispose'),
+            );
+            expect(disposals.length).toBeGreaterThan(0);
+
+            gateway.removeEntity(modelData);
+
+            disposals.forEach((dispose) => expect(dispose).toHaveBeenCalled());
+        });
+
+        it('should free the resources of nodes it takes down with it', async () => {
+            /**
+             * direct child nodes are re-parented to the root and survive, so what
+             * goes down with the entity is whatever hangs below a plain Object3D
+             * -- and its components have to be disposed too
+             */
+            const modelData: ModelSchema = {
+                id: 'model-1',
+                entityType: 'model',
+                name: 'Test Model',
+                visible: true,
+                uri: 'test.glb',
+                position: { x: 0, y: 0, z: 0 },
+                rotation: { x: 0, y: 0, z: 0 },
+                scale: { x: 1, y: 1, z: 1 },
+                loaded: false,
+            };
+
+            const gateway = makeGateway();
+            await addEntity(gateway, modelData);
+            const model = findEntity(gateway, modelData) as unknown as DIVENode;
+
+            const wrapper = new Object3D();
+            const nested = new DIVENode();
+            const nestedComponent = nested.addComponent(
+                new BoundingBoxComponent(),
+            );
+            wrapper.add(nested);
+            model.add(wrapper);
+            const disposed = vi.spyOn(nestedComponent, 'dispose');
+
+            gateway.removeEntity(modelData);
+
+            expect(disposed).toHaveBeenCalled();
+        });
+
+        it('should keep the resources of the child nodes it hands to the root', async () => {
+            // they survive the deletion, so disposing them would break them
+            const groupData = {
+                id: 'group-1',
+                entityType: 'group' as const,
+                name: 'Test Group',
+                visible: true,
+                position: { x: 0, y: 0, z: 0 },
+                rotation: { x: 0, y: 0, z: 0 },
+                scale: { x: 1, y: 1, z: 1 },
+            } as unknown as EntitySchema;
+
+            const gateway = makeGateway();
+            await addEntity(gateway, groupData);
+            const group = findEntity(gateway, groupData) as unknown as DIVENode;
+
+            const member = new DIVENode();
+            const memberComponent = member.addComponent(
+                new BoundingBoxComponent(),
+            );
+            group.add(member);
+            const disposed = vi.spyOn(memberComponent, 'dispose');
+
+            gateway.removeEntity(groupData);
+
+            expect(member.parent).toBe(gateway.root);
+            expect(disposed).not.toHaveBeenCalled();
+        });
+
+        it('should cope with a node that was already unparented', async () => {
+            // `parent!.remove(...)` threw on a node someone detached elsewhere
+            const modelData: ModelSchema = {
+                id: 'model-1',
+                entityType: 'model',
+                name: 'Test Model',
+                visible: true,
+                uri: 'test.glb',
+                position: { x: 0, y: 0, z: 0 },
+                rotation: { x: 0, y: 0, z: 0 },
+                scale: { x: 1, y: 1, z: 1 },
+                loaded: false,
+            };
+
+            const gateway = makeGateway();
+            await addEntity(gateway, modelData);
+            const model = findEntity(gateway, modelData)!;
+            model.removeFromParent();
+
+            expect(() => gateway.removeEntity(modelData)).not.toThrow();
         });
 
         it('should handle transform controls detachment', async () => {
@@ -1116,11 +1068,13 @@ describe('plugins/state/EngineGateway', () => {
                 detach: vi.fn(),
             });
 
-            const mockScene = new Object3D();
+            const mockScene = Object.assign(new Object3D(), {
+                isDIVEScene: true,
+            });
             mockScene.children = [mockTransformControls];
 
             const gateway = makeGateway();
-            await gateway.addEntity(modelData);
+            await addEntity(gateway, modelData);
             const model = findEntity(gateway, modelData);
             expect(model).toBeDefined();
 
@@ -1150,11 +1104,13 @@ describe('plugins/state/EngineGateway', () => {
                 detach: vi.fn(),
             });
 
-            const mockScene = new Object3D();
+            const mockScene = Object.assign(new Object3D(), {
+                isDIVEScene: true,
+            });
             mockScene.children = [mockTransformControls];
 
             const gateway = makeGateway();
-            await gateway.addEntity(primitiveData);
+            await addEntity(gateway, primitiveData);
             const primitive = findEntity(gateway, primitiveData);
             expect(primitive).toBeDefined();
 
@@ -1183,23 +1139,26 @@ describe('plugins/state/EngineGateway', () => {
                 detach: vi.fn(),
             });
 
-            const mockScene = new Object3D();
+            const mockScene = Object.assign(new Object3D(), {
+                isDIVEScene: true,
+            });
             mockScene.children = [mockTransformControls];
 
             const gateway = makeGateway();
-            await gateway.addEntity(groupData);
+            await addEntity(gateway, groupData);
             const group = findEntity(gateway, groupData);
             expect(group).toBeDefined();
 
+            const member = new DIVENode();
             if (group) {
-                group.parent = gateway.root;
                 gateway.root.parent = mockScene;
-                (group as any).members = [new Object3D()];
+                group.add(member);
             }
 
             gateway.removeEntity(groupData);
             expect(mockTransformControls.detach).toHaveBeenCalled();
-            expect(gateway.root.attach).toHaveBeenCalled();
+            // the member outlives the group at the root
+            expect(member.parent).toBe(gateway.root);
         });
     });
 
@@ -1245,15 +1204,15 @@ describe('plugins/state/EngineGateway', () => {
             };
 
             const gateway = makeGateway();
-            await gateway.addEntity(parentData);
-            await gateway.addEntity(childData);
+            await addEntity(gateway, parentData);
+            await addEntity(gateway, childData);
 
             const parent = findEntity(gateway, parentData);
             const child = findEntity(gateway, childData);
 
             expect(parent).toBeDefined();
             expect(child).toBeDefined();
-            expect(parent?.attach).toHaveBeenCalled();
+            expect(child?.parent).toBe(parent);
         });
 
         it('should attach to gateway when parent is null', async () => {
@@ -1271,10 +1230,10 @@ describe('plugins/state/EngineGateway', () => {
             };
 
             const gateway = makeGateway();
-            await gateway.addEntity(childData);
+            await addEntity(gateway, childData);
             const child = findEntity(gateway, childData);
             expect(child).toBeDefined();
-            expect(gateway.root.attach).toHaveBeenCalled();
+            expect(child?.parent).toBe(gateway.root);
         });
 
         it('should handle non-existent parent', async () => {
@@ -1292,11 +1251,11 @@ describe('plugins/state/EngineGateway', () => {
             };
 
             const gateway = makeGateway();
-            await gateway.addEntity(childData);
+            await addEntity(gateway, childData);
             const child = findEntity(gateway, childData);
             expect(child).toBeDefined();
             // When parent doesn't exist, the object should remain where it is
-            expect(gateway.root.attach).not.toHaveBeenCalled();
+            expect(child?.parent).toBe(gateway.root);
         });
 
         it('should handle non-existent object', async () => {
@@ -1316,7 +1275,12 @@ describe('plugins/state/EngineGateway', () => {
             const gateway = makeGateway();
             // Don't add the object to the scene
             await gateway.updateEntity(modelData);
-            expect(gateway.root.attach).not.toHaveBeenCalled();
+            // nothing to re-parent, so the root gained no model
+            expect(
+                gateway.root.children.some(
+                    (child) => child.userData.id === modelData.id,
+                ),
+            ).toBe(false);
         });
     });
 
@@ -1339,14 +1303,14 @@ describe('plugins/state/EngineGateway', () => {
             };
 
             const gateway = makeGateway();
-            await gateway.addEntity(lightData as LightSchema);
+            await addEntity(gateway, lightData as LightSchema);
             const light = findEntity(gateway, lightData);
             expect(light).toBeDefined();
         });
 
         it('should only touch the fields a patch carries', async () => {
             const gateway = makeGateway();
-            await gateway.addEntity({
+            await addEntity(gateway, {
                 id: 'light-1',
                 entityType: 'light',
                 type: 'point',
@@ -1357,10 +1321,12 @@ describe('plugins/state/EngineGateway', () => {
             const light = findEntity(gateway, {
                 id: 'light-1',
                 entityType: 'light',
-            }) as any;
-            light.setIntensity.mockClear();
-            light.setColor.mockClear();
-            light.setEnabled.mockClear();
+            }) as DIVENode;
+            const component = light.requireComponent(PointLightComponent);
+
+            const setIntensity = vi.spyOn(component, 'setIntensity');
+            const setColor = vi.spyOn(component, 'setColor');
+            const setEnabled = vi.spyOn(component, 'setEnabled');
 
             await gateway.updateEntity({
                 id: 'light-1',
@@ -1370,9 +1336,9 @@ describe('plugins/state/EngineGateway', () => {
 
             expect(light.name).toBe('Renamed');
             // absent means unchanged, so no other setter runs
-            expect(light.setIntensity).not.toHaveBeenCalled();
-            expect(light.setColor).not.toHaveBeenCalled();
-            expect(light.setEnabled).not.toHaveBeenCalled();
+            expect(setIntensity).not.toHaveBeenCalled();
+            expect(setColor).not.toHaveBeenCalled();
+            expect(setEnabled).not.toHaveBeenCalled();
         });
     });
 
@@ -1381,7 +1347,7 @@ describe('plugins/state/EngineGateway', () => {
             gateway: EngineGateway,
             uri: string,
         ): Promise<any> => {
-            await gateway.addEntity({
+            await addEntity(gateway, {
                 id: 'model-1',
                 entityType: 'model',
                 name: 'M',
@@ -1398,14 +1364,14 @@ describe('plugins/state/EngineGateway', () => {
             const gateway = makeGateway();
             const model = await addModel(gateway, 'a.glb');
 
-            expect(model.setFromURL).toHaveBeenCalledWith('a.glb');
+            expect(loadAsset).toHaveBeenCalledWith('a.glb');
             expect(model.userData.uri).toBe('a.glb');
         });
 
         it('should not fetch the asset again when the uri is unchanged', async () => {
             const gateway = makeGateway();
             const model = await addModel(gateway, 'a.glb');
-            model.setFromURL.mockClear();
+            loadAsset.mockClear();
 
             await gateway.updateEntity({
                 id: 'model-1',
@@ -1414,19 +1380,15 @@ describe('plugins/state/EngineGateway', () => {
                 position: { x: 1, y: 2, z: 3 },
             });
 
-            expect(model.setFromURL).not.toHaveBeenCalled();
+            expect(loadAsset).not.toHaveBeenCalled();
             // the rest of the patch still applies
-            expect(model.setPosition).toHaveBeenCalledWith({
-                x: 1,
-                y: 2,
-                z: 3,
-            });
+            expectVec(model.position, { x: 1, y: 2, z: 3 });
         });
 
         it('should fetch the asset when the uri changed', async () => {
             const gateway = makeGateway();
             const model = await addModel(gateway, 'a.glb');
-            model.setFromURL.mockClear();
+            loadAsset.mockClear();
 
             await gateway.updateEntity({
                 id: 'model-1',
@@ -1434,7 +1396,7 @@ describe('plugins/state/EngineGateway', () => {
                 uri: 'b.glb',
             });
 
-            expect(model.setFromURL).toHaveBeenCalledWith('b.glb');
+            expect(loadAsset).toHaveBeenCalledWith('b.glb');
             expect(model.userData.uri).toBe('b.glb');
         });
     });
@@ -1458,11 +1420,13 @@ describe('plugins/state/EngineGateway', () => {
                 detach: vi.fn(),
             });
 
-            const mockScene = new Object3D();
+            const mockScene = Object.assign(new Object3D(), {
+                isDIVEScene: true,
+            });
             mockScene.children = [mockTransformControls];
 
             const gateway = makeGateway();
-            await gateway.addEntity(lightData);
+            await addEntity(gateway, lightData);
             const light = findEntity(gateway, lightData);
             expect(light).toBeDefined();
 
@@ -1513,23 +1477,26 @@ describe('plugins/state/EngineGateway', () => {
                 detach: vi.fn(),
             });
 
-            const mockScene = new Object3D();
+            const mockScene = Object.assign(new Object3D(), {
+                isDIVEScene: true,
+            });
             mockScene.children = [mockTransformControls];
 
             const gateway = makeGateway();
-            await gateway.addEntity(groupData);
+            await addEntity(gateway, groupData);
             const group = findEntity(gateway, groupData);
             expect(group).toBeDefined();
 
+            const member = new DIVENode();
             if (group) {
-                group.parent = gateway.root;
                 gateway.root.parent = mockScene;
-                (group as any).members = [new Object3D()];
+                group.add(member);
             }
 
             gateway.removeEntity(groupData);
             expect(mockTransformControls.detach).toHaveBeenCalled();
-            expect(gateway.root.attach).toHaveBeenCalled();
+            // the member outlives the group at the root
+            expect(member.parent).toBe(gateway.root);
         });
 
         it('should handle non-existent group', () => {
@@ -1567,10 +1534,10 @@ describe('plugins/state/EngineGateway', () => {
             };
 
             const gateway = makeGateway();
-            await gateway.addEntity(modelData);
+            await addEntity(gateway, modelData);
             const model = findEntity(gateway, modelData);
             expect(model).toBeDefined();
-            expect(gateway.root.attach).toHaveBeenCalled();
+            expect(model?.parent).toBe(gateway.root);
         });
 
         it('should handle object with non-existent parent', async () => {
@@ -1588,10 +1555,10 @@ describe('plugins/state/EngineGateway', () => {
             };
 
             const gateway = makeGateway();
-            await gateway.addEntity(modelData);
+            await addEntity(gateway, modelData);
             const model = findEntity(gateway, modelData);
             expect(model).toBeDefined();
-            expect(gateway.root.attach).not.toHaveBeenCalled();
+            expect(model?.parent).toBe(gateway.root);
         });
     });
 
@@ -1620,7 +1587,7 @@ describe('plugins/state/EngineGateway', () => {
             };
 
             const gateway = makeGateway();
-            await gateway.addEntity(modelData as ModelSchema);
+            await addEntity(gateway, modelData as ModelSchema);
             const model = findEntity(gateway, modelData);
             expect(model).toBeDefined();
         });
@@ -1651,7 +1618,7 @@ describe('plugins/state/EngineGateway', () => {
             };
 
             const gateway = makeGateway();
-            await gateway.addEntity(modelData as ModelSchema);
+            await addEntity(gateway, modelData as ModelSchema);
             const model = findEntity(gateway, modelData);
             expect(model).toBeDefined();
         });
@@ -1675,7 +1642,7 @@ describe('plugins/state/EngineGateway', () => {
             };
 
             const gateway = makeGateway();
-            await gateway.addEntity(primitiveData as PrimitiveSchema);
+            await addEntity(gateway, primitiveData as PrimitiveSchema);
             const primitive = findEntity(gateway, primitiveData);
             expect(primitive).toBeDefined();
         });
@@ -1710,7 +1677,7 @@ describe('plugins/state/EngineGateway', () => {
             };
 
             const gateway = makeGateway();
-            await gateway.addEntity(primitiveData as PrimitiveSchema);
+            await addEntity(gateway, primitiveData as PrimitiveSchema);
             const primitive = findEntity(gateway, primitiveData);
             expect(primitive).toBeDefined();
         });
@@ -1757,10 +1724,7 @@ describe('plugins/state/EngineGateway', () => {
                 setBackground: vi.fn(),
                 root: { floor },
             };
-            const gateway = new EngineGateway(
-                { scene } as unknown as DIVE,
-                { performAction: vi.fn() } as unknown as State,
-            );
+            const gateway = new EngineGateway({ scene } as unknown as DIVE);
             return { gateway, scene, floor };
         };
 
@@ -1819,236 +1783,6 @@ describe('plugins/state/EngineGateway', () => {
         });
     });
 
-    describe('wiring objects to the state', () => {
-        const modelData: ModelSchema = {
-            id: 'model-1',
-            entityType: 'model',
-            name: 'M',
-            visible: true,
-            uri: 'a.glb',
-            position: { x: 0, y: 0, z: 0 },
-            rotation: { x: 0, y: 0, z: 0 },
-            scale: { x: 1, y: 1, z: 1 },
-            loaded: false,
-            parentId: null,
-        };
-
-        /** A gateway whose listeners are the real ones, over a spying State. */
-        const makeWired = () => {
-            const performAction = vi.fn();
-            const gateway = new EngineGateway(
-                {
-                    scene: { root: new DIVERoot() },
-                } as unknown as DIVE,
-                { performAction } as unknown as State,
-            );
-            return { gateway, performAction };
-        };
-
-        /** Replays what the object would have dispatched. */
-        const fire = (
-            object: MockedSceneObject,
-            type: string,
-            payload: object = {},
-        ): void => {
-            object.addEventListener.mock.calls
-                .filter((call: unknown[]) => call[0] === type)
-                .forEach((call: unknown[]) =>
-                    (call[1] as (e: object) => void)({ type, ...payload }),
-                );
-        };
-
-        it('should subscribe before the schema is applied', async () => {
-            // applying a model schema awaits setFromURL, and object-load fires
-            // in there — listening afterwards would miss it
-            const { gateway } = makeWired();
-            await gateway.addEntity(modelData);
-            const model = findEntity(gateway, modelData)!;
-
-            const order = (name: string): number =>
-                model[name].mock.invocationCallOrder[0];
-
-            expect(order('addEventListener')).toBeLessThan(order('setFromURL'));
-        });
-
-        it('should turn a reported transform into one UPDATE_OBJECT', async () => {
-            const { gateway, performAction } = makeWired();
-            await gateway.addEntity(modelData);
-            const model = findEntity(gateway, modelData)!;
-
-            fire(model, 'object-transform', {
-                position: { x: 1, y: 2, z: 3 },
-                rotation: { x: 0, y: 0, z: 0 },
-                scale: { x: 1, y: 1, z: 1 },
-            });
-
-            const updates = performAction.mock.calls.filter(
-                (call) => call[0] === 'UPDATE_OBJECT',
-            );
-            expect(updates).toHaveLength(1);
-            expect(updates[0][1]).toEqual({
-                id: 'model-1',
-                entityType: 'model',
-                position: { x: 1, y: 2, z: 3 },
-                rotation: { x: 0, y: 0, z: 0 },
-                scale: { x: 1, y: 1, z: 1 },
-            });
-        });
-
-        it('should copy the reported vectors', async () => {
-            // the object hands out a scratch buffer it overwrites next frame,
-            // and UPDATE_OBJECT merges the payload straight into the registry
-            const { gateway, performAction } = makeWired();
-            await gateway.addEntity(modelData);
-            const model = findEntity(gateway, modelData)!;
-
-            const live = { x: 1, y: 2, z: 3 };
-            fire(model, 'object-transform', {
-                position: live,
-                rotation: live,
-                scale: live,
-            });
-
-            const sent = performAction.mock.calls.find(
-                (call) => call[0] === 'UPDATE_OBJECT',
-            )![1];
-            expect(sent.position).not.toBe(live);
-
-            live.x = 999;
-            expect(sent.position.x).toBe(1);
-        });
-
-        it('should report a model load', async () => {
-            const { gateway, performAction } = makeWired();
-            await gateway.addEntity(modelData);
-            const model = findEntity(gateway, modelData)!;
-
-            fire(model, 'object-load');
-
-            expect(performAction).toHaveBeenCalledWith('MODEL_LOADED', {
-                id: 'model-1',
-            });
-        });
-
-        it('should not select the same object twice', async () => {
-            // SELECT_OBJECT runs selectionState.select(), which calls back into
-            // onSelect() — without the guard that loops
-            const { gateway, performAction } = makeWired();
-            await gateway.addEntity(modelData);
-            const model = findEntity(gateway, modelData)!;
-
-            fire(model, 'object-select');
-            fire(model, 'object-select');
-
-            expect(
-                performAction.mock.calls.filter(
-                    (call) => call[0] === 'SELECT_OBJECT',
-                ),
-            ).toHaveLength(1);
-        });
-
-        it('should deselect only what is actually selected', async () => {
-            const { gateway, performAction } = makeWired();
-            await gateway.addEntity(modelData);
-            const model = findEntity(gateway, modelData)!;
-
-            fire(model, 'object-deselect');
-            expect(performAction).not.toHaveBeenCalledWith(
-                'DESELECT_OBJECT',
-                expect.anything(),
-            );
-
-            fire(model, 'object-select');
-            fire(model, 'object-deselect');
-            expect(performAction).toHaveBeenCalledWith('DESELECT_OBJECT', {
-                id: 'model-1',
-                entityType: 'model',
-            });
-        });
-
-        it('should allow selecting again after a deselect', async () => {
-            const { gateway, performAction } = makeWired();
-            await gateway.addEntity(modelData);
-            const model = findEntity(gateway, modelData)!;
-
-            fire(model, 'object-select');
-            fire(model, 'object-deselect');
-            fire(model, 'object-select');
-
-            expect(
-                performAction.mock.calls.filter(
-                    (call) => call[0] === 'SELECT_OBJECT',
-                ),
-            ).toHaveLength(2);
-        });
-
-        it('should stop listening once the object is removed', async () => {
-            const { gateway } = makeWired();
-            await gateway.addEntity(modelData);
-            const model = findEntity(gateway, modelData)!;
-            model.parent = gateway.root;
-
-            gateway.removeEntity(modelData);
-
-            const removed = model.removeEventListener.mock.calls.map(
-                (call: unknown[]) => call[0],
-            );
-            expect(removed).toEqual(
-                expect.arrayContaining([
-                    'object-transform',
-                    'object-select',
-                    'object-deselect',
-                    'object-load',
-                ]),
-            );
-        });
-
-        it('should forget the selection when the selected object is removed', async () => {
-            // otherwise the id stays in _selectedId and an object added again
-            // under the same id could never be selected
-            const { gateway, performAction } = makeWired();
-            await gateway.addEntity(modelData);
-            fire(findEntity(gateway, modelData)!, 'object-select');
-            findEntity(gateway, modelData)!.parent = gateway.root;
-
-            gateway.removeEntity(modelData);
-
-            await gateway.addEntity(modelData);
-            fire(findEntity(gateway, modelData)!, 'object-select');
-
-            expect(
-                performAction.mock.calls.filter(
-                    (call) => call[0] === 'SELECT_OBJECT',
-                ),
-            ).toHaveLength(2);
-        });
-
-        it('should drop every subscription on dispose', async () => {
-            const { gateway } = makeWired();
-            await gateway.addEntity(modelData);
-            const model = findEntity(gateway, modelData)!;
-
-            gateway.dispose();
-
-            expect(model.removeEventListener).toHaveBeenCalledTimes(4);
-        });
-
-        it('should not wire a camera, because it never enters the scene', async () => {
-            const { gateway } = makeWired();
-
-            const result = await gateway.addEntity({
-                id: 'camera-1',
-                entityType: 'camera',
-                name: 'C',
-                visible: true,
-                position: { x: 0, y: 0, z: 0 },
-                target: { x: 0, y: 0, z: 0 },
-            } as CameraSchema);
-
-            expect(result).toBeUndefined();
-        });
-    });
-
     describe('engine control', () => {
         const makeControllable = () => {
             const clock = {
@@ -2056,14 +1790,11 @@ describe('plugins/state/EngineGateway', () => {
                 addTicker: vi.fn(),
             };
             const startAsync = vi.fn().mockResolvedValue(undefined);
-            const gateway = new EngineGateway(
-                {
-                    scene: { root: new DIVERoot() },
-                    clock,
-                    startAsync,
-                } as unknown as DIVE,
-                { performAction: vi.fn() } as unknown as State,
-            );
+            const gateway = new EngineGateway({
+                scene: { root: new DIVERoot() },
+                clock,
+                startAsync,
+            } as unknown as DIVE);
             return { gateway, clock, startAsync };
         };
 

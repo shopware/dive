@@ -1,5 +1,7 @@
 export * from './Dive.ts';
-export * from './camera/PerspectiveCamera.ts';
+export * from './component/Component.ts';
+export * from './node/Node.ts';
+export * from './boundingbox/BoundingBox.ts';
 export * from './clock/Clock.ts';
 export * from './renderer/Renderer.ts';
 export * from './environment/Environment.ts';
@@ -7,4 +9,5 @@ export * from './canvas/CanvasLifecycleManager.ts';
 export * from './promise/deferred/DeferredPromise.ts';
 export * from './promise/abortable/AbortablePromise.ts';
 export * from './scene/Scene.ts';
+export * from './scene/root/Root.ts';
 export * from './view/View.ts';

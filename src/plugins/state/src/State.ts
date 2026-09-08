@@ -1,8 +1,5 @@
-import { MathUtils } from 'three/webgpu';
-
 // type imports
 import { type DIVE } from '@shopware-ag/dive';
-import { type EntitySchema } from '../types/index.ts';
 import { type OrbitController } from '@shopware-ag/dive/orbitcontroller';
 import {
     ActionDependencies,
@@ -10,6 +7,7 @@ import {
     ActionReturn,
 } from '../types/index.ts';
 import { getActionClass } from './ActionRegistry.ts';
+import { EntityRegistry } from './EntityRegistry.ts';
 import { EngineGateway } from './EngineGateway.ts';
 
 export type ActionSubscriber<ActionType extends keyof ActionTypes> = (
@@ -21,114 +19,88 @@ export type ActionUnsubscribe = () => void;
 export class State {
     private static __instances: State[] = [];
 
-    /**
-     * Find the instance that owns an id, either the state's own or one of the
-     * entities it holds.
-     *
-     * @deprecated Nothing inside DIVE uses this any more. It existed so scene
-     * objects could look up their state at runtime; they now report through
-     * events and the {@link EngineGateway} routes them without a search. Hold
-     * on to the instance you created instead. Will be removed in a future
-     * major release.
-     */
-    public static get(id: string): State | undefined {
-        const fromComID = this.__instances.find(
-            (instance) => instance.id === id,
-        );
-        if (fromComID) return fromComID;
-        return this.__instances.find((instance) =>
-            Array.from(instance.registered.values()).find(
-                (object) => object.id === id,
-            ),
-        );
-    }
-
-    private _id: string;
-    public get id(): string {
-        return this._id;
-    }
-
     private engine: DIVE;
     private controller: OrbitController;
 
     /** The only way from here into the engine, see {@link EngineGateway}. */
     private gateway: EngineGateway;
 
-    // modules
-    private _mediaCreator:
-        import('@shopware-ag/dive/mediacreator').MediaCreator | null = null;
+    /**
+     * modules, each loaded on first use
+     * the promise is cached, not the instance, and stored before anything is
+     * awaited, or two callers in the same tick each build their own
+     */
 
-    private async getMediaCreator(): Promise<
+    private _mediaCreator?: Promise<
+        import('@shopware-ag/dive/mediacreator').MediaCreator
+    >;
+
+    private getMediaCreator(): Promise<
         import('@shopware-ag/dive/mediacreator').MediaCreator
     > {
-        if (!this._mediaCreator) {
-            this._mediaCreator = new (
-                await import('@shopware-ag/dive/mediacreator')
-            ).MediaCreator(
-                this.engine.mainView.renderer,
-                this.engine.scene,
-                this.controller,
-            );
-        }
+        this._mediaCreator ??= import('@shopware-ag/dive/mediacreator').then(
+            (module) =>
+                new module.MediaCreator(
+                    this.engine.mainView.renderer,
+                    this.engine.scene,
+                    this.controller,
+                ),
+        );
+
         return this._mediaCreator;
     }
 
-    private _arSystem: import('@shopware-ag/dive/ar').ARSystem | null = null;
+    private _arSystem?: Promise<import('@shopware-ag/dive/ar').ARSystem>;
 
-    private async getARSystem(): Promise<
-        import('@shopware-ag/dive/ar').ARSystem
-    > {
-        if (!this._arSystem) {
-            this._arSystem = new (
-                await import('@shopware-ag/dive/ar')
-            ).ARSystem();
-        }
+    private getARSystem(): Promise<import('@shopware-ag/dive/ar').ARSystem> {
+        this._arSystem ??= import('@shopware-ag/dive/ar').then(
+            (module) => new module.ARSystem(),
+        );
+
         return this._arSystem;
     }
 
-    private _assetExplorer:
-        import('@shopware-ag/dive/assetexporter').AssetExporter | null = null;
+    private _assetExplorer?: Promise<
+        import('@shopware-ag/dive/assetexporter').AssetExporter
+    >;
 
-    private async getAssetExporter(): Promise<
+    private getAssetExporter(): Promise<
         import('@shopware-ag/dive/assetexporter').AssetExporter
     > {
-        if (!this._assetExplorer) {
-            this._assetExplorer = new (
-                await import('@shopware-ag/dive/assetexporter')
-            ).AssetExporter();
-        }
+        this._assetExplorer ??= import('@shopware-ag/dive/assetexporter').then(
+            (module) => new module.AssetExporter(),
+        );
+
         return this._assetExplorer;
     }
 
-    private _animationSystem:
-        import('@shopware-ag/dive/animation').AnimationSystem | null = null;
+    private _animationSystem?: Promise<
+        import('@shopware-ag/dive/animation').AnimationSystem
+    >;
 
-    private async getAnimationSystem(): Promise<
+    private getAnimationSystem(): Promise<
         import('@shopware-ag/dive/animation').AnimationSystem
     > {
-        if (!this._animationSystem) {
-            this._animationSystem = new (
-                await import('@shopware-ag/dive/animation')
-            ).AnimationSystem();
-        }
+        this._animationSystem ??= import('@shopware-ag/dive/animation').then(
+            (module) => new module.AnimationSystem(),
+        );
+
         return this._animationSystem;
     }
 
-    private _toolbox: import('@shopware-ag/dive/toolbox').Toolbox | null = null;
+    private _toolbox?: Promise<import('@shopware-ag/dive/toolbox').Toolbox>;
 
-    private async getToolbox(): Promise<
-        import('@shopware-ag/dive/toolbox').Toolbox
-    > {
-        if (!this._toolbox) {
-            this._toolbox = new (
-                await import('@shopware-ag/dive/toolbox')
-            ).Toolbox(this.engine.scene, this.controller);
-        }
+    private getToolbox(): Promise<import('@shopware-ag/dive/toolbox').Toolbox> {
+        this._toolbox ??= import('@shopware-ag/dive/toolbox').then(
+            (module) => new module.Toolbox(this.engine.scene, this.controller),
+        );
+
         return this._toolbox;
     }
 
     // registered entities
-    private registered: Map<string, EntitySchema> = new Map();
+    /** Every entity this state holds. See {@link EntityRegistry}. */
+    private registry: EntityRegistry = new EntityRegistry();
 
     private listeners: Map<
         keyof ActionTypes,
@@ -136,21 +108,46 @@ export class State {
     > = new Map();
 
     constructor(dive: DIVE, controller: OrbitController) {
-        this._id = MathUtils.generateUUID();
         this.engine = dive;
         this.controller = controller;
-        this.gateway = new EngineGateway(dive, this);
+        this.gateway = new EngineGateway(dive);
 
         State.__instances.push(this);
     }
 
+    /**
+     * Tears this state down and forgets it.
+     *
+     * @returns Whether it was still registered.
+     */
     public destroyInstance(): boolean {
-        const existingIndex = State.__instances.findIndex(
-            (entry) => entry.id === this.id,
-        );
+        const existingIndex = State.__instances.indexOf(this);
         if (existingIndex === -1) return false;
         State.__instances.splice(existingIndex, 1);
+
+        /**
+         * every watchEntity teardown lives in the registry, and dropping the
+         * gateway's map does not run them: the listeners would stay on the nodes
+         * and go on reporting into a state nobody uses any more
+         */
+        this.registry.clear();
+
+        // and the subscribers, which are consumer closures this no longer serves
+        this.listeners.clear();
+
+        /**
+         * the lazy modules are this state's to take down, because they are this
+         * state's to build: a Toolbox listens on the canvas and puts a gizmo in
+         * the scene from its constructor, and an AnimationSystem holds animators
+         *
+         * awaited rather than checked, so a module still being imported is torn
+         * down as soon as it arrives
+         */
+        void this._toolbox?.then((toolbox) => toolbox.dispose());
+        void this._animationSystem?.then((system) => system.dispose());
+
         this.gateway.dispose();
+
         return true;
     }
 
@@ -237,7 +234,8 @@ export class State {
 
     private getDependencies(): ActionDependencies {
         return {
-            registered: this.registered,
+            registry: this.registry,
+            dispatch: (type, payload) => this.dispatch(type, payload),
             gateway: this.gateway,
             controller: this.controller,
             getARSystem: () => this.getARSystem(),

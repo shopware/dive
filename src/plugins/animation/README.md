@@ -10,7 +10,7 @@ Leverages the workload for Animations in DIVE.
 
 ## Usage
 ```ts
-import { Vector3 } from 'three';
+import { Vector3 } from 'three/webgpu';
 import { DIVEModel } from '@shopware-ag/dive';
 import { AnimationSystem } from '@shopware-ag/dive/animation';
 

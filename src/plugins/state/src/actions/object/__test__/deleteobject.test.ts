@@ -1,3 +1,4 @@
+import { makeActionDeps } from '../../../__test__/actionDeps.ts';
 import { type EngineGateway } from '../../../EngineGateway.ts';
 import { DeleteObjectAction } from '../deleteobject.ts';
 import { DIVE, DIVEScene } from '@shopware-ag/dive';
@@ -20,10 +21,10 @@ describe('DeleteObjectAction', () => {
         removeEntity: vi.fn(),
     } as unknown as EngineGateway;
 
-    const mockRegistered = new Map<string, EntitySchema>();
+    const deps = makeActionDeps();
 
     beforeEach(() => {
-        mockRegistered.clear();
+        deps.registry.clear();
         vi.clearAllMocks();
         vi.mocked(SetParentAction).mockClear();
         vi.mocked(UpdateObjectAction).mockClear();
@@ -47,18 +48,18 @@ describe('DeleteObjectAction', () => {
                 depth: 1,
             },
         };
-        mockRegistered.set(object.id, object);
+        deps.registry.register(object);
 
         // Act
         const action = new DeleteObjectAction(
             { id: object.id },
-            { gateway: mockGateway, registered: mockRegistered },
+            { gateway: mockGateway, ...deps },
         );
         action.execute();
 
         // Assert
         expect(mockGateway.removeEntity).toHaveBeenCalledWith(object);
-        expect(mockRegistered.has(object.id)).toBe(false);
+        expect(deps.registry.read(object.id)).toBeUndefined();
     });
 
     it('should detach from parent before deleting', () => {
@@ -79,12 +80,12 @@ describe('DeleteObjectAction', () => {
                 depth: 1,
             },
         };
-        mockRegistered.set(object.id, object);
+        deps.registry.register(object);
 
         // Act
         const action = new DeleteObjectAction(
             { id: object.id },
-            { gateway: mockGateway, registered: mockRegistered },
+            { gateway: mockGateway, ...deps },
         );
         action.execute();
 
@@ -94,13 +95,10 @@ describe('DeleteObjectAction', () => {
                 object: { id: object.id },
                 parent: null,
             },
-            {
-                gateway: mockGateway,
-                registered: mockRegistered,
-            },
+            { gateway: mockGateway, registry: deps.registry },
         );
         expect(mockGateway.removeEntity).toHaveBeenCalledWith(object);
-        expect(mockRegistered.has(object.id)).toBe(false);
+        expect(deps.registry.read(object.id)).toBeUndefined();
     });
 
     it('should update children when deleting a group', () => {
@@ -148,14 +146,14 @@ describe('DeleteObjectAction', () => {
             },
         };
 
-        mockRegistered.set(group.id, group);
-        mockRegistered.set(child1.id, child1);
-        mockRegistered.set(child2.id, child2);
+        deps.registry.register(group);
+        deps.registry.register(child1);
+        deps.registry.register(child2);
 
         // Act
         const action = new DeleteObjectAction(
             { id: group.id },
-            { gateway: mockGateway, registered: mockRegistered },
+            { gateway: mockGateway, ...deps },
         );
         action.execute();
 
@@ -166,30 +164,24 @@ describe('DeleteObjectAction', () => {
                 id: 'child1',
                 parentId: null,
             },
-            {
-                gateway: mockGateway,
-                registered: mockRegistered,
-            },
+            { gateway: mockGateway, registry: deps.registry },
         );
         expect(UpdateObjectAction).toHaveBeenCalledWith(
             {
                 id: 'child2',
                 parentId: null,
             },
-            {
-                gateway: mockGateway,
-                registered: mockRegistered,
-            },
+            { gateway: mockGateway, registry: deps.registry },
         );
         expect(mockGateway.removeEntity).toHaveBeenCalledWith(group);
-        expect(mockRegistered.has(group.id)).toBe(false);
+        expect(deps.registry.read(group.id)).toBeUndefined();
     });
 
     it('should return false when object does not exist', () => {
         // Act
         const action = new DeleteObjectAction(
             { id: 'non-existent' },
-            { gateway: mockGateway, registered: mockRegistered },
+            { gateway: mockGateway, ...deps },
         );
         const result = action.execute();
 

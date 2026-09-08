@@ -1,6 +1,6 @@
 import { MathUtils } from 'three/webgpu';
 import { DIVETicker } from '../clock/Clock.ts';
-import { DIVEPerspectiveCamera } from '../camera/PerspectiveCamera.ts';
+import { type DIVECameraComponent } from '../../components/camera/CameraComponent.ts';
 import { DIVERenderer } from '../renderer/Renderer.ts';
 import { DIVECanvasLifecycleManager } from '../canvas/CanvasLifecycleManager.ts';
 import { DIVEScene } from '../scene/Scene.ts';
@@ -20,12 +20,12 @@ export class DIVEView implements DIVETicker {
 
     constructor(
         private _scene: DIVEScene,
-        private _camera: DIVEPerspectiveCamera,
+        cameraComponent: DIVECameraComponent,
         private _settings: Partial<DIVERendererSettings>,
     ) {
         this._renderer = new DIVERenderer(
             this._scene,
-            this._camera,
+            cameraComponent,
             this._settings,
         );
 
@@ -39,8 +39,20 @@ export class DIVEView implements DIVETicker {
         return this._renderer;
     }
 
-    public get camera(): DIVEPerspectiveCamera {
-        return this._camera;
+    /**
+     * What the view looks through.
+     *
+     * The component and not the camera or its node: everything a consumer needs
+     * hangs off it -- `camera` for three, `owner` for the transform, `onResize` and
+     * `setCameraLayer` for itself -- so there is one way in rather than three.
+     *
+     * Read off the renderer rather than kept here. `DIVERenderer.activeCamera` is
+     * settable, so a second copy would keep reporting the camera the renderer has
+     * already stopped drawing through -- and `onResize` below would resize that
+     * stale one.
+     */
+    public get cameraComponent(): DIVECameraComponent {
+        return this._renderer.activeCamera;
     }
 
     public get canvas(): HTMLCanvasElement {
@@ -65,11 +77,7 @@ export class DIVEView implements DIVETicker {
                     );
                 }
 
-                try {
-                    await this._canvasLifecycleManager.waitForHealthyCanvas();
-                } catch (error) {
-                    return Promise.reject(error);
-                }
+                await this._canvasLifecycleManager.waitForHealthyCanvas();
 
                 if (signal.aborted) {
                     return Promise.reject(
@@ -94,7 +102,7 @@ export class DIVEView implements DIVETicker {
 
     public onResize(width: number, height: number): void {
         this._renderer.onResize(width, height);
-        this._camera.onResize(width, height);
+        this.cameraComponent.onResize(width, height);
     }
 
     public async setCanvas(canvas: HTMLCanvasElement): Promise<void> {

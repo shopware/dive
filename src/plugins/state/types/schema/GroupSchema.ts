@@ -18,5 +18,5 @@ export type GroupSchema = BaseEntitySchema & {
     rotation: Vector3Like;
     scale: Vector3Like;
     /** Shows the helper lines that run from the group to each of its members. */
-    bbVisible?: boolean;
+    linksVisible?: boolean;
 };

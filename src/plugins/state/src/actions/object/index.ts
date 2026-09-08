@@ -5,7 +5,6 @@ export * from './dropit.ts';
 export * from './getallobjects.ts';
 export * from './getobjects.ts';
 export * from './modelloaded.ts';
-export * from './placeonfloor.ts';
 export * from './selectobject.ts';
 export * from './setparent.ts';
 export * from './updateobject.ts';

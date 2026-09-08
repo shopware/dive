@@ -7,18 +7,15 @@ import {
     DIVESceneSettings,
 } from './scene/Scene.ts';
 import {
-    DIVEPerspectiveCamera,
     DIVEPerspectiveCameraDefaultSettings,
     DIVEPerspectiveCameraSettings,
-} from './camera/PerspectiveCamera.ts';
+    PerspectiveCameraComponent,
+} from '../components/camera/perspective/PerspectiveCameraComponent.ts';
+import { DIVENode } from './node/Node.ts';
 import {
     DIVERendererDefaultSettings,
     DIVERendererSettings,
 } from './renderer/Renderer.ts';
-import {
-    OrbitControllerDefaultSettings,
-    OrbitControllerSettings,
-} from '@shopware-ag/dive/orbitcontroller';
 import { DIVE_ASCII_ART } from './AsciiArt.ts';
 
 declare global {
@@ -65,8 +62,7 @@ export type DIVESettings = {
     displayAxes: boolean;
 } & DIVESceneSettings &
     DIVEPerspectiveCameraSettings &
-    DIVERendererSettings &
-    OrbitControllerSettings;
+    DIVERendererSettings;
 
 export const DIVEDefaultSettings: Required<DIVESettings> = {
     autoStart: true,
@@ -74,7 +70,6 @@ export const DIVEDefaultSettings: Required<DIVESettings> = {
     ...DIVESceneDefaultSettings,
     ...DIVEPerspectiveCameraDefaultSettings,
     ...DIVERendererDefaultSettings,
-    ...OrbitControllerDefaultSettings,
 };
 
 /**
@@ -145,10 +140,30 @@ export class DIVE {
                 settings?.displayFloor ?? DIVEDefaultSettings.displayFloor,
         });
 
+        /**
+         * the scene ticks its components, registered before the view so they see
+         * the frame they affect
+         */
+        this._clock.addTicker(this._scene);
+
         // set up main view
+
+        /**
+         * the camera node goes into the scene, because three only updates a
+         * camera's world matrix itself while the camera has no parent
+         * into the scene and not into root, this camera belongs to the viewer
+         */
+        const cameraNode = new DIVENode();
+        cameraNode.name = 'DIVECamera';
+        const cameraComponent = cameraNode.addComponent(
+            new PerspectiveCameraComponent(),
+        );
+        cameraComponent.applySettings(this._settings);
+        this._scene.add(cameraNode);
+
         const mainView = new DIVEView(
             this._scene,
-            new DIVEPerspectiveCamera(),
+            cameraComponent,
             this._settings,
         );
         this._clock.addTicker(mainView);
@@ -165,7 +180,7 @@ export class DIVE {
                     this._orientationDisplay = new OrientationDisplay(
                         this.mainView.renderer,
                         this.scene,
-                        this.mainView.camera,
+                        this.mainView.cameraComponent,
                     );
                     this._clock.addTicker(this._orientationDisplay);
                 },
@@ -181,7 +196,7 @@ export class DIVE {
         window.DIVE.instances.push(this);
 
         if (this._settings.autoStart) {
-            this.start();
+            this.startAsync();
         }
     }
 
@@ -203,13 +218,6 @@ export class DIVE {
 
     public get clock(): DIVEClock {
         return this._clock;
-    }
-
-    /**
-     * @deprecated Use startAsync() instead, which returns a promise that resolves when the engine is fully initialized.
-     */
-    public start(): void {
-        void this.startAsync();
     }
 
     public async startAsync(): Promise<void> {
@@ -239,17 +247,17 @@ export class DIVE {
 
             this._clock.dispose();
 
-            this._views.forEach((view) => {
-                view.dispose();
-            });
-            this._views = [];
-
             if (this._orientationDisplay) {
                 this._orientationDisplay.dispose();
                 this._orientationDisplay = null;
             }
 
             this.scene.dispose();
+
+            this._views.forEach((view) => {
+                view.dispose();
+            });
+            this._views = [];
 
             window.DIVE.instances = window.DIVE.instances.filter(
                 (instance) => instance._instanceId !== this._instanceId,

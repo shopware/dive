@@ -26,10 +26,7 @@ const quickView = await QuickView('my-model.glb', {
         enabled: true,
         imageUrl: 'path/to/image.hdr',
         useAsBackground: true,
-        globalEnvIntensity: 1,
-        exposure: 1,
         rotateY: 0,
-        replaceLights: false,
     }
 });
 quickView.orbitController.enablePan = false;

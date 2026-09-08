@@ -7,7 +7,7 @@ import {
     WebGPURenderer,
 } from 'three/webgpu';
 import { DIVEScene } from '../scene/Scene.ts';
-import { DIVEPerspectiveCamera } from '../camera/PerspectiveCamera.ts';
+import { type DIVECameraComponent } from '../../components/camera/CameraComponent.ts';
 import { DIVEEnvironment } from '../environment/Environment.ts';
 import { DIVEAbortablePromise } from '../promise/abortable/AbortablePromise.ts';
 
@@ -101,11 +101,29 @@ export class DIVERenderer {
 
     private _settings: DIVERendererSettings;
 
+    /**
+     * Whose eyes the next frame is drawn through.
+     *
+     * The component, not the bare camera: a camera is reached through the
+     * component that owns it everywhere else, and taking the camera here would
+     * make the renderer the one place holding a handle that cannot be asked for
+     * its layers or resized. `tick` reads `.camera` off it per frame, so a
+     * component that swaps its camera is followed rather than remembered wrongly.
+     *
+     * Settable rather than fixed at construction: cameras are nodes now, so a
+     * caller may want to render through a camera entity or a preview and back
+     * again. Welding one in meant rebuilding the renderer -- and with it the WebGPU
+     * context -- to look somewhere else.
+     */
+    public activeCamera: DIVECameraComponent;
+
     constructor(
         private _scene: DIVEScene,
-        private _camera: DIVEPerspectiveCamera,
+        camera: DIVECameraComponent,
         settings?: Partial<DIVERendererSettings>,
     ) {
+        this.activeCamera = camera;
+
         this._settings = {
             ...DIVERendererDefaultSettings,
             ...(settings ?? {}),
@@ -155,18 +173,10 @@ export class DIVERenderer {
         return this._initPromise;
     }
 
-    /**
-     * @deprecated Use {@link DIVERenderer.tick} instead.
-     */
-    public render(): void {
-        console.warn('DIVERenderer.render: Use DIVERenderer.tick instead.');
-        this.tick();
-    }
-
     public tick(): void {
         if (!this._webgpurenderer.initialized) return;
 
-        this._webgpurenderer.render(this._scene, this._camera);
+        this._webgpurenderer.render(this._scene, this.activeCamera.camera);
     }
 
     public onResize(width: number, height: number): void {
@@ -176,6 +186,7 @@ export class DIVERenderer {
     public dispose(): void {
         this._initPromise?.abort();
         this._environment.dispose();
+        this._keepCanvasUsable(this._webgpurenderer);
         this._webgpurenderer.dispose();
     }
 
@@ -189,7 +200,53 @@ export class DIVERenderer {
         this._settings.canvas = canvas;
         this._webgpurenderer = this._createWebGPURenderer();
         this._environment.setRenderer(this._webgpurenderer);
+
+        this._keepCanvasUsable(previousRenderer);
         previousRenderer.dispose();
+    }
+
+    /**
+     * Stops a `dispose` from ending the canvas's WebGL context.
+     *
+     * `WebGLBackend.dispose()` finishes with `WEBGL_lose_context.loseContext()`,
+     * which kills the context of the *canvas*, not of the renderer. A canvas is
+     * only ever given one context per type, so once it is lost
+     * `getContext('webgl2')` keeps handing back the dead one -- and the next
+     * renderer on it reads `getParameter(VIEWPORT)`, gets `null`, and throws. That
+     * made a canvas unusable after the first teardown, which is not something DIVE
+     * may do to an element a caller passed in and still has in their document.
+     *
+     * Skipping it is only safe because {@link DIVEScene.dispose} releases the GPU
+     * resources itself, through the `dispose` listeners three puts on every
+     * geometry, material and texture -- and `DIVE.disposeAsync` runs it before the
+     * views, while this renderer is still there to hear it.
+     *
+     * `WebGLExtensions.get` returns whatever its cache holds unless that is
+     * `undefined`, so seeding the entry with `null` makes the lookup in `dispose`
+     * come up empty. Everything else `dispose` does still runs.
+     *
+     * Warns rather than throws if three's internals have moved: the canvas is then
+     * lost again, which is bad, but not worth failing a teardown over.
+     *
+     * @param renderer - The renderer about to be disposed.
+     */
+    private _keepCanvasUsable(renderer: WebGPURenderer): void {
+        const cache = (
+            renderer as unknown as {
+                backend?: {
+                    extensions?: { extensions?: Record<string, unknown> };
+                };
+            }
+        ).backend?.extensions?.extensions;
+
+        if (!cache) {
+            console.warn(
+                'DIVERenderer: could not reach the WebGL extension cache, so disposing will end this canvas context. Reusing the canvas will fail.',
+            );
+            return;
+        }
+
+        cache['WEBGL_lose_context'] = null;
     }
 
     private _createWebGPURenderer(): WebGPURenderer {

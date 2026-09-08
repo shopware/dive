@@ -29,6 +29,43 @@ export class SelectionState {
      * Calls onSelect on the new object and onDeselect on the previous.
      */
     public select(obj: Object3D & DIVESelectable): void {
+        this._select(obj, true);
+    }
+
+    /**
+     * Selects without having the object announce it.
+     *
+     * For a caller that announces the selection itself, so a subscriber does not
+     * hear about it twice: whoever asked for this already knows it happened.
+     *
+     * The object that was displaced still gets its `onDeselect` — nobody told
+     * *it* anything, and it is the only source for that news. Listeners
+     * registered through {@link onChange} are notified either way, or a
+     * programmatic selection would not attach the gizmo.
+     */
+    public applySelection(obj: Object3D & DIVESelectable): void {
+        this._select(obj, false);
+    }
+
+    /**
+     * Deselect the currently selected object.
+     * Calls onDeselect on the object.
+     */
+    public deselect(): void {
+        this._deselect(true);
+    }
+
+    /**
+     * Deselects without having the object announce it.
+     *
+     * The counterpart to {@link applySelection}: for a caller that asked for
+     * exactly this and announces it itself.
+     */
+    public applyDeselection(): void {
+        this._deselect(false);
+    }
+
+    private _select(obj: Object3D & DIVESelectable, announce: boolean): void {
         if (this._selected === obj) return;
 
         // Both handlers below can call straight back in here, so the field is
@@ -43,22 +80,18 @@ export class SelectionState {
         previous?.onDeselect?.();
 
         this._selected = obj;
-        obj.onSelect?.();
+        if (announce) obj.onSelect?.();
 
         this.notifyListeners();
     }
 
-    /**
-     * Deselect the currently selected object.
-     * Calls onDeselect on the object.
-     */
-    public deselect(): void {
+    private _deselect(announce: boolean): void {
         const previous = this._selected;
         if (!previous) return;
 
         // cleared before the handler runs, for the same reason as in select()
         this._selected = null;
-        previous.onDeselect?.();
+        if (announce) previous.onDeselect?.();
 
         this.notifyListeners();
     }

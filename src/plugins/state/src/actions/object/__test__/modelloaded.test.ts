@@ -1,3 +1,4 @@
+import { makeActionDeps } from '../../../__test__/actionDeps.ts';
 import { ModelLoadedAction } from '../modelloaded.ts';
 import {
     type EntitySchema,
@@ -7,7 +8,7 @@ import {
 describe('ModelLoadedAction', () => {
     it('should mark a model as loaded', async () => {
         // Mock dependencies
-        const mockRegistered = new Map<string, EntitySchema>();
+        const deps = makeActionDeps();
 
         const testObject: EntitySchema = {
             id: 'test-object',
@@ -21,12 +22,12 @@ describe('ModelLoadedAction', () => {
         } as unknown as EntitySchema;
 
         // Add the object first
-        mockRegistered.set(testObject.id, testObject);
+        deps.registry.register(testObject);
 
         const action = new ModelLoadedAction(
             { id: 'test-object' },
             {
-                registered: mockRegistered,
+                ...deps,
             },
         );
 
@@ -34,19 +35,19 @@ describe('ModelLoadedAction', () => {
         action.execute();
 
         // Verify results
-        expect((mockRegistered.get('test-object') as ModelSchema).loaded).toBe(
-            true,
-        );
+        expect(
+            (deps.registry.read('test-object')?.schema as ModelSchema).loaded,
+        ).toBe(true);
     });
 
     it('should throw error if model is not registered', async () => {
         // Mock dependencies
-        const mockRegistered = new Map<string, EntitySchema>();
+        const deps = makeActionDeps();
 
         const action = new ModelLoadedAction(
             { id: 'non-existent-object' },
             {
-                registered: mockRegistered,
+                ...deps,
             },
         );
 
@@ -58,7 +59,7 @@ describe('ModelLoadedAction', () => {
 
     it('should throw error if object is not a model', async () => {
         // Mock dependencies
-        const mockRegistered = new Map<string, EntitySchema>();
+        const deps = makeActionDeps();
 
         const testObject: EntitySchema = {
             id: 'test-object',
@@ -71,12 +72,12 @@ describe('ModelLoadedAction', () => {
         } as unknown as EntitySchema;
 
         // Add the object first
-        mockRegistered.set(testObject.id, testObject);
+        deps.registry.register(testObject);
 
         const action = new ModelLoadedAction(
             { id: 'test-object' },
             {
-                registered: mockRegistered,
+                ...deps,
             },
         );
 

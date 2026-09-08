@@ -16,7 +16,10 @@ import { findSceneRecursive } from '../findSceneRecursive/findSceneRecursive.ts'
  * @param object - The object about to leave the scene.
  */
 export const detachTransformControls = (object: Object3D): void => {
-    findSceneRecursive(object).children.find((sceneChild) => {
+    const scene = findSceneRecursive(object);
+    if (!scene) return;
+
+    scene.children.find((sceneChild) => {
         const helperRoot = sceneChild as Object3D & {
             isTransformControlsRoot?: boolean;
             controls?: TransformControls;

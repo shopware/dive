@@ -7,39 +7,49 @@ import { type EntitySchema } from '../../../types/index.ts';
 import {
     AddObjectAction,
     DeleteObjectAction,
+    SetCameraTransformAction,
     SetParentAction,
 } from '@shopware-ag/dive/state';
 
 export const SetStateAction = Action.define<
     StateData,
-    Pick<ActionDependencies, 'gateway' | 'controller' | 'registered'>,
+    Pick<
+        ActionDependencies,
+        'gateway' | 'controller' | 'registry' | 'dispatch'
+    >,
     Promise<DIVESceneObject[]>
 >({
     description: 'Applies complete state data to current dive instance.',
-    execute: async (_payload, { gateway, controller, registered }) => {
+    execute: async (_payload, { gateway, controller, registry, dispatch }) => {
         // the state is meant to replace what is there, and ADD_OBJECT skips ids that are already registered, so clear the scene up front
-        Array.from(registered.values()).forEach((entity: EntitySchema) => {
+        registry.read().forEach(({ schema: entity }) => {
             new DeleteObjectAction(
                 {
                     id: entity.id,
                     entityType: entity.entityType,
                 },
-                { gateway, registered },
+                {
+                    gateway,
+                    registry,
+                },
             ).execute();
         });
 
         // one call instead of a hand-written copy per property, which is how
         // gridEnabled went missing here while updatescene had it
         gateway.applySceneSettings(_payload);
+        /**
+         * the same move SET_CAMERA_TRANSFORM makes, so it is that action rather
+         * than a second copy of it
+         */
         _payload.userCamera !== undefined &&
-            controller.setState({
-                position: _payload.userCamera.position,
-                target: _payload.userCamera.target,
-                azimuthalAngle: controller.getState().azimuthalAngle,
-                polarAngle: controller.getState().polarAngle,
-                distance: controller.getState().distance,
-                quaternion: controller.getState().quaternion,
-            });
+            new SetCameraTransformAction(
+                {
+                    position: _payload.userCamera.position,
+                    target: _payload.userCamera.target,
+                },
+                { controller },
+            ).execute();
 
         /** What was created, in the order the entities finished loading. Entity types without a scene object, currently cameras, contribute nothing. */
         const objects: DIVESceneObject[] = [];
@@ -65,7 +75,7 @@ export const SetStateAction = Action.define<
                             ...entity,
                             parentId: null,
                         },
-                        { gateway, registered },
+                        { gateway, registry, dispatch },
                     )
                         .execute()
                         .then((object) => {
@@ -92,7 +102,7 @@ export const SetStateAction = Action.define<
                             ...entity,
                             parentId: null,
                         },
-                        { gateway, registered },
+                        { gateway, registry, dispatch },
                     )
                         .execute()
                         .then((object) => {
@@ -118,7 +128,7 @@ export const SetStateAction = Action.define<
                             ...entity,
                             parentId: null,
                         },
-                        { gateway, registered },
+                        { gateway, registry, dispatch },
                     )
                         .execute()
                         .then((object) => {
@@ -144,7 +154,7 @@ export const SetStateAction = Action.define<
                             ...entity,
                             parentId: null,
                         },
-                        { gateway, registered },
+                        { gateway, registry, dispatch },
                     )
                         .execute()
                         .then((object) => {
@@ -170,7 +180,7 @@ export const SetStateAction = Action.define<
                             ...entity,
                             parentId: null,
                         },
-                        { gateway, registered },
+                        { gateway, registry, dispatch },
                     )
                         .execute()
                         .then((sceneObject) => {
@@ -203,7 +213,7 @@ export const SetStateAction = Action.define<
                         object: { id: entity.id },
                         parent: { id: entity.parentId },
                     },
-                    { gateway, registered },
+                    { gateway, registry },
                 ).execute();
             } catch (reason) {
                 failed.push({ entity, reason });
