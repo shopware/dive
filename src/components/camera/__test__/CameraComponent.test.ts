@@ -225,7 +225,7 @@ describe('dive/camera/DIVECameraComponent', () => {
             const component = attached();
             component.owner.position.set(0, 0, 5);
 
-            component.aimAt(new Vector3(0, 0, 0));
+            component.lookAt(new Vector3(0, 0, 0));
 
             expect(worldViewDirection(component).z).toBeCloseTo(-1, 5);
         });
@@ -234,7 +234,7 @@ describe('dive/camera/DIVECameraComponent', () => {
             const component = attached();
             component.owner.position.set(4, 0, 0);
 
-            component.aimAt(new Vector3(0, 0, 0));
+            component.lookAt(new Vector3(0, 0, 0));
 
             expect(worldViewDirection(component).x).toBeCloseTo(-1, 5);
         });
@@ -243,7 +243,7 @@ describe('dive/camera/DIVECameraComponent', () => {
             const component = attached();
             component.owner.position.set(0, 3, 0);
 
-            component.aimAt(new Vector3(0, 0, 0));
+            component.lookAt(new Vector3(0, 0, 0));
 
             expect(worldViewDirection(component).y).toBeCloseTo(-1, 5);
         });
@@ -261,7 +261,7 @@ describe('dive/camera/DIVECameraComponent', () => {
             component.owner.position.set(0, 0, 5);
             parent.updateMatrixWorld(true);
 
-            component.aimAt(new Vector3(0, 0, 0));
+            component.lookAt(new Vector3(0, 0, 0));
 
             /**
              * the parent's turn puts the node at world (5, 0, 0), so facing the
@@ -295,7 +295,7 @@ describe('dive/camera/DIVECameraComponent', () => {
         it('should refuse to aim while it has no node', () => {
             // it turns its owner, and there is nothing else it could turn
             expect(() =>
-                new TestCameraComponent().aimAt(new Vector3()),
+                new TestCameraComponent().lookAt(new Vector3()),
             ).toThrow();
         });
     });
