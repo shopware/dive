@@ -1,3 +1,4 @@
+import type { Mock } from 'vitest';
 import { OrbitController } from '../OrbitController.ts';
 import { BoundingBox, DIVERenderer, DIVEScene } from '@shopware-ag/dive';
 import {
@@ -485,7 +486,7 @@ describe('modules/controller/orbit/OrbitController', () => {
         const enclosed = () =>
             (
                 vi.mocked(BoundingBox).mock.results[0].value as {
-                    enclose: ReturnType<typeof vi.fn>;
+                    enclose: Mock;
                 }
             ).enclose;
 

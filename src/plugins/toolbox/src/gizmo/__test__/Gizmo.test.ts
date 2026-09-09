@@ -9,10 +9,12 @@ const mockAddEventListener = vi.fn();
 const mockGetDistance = vi.fn(() => 10);
 
 vi.mock('@shopware-ag/dive/orbitcontroller', () => ({
-    OrbitController: vi.fn().mockImplementation(() => ({
-        addEventListener: mockAddEventListener,
-        getDistance: mockGetDistance,
-    })),
+    OrbitController: vi.fn().mockImplementation(function () {
+        return {
+            addEventListener: mockAddEventListener,
+            getDistance: mockGetDistance,
+        };
+    }),
 }));
 
 // Mock the gizmo components
@@ -20,12 +22,12 @@ vi.mock('../translate/TranslateGizmo', async () => {
     const { Object3D } = await vi.importActual<typeof import('three')>('three');
 
     return {
-        DIVETranslateGizmo: vi.fn().mockImplementation(() =>
-            Object.assign(new Object3D(), {
+        DIVETranslateGizmo: vi.fn().mockImplementation(function () {
+            return Object.assign(new Object3D(), {
                 debug: false,
                 reset: vi.fn(),
-            }),
-        ),
+            });
+        }),
     };
 });
 
@@ -33,12 +35,12 @@ vi.mock('../rotate/RotateGizmo', async () => {
     const { Object3D } = await vi.importActual<typeof import('three')>('three');
 
     return {
-        DIVERotateGizmo: vi.fn().mockImplementation(() =>
-            Object.assign(new Object3D(), {
+        DIVERotateGizmo: vi.fn().mockImplementation(function () {
+            return Object.assign(new Object3D(), {
                 debug: false,
                 reset: vi.fn(),
-            }),
-        ),
+            });
+        }),
     };
 });
 
@@ -46,13 +48,13 @@ vi.mock('../scale/ScaleGizmo', async () => {
     const { Object3D } = await vi.importActual<typeof import('three')>('three');
 
     return {
-        DIVEScaleGizmo: vi.fn().mockImplementation(() =>
-            Object.assign(new Object3D(), {
+        DIVEScaleGizmo: vi.fn().mockImplementation(function () {
+            return Object.assign(new Object3D(), {
                 debug: false,
                 reset: vi.fn(),
                 update: vi.fn(),
-            }),
-        ),
+            });
+        }),
     };
 });
 
@@ -60,13 +62,13 @@ vi.mock('../plane/GizmoPlane', async () => {
     const { Object3D } = await vi.importActual<typeof import('three')>('three');
 
     return {
-        DIVEGizmoPlane: vi.fn().mockImplementation(() =>
-            Object.assign(new Object3D(), {
+        DIVEGizmoPlane: vi.fn().mockImplementation(function () {
+            return Object.assign(new Object3D(), {
                 visible: false,
                 clear: vi.fn(),
                 assemble: vi.fn(),
-            }),
-        ),
+            });
+        }),
     };
 });
 

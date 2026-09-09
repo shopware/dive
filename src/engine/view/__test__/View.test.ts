@@ -107,17 +107,19 @@ describe('DIVEView', () => {
          * stores what it is constructed with, as the real renderer does: the view
          * reads the camera back off it rather than keeping its own copy
          */
-        vi.mocked(DIVERenderer).mockImplementation((_scene, camera) => {
+        vi.mocked(DIVERenderer).mockImplementation(function (_scene, camera) {
             mockRenderer.activeCamera = camera;
             return mockRenderer as any;
         });
         vi.mocked(DIVECanvasLifecycleManager).mockImplementation(
-            (_canvas, onResize) => {
+            function (_canvas, onResize) {
                 lifecycleResizeHandler = onResize;
                 return mockCanvasLifecycleManager as any;
             },
         );
-        vi.mocked(DIVEScene).mockImplementation(() => mockScene as any);
+        vi.mocked(DIVEScene).mockImplementation(function () {
+            return mockScene as any;
+        });
 
         const scene = new DIVEScene();
 

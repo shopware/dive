@@ -1,3 +1,4 @@
+import type { Mock } from 'vitest';
 import {
     BoxGeometry,
     Mesh,
@@ -233,7 +234,7 @@ describe('dive/engine/DIVENode', () => {
          * does not get a second report on top of its own.
          */
         let parent: DIVENode;
-        let onTransform: ReturnType<typeof vi.fn>;
+        let onTransform: Mock;
 
         beforeEach(() => {
             parent = new DIVENode();
@@ -292,7 +293,7 @@ describe('dive/engine/DIVENode', () => {
 
         describe('members', () => {
             let member: DIVENode;
-            let onMemberTransform: ReturnType<typeof vi.fn>;
+            let onMemberTransform: Mock;
 
             beforeEach(() => {
                 member = new DIVENode();
@@ -334,7 +335,7 @@ describe('dive/engine/DIVENode', () => {
          * from a setPosition, and does not need to.
          */
         let parent: DIVENode;
-        let onTransform: ReturnType<typeof vi.fn>;
+        let onTransform: Mock;
 
         beforeEach(() => {
             parent = new DIVENode();
@@ -404,8 +405,8 @@ describe('dive/engine/DIVENode', () => {
         describe('members', () => {
             let member: DIVENode;
             let grandMember: DIVENode;
-            let onMemberTransform: ReturnType<typeof vi.fn>;
-            let onGrandMemberTransform: ReturnType<typeof vi.fn>;
+            let onMemberTransform: Mock;
+            let onGrandMemberTransform: Mock;
 
             beforeEach(() => {
                 member = new DIVENode();

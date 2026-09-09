@@ -7,31 +7,39 @@ import { AssetCache } from '@shopware-ag/dive/assetcache';
 // Mock the Three.js loaders
 const mockParseAsyncGLTF = vi.fn();
 vi.mock('three/examples/jsm/loaders/GLTFLoader.js', () => ({
-    GLTFLoader: vi.fn().mockImplementation(() => ({
-        parseAsync: mockParseAsyncGLTF,
-        setDRACOLoader: vi.fn(),
-    })),
+    GLTFLoader: vi.fn().mockImplementation(function () {
+        return {
+            parseAsync: mockParseAsyncGLTF,
+            setDRACOLoader: vi.fn(),
+        };
+    }),
 }));
 
 const mockParseUSD = vi.fn();
 vi.mock('three/examples/jsm/loaders/USDLoader.js', () => ({
-    USDLoader: vi.fn().mockImplementation(() => ({
-        parse: mockParseUSD,
-    })),
+    USDLoader: vi.fn().mockImplementation(function () {
+        return {
+            parse: mockParseUSD,
+        };
+    }),
 }));
 
 vi.mock('../../draco/DracoLoader.ts', () => ({
-    DracoLoader: vi.fn().mockImplementation(() => ({
-        setDecoderPath: vi.fn(),
-        setDecoderConfig: vi.fn(),
-    })),
+    DracoLoader: vi.fn().mockImplementation(function () {
+        return {
+            setDecoderPath: vi.fn(),
+            setDecoderConfig: vi.fn(),
+        };
+    }),
 }));
 
 const mockStepParseAsync = vi.fn();
 vi.mock('../../step/STEPLoader.ts', () => ({
-    STEPLoader: vi.fn().mockImplementation(() => ({
-        parseAsync: mockStepParseAsync,
-    })),
+    STEPLoader: vi.fn().mockImplementation(function () {
+        return {
+            parseAsync: mockStepParseAsync,
+        };
+    }),
 }));
 
 // Mock AssetCache

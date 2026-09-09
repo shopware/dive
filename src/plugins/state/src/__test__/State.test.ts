@@ -132,11 +132,13 @@ vi.mock('../../../../engine/Dive.ts', async () => {
         },
     };
 
-    const DIVE = vi.fn().mockImplementation(() => mockDiveInstance);
+    const DIVE = vi.fn().mockImplementation(function () {
+        return mockDiveInstance;
+    });
 
-    (DIVE as any).QuickView = vi
-        .fn()
-        .mockImplementation(() => mockDiveInstance);
+    (DIVE as any).QuickView = vi.fn().mockImplementation(function () {
+        return mockDiveInstance;
+    });
 
     return {
         DIVE,
@@ -144,9 +146,11 @@ vi.mock('../../../../engine/Dive.ts', async () => {
 });
 vi.mock(import('@shopware-ag/dive/orbitcontroller'), async (importOriginal) => {
     const actual = await importOriginal();
-    const MockOrbitController = vi.fn().mockImplementation(() => ({
-        uuid: 'mock-orbit-controller-uuid',
-    }));
+    const MockOrbitController = vi.fn().mockImplementation(function () {
+        return {
+            uuid: 'mock-orbit-controller-uuid',
+        };
+    });
 
     // Explicitly define static properties
     (MockOrbitController as any).DEFAULT_ZOOM_FACTOR = (
@@ -161,9 +165,11 @@ vi.mock(import('@shopware-ag/dive/orbitcontroller'), async (importOriginal) => {
     };
 });
 vi.mock('../../toolbox/Toolbox.ts', () => ({
-    DIVEToolbox: vi.fn().mockImplementation(() => ({
-        uuid: 'mock-toolbox-uuid',
-    })),
+    DIVEToolbox: vi.fn().mockImplementation(function () {
+        return {
+            uuid: 'mock-toolbox-uuid',
+        };
+    }),
 }));
 vi.mock('../ActionRegistry');
 describe('modules/state/State', () => {
@@ -499,35 +505,45 @@ describe('modules/state/State', () => {
         beforeEach(() => {
             // Mock the dynamic imports for each module
             vi.mock('@shopware-ag/dive/mediacreator', () => ({
-                MediaCreator: vi.fn().mockImplementation(() => ({
-                    uuid: 'mock-media-creator-uuid',
-                })),
+                MediaCreator: vi.fn().mockImplementation(function () {
+                    return {
+                        uuid: 'mock-media-creator-uuid',
+                    };
+                }),
             }));
 
             vi.mock('@shopware-ag/dive/ar', () => ({
-                ARSystem: vi.fn().mockImplementation(() => ({
-                    uuid: 'mock-ar-system-uuid',
-                })),
+                ARSystem: vi.fn().mockImplementation(function () {
+                    return {
+                        uuid: 'mock-ar-system-uuid',
+                    };
+                }),
             }));
 
             vi.mock('@shopware-ag/dive/assetexporter', () => ({
-                AssetExporter: vi.fn().mockImplementation(() => ({
-                    uuid: 'mock-asset-exporter-uuid',
-                })),
+                AssetExporter: vi.fn().mockImplementation(function () {
+                    return {
+                        uuid: 'mock-asset-exporter-uuid',
+                    };
+                }),
             }));
 
             vi.mock('@shopware-ag/dive/animation', () => ({
-                AnimationSystem: vi.fn().mockImplementation(() => ({
-                    uuid: 'mock-animation-system-uuid',
-                    dispose: vi.fn(),
-                })),
+                AnimationSystem: vi.fn().mockImplementation(function () {
+                    return {
+                        uuid: 'mock-animation-system-uuid',
+                        dispose: vi.fn(),
+                    };
+                }),
             }));
 
             vi.mock('@shopware-ag/dive/toolbox', () => ({
-                Toolbox: vi.fn().mockImplementation(() => ({
-                    uuid: 'mock-toolbox-uuid',
-                    dispose: vi.fn(),
-                })),
+                Toolbox: vi.fn().mockImplementation(function () {
+                    return {
+                        uuid: 'mock-toolbox-uuid',
+                        dispose: vi.fn(),
+                    };
+                }),
             }));
         });
 

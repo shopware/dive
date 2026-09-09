@@ -2,6 +2,7 @@
  * @jest-environment jsdom
  */
 
+import type { Mock } from 'vitest';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { DIVECanvasLifecycleManager } from '../CanvasLifecycleManager.ts';
 
@@ -14,9 +15,9 @@ type CanvasFixture = {
 };
 
 describe('DIVECanvasLifecycleManager', () => {
-    let onResize: ReturnType<typeof vi.fn>;
-    let mockObserve: ReturnType<typeof vi.fn>;
-    let mockDisconnect: ReturnType<typeof vi.fn>;
+    let onResize: Mock;
+    let mockObserve: Mock;
+    let mockDisconnect: Mock;
     let resizeObserverCallbacks: ResizeCallback[];
 
     const createParent = (): HTMLElement => document.createElement('div');
@@ -66,7 +67,7 @@ describe('DIVECanvasLifecycleManager', () => {
 
         vi.stubGlobal(
             'ResizeObserver',
-            vi.fn().mockImplementation((callback: ResizeCallback) => {
+            vi.fn().mockImplementation(function (callback: ResizeCallback) {
                 resizeObserverCallbacks.push(callback);
                 return {
                     observe: mockObserve,

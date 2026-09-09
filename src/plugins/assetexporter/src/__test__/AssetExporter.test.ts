@@ -20,17 +20,21 @@ const mockUsdzParseAsync = vi.fn();
 
 vi.mock('three/examples/jsm/exporters/GLTFExporter.js', () => {
     return {
-        GLTFExporter: vi.fn().mockImplementation(() => ({
-            parseAsync: mockGltfParseAsync,
-        })),
+        GLTFExporter: vi.fn().mockImplementation(function () {
+            return {
+                parseAsync: mockGltfParseAsync,
+            };
+        }),
     };
 });
 
 vi.mock('three/examples/jsm/exporters/USDZExporter.js', () => {
     return {
-        USDZExporter: vi.fn().mockImplementation(() => ({
-            parseAsync: mockUsdzParseAsync,
-        })),
+        USDZExporter: vi.fn().mockImplementation(function () {
+            return {
+                parseAsync: mockUsdzParseAsync,
+            };
+        }),
     };
 });
 

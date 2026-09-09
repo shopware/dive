@@ -1,3 +1,4 @@
+import type { Mock } from 'vitest';
 import {
     BufferGeometry,
     Color,
@@ -103,7 +104,11 @@ vi.mocked(Group).mockImplementation(function (this: any) {
 });
 
 // Color needs setRGB / setHex which the STEPLoader calls on MeshStandardMaterial.color.
-const _origColorImpl = vi.mocked(Color).getMockImplementation()!;
+/** getMockImplementation() widens to a constructor/function union, which is not callable. */
+const _origColorImpl = vi.mocked(Color).getMockImplementation()! as (
+    this: any,
+    ...args: any[]
+) => any;
 vi.mocked(Color).mockImplementation(function (this: any, ...args: any[]) {
     const proxy = _origColorImpl.apply(this, args as [number, number, number]);
     const self = this;
@@ -146,18 +151,22 @@ vi.mock('../worker/StepWorker.js', () => ({
 const NativeURL = globalThis.URL;
 (NativeURL as any).createObjectURL = vi.fn().mockReturnValue('blob:mock-url');
 
-global.Blob = vi.fn().mockImplementation((content) => ({ content })) as any;
+global.Blob = vi.fn().mockImplementation(function (content) {
+    return { content };
+}) as any;
 
 // Shared mock worker instance (created fresh each test via beforeEach)
 let mockWorkerInstance: {
-    postMessage: ReturnType<typeof vi.fn>;
-    terminate: ReturnType<typeof vi.fn>;
+    postMessage: Mock;
+    terminate: Mock;
     onmessage: ((e: MessageEvent) => void) | null;
     onerror: ((e: ErrorEvent) => void) | null;
 };
 
 // Mock Worker constructor
-const MockWorker = vi.fn().mockImplementation(() => mockWorkerInstance);
+const MockWorker = vi.fn().mockImplementation(function () {
+    return mockWorkerInstance;
+});
 global.Worker = MockWorker as any;
 
 describe('STEPLoader', () => {
@@ -172,7 +181,9 @@ describe('STEPLoader', () => {
             onmessage: null,
             onerror: null,
         };
-        MockWorker.mockImplementation(() => mockWorkerInstance);
+        MockWorker.mockImplementation(function () {
+            return mockWorkerInstance;
+        });
 
         loader = new STEPLoader();
     });

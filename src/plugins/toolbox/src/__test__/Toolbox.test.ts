@@ -28,63 +28,75 @@ vi.mock('three/webgpu', async (importOriginal) => {
     const actual = await importOriginal<typeof import('three/webgpu')>();
     return {
         ...actual,
-        Layers: vi.fn().mockImplementation(() => ({
-            mask: 0,
-            set: vi.fn(),
-        })),
-        Raycaster: vi.fn().mockImplementation(() => ({
-            layers: { mask: 0 },
-            setFromCamera: vi.fn(),
-            intersectObjects: vi.fn(() => []),
-        })),
+        Layers: vi.fn().mockImplementation(function () {
+            return {
+                mask: 0,
+                set: vi.fn(),
+            };
+        }),
+        Raycaster: vi.fn().mockImplementation(function () {
+            return {
+                layers: { mask: 0 },
+                setFromCamera: vi.fn(),
+                intersectObjects: vi.fn(() => []),
+            };
+        }),
     };
 });
 
 vi.mock('../hover/HoverTool.ts', () => ({
-    HoverTool: vi.fn().mockImplementation(() => ({
-        name: 'hover',
-        priority: 20,
-        onActivate: vi.fn(),
-        onDeactivate: vi.fn(),
-        onPointerMove: vi.fn(),
-    })),
+    HoverTool: vi.fn().mockImplementation(function () {
+        return {
+            name: 'hover',
+            priority: 20,
+            onActivate: vi.fn(),
+            onDeactivate: vi.fn(),
+            onPointerMove: vi.fn(),
+        };
+    }),
 }));
 
 vi.mock('../select/SelectTool.ts', () => ({
-    SelectTool: vi.fn().mockImplementation(() => ({
-        name: 'select',
-        priority: 30,
-        onActivate: vi.fn(),
-        onDeactivate: vi.fn(),
-        onClick: vi.fn(),
-    })),
+    SelectTool: vi.fn().mockImplementation(function () {
+        return {
+            name: 'select',
+            priority: 30,
+            onActivate: vi.fn(),
+            onDeactivate: vi.fn(),
+            onClick: vi.fn(),
+        };
+    }),
     isSelectTool: vi.fn(),
 }));
 
 vi.mock('../transform/TransformTool.ts', () => ({
-    TransformTool: vi.fn().mockImplementation(() => ({
-        name: 'transform',
-        priority: 5,
-        onActivate: vi.fn(),
-        onDeactivate: vi.fn(),
-        onPointerMove: vi.fn(),
-        setGizmoMode: vi.fn(),
-        setGizmoVisible: vi.fn(),
-        setGizmoScaleLinked: vi.fn(),
-    })),
+    TransformTool: vi.fn().mockImplementation(function () {
+        return {
+            name: 'transform',
+            priority: 5,
+            onActivate: vi.fn(),
+            onDeactivate: vi.fn(),
+            onPointerMove: vi.fn(),
+            setGizmoMode: vi.fn(),
+            setGizmoVisible: vi.fn(),
+            setGizmoScaleLinked: vi.fn(),
+        };
+    }),
     isTransformTool: vi.fn(),
 }));
 
 vi.mock('../drag/DragTool.ts', () => ({
-    DragTool: vi.fn().mockImplementation(() => ({
-        name: 'drag',
-        priority: 10,
-        onActivate: vi.fn(),
-        onDeactivate: vi.fn(),
-        onPointerDown: vi.fn(),
-        onPointerMove: vi.fn(),
-        onPointerUp: vi.fn(),
-    })),
+    DragTool: vi.fn().mockImplementation(function () {
+        return {
+            name: 'drag',
+            priority: 10,
+            onActivate: vi.fn(),
+            onDeactivate: vi.fn(),
+            onPointerDown: vi.fn(),
+            onPointerMove: vi.fn(),
+            onPointerUp: vi.fn(),
+        };
+    }),
 }));
 
 const createMockCanvas = () => ({

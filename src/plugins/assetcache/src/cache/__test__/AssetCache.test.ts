@@ -3,10 +3,12 @@ import { Chunk } from '../../chunk/Chunk.ts';
 
 // Mock Chunk class
 vi.mock('../../chunk/Chunk.ts', () => ({
-    Chunk: vi.fn().mockImplementation((uri) => ({
-        uri,
-        id: Math.random().toString(36), // Unique identifier for testing
-    })),
+    Chunk: vi.fn().mockImplementation(function (uri) {
+        return {
+            uri,
+            id: Math.random().toString(36), // Unique identifier for testing
+        };
+    }),
 }));
 
 const MockedChunk = vi.mocked(Chunk);

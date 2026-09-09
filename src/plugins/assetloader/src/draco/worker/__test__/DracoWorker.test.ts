@@ -88,9 +88,15 @@ describe('DRACOWorker', () => {
         (globalThis as any).onmessage = null;
 
         // Setup default mock returns
-        mockDraco.Decoder.mockReturnValue(mockDecoder);
-        mockDraco.Mesh.mockReturnValue(mockGeometry);
-        mockDraco.PointCloud.mockReturnValue(mockGeometry);
+        mockDraco.Decoder.mockImplementation(function () {
+            return mockDecoder;
+        });
+        mockDraco.Mesh.mockImplementation(function () {
+            return mockGeometry;
+        });
+        mockDraco.PointCloud.mockImplementation(function () {
+            return mockGeometry;
+        });
         mockDecoder.GetEncodedGeometryType.mockReturnValue(
             mockDraco.TRIANGULAR_MESH,
         );

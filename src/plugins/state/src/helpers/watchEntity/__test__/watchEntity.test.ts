@@ -1,3 +1,4 @@
+import type { Mock } from 'vitest';
 import { Vector3 } from 'three/webgpu';
 import {
     DIVENode,
@@ -30,7 +31,7 @@ describe('plugins/state/watchEntity', () => {
     let node: DIVENode;
     let model: ModelComponent;
     let registry: EntityRegistry;
-    let dispatch: ReturnType<typeof vi.fn>;
+    let dispatch: Mock;
     let unwatch: () => void;
 
     /**
