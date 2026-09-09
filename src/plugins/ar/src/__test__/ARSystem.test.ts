@@ -30,14 +30,14 @@ describe('ARSystem', () => {
 
         // Setup mock implementations for ARQuickLook and SceneViewer
         // When `new ARQuickLook()` is called in ARSystem, it will return an object with a mocked launch function.
-        vi.mocked(ARQuickLook).mockImplementation(() => {
+        vi.mocked(ARQuickLook).mockImplementation(function () {
             return {
                 launch: mockARQuickLookLaunch,
             } as unknown as ARQuickLook;
         });
 
         // When `new SceneViewer()` is called in ARSystem, it will return an object with a mocked launch function.
-        vi.mocked(SceneViewer).mockImplementation(() => {
+        vi.mocked(SceneViewer).mockImplementation(function () {
             return {
                 launch: mockSceneViewerLaunch,
             } as unknown as SceneViewer;

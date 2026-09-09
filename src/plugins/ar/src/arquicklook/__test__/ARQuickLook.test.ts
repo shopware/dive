@@ -20,10 +20,12 @@ vi.mock('@shopware-ag/dive/assetexporter', () => ({
     AssetExporter: vi.fn(),
 }));
 vi.mock('@shopware-ag/dive/assetconverter', () => ({
-    AssetConverter: vi.fn().mockImplementation(() => ({
-        convert: mockConvert,
-        to: mockTo,
-    })),
+    AssetConverter: vi.fn().mockImplementation(function () {
+        return {
+            convert: mockConvert,
+            to: mockTo,
+        };
+    }),
 }));
 
 // Mock URL.createObjectURL

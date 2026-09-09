@@ -8,10 +8,12 @@ import { Vector3 } from 'three/webgpu';
 
 // Mock the OrbitController
 vi.mock('@shopware-ag/dive/orbitcontroller', () => ({
-    OrbitController: vi.fn().mockImplementation(() => ({
-        addEventListener: vi.fn(),
-        getDistance: vi.fn(() => 10),
-    })),
+    OrbitController: vi.fn().mockImplementation(function () {
+        return {
+            addEventListener: vi.fn(),
+            getDistance: vi.fn(() => 10),
+        };
+    }),
 }));
 
 // Mock the AxisHandle
@@ -21,8 +23,8 @@ vi.mock('../../handles/AxisHandle', async () => {
     return {
         DIVEAxisHandle: vi
             .fn()
-            .mockImplementation((axis, length, direction, color) =>
-                Object.assign(new Object3D(), {
+            .mockImplementation(function (axis, length, direction, color) {
+                return Object.assign(new Object3D(), {
                     axis,
                     length,
                     direction,
@@ -34,8 +36,8 @@ vi.mock('../../handles/AxisHandle', async () => {
                         direction.z,
                     ),
                     reset: vi.fn(),
-                }),
-            ),
+                });
+            }),
     };
 });
 

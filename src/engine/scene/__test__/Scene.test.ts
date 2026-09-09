@@ -1,3 +1,4 @@
+import type { Mock } from 'vitest';
 import { Color, Object3D } from 'three/webgpu';
 import { DIVEComponent } from '../../component/Component.ts';
 import { DIVENode } from '../../node/Node.ts';
@@ -6,7 +7,7 @@ import { DIVEScene, DIVESceneDefaultSettings } from '../Scene.ts';
 const mock_GetSceneObject = vi.fn();
 const mock_ComputeSceneBB = vi.fn();
 
-let mock_FloorSetVisibility: ReturnType<typeof vi.fn>;
+let mock_FloorSetVisibility: Mock;
 
 vi.mock('../root/Root', () => {
     return {

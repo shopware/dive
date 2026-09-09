@@ -9,10 +9,12 @@ import { DIVEMath } from '../../../../../../helpers/math/index.ts';
 
 // Mock the OrbitController
 vi.mock('@shopware-ag/dive/orbitcontroller', () => ({
-    OrbitController: vi.fn().mockImplementation(() => ({
-        addEventListener: vi.fn(),
-        getDistance: vi.fn(() => 10),
-    })),
+    OrbitController: vi.fn().mockImplementation(function () {
+        return {
+            addEventListener: vi.fn(),
+            getDistance: vi.fn(() => 10),
+        };
+    }),
 }));
 
 // Mock the RadialHandle
@@ -22,8 +24,8 @@ vi.mock('../../handles/RadialHandle', async () => {
     return {
         DIVERadialHandle: vi
             .fn()
-            .mockImplementation((axis, radius, arc, direction, color) =>
-                Object.assign(new Object3D(), {
+            .mockImplementation(function (axis, radius, arc, direction, color) {
+                return Object.assign(new Object3D(), {
                     axis,
                     radius,
                     arc,
@@ -36,8 +38,8 @@ vi.mock('../../handles/RadialHandle', async () => {
                         direction.z,
                     ),
                     reset: vi.fn(),
-                }),
-            ),
+                });
+            }),
     };
 });
 

@@ -1,3 +1,4 @@
+import type { Mock } from 'vitest';
 import { SetStateAction } from '../setstate.ts';
 import {
     State,
@@ -40,15 +41,21 @@ vi.mock('@shopware-ag/dive/state', async () => ({
     SetCameraTransformAction: (
         await import('../../camera/setcameratransform.ts')
     ).SetCameraTransformAction,
-    AddObjectAction: vi.fn((payload, deps) => ({
-        execute: () => addExecute(payload, deps),
-    })),
-    DeleteObjectAction: vi.fn((payload, deps) => ({
-        execute: () => deleteExecute(payload, deps),
-    })),
-    SetParentAction: vi.fn((payload, deps) => ({
-        execute: () => setParentExecute(payload, deps),
-    })),
+    AddObjectAction: vi.fn(function (payload, deps) {
+        return {
+            execute: () => addExecute(payload, deps),
+        };
+    }),
+    DeleteObjectAction: vi.fn(function (payload, deps) {
+        return {
+            execute: () => deleteExecute(payload, deps),
+        };
+    }),
+    SetParentAction: vi.fn(function (payload, deps) {
+        return {
+            execute: () => setParentExecute(payload, deps),
+        };
+    }),
 }));
 
 type MockDeps = { registry: EntityRegistry };
@@ -76,7 +83,7 @@ const createDependencies = (
     gateway: EngineGateway;
     controller: OrbitController;
     registry: EntityRegistry;
-    dispatch: ReturnType<typeof vi.fn>;
+    dispatch: Mock;
 } => {
     const registry = new EntityRegistry();
     alreadyRegistered.forEach((entity) => registry.register(entity));
@@ -472,7 +479,7 @@ describe('SetStateAction', () => {
         controller: OrbitController;
         state: State;
         registry: EntityRegistry;
-        dispatch: ReturnType<typeof vi.fn>;
+        dispatch: Mock;
         scene: { name: string; background: Color };
         floor: { visible: boolean; material: MeshStandardMaterial };
     } => {

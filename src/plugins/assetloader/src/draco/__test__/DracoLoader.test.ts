@@ -34,7 +34,9 @@ global.URL = {
     createObjectURL: vi.fn().mockReturnValue('blob:mock-url'),
 } as any;
 
-global.Blob = vi.fn().mockImplementation((content) => ({ content })) as any;
+global.Blob = vi.fn().mockImplementation(function (content) {
+    return { content };
+}) as any;
 
 // Mock WebAssembly
 Object.defineProperty(global, 'WebAssembly', {

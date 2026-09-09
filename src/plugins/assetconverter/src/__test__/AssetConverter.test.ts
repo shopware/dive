@@ -6,9 +6,11 @@ import { Object3D } from 'three/webgpu';
 const mockLoaderLoad = vi.fn();
 vi.mock('@shopware-ag/dive/assetloader', () => {
     return {
-        AssetLoader: vi.fn().mockImplementation(() => ({
-            load: mockLoaderLoad,
-        })),
+        AssetLoader: vi.fn().mockImplementation(function () {
+            return {
+                load: mockLoaderLoad,
+            };
+        }),
     };
 });
 
@@ -16,9 +18,11 @@ vi.mock('@shopware-ag/dive/assetloader', () => {
 const mockExporterExport = vi.fn();
 vi.mock('@shopware-ag/dive/assetexporter', () => {
     return {
-        AssetExporter: vi.fn().mockImplementation(() => ({
-            export: mockExporterExport,
-        })),
+        AssetExporter: vi.fn().mockImplementation(function () {
+            return {
+                export: mockExporterExport,
+            };
+        }),
     };
 });
 

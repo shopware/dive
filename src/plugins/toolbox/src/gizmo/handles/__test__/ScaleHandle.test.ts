@@ -6,12 +6,14 @@ import { Vector3 } from 'three/webgpu';
 import { vi } from 'vitest';
 
 vi.mock('../../scale/ScaleGizmo', () => ({
-    DIVEScaleGizmo: vi.fn().mockImplementation(() => ({
-        onHoverAxis: vi.fn(),
-        onAxisDragStart: vi.fn(),
-        onAxisDrag: vi.fn(),
-        onAxisDragEnd: vi.fn(),
-    })),
+    DIVEScaleGizmo: vi.fn().mockImplementation(function () {
+        return {
+            onHoverAxis: vi.fn(),
+            onAxisDragStart: vi.fn(),
+            onAxisDrag: vi.fn(),
+            onAxisDragEnd: vi.fn(),
+        };
+    }),
 }));
 
 describe('DIVEScaleHandle', () => {

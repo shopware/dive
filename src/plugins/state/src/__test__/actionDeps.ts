@@ -1,3 +1,4 @@
+import type { Mock } from 'vitest';
 import {
     type DIVESceneObject,
     DIVENode,
@@ -57,7 +58,7 @@ export const makeActionDeps = (
 export const makeCameraController = (
     position = new Vector3(),
     target = new Vector3(),
-): OrbitController & { update: ReturnType<typeof vi.fn> } => {
+): OrbitController & { update: Mock } => {
     const node = new DIVENode();
     node.addComponent(new PerspectiveCameraComponent());
     node.position.copy(position);
@@ -66,5 +67,5 @@ export const makeCameraController = (
         object: node.getComponent(PerspectiveCameraComponent),
         target: target.clone(),
         update: vi.fn(() => false),
-    } as unknown as OrbitController & { update: ReturnType<typeof vi.fn> };
+    } as unknown as OrbitController & { update: Mock };
 };

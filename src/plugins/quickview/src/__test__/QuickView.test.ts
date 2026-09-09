@@ -2,6 +2,7 @@
  * @jest-environment jsdom
  */
 
+import type { Mock } from 'vitest';
 import { vi } from 'vitest';
 import { DIVE, DIVENode, ModelComponent } from '@shopware-ag/dive';
 import { OrbitController } from '@shopware-ag/dive/orbitcontroller';
@@ -36,7 +37,7 @@ const {
 
 vi.mock('@shopware-ag/dive', () => {
     return {
-        DIVE: vi.fn(() => {
+        DIVE: vi.fn(function () {
             return {
                 mainView: {
                     canvas: vi.fn(),
@@ -86,7 +87,7 @@ vi.mock('@shopware-ag/dive', () => {
 
 vi.mock('@shopware-ag/dive/orbitcontroller', () => {
     return {
-        OrbitController: vi.fn(() => {
+        OrbitController: vi.fn(function () {
             return { focusObject: vi.fn(), dispose: vi.fn() };
         }),
     };
@@ -94,7 +95,7 @@ vi.mock('@shopware-ag/dive/orbitcontroller', () => {
 
 vi.mock('@shopware-ag/dive/state', () => {
     return {
-        State: vi.fn(() => {
+        State: vi.fn(function () {
             return {
                 performAction: statePerformAction,
                 subscribe: vi.fn(),
@@ -179,7 +180,7 @@ describe('QuickView', () => {
             await expect(QuickView('broken.glb')).rejects.toThrow();
 
             const controller = vi.mocked(OrbitController).mock.results[0]
-                .value as { dispose: ReturnType<typeof vi.fn> };
+                .value as { dispose: Mock };
             expect(controller.dispose).toHaveBeenCalledTimes(1);
             expect(controller.dispose.mock.invocationCallOrder[0]).toBeLessThan(
                 diveDisposeAsync.mock.invocationCallOrder[0],
@@ -230,8 +231,8 @@ describe('QuickView', () => {
             await expect(QuickView('broken.glb')).rejects.toThrow();
 
             const node = vi.mocked(DIVENode).mock.results[0].value as {
-                components: { dispose: ReturnType<typeof vi.fn> }[];
-                removeFromParent: ReturnType<typeof vi.fn>;
+                components: { dispose: Mock }[];
+                removeFromParent: Mock;
             };
             expect(node.components[0].dispose).toHaveBeenCalled();
             expect(node.removeFromParent).toHaveBeenCalled();

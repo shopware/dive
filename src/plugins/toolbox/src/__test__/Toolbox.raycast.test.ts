@@ -25,30 +25,32 @@ import { Toolbox } from '../Toolbox.ts';
  */
 
 vi.mock('../hover/HoverTool.ts', () => ({
-    HoverTool: vi
-        .fn()
-        .mockImplementation(() => ({ name: 'hover', priority: 20 })),
+    HoverTool: vi.fn().mockImplementation(function () {
+        return { name: 'hover', priority: 20 };
+    }),
 }));
 
 vi.mock('../select/SelectTool.ts', () => ({
-    SelectTool: vi
-        .fn()
-        .mockImplementation(() => ({ name: 'select', priority: 30 })),
+    SelectTool: vi.fn().mockImplementation(function () {
+        return { name: 'select', priority: 30 };
+    }),
     isSelectTool: vi.fn(),
 }));
 
 vi.mock('../transform/TransformTool.ts', () => ({
-    TransformTool: vi.fn().mockImplementation(() => ({
-        name: 'transform',
-        priority: 5,
-    })),
+    TransformTool: vi.fn().mockImplementation(function () {
+        return {
+            name: 'transform',
+            priority: 5,
+        };
+    }),
     isTransformTool: vi.fn(),
 }));
 
 vi.mock('../drag/DragTool.ts', () => ({
-    DragTool: vi
-        .fn()
-        .mockImplementation(() => ({ name: 'drag', priority: 10 })),
+    DragTool: vi.fn().mockImplementation(function () {
+        return { name: 'drag', priority: 10 };
+    }),
 }));
 
 const createMockCanvas = () =>

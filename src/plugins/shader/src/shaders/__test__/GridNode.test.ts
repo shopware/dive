@@ -1,14 +1,15 @@
+import type { Mock } from 'vitest';
 type MockTSLNode = {
     label: string;
     x: MockTSLNode;
     y: MockTSLNode;
     xz: MockTSLNode;
-    div: ReturnType<typeof vi.fn>;
-    sub: ReturnType<typeof vi.fn>;
-    mul: ReturnType<typeof vi.fn>;
-    length: ReturnType<typeof vi.fn>;
-    lessThan: ReturnType<typeof vi.fn>;
-    discard: ReturnType<typeof vi.fn>;
+    div: Mock;
+    sub: Mock;
+    mul: Mock;
+    length: Mock;
+    lessThan: Mock;
+    discard: Mock;
 };
 
 const mockState = vi.hoisted(() => {
