@@ -23,6 +23,8 @@ const {
     rootAdd,
     rootNodes,
     bounds,
+    cameraResize,
+    canvasLayout,
 } = vi.hoisted(() => ({
     diveDisposeAsync: vi.fn(async () => {}),
     diveStartAsync: vi.fn(async () => {}),
@@ -33,6 +35,9 @@ const {
     rootNodes: [] as unknown[],
     // whether the thing being framed has any geometry to frame
     bounds: { isEmpty: false },
+    cameraResize: vi.fn(),
+    // what a laid-out canvas reports; zero stands for one not mounted yet
+    canvasLayout: { clientWidth: 800, clientHeight: 600 },
 }));
 
 vi.mock('@shopware-ag/dive', () => {
@@ -40,9 +45,12 @@ vi.mock('@shopware-ag/dive', () => {
         DIVE: vi.fn(function () {
             return {
                 mainView: {
-                    canvas: vi.fn(),
+                    canvas: canvasLayout,
                     // the controller drives the component, not the camera
-                    cameraComponent: { owner: { position: { set: vi.fn() } } },
+                    cameraComponent: {
+                        owner: { position: { set: vi.fn() } },
+                        onResize: cameraResize,
+                    },
                 },
                 scene: {
                     root: {
@@ -115,6 +123,7 @@ describe('QuickView', () => {
         vi.clearAllMocks();
         rootNodes.length = 0;
         bounds.isEmpty = false;
+        Object.assign(canvasLayout, { clientWidth: 800, clientHeight: 600 });
         setFromURL.mockImplementation(async () => {});
         diveStartAsync.mockImplementation(async () => {});
         statePerformAction.mockImplementation(async () => []);
@@ -271,25 +280,49 @@ describe('QuickView', () => {
             );
         });
 
-        it('should frame only once the scene runs', async () => {
-            // focusObject reads the viewport, which has no size before start
+        it('should fit the camera to the canvas before framing it', async () => {
+            /**
+             * framing reads the aspect, and the one the camera is built with is
+             * a placeholder -- a portrait viewport would be framed too close
+             */
+            const quickView = await QuickView('test_uri');
+
+            expect(cameraResize).toHaveBeenCalledWith(800, 600);
+            expect(cameraResize.mock.invocationCallOrder[0]).toBeLessThan(
+                vi.mocked(quickView.orbitController.focusObject).mock
+                    .invocationCallOrder[0],
+            );
+        });
+
+        it('should keep the placeholder for a canvas that has no size yet', async () => {
+            // a canvas the consumer has yet to mount would give a NaN aspect
+            Object.assign(canvasLayout, { clientWidth: 0, clientHeight: 0 });
+
+            const quickView = await QuickView('test_uri');
+
+            expect(cameraResize).not.toHaveBeenCalled();
+            expect(quickView.orbitController.focusObject).toHaveBeenCalled();
+        });
+
+        it('should frame without waiting for the scene to run', async () => {
+            // the canvas answers the viewport question, so the start does not
             const quickView = await QuickView('test_uri');
 
             const focus = vi.mocked(quickView.orbitController.focusObject);
             const start = vi.mocked(quickView.startAsync);
-            expect(start.mock.invocationCallOrder[0]).toBeLessThan(
-                focus.mock.invocationCallOrder[0],
+            expect(focus.mock.invocationCallOrder[0]).toBeLessThan(
+                start.mock.invocationCallOrder[0],
             );
         });
 
-        it('should not frame anything when it was told not to start', async () => {
+        it('should frame even when it was told not to start', async () => {
             const quickView = await QuickView('test_uri', {
                 autoStart: false,
             });
 
-            expect(
-                quickView.orbitController.focusObject,
-            ).not.toHaveBeenCalled();
+            expect(quickView.orbitController.focusObject).toHaveBeenCalledWith(
+                quickView.model,
+            );
         });
 
         it('should not frame a model that loaded no geometry', async () => {
@@ -388,35 +421,36 @@ describe('QuickView', () => {
             return quickView;
         };
 
-        it('should swap the model, stand it up and frame it', async () => {
-            // the three calls every consumer wrote by hand, as one
+        it('should swap the model and stand it up', async () => {
+            // the two calls every consumer wrote by hand, as one
             const quickView = await started();
 
             await quickView.load('second_uri');
 
             expect(setFromURL).toHaveBeenCalledWith('second_uri');
             expect(quickView.model!.dropIt).toHaveBeenCalled();
-            expect(quickView.orbitController.focusObject).toHaveBeenCalledWith(
-                quickView.model,
-            );
         });
 
-        it('should keep the model where it loaded when told to', async () => {
+        it('should leave the camera to the caller', async () => {
+            /**
+             * framing reads the viewport, which only has a size once the view
+             * runs -- a load cannot know whether that already happened, so it
+             * never moves the camera on its own
+             */
             const quickView = await started();
-            vi.mocked(quickView.model!.dropIt).mockClear();
 
-            await quickView.load('second_uri', { dropToFloor: false });
+            await quickView.load('second_uri');
 
-            expect(quickView.model!.dropIt).not.toHaveBeenCalled();
-            expect(quickView.orbitController.focusObject).toHaveBeenCalled();
+            expect(
+                quickView.orbitController.focusObject,
+            ).not.toHaveBeenCalled();
         });
 
-        it('should leave the camera alone when told to', async () => {
+        it('should leave the camera to the caller for a state too', async () => {
             const quickView = await started();
 
-            await quickView.load('second_uri', { focus: false });
+            await quickView.load(sceneData);
 
-            expect(quickView.model!.dropIt).toHaveBeenCalled();
             expect(
                 quickView.orbitController.focusObject,
             ).not.toHaveBeenCalled();

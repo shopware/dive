@@ -8,10 +8,7 @@ import {
 } from '@shopware-ag/dive';
 import { OrbitController } from '@shopware-ag/dive/orbitcontroller';
 import type { State, StateData } from '@shopware-ag/dive/state';
-import {
-    type QuickViewLoadSettings,
-    type QuickViewSettings,
-} from '../types/index.ts';
+import { type QuickViewSettings } from '../types/index.ts';
 
 /**
  * What {@link QuickView} hands back.
@@ -47,12 +44,8 @@ export type QuickView = DIVE & {
      * GPU resources included.
      *
      * @param source - A model URI, or the scene data to apply.
-     * @param settings - What to skip; see {@link QuickViewLoadSettings}.
      */
-    load: (
-        source: string | StateData,
-        settings?: Partial<QuickViewLoadSettings>,
-    ) => Promise<void>;
+    load: (source: string | StateData) => Promise<void>;
 };
 
 export const QuickViewDefaultSettings: Omit<
@@ -96,6 +89,20 @@ export async function QuickView(
          * controller below moves the node
          */
         dive.mainView.cameraComponent.owner.position.set(0, 1, 2);
+
+        /**
+         * The aspect the camera is built with is a placeholder, and framing
+         * reads it: a portrait viewport fits horizontally, so a frame against
+         * the placeholder puts the camera too close. A laid-out canvas answers
+         * it here already, long before the view runs and reports the same size.
+         * A canvas the consumer has yet to mount measures zero, which is no
+         * answer at all -- better the placeholder than a NaN aspect.
+         */
+        const { clientWidth: width, clientHeight: height } =
+            dive.mainView.canvas;
+        if (width > 0 && height > 0) {
+            dive.mainView.cameraComponent.onResize(width, height);
+        }
 
         const orbitController = new OrbitController(
             dive.mainView.cameraComponent,
@@ -170,10 +177,7 @@ export async function QuickView(
             await originalDispose();
         };
 
-        const loadUri = async (
-            uri: string,
-            loadSettings?: Partial<QuickViewLoadSettings>,
-        ): Promise<void> => {
+        const loadUri = async (uri: string): Promise<void> => {
             if (state) clear();
 
             if (!model) {
@@ -201,14 +205,10 @@ export async function QuickView(
                 return;
             }
 
-            if (loadSettings?.dropToFloor ?? true) node.dropIt();
-            if (loadSettings?.focus ?? true) frame();
+            node.dropIt();
         };
 
-        const loadState = async (
-            sceneData: StateData,
-            loadSettings?: Partial<QuickViewLoadSettings>,
-        ): Promise<void> => {
+        const loadState = async (sceneData: StateData): Promise<void> => {
             clear();
 
             const instance = new (
@@ -230,14 +230,9 @@ export async function QuickView(
 
                 return;
             }
-
-            if (loadSettings?.focus ?? true) frame();
         };
 
-        const load = (
-            nextSource: string | StateData,
-            loadSettings?: Partial<QuickViewLoadSettings>,
-        ): Promise<void> => {
+        const load = (nextSource: string | StateData): Promise<void> => {
             const ticket = ++generation;
 
             const run = queue.then(() => {
@@ -245,8 +240,8 @@ export async function QuickView(
                 if (ticket !== generation || disposed) return;
 
                 return typeof nextSource === 'string'
-                    ? loadUri(nextSource, loadSettings)
-                    : loadState(nextSource, loadSettings);
+                    ? loadUri(nextSource)
+                    : loadState(nextSource);
             });
 
             /**
@@ -272,21 +267,17 @@ export async function QuickView(
             state: { get: () => state, enumerable: true },
         });
 
-        /**
-         * The first load frames only after the scene runs: `focusObject` reads
-         * the viewport, which has no size before then.
-         */
-        await load(source, { focus: false });
+        await load(source);
+
+        frame();
 
         if (settings?.autoStart ?? true) {
             await dive.startAsync();
-            frame();
         }
 
         return quickView as QuickView;
     } catch (error) {
         disposed = true;
-
         // never in front of the error that brought us here
         try {
             await dive.disposeAsync();
