@@ -1,5 +1,12 @@
 # Changelog
 
+## [4.0.1](https://github.com/shopware/dive/compare/v4.0.0...v4.0.1) (2026-09-16)
+
+
+### 🐛 Bug Fixes
+
+* correctly focus objects after load. ([#241](https://github.com/shopware/dive/issues/241)) ([c325cb7](https://github.com/shopware/dive/commit/c325cb7909b4f376c2a1485642c2dcaac4d36a11))
+
 ## [4.0.0](https://github.com/shopware/dive/compare/v3.1.0...v4.0.0) (2026-09-09)
 
 
