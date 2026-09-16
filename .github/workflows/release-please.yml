@@ -35,6 +35,38 @@ jobs:
                   config-file: release-please-config.json
                   manifest-file: .release-please-manifest.json
 
+    # Gives trunk a coverage report of its own. The PR workflow only uploads for
+    # PR head commits, and trunk is squash-merged, so its commits are SHAs
+    # Codecov has never seen -- leaving PR comparisons to fall back on whatever
+    # ancestor last had a report.
+    coverage:
+        if: ${{ github.event_name == 'push' }}
+        runs-on: ubuntu-latest
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v4
+            - name: Setup Node.js
+              uses: actions/setup-node@v6
+              with:
+                  node-version: '24'
+            - name: Search for cached dependencies
+              uses: actions/cache@v4
+              id: yarn-cache
+              with:
+                  path: node_modules
+                  key: node-modules-${{ runner.os }}-${{ hashFiles('yarn.lock') }}
+            - name: Install dependencies (if cache not found)
+              if: steps.yarn-cache.outputs.cache-hit != 'true'
+              run: yarn
+            - name: Unit-Test DIVE (coverage)
+              run: yarn coverage
+            - name: Upload coverage to Codecov (trunk baseline)
+              uses: codecov/codecov-action@v5
+              with:
+                  files: ./coverage/coverage-final.json
+                  token: ${{ secrets.CODECOV_TOKEN }}
+                  fail_ci_if_error: true
+
     publish:
         needs: release-please
         if: ${{ needs.release-please.outputs.release_created == 'true' }}
