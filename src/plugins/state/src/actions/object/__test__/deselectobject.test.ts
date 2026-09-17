@@ -83,7 +83,7 @@ describe('DeselectObjectAction', () => {
         await expect(action.execute()).rejects.toThrow('Object not found.');
     });
 
-    it('should return false if object is not found in scene', async () => {
+    it('should deselect for an entity with no scene object of its own', async () => {
         // Arrange
         const testObject: EntitySchema = {
             id: 'test-object',
@@ -114,13 +114,13 @@ describe('DeselectObjectAction', () => {
             },
         );
 
+        await action.execute();
+
         // Assert
-        await expect(action.execute()).rejects.toThrow(
-            'Object is not in the scene.',
-        );
+        expect(mockSelectionState.applyDeselection).toHaveBeenCalledTimes(1);
     });
 
-    it('should return false if object is not selectable', async () => {
+    it('should deselect without asking whether the object is selectable', async () => {
         // Arrange
         const testObject: EntitySchema = {
             id: 'test-object',
@@ -150,9 +150,12 @@ describe('DeselectObjectAction', () => {
             },
         );
 
-        // Assert
-        await expect(action.execute()).rejects.toThrow(
-            'Object is not selectable.',
-        );
+        await action.execute();
+
+        /**
+         * applyDeselection clears whatever is selected and never looks at the
+         * object, so there is nothing about it that could stand in the way
+         */
+        expect(mockSelectionState.applyDeselection).toHaveBeenCalledTimes(1);
     });
 });

@@ -43,14 +43,13 @@ describe('DropItAction', () => {
         );
     });
 
-    it('should throw error if object has no scene object', () => {
+    it('should pass over an object with no scene object to drop', () => {
         // registered, but state-only — a camera is the real case
         deps.registry.register(testObject);
 
         const action = new DropItAction({ id: 'test-object' }, deps);
 
-        expect(() => action.execute()).toThrow(
-            'Object with id test-object is not in the scene.',
-        );
+        expect(() => action.execute()).not.toThrow();
+        expect(mockModel.dropIt).not.toHaveBeenCalled();
     });
 });

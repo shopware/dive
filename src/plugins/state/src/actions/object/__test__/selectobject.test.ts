@@ -19,11 +19,11 @@ const mockSelectionState = {
     applyDeselection: vi.fn(),
 } as unknown as SelectionState;
 
-const mockGetToolbox = () => {
+const mockGetToolbox = vi.fn(() => {
     return Promise.resolve({
         selectionState: mockSelectionState,
     } as unknown as Toolbox);
-};
+});
 
 const deps = makeActionDeps();
 
@@ -73,7 +73,7 @@ describe('SelectObjectAction', () => {
         );
     });
 
-    it('should return false if object does not exist', async () => {
+    it('should reject for an id nothing is registered under', async () => {
         // Act
         const action = new SelectObjectAction(
             { id: 'non-existent-object' },
@@ -85,7 +85,7 @@ describe('SelectObjectAction', () => {
         await expect(action.execute()).rejects.toThrow('Object not found.');
     });
 
-    it('should return false if object is not found in scene', async () => {
+    it('should pass over an entity with no scene object of its own', async () => {
         // Arrange
         const testObject: EntitySchema = {
             id: 'test-object',
@@ -115,12 +115,15 @@ describe('SelectObjectAction', () => {
                 ...deps,
             },
         );
-        await expect(action.execute()).rejects.toThrow(
-            'Object is not in the scene.',
-        );
+        await action.execute();
+
+        // Assert
+        expect(mockSelectionState.applySelection).not.toHaveBeenCalled();
+        // the toolbox is never built for a selection that cannot happen
+        expect(mockGetToolbox).not.toHaveBeenCalled();
     });
 
-    it('should return false if object is not selectable', async () => {
+    it('should pass over a scene object that is not selectable', async () => {
         // Arrange
         const testObject: EntitySchema = {
             id: 'test-object',
@@ -150,9 +153,10 @@ describe('SelectObjectAction', () => {
             },
         );
 
+        await action.execute();
+
         // Assert
-        await expect(action.execute()).rejects.toThrow(
-            'Object is not selectable.',
-        );
+        expect(mockSelectionState.applySelection).not.toHaveBeenCalled();
+        expect(mockGetToolbox).not.toHaveBeenCalled();
     });
 });

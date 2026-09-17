@@ -19,7 +19,12 @@ export const SetParentAction = Action.define<
 
         const object = entry.schema;
         const sceneObject = entry.node;
-        if (!sceneObject) throw new Error('Object is not in the scene.');
+        /**
+         * parenting is a scene operation, and an entity with no scene object of
+         * its own (as in camera for now) has nothing to attach -- the same way
+         * a missing parent below is passed over rather than reported
+         */
+        if (!sceneObject) return;
 
         if (payload.parent === null) {
             // detach from current parent
