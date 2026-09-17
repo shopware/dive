@@ -19,6 +19,22 @@ const GRID_SIZE = 1;
 const MAJOR_LINE_EVERY = 10;
 
 /**
+ * How far the plane is pulled toward the camera in depth.
+ *
+ * It lies on the floor, and coplanar the depth test goes either way per
+ * fragment -- the flicker. The pull sits here rather than as a push on the
+ * floor, because a floor that gives way gives way to everything: a model
+ * resting on it would show through it just the same. Only the grid is meant to
+ * win, so only the grid asks for it.
+ *
+ * Positive because the renderer reverses the depth buffer, where closer is the
+ * larger value. The factor is the slope-scaled half, which is what still
+ * separates the two at grazing angles, and it works from either side of the
+ * floor: the pull is toward the viewer, not upward.
+ */
+const DEPTH_PULL = 1;
+
+/**
  * An infinite shader-based grid that follows the camera.
  *
  * Draws anti-aliased minor and major grid lines with a radial distance fade. The
@@ -64,6 +80,9 @@ export class GridComponent extends DIVEComponent {
             depthWrite: false,
             side: DoubleSide,
             outputNode: new GridNode(this._uniforms),
+            polygonOffset: true,
+            polygonOffsetFactor: DEPTH_PULL,
+            polygonOffsetUnits: DEPTH_PULL,
         });
 
         this._mesh = new Mesh(geometry, this._material);

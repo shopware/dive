@@ -97,12 +97,19 @@ vi.mock('three/webgpu', () => {
         transparent: boolean;
         depthWrite: boolean;
         side: number;
+        // three's own defaults, so an unasked-for offset reads as absent
+        polygonOffset: boolean;
+        polygonOffsetFactor: number;
+        polygonOffsetUnits: number;
 
         constructor(params: any = {}) {
             this.transparent = params.transparent ?? false;
             this.depthWrite = params.depthWrite ?? true;
             this.side = params.side ?? 0;
             this.outputNode = params.outputNode ?? null;
+            this.polygonOffset = params.polygonOffset ?? false;
+            this.polygonOffsetFactor = params.polygonOffsetFactor ?? 0;
+            this.polygonOffsetUnits = params.polygonOffsetUnits ?? 0;
         }
 
         dispose = vi.fn();
@@ -231,6 +238,24 @@ describe('dive/grid/GridComponent', () => {
 
         expect(grid.majorLineEvery).toBe(10);
         expect(uniformsOf(grid).uMajorLineEvery.value).toBe(10);
+    });
+
+    it('should win the depth test against the plane it lies on', () => {
+        /**
+         * on the grid rather than on the floor, because a floor that gives way
+         * gives way to everything -- a model resting on it would show through
+         * it just the same
+         */
+        const material = grid.mesh.material as MeshBasicNodeMaterial;
+
+        expect(material.polygonOffset).toBe(true);
+        /**
+         * positive, because the renderer reverses the depth buffer: closer is
+         * the larger value there, so toward the camera is up -- which is what
+         * makes it hold from below the floor as well as from above
+         */
+        expect(material.polygonOffsetFactor).toBeGreaterThan(0);
+        expect(material.polygonOffsetUnits).toBeGreaterThan(0);
     });
 
     it('should snap position to camera in onBeforeRender', () => {

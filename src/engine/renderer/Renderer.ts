@@ -53,9 +53,29 @@ export type DIVERendererSettings = {
     /**
      * Whether to use logarithmic depth buffer
      *
-     * @default true
+     * Off, and {@link reversedDepthBuffer} on in its place: both answer the same
+     * question, and only one of them answers it in the projection. A logarithmic
+     * buffer has every fragment shader write its own depth, which costs early-z
+     * and makes every rasterizer-level depth bias a no-op -- `polygonOffset`
+     * included, which is how coplanar surfaces are normally settled.
+     *
+     * @default false
      */
     logarithmicDepthBuffer: boolean;
+    /**
+     * Whether to use a reversed depth buffer
+     *
+     * Floating point depth is near-uniform in its exponent, and a reversed range
+     * lines that up with where a perspective divide puts its precision. That is
+     * what makes a near plane of a millimeter and a far plane of a kilometer
+     * survivable without writing depth per fragment.
+     *
+     * The WebGL backend needs `EXT_clip_control` for it; three warns and falls
+     * back to a plain depth buffer where the extension is missing.
+     *
+     * @default true
+     */
+    reversedDepthBuffer: boolean;
     /**
      * Whether to enable shadows
      *
@@ -79,7 +99,8 @@ export const DIVERendererDefaultSettings: Required<DIVERendererSettings> = {
     precision: 'highp',
     stencil: false,
     depth: true,
-    logarithmicDepthBuffer: true,
+    logarithmicDepthBuffer: false,
+    reversedDepthBuffer: true,
     shadows: true,
     shadowQuality: 'high',
 };
