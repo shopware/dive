@@ -127,7 +127,7 @@ describe('SetParentAction', () => {
         expect(() => action.execute()).toThrow('Object not found.');
     });
 
-    it('should throw error if object is not found in scene', () => {
+    it('should pass over an object with no scene object to attach', () => {
         // Arrange
         const testObject: EntitySchema = {
             id: 'test-object',
@@ -158,7 +158,10 @@ describe('SetParentAction', () => {
             { gateway: mockGateway, ...deps },
         );
 
-        expect(() => action.execute()).toThrow('Object is not in the scene.');
+        expect(() => action.execute()).not.toThrow();
+        // the same silence the missing parent below is met with
+        expect(mockParentObject.attach).not.toHaveBeenCalled();
+        expect(mockGateway.updateEntity).not.toHaveBeenCalled();
     });
 
     it('should warn if parent does not exist', () => {

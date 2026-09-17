@@ -13,12 +13,11 @@ export const DeselectObjectAction = Action.define<
         const entry = registry.read(payload.id);
         if (!entry) throw new Error('Object not found.');
 
-        const sceneObject = entry.node;
-        if (!sceneObject) throw new Error('Object is not in the scene.');
-
-        if (!('isSelectable' in sceneObject))
-            throw new Error('Object is not selectable.');
-
+        /**
+         * the scene object is never asked for: applyDeselection clears whatever
+         * is selected, so an entity with none of its own (as in camera for now)
+         * deselects just as well as one that has one
+         */
         const instance = await getToolbox();
         /**
          * applyDeselection, not deselect, performAction announces this action

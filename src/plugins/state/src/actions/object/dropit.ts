@@ -16,11 +16,11 @@ export const DropItAction = Action.define<
         }
 
         const model = entry.node;
-        if (!model) {
-            throw new Error(
-                `Object with id ${payload.id} is not in the scene.`,
-            );
-        }
+        /**
+         * an entity with no scene object of its own (as in camera for now) has
+         * nothing to drop, so there is nothing to do rather than to report
+         */
+        if (!model) return;
 
         model.dropIt();
     },

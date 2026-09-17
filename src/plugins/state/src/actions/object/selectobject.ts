@@ -16,10 +16,12 @@ export const SelectObjectAction = Action.define<
         if (!entry) throw new Error('Object not found.');
 
         const sceneObject = entry.node;
-        if (!sceneObject) throw new Error('Object is not in the scene.');
-
-        if (!('isSelectable' in sceneObject))
-            throw new Error('Object is not selectable.');
+        /**
+         * if there is no scene object representation for an entity (as in camera for now)
+         * or it is not selectable,
+         * we will not select it in the scene and simply return.
+         */
+        if (!sceneObject || !('isSelectable' in sceneObject)) return;
 
         const instance = await getToolbox();
         /**
