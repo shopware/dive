@@ -23,6 +23,10 @@ export type GridNodeUniforms = {
     uMinorLineColor: UniformNode<'color', Color>;
     /** Color of major grid lines. */
     uMajorLineColor: UniformNode<'color', Color>;
+    /** How opaque minor grid lines are drawn, 0 to 1. */
+    uMinorLineOpacity: UniformNode<'float', number>;
+    /** How opaque major grid lines are drawn, 0 to 1. */
+    uMajorLineOpacity: UniformNode<'float', number>;
     /** Distance at which the grid fades out in meters. */
     uFadeDistance: UniformNode<'float', number>;
 };
@@ -48,8 +52,17 @@ export class GridNode extends Node {
         );
         const lineMajor = min(majorGrid.x, majorGrid.y);
 
-        const minorAlpha = float(1).sub(min(lineMinor, 1));
-        const majorAlpha = float(1).sub(min(lineMajor.div(2), 1));
+        /**
+         * Coverage times how loud that kind of line is meant to be. Scaled
+         * before they are compared, so the comparison below picks the line that
+         * actually shows rather than the one that would have.
+         */
+        const minorAlpha = float(1)
+            .sub(min(lineMinor, 1))
+            .mul(uniforms.uMinorLineOpacity);
+        const majorAlpha = float(1)
+            .sub(min(lineMajor.div(2), 1))
+            .mul(uniforms.uMajorLineOpacity);
 
         const alpha = max(minorAlpha, majorAlpha).mul(
             float(1).sub(

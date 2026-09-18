@@ -157,6 +157,8 @@ describe('shader/GridNode', () => {
             uMajorLineEvery: mockState.createMockNode('uMajorLineEvery'),
             uMinorLineColor: mockState.createMockNode('uMinorLineColor'),
             uMajorLineColor: mockState.createMockNode('uMajorLineColor'),
+            uMinorLineOpacity: mockState.createMockNode('uMinorLineOpacity'),
+            uMajorLineOpacity: mockState.createMockNode('uMajorLineOpacity'),
             uFadeDistance: mockState.createMockNode('uFadeDistance'),
         };
         const uniforms = rawUniforms as unknown as GridNodeUniforms;
@@ -165,10 +167,16 @@ describe('shader/GridNode', () => {
 
         const gridNodeInstance = (Node as any).instances[0];
         const majorSize = rawUniforms.uGridSize.mul.mock.results[0].value;
-        const minorAlpha =
+        /**
+         * coverage scaled by the opacity of that kind of line, which is what is
+         * compared below -- so the louder line wins rather than the wider one
+         */
+        const minorCoverage =
             mockState.float.mock.results[0].value.sub.mock.results[0].value;
-        const majorAlpha =
+        const majorCoverage =
             mockState.float.mock.results[1].value.sub.mock.results[0].value;
+        const minorAlpha = minorCoverage.mul.mock.results[0].value;
+        const majorAlpha = majorCoverage.mul.mock.results[0].value;
         expect(gridNodeInstance.name).toBe('GridNode');
 
         expect(mockState.positionWorld.xz.div).toHaveBeenNthCalledWith(
@@ -203,6 +211,12 @@ describe('shader/GridNode', () => {
         expect(discardThreshold).toBeDefined();
         expect(alpha.lessThan).toHaveBeenCalledWith(discardThreshold);
         expect(discardCondition.discard).toHaveBeenCalled();
+        expect(minorCoverage.mul).toHaveBeenCalledWith(
+            rawUniforms.uMinorLineOpacity,
+        );
+        expect(majorCoverage.mul).toHaveBeenCalledWith(
+            rawUniforms.uMajorLineOpacity,
+        );
         expect(mockState.step).toHaveBeenCalledWith(minorAlpha, majorAlpha);
         expect(mockState.mix).toHaveBeenCalledWith(
             rawUniforms.uMinorLineColor,

@@ -123,6 +123,8 @@ describe('DIVERenderPipeline', () => {
                 depth: DIVERendererDefaultSettings.depth,
                 logarithmicDepthBuffer:
                     DIVERendererDefaultSettings.logarithmicDepthBuffer,
+                reversedDepthBuffer:
+                    DIVERendererDefaultSettings.reversedDepthBuffer,
                 shadows: DIVERendererDefaultSettings.shadows,
                 shadowQuality: DIVERendererDefaultSettings.shadowQuality,
             }),
@@ -145,7 +147,8 @@ describe('DIVERenderPipeline', () => {
             precision: 'mediump' as const,
             stencil: true,
             depth: false,
-            logarithmicDepthBuffer: false,
+            logarithmicDepthBuffer: true,
+            reversedDepthBuffer: false,
             shadows: false,
             shadowQuality: 'low' as const,
         };

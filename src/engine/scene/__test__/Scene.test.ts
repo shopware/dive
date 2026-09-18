@@ -3,6 +3,7 @@ import { Color, Object3D } from 'three/webgpu';
 import { DIVEComponent } from '../../component/Component.ts';
 import { DIVENode } from '../../node/Node.ts';
 import { DIVEScene, DIVESceneDefaultSettings } from '../Scene.ts';
+import { DIVEGridDefaultSettings } from '../../../components/grid/GridComponent.ts';
 
 const mock_GetSceneObject = vi.fn();
 const mock_ComputeSceneBB = vi.fn();
@@ -90,8 +91,7 @@ describe('DIVEScene', () => {
             expect(DIVESceneDefaultSettings).toEqual({
                 displayFloor: false,
                 displayGrid: false,
-                gridSize: 1,
-                gridMajorLineEvery: 5,
+                grid: DIVEGridDefaultSettings,
                 backgroundColor: 'transparent',
             });
         });
