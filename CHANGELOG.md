@@ -1,5 +1,13 @@
 # Changelog
 
+## [4.0.2](https://github.com/shopware/dive/compare/v4.0.1...v4.0.2) (2026-09-18)
+
+
+### 🐛 Bug Fixes
+
+* grid floor jitter ([#246](https://github.com/shopware/dive/issues/246)) ([5247d37](https://github.com/shopware/dive/commit/5247d3789c6130451a46adeeecdc48c1a3ae7cbb))
+* **state:** change scene object behaviour with cameras. ([#244](https://github.com/shopware/dive/issues/244)) ([d2b40b0](https://github.com/shopware/dive/commit/d2b40b01a6002fb6676c683e9fd6fa10eb06fde4))
+
 ## [4.0.1](https://github.com/shopware/dive/compare/v4.0.0...v4.0.1) (2026-09-16)
 
 
