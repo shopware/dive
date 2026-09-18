@@ -1,11 +1,12 @@
 import { GridNode, type GridNodeUniforms } from '@shopware-ag/dive/shader';
 import {
-    GRID_MINOR_LINE_COLOR,
-    GRID_MAJOR_LINE_COLOR,
+    type DIVEGridColors,
+    DIVEGridOnLightColors,
 } from '../../constants/GridColors.ts';
 import { HELPER_LAYER_MASK } from '../../constants/VisibilityLayerMask.ts';
 import {
     Color,
+    type ColorRepresentation,
     DoubleSide,
     Mesh,
     MeshBasicNodeMaterial,
@@ -15,8 +16,28 @@ import { uniform } from 'three/tsl';
 import { DIVEComponent } from '../../engine/component/Component.ts';
 
 const PLANE_SIZE = 50;
-const GRID_SIZE = 1;
-const MAJOR_LINE_EVERY = 10;
+
+/**
+ * Everything about a grid a caller can decide.
+ *
+ * Colors come as a whole rather than one at a time, because what makes a grid
+ * readable is the relationship between the two lines and the ground they sit
+ * on -- see the presets in {@link DIVEGridColors}. The engine never picks one:
+ * the ground is a white floor in one scene and the page behind a transparent
+ * canvas in the next, and only the caller knows which.
+ */
+export type DIVEGridSettings = DIVEGridColors & {
+    /** Distance between minor grid lines in meters. @default 1 */
+    gridSize: number;
+    /** Draw a thicker major line every N cells. @default 10 */
+    majorLineEvery: number;
+};
+
+export const DIVEGridDefaultSettings: Required<DIVEGridSettings> = {
+    gridSize: 1,
+    majorLineEvery: 10,
+    ...DIVEGridOnLightColors,
+};
 
 /**
  * How far the plane is pulled toward the camera in depth.
@@ -57,7 +78,7 @@ export class GridComponent extends DIVEComponent {
     private _mesh: Mesh;
     private _material: MeshBasicNodeMaterial;
     private _uniforms: GridNodeUniforms;
-    private _gridSize: number = GRID_SIZE;
+    private _gridSize: number = DIVEGridDefaultSettings.gridSize;
 
     constructor() {
         super();
@@ -69,9 +90,19 @@ export class GridComponent extends DIVEComponent {
 
         this._uniforms = {
             uGridSize: uniform(this._gridSize),
-            uMajorLineEvery: uniform(MAJOR_LINE_EVERY),
-            uMinorLineColor: uniform(new Color(GRID_MINOR_LINE_COLOR)),
-            uMajorLineColor: uniform(new Color(GRID_MAJOR_LINE_COLOR)),
+            uMajorLineEvery: uniform(DIVEGridDefaultSettings.majorLineEvery),
+            uMinorLineColor: uniform(
+                new Color(DIVEGridDefaultSettings.minorLineColor),
+            ),
+            uMajorLineColor: uniform(
+                new Color(DIVEGridDefaultSettings.majorLineColor),
+            ),
+            uMinorLineOpacity: uniform(
+                DIVEGridDefaultSettings.minorLineOpacity,
+            ),
+            uMajorLineOpacity: uniform(
+                DIVEGridDefaultSettings.majorLineOpacity,
+            ),
             uFadeDistance: uniform(PLANE_SIZE / 2),
         };
 
@@ -121,6 +152,61 @@ export class GridComponent extends DIVEComponent {
         return this._uniforms.uMajorLineEvery.value as number;
     }
 
+    /** Color of the minor grid lines. */
+    public get minorLineColor(): Color {
+        return this._uniforms.uMinorLineColor.value as Color;
+    }
+
+    /** Color of the major grid lines. */
+    public get majorLineColor(): Color {
+        return this._uniforms.uMajorLineColor.value as Color;
+    }
+
+    /** How opaque the minor grid lines are drawn. */
+    public get minorLineOpacity(): number {
+        return this._uniforms.uMinorLineOpacity.value as number;
+    }
+
+    /** How opaque the major grid lines are drawn. */
+    public get majorLineOpacity(): number {
+        return this._uniforms.uMajorLineOpacity.value as number;
+    }
+
+    /**
+     * Takes on whatever the settings carry, leaving the rest as it is.
+     *
+     * The way a preset is put on: `applySettings(DIVEGridOnDarkColors)` reads
+     * as what it does, and says nothing about the cell size the caller chose.
+     *
+     * @param settings - Cell size, major line spacing, line colors.
+     */
+    public applySettings(settings: Partial<DIVEGridSettings>): this {
+        if (settings.gridSize !== undefined)
+            this.setGridSize(settings.gridSize);
+
+        if (settings.majorLineEvery !== undefined) {
+            this.setMajorLineEvery(settings.majorLineEvery);
+        }
+
+        if (settings.minorLineColor !== undefined) {
+            this.setMinorLineColor(settings.minorLineColor);
+        }
+
+        if (settings.majorLineColor !== undefined) {
+            this.setMajorLineColor(settings.majorLineColor);
+        }
+
+        if (settings.minorLineOpacity !== undefined) {
+            this.setMinorLineOpacity(settings.minorLineOpacity);
+        }
+
+        if (settings.majorLineOpacity !== undefined) {
+            this.setMajorLineOpacity(settings.majorLineOpacity);
+        }
+
+        return this;
+    }
+
     /**
      * @param visible - Whether the grid is drawn.
      */
@@ -150,11 +236,53 @@ export class GridComponent extends DIVEComponent {
         return this;
     }
 
+    /**
+     * @param color - Color of the minor grid lines.
+     */
+    public setMinorLineColor(color: ColorRepresentation): this {
+        (this._uniforms.uMinorLineColor.value as Color).set(color);
+
+        return this;
+    }
+
+    /**
+     * @param color - Color of the major grid lines.
+     */
+    public setMajorLineColor(color: ColorRepresentation): this {
+        (this._uniforms.uMajorLineColor.value as Color).set(color);
+
+        return this;
+    }
+
+    /**
+     * @param opacity - How opaque the minor grid lines are drawn, 0 to 1.
+     */
+    public setMinorLineOpacity(opacity: number): this {
+        this._uniforms.uMinorLineOpacity.value = opacity;
+
+        return this;
+    }
+
+    /**
+     * @param opacity - How opaque the major grid lines are drawn, 0 to 1.
+     */
+    public setMajorLineOpacity(opacity: number): this {
+        this._uniforms.uMajorLineOpacity.value = opacity;
+
+        return this;
+    }
+
     public copy(source: this): this {
         super.copy(source);
 
-        this.setGridSize(source.gridSize);
-        this.setMajorLineEvery(source.majorLineEvery);
+        this.applySettings({
+            gridSize: source.gridSize,
+            majorLineEvery: source.majorLineEvery,
+            minorLineColor: source.minorLineColor,
+            majorLineColor: source.majorLineColor,
+            minorLineOpacity: source.minorLineOpacity,
+            majorLineOpacity: source.majorLineOpacity,
+        });
         this.setVisibility(source.visible);
 
         return this;

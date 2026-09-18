@@ -121,12 +121,35 @@ vi.mock('three/webgpu', () => {
         b = 0;
 
         constructor(color?: string | number) {
+            this.set(color);
+        }
+
+        // the component recolors in place, so the mock has to take a set too
+        set(color?: string | number | MockColor) {
             if (typeof color === 'string') {
                 const hex = color.replace('#', '');
                 this.r = parseInt(hex.substring(0, 2), 16) / 255;
                 this.g = parseInt(hex.substring(2, 4), 16) / 255;
                 this.b = parseInt(hex.substring(4, 6), 16) / 255;
             }
+
+            // copy() hands the source's Color along, as three's own set does
+            if (color instanceof MockColor) {
+                this.r = color.r;
+                this.g = color.g;
+                this.b = color.b;
+            }
+
+            return this;
+        }
+
+        getHexString() {
+            const channel = (v: number) =>
+                Math.round(v * 255)
+                    .toString(16)
+                    .padStart(2, '0');
+
+            return channel(this.r) + channel(this.g) + channel(this.b);
         }
     }
 
@@ -164,6 +187,10 @@ vi.mock('three/tsl', () => ({
 import { GridNode } from '@shopware-ag/dive/shader';
 import { GridComponent } from '../GridComponent.ts';
 import { HELPER_LAYER_MASK } from '../../../constants/VisibilityLayerMask.ts';
+import {
+    DIVEGridOnDarkColors,
+    DIVEGridOnLightColors,
+} from '../../../constants/GridColors.ts';
 import { Mesh, MeshBasicNodeMaterial, PerspectiveCamera } from 'three/webgpu';
 
 let grid: GridComponent;
@@ -240,6 +267,59 @@ describe('dive/grid/GridComponent', () => {
         expect(uniformsOf(grid).uMajorLineEvery.value).toBe(10);
     });
 
+    it('should recolor its lines in place', () => {
+        /**
+         * in place, because the uniform is what the shader node was built with:
+         * a fresh Color would leave the material pointing at the old one
+         */
+        const minor = uniformsOf(grid).uMinorLineColor.value;
+
+        grid.setMinorLineColor('#123456').setMajorLineColor('#abcdef');
+
+        expect(uniformsOf(grid).uMinorLineColor.value).toBe(minor);
+        expect(minor.getHexString()).toBe('123456');
+        expect(uniformsOf(grid).uMajorLineColor.value.getHexString()).toBe(
+            'abcdef',
+        );
+    });
+
+    it('should take a preset on without touching what it leaves out', () => {
+        // a preset carries colors, and says nothing about the caller's cells
+        grid.setGridSize(3);
+
+        grid.applySettings(DIVEGridOnDarkColors);
+
+        expect(grid.gridSize).toBe(3);
+        expect(grid.minorLineColor.getHexString()).toBe(
+            (DIVEGridOnDarkColors.minorLineColor as string).replace('#', ''),
+        );
+        expect(grid.majorLineColor.getHexString()).toBe(
+            (DIVEGridOnDarkColors.majorLineColor as string).replace('#', ''),
+        );
+        expect(grid.minorLineOpacity).toBe(
+            DIVEGridOnDarkColors.minorLineOpacity,
+        );
+    });
+
+    it('should start on the light preset', () => {
+        // the ground it cannot see is a white floor more often than not
+        expect(grid.minorLineColor.getHexString()).toBe(
+            (DIVEGridOnLightColors.minorLineColor as string).replace('#', ''),
+        );
+        expect(grid.majorLineColor.getHexString()).toBe(
+            (DIVEGridOnLightColors.majorLineColor as string).replace('#', ''),
+        );
+    });
+
+    it('should set how loud each kind of line is drawn', () => {
+        grid.setMinorLineOpacity(0.25).setMajorLineOpacity(0.75);
+
+        expect(grid.minorLineOpacity).toBe(0.25);
+        expect(grid.majorLineOpacity).toBe(0.75);
+        expect(uniformsOf(grid).uMinorLineOpacity.value).toBe(0.25);
+        expect(uniformsOf(grid).uMajorLineOpacity.value).toBe(0.75);
+    });
+
     it('should win the depth test against the plane it lies on', () => {
         /**
          * on the grid rather than on the floor, because a floor that gives way
@@ -275,12 +355,20 @@ describe('dive/grid/GridComponent', () => {
     });
 
     it('should carry its settings along to a clone', () => {
-        grid.setGridSize(2).setMajorLineEvery(4).setVisibility(false);
+        grid.applySettings({ gridSize: 2, majorLineEvery: 4 })
+            .applySettings(DIVEGridOnDarkColors)
+            .setVisibility(false);
 
         const copy = grid.clone();
 
         expect(copy.gridSize).toBe(2);
         expect(copy.majorLineEvery).toBe(4);
+        expect(copy.minorLineColor.getHexString()).toBe(
+            (DIVEGridOnDarkColors.minorLineColor as string).replace('#', ''),
+        );
+        expect(copy.minorLineOpacity).toBe(
+            DIVEGridOnDarkColors.minorLineOpacity,
+        );
         expect(copy.visible).toBe(false);
         expect(copy.mesh).not.toBe(grid.mesh);
         expect(uniformsOf(copy).uGridSize.value).toBe(2);

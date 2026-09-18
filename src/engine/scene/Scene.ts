@@ -5,7 +5,11 @@ import {
     type ColorRepresentation,
 } from 'three/webgpu';
 import { DIVERoot } from './root/Root.ts';
-import { GridComponent } from '../../components/grid/GridComponent.ts';
+import {
+    DIVEGridDefaultSettings,
+    type DIVEGridSettings,
+    GridComponent,
+} from '../../components/grid/GridComponent.ts';
 import { type DIVEComponent } from '../component/Component.ts';
 import { disposeComponents } from '../../helpers/disposeComponents/disposeComponents.ts';
 import { DIVENode } from '../node/Node.ts';
@@ -25,17 +29,17 @@ export type DIVESceneSettings = {
      */
     displayGrid: boolean;
     /**
-     * Distance between minor grid lines in meters.
+     * How the grid looks: cell size, major line spacing, line colors.
      *
-     * @default 1
-     */
-    gridSize: number;
-    /**
-     * Draw a thicker major line every N cells.
+     * Whatever it leaves out keeps its default. Line colors come as a preset --
+     * `DIVEGridOnLightColors`, `DIVEGridOnDarkColors`, `DIVEGridOnAnyColors` --
+     * because which one reads well is a question about the ground the grid sits
+     * on, and the engine cannot see it: that ground is a white floor in one
+     * scene and the page behind a transparent canvas in the next.
      *
-     * @default 5
+     * @default DIVEGridDefaultSettings
      */
-    gridMajorLineEvery: number;
+    grid: Partial<DIVEGridSettings>;
     /**
      * The background color of the scene.
      *
@@ -47,8 +51,7 @@ export type DIVESceneSettings = {
 export const DIVESceneDefaultSettings: Required<DIVESceneSettings> = {
     displayFloor: false,
     displayGrid: false,
-    gridSize: 1,
-    gridMajorLineEvery: 5,
+    grid: DIVEGridDefaultSettings,
     backgroundColor: 'transparent',
 };
 
@@ -141,8 +144,7 @@ export class DIVEScene extends Scene implements DIVETicker {
 
         this._grid = node
             .addComponent(new GridComponent())
-            .setGridSize(this._settings.gridSize)
-            .setMajorLineEvery(this._settings.gridMajorLineEvery)
+            .applySettings(this._settings.grid)
             .setVisibility(this._settings.displayGrid);
 
         this.add(node);
