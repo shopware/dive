@@ -28,3 +28,16 @@ export const FLOOR_LAYER_MASK = 0b00100000; // 32
  * picked at all.
  */
 export const PROXY_LAYER_MASK = 0b01000000; // 64
+
+/**
+ * A baked contact shadow under a model.
+ *
+ * Its own bit for the same reason the floor has one: the shadow has to be drawn
+ * in both views, but it is not geometry. `PRODUCT_LAYER_MASK` would put it into
+ * bounding boxes, scene exports and picking, and it is the one thing the bake
+ * must never capture -- the bake camera renders `PRODUCT_LAYER_MASK`, so this
+ * bit is what keeps the plane out of its own shadow. `FLOOR_LAYER_MASK` would
+ * tie it to the ground plane, and hiding the floor would take the shadow with
+ * it.
+ */
+export const SHADOW_LAYER_MASK = 0b10000000; // 128
