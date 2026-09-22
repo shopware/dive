@@ -118,7 +118,7 @@
         "@types/jest": "^29.5.12",
         "@types/lodash": "^4.17.12",
         "@types/node": "^20.12.7",
-        "@types/three": "^0.185.1",
+        "@types/three": "^0.186.0",
         "@vitest/coverage-v8": "^4.1.11",
         "acorn": "^8.14.1",
         "acorn-walk": "^8.3.4",
