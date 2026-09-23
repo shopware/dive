@@ -1,5 +1,17 @@
 # Changelog
 
+## [4.1.0](https://github.com/shopware/dive/compare/v4.0.2...v4.1.0) (2026-09-23)
+
+
+### 🚀 Features
+
+* **components:** add SoftShadowComponent. ([#252](https://github.com/shopware/dive/issues/252)) ([3a7a2f1](https://github.com/shopware/dive/commit/3a7a2f164e956552707664b1cc78d40452bcac99))
+
+
+### 🐛 Bug Fixes
+
+* **node:** ignore own geometry in dropIt raycast. ([#254](https://github.com/shopware/dive/issues/254)) ([2274912](https://github.com/shopware/dive/commit/22749121140b1283d6a6f6c16ef5dcbac5ecee5b))
+
 ## [4.0.2](https://github.com/shopware/dive/compare/v4.0.1...v4.0.2) (2026-09-18)
 
 
