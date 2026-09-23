@@ -407,24 +407,22 @@ export class DIVENode
         const box = computeProductBounds(this);
         if (box.isEmpty()) return;
 
-        /**
-         * cast down from the bottom centre, which keeps this node's own geometry
-         * out of the results
-         */
+        // cast down from the bottom centre
         const bottomCenter = box.getCenter(new Vector3());
         bottomCenter.y = box.min.y;
 
         const raycaster = new Raycaster(bottomCenter, new Vector3(0, -1, 0));
         raycaster.layers.mask = PRODUCT_LAYER_MASK;
-        const intersections = raycaster.intersectObjects(
-            scene.root.children,
-            true,
-        );
 
-        const hitY =
-            intersections.length > 0
-                ? computeProductBounds(intersections[0].object).max.y
-                : 0;
+        /**
+         * the ray starts on this node's own underside, and a double-sided face
+         * there is hit at distance zero -- the node would rest on itself
+         */
+        const hit = raycaster
+            .intersectObjects(scene.root.children, true)
+            .find(({ object }) => !this._contains(object));
+
+        const hitY = hit ? computeProductBounds(hit.object).max.y : 0;
 
         const restY = Math.max(hitY, 0);
         const delta = restY - box.min.y;
@@ -456,6 +454,15 @@ export class DIVENode
 
     public onDeselect(): void {
         this.dispatchEvent({ type: 'object-deselect' });
+    }
+
+    /** Whether an object is this node or hangs anywhere below it. */
+    private _contains(object: Object3D): boolean {
+        for (let o: Object3D | null = object; o; o = o.parent) {
+            if (o === this) return true;
+        }
+
+        return false;
     }
 
     private _handleAddedToTree(): void {
