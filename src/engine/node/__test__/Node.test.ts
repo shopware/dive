@@ -1,6 +1,7 @@
 import type { Mock } from 'vitest';
 import {
     BoxGeometry,
+    DoubleSide,
     Mesh,
     MeshStandardMaterial,
     Object3D,
@@ -744,6 +745,23 @@ describe('dive/node/DIVENode dropIt', () => {
 
     it('should lift a model that has sunk below the ground plane', () => {
         model.position.set(0, -3, 0);
+        scene.updateMatrixWorld(true);
+
+        model.dropIt();
+
+        expect(model.position.y).toBeCloseTo(0.5);
+    });
+
+    it('should not rest a double-sided model on its own underside', () => {
+        /**
+         * the ray starts on the bottom face, and a double-sided one is hit
+         * there at distance zero
+         */
+        const cube = model.children.find((child) => child instanceof Mesh)!;
+        (cube as Mesh<BoxGeometry, MeshStandardMaterial>).material.side =
+            DoubleSide;
+
+        model.position.set(0, 5, 0);
         scene.updateMatrixWorld(true);
 
         model.dropIt();
