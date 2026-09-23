@@ -9,6 +9,7 @@ import {
     HELPER_LAYER_MASK,
     PRODUCT_LAYER_MASK,
     PROXY_LAYER_MASK,
+    SHADOW_LAYER_MASK,
     UI_LAYER_MASK,
 } from '../../../constants/VisibilityLayerMask.ts';
 
@@ -147,13 +148,14 @@ describe('dive/camera/DIVECameraComponent', () => {
                     HELPER_LAYER_MASK |
                     PRODUCT_LAYER_MASK |
                     PROXY_LAYER_MASK |
-                    FLOOR_LAYER_MASK,
+                    FLOOR_LAYER_MASK |
+                    SHADOW_LAYER_MASK,
             );
         });
 
-        it('should keep the live mask to content and ground', () => {
+        it('should keep the live mask to content, ground and its shadow', () => {
             expect(DIVECameraComponent.LIVE_VIEW_LAYER_MASK).toBe(
-                PRODUCT_LAYER_MASK | FLOOR_LAYER_MASK,
+                PRODUCT_LAYER_MASK | FLOOR_LAYER_MASK | SHADOW_LAYER_MASK,
             );
         });
 

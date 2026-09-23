@@ -11,6 +11,7 @@ import {
     HELPER_LAYER_MASK,
     PRODUCT_LAYER_MASK,
     PROXY_LAYER_MASK,
+    SHADOW_LAYER_MASK,
     UI_LAYER_MASK,
 } from '../../constants/VisibilityLayerMask.ts';
 import { DIVEComponent } from '../../engine/component/Component.ts';
@@ -69,7 +70,8 @@ export abstract class DIVECameraComponent extends DIVEComponent {
         HELPER_LAYER_MASK |
         PRODUCT_LAYER_MASK |
         PROXY_LAYER_MASK |
-        FLOOR_LAYER_MASK;
+        FLOOR_LAYER_MASK |
+        SHADOW_LAYER_MASK;
 
     /**
      * What an end user sees: the content and the ground it stands on.
@@ -78,10 +80,11 @@ export abstract class DIVECameraComponent extends DIVEComponent {
      * exists to help build a scene stays out — the gizmo, the helper lines, the
      * proxies for entities without geometry — and so does `DEFAULT_LAYER_MASK`,
      * because it is the catch-all: anything that never chose a layer is a thing
-     * nobody decided to show an end user.
+     * nobody decided to show an end user. `SHADOW_LAYER_MASK` is in: a baked
+     * contact shadow is part of the picture, not a building aid.
      */
     public static readonly LIVE_VIEW_LAYER_MASK =
-        PRODUCT_LAYER_MASK | FLOOR_LAYER_MASK;
+        PRODUCT_LAYER_MASK | FLOOR_LAYER_MASK | SHADOW_LAYER_MASK;
 
     /** Told whenever {@link setCameraLayer} changed what is visible. */
     public onSetCameraLayer: (mask: number) => void = () => {};
