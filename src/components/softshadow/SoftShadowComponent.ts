@@ -252,7 +252,7 @@ export class SoftShadowComponent extends DIVEComponent {
             material.depthWrite = false;
         });
 
-        this._quad = new QuadMesh();
+        this._quad = new QuadMesh(new NodeMaterial());
     }
 
     /** The plane the shadow is drawn on. */
