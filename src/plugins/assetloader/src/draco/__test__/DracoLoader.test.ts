@@ -1,15 +1,15 @@
 import { DracoLoader } from '../DracoLoader.ts';
 
 // Mock dynamic imports
-vi.mock('three/examples/jsm/libs/draco/draco_decoder.js?raw', () => ({
+vi.mock('three/examples/jsm/libs/draco/gltf/draco_decoder.js?raw', () => ({
     default: 'mock-draco-js-decoder-content',
 }));
 
-vi.mock('three/examples/jsm/libs/draco/draco_wasm_wrapper.js?raw', () => ({
+vi.mock('three/examples/jsm/libs/draco/gltf/draco_wasm_wrapper.js?raw', () => ({
     default: 'mock-draco-wasm-wrapper-content',
 }));
 
-vi.mock('three/examples/jsm/libs/draco/draco_decoder.wasm?url', () => ({
+vi.mock('three/examples/jsm/libs/draco/gltf/draco_decoder.wasm?url', () => ({
     default: 'mock-wasm-url',
 }));
 
