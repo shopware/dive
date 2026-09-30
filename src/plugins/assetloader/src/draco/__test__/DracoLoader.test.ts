@@ -44,11 +44,32 @@ Object.defineProperty(global, 'WebAssembly', {
     writable: true,
 });
 
+/** Runs `fn` in a browser without WebAssembly, the only way to the JS decoder. */
+const withoutWebAssembly = async (fn: () => Promise<void>) => {
+    Object.defineProperty(global, 'WebAssembly', {
+        value: undefined,
+        writable: true,
+    });
+
+    try {
+        await fn();
+    } finally {
+        Object.defineProperty(global, 'WebAssembly', {
+            value: { compile: vi.fn() },
+            writable: true,
+        });
+    }
+};
+
 describe('DracoLoader', () => {
     let loader: DracoLoader;
 
     beforeEach(() => {
         vi.clearAllMocks();
+        // the error cases replace it, and the WASM path is now the default one
+        vi.mocked(global.fetch).mockResolvedValue({
+            arrayBuffer: vi.fn().mockResolvedValue(new ArrayBuffer(1024)),
+        } as unknown as Response);
         loader = new DracoLoader();
     });
 
@@ -58,49 +79,23 @@ describe('DracoLoader', () => {
         });
 
         it('should initialize with default decoder configuration', () => {
-            expect(loader['decoderConfig']).toEqual({
-                type: 'js',
-                wasmBinary: null,
-            });
+            expect(loader['decoderConfig']).toEqual({ wasmBinary: null });
             expect(loader['decoderPending']).toBeNull();
             expect(loader['workerSourceURL']).toBe('');
         });
-    });
 
-    describe('decoder configuration', () => {
-        it('should have JS as default decoder type', () => {
-            expect(loader['decoderConfig'].type).toBe('js');
-            expect(loader['decoderConfig'].wasmBinary).toBeNull();
-        });
+        it('should not warn about the deprecated decoder config', () => {
+            const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
 
-        it('should allow changing decoder configuration', () => {
-            // Test that we can access the decoderConfig property
-            const initialConfig = loader['decoderConfig'];
-            expect(initialConfig.type).toBe('js');
+            new DracoLoader();
 
-            // Manually set the config to test the structure
-            loader['decoderConfig'] = { type: 'wasm', wasmBinary: null };
-            expect(loader['decoderConfig'].type).toBe('wasm');
+            expect(warn).not.toHaveBeenCalled();
+            warn.mockRestore();
         });
     });
 
     describe('_initDecoder integration', () => {
-        it('should handle JS decoder initialization', async () => {
-            loader['decoderConfig'].type = 'js';
-
-            await loader['_initDecoder']();
-
-            // Should not fetch WASM for JS decoder
-            expect(global.fetch).not.toHaveBeenCalled();
-            // Should create worker URL
-            expect(global.URL.createObjectURL).toHaveBeenCalled();
-            expect(loader['workerSourceURL']).toBe('blob:mock-url');
-            expect(loader['decoderPending']).toBeDefined();
-        });
-
-        it('should handle WASM decoder initialization', async () => {
-            loader['decoderConfig'].type = 'wasm';
-
+        it('should use the WASM decoder when WebAssembly is available', async () => {
             await loader['_initDecoder']();
 
             // Should fetch WASM binary
@@ -115,24 +110,15 @@ describe('DracoLoader', () => {
         });
 
         it('should fallback to JS when WebAssembly is not available', async () => {
-            // Mock WebAssembly as undefined
-            Object.defineProperty(global, 'WebAssembly', {
-                value: undefined,
-                writable: true,
-            });
+            await withoutWebAssembly(async () => {
+                await loader['_initDecoder']();
 
-            loader['decoderConfig'].type = 'wasm';
-
-            await loader['_initDecoder']();
-
-            // Should not fetch WASM binary
-            expect(global.fetch).not.toHaveBeenCalled();
-            expect(loader['decoderConfig'].wasmBinary).toBeNull();
-
-            // Restore WebAssembly for other tests
-            Object.defineProperty(global, 'WebAssembly', {
-                value: { compile: vi.fn() },
-                writable: true,
+                // Should not fetch WASM binary
+                expect(global.fetch).not.toHaveBeenCalled();
+                expect(loader['decoderConfig'].wasmBinary).toBeNull();
+                // Should create worker URL
+                expect(global.URL.createObjectURL).toHaveBeenCalled();
+                expect(loader['workerSourceURL']).toBe('blob:mock-url');
             });
         });
 
@@ -150,6 +136,17 @@ describe('DracoLoader', () => {
     describe('worker creation', () => {
         it('should create worker blob with correct structure', async () => {
             await loader['_initDecoder']();
+
+            const blobContent = vi.mocked(global.Blob).mock.calls[0]?.[0]?.[0];
+
+            expect(blobContent).toContain('/* draco decoder */');
+            expect(blobContent).toContain('mock-draco-wasm-wrapper-content');
+            expect(blobContent).toContain('/* worker */');
+            expect(blobContent).toContain('console.log("worker")');
+        });
+
+        it('should put the JS decoder into the worker without WebAssembly', async () => {
+            await withoutWebAssembly(() => loader['_initDecoder']());
 
             expect(global.Blob).toHaveBeenCalledWith([
                 expect.stringContaining('/* draco decoder */'),
@@ -181,7 +178,6 @@ describe('DracoLoader', () => {
 
     describe('error handling', () => {
         it('should handle fetch errors gracefully', async () => {
-            loader['decoderConfig'].type = 'wasm';
             vi.mocked(global.fetch).mockRejectedValue(
                 new Error('Network error'),
             );
@@ -192,7 +188,6 @@ describe('DracoLoader', () => {
         });
 
         it('should handle arrayBuffer extraction errors', async () => {
-            loader['decoderConfig'].type = 'wasm';
             const mockResponse = {
                 arrayBuffer: vi
                     .fn()
@@ -228,7 +223,6 @@ describe('DracoLoader', () => {
 
     describe('WASM binary handling', () => {
         it('should set wasmBinary for WASM decoder', async () => {
-            loader['decoderConfig'].type = 'wasm';
             const mockArrayBuffer = new ArrayBuffer(2048);
 
             vi.mocked(global.fetch).mockResolvedValue({
@@ -241,9 +235,7 @@ describe('DracoLoader', () => {
         });
 
         it('should not set wasmBinary for JS decoder', async () => {
-            loader['decoderConfig'].type = 'js';
-
-            await loader['_initDecoder']();
+            await withoutWebAssembly(() => loader['_initDecoder']());
 
             expect(loader['decoderConfig'].wasmBinary).toBeNull();
         });

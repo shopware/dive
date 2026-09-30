@@ -19,11 +19,8 @@ export class AssetLoader {
     private _stepLoader: STEPLoader;
 
     constructor() {
-        // create draco loader
+        // picks the wasm decoder by itself, with js as the fallback
         const dracoLoader = new DracoLoader();
-
-        // use wasm decoder if supported
-        dracoLoader.setDecoderConfig({ type: 'wasm' });
 
         // create gltf loader
         this._gltfLoader = new GLTFLoader();

@@ -22,10 +22,8 @@ const DRACO_LOADER_REGISTRY = {
 export class DracoLoader extends DRACOLoader {
     protected decoderPending: Promise<void> | null = null;
     protected decoderConfig: {
-        type: 'js' | 'wasm';
         wasmBinary: ArrayBuffer | null;
     } = {
-        type: 'js',
         wasmBinary: null,
     };
     protected workerSourceURL: string = '';
@@ -33,8 +31,11 @@ export class DracoLoader extends DRACOLoader {
     protected async _initDecoder(): Promise<void> {
         if (this.decoderPending) return this.decoderPending;
 
-        const useJS =
-            typeof WebAssembly !== 'object' || this.decoderConfig.type === 'js';
+        /**
+         * WASM wherever the browser has it, JS only as the fallback -- the choice
+         * three makes on its own once `setDecoderConfig` is gone in r194
+         */
+        const useJS = typeof WebAssembly !== 'object';
 
         const librariesPending: Promise<string | ArrayBuffer>[] = [];
 
