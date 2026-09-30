@@ -28,7 +28,6 @@ vi.mock('../../draco/DracoLoader.ts', () => ({
     DracoLoader: vi.fn().mockImplementation(function () {
         return {
             setDecoderPath: vi.fn(),
-            setDecoderConfig: vi.fn(),
         };
     }),
 }));
