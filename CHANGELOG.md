@@ -1,5 +1,20 @@
 # Changelog
 
+## [4.1.0](https://github.com/shopware/dive/compare/v4.0.2...v4.1.0) (2026-10-02)
+
+
+### 🚀 Features
+
+* change draco loader to gltf version. ([#256](https://github.com/shopware/dive/issues/256)) ([f1b0443](https://github.com/shopware/dive/commit/f1b044381475b8415610922a83652c0f03bf970c))
+* change how bytecode is transformed in vite build. ([#258](https://github.com/shopware/dive/issues/258)) ([f140fa5](https://github.com/shopware/dive/commit/f140fa564e84908c14843bea534625065ef1dd4a))
+* **components:** add SoftShadowComponent. ([#252](https://github.com/shopware/dive/issues/252)) ([3a7a2f1](https://github.com/shopware/dive/commit/3a7a2f164e956552707664b1cc78d40452bcac99))
+* remove choosing specific decoder version and instead let system capabilities decide. ([#257](https://github.com/shopware/dive/issues/257)) ([bec4114](https://github.com/shopware/dive/commit/bec41145be838a224fe088975a11b446002a768c))
+
+
+### 🐛 Bug Fixes
+
+* **node:** ignore own geometry in dropIt raycast. ([#254](https://github.com/shopware/dive/issues/254)) ([2274912](https://github.com/shopware/dive/commit/22749121140b1283d6a6f6c16ef5dcbac5ecee5b))
+
 ## [4.0.2](https://github.com/shopware/dive/compare/v4.0.1...v4.0.2) (2026-09-18)
 
 
