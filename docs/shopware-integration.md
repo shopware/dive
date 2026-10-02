@@ -50,3 +50,5 @@ module.exports = () => {
     };
 };
 ```
+
+Draco decoding needs no extra rule: the decoder ships as plain chunks inside the package (see the [Asset Loader README](../src/plugins/assetloader/README.md#draco-decoder)).

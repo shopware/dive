@@ -2,6 +2,7 @@ import { defineConfig } from 'vite';
 import type { UserConfigExport } from 'vite';
 import dts from 'vite-plugin-dts';
 import pluginBuildPlugin from './scripts/build/vite/vite-plugin-exports.ts';
+import noBundlerQueriesPlugin from './scripts/build/vite/vite-plugin-no-bundler-queries.ts';
 import wasm from 'vite-plugin-wasm';
 import tsconfigPaths from 'vite-tsconfig-paths';
 import pkg from './package.json';
@@ -41,6 +42,9 @@ export default defineConfig({
 
         // build plugins, generates exports to write to {rootDir}/package.json
         pluginBuildPlugin(),
+
+        // keep Vite-only import queries out of the published chunks
+        noBundlerQueriesPlugin(),
 
         // generate types
         dts({
