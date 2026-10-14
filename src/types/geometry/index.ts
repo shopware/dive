@@ -1,2 +1,2 @@
-export * from './DIVEGeometry.ts';
-export * from './DIVEGeometryType.ts';
+export type * from './DIVEGeometry.ts';
+export type * from './DIVEGeometryType.ts';

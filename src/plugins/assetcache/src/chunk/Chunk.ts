@@ -104,7 +104,7 @@ export class Chunk {
 
             this._size += this._arrayBuffer.byteLength;
             this._updatedAt = new Date();
-        } catch (error) {
+        } catch {
             throw new FileContentError(this._uri);
         }
 

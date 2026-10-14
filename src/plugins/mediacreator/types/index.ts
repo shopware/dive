@@ -1,3 +1,3 @@
-export * from './MediaGenerationById.ts';
-export * from './MediaGenerationByPosition.ts';
-export * from './MediaGenerationResolution.ts';
+export type * from './MediaGenerationById.ts';
+export type * from './MediaGenerationByPosition.ts';
+export type * from './MediaGenerationResolution.ts';

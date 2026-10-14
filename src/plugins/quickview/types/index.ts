@@ -1,1 +1,1 @@
-export * from './QuickViewSettings.ts';
+export type * from './QuickViewSettings.ts';

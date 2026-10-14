@@ -1,1 +1,1 @@
-export * from './OrbitControllerState.types.ts';
+export type * from './OrbitControllerState.types.ts';

@@ -1,2 +1,2 @@
 export * from './src/QuickView.ts';
-export * from './types/index.ts';
+export type * from './types/index.ts';

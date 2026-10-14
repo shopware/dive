@@ -1,5 +1,5 @@
-export * from './components/index.ts';
-export * from './events/index.ts';
+export type * from './components/index.ts';
+export type * from './events/index.ts';
 export * from './file/index.ts';
-export * from './geometry/index.ts';
-export * from './material/index.ts';
+export type * from './geometry/index.ts';
+export type * from './material/index.ts';
