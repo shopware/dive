@@ -1,5 +1,12 @@
 # Changelog
 
+## [4.2.0](https://github.com/shopware/dive/compare/v4.1.0...v4.2.0) (2026-10-14)
+
+
+### 🚀 Features
+
+* TiltController and GyroInput ([#263](https://github.com/shopware/dive/issues/263)) ([ec9312b](https://github.com/shopware/dive/commit/ec9312b2b9992ae5f330bb00d5b7d24c9ea4b55b))
+
 ## [4.1.0](https://github.com/shopware/dive/compare/v4.0.2...v4.1.0) (2026-10-02)
 
 
