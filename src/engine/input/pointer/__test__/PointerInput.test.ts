@@ -172,6 +172,10 @@ describe('plugins/input/PointerInput', () => {
     });
 
     describe('touch', () => {
+        it('should keep the page from scrolling on the element', () => {
+            expect(element.style.touchAction).toBe('none');
+        });
+
         const touch = (type: string, id: number, x: number, y: number) =>
             fire(pointer(type, { id, x, y, kind: 'touch' }));
 
@@ -377,6 +381,8 @@ describe('plugins/input/PointerInput', () => {
             fire(pointer('pointerdown'), other);
 
             expect(input.element).toBe(other);
+            expect(element.style.touchAction).not.toBe('none');
+            expect(other.style.touchAction).toBe('none');
             expect(events).toEqual([{ type: 'start', channel: 'primary' }]);
         });
 
@@ -396,6 +402,16 @@ describe('plugins/input/PointerInput', () => {
 
             expect(events).toEqual([{ type: 'start', channel: 'primary' }]);
         });
+    });
+
+    it('should give the element its own touch-action back on dispose', () => {
+        const own = makeElement();
+        own.style.touchAction = 'pan-y';
+        const other = new PointerInput(own);
+
+        other.dispose();
+
+        expect(own.style.touchAction).toBe('pan-y');
     });
 
     it('should end a drag and stop listening on dispose', () => {
