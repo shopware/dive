@@ -14,12 +14,17 @@ import {
     type DIVETicker,
 } from '@shopware-ag/dive';
 
-/** A camera pose: where it stands and what it looks at. */
+/**
+ * A camera pose: where it stands and what it looks at.
+ *
+ * @experimental See {@link TiltController}.
+ */
 export type TiltControllerPose = {
     position: Vector3Like;
     target: Vector3Like;
 };
 
+/** @experimental See {@link TiltController}. */
 export type TiltControllerSettings = {
     enabled?: boolean;
 
@@ -33,6 +38,7 @@ export type TiltControllerSettings = {
     smoothing?: number;
 };
 
+/** @experimental See {@link TiltController}. */
 export const TiltControllerDefaultSettings: Required<TiltControllerSettings> = {
     enabled: true,
     maxTilt: { x: MathUtils.degToRad(30), y: MathUtils.degToRad(20) },
@@ -56,11 +62,14 @@ const EPS = 0.000001;
  * once instead of first winding off the excess -- the front then lies that much
  * further over. A limit only follows a movement mainly along its own axis, so
  * the sideways wobble of moving the device up and down is held at the stop
- * rather than kept. A sideways tilt of {@link maxTilt}`.x` turns the camera half way round -- to
- * the middle of the back, from either side. Tilting forward or backward moves
- * the polar angle by up to {@link maxPolarOffset}.
+ * rather than kept. A sideways tilt of {@link maxTilt}`.x` turns the camera
+ * half way round -- to the middle of the back, from either side. Tilting
+ * forward or backward moves the polar angle by up to {@link maxPolarOffset}.
  *
  * Nothing moves before {@link setHome} has been called.
+ *
+ * @experimental The mapping is still being tuned on devices; behaviour,
+ * defaults and settings may change without a major release.
  */
 export class TiltController
     extends EventDispatcher<EventMap>

@@ -50,6 +50,9 @@ export type QuickView = DIVE & {
      * handler. It rejects, and the previous controller stays, when the sensor is
      * refused or reports nothing.
      *
+     * `'gyro'` is experimental, see `GyroInput` and `TiltController`: how it
+     * feels may change without a major release.
+     *
      * @param kind - The controller to use.
      */
     useController: (kind: QuickViewController) => Promise<void>;
@@ -73,7 +76,10 @@ export type QuickView = DIVE & {
     load: (source: string | StateData) => Promise<void>;
 };
 
-/** The controllers a {@link QuickView} can hand its camera to. */
+/**
+ * The controllers a {@link QuickView} can hand its camera to. `'gyro'` is
+ * experimental.
+ */
 export type QuickViewController = 'orbit' | 'gyro';
 
 export const QuickViewDefaultSettings: Omit<

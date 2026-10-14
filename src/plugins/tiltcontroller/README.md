@@ -1,4 +1,7 @@
 # Tilt Controller
+> **Experimental:** still being tuned on devices. Behaviour, defaults and settings may change
+> without a major release.
+
 Turns the camera around a home pose by how a device is tilted.
 
 ## Features:

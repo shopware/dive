@@ -34,6 +34,9 @@ quickView.orbitController.enablePan = false;
 ```
 
 ## Switching controllers
+> **Experimental:** the `'gyro'` controller is still being tuned on devices. How it feels may
+> change without a major release.
+
 Exactly one controller moves the camera. `'gyro'` turns the camera by how the device is tilted,
 around the pose the first load was framed in. iOS grants the sensor only from inside a user
 gesture, so call `useController` straight from the click handler. It rejects, and the previous

@@ -3,6 +3,7 @@ import { DIVEInput } from '../Input.ts';
 
 type PermissionRequest = () => Promise<PermissionState | 'granted' | 'denied'>;
 
+/** @experimental See {@link GyroInput}. */
 export type GyroInputSettings = {
     /** How long `enable()` waits for a first reading, in milliseconds. */
     timeout?: number;
@@ -37,6 +38,9 @@ const MINUS_HALF_PI_X = new Quaternion(-Math.sqrt(0.5), 0, 0, Math.sqrt(0.5));
  * Browsers that guard the sensor -- iOS -- only grant it from inside a user
  * gesture, so call {@link GyroInput.requestPermission} straight from the click
  * handler, before anything else is awaited.
+ *
+ * @experimental How the tilt is measured and filtered is still being tuned on
+ * devices; values, defaults and settings may change without a major release.
  */
 export class GyroInput extends DIVEInput {
     public static get isSupported(): boolean {

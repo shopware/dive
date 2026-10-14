@@ -24,6 +24,9 @@ Mouse and touch on one element.
 | wheel, pinch | `scale` |
 
 ### GyroInput
+> **Experimental:** still being tuned on devices. Behaviour, defaults and settings may change
+> without a major release.
+
 The way the device is held, as `axis` on `orientation`: `x > 0` turned right, `y > 0` turned up,
 relative to the pose held when it was enabled. iOS grants the sensor only from inside a user
 gesture, so ask for it before anything else is awaited.

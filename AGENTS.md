@@ -24,6 +24,7 @@
 - `DIVERoot` CAMERA update/delete coverage requires manually seeding a matching `Object3D` in tests because `addSceneObject` intentionally skips creating CAMERA scene nodes
 - Plugins live in `src/plugins/<name>/` and are auto-discovered by looking for `index.ts` in subdirectories
 - Plugins are exported as subpath exports: `@shopware-ag/dive/<plugin-name>` (e.g. `@shopware-ag/dive/shader`, `@shopware-ag/dive/state`)
+- Experimental APIs are marked with a TSDoc `@experimental` tag on every exported symbol (class, settings type, defaults, pose types), saying they may change without a major release, plus a `> **Experimental:**` note in the README/docs section that covers them. No runtime warning and no separate import path, so stabilizing one means deleting the tag and the note. Currently experimental: `GyroInput`, the `tiltcontroller` plugin and QuickView's `useController('gyro')`
 - The shader plugin (`src/plugins/shader/`) now exposes node-based building blocks like `GridNode` and `GridNodeUniforms`; legacy `DIVEShaderLib`/`DIVEShaderMaterial` shader-lib wrappers are being removed
 - `GridComponent` custom shader code must use TSL/node materials for WebGPU; plain `ShaderMaterial` triggers `THREE.NodeMaterial: Material "ShaderMaterial" is not compatible`
 - `GridComponent` owns its `MeshBasicNodeMaterial` setup and creates its grid uniform nodes locally; `GridNode` only provides the TSL output-node implementation
