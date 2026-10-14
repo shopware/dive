@@ -1,5 +1,12 @@
 # Changelog
 
+## [4.2.1](https://github.com/shopware/dive/compare/v4.2.0...v4.2.1) (2026-10-14)
+
+
+### 🐛 Bug Fixes
+
+* remove touch action from canvas in pointer input. ([#267](https://github.com/shopware/dive/issues/267)) ([a6658dd](https://github.com/shopware/dive/commit/a6658dddfe7e88247c9ef24037a642ac16c663ba))
+
 ## [4.2.0](https://github.com/shopware/dive/compare/v4.1.0...v4.2.0) (2026-10-14)
 
 
