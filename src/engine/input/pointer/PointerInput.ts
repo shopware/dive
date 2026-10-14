@@ -32,6 +32,9 @@ export class PointerInput extends DIVEInput {
     private readonly _centroid = new Vector2();
     private _spread = 0;
 
+    /** The element's own `touch-action`, put back when this lets go of it. */
+    private _touchAction = '';
+
     constructor(element: HTMLElement) {
         super();
 
@@ -60,6 +63,12 @@ export class PointerInput extends DIVEInput {
 
     private _attach(): void {
         const element = this._element;
+
+        // without it the browser scrolls and zooms the page on a touch drag,
+        // and cancels the pointers mid-gesture
+        this._touchAction = element.style.touchAction;
+        element.style.touchAction = 'none';
+
         element.addEventListener('pointerdown', this._onPointerDown);
         element.addEventListener('pointermove', this._onPointerMove);
         element.addEventListener('pointerup', this._onPointerUp);
@@ -70,6 +79,8 @@ export class PointerInput extends DIVEInput {
 
     private _detach(): void {
         const element = this._element;
+        element.style.touchAction = this._touchAction;
+
         element.removeEventListener('pointerdown', this._onPointerDown);
         element.removeEventListener('pointermove', this._onPointerMove);
         element.removeEventListener('pointerup', this._onPointerUp);
