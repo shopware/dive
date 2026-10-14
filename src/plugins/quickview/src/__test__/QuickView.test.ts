@@ -4,9 +4,16 @@
 
 import type { Mock } from 'vitest';
 import { vi } from 'vitest';
-import { DIVE, DIVENode, ModelComponent } from '@shopware-ag/dive';
+import {
+    DIVE,
+    DIVENode,
+    GyroInput,
+    ModelComponent,
+    PointerInput,
+} from '@shopware-ag/dive';
 import { OrbitController } from '@shopware-ag/dive/orbitcontroller';
 import { State, type StateData } from '@shopware-ag/dive/state';
+import { TiltController } from '@shopware-ag/dive/tiltcontroller';
 import { QuickView, QuickViewDefaultSettings } from '../QuickView.ts';
 
 /**
@@ -25,6 +32,8 @@ const {
     bounds,
     cameraResize,
     canvasLayout,
+    gyroPermission,
+    gyroEnable,
 } = vi.hoisted(() => ({
     diveDisposeAsync: vi.fn(async () => {}),
     diveStartAsync: vi.fn(async () => {}),
@@ -38,6 +47,8 @@ const {
     cameraResize: vi.fn(),
     // what a laid-out canvas reports; zero stands for one not mounted yet
     canvasLayout: { clientWidth: 800, clientHeight: 600 },
+    gyroPermission: vi.fn(async () => true),
+    gyroEnable: vi.fn(async () => {}),
 }));
 
 vi.mock('@shopware-ag/dive', () => {
@@ -48,7 +59,12 @@ vi.mock('@shopware-ag/dive', () => {
                     canvas: canvasLayout,
                     // the controller drives the component, not the camera
                     cameraComponent: {
-                        owner: { position: { set: vi.fn() } },
+                        owner: {
+                            position: {
+                                set: vi.fn(),
+                                clone: vi.fn(() => ({ home: 'position' })),
+                            },
+                        },
                         onResize: cameraResize,
                     },
                 },
@@ -60,7 +76,7 @@ vi.mock('@shopware-ag/dive', () => {
                         },
                     },
                 },
-                clock: { addTicker: vi.fn() },
+                clock: { addTicker: vi.fn(), removeTicker: vi.fn() },
                 startAsync: diveStartAsync,
                 disposeAsync: diveDisposeAsync,
             };
@@ -90,13 +106,45 @@ vi.mock('@shopware-ag/dive', () => {
             return this;
         }),
         ModelComponent: vi.fn(),
+        PointerInput: vi.fn(function () {
+            return { dispose: vi.fn() };
+        }),
+        GyroInput: Object.assign(
+            vi.fn(function () {
+                return {
+                    enable: gyroEnable,
+                    disable: vi.fn(),
+                    dispose: vi.fn(),
+                };
+            }),
+            { requestPermission: gyroPermission },
+        ),
     };
 });
 
 vi.mock('@shopware-ag/dive/orbitcontroller', () => {
     return {
         OrbitController: vi.fn(function () {
-            return { focusObject: vi.fn(), dispose: vi.fn() };
+            return {
+                focusObject: vi.fn(),
+                dispose: vi.fn(),
+                connect: vi.fn(),
+                enabled: true,
+                target: { clone: vi.fn(() => ({ home: 'target' })) },
+            };
+        }),
+    };
+});
+
+vi.mock('@shopware-ag/dive/tiltcontroller', () => {
+    return {
+        TiltController: vi.fn(function () {
+            return {
+                connect: vi.fn(),
+                setHome: vi.fn(),
+                dispose: vi.fn(),
+                enabled: false,
+            };
         }),
     };
 });
@@ -127,6 +175,9 @@ describe('QuickView', () => {
         setFromURL.mockImplementation(async () => {});
         diveStartAsync.mockImplementation(async () => {});
         statePerformAction.mockImplementation(async () => []);
+        // reset, not just cleared: a pending once-implementation would leak
+        gyroPermission.mockReset().mockImplementation(async () => true);
+        gyroEnable.mockReset().mockImplementation(async () => {});
         vi.spyOn(console, 'error').mockImplementation(() => {});
     });
 
@@ -649,6 +700,232 @@ describe('QuickView', () => {
 
             expect(stateDestroyInstance).toHaveBeenCalledTimes(1);
             expect(State).toHaveBeenCalledTimes(2);
+        });
+    });
+
+    describe('controllers', () => {
+        /** What a mocked constructor built on its `index`th call. */
+        const built = <T>(constructor: unknown, index = 0): T =>
+            vi.mocked(constructor as Mock).mock.results[index].value as T;
+
+        type Tilt = {
+            connect: Mock;
+            setHome: Mock;
+            dispose: Mock;
+            enabled: boolean;
+        };
+        type Gyro = { enable: Mock; disable: Mock; dispose: Mock };
+
+        it('should drive the orbit controller from the pointer on the canvas', async () => {
+            const quickView = await QuickView('test_uri');
+
+            expect(PointerInput).toHaveBeenCalledWith(canvasLayout);
+            expect(quickView.pointerInput).toBe(built(PointerInput));
+            expect(quickView.orbitController.connect).toHaveBeenCalledWith(
+                quickView.pointerInput,
+            );
+            expect(quickView.activeController).toBe('orbit');
+        });
+
+        it('should do nothing for the controller that is already active', async () => {
+            const quickView = await QuickView('test_uri');
+
+            await quickView.useController('orbit');
+
+            expect(quickView.activeController).toBe('orbit');
+            expect(quickView.orbitController.enabled).toBe(true);
+        });
+
+        it('should hand the camera to the tilt controller', async () => {
+            const quickView = await QuickView('test_uri');
+
+            await quickView.useController('gyro');
+
+            const tilt = built<Tilt>(TiltController);
+            const gyro = built<Gyro>(GyroInput);
+            expect(TiltController).toHaveBeenCalledWith(
+                quickView.mainView.cameraComponent,
+                { enabled: false },
+            );
+            expect(tilt.connect).toHaveBeenCalledWith(gyro);
+            expect(quickView.clock.addTicker).toHaveBeenCalledWith(tilt);
+            expect(gyro.enable).toHaveBeenCalledTimes(1);
+
+            expect(quickView.orbitController.enabled).toBe(false);
+            expect(tilt.enabled).toBe(true);
+            expect(quickView.activeController).toBe('gyro');
+        });
+
+        it('should ask for the sensor before anything is awaited', async () => {
+            const quickView = await QuickView('test_uri');
+
+            // iOS only grants it while the user gesture is still current
+            const switched = quickView.useController('gyro');
+            expect(gyroPermission).toHaveBeenCalledTimes(1);
+
+            await switched;
+        });
+
+        it('should turn around the pose the first load was framed in', async () => {
+            const quickView = await QuickView('test_uri');
+
+            await quickView.useController('gyro');
+
+            expect(built<Tilt>(TiltController).setHome).toHaveBeenCalledWith({
+                position: { home: 'position' },
+                target: { home: 'target' },
+            });
+
+            const position = vi.mocked(
+                quickView.mainView.cameraComponent.owner.position.clone,
+            );
+            expect(position.mock.invocationCallOrder[0]).toBeGreaterThan(
+                vi.mocked(quickView.orbitController.focusObject).mock
+                    .invocationCallOrder[0],
+            );
+        });
+
+        it('should keep the orbit controller when the sensor is refused', async () => {
+            gyroPermission.mockResolvedValueOnce(false);
+            const quickView = await QuickView('test_uri');
+
+            await expect(quickView.useController('gyro')).rejects.toThrow(
+                'not permitted',
+            );
+
+            expect(TiltController).not.toHaveBeenCalled();
+            expect(quickView.activeController).toBe('orbit');
+            expect(quickView.orbitController.enabled).toBe(true);
+        });
+
+        it('should pass on a request for the sensor that failed', async () => {
+            gyroPermission.mockRejectedValueOnce(new Error('not allowed'));
+            const quickView = await QuickView('test_uri');
+
+            await expect(quickView.useController('gyro')).rejects.toThrow(
+                'not allowed',
+            );
+
+            expect(quickView.activeController).toBe('orbit');
+        });
+
+        it('should not leave a failed request unhandled when overtaken', async () => {
+            gyroPermission.mockRejectedValueOnce(new Error('not allowed'));
+            const quickView = await QuickView('test_uri');
+
+            const toGyro = quickView.useController('gyro');
+            await quickView.useController('orbit');
+
+            await expect(toGyro).resolves.toBeUndefined();
+        });
+
+        it('should keep the orbit controller when the sensor reports nothing', async () => {
+            gyroEnable.mockRejectedValueOnce(new Error('no orientation'));
+            const quickView = await QuickView('test_uri');
+
+            await expect(quickView.useController('gyro')).rejects.toThrow(
+                'no orientation',
+            );
+
+            expect(quickView.activeController).toBe('orbit');
+            expect(quickView.orbitController.enabled).toBe(true);
+            expect(built<Tilt>(TiltController).enabled).toBe(false);
+        });
+
+        it('should let a failed switch not block the next one', async () => {
+            gyroEnable.mockRejectedValueOnce(new Error('no orientation'));
+            const quickView = await QuickView('test_uri');
+
+            await expect(quickView.useController('gyro')).rejects.toThrow();
+            await quickView.useController('gyro');
+
+            expect(quickView.activeController).toBe('gyro');
+        });
+
+        it('should hand the camera back to the orbit controller', async () => {
+            const quickView = await QuickView('test_uri');
+            await quickView.useController('gyro');
+
+            await quickView.useController('orbit');
+
+            const tilt = built<Tilt>(TiltController);
+            expect(built<Gyro>(GyroInput).disable).toHaveBeenCalledTimes(1);
+            expect(tilt.enabled).toBe(false);
+            expect(quickView.orbitController.enabled).toBe(true);
+            expect(quickView.activeController).toBe('orbit');
+        });
+
+        it('should build the tilt controller only once', async () => {
+            const quickView = await QuickView('test_uri');
+
+            await quickView.useController('gyro');
+            await quickView.useController('orbit');
+            await quickView.useController('gyro');
+
+            expect(TiltController).toHaveBeenCalledTimes(1);
+            expect(GyroInput).toHaveBeenCalledTimes(1);
+            expect(quickView.activeController).toBe('gyro');
+        });
+
+        it('should let a newer switch overtake one still waiting for the sensor', async () => {
+            let wake!: () => void;
+            gyroEnable.mockImplementationOnce(
+                () => new Promise<void>((resolve) => (wake = resolve)),
+            );
+            const quickView = await QuickView('test_uri');
+
+            const toGyro = quickView.useController('gyro');
+            await vi.waitFor(() => expect(gyroEnable).toHaveBeenCalled());
+            const toOrbit = quickView.useController('orbit');
+            wake();
+            await Promise.all([toGyro, toOrbit]);
+
+            expect(built<Gyro>(GyroInput).disable).toHaveBeenCalled();
+            expect(built<Tilt>(TiltController).enabled).toBe(false);
+            expect(quickView.orbitController.enabled).toBe(true);
+            expect(quickView.activeController).toBe('orbit');
+        });
+
+        it('should skip a switch that was overtaken before it ran', async () => {
+            const quickView = await QuickView('test_uri');
+
+            const toGyro = quickView.useController('gyro');
+            const toOrbit = quickView.useController('orbit');
+            await Promise.all([toGyro, toOrbit]);
+
+            expect(TiltController).not.toHaveBeenCalled();
+            expect(quickView.activeController).toBe('orbit');
+        });
+
+        it('should take the gyro down with the view', async () => {
+            const quickView = await QuickView('test_uri');
+            await quickView.useController('gyro');
+
+            await quickView.disposeAsync();
+
+            const tilt = built<Tilt>(TiltController);
+            expect(quickView.pointerInput.dispose).toHaveBeenCalledTimes(1);
+            expect(tilt.dispose).toHaveBeenCalledTimes(1);
+            expect(built<Gyro>(GyroInput).dispose).toHaveBeenCalledTimes(1);
+            expect(quickView.clock.removeTicker).toHaveBeenCalledWith(tilt);
+        });
+
+        it('should free a gyro whose sensor woke up after disposal', async () => {
+            let wake!: () => void;
+            gyroEnable.mockImplementationOnce(
+                () => new Promise<void>((resolve) => (wake = resolve)),
+            );
+            const quickView = await QuickView('test_uri');
+
+            const toGyro = quickView.useController('gyro');
+            await vi.waitFor(() => expect(gyroEnable).toHaveBeenCalled());
+            await quickView.disposeAsync();
+            wake();
+            await toGyro;
+
+            expect(built<Tilt>(TiltController).dispose).toHaveBeenCalled();
+            expect(built<Gyro>(GyroInput).dispose).toHaveBeenCalled();
+            expect(quickView.orbitController.enabled).toBe(true);
         });
     });
 

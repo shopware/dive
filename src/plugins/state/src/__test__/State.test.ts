@@ -123,6 +123,7 @@ vi.mock('../../../../engine/Dive.ts', async () => {
             renderer: {
                 uuid: 'mock-renderer-uuid',
             },
+            canvas: { uuid: 'mock-canvas' },
         },
         scene: {
             uuid: 'mock-scene-uuid',
@@ -204,8 +205,7 @@ describe('modules/state/State', () => {
         mockScene = new DIVEScene();
         mockDive = new DIVE(diveSettings);
 
-        const mockCanvas = document.createElement('canvas');
-        mockController = new OrbitController(cameraComponent, mockCanvas);
+        mockController = new OrbitController(cameraComponent);
 
         state = new State(mockDive, mockController);
     });
@@ -647,6 +647,7 @@ describe('modules/state/State', () => {
             expect(Toolbox).toHaveBeenCalledWith(
                 mockDive.scene,
                 mockController,
+                mockDive.mainView.canvas,
             );
         });
 
@@ -805,10 +806,7 @@ describe('modules/state/State', () => {
                 autoStart: false,
                 displayAxes: false,
             });
-            const otherController = new OrbitController(
-                cameraComponent,
-                document.createElement('canvas'),
-            );
+            const otherController = new OrbitController(cameraComponent);
             const otherState = new State(otherDive, otherController);
 
             const own = performCapture();

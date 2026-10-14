@@ -157,10 +157,7 @@ const mockCameraComponent = {
     camera: { layers: { mask: 0 } },
 } as never;
 const mockRenderer = new DIVERenderer(mockScene, mockCameraComponent);
-const mockOrbitController = new OrbitController(
-    mockCameraComponent,
-    mockRenderer.webgpurenderer.domElement,
-);
+const mockOrbitController = new OrbitController(mockCameraComponent);
 
 describe('MediaCreator', () => {
     let mediaCreator: MediaCreator;

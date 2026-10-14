@@ -9,12 +9,14 @@ A Toolbox to activate and deactivate tools for pointer-based interaction in the 
 ## Usage
 ```ts
 import { DIVEScene } from '@shopware-ag/dive';
+import { PointerInput } from '@shopware-ag/dive';
 import { OrbitController } from '@shopware-ag/dive/orbitcontroller';
 import { Toolbox } from '@shopware-ag/dive/toolbox';
 
 const scene = new DIVEScene();
-const controller = new OrbitController(camera, canvas);
-const toolbox = new Toolbox(scene, controller);
+const controller = new OrbitController(camera);
+controller.connect(new PointerInput(canvas));
+const toolbox = new Toolbox(scene, controller, canvas);
 
 toolbox.useTool('select');
 toolbox.setGizmoMode('translate');

@@ -43,6 +43,9 @@
             "@shopware-ag/dive/shader": ["src/plugins/shader/index.ts"],
             "@shopware-ag/dive/state": ["src/plugins/state/index.ts"],
             "@shopware-ag/dive/systeminfo": ["src/plugins/systeminfo/index.ts"],
+            "@shopware-ag/dive/tiltcontroller": [
+                "src/plugins/tiltcontroller/index.ts"
+            ],
             "@shopware-ag/dive/toolbox": ["src/plugins/toolbox/index.ts"]
         }
     },

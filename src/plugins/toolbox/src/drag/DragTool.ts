@@ -140,7 +140,7 @@ export class DragTool implements Tool {
         this._draggable?.onDragStart?.(this.createDragEvent());
 
         this._dragging = true;
-        this._controller.enabled = false;
+        this._controller.inputEnabled = false;
     }
 
     private updateDrag(ctx: PointerContext): void {
@@ -160,7 +160,7 @@ export class DragTool implements Tool {
         this._draggable?.onDragEnd?.(finalEvent);
 
         this._dragging = false;
-        this._controller.enabled = true;
+        this._controller.inputEnabled = true;
 
         this.resetDragState();
     }

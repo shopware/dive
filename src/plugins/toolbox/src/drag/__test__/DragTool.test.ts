@@ -37,15 +37,11 @@ globalThis.PointerEvent = MockPointerEvent as unknown as typeof PointerEvent;
 
 const createMockController = () =>
     ({
-        domElement: {
-            clientWidth: 1000,
-            clientHeight: 1000,
-        },
         object: {
             isPerspectiveCamera: true,
             layers: { mask: 0 },
         },
-        enabled: true,
+        inputEnabled: true,
     }) as unknown as OrbitController;
 
 const createMockContext = (
@@ -227,7 +223,7 @@ describe('DragTool', () => {
 
             expect(mockDraggable.onDragEnd).toHaveBeenCalled();
             expect(dragTool.isDragging).toBe(false);
-            expect(mockController.enabled).toBe(true);
+            expect(mockController.inputEnabled).toBe(true);
         });
     });
 
@@ -378,7 +374,7 @@ describe('DragTool', () => {
 
             expect(dragTool.isDragging).toBe(true);
             expect(mockDraggable.onDragStart).toHaveBeenCalled();
-            expect(mockController.enabled).toBe(false);
+            expect(mockController.inputEnabled).toBe(false);
         });
 
         it('should call updateDrag internal method', () => {
@@ -416,13 +412,13 @@ describe('DragTool', () => {
             // Setup drag state
             (dragTool as any)._dragging = true;
             (dragTool as any)._draggable = mockDraggable;
-            mockController.enabled = false;
+            mockController.inputEnabled = false;
 
             (dragTool as any).endDrag();
 
             expect(mockDraggable.onDragEnd).toHaveBeenCalled();
             expect(dragTool.isDragging).toBe(false);
-            expect(mockController.enabled).toBe(true);
+            expect(mockController.inputEnabled).toBe(true);
         });
 
         it('should use custom raycast targets in getDragIntersect', () => {
