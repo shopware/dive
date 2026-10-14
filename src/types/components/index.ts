@@ -1,1 +1,1 @@
-export * from './DIVESceneObject.ts';
+export type * from './DIVESceneObject.ts';

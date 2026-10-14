@@ -1,6 +1,6 @@
-export * from './BaseEntitySchema.ts';
-export * from './EntitySchema.ts';
-export * from './EntityTypeSchema.ts';
+export type * from './BaseEntitySchema.ts';
+export type * from './EntitySchema.ts';
+export type * from './EntityTypeSchema.ts';
 export * from './GroupSchema.ts';
 export * from './LightSchema.ts';
 export * from './ModelSchema.ts';

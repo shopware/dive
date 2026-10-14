@@ -1,2 +1,2 @@
 export { MediaCreator } from './src/MediaCreator.ts';
-export * from './types/index.ts';
+export type * from './types/index.ts';

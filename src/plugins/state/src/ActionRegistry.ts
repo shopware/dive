@@ -11,6 +11,7 @@ declare global {
      *
      * This will be used to define the action classes.
      */
+    // eslint-disable-next-line @typescript-eslint/no-empty-object-type -- filled by declaration merging
     interface ActionTypes {}
 }
 

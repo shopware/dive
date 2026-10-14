@@ -1,1 +1,1 @@
-export * from './DIVEMaterial.ts';
+export type * from './DIVEMaterial.ts';

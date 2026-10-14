@@ -1,1 +1,1 @@
-export * from './ToolType.ts';
+export type * from './ToolType.ts';

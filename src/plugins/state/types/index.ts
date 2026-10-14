@@ -1,5 +1,5 @@
 export * from './schema/index.ts';
-export * from './ActionTypes.ts';
-export * from './RegisteredEntity.ts';
-export * from './StateData.ts';
-export * from './StateExportFileType.ts';
+export type * from './ActionTypes.ts';
+export type * from './RegisteredEntity.ts';
+export type * from './StateData.ts';
+export type * from './StateExportFileType.ts';

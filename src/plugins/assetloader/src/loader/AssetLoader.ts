@@ -160,7 +160,7 @@ export class AssetLoader {
             }
 
             return '';
-        } catch (error) {
+        } catch {
             // If detection fails, return empty string
             return '';
         }

@@ -74,7 +74,7 @@ export class SystemInfo {
                 this._webXRUnsupportedReason =
                     EWebXRUnsupportedReason.IMMERSIVE_AR_NOT_SUPPORTED_BY_DEVICE;
             }
-        } catch (error) {
+        } catch {
             this._supportsWebXR = false;
             this._webXRUnsupportedReason =
                 EWebXRUnsupportedReason.AR_PERMISSION_DENIED;
