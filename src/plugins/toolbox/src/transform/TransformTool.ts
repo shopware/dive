@@ -50,6 +50,7 @@ export class TransformTool
 
     private _scene: DIVEScene;
     private _controller: OrbitController;
+    private _canvas: HTMLElement;
     private _selectionState: SelectionState;
     private _gizmo: TransformControls;
     private _gizmoHelper: Object3D;
@@ -63,12 +64,14 @@ export class TransformTool
     constructor(
         scene: DIVEScene,
         controller: OrbitController,
+        canvas: HTMLElement,
         selectionState: SelectionState,
     ) {
         super();
 
         this._scene = scene;
         this._controller = controller;
+        this._canvas = canvas;
         this._selectionState = selectionState;
 
         this._gizmo = this.initGizmo();
@@ -212,7 +215,7 @@ export class TransformTool
     private initGizmo(): TransformControls {
         const g = new TransformControls(
             this._controller.object.camera,
-            this._controller.domElement,
+            this._canvas,
         );
         g.mode = 'translate';
 
@@ -246,7 +249,7 @@ export class TransformTool
 
         // Gizmo drag start - disable orbit controls
         g.addEventListener('mouseDown', () => {
-            this._controller.enabled = false;
+            this._controller.inputEnabled = false;
 
             if (!implementsInterface<DIVEMovable>(g.object, 'isMovable'))
                 return;
@@ -295,7 +298,7 @@ export class TransformTool
 
         // Gizmo drag end - re-enable orbit controls
         g.addEventListener('mouseUp', () => {
-            this._controller.enabled = true;
+            this._controller.inputEnabled = true;
 
             if (!implementsInterface<DIVEMovable>(g.object, 'isMovable'))
                 return;

@@ -167,13 +167,15 @@ const createMockScene = () => {
     } as unknown as DIVEScene;
 };
 
+const createMockCanvas = () =>
+    ({
+        clientWidth: 1000,
+        clientHeight: 1000,
+    }) as unknown as HTMLElement;
+
 const createMockController = () =>
     ({
-        enabled: true,
-        domElement: {
-            clientWidth: 1000,
-            clientHeight: 1000,
-        },
+        inputEnabled: true,
         object: {
             isPerspectiveCamera: true,
             layers: { mask: 0 },
@@ -210,6 +212,7 @@ describe('TransformTool', () => {
         transformTool = new TransformTool(
             mockScene,
             mockController,
+            createMockCanvas(),
             selectionState,
         );
     });
@@ -565,10 +568,10 @@ describe('TransformTool', () => {
     });
 
     describe('gizmo event callbacks', () => {
-        it('should disable controller on mouseDown', () => {
+        it('should take the input away from the controller on mouseDown', () => {
             triggerGizmoEvent('mouseDown');
 
-            expect(mockController.enabled).toBe(false);
+            expect(mockController.inputEnabled).toBe(false);
         });
 
         it('should call onMoveStart on attached movable object on mouseDown', () => {
@@ -592,15 +595,15 @@ describe('TransformTool', () => {
             // No object attached
             triggerGizmoEvent('mouseDown');
             // Should not throw
-            expect(mockController.enabled).toBe(false);
+            expect(mockController.inputEnabled).toBe(false);
         });
 
-        it('should enable controller on mouseUp', () => {
-            mockController.enabled = false;
+        it('should give the input back to the controller on mouseUp', () => {
+            mockController.inputEnabled = false;
 
             triggerGizmoEvent('mouseUp');
 
-            expect(mockController.enabled).toBe(true);
+            expect(mockController.inputEnabled).toBe(true);
         });
 
         it('should call onMoveEnd on attached movable object on mouseUp', () => {
@@ -689,7 +692,7 @@ describe('TransformTool', () => {
             // No object attached
             triggerGizmoEvent('mouseUp');
             // Should not throw - early return happens
-            expect(mockController.enabled).toBe(true);
+            expect(mockController.inputEnabled).toBe(true);
         });
     });
 

@@ -103,11 +103,14 @@ describe('Toolbox raycast', () => {
         camera.updateMatrixWorld(true);
 
         const controller = {
-            domElement: createMockCanvas(),
             object: { camera },
         } as unknown as OrbitController;
 
-        toolbox = new Toolbox(scene as unknown as DIVEScene, controller);
+        toolbox = new Toolbox(
+            scene as unknown as DIVEScene,
+            controller,
+            createMockCanvas() as unknown as HTMLElement,
+        );
     });
 
     afterEach(() => {

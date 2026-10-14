@@ -89,9 +89,9 @@ describe('plugins/state/State reporting to subscribers', () => {
         state = new State(
             {
                 scene: Object.assign(new Object3D(), { root }),
+                mainView: { canvas: document.createElement('canvas') },
             } as unknown as DIVE,
             {
-                domElement: document.createElement('canvas'),
                 object: new Object3D(),
                 addEventListener: vi.fn(),
                 removeEventListener: vi.fn(),

@@ -77,6 +77,11 @@
             "import": "./build/plugins/systeminfo/index.mjs",
             "require": "./build/plugins/systeminfo/index.cjs"
         },
+        "./tiltcontroller": {
+            "types": "./build/plugins/tiltcontroller/index.d.ts",
+            "import": "./build/plugins/tiltcontroller/index.mjs",
+            "require": "./build/plugins/tiltcontroller/index.cjs"
+        },
         "./toolbox": {
             "types": "./build/plugins/toolbox/index.d.ts",
             "import": "./build/plugins/toolbox/index.mjs",

@@ -128,6 +128,7 @@ For detailed information about the plugin system, see
 For detailed documentation, please refer to the following sections:
 
 - [Component System](docs/component-system.md) - Nodes, components, ticking and layers
+- [Input System](docs/input-system.md) - Input devices and the shared input format camera controllers listen to
 - [Plugin System](docs/plugin-system.md) - Detailed plugin system architecture and usage
 - [Shopware Integration](docs/shopware-integration.md) - Integration with Shopware projects
 - [Testing and Quality Assurance](docs/testing.md) - Testing guidelines and best practices

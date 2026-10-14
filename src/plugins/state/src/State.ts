@@ -92,7 +92,12 @@ export class State {
 
     private getToolbox(): Promise<import('@shopware-ag/dive/toolbox').Toolbox> {
         this._toolbox ??= import('@shopware-ag/dive/toolbox').then(
-            (module) => new module.Toolbox(this.engine.scene, this.controller),
+            (module) =>
+                new module.Toolbox(
+                    this.engine.scene,
+                    this.controller,
+                    this.engine.mainView.canvas,
+                ),
         );
 
         return this._toolbox;

@@ -113,12 +113,11 @@ const createMockCanvas = () => ({
 
 const createMockController = () =>
     ({
-        domElement: createMockCanvas(),
         object: {
             isPerspectiveCamera: true,
             layers: { mask: 0 },
         },
-        enabled: true,
+        inputEnabled: true,
     }) as unknown as OrbitController;
 
 const createMockScene = () =>
@@ -132,11 +131,17 @@ describe('Toolbox', () => {
     let toolbox: Toolbox;
     let mockScene: DIVEScene;
     let mockController: OrbitController;
+    let mockCanvas: ReturnType<typeof createMockCanvas>;
 
     beforeEach(() => {
         mockScene = createMockScene();
         mockController = createMockController();
-        toolbox = new Toolbox(mockScene, mockController);
+        mockCanvas = createMockCanvas();
+        toolbox = new Toolbox(
+            mockScene,
+            mockController,
+            mockCanvas as unknown as HTMLElement,
+        );
     });
 
     afterEach(() => {
@@ -237,30 +242,38 @@ describe('Toolbox', () => {
 
         beforeEach(() => {
             addEventListenerCalls = new Map();
-            (
-                mockController.domElement.addEventListener as any
-            ).mockImplementation((type: string, handler: Function) => {
-                addEventListenerCalls.set(type, handler);
-            });
+            (mockCanvas.addEventListener as any).mockImplementation(
+                (type: string, handler: Function) => {
+                    addEventListenerCalls.set(type, handler);
+                },
+            );
 
             // Recreate toolbox to capture event listeners
             toolbox.dispose();
-            toolbox = new Toolbox(mockScene, mockController);
+            toolbox = new Toolbox(
+                mockScene,
+                mockController,
+                mockCanvas as unknown as HTMLElement,
+            );
         });
 
         it('should register event listeners on construction', () => {
-            expect(
-                mockController.domElement.addEventListener,
-            ).toHaveBeenCalledWith('pointermove', expect.any(Function));
-            expect(
-                mockController.domElement.addEventListener,
-            ).toHaveBeenCalledWith('pointerdown', expect.any(Function));
-            expect(
-                mockController.domElement.addEventListener,
-            ).toHaveBeenCalledWith('pointerup', expect.any(Function));
-            expect(
-                mockController.domElement.addEventListener,
-            ).toHaveBeenCalledWith('wheel', expect.any(Function));
+            expect(mockCanvas.addEventListener).toHaveBeenCalledWith(
+                'pointermove',
+                expect.any(Function),
+            );
+            expect(mockCanvas.addEventListener).toHaveBeenCalledWith(
+                'pointerdown',
+                expect.any(Function),
+            );
+            expect(mockCanvas.addEventListener).toHaveBeenCalledWith(
+                'pointerup',
+                expect.any(Function),
+            );
+            expect(mockCanvas.addEventListener).toHaveBeenCalledWith(
+                'wheel',
+                expect.any(Function),
+            );
         });
 
         it('should dispatch pointer move to active tools', () => {
@@ -444,15 +457,17 @@ describe('Toolbox', () => {
 
         beforeEach(() => {
             const listeners = new Map<string, (event: PointerEvent) => void>();
-            (
-                mockController.domElement.addEventListener as any
-            ).mockImplementation(
+            (mockCanvas.addEventListener as any).mockImplementation(
                 (type: string, handler: (event: PointerEvent) => void) => {
                     listeners.set(type, handler);
                 },
             );
             toolbox.dispose();
-            toolbox = new Toolbox(mockScene, mockController);
+            toolbox = new Toolbox(
+                mockScene,
+                mockController,
+                mockCanvas as unknown as HTMLElement,
+            );
             move = listeners.get('pointermove')!;
 
             raycasts = 0;

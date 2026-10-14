@@ -59,10 +59,14 @@ export class Toolbox {
     private _boundPointerUp: (e: PointerEvent) => void;
     private _boundWheel: (e: WheelEvent) => void;
 
-    constructor(scene: DIVEScene, controller: OrbitController) {
+    constructor(
+        scene: DIVEScene,
+        controller: OrbitController,
+        canvas: HTMLElement,
+    ) {
         this._scene = scene;
         this._controller = controller;
-        this._canvas = controller.domElement;
+        this._canvas = canvas;
 
         this._selectionState = new SelectionState();
 
@@ -77,7 +81,12 @@ export class Toolbox {
             ['select', new SelectTool(this._selectionState)],
             [
                 'transform',
-                new TransformTool(scene, controller, this._selectionState),
+                new TransformTool(
+                    scene,
+                    controller,
+                    canvas,
+                    this._selectionState,
+                ),
             ],
             ['drag', new DragTool(controller)],
         ]);

@@ -23,14 +23,15 @@ This mechanism allows for a unified way of importing plugins, whether you are wo
 To use a plugin, you can directly import it from its subpath:
 
 ```ts
-import { DIVE } from '@shopware-ag/dive';
+import { DIVE, PointerInput } from '@shopware-ag/dive';
 import { OrbitController } from '@shopware-ag/dive/orbitcontroller';
 import { OrientationDisplay } from '@shopware-ag/dive/orientationdisplay';
 
 const dive = new DIVE();
 
 // The DIVE class itself uses plugins internally for its default setup
-const controller = new OrbitController(dive.engine.camera, dive.canvas);
+const controller = new OrbitController(dive.mainView.cameraComponent);
+controller.connect(new PointerInput(dive.canvas));
 const orientation = new OrientationDisplay(dive.engine.renderer, dive.engine.scene, dive.engine.camera);
 ```
 

@@ -2,14 +2,11 @@ import {
     EventDispatcher,
     MathUtils,
     Matrix4,
-    MOUSE,
     OrthographicCamera,
     PerspectiveCamera,
     Quaternion,
     Sphere,
     Spherical,
-    TOUCH,
-    Vector2,
     Vector3,
     Vector3Like,
 } from 'three/webgpu';
@@ -18,13 +15,30 @@ import {
     DIVENode,
     DIVETicker,
     type DIVECameraComponent,
+    type DIVEInput,
+    type DIVEInputChannel,
+    type DIVEInputEventMap,
 } from '@shopware-ag/dive';
 import { OrbitControllerState } from '../types/index.ts';
+
+/** What a movement on an input channel does to the camera. */
+export type OrbitControllerAction = 'rotate' | 'pan' | 'dolly';
+
+export type OrbitControllerBinding = {
+    action: OrbitControllerAction;
+    speed: number;
+};
+
+/** Which channel does what. A channel without a binding is ignored. */
+export type OrbitControllerBindings = Partial<
+    Record<DIVEInputChannel, OrbitControllerBinding>
+>;
 
 export type OrbitControllerSettings = {
     enableDamping?: boolean;
     dampingFactor?: number;
     enabled?: boolean;
+    inputEnabled?: boolean;
     target?: Vector3;
     minDistance?: number;
     maxDistance?: number;
@@ -37,16 +51,11 @@ export type OrbitControllerSettings = {
     enableZoom?: boolean;
     zoomSpeed?: number;
     enableRotate?: boolean;
-    rotateSpeed?: number;
     enablePan?: boolean;
-    panSpeed?: number;
     screenSpacePanning?: boolean;
-    keyPanSpeed?: number;
     autoRotate?: boolean;
     autoRotateSpeed?: number;
-    keys?: { LEFT: string; UP: string; RIGHT: string; BOTTOM: string };
-    mouseButtons?: { LEFT: MOUSE; MIDDLE: MOUSE; RIGHT: MOUSE };
-    touches?: { ONE: TOUCH; TWO: TOUCH };
+    bindings?: OrbitControllerBindings;
 };
 
 export const OrbitControllerDefaultSettings: Required<OrbitControllerSettings> =
@@ -54,6 +63,7 @@ export const OrbitControllerDefaultSettings: Required<OrbitControllerSettings> =
         enableDamping: true,
         dampingFactor: 0.05,
         enabled: true,
+        inputEnabled: true,
         target: new Vector3(),
         minDistance: 0,
         maxDistance: Infinity,
@@ -66,27 +76,14 @@ export const OrbitControllerDefaultSettings: Required<OrbitControllerSettings> =
         enableZoom: true,
         zoomSpeed: 1.0,
         enableRotate: true,
-        rotateSpeed: 1.0,
         enablePan: true,
-        panSpeed: 1.0,
         screenSpacePanning: true,
-        keyPanSpeed: 7.0,
         autoRotate: false,
         autoRotateSpeed: 2.0,
-        keys: {
-            LEFT: 'ArrowLeft',
-            UP: 'ArrowUp',
-            RIGHT: 'ArrowRight',
-            BOTTOM: 'ArrowDown',
-        },
-        mouseButtons: {
-            LEFT: MOUSE.ROTATE,
-            MIDDLE: MOUSE.DOLLY,
-            RIGHT: MOUSE.PAN,
-        },
-        touches: {
-            ONE: TOUCH.ROTATE,
-            TWO: TOUCH.DOLLY_PAN,
+        bindings: {
+            primary: { action: 'rotate', speed: 1.0 },
+            secondary: { action: 'pan', speed: 1.0 },
+            tertiary: { action: 'dolly', speed: 1.0 },
         },
     };
 
@@ -97,17 +94,20 @@ type EventMap = {
     end: { type: 'end' };
 };
 
-enum STATE {
-    NONE = -1,
-    ROTATE = 0,
-    DOLLY = 1,
-    PAN = 2,
-    TOUCH_ROTATE = 3,
-    TOUCH_PAN = 4,
-    TOUCH_DOLLY_PAN = 5,
-    TOUCH_DOLLY_ROTATE = 6,
-}
+/** What the controller keeps per connected input. */
+type Connection = {
+    /** The channels of this input that are active right now. */
+    active: Set<DIVEInputChannel>;
+    detach: () => void;
+};
 
+/**
+ * Orbits the camera around a target, driven by input devices.
+ *
+ * Devices are connected with {@link connect} and report in the shared input
+ * format; {@link bindings} decides what each channel does. The controller never
+ * touches the DOM itself.
+ */
 export class OrbitController
     extends EventDispatcher<EventMap>
     implements DIVETicker
@@ -133,12 +133,33 @@ export class OrbitController
     private get _camera(): PerspectiveCamera | OrthographicCamera {
         return this.object.camera as PerspectiveCamera | OrthographicCamera;
     }
-    public get domElement(): HTMLCanvasElement {
-        return this.domElements[0];
-    }
-    public domElements: HTMLCanvasElement[];
 
-    public enabled = true;
+    /**
+     * Whether the controller moves the camera at all.
+     *
+     * Turning it back on drops whatever movement was still pending, so damping
+     * from before does not carry over into a camera someone else has moved since.
+     */
+    public get enabled(): boolean {
+        return this._enabled;
+    }
+    public set enabled(enabled: boolean) {
+        if (enabled && !this._enabled) {
+            this.sphericalDelta.set(0, 0, 0);
+            this.panOffset.set(0, 0, 0);
+            this.scale = 1;
+        }
+
+        this._enabled = enabled;
+    }
+    private _enabled = true;
+
+    /**
+     * Whether input moves the camera. Unlike {@link enabled}, the camera keeps
+     * ticking -- damping runs out and auto-rotation goes on. For a tool that
+     * needs the pointer for itself.
+     */
+    public inputEnabled = true;
 
     public target = new Vector3();
 
@@ -161,37 +182,23 @@ export class OrbitController
     public zoomSpeed = 1.0;
 
     public enableRotate = true;
-    public rotateSpeed = 1.0;
 
     public enablePan = true;
-    public panSpeed = 1.0;
     public screenSpacePanning = true;
-    public keyPanSpeed = 7.0;
 
     public autoRotate = false;
     public autoRotateSpeed = 2.0;
 
-    public keys = {
-        LEFT: 'ArrowLeft',
-        UP: 'ArrowUp',
-        RIGHT: 'ArrowRight',
-        BOTTOM: 'ArrowDown',
+    public bindings: OrbitControllerBindings = {
+        ...OrbitControllerDefaultSettings.bindings,
     };
-    public mouseButtons = {
-        LEFT: MOUSE.ROTATE,
-        MIDDLE: MOUSE.DOLLY,
-        RIGHT: MOUSE.PAN,
-    };
-    public touches = { ONE: TOUCH.ROTATE, TWO: TOUCH.DOLLY_PAN };
 
     public target0: Vector3;
     public position0: Vector3;
     public zoom0: number;
     public uuid: string = MathUtils.generateUUID();
 
-    // private state
-    private state: STATE = STATE.NONE;
-
+    // internals
     private readonly EPS = 0.000001;
 
     private readonly spherical = new Spherical();
@@ -201,22 +208,9 @@ export class OrbitController
     private readonly panOffset = new Vector3();
     private zoomChanged = false;
 
-    private readonly rotateStart = new Vector2();
-    private readonly rotateEnd = new Vector2();
-    private readonly rotateDelta = new Vector2();
+    private readonly connections = new Map<DIVEInput, Connection>();
 
-    private readonly panStart = new Vector2();
-    private readonly panEnd = new Vector2();
-    private readonly panDelta = new Vector2();
-
-    private readonly dollyStart = new Vector2();
-    private readonly dollyEnd = new Vector2();
-    private readonly dollyDelta = new Vector2();
-
-    private readonly pointers: PointerEvent[] = [];
-    private readonly pointerPositions: Record<number, Vector2> = {};
-
-    // for update() function
+    // for update speedup
     private readonly offset = new Vector3();
     private readonly quat: Quaternion;
     private readonly quatInverse: Quaternion;
@@ -226,7 +220,6 @@ export class OrbitController
 
     constructor(
         cameraComponent: DIVECameraComponent,
-        domElements: HTMLCanvasElement | HTMLCanvasElement[],
         settings?: OrbitControllerSettings,
     ) {
         super();
@@ -239,12 +232,11 @@ export class OrbitController
                 'OrbitController: the camera component must be attached to a node, because that is what gets moved.',
             );
         }
-        this.domElements = Array.isArray(domElements)
-            ? domElements
-            : [domElements];
 
         // apply settings
-        Object.assign(this, settings);
+        const { bindings, ...rest } = settings ?? {};
+        Object.assign(this, rest);
+        if (bindings) this.bindings = { ...this.bindings, ...bindings };
 
         // for reset
         this.target0 = this.target.clone();
@@ -257,8 +249,6 @@ export class OrbitController
         );
         this.quatInverse = this.quat.clone().invert();
 
-        this.domElements.forEach((element) => this.addEventListeners(element));
-
         // force an update at start
         this.update();
     }
@@ -267,6 +257,65 @@ export class OrbitController
         if (!this.enabled) return;
 
         this.update();
+    }
+
+    /** Lets an input device move the camera. Connecting twice changes nothing. */
+    public connect(input: DIVEInput): void {
+        if (this.connections.has(input)) return;
+
+        const active = new Set<DIVEInputChannel>();
+
+        const onStart = ({ channel }: DIVEInputEventMap['start']): void => {
+            const wasInteracting = this.isInteracting();
+            active.add(channel);
+            if (!wasInteracting) this.dispatchEvent({ type: 'start' });
+        };
+        const onEnd = ({ channel }: DIVEInputEventMap['end']): void => {
+            if (!active.delete(channel)) return;
+            if (!this.isInteracting()) this.dispatchEvent({ type: 'end' });
+        };
+        const onMove = (event: DIVEInputEventMap['move']): void =>
+            this.onInputMove(event);
+        const onScale = (event: DIVEInputEventMap['scale']): void =>
+            this.onInputScale(event);
+
+        input.addEventListener('start', onStart);
+        input.addEventListener('end', onEnd);
+        input.addEventListener('move', onMove);
+        input.addEventListener('scale', onScale);
+
+        this.connections.set(input, {
+            active,
+            detach: () => {
+                input.removeEventListener('start', onStart);
+                input.removeEventListener('end', onEnd);
+                input.removeEventListener('move', onMove);
+                input.removeEventListener('scale', onScale);
+            },
+        });
+    }
+
+    /** Stops listening to an input device. Its gesture in progress is dropped. */
+    public disconnect(input: DIVEInput): void {
+        const connection = this.connections.get(input);
+        if (!connection) return;
+
+        const wasInteracting = this.isInteracting();
+        connection.detach();
+        this.connections.delete(input);
+
+        if (wasInteracting && !this.isInteracting()) {
+            this.dispatchEvent({ type: 'end' });
+        }
+    }
+
+    /** Whether any connected input has a gesture in progress. */
+    public isInteracting(): boolean {
+        for (const { active } of this.connections.values()) {
+            if (active.size > 0) return true;
+        }
+
+        return false;
     }
 
     public getPolarAngle(): number {
@@ -296,8 +345,6 @@ export class OrbitController
         this.dispatchEvent({ type: 'change' });
 
         this.update();
-
-        this.state = STATE.NONE;
     }
 
     public update(): boolean {
@@ -305,7 +352,7 @@ export class OrbitController
         this.offset.applyQuaternion(this.quat);
         this.spherical.setFromVector3(this.offset);
 
-        if (this.autoRotate && this.state === STATE.NONE) {
+        if (this.autoRotate && !this.isInteracting()) {
             this.rotateLeft(this.getAutoRotationAngle());
         }
 
@@ -378,34 +425,8 @@ export class OrbitController
     }
 
     public dispose(): void {
-        this.domElements.forEach((element) =>
-            this.removeEventListeners(element),
-        );
+        [...this.connections.keys()].forEach((input) => this.disconnect(input));
         this.dispatchEvent({ type: 'dispose' });
-    }
-
-    public addDomElements(...domElements: HTMLCanvasElement[]): void {
-        domElements.forEach((domElement) => {
-            if (this.domElements.includes(domElement)) return;
-            this.domElements.push(domElement);
-            this.addEventListeners(domElement);
-        });
-    }
-
-    public removeDomElements(...domElements: HTMLCanvasElement[]): void {
-        domElements.forEach((domElement) => {
-            const index = this.domElements.indexOf(domElement);
-            if (index > -1) {
-                this.removeEventListeners(domElement);
-                this.domElements.splice(index, 1);
-            }
-        });
-    }
-
-    public setDomElements(...domElements: HTMLCanvasElement[]): void {
-        this.removeDomElements(...this.domElements);
-        this.domElements = [];
-        this.addDomElements(...domElements);
     }
 
     /**
@@ -508,25 +529,52 @@ export class OrbitController
     // Private methods
     //
 
-    private addEventListeners(element: HTMLCanvasElement): void {
-        element.style.touchAction = 'none';
-        element.addEventListener('contextmenu', this.onContextMenu);
-        element.addEventListener('pointerdown', this.onPointerDown);
-        element.addEventListener('pointercancel', this.onPointerCancel);
-        element.addEventListener('wheel', this.onMouseWheel, {
-            passive: false,
-        });
-        element.addEventListener('keydown', this.onKeyDown);
+    private onInputMove({
+        channel,
+        delta,
+        unit,
+    }: DIVEInputEventMap['move']): void {
+        if (!this.enabled || !this.inputEnabled) return;
+
+        const binding = this.bindings[channel];
+        if (!binding) return;
+
+        /**
+         * One viewport height is a full turn, the ratio rotation has always used,
+         * so an angle converts to viewport units and back by 2π.
+         */
+        const turns = unit === 'radians' ? 1 / (2 * Math.PI) : 1;
+        const x = delta.x * turns * binding.speed;
+        const y = delta.y * turns * binding.speed;
+
+        switch (binding.action) {
+            case 'rotate':
+                if (!this.enableRotate) return;
+                this.rotateLeft(2 * Math.PI * x);
+                this.rotateUp(2 * Math.PI * y);
+                break;
+            case 'pan':
+                if (!this.enablePan) return;
+                this.pan(x, y);
+                break;
+            case 'dolly':
+                if (!this.enableZoom) return;
+                if (y > 0) {
+                    this.dollyIn(this.getZoomScale());
+                } else if (y < 0) {
+                    this.dollyOut(this.getZoomScale());
+                }
+                break;
+        }
+
+        this.update();
     }
 
-    private removeEventListeners(element: HTMLCanvasElement): void {
-        element.removeEventListener('contextmenu', this.onContextMenu);
-        element.removeEventListener('pointerdown', this.onPointerDown);
-        element.removeEventListener('pointercancel', this.onPointerCancel);
-        element.removeEventListener('wheel', this.onMouseWheel);
-        element.removeEventListener('keydown', this.onKeyDown);
-        element.removeEventListener('pointermove', this.onPointerMove);
-        element.removeEventListener('pointerup', this.onPointerUp);
+    private onInputScale({ factor }: DIVEInputEventMap['scale']): void {
+        if (!this.enabled || !this.inputEnabled || !this.enableZoom) return;
+
+        this.dollyOut(Math.pow(factor, this.zoomSpeed));
+        this.update();
     }
 
     private getAutoRotationAngle(): number {
@@ -570,11 +618,14 @@ export class OrbitController
         };
     })();
 
-    private pan(
-        deltaX: number,
-        deltaY: number,
-        element: HTMLCanvasElement,
-    ): void {
+    /**
+     * Pans by a distance in viewport units: fractions of the view's height.
+     *
+     * The orthographic branch measures both axes by the frustum's height, which
+     * equals measuring x by its width as long as the frustum has the viewport's
+     * aspect.
+     */
+    private pan(deltaX: number, deltaY: number): void {
         const offset = new Vector3();
 
         if ('isPerspectiveCamera' in this._camera) {
@@ -584,27 +635,13 @@ export class OrbitController
             targetDistance *= Math.tan(
                 ((this._camera.fov / 2) * Math.PI) / 180.0,
             );
-            this.panLeft(
-                (2 * deltaX * targetDistance) / element.clientHeight,
-                this.object.owner.matrix,
-            );
-            this.panUp(
-                (2 * deltaY * targetDistance) / element.clientHeight,
-                this.object.owner.matrix,
-            );
+            this.panLeft(2 * deltaX * targetDistance, this.object.owner.matrix);
+            this.panUp(2 * deltaY * targetDistance, this.object.owner.matrix);
         } else if ('isOrthographicCamera' in this._camera) {
-            this.panLeft(
-                (deltaX * (this._camera.right - this._camera.left)) /
-                    this._camera.zoom /
-                    element.clientWidth,
-                this.object.owner.matrix,
-            );
-            this.panUp(
-                (deltaY * (this._camera.top - this._camera.bottom)) /
-                    this._camera.zoom /
-                    element.clientHeight,
-                this.object.owner.matrix,
-            );
+            const height =
+                (this._camera.top - this._camera.bottom) / this._camera.zoom;
+            this.panLeft(deltaX * height, this.object.owner.matrix);
+            this.panUp(deltaY * height, this.object.owner.matrix);
         } else {
             console.warn(
                 'WARNING: OrbitController encountered an unknown camera type - pan disabled.',
@@ -639,474 +676,5 @@ export class OrbitController
             );
             this.enableZoom = false;
         }
-    }
-
-    // event callbacks
-    private handleMouseDownRotate(event: MouseEvent): void {
-        this.rotateStart.set(event.clientX, event.clientY);
-    }
-
-    private handleMouseDownDolly(event: MouseEvent): void {
-        this.dollyStart.set(event.clientX, event.clientY);
-    }
-
-    private handleMouseDownPan(event: MouseEvent): void {
-        this.panStart.set(event.clientX, event.clientY);
-    }
-
-    private handleMouseMoveRotate(event: MouseEvent): void {
-        this.rotateEnd.set(event.clientX, event.clientY);
-        this.rotateDelta
-            .subVectors(this.rotateEnd, this.rotateStart)
-            .multiplyScalar(this.rotateSpeed);
-
-        const element = event.currentTarget as HTMLCanvasElement;
-        this.rotateLeft(
-            (2 * Math.PI * this.rotateDelta.x) / element.clientHeight,
-        );
-        this.rotateUp(
-            (2 * Math.PI * this.rotateDelta.y) / element.clientHeight,
-        );
-        this.rotateStart.copy(this.rotateEnd);
-        this.update();
-    }
-
-    private handleMouseMoveDolly(event: MouseEvent): void {
-        this.dollyEnd.set(event.clientX, event.clientY);
-        this.dollyDelta.subVectors(this.dollyEnd, this.dollyStart);
-
-        if (this.dollyDelta.y > 0) {
-            this.dollyIn(this.getZoomScale());
-        } else if (this.dollyDelta.y < 0) {
-            this.dollyOut(this.getZoomScale());
-        }
-
-        this.dollyStart.copy(this.dollyEnd);
-        this.update();
-    }
-
-    private handleMouseMovePan(event: MouseEvent): void {
-        const element = event.currentTarget as HTMLCanvasElement;
-
-        this.panEnd.set(event.clientX, event.clientY);
-        this.panDelta
-            .subVectors(this.panEnd, this.panStart)
-            .multiplyScalar(this.panSpeed);
-        this.pan(this.panDelta.x, this.panDelta.y, element);
-        this.panStart.copy(this.panEnd);
-        this.update();
-    }
-
-    private handleMouseWheel(event: WheelEvent): void {
-        if (event.deltaY < 0) {
-            this.dollyIn(this.getZoomScale());
-        } else if (event.deltaY > 0) {
-            this.dollyOut(this.getZoomScale());
-        }
-        this.update();
-    }
-
-    private handleKeyDown(event: KeyboardEvent): void {
-        let needsUpdate = false;
-        const element = event.currentTarget as HTMLCanvasElement;
-
-        switch (event.code) {
-            case this.keys.UP:
-                this.pan(0, this.keyPanSpeed, element);
-                needsUpdate = true;
-                break;
-            case this.keys.BOTTOM:
-                this.pan(0, -this.keyPanSpeed, element);
-                needsUpdate = true;
-                break;
-            case this.keys.LEFT:
-                this.pan(this.keyPanSpeed, 0, element);
-                needsUpdate = true;
-                break;
-            case this.keys.RIGHT:
-                this.pan(-this.keyPanSpeed, 0, element);
-                needsUpdate = true;
-                break;
-        }
-
-        if (needsUpdate) {
-            event.preventDefault();
-            this.update();
-        }
-    }
-
-    private handleTouchStartRotate(event: PointerEvent): void {
-        if (this.pointers.length === 1) {
-            this.rotateStart.set(event.pageX, event.pageY);
-        } else {
-            const otherPointer = this.getSecondPointer(event);
-            const x = 0.5 * (event.pageX + otherPointer.pageX);
-            const y = 0.5 * (event.pageY + otherPointer.pageY);
-            this.rotateStart.set(x, y);
-        }
-    }
-
-    private handleTouchStartPan(event: PointerEvent): void {
-        if (this.pointers.length === 1) {
-            this.panStart.set(event.pageX, event.pageY);
-        } else {
-            const otherPointer = this.getSecondPointer(event);
-            const x = 0.5 * (event.pageX + otherPointer.pageX);
-            const y = 0.5 * (event.pageY + otherPointer.pageY);
-            this.panStart.set(x, y);
-        }
-    }
-
-    private handleTouchStartDolly(event: PointerEvent): void {
-        const otherPointer = this.getSecondPointer(event);
-        const dx = event.pageX - otherPointer.pageX;
-        const dy = event.pageY - otherPointer.pageY;
-        const distance = Math.sqrt(dx * dx + dy * dy);
-
-        this.dollyStart.set(0, distance);
-    }
-
-    private handleTouchStartDollyPan(event: PointerEvent): void {
-        if (this.enableZoom) this.handleTouchStartDolly(event);
-        if (this.enablePan) this.handleTouchStartPan(event);
-    }
-
-    private handleTouchStartDollyRotate(event: PointerEvent): void {
-        if (this.enableZoom) this.handleTouchStartDolly(event);
-        if (this.enableRotate) this.handleTouchStartRotate(event);
-    }
-
-    private handleTouchMoveRotate(event: PointerEvent): void {
-        if (this.pointers.length === 1) {
-            this.rotateEnd.set(event.pageX, event.pageY);
-        } else {
-            const otherPointer = this.getSecondPointer(event);
-            const x = 0.5 * (event.pageX + otherPointer.pageX);
-            const y = 0.5 * (event.pageY + otherPointer.pageY);
-            this.rotateEnd.set(x, y);
-        }
-        const element = event.currentTarget as HTMLCanvasElement;
-
-        this.rotateDelta
-            .subVectors(this.rotateEnd, this.rotateStart)
-            .multiplyScalar(this.rotateSpeed);
-        this.rotateLeft(
-            (2 * Math.PI * this.rotateDelta.x) / element.clientHeight,
-        );
-        this.rotateUp(
-            (2 * Math.PI * this.rotateDelta.y) / element.clientHeight,
-        );
-        this.rotateStart.copy(this.rotateEnd);
-    }
-
-    private handleTouchMovePan(event: PointerEvent): void {
-        if (this.pointers.length === 1) {
-            this.panEnd.set(event.pageX, event.pageY);
-        } else {
-            const otherPointer = this.getSecondPointer(event);
-            const x = 0.5 * (event.pageX + otherPointer.pageX);
-            const y = 0.5 * (event.pageY + otherPointer.pageY);
-            this.panEnd.set(x, y);
-        }
-
-        const element = event.currentTarget as HTMLCanvasElement;
-
-        this.panDelta
-            .subVectors(this.panEnd, this.panStart)
-            .multiplyScalar(this.panSpeed);
-        this.pan(this.panDelta.x, this.panDelta.y, element);
-        this.panStart.copy(this.panEnd);
-    }
-
-    private handleTouchMoveDolly(event: PointerEvent): void {
-        const otherPointer = this.getSecondPointer(event);
-        const dx = event.pageX - otherPointer.pageX;
-        const dy = event.pageY - otherPointer.pageY;
-        const distance = Math.sqrt(dx * dx + dy * dy);
-
-        this.dollyEnd.set(0, distance);
-        this.dollyDelta.set(
-            0,
-            Math.pow(this.dollyEnd.y / this.dollyStart.y, this.zoomSpeed),
-        );
-        this.dollyOut(this.dollyDelta.y);
-        this.dollyStart.copy(this.dollyEnd);
-    }
-
-    private handleTouchMoveDollyPan(event: PointerEvent): void {
-        if (this.enableZoom) this.handleTouchMoveDolly(event);
-        if (this.enablePan) this.handleTouchMovePan(event);
-    }
-
-    private handleTouchMoveDollyRotate(event: PointerEvent): void {
-        if (this.enableZoom) this.handleTouchMoveDolly(event);
-        if (this.enableRotate) this.handleTouchMoveRotate(event);
-    }
-
-    private onMouseDown = (event: MouseEvent): void => {
-        let mouseAction: MOUSE | number;
-
-        switch (event.button) {
-            case 0:
-                mouseAction = this.mouseButtons.LEFT;
-                break;
-            case 1:
-                mouseAction = this.mouseButtons.MIDDLE;
-                break;
-            case 2:
-                mouseAction = this.mouseButtons.RIGHT;
-                break;
-            default:
-                mouseAction = -1;
-        }
-
-        switch (mouseAction) {
-            case MOUSE.DOLLY:
-                if (this.enableZoom === false) return;
-                this.handleMouseDownDolly(event);
-                this.state = STATE.DOLLY;
-                break;
-            case MOUSE.ROTATE:
-                if (event.ctrlKey || event.metaKey || event.shiftKey) {
-                    if (this.enablePan === false) return;
-                    this.handleMouseDownPan(event);
-                    this.state = STATE.PAN;
-                } else {
-                    if (this.enableRotate === false) return;
-                    this.handleMouseDownRotate(event);
-                    this.state = STATE.ROTATE;
-                }
-                break;
-            case MOUSE.PAN:
-                if (event.ctrlKey || event.metaKey || event.shiftKey) {
-                    if (this.enableRotate === false) return;
-                    this.handleMouseDownRotate(event);
-                    this.state = STATE.ROTATE;
-                } else {
-                    if (this.enablePan === false) return;
-                    this.handleMouseDownPan(event);
-                    this.state = STATE.PAN;
-                }
-                break;
-            default:
-                this.state = STATE.NONE;
-        }
-
-        if (this.state !== STATE.NONE) {
-            this.dispatchEvent({ type: 'start' });
-        }
-    };
-
-    private onMouseMove = (event: MouseEvent): void => {
-        if (this.enabled === false) return;
-
-        switch (this.state) {
-            case STATE.ROTATE:
-                if (this.enableRotate === false) return;
-                this.handleMouseMoveRotate(event);
-                break;
-            case STATE.DOLLY:
-                if (this.enableZoom === false) return;
-                this.handleMouseMoveDolly(event);
-                break;
-            case STATE.PAN:
-                if (this.enablePan === false) return;
-                this.handleMouseMovePan(event);
-                break;
-        }
-    };
-
-    private onMouseWheel = (event: WheelEvent): void => {
-        if (
-            this.enabled === false ||
-            this.enableZoom === false ||
-            this.state !== STATE.NONE
-        )
-            return;
-
-        event.preventDefault();
-
-        this.dispatchEvent({ type: 'start' });
-        this.handleMouseWheel(event);
-        this.dispatchEvent({ type: 'end' });
-    };
-
-    private onKeyDown = (event: KeyboardEvent): void => {
-        if (this.enabled === false || this.enablePan === false) return;
-
-        this.handleKeyDown(event);
-    };
-
-    private onTouchStart = (event: PointerEvent): void => {
-        this.trackPointer(event);
-
-        switch (this.pointers.length) {
-            case 1:
-                switch (this.touches.ONE) {
-                    case TOUCH.ROTATE:
-                        if (this.enableRotate === false) return;
-                        this.handleTouchStartRotate(event);
-                        this.state = STATE.TOUCH_ROTATE;
-                        break;
-                    case TOUCH.PAN:
-                        if (this.enablePan === false) return;
-                        this.handleTouchStartPan(event);
-                        this.state = STATE.TOUCH_PAN;
-                        break;
-                    default:
-                        this.state = STATE.NONE;
-                }
-                break;
-            case 2:
-                switch (this.touches.TWO) {
-                    case TOUCH.DOLLY_PAN:
-                        if (
-                            this.enableZoom === false &&
-                            this.enablePan === false
-                        )
-                            return;
-                        this.handleTouchStartDollyPan(event);
-                        this.state = STATE.TOUCH_DOLLY_PAN;
-                        break;
-                    case TOUCH.DOLLY_ROTATE:
-                        if (
-                            this.enableZoom === false &&
-                            this.enableRotate === false
-                        )
-                            return;
-                        this.handleTouchStartDollyRotate(event);
-                        this.state = STATE.TOUCH_DOLLY_ROTATE;
-                        break;
-                    default:
-                        this.state = STATE.NONE;
-                }
-                break;
-            default:
-                this.state = STATE.NONE;
-        }
-
-        if (this.state !== STATE.NONE) {
-            this.dispatchEvent({ type: 'start' });
-        }
-    };
-
-    private onTouchMove = (event: PointerEvent): void => {
-        this.trackPointer(event);
-
-        switch (this.state) {
-            case STATE.TOUCH_ROTATE:
-                if (this.enableRotate === false) return;
-                this.handleTouchMoveRotate(event);
-                this.update();
-                break;
-            case STATE.TOUCH_PAN:
-                if (this.enablePan === false) return;
-                this.handleTouchMovePan(event);
-                this.update();
-                break;
-            case STATE.TOUCH_DOLLY_PAN:
-                if (this.enableZoom === false && this.enablePan === false)
-                    return;
-                this.handleTouchMoveDollyPan(event);
-                this.update();
-                break;
-            case STATE.TOUCH_DOLLY_ROTATE:
-                if (this.enableZoom === false && this.enableRotate === false)
-                    return;
-                this.handleTouchMoveDollyRotate(event);
-                this.update();
-                break;
-            default:
-                this.state = STATE.NONE;
-        }
-    };
-
-    private onPointerDown = (event: PointerEvent): void => {
-        if (this.enabled === false) return;
-
-        if (this.pointers.length === 0) {
-            const element = event.currentTarget as HTMLCanvasElement;
-            element.setPointerCapture(event.pointerId);
-            element.addEventListener('pointermove', this.onPointerMove);
-            element.addEventListener('pointerup', this.onPointerUp);
-        }
-
-        if (this.isTrackingPointer(event)) return;
-
-        this.addPointer(event);
-        if (event.pointerType === 'touch') {
-            this.onTouchStart(event);
-        } else {
-            this.onMouseDown(event);
-        }
-    };
-
-    private onPointerMove = (event: PointerEvent): void => {
-        if (this.enabled === false) return;
-        if (event.pointerType === 'touch') {
-            this.onTouchMove(event);
-        } else {
-            this.onMouseMove(event);
-        }
-    };
-
-    private onPointerUp = (event: PointerEvent): void => {
-        this.removePointer(event);
-
-        if (this.pointers.length === 0) {
-            const element = event.currentTarget as HTMLCanvasElement;
-            element.releasePointerCapture(event.pointerId);
-            element.removeEventListener('pointermove', this.onPointerMove);
-            element.removeEventListener('pointerup', this.onPointerUp);
-            this.dispatchEvent({ type: 'end' });
-            this.state = STATE.NONE;
-        }
-    };
-
-    private onPointerCancel = (event: PointerEvent): void => {
-        this.removePointer(event);
-    };
-
-    private onContextMenu = (event: MouseEvent): void => {
-        if (this.enabled === false) return;
-        event.preventDefault();
-    };
-
-    private addPointer(event: PointerEvent): void {
-        this.pointers.push(event);
-    }
-
-    private removePointer(event: PointerEvent): void {
-        delete this.pointerPositions[event.pointerId];
-
-        for (let i = 0; i < this.pointers.length; i++) {
-            if (this.pointers[i].pointerId == event.pointerId) {
-                this.pointers.splice(i, 1);
-                return;
-            }
-        }
-    }
-
-    private trackPointer(event: PointerEvent): void {
-        let position = this.pointerPositions[event.pointerId];
-
-        if (position === undefined) {
-            position = new Vector2();
-            this.pointerPositions[event.pointerId] = position;
-        }
-
-        position.set(event.pageX, event.pageY);
-    }
-
-    private getSecondPointer(event: PointerEvent): PointerEvent {
-        return this.pointers[0].pointerId === event.pointerId
-            ? this.pointers[1]
-            : this.pointers[0];
-    }
-
-    private isTrackingPointer(event: PointerEvent): boolean {
-        return this.pointers.some(
-            (pointer) => pointer.pointerId === event.pointerId,
-        );
     }
 }
