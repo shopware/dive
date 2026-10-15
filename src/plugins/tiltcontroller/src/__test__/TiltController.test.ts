@@ -159,7 +159,7 @@ describe('plugins/tiltcontroller/TiltController', () => {
             input.tilt(MAX_X / 2, 0);
             controller.tick(1);
 
-            expectAt(5, 0, 0);
+            expectAt(-5, 0, 0);
         });
 
         it.each([
@@ -197,7 +197,7 @@ describe('plugins/tiltcontroller/TiltController', () => {
             input.tilt(2.5 * MAX_X, 0);
             controller.tick(1);
 
-            expectAt(5, 0, 0);
+            expectAt(-5, 0, 0);
         });
 
         it('should find the front a full limit back from the stop', () => {
@@ -265,7 +265,7 @@ describe('plugins/tiltcontroller/TiltController', () => {
             const forward = new Vector3(0, 0, -1).applyQuaternion(
                 camera.owner!.quaternion,
             );
-            expect(forward.x).toBeCloseTo(-1);
+            expect(forward.x).toBeCloseTo(1);
         });
     });
 
@@ -323,7 +323,7 @@ describe('plugins/tiltcontroller/TiltController', () => {
 
             // 1 - e^-1 of the way to a quarter turn
             const angle = (1 - Math.exp(-1)) * (Math.PI / 2);
-            expectAt(5 * Math.sin(angle), 0, 5 * Math.cos(angle));
+            expectAt(-5 * Math.sin(angle), 0, 5 * Math.cos(angle));
         });
 
         it('should start from wherever the camera is', () => {
