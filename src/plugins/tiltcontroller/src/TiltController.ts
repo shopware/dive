@@ -232,7 +232,7 @@ export class TiltController
                 EPS,
                 Math.PI - EPS,
             ),
-            home.spherical.theta + this._fraction.x * Math.PI,
+            home.spherical.theta - this._fraction.x * Math.PI,
         );
 
         const position = this.object.owner.position;
@@ -310,7 +310,7 @@ export class TiltController
         );
 
         this._fraction.set(
-            (azimuth - Math.PI) / Math.PI,
+            (Math.PI - azimuth) / Math.PI,
             this.maxPolarOffset > 0
                 ? (current.phi - home.spherical.phi) / this.maxPolarOffset
                 : 0,
