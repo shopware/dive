@@ -1,5 +1,12 @@
 # Changelog
 
+## [4.2.2](https://github.com/shopware/dive/compare/v4.2.1...v4.2.2) (2026-10-15)
+
+
+### 🐛 Bug Fixes
+
+* reverse azimuthal TiltController movement. ([#270](https://github.com/shopware/dive/issues/270)) ([6d774f9](https://github.com/shopware/dive/commit/6d774f9206a6054ce6eaf9de9890f3e3529361a6))
+
 ## [4.2.1](https://github.com/shopware/dive/compare/v4.2.0...v4.2.1) (2026-10-14)
 
 
