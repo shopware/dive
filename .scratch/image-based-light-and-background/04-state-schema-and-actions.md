@@ -1,6 +1,6 @@
 # 04 State: image based light and background
 
-Status: ready-for-agent
+Status: done
 Blocked by: 01, 02
 
 Spec: `SPEC.md` (this folder). ADR 0001, `GLOSSARY.md`.
