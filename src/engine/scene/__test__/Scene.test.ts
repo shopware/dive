@@ -2,7 +2,11 @@ import type { Mock } from 'vitest';
 import { Color, Object3D } from 'three/webgpu';
 import { DIVEComponent } from '../../component/Component.ts';
 import { DIVENode } from '../../node/Node.ts';
-import { DIVEScene, DIVESceneDefaultSettings } from '../Scene.ts';
+import {
+    DIVEImageBasedLightDefaultSettings,
+    DIVEScene,
+    DIVESceneDefaultSettings,
+} from '../Scene.ts';
 import { DIVEGridDefaultSettings } from '../../../components/grid/GridComponent.ts';
 
 const mock_GetSceneObject = vi.fn();
@@ -93,6 +97,7 @@ describe('DIVEScene', () => {
                 displayGrid: false,
                 grid: DIVEGridDefaultSettings,
                 backgroundColor: 'transparent',
+                imageBasedLight: DIVEImageBasedLightDefaultSettings,
             });
         });
     });
