@@ -20,7 +20,13 @@ describe('GetStateAction', () => {
         const mockGateway = {
             readSceneSettings: vi.fn(() => ({
                 name: 'Test Scene',
-                backgroundColor: '#000000',
+                background: { image: 'panorama.jpg', rotation: 1 },
+                backgroundColor: 'transparent',
+                imageBasedLight: {
+                    image: 'studio.hdr',
+                    rotation: 2,
+                    intensity: 3,
+                },
                 gridEnabled: true,
                 floorEnabled: true,
                 floorColor: '#ffffff',
@@ -78,7 +84,9 @@ describe('GetStateAction', () => {
         // Verify results
         expect(result).toMatchObject({
             name: 'Test Scene',
-            backgroundColor: '#000000',
+            background: { image: 'panorama.jpg', rotation: 1 },
+            backgroundColor: 'transparent',
+            imageBasedLight: { image: 'studio.hdr', rotation: 2, intensity: 3 },
             floorEnabled: true,
             floorColor: '#ffffff',
             cameras: [
