@@ -1,6 +1,6 @@
 # 05 Docs and AGENTS.md
 
-Status: ready-for-agent
+Status: done
 Blocked by: 03, 04
 
 Spec: `SPEC.md` (this folder). ADR 0001, `GLOSSARY.md`.
