@@ -161,3 +161,19 @@
 - `quickView.useController('orbit' | 'gyro')` switches between exactly one active controller; `GyroInput.requestPermission()` is called synchronously before any `await`, because iOS only grants the sensor inside the user gesture and the lazy `import('@shopware-ag/dive/tiltcontroller')` would break that. Switches are serialized with a queue plus generation ticket like `load`. The gyro's home pose is captured right after the initial `frame()`. QuickView exposes `pointerInput` (`setElement(canvas)` replaces the old `orbitController.setDomElements`) and `activeController`
 - `QuickView.test.ts` mocks for `GyroInput` must use `mockReset()` in `beforeEach`, not just `vi.clearAllMocks()`: an unconsumed `mockImplementationOnce` (a deferred `enable()`) otherwise leaks into the next test and hangs it
 - Install warnings like `Resolution field "x" is incompatible` usually mean a `resolutions` pin outlived the stale transitive dependency it patched; yarn 1's `yarn upgrade <transitive>` does not re-resolve it, so delete that package's block from `yarn.lock` and run `yarn` again, then drop the pin. `@microsoft/api-extractor` ≥ 7.59 needs no `lodash`/`minimatch` pins any more. Jest is not used (vitest only); `@jest-environment` docblocks are read by vitest as well. The repo is on `typescript-eslint` 8, which matches the `eslint` 9 peer
+
+## Agent skills
+
+### Issue tracker
+
+Issues are tracked locally as markdown files under `.scratch/<feature>/`, not on GitHub. See `docs/agents/issue-tracker.md`.
+
+### Triage labels
+
+Default vocabulary, recorded as a `Status:` line in each issue file: `needs-triage`, `needs-info`, `ready-for-agent`, `ready-for-human`, `wontfix`. See `docs/agents/triage-labels.md`.
+
+### Domain docs
+
+Single-context: one `GLOSSARY.md` plus `docs/adr/` at the repo root. See `docs/agents/domain.md`.
+- Ground projection deliberately stays a narrow, additive option on `useAsBackground` (no background-mode enum, no deprecations): a broader environment/background API restructure is planned and will decide the final shape. Its docs live in `docs/environment.md`
+- QuickView's `softShadow` setting (default `false`) is stripped from the settings before `new DIVE(...)` and adds a `SoftShadowComponent` to the model node when that node is created; the node is reused across URI loads, so the shadow persists. Scene-state loads get no shadow. There is no QuickView getter for it: reach it via `quickView.model.getComponent(SoftShadowComponent)`. QuickView has no HDR/environment settings; the old `hdr` option in its README never existed in code
