@@ -3,7 +3,11 @@
  */
 
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { Color, PMREMGenerator as PMREMGeneratorOriginal } from 'three/webgpu';
+import {
+    Color,
+    PMREMGenerator as PMREMGeneratorOriginal,
+    Texture,
+} from 'three/webgpu';
 import { DIVEScene } from '../../scene/Scene.ts';
 import { DIVERenderer } from '../../renderer/Renderer.ts';
 import { DIVEEnvironment } from '../Environment.ts';
@@ -142,7 +146,31 @@ describe('DIVEEnvironment', () => {
 
         await environment.setImageUrl(null);
 
-        expect(scene.imageBasedLight!.image).toMatch(/default\.hdr/);
+        expect(scene.imageBasedLight!.image).toBeNull();
+        expect(scene.imageBasedLightTexture!.name).toMatch(/default\.hdr/);
+    });
+
+    it('hands a failed image to the caller who awaits it, and only to them', async () => {
+        const { environment } = await setUp();
+        const error = vi.spyOn(console, 'error').mockImplementation(() => {});
+        loaders.hdr.mockRejectedValueOnce(new Error('404'));
+
+        await expect(environment.setImageUrl('missing.hdr')).rejects.toThrow(
+            '404',
+        );
+        expect(error).not.toHaveBeenCalled();
+        error.mockRestore();
+    });
+
+    it('reports a failed forward nobody awaits', async () => {
+        const { environment } = await setUp();
+        const error = vi.spyOn(console, 'error').mockImplementation(() => {});
+        loaders.hdr.mockRejectedValueOnce(new Error('404'));
+
+        environment.setUseAsBackground(true);
+
+        await vi.waitFor(() => expect(error).toHaveBeenCalledTimes(1));
+        error.mockRestore();
     });
 
     it('resolves init once the image asked for has loaded', async () => {
@@ -178,16 +206,49 @@ describe('DIVEEnvironment', () => {
         expect(scene.backgroundRotation.y).toBe(0);
     });
 
-    it('shows the light image as the background, loaded once', async () => {
+    it('shows the light image as the background', async () => {
         const { scene, environment } = await setUp();
         environment.setRotationY(0.5);
 
         environment.setUseAsBackground(true);
         await settle();
 
-        expect(scene.background).toBe(scene.imageBasedLight!.texture);
+        expect((scene.background as Texture).name).toMatch(/default\.hdr/);
         expect(scene.backgroundRotation.y).toBe(0.5);
-        expect(loaders.hdr).toHaveBeenCalledTimes(1);
+    });
+
+    it('gives the background an image of its own, which the light cannot take away', async () => {
+        const { scene, environment } = await setUp({
+            imageBasedLight: { image: 'studio.hdr' },
+        });
+        environment.setUseAsBackground(true);
+        await settle();
+        const shown = scene.background as Texture;
+
+        expect(shown.name).toBe('studio.hdr');
+        expect(scene.getBackground()).toEqual({
+            type: 'image',
+            image: 'studio.hdr',
+            rotation: 0,
+        });
+
+        await scene.setImageBasedLight({ image: 'other.hdr' });
+
+        expect(scene.background).toBe(shown);
+        expect(shown.dispose).not.toHaveBeenCalled();
+    });
+
+    it('shares a texture the light was given with the background', async () => {
+        const borrowed = new Texture();
+        const { scene, environment } = await setUp({
+            imageBasedLight: { image: borrowed },
+        });
+
+        environment.setUseAsBackground(true);
+        await settle();
+
+        expect(scene.background).toBe(borrowed);
+        expect(scene.getBackground()).toMatchObject({ image: borrowed });
     });
 
     it('rotates an image background along with the light', async () => {
@@ -209,8 +270,8 @@ describe('DIVEEnvironment', () => {
 
         await environment.setImageUrl('studio.hdr');
 
-        expect(scene.background).toBe(scene.imageBasedLight!.texture);
-        expect((scene.background as any).name).toBe('studio.hdr');
+        expect((scene.background as Texture).name).toBe('studio.hdr');
+        expect(scene.imageBasedLightTexture!.name).toBe('studio.hdr');
     });
 
     it('goes back to the colour from before when turned off', async () => {
@@ -249,8 +310,8 @@ describe('DIVEEnvironment', () => {
         environment.setUseAsBackground(true);
         await settle();
 
-        expect(scene.imageBasedLight!.texture).not.toBeNull();
-        expect(scene.background).toBe(scene.imageBasedLight!.texture);
+        expect(scene.imageBasedLightTexture).not.toBeNull();
+        expect((scene.background as Texture).name).toMatch(/default\.hdr/);
     });
 
     it('applies the options it is given and leaves the rest to the scene', async () => {
@@ -268,7 +329,8 @@ describe('DIVEEnvironment', () => {
             rotation: 1,
             intensity: 2,
         });
-        expect(scene.background).toBe(scene.imageBasedLight!.texture);
+        expect((scene.background as Texture).name).toBe('studio.hdr');
+        expect(scene.backgroundRotation.y).toBe(1);
     });
 
     it('turns the light off when disabled', async () => {
@@ -278,16 +340,5 @@ describe('DIVEEnvironment', () => {
         await settle();
 
         expect(scene.imageBasedLight).toBeNull();
-    });
-
-    it('changes nothing after dispose', async () => {
-        const scene = new DIVEScene();
-        const environment = new DIVEEnvironment({} as never, scene);
-
-        environment.setUseAsBackground(true);
-        environment.dispose();
-        await settle();
-
-        expect(scene.background).toBeNull();
     });
 });

@@ -1,4 +1,4 @@
-import { Color, MeshStandardMaterial, type Texture } from 'three/webgpu';
+import { Color, MeshStandardMaterial } from 'three/webgpu';
 import {
     AmbientLightComponent,
     detachTransformControls,
@@ -12,7 +12,6 @@ import {
     ModelComponent,
     PrimitiveComponent,
     PointLightComponent,
-    DIVEImageBasedLightDefaultSettings,
     type DIVE,
     type DIVEBackgroundSettings,
     type DIVEImageBasedLightSettings,
@@ -59,16 +58,6 @@ export type SceneSettings = {
 };
 
 /**
- * A change to the image based light. Fields left out keep their value, an
- * `image` of `null` is the bundled default HDR.
- */
-export type ImageBasedLightPatch = Partial<
-    Omit<DIVEImageBasedLightSettings, 'image'> & {
-        image: string | Texture | null;
-    }
->;
-
-/**
  * What may be written back.
  *
  * Colours come out as hex strings but go in either way, because three accepts
@@ -84,7 +73,7 @@ export type SceneSettingsPatch = Partial<
         /** @deprecated Use `background` instead. */
         backgroundColor: string | number;
         /** `null` turns the image based light off. */
-        imageBasedLight: ImageBasedLightPatch | null;
+        imageBasedLight: Partial<DIVEImageBasedLightSettings> | null;
         floorColor: string | number;
     }
 >;
@@ -270,7 +259,7 @@ export class EngineGateway {
             loads.push(scene.setBackground(patch.backgroundColor));
         }
         if (patch.imageBasedLight !== undefined)
-            loads.push(this._applyImageBasedLight(patch.imageBasedLight));
+            loads.push(scene.setImageBasedLight(patch.imageBasedLight));
         if (patch.gridEnabled !== undefined)
             scene.grid.setVisibility(patch.gridEnabled);
         if (patch.floorEnabled !== undefined)
@@ -307,36 +296,18 @@ export class EngineGateway {
         return { image: background.image, rotation: background.rotation };
     }
 
-    /**
-     * what the state can store of the image based light: no textures, and
-     * the bundled default as `null`, since its URL belongs to this build
-     */
+    /** what the state can store of the image based light: no textures */
     private _readImageBasedLight(): StateImageBasedLight {
         const light = this._engine.scene.imageBasedLight;
-        if (light === null || typeof light.image !== 'string') return null;
+        if (light === null) return null;
+        if (light.image !== null && typeof light.image !== 'string') {
+            return null;
+        }
         return {
-            image:
-                light.image === DIVEImageBasedLightDefaultSettings.image
-                    ? null
-                    : light.image,
+            image: light.image,
             rotation: light.rotation,
             intensity: light.intensity,
         };
-    }
-
-    private _applyImageBasedLight(
-        patch: ImageBasedLightPatch | null,
-    ): Promise<void> {
-        const scene = this._engine.scene;
-        if (patch === null) return scene.setImageBasedLight(null);
-
-        const { image, ...rest } = patch;
-        return scene.setImageBasedLight({
-            ...rest,
-            ...(image !== undefined && {
-                image: image ?? DIVEImageBasedLightDefaultSettings.image,
-            }),
-        });
     }
 
     /**

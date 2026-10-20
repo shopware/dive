@@ -1,7 +1,7 @@
 import { Action } from '../action.ts';
 import { registerAction } from '../../ActionRegistry.ts';
 import { type ActionDependencies } from '../../../types/index.ts';
-import { type ImageBasedLightPatch } from '../../EngineGateway.ts';
+import { type DIVEImageBasedLightSettings } from '@shopware-ag/dive';
 
 export type SetImageBasedLightPayload = {
     /**
@@ -9,7 +9,7 @@ export type SetImageBasedLightPayload = {
      * left out keep their value; an `image` of `null` is the bundled default
      * HDR.
      */
-    imageBasedLight: ImageBasedLightPatch | null;
+    imageBasedLight: Partial<DIVEImageBasedLightSettings> | null;
 };
 
 export const SetImageBasedLightAction = Action.define<

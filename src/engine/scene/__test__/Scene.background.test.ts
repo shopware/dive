@@ -69,7 +69,6 @@ describe('DIVEScene background', () => {
             type: 'image',
             image: 'panorama.jpg',
             rotation: 1,
-            texture: background,
         });
     });
 
@@ -137,11 +136,17 @@ describe('DIVEScene background', () => {
         const pending = scene.setBackground({ image: 'panorama.jpg' });
 
         expect((scene.background as Color).getHex()).toBe(0xff0000);
+        expect(scene.getBackground()).toEqual({
+            type: 'image',
+            image: 'panorama.jpg',
+            rotation: 0,
+        });
 
-        slow.resolve(new Texture());
+        const loaded = new Texture();
+        slow.resolve(loaded);
         await pending;
 
-        expect(scene.getBackground()?.type).toBe('image');
+        expect(scene.background).toBe(loaded);
     });
 
     it('lets the last of overlapping images win and disposes the stale one', async () => {
@@ -227,9 +232,10 @@ describe('DIVEScene background', () => {
         await scene.setBackground({ image: borrowed, rotation: 1 });
 
         expect(scene.background).toBe(borrowed);
-        expect(scene.getBackground()).toMatchObject({
+        expect(scene.getBackground()).toEqual({
+            type: 'image',
             image: borrowed,
-            texture: borrowed,
+            rotation: 1,
         });
         expect(loaders.texture).not.toHaveBeenCalled();
 

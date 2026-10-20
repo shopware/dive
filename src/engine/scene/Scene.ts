@@ -16,19 +16,20 @@ import { type DIVEComponent } from '../component/Component.ts';
 import { disposeComponents } from '../../helpers/disposeComponents/disposeComponents.ts';
 import { DIVENode } from '../node/Node.ts';
 import { type DIVETicker } from '../clock/Clock.ts';
-import { loadEquirectangularImage } from '../../helpers/loadEquirectangularImage/loadEquirectangularImage.ts';
+import { ImageSlot } from './imageslot/ImageSlot.ts';
 
 /**
  * The light a scene gets from an equirectangular image around it.
  */
 export type DIVEImageBasedLightSettings = {
     /**
-     * The image, as a URL or as a texture. A texture is borrowed and never
-     * disposed by the scene; what the scene loads from a URL it owns.
+     * The image, as a URL or as a texture, `null` for the bundled default
+     * HDR. A texture is borrowed and never disposed by the scene; what the
+     * scene loads from a URL it owns.
      *
-     * @default defaultEnvUrl from assets/maps/env/default.hdr
+     * @default null
      */
-    image: string | Texture;
+    image: string | Texture | null;
     /**
      * Rotation around Y in radians.
      *
@@ -42,21 +43,15 @@ export type DIVEImageBasedLightSettings = {
 };
 
 export const DIVEImageBasedLightDefaultSettings: DIVEImageBasedLightSettings = {
-    image: defaultEnvUrl,
+    image: null,
     rotation: 0,
     intensity: 1,
 };
 
 /**
- * The image based light as recorded on the scene: the settings plus the
- * texture they resolved to.
+ * The image based light as requested, its image possibly still loading.
  */
-export type DIVEImageBasedLight = Readonly<
-    DIVEImageBasedLightSettings & {
-        /** `null` until the first image has loaded. */
-        texture: Texture | null;
-    }
->;
+export type DIVEImageBasedLight = Readonly<DIVEImageBasedLightSettings>;
 
 /**
  * An equirectangular image at infinity behind the scene.
@@ -84,16 +79,12 @@ export type DIVEBackgroundSettings =
     ColorRepresentation | DIVEBackgroundImageSettings | null;
 
 /**
- * The background as recorded on the scene, `null` being transparent.
+ * The background as requested, `null` being transparent. An image may still
+ * be loading.
  */
 export type DIVEBackground =
     | Readonly<{ type: 'color'; color: Color }>
-    | Readonly<{
-          type: 'image';
-          image: string | Texture;
-          rotation: number;
-          texture: Texture;
-      }>
+    | Readonly<{ type: 'image'; image: string | Texture; rotation: number }>
     | null;
 
 export type DIVESceneSettings = {
@@ -200,40 +191,15 @@ export class DIVEScene extends Scene implements DIVETicker {
      */
     private _withdrawn: Set<DIVEComponent> | null = null;
 
-    /** what the caller asked for last, the image possibly still loading */
-    private _requestedLight: DIVEImageBasedLightSettings | null = null;
-
-    /** what is recorded, i.e. what the renderer gets to see */
+    /** the image based light as requested */
     private _imageBasedLight: DIVEImageBasedLight | null = null;
 
-    /** whether the recorded texture was loaded here and is ours to dispose */
-    private _ownsLightTexture = false;
+    private _lightImage = new ImageSlot();
 
-    private _lightImageVersion = 0;
-
-    /** ticket of the newest image request; older ones are stale */
-    private _lightRequest = 0;
-
-    /** the load serving the newest image request */
-    private _pendingLight: {
-        image: string | Texture;
-        done: Promise<void>;
-    } | null = null;
-
-    /** what is recorded and shown */
+    /** the background as requested */
     private _background: DIVEBackground = null;
 
-    /** whether the recorded background texture was loaded here */
-    private _ownsBackgroundTexture = false;
-
-    /** the image load still on its way; replacing it makes it stale */
-    private _pendingBackground: {
-        image: string | Texture;
-        rotation: number;
-        done: Promise<void>;
-    } | null = null;
-
-    private _disposed = false;
+    private _backgroundImage = new ImageSlot(() => this._showBackground());
 
     constructor(settings?: Partial<DIVESceneSettings>) {
         super();
@@ -264,117 +230,69 @@ export class DIVEScene extends Scene implements DIVETicker {
     }
 
     /**
-     * The image based light as recorded, or `null` while there is none.
+     * The image based light as requested, or `null` for none.
      *
-     * Rotation and intensity apply at once; the image and its texture change
-     * only once a new one has loaded.
+     * A new image shows up here at once and lights the scene once it has
+     * loaded, the previous one lighting it until then.
      */
     public get imageBasedLight(): DIVEImageBasedLight | null {
         return this._imageBasedLight;
     }
 
     /**
-     * Counts every change of the recorded light's texture, including to and
-     * from none. Rotation and intensity leave it alone, so whoever bakes from
-     * the texture can compare it against the value at its last bake.
+     * The texture the scene is lit by, `null` before the first image has
+     * loaded.
+     *
+     * @internal
      */
-    public get imageBasedLightImageVersion(): number {
-        return this._lightImageVersion;
+    public get imageBasedLightTexture(): Texture | null {
+        return this._lightImage.texture;
+    }
+
+    /**
+     * Counts every change of {@link imageBasedLightTexture}, including to and
+     * from none, so whoever bakes from it can compare against its last bake.
+     *
+     * @internal
+     */
+    public get imageBasedLightVersion(): number {
+        return this._lightImage.version;
     }
 
     /**
      * Sets the image based light, or turns it off with `null`.
      *
      * Fields left out keep their value; after `null` they start from the
-     * defaults again. Of overlapping image changes the last one wins, and an
-     * image loaded for a call that was overtaken is disposed.
+     * defaults again. An `image` of `null` is the bundled default HDR. Of
+     * overlapping image changes the last one wins, and an image loaded for a
+     * call that was overtaken is disposed.
      *
      * @param settings - What to change, or `null` for no image based light.
-     * @returns Resolves once the image is loaded and recorded.
+     * @returns Resolves once the image is loaded and in place.
      */
     public async setImageBasedLight(
         settings: Partial<DIVEImageBasedLightSettings> | null,
     ): Promise<void> {
         if (settings === null) {
-            this._lightRequest++;
-            this._pendingLight = null;
-            this._requestedLight = null;
-            this._recordLight(null, false);
+            this._imageBasedLight = null;
+            this._lightImage.clear();
             return;
         }
 
-        const requested: DIVEImageBasedLightSettings = {
-            ...(this._requestedLight ?? DIVEImageBasedLightDefaultSettings),
+        const light: DIVEImageBasedLightSettings = {
+            ...(this._imageBasedLight ?? DIVEImageBasedLightDefaultSettings),
         };
-        if (settings.image !== undefined) requested.image = settings.image;
-        if (settings.rotation !== undefined) {
-            requested.rotation = settings.rotation;
+        if (settings.image !== undefined) {
+            // the default's URL belongs to this build, so it is described as null
+            light.image = settings.image === defaultEnvUrl ? null : settings.image;
         }
+        if (settings.rotation !== undefined) light.rotation = settings.rotation;
         if (settings.intensity !== undefined) {
-            requested.intensity = settings.intensity;
+            light.intensity = settings.intensity;
         }
-        this._requestedLight = requested;
+        this._imageBasedLight = light;
 
-        // rotation and intensity do not wait for an image
-        if (this._imageBasedLight) {
-            this._imageBasedLight = {
-                ...this._imageBasedLight,
-                rotation: requested.rotation,
-                intensity: requested.intensity,
-            };
-        }
-
-        // the image already on its way
-        if (this._pendingLight?.image === requested.image) {
-            return this._pendingLight.done;
-        }
-
-        const request = ++this._lightRequest;
-        this._pendingLight = null;
-
-        // the image already recorded
-        if (this._imageBasedLight?.image === requested.image) {
-            this._recordLight(
-                this._imageBasedLight.texture,
-                this._ownsLightTexture,
-            );
-            return;
-        }
-
-        const done = this._loadLight(request, requested.image);
-        this._pendingLight = { image: requested.image, done };
-        return done;
-    }
-
-    private async _loadLight(
-        request: number,
-        image: string | Texture,
-    ): Promise<void> {
-        const owned = typeof image === 'string';
-        const texture = owned ? await loadEquirectangularImage(image) : image;
-
-        if (this._disposed || request !== this._lightRequest) {
-            if (owned) texture.dispose();
-            return;
-        }
-
-        this._pendingLight = null;
-        this._recordLight(texture, owned);
-    }
-
-    /** records the requested light with the given texture */
-    private _recordLight(texture: Texture | null, owned: boolean): void {
-        const previous = this._imageBasedLight?.texture ?? null;
-
-        if (previous !== texture) {
-            if (this._ownsLightTexture) previous?.dispose();
-            this._lightImageVersion++;
-        }
-        this._ownsLightTexture = owned;
-
-        this._imageBasedLight = this._requestedLight
-            ? { ...this._requestedLight, texture }
-            : null;
+        return this._lightImage.request(light.image ?? defaultEnvUrl);
     }
 
     public get root(): DIVERoot {
@@ -413,10 +331,10 @@ export class DIVEScene extends Scene implements DIVETicker {
     }
 
     /**
-     * The background as recorded, `null` being transparent.
+     * The background as requested, `null` being transparent.
      *
-     * An image shows up here only once it has loaded; until then the previous
-     * background stays.
+     * A new image shows up here at once and is shown once it has loaded, the
+     * previous background staying until then.
      */
     public getBackground(): DIVEBackground {
         return this._background;
@@ -432,90 +350,42 @@ export class DIVEScene extends Scene implements DIVETicker {
      * loaded for a call that was overtaken is disposed.
      *
      * @param value - The new background.
-     * @returns Resolves once the background is recorded, for an image once it
+     * @returns Resolves once the background is in place, for an image once it
      * has loaded.
      */
     public async setBackground(value: DIVEBackgroundSettings): Promise<void> {
         if (!isBackgroundImage(value)) {
-            this._pendingBackground = null;
-            this._recordBackground(toColorBackground(value), false);
+            this._background = toColorBackground(value);
+            this._backgroundImage.clear();
+            this._showBackground();
             return;
         }
 
-        const { image } = value;
-        const rotation = value.rotation ?? 0;
-
-        // the image already on its way, which then arrives with this rotation
-        if (this._pendingBackground?.image === image) {
-            this._pendingBackground.rotation = rotation;
-            return this._pendingBackground.done;
-        }
-
-        this._pendingBackground = null;
-
-        // the image already shown
-        if (
-            this._background?.type === 'image' &&
-            this._background.image === image
-        ) {
-            this._recordBackground(
-                { ...this._background, rotation },
-                this._ownsBackgroundTexture,
-            );
-            return;
-        }
-
-        // registered before the load starts, since a texture records at once
-        const pending = { image, rotation, done: Promise.resolve() };
-        this._pendingBackground = pending;
-        pending.done = this._loadBackground(pending);
-        return pending.done;
+        this._background = {
+            type: 'image',
+            image: value.image,
+            rotation: value.rotation ?? 0,
+        };
+        const done = this._backgroundImage.request(value.image);
+        this._showBackground();
+        return done;
     }
 
-    private async _loadBackground(
-        pending: NonNullable<DIVEScene['_pendingBackground']>,
-    ): Promise<void> {
-        const { image } = pending;
-        const owned = typeof image === 'string';
-        const texture = owned ? await loadEquirectangularImage(image) : image;
+    /** puts the requested background on the scene, an image once it has loaded */
+    private _showBackground(): void {
+        const background = this._background;
 
-        // overtaken by a newer call or by dispose
-        if (this._disposed || this._pendingBackground !== pending) {
-            if (owned) texture.dispose();
-            return;
-        }
-
-        this._pendingBackground = null;
-        this._recordBackground(
-            { type: 'image', image, rotation: pending.rotation, texture },
-            owned,
-        );
-    }
-
-    /** records the background and puts it on the scene */
-    private _recordBackground(
-        background: DIVEBackground,
-        owned: boolean,
-    ): void {
-        const previous =
-            this._background?.type === 'image'
-                ? this._background.texture
-                : null;
-        const next = background?.type === 'image' ? background.texture : null;
-
-        if (previous !== next && this._ownsBackgroundTexture) {
-            previous?.dispose();
-        }
-        this._ownsBackgroundTexture = owned;
-        this._background = background;
-
-        if (background?.type === 'image') {
-            this.background = background.texture;
-            this.backgroundRotation.set(0, background.rotation, 0);
-        } else {
+        if (background?.type !== 'image') {
             this.background = background?.color ?? null;
             this.backgroundRotation.set(0, 0, 0);
+            return;
         }
+
+        // the previous background stays until the image has loaded
+        if (this._backgroundImage.image !== background.image) return;
+
+        this.background = this._backgroundImage.texture;
+        this.backgroundRotation.set(0, background.rotation, 0);
     }
 
     public computeSceneBB(): Box3 {
@@ -624,18 +494,8 @@ export class DIVEScene extends Scene implements DIVETicker {
 
         this._tickingComponents = [];
 
-        // a load still on its way disposes itself on arrival
-        this._disposed = true;
-        this._lightRequest++;
-        this._pendingLight = null;
-        if (this._ownsLightTexture) this._imageBasedLight?.texture?.dispose();
-        this._ownsLightTexture = false;
-
-        this._pendingBackground = null;
-        if (this._ownsBackgroundTexture && this._background?.type === 'image') {
-            this._background.texture.dispose();
-        }
-        this._ownsBackgroundTexture = false;
+        this._lightImage.dispose();
+        this._backgroundImage.dispose();
     }
 }
 
