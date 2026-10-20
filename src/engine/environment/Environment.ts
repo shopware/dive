@@ -1,51 +1,48 @@
-import {
-    CubeCamera,
-    EquirectangularReflectionMapping,
-    Mesh,
-    MeshBasicMaterial,
-    PMREMGenerator,
-    Scene,
-    Texture,
-    CubeRenderTarget,
-    RenderTarget,
-    WebGPURenderer,
-    BackSide,
-    SphereGeometry,
-    NoToneMapping,
-    LinearSRGBColorSpace,
-    HalfFloatType,
-} from 'three/webgpu';
-import { HDRLoader } from 'three/examples/jsm/loaders/HDRLoader.js';
+import { type WebGPURenderer } from 'three/webgpu';
 import defaultEnvUrl from '../../../assets/maps/env/default.hdr?url';
-import { DIVEAbortablePromise } from '../promise/abortable/AbortablePromise.ts';
+import {
+    type DIVEBackground,
+    type DIVEBackgroundSettings,
+    type DIVEScene,
+} from '../scene/Scene.ts';
 
+/**
+ * @deprecated Use `scene.setImageBasedLight` and `scene.setBackground`.
+ */
 export type DIVEEnvironmentSettings = {
     /**
      * Whether to enable the image-based lighting.
      *
      * @default true
+     * @deprecated Use `scene.setImageBasedLight(null)` to turn it off.
      */
     enabled: boolean;
     /**
      * The URL of the HDR image.
      *
      * @default defaultEnvUrl from assets/maps/env/default.hdr
+     * @deprecated Use `scene.setImageBasedLight({ image })`.
      */
     imageUrl: string;
     /**
      * Whether to use the HDR image as a background image.
      *
      * @default false
+     * @deprecated Use `scene.setBackground({ image, rotation })`.
      */
     useAsBackground: boolean;
     /**
      * The rotation of the HDR image in radians.
      *
      * @default 0
+     * @deprecated Use `scene.setImageBasedLight({ rotation })`.
      */
     rotateY: number;
 };
 
+/**
+ * @deprecated Use `DIVEImageBasedLightDefaultSettings`.
+ */
 export const DIVEEnvironmentDefaultSettings: DIVEEnvironmentSettings = {
     enabled: true,
     imageUrl: defaultEnvUrl,
@@ -54,279 +51,178 @@ export const DIVEEnvironmentDefaultSettings: DIVEEnvironmentSettings = {
 };
 
 /**
- * Manages an image-based lighting setup with optional Y-rotation.
+ * The old way to set the image based light and to show its image as the
+ * background. Only forwards to the scene, which the renderer bakes from.
  *
- * Rotation is achieved by rendering the equirect HDR to a skybox that is
- * rotated around Y, capturing it into a cubemap with CubeCamera, and then
- * generating a PMREM for scene.environment.
+ * @deprecated Use `scene.setImageBasedLight` and `scene.setBackground`.
  */
 export class DIVEEnvironment {
-    // The background to put back once the HDR is no longer used as one.
-    private originalBackground: typeof Scene.prototype.background = null;
+    private _scene: DIVEScene;
 
-    // The background this environment last put on the scene itself.
-    private installedBackground: typeof Scene.prototype.background = null;
+    private _enabled = true;
+    private _useAsBackground = false;
 
-    private _webgpurenderer: WebGPURenderer;
-    private scene: Scene;
-    private pmrem: PMREMGenerator;
-    private currentEnvRT: RenderTarget | null = null;
-    private currentBackgroundCube: CubeRenderTarget | null = null;
-    private sourceImage: Texture | null = null;
-    private options: DIVEEnvironmentSettings;
-    private _loadPromise: Promise<void>;
-    private _initPromise: DIVEAbortablePromise<void> | null = null;
-    private _sourceImageLoadId = 0;
-    private _initRequested = false;
+    /** the background to go back to once the image is no longer shown */
+    private _backgroundBefore: DIVEBackground = null;
+
+    /** the newest image request made here */
+    private _imageLoad: Promise<void> = Promise.resolve();
+
     private _disposed = false;
 
+    /**
+     * @param _renderer - Unused; the renderer bakes from the scene itself.
+     * @param scene - The scene to forward to.
+     * @param options - Applied to the scene; what is left out stays as the
+     * scene has it.
+     */
     constructor(
-        renderer: WebGPURenderer,
-        scene: Scene,
+        _renderer: WebGPURenderer,
+        scene: DIVEScene,
         options: Partial<DIVEEnvironmentSettings> = {},
     ) {
-        this._webgpurenderer = renderer;
-        this.scene = scene;
+        this._scene = scene;
 
-        this.pmrem = new PMREMGenerator(renderer);
-        this.options = {
-            ...DIVEEnvironmentDefaultSettings,
-            ...options,
-        };
-
-        this._loadPromise = this._loadSourceImage(this.options.imageUrl);
-    }
-
-    public async initAsync(): Promise<void> {
-        this._initRequested = true;
-
-        if (!this._initPromise) {
-            this._initPromise = new DIVEAbortablePromise<void>(
-                async (signal) => {
-                    await this._loadPromise;
-
-                    if (
-                        signal.aborted ||
-                        this._disposed ||
-                        !this._webgpurenderer.initialized
-                    )
-                        return;
-
-                    this.update();
-                },
+        if (options.enabled === false) {
+            this._enabled = false;
+            this._forward(scene.setImageBasedLight(null));
+        } else if (options.imageUrl !== undefined) {
+            this._imageLoad = this._forward(
+                scene.setImageBasedLight({ image: options.imageUrl }),
             );
         }
-
-        return this._initPromise;
+        if (options.rotateY !== undefined) this.setRotationY(options.rotateY);
+        if (options.useAsBackground) this.setUseAsBackground(true);
     }
 
     /**
-     * Disposes the environment.
+     * Resolves once the image requested here has loaded.
+     *
+     * @deprecated The renderer applies the scene's image based light itself.
+     */
+    public async initAsync(): Promise<void> {
+        await this._imageLoad;
+    }
+
+    /**
+     * Stops what is still pending from reaching the scene.
+     *
+     * @deprecated The renderer frees what it baked itself.
      */
     public dispose(): void {
         this._disposed = true;
-        this.pmrem.dispose();
-        this.sourceImage?.dispose();
-        this.sourceImage = null;
-        this.clearEnvironment();
     }
 
     /**
-     * Whether `scene.background` is still the one this environment installed.
+     * Does nothing, the renderer applies changes on its next frame.
      *
-     * A foreign value means something else has changed the background in the
-     * meantime, which makes it the value to restore instead.
+     * @deprecated The renderer applies the scene's image based light itself.
      */
-    private ownsSceneBackground(): boolean {
-        return (
-            this.installedBackground !== null &&
-            this.scene.background === this.installedBackground
+    public update(): void {}
+
+    /**
+     * Does nothing, the renderer rebakes on a new canvas itself.
+     *
+     * @deprecated The renderer rebakes on a new canvas itself.
+     */
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    public setRenderer(_renderer: WebGPURenderer): void {}
+
+    /**
+     * Sets the image of the image based light, and of the background while
+     * the image is used as one.
+     *
+     * @param url - The URL of the image, `null` for the default HDR.
+     * @deprecated Use `scene.setImageBasedLight({ image })`.
+     */
+    public async setImageUrl(url: string | null): Promise<void> {
+        this._enabled = true;
+        this._imageLoad = this._forward(
+            this._scene.setImageBasedLight({ image: url ?? defaultEnvUrl }),
+        );
+        await this._imageLoad;
+
+        if (this._useAsBackground) await this._showImage();
+    }
+
+    /**
+     * Rotates the image based light, and the background if it is an image.
+     *
+     * @param radians - The rotation around Y.
+     * @deprecated Use `scene.setImageBasedLight({ rotation })` and
+     * `scene.setBackground({ image, rotation })`.
+     */
+    public setRotationY(radians: number): void {
+        if (this._enabled) {
+            this._forward(
+                this._scene.setImageBasedLight({ rotation: radians }),
+            );
+        }
+
+        const background = this._scene.getBackground();
+        if (background?.type === 'image') {
+            this._forward(
+                this._scene.setBackground({
+                    image: background.image,
+                    rotation: radians,
+                }),
+            );
+        }
+    }
+
+    /**
+     * Shows the image of the image based light as the background, or goes
+     * back to the background from before.
+     *
+     * @param useAsBackground - Whether to show the image.
+     * @deprecated Use `scene.setBackground({ image, rotation })`.
+     */
+    public setUseAsBackground(useAsBackground: boolean): void {
+        if (useAsBackground === this._useAsBackground) return;
+        this._useAsBackground = useAsBackground;
+
+        if (useAsBackground) {
+            this._backgroundBefore = this._scene.getBackground();
+            this._forward(this._showImage());
+            return;
+        }
+
+        this._forward(
+            this._scene.setBackground(toSettings(this._backgroundBefore)),
         );
     }
 
-    private clearEnvironment(): void {
-        this.scene.environment = null;
+    /** puts the light's image on the background, once it has loaded */
+    private async _showImage(): Promise<void> {
+        if (!this._enabled) return;
 
-        // never revert a background that was not put there by this environment
-        if (this.ownsSceneBackground()) {
-            this.scene.background = this.originalBackground;
-            this.installedBackground = null;
-        }
+        // resolves with the image on its way, or at once with the recorded one
+        await this._scene.setImageBasedLight({});
 
-        if (this.currentEnvRT) {
-            this.currentEnvRT.texture.dispose();
-            this.currentEnvRT.dispose();
-            this.currentEnvRT = null;
-        }
-        if (this.currentBackgroundCube) {
-            this.currentBackgroundCube.texture.dispose();
-            this.currentBackgroundCube.dispose();
-            this.currentBackgroundCube = null;
-        }
-    }
-
-    /**
-     * Updates the environment.
-     *
-     * - Creates a sky scene with a large inward-facing sphere with equirectangular mapping for correct UVs.
-     * - Renders the equirect HDR to a cubemap with CubeCamera.
-     * - Generates a PMREM from the cubemap.
-     * - Updates the scene environment with the PMREM.
-     * - Handles background image replacement logic.
-     * - Early-returns if the source image is not loaded.
-     */
-    public update(): void {
-        if (!this._webgpurenderer.initialized) return;
-
-        // a background we did not install belongs to someone else and is the one
-        // to restore, so it has to be picked up before it gets overwritten
-        if (!this.ownsSceneBackground()) {
-            this.originalBackground = this.scene.background;
-        }
-
-        if (!this.sourceImage) {
-            this.clearEnvironment();
+        const light = this._scene.imageBasedLight;
+        if (this._disposed || !this._useAsBackground || !light?.texture) {
             return;
         }
 
-        // Build an offscreen sky scene to render the equirect HDR with rotation
-        const skyScene = new Scene();
-
-        // Use a large inward-facing sphere with equirectangular mapping for correct UVs
-        const skyGeo = new SphereGeometry(10, 60, 40);
-        const skyMat = new MeshBasicMaterial({
-            map: this.sourceImage,
-            side: BackSide,
+        // the light's texture, borrowed, so the image is loaded only once
+        await this._scene.setBackground({
+            image: light.texture,
+            rotation: light.rotation,
         });
-        const skyMesh = new Mesh(skyGeo, skyMat);
-        skyMesh.scale.set(1, 1, -1);
-        skyMesh.rotation.y = this.options.rotateY ?? 0;
-        skyScene.add(skyMesh);
+    }
 
-        const oldToneMapping = this._webgpurenderer.toneMapping;
-        const oldOutputCS = this._webgpurenderer.outputColorSpace;
-        this._webgpurenderer.toneMapping = NoToneMapping;
-        this._webgpurenderer.outputColorSpace = LinearSRGBColorSpace;
-
-        const cubeRT = new CubeRenderTarget(1024, {
-            type: HalfFloatType,
+    /** reports a failure nobody awaits; a caller who awaits still gets it */
+    private _forward(promise: Promise<void>): Promise<void> {
+        promise.catch((error: unknown) => {
+            console.error('DIVEEnvironment: forwarding failed', error);
         });
-        const cubeCamera = new CubeCamera(0.1, 1000, cubeRT);
-
-        // Position at origin; IBL is direction-only
-        cubeCamera.update(this._webgpurenderer, skyScene);
-
-        // restore renderer state
-        this._webgpurenderer.toneMapping = oldToneMapping;
-        this._webgpurenderer.outputColorSpace = oldOutputCS;
-
-        // PMREM from cubemap
-        const pmremRT = this.pmrem.fromCubemap(cubeRT.texture);
-
-        if (this.currentEnvRT) {
-            this.currentEnvRT.texture.dispose();
-            this.currentEnvRT.dispose();
-            this.currentEnvRT = null;
-        }
-        if (this.currentBackgroundCube) {
-            this.currentBackgroundCube.texture.dispose();
-            this.currentBackgroundCube.dispose();
-            this.currentBackgroundCube = null;
-        }
-
-        this.currentEnvRT = pmremRT;
-        this.scene.environment = pmremRT.texture;
-
-        // keep unfiltered capture as background (matches HDRLoader brightness)
-        if (this.options.useAsBackground) {
-            this.scene.background = cubeRT.texture;
-            this.installedBackground = cubeRT.texture;
-            this.currentBackgroundCube = cubeRT;
-        } else {
-            this.scene.background = this.originalBackground;
-            this.installedBackground = null;
-            // We created a cubeRT but are not using it as background.
-            // We should dispose it if we don't store it in currentBackgroundCube.
-            // But we used it for PMREM. Can we dispose it now?
-            // pmrem.fromCubemap uses it.
-            // If we don't store it, we should dispose it to avoid leak.
-            cubeRT.texture.dispose();
-            cubeRT.dispose();
-        }
+        return promise;
     }
+}
 
-    /**
-     * Sets the renderer and rebinds the PMREM generator. Use this only when rebuilding the renderer.
-     *
-     * @param renderer - The renderer.
-     */
-    public setRenderer(renderer: WebGPURenderer): void {
-        this.pmrem.dispose();
-        this._webgpurenderer = renderer;
-        this.pmrem = new PMREMGenerator(renderer);
-
-        this._initPromise?.abort();
-        this._initPromise = null;
-    }
-
-    /**
-     * Sets the URL of the HDR image.
-     *
-     * @param url - The URL of the HDR image. If null, the default environment image will be used.
-     */
-    public async setImageUrl(url: string | null): Promise<void> {
-        this.options.imageUrl = url ?? defaultEnvUrl;
-
-        this._loadPromise = this._loadSourceImage(this.options.imageUrl);
-        await this._loadPromise;
-
-        if (this._initRequested && this._webgpurenderer.initialized) {
-            this.update();
-        }
-    }
-
-    /**
-     * Sets the rotation of the HDR image in radians.
-     *
-     * @param radians - The rotation of the HDR image in radians.
-     */
-    public setRotationY(radians: number): void {
-        this.options.rotateY = radians;
-        this.update();
-    }
-
-    /**
-     * Sets whether to use the HDR image as a background.
-     * @param useAsBackground - Whether to use the HDR image as a background.
-     */
-    public setUseAsBackground(useAsBackground: boolean): void {
-        this.options.useAsBackground = useAsBackground;
-        this.update();
-    }
-
-    /**
-     * Loads equirectangular HDR image from URL.
-     * Sets the mapping to EquirectangularReflectionMapping.
-     *
-     * @param url - The URL of the HDR image.
-     * @returns The loaded equirectangular HDR texture.
-     */
-    private async loadHDRImage(url: string): Promise<Texture> {
-        const image = await new HDRLoader().loadAsync(url);
-        image.mapping = EquirectangularReflectionMapping;
-        return image;
-    }
-
-    private async _loadSourceImage(url: string): Promise<void> {
-        const loadId = ++this._sourceImageLoadId;
-        const image = await this.loadHDRImage(url);
-
-        if (this._disposed || loadId !== this._sourceImageLoadId) {
-            image.dispose();
-            return;
-        }
-
-        this.sourceImage?.dispose();
-        this.sourceImage = image;
-    }
+/** the settings that record the given background again */
+function toSettings(background: DIVEBackground): DIVEBackgroundSettings {
+    if (background === null) return null;
+    if (background.type === 'color') return background.color;
+    return { image: background.image, rotation: background.rotation };
 }

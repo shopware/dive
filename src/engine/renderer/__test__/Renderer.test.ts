@@ -82,17 +82,7 @@ vi.mock('three/webgpu', async (importOriginal) => {
     };
 });
 
-vi.mock('../../environment/Environment.ts', () => ({
-    DIVEEnvironment: vi.fn(function (this: any) {
-        this.dispose = vi.fn();
-        this.setRenderer = vi.fn();
-        this.initAsync = vi.fn(async () => {});
-        return this;
-    }),
-}));
-
 const WebGPURenderer = WebGPURendererOriginal as any;
-const MockedDIVEEnvironment = DIVEEnvironment as any;
 
 describe('DIVERenderPipeline', () => {
     let renderer: DIVERenderer;
@@ -136,7 +126,6 @@ describe('DIVERenderPipeline', () => {
         );
         expect(instance.outputColorSpace).toBe(SRGBColorSpace);
         expect(instance.toneMapping).toBe(LinearToneMapping);
-        expect(MockedDIVEEnvironment).toHaveBeenCalledWith(instance, scene);
     });
 
     it('should instantiate with custom settings', () => {
@@ -181,37 +170,30 @@ describe('DIVERenderPipeline', () => {
     });
 
     it('should expose the environment instance', () => {
-        const environment = MockedDIVEEnvironment.mock.results[0].value;
-
-        expect(renderer.environment).toBe(environment);
+        expect(renderer.environment).toBeInstanceOf(DIVEEnvironment);
     });
 
-    it('should initialize renderer and environment', async () => {
+    it('should initialize the renderer', async () => {
         const instance = WebGPURenderer.mock.results[0].value;
-        const environment = MockedDIVEEnvironment.mock.results[0].value;
 
         await renderer.initAsync();
 
         expect(instance.init).toHaveBeenCalled();
-        expect(environment.initAsync).toHaveBeenCalled();
         expect(renderer.initialized).toBe(true);
     });
 
-    it('should initialize the environment immediately when the renderer is already initialized', async () => {
+    it('should not initialize a renderer that already is', async () => {
         const instance = WebGPURenderer.mock.results[0].value;
-        const environment = MockedDIVEEnvironment.mock.results[0].value;
 
         instance.initialized = true;
 
         await renderer.initAsync();
 
         expect(instance.init).not.toHaveBeenCalled();
-        expect(environment.initAsync).toHaveBeenCalledTimes(1);
     });
 
     it('should reuse the pending init when init is called twice concurrently', async () => {
         const instance = WebGPURenderer.mock.results[0].value;
-        const environment = MockedDIVEEnvironment.mock.results[0].value;
         let resolveInit: (() => void) | undefined;
 
         instance.init = vi.fn(
@@ -230,12 +212,12 @@ describe('DIVERenderPipeline', () => {
         await Promise.resolve();
 
         expect(instance.init).toHaveBeenCalledTimes(1);
-        expect(environment.initAsync).not.toHaveBeenCalled();
 
         resolveInit?.();
         await Promise.all([firstInit, secondInit]);
 
-        expect(environment.initAsync).toHaveBeenCalledTimes(1);
+        expect(instance.init).toHaveBeenCalledTimes(1);
+        expect(renderer.initialized).toBe(true);
     });
 
     it('should render only after initialization', () => {
@@ -285,7 +267,6 @@ describe('DIVERenderPipeline', () => {
 
     it('should recreate the renderer when setting a canvas', () => {
         const firstInstance = WebGPURenderer.mock.results[0].value;
-        const environment = MockedDIVEEnvironment.mock.results[0].value;
         const newCanvas = document.createElement('canvas');
 
         renderer.setCanvas(newCanvas);
@@ -295,22 +276,7 @@ describe('DIVERenderPipeline', () => {
         expect(WebGPURenderer).toHaveBeenLastCalledWith(
             expect.objectContaining({ canvas: newCanvas }),
         );
-        expect(environment.setRenderer).toHaveBeenCalledWith(secondInstance);
         expect(renderer.canvas).toBe(secondInstance.domElement);
-    });
-
-    it('should swap the environment to the new renderer before disposing the previous renderer', () => {
-        const firstInstance = WebGPURenderer.mock.results[0].value;
-        const environment = MockedDIVEEnvironment.mock.results[0].value;
-        const newCanvas = document.createElement('canvas');
-
-        renderer.setCanvas(newCanvas);
-
-        expect(environment.setRenderer).toHaveBeenCalledTimes(1);
-        expect(firstInstance.dispose).toHaveBeenCalledTimes(1);
-        expect(
-            environment.setRenderer.mock.invocationCallOrder[0],
-        ).toBeLessThan(firstInstance.dispose.mock.invocationCallOrder[0]);
     });
 
     it('should not auto reinitialize after a canvas swap', () => {
@@ -327,7 +293,6 @@ describe('DIVERenderPipeline', () => {
 
     it('should ignore stale init completions after a canvas swap', async () => {
         const firstInstance = WebGPURenderer.mock.results[0].value;
-        const environment = MockedDIVEEnvironment.mock.results[0].value;
         let resolveFirstInit: (() => void) | undefined;
 
         firstInstance.init = vi.fn(
@@ -346,16 +311,14 @@ describe('DIVERenderPipeline', () => {
         resolveFirstInit?.();
         await pendingInit;
 
-        expect(environment.initAsync).not.toHaveBeenCalled();
+        expect(renderer.initialized).toBe(false);
     });
 
-    it('should dispose environment and renderer', () => {
+    it('should dispose the renderer', () => {
         const instance = WebGPURenderer.mock.results[0].value;
-        const environment = MockedDIVEEnvironment.mock.results[0].value;
 
         renderer.dispose();
 
-        expect(environment.dispose).toHaveBeenCalled();
         expect(instance.dispose).toHaveBeenCalled();
     });
 
