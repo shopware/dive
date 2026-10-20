@@ -284,7 +284,8 @@ export class DIVEScene extends Scene implements DIVETicker {
         };
         if (settings.image !== undefined) {
             // the default's URL belongs to this build, so it is described as null
-            light.image = settings.image === defaultEnvUrl ? null : settings.image;
+            light.image =
+                settings.image === defaultEnvUrl ? null : settings.image;
         }
         if (settings.rotation !== undefined) light.rotation = settings.rotation;
         if (settings.intensity !== undefined) {
