@@ -7,9 +7,8 @@ Quickly create a 3D scene with a 3D model and orbit controller with just one lin
 - Asynchronously loads the model from provided uri automatically.
 - Creates an OrbitController driven by a PointerInput on the canvas to enable interaction.
 - Can hand the camera to the device's gyro via `useController('gyro')`.
-- Can put a baked contact shadow under the model via the `softShadow` setting.
 - Lights the model from an HDR image. Set the image based light and the background through the scene
-  (see [Image based light, background and dome](../../../docs/environment.md)).
+  (see [Image based light and background](../../../docs/environment.md)).
 - You can change the behaviour via the `settings` parameter or afterwards via the returned QuickView instance.
 - QuickView return a DIVE instance with an `orbitController` and a `pointerInput` in it.
 
@@ -23,7 +22,6 @@ const canvas = document.createElement('canvas');
 const quickView = await QuickView('my-model.glb', {
     canvas,
     background: '#00ff00',
-    softShadow: true,
 });
 
 await quickView.scene.setImageBasedLight({ image: 'path/to/image.hdr' });
