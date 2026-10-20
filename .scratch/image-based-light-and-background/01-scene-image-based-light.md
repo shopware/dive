@@ -1,6 +1,6 @@
 # 01 Image based light description on the scene
 
-Status: ready-for-agent
+Status: done
 Blocked by: none
 
 Spec: `SPEC.md` (this folder). ADR 0001, `GLOSSARY.md`.
