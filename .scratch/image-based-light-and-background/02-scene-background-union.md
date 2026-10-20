@@ -1,6 +1,6 @@
 # 02 Background union on the scene
 
-Status: ready-for-agent
+Status: done
 Blocked by: 01
 
 Spec: `SPEC.md` (this folder). ADR 0001, `GLOSSARY.md`.
