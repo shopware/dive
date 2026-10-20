@@ -135,8 +135,8 @@ Things to know:
 - Turn `displayFloor` off. The floor sits at the same height and covers the projected one.
 - The projection is only convincing close to where the image was taken, and the camera has to stay
   inside the dome. Limit the distance, e.g. `orbitController.maxDistance`, to a few meters.
-- Ground a model with a contact shadow: a `SoftShadowComponent` on the model's node lies on the
-  projected floor.
+- Ground a model with a contact shadow: a `SoftShadowComponent` on the model's node (or QuickView's
+  `softShadow` setting) lies on the projected floor.
 - The dome is on `BACKGROUND_LAYER_MASK`, so it is not part of bounding boxes, exports, picking or a
   contact-shadow bake.
 - The dome draws over the background. You can leave the background transparent.
