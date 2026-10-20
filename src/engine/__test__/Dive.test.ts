@@ -5,6 +5,7 @@
 import { vi } from 'vitest';
 import { DIVE, DIVESettings } from '../Dive.ts';
 import { MathUtils } from 'three/webgpu';
+import { DIVEScene } from '../scene/Scene.ts';
 
 const waitForAsync = () => new Promise((resolve) => setTimeout(resolve, 0));
 
@@ -294,6 +295,29 @@ describe('DIVE', () => {
         };
         const dive = new DIVE(settings);
         expect(dive).toBeDefined();
+    });
+
+    it('hands background and backgroundColor to the scene, which picks one', () => {
+        new DIVE({
+            autoStart: false,
+            background: { image: 'panorama.jpg' },
+            backgroundColor: '#ffffff',
+        });
+
+        expect(vi.mocked(DIVEScene)).toHaveBeenLastCalledWith(
+            expect.objectContaining({
+                background: { image: 'panorama.jpg' },
+                backgroundColor: '#ffffff',
+            }),
+        );
+    });
+
+    it('leaves background unset when it is not given', () => {
+        new DIVE({ autoStart: false });
+
+        expect(vi.mocked(DIVEScene)).toHaveBeenLastCalledWith(
+            expect.objectContaining({ background: undefined }),
+        );
     });
 
     it('should have Canvas', () => {

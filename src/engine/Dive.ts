@@ -131,6 +131,8 @@ export class DIVE {
 
         // set up scene
         this._scene = new DIVEScene({
+            // the scene lets it win over backgroundColor
+            background: settings?.background,
             backgroundColor:
                 settings?.backgroundColor ??
                 DIVEDefaultSettings.backgroundColor,
