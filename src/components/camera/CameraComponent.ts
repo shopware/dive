@@ -6,6 +6,7 @@ import {
     type Vector3Like,
 } from 'three/webgpu';
 import {
+    BACKGROUND_LAYER_MASK,
     DEFAULT_LAYER_MASK,
     FLOOR_LAYER_MASK,
     HELPER_LAYER_MASK,
@@ -71,7 +72,8 @@ export abstract class DIVECameraComponent extends DIVEComponent {
         PRODUCT_LAYER_MASK |
         PROXY_LAYER_MASK |
         FLOOR_LAYER_MASK |
-        SHADOW_LAYER_MASK;
+        SHADOW_LAYER_MASK |
+        BACKGROUND_LAYER_MASK;
 
     /**
      * What an end user sees: the content and the ground it stands on.
@@ -81,10 +83,14 @@ export abstract class DIVECameraComponent extends DIVEComponent {
      * proxies for entities without geometry — and so does `DEFAULT_LAYER_MASK`,
      * because it is the catch-all: anything that never chose a layer is a thing
      * nobody decided to show an end user. `SHADOW_LAYER_MASK` is in: a baked
-     * contact shadow is part of the picture, not a building aid.
+     * contact shadow is part of the picture, not a building aid, and so is the
+     * backdrop it lies on.
      */
     public static readonly LIVE_VIEW_LAYER_MASK =
-        PRODUCT_LAYER_MASK | FLOOR_LAYER_MASK | SHADOW_LAYER_MASK;
+        PRODUCT_LAYER_MASK |
+        FLOOR_LAYER_MASK |
+        SHADOW_LAYER_MASK |
+        BACKGROUND_LAYER_MASK;
 
     /** Told whenever {@link setCameraLayer} changed what is visible. */
     public onSetCameraLayer: (mask: number) => void = () => {};
