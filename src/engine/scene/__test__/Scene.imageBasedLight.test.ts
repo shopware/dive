@@ -57,12 +57,13 @@ describe('DIVEScene image based light', () => {
         const scene = new DIVEScene();
         await scene.setImageBasedLight({});
 
-        const light = scene.imageBasedLight!;
-        expect(light.image).toMatch(/default\.hdr/);
-        expect(light.texture).toBeInstanceOf(Texture);
-        expect(light.texture!.name).toBe(light.image);
-        expect(light.rotation).toBe(0);
-        expect(light.intensity).toBe(1);
+        expect(scene.imageBasedLight).toEqual({
+            image: null,
+            rotation: 0,
+            intensity: 1,
+        });
+        expect(scene.imageBasedLightTexture).toBeInstanceOf(Texture);
+        expect(scene.imageBasedLightTexture!.name).toMatch(/default\.hdr/);
         expect(loaders.hdr).toHaveBeenCalledTimes(1);
     });
 
@@ -86,18 +87,19 @@ describe('DIVEScene image based light', () => {
 
         const scene = new DIVEScene();
         await scene.setImageBasedLight({});
-        const texture = scene.imageBasedLight!.texture!;
+        const texture = scene.imageBasedLightTexture!;
 
         await scene.setImageBasedLight(null);
 
         expect(scene.imageBasedLight).toBeNull();
+        expect(scene.imageBasedLightTexture).toBeNull();
         expect(texture.dispose).toHaveBeenCalled();
     });
 
     it('keeps the fields a call leaves out', async () => {
         const scene = new DIVEScene();
         await scene.setImageBasedLight({ image: 'a.hdr', rotation: 1 });
-        const texture = scene.imageBasedLight!.texture;
+        const texture = scene.imageBasedLightTexture;
 
         await scene.setImageBasedLight({ intensity: 3 });
 
@@ -106,7 +108,7 @@ describe('DIVEScene image based light', () => {
             rotation: 1,
             intensity: 3,
         });
-        expect(scene.imageBasedLight!.texture).toBe(texture);
+        expect(scene.imageBasedLightTexture).toBe(texture);
     });
 
     it('starts from the defaults again after null', async () => {
@@ -116,9 +118,12 @@ describe('DIVEScene image based light', () => {
 
         await scene.setImageBasedLight({ intensity: 3 });
 
-        expect(scene.imageBasedLight!.image).toMatch(/default\.hdr/);
-        expect(scene.imageBasedLight!.rotation).toBe(0);
-        expect(scene.imageBasedLight!.intensity).toBe(3);
+        expect(scene.imageBasedLight).toEqual({
+            image: null,
+            rotation: 0,
+            intensity: 3,
+        });
+        expect(scene.imageBasedLightTexture!.name).toMatch(/default\.hdr/);
     });
 
     it('lets the last of overlapping calls win and disposes the stale image', async () => {
@@ -137,7 +142,7 @@ describe('DIVEScene image based light', () => {
         await first;
 
         expect(scene.imageBasedLight!.image).toBe('fast.hdr');
-        expect(scene.imageBasedLight!.texture!.name).toBe('fast.hdr');
+        expect(scene.imageBasedLightTexture!.name).toBe('fast.hdr');
         expect(stale.dispose).toHaveBeenCalled();
     });
 
@@ -160,8 +165,11 @@ describe('DIVEScene image based light', () => {
         const pending = scene.setImageBasedLight({ image: 'slow.hdr' });
         const rotated = scene.setImageBasedLight({ rotation: 2 });
 
-        expect(scene.imageBasedLight!.rotation).toBe(2);
-        expect(scene.imageBasedLight!.image).toMatch(/default\.hdr/);
+        expect(scene.imageBasedLight).toMatchObject({
+            image: 'slow.hdr',
+            rotation: 2,
+        });
+        expect(scene.imageBasedLightTexture!.name).toMatch(/default\.hdr/);
 
         slow.resolve(new Texture());
         await Promise.all([pending, rotated]);
@@ -172,13 +180,27 @@ describe('DIVEScene image based light', () => {
         });
     });
 
+    it('describes the default image as null, also when given its URL', async () => {
+        const scene = new DIVEScene({ imageBasedLight: { image: 'a.hdr' } });
+        await scene.setImageBasedLight({});
+
+        await scene.setImageBasedLight({ image: null });
+        const texture = scene.imageBasedLightTexture;
+        expect(scene.imageBasedLight!.image).toBeNull();
+        expect(texture!.name).toMatch(/default\.hdr/);
+
+        await scene.setImageBasedLight({ image: texture!.name });
+        expect(scene.imageBasedLight!.image).toBeNull();
+        expect(scene.imageBasedLightTexture).toBe(texture);
+    });
+
     it('borrows a texture passed in and never disposes it', async () => {
         const borrowed = new Texture();
         vi.spyOn(borrowed, 'dispose');
         const scene = new DIVEScene({ imageBasedLight: { image: borrowed } });
         await scene.setImageBasedLight({});
 
-        expect(scene.imageBasedLight!.texture).toBe(borrowed);
+        expect(scene.imageBasedLightTexture).toBe(borrowed);
 
         await scene.setImageBasedLight({ image: 'a.hdr' });
         await scene.setImageBasedLight({ image: borrowed });
@@ -190,10 +212,10 @@ describe('DIVEScene image based light', () => {
     it('disposes a loaded image on replace and on scene dispose', async () => {
         const scene = new DIVEScene();
         await scene.setImageBasedLight({ image: 'a.hdr' });
-        const replaced = scene.imageBasedLight!.texture!;
+        const replaced = scene.imageBasedLightTexture!;
 
         await scene.setImageBasedLight({ image: 'b.hdr' });
-        const current = scene.imageBasedLight!.texture!;
+        const current = scene.imageBasedLightTexture!;
 
         expect(replaced.dispose).toHaveBeenCalled();
         expect(current.dispose).not.toHaveBeenCalled();
@@ -229,7 +251,7 @@ describe('DIVEScene image based light', () => {
         const scene = new DIVEScene({ imageBasedLight: null });
         await scene.setImageBasedLight({ image: url });
 
-        const texture = scene.imageBasedLight!.texture!;
+        const texture = scene.imageBasedLightTexture!;
         expect(texture.userData.loader).toBe(loader);
         expect(texture.name).toBe(url);
         expect(texture.mapping).toBe(EquirectangularReflectionMapping);
@@ -239,10 +261,10 @@ describe('DIVEScene image based light', () => {
         const scene = new DIVEScene({ imageBasedLight: null });
 
         await scene.setImageBasedLight({ image: 'a.jpg' });
-        expect(scene.imageBasedLight!.texture!.colorSpace).toBe(SRGBColorSpace);
+        expect(scene.imageBasedLightTexture!.colorSpace).toBe(SRGBColorSpace);
 
         await scene.setImageBasedLight({ image: 'a.hdr' });
-        expect(scene.imageBasedLight!.texture!.colorSpace).not.toBe(
+        expect(scene.imageBasedLightTexture!.colorSpace).not.toBe(
             SRGBColorSpace,
         );
     });
@@ -250,17 +272,17 @@ describe('DIVEScene image based light', () => {
     it('signals an image change, but not a rotation or intensity change', async () => {
         const scene = new DIVEScene();
         await scene.setImageBasedLight({});
-        let version = scene.imageBasedLightImageVersion;
+        let version = scene.imageBasedLightVersion;
 
         await scene.setImageBasedLight({ rotation: 1, intensity: 2 });
-        expect(scene.imageBasedLightImageVersion).toBe(version);
+        expect(scene.imageBasedLightVersion).toBe(version);
 
         await scene.setImageBasedLight({ image: 'a.hdr' });
-        expect(scene.imageBasedLightImageVersion).not.toBe(version);
-        version = scene.imageBasedLightImageVersion;
+        expect(scene.imageBasedLightVersion).not.toBe(version);
+        version = scene.imageBasedLightVersion;
 
         await scene.setImageBasedLight(null);
-        expect(scene.imageBasedLightImageVersion).not.toBe(version);
+        expect(scene.imageBasedLightVersion).not.toBe(version);
     });
 });
 

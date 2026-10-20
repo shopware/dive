@@ -42,6 +42,19 @@ vi.mock('three/webgpu', async (importOriginal) => {
     };
 });
 
+/** holds back the next load until the returned function is called */
+const holdNextLoad = (): (() => void) => {
+    let release!: () => void;
+    const released = new Promise<void>((resolve) => (release = resolve));
+    loadAsync.mockImplementationOnce(async (url: string) => {
+        await released;
+        const texture = new (await import('three/webgpu')).Texture();
+        texture.name = url;
+        return texture;
+    });
+    return release;
+};
+
 const makeGateway = (
     settings?: ConstructorParameters<typeof DIVEScene>[0],
 ): { gateway: EngineGateway; scene: DIVEScene } => {
@@ -189,6 +202,55 @@ describe('plugins/state/EngineGateway scene settings', () => {
                 expect(gateway.readSceneSettings().background).toBe(expected);
             },
         );
+    });
+
+    describe('while an image is loading', () => {
+        it('exports the default light before it has loaded', () => {
+            holdNextLoad();
+            const { gateway } = makeGateway();
+
+            expect(gateway.readSceneSettings().imageBasedLight).toEqual({
+                image: null,
+                rotation: 0,
+                intensity: 1,
+            });
+        });
+
+        it('exports the requested light during a swap', async () => {
+            const { gateway, scene } = makeGateway({
+                imageBasedLight: { image: 'old.hdr' },
+            });
+            await scene.setImageBasedLight({});
+            const release = holdNextLoad();
+
+            const swap = gateway.applySceneSettings({
+                imageBasedLight: { image: 'new.hdr', rotation: 2 },
+            });
+
+            expect(gateway.readSceneSettings().imageBasedLight).toEqual({
+                image: 'new.hdr',
+                rotation: 2,
+                intensity: 1,
+            });
+            release();
+            await swap;
+        });
+
+        it('exports the requested background before it has loaded', async () => {
+            const { gateway } = makeGateway({ background: '#ff0000' });
+            const release = holdNextLoad();
+
+            const load = gateway.applySceneSettings({
+                background: { image: 'panorama.jpg', rotation: 1 },
+            });
+
+            expect(gateway.readSceneSettings()).toMatchObject({
+                background: { image: 'panorama.jpg', rotation: 1 },
+                backgroundColor: 'transparent',
+            });
+            release();
+            await load;
+        });
     });
 
     describe('image based light', () => {

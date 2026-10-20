@@ -133,8 +133,8 @@ export class DIVERenderer {
     private _environment: DIVEEnvironment;
     private _baker: ImageBasedLightBaker;
 
-    /** the scene's image version at the last bake, -1 before the first */
-    private _bakedImageVersion = -1;
+    /** the scene's light version at the last bake, -1 before the first */
+    private _bakedLightVersion = -1;
 
     private _initPromise: DIVEAbortablePromise<void> | null = null;
 
@@ -230,11 +230,13 @@ export class DIVERenderer {
      */
     private _applyImageBasedLight(): void {
         const light = this._scene.imageBasedLight;
-        const version = this._scene.imageBasedLightImageVersion;
+        const version = this._scene.imageBasedLightVersion;
 
-        if (version !== this._bakedImageVersion) {
-            this._bakedImageVersion = version;
-            this._scene.environment = this._baker.bake(light?.texture ?? null);
+        if (version !== this._bakedLightVersion) {
+            this._bakedLightVersion = version;
+            this._scene.environment = this._baker.bake(
+                this._scene.imageBasedLightTexture,
+            );
         }
 
         if (!light) return;
@@ -280,7 +282,7 @@ export class DIVERenderer {
             this._scene.environment = null;
         }
         this._baker.release();
-        this._bakedImageVersion = -1;
+        this._bakedLightVersion = -1;
     }
 
     /**

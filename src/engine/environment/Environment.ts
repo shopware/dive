@@ -59,7 +59,6 @@ export const DIVEEnvironmentDefaultSettings: DIVEEnvironmentSettings = {
 export class DIVEEnvironment {
     private _scene: DIVEScene;
 
-    private _enabled = true;
     private _useAsBackground = false;
 
     /** the background to go back to once the image is no longer shown */
@@ -67,8 +66,6 @@ export class DIVEEnvironment {
 
     /** the newest image request made here */
     private _imageLoad: Promise<void> = Promise.resolve();
-
-    private _disposed = false;
 
     /**
      * @param _renderer - Unused; the renderer bakes from the scene itself.
@@ -84,10 +81,9 @@ export class DIVEEnvironment {
         this._scene = scene;
 
         if (options.enabled === false) {
-            this._enabled = false;
-            this._forward(scene.setImageBasedLight(null));
+            this._reportFailure(scene.setImageBasedLight(null));
         } else if (options.imageUrl !== undefined) {
-            this._imageLoad = this._forward(
+            this._imageLoad = this._reportFailure(
                 scene.setImageBasedLight({ image: options.imageUrl }),
             );
         }
@@ -105,13 +101,11 @@ export class DIVEEnvironment {
     }
 
     /**
-     * Stops what is still pending from reaching the scene.
+     * Does nothing, the scene owns everything forwarded to it.
      *
      * @deprecated The renderer frees what it baked itself.
      */
-    public dispose(): void {
-        this._disposed = true;
-    }
+    public dispose(): void {}
 
     /**
      * Does nothing, the renderer applies changes on its next frame.
@@ -136,13 +130,11 @@ export class DIVEEnvironment {
      * @deprecated Use `scene.setImageBasedLight({ image })`.
      */
     public async setImageUrl(url: string | null): Promise<void> {
-        this._enabled = true;
-        this._imageLoad = this._forward(
-            this._scene.setImageBasedLight({ image: url ?? defaultEnvUrl }),
-        );
-        await this._imageLoad;
+        this._imageLoad = this._scene.setImageBasedLight({ image: url });
 
-        if (this._useAsBackground) await this._showImage();
+        const loads = [this._imageLoad];
+        if (this._useAsBackground) loads.push(this._showImage());
+        await Promise.all(loads);
     }
 
     /**
@@ -153,15 +145,16 @@ export class DIVEEnvironment {
      * `scene.setBackground({ image, rotation })`.
      */
     public setRotationY(radians: number): void {
-        if (this._enabled) {
-            this._forward(
+        // a rotation alone would turn a light that is off back on
+        if (this._scene.imageBasedLight) {
+            this._reportFailure(
                 this._scene.setImageBasedLight({ rotation: radians }),
             );
         }
 
         const background = this._scene.getBackground();
         if (background?.type === 'image') {
-            this._forward(
+            this._reportFailure(
                 this._scene.setBackground({
                     image: background.image,
                     rotation: radians,
@@ -183,45 +176,40 @@ export class DIVEEnvironment {
 
         if (useAsBackground) {
             this._backgroundBefore = this._scene.getBackground();
-            this._forward(this._showImage());
+            this._reportFailure(this._showImage());
             return;
         }
 
-        this._forward(
-            this._scene.setBackground(toSettings(this._backgroundBefore)),
+        this._reportFailure(
+            this._scene.setBackground(
+                toBackgroundSettings(this._backgroundBefore),
+            ),
         );
     }
 
-    /** puts the light's image on the background, once it has loaded */
+    /** puts the light's image on the background, which loads it on its own */
     private async _showImage(): Promise<void> {
-        if (!this._enabled) return;
-
-        // resolves with the image on its way, or at once with the recorded one
-        await this._scene.setImageBasedLight({});
-
         const light = this._scene.imageBasedLight;
-        if (this._disposed || !this._useAsBackground || !light?.texture) {
-            return;
-        }
+        if (!light) return;
 
-        // the light's texture, borrowed, so the image is loaded only once
         await this._scene.setBackground({
-            image: light.texture,
+            image: light.image ?? defaultEnvUrl,
             rotation: light.rotation,
         });
     }
 
-    /** reports a failure nobody awaits; a caller who awaits still gets it */
-    private _forward(promise: Promise<void>): Promise<void> {
-        promise.catch((error: unknown) => {
+    /** logs a failure nobody awaits and settles either way */
+    private _reportFailure(promise: Promise<void>): Promise<void> {
+        return promise.catch((error: unknown) => {
             console.error('DIVEEnvironment: forwarding failed', error);
         });
-        return promise;
     }
 }
 
-/** the settings that record the given background again */
-function toSettings(background: DIVEBackground): DIVEBackgroundSettings {
+/** the settings that request the given background again */
+function toBackgroundSettings(
+    background: DIVEBackground,
+): DIVEBackgroundSettings {
     if (background === null) return null;
     if (background.type === 'color') return background.color;
     return { image: background.image, rotation: background.rotation };
