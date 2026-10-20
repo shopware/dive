@@ -35,12 +35,7 @@ export const SetStateAction = Action.define<
             ).execute();
         });
 
-        /**
-         * one call instead of a hand-written copy per property, which is how
-         * gridEnabled went missing here while updatescene had it
-         * an image that fails to load is reported like a broken entity, so it
-         * does not take the entities down with it
-         */
+        // a failed image is reported like a broken entity, so the entities still load
         const sceneSettings = gateway
             .applySceneSettings(_payload)
             .catch((reason: unknown) => {
