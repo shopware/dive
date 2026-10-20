@@ -1,4 +1,4 @@
-import { Color, MeshStandardMaterial } from 'three/webgpu';
+import { Color, MeshStandardMaterial, type Texture } from 'three/webgpu';
 import {
     AmbientLightComponent,
     detachTransformControls,
@@ -12,7 +12,10 @@ import {
     ModelComponent,
     PrimitiveComponent,
     PointLightComponent,
+    DIVEImageBasedLightDefaultSettings,
     type DIVE,
+    type DIVEBackgroundSettings,
+    type DIVEImageBasedLightSettings,
     type DIVERoot,
     type DIVESceneObject,
 } from '@shopware-ag/dive';
@@ -29,6 +32,8 @@ import {
     type ModelSchema,
     type PartialSchema,
     type PrimitiveSchema,
+    type StateBackground,
+    type StateImageBasedLight,
 } from '../types/index.ts';
 import { updateParentLink } from './helpers/updateParentLink/updateParentLink.ts';
 
@@ -40,11 +45,28 @@ import { updateParentLink } from './helpers/updateParentLink/updateParentLink.ts
  */
 export type SceneSettings = {
     name: string;
+    background: StateBackground;
+    /**
+     * The colour when the background is a colour, otherwise `'transparent'`.
+     *
+     * @deprecated Use `background` instead.
+     */
     backgroundColor: string;
+    imageBasedLight: StateImageBasedLight;
     gridEnabled: boolean;
     floorEnabled: boolean;
     floorColor: string;
 };
+
+/**
+ * A change to the image based light. Fields left out keep their value, an
+ * `image` of `null` is the bundled default HDR.
+ */
+export type ImageBasedLightPatch = Partial<
+    Omit<DIVEImageBasedLightSettings, 'image'> & {
+        image: string | Texture | null;
+    }
+>;
 
 /**
  * What may be written back.
@@ -53,8 +75,16 @@ export type SceneSettings = {
  * both and callers pass whatever they happen to hold.
  */
 export type SceneSettingsPatch = Partial<
-    Omit<SceneSettings, 'backgroundColor' | 'floorColor'> & {
+    Omit<
+        SceneSettings,
+        'background' | 'backgroundColor' | 'imageBasedLight' | 'floorColor'
+    > & {
+        /** Wins over `backgroundColor` when both are given. */
+        background: DIVEBackgroundSettings;
+        /** @deprecated Use `background` instead. */
         backgroundColor: string | number;
+        /** `null` turns the image based light off. */
+        imageBasedLight: ImageBasedLightPatch | null;
         floorColor: string | number;
     }
 >;
@@ -207,9 +237,13 @@ export class EngineGateway {
 
     public readSceneSettings(): SceneSettings {
         const scene = this._engine.scene;
+        const background = this._readBackground();
         return {
             name: scene.name,
-            backgroundColor: '#' + (scene.background as Color).getHexString(),
+            background,
+            backgroundColor:
+                typeof background === 'string' ? background : 'transparent',
+            imageBasedLight: this._readImageBasedLight(),
             gridEnabled: scene.grid.visible,
             floorEnabled: scene.root.floor.visible,
             floorColor:
@@ -220,17 +254,31 @@ export class EngineGateway {
         };
     }
 
-    public applySceneSettings(patch: SceneSettingsPatch): void {
+    /**
+     * Writes what the patch carries onto the scene.
+     *
+     * @returns Resolves once every image the patch asked for has loaded.
+     */
+    public async applySceneSettings(patch: SceneSettingsPatch): Promise<void> {
         const scene = this._engine.scene;
+        const loads: Promise<void>[] = [];
+
         if (patch.name !== undefined) scene.name = patch.name;
-        if (patch.backgroundColor !== undefined)
-            scene.setBackground(patch.backgroundColor);
+        if (patch.background !== undefined) {
+            loads.push(scene.setBackground(patch.background));
+        } else if (patch.backgroundColor !== undefined) {
+            loads.push(scene.setBackground(patch.backgroundColor));
+        }
+        if (patch.imageBasedLight !== undefined)
+            loads.push(this._applyImageBasedLight(patch.imageBasedLight));
         if (patch.gridEnabled !== undefined)
             scene.grid.setVisibility(patch.gridEnabled);
         if (patch.floorEnabled !== undefined)
             scene.root.floor.setVisibility(patch.floorEnabled);
         if (patch.floorColor !== undefined)
             scene.root.floor.setColor(patch.floorColor);
+
+        await Promise.all(loads);
     }
 
     // ---------------------------------------------------------------- engine
@@ -248,6 +296,48 @@ export class EngineGateway {
     }
 
     // --------------------------------------------------------------- private
+
+    /** what the state can store of the background: no textures */
+    private _readBackground(): StateBackground {
+        const background = this._engine.scene.getBackground();
+        if (background === null) return null;
+        if (background.type === 'color')
+            return '#' + background.color.getHexString();
+        if (typeof background.image !== 'string') return null;
+        return { image: background.image, rotation: background.rotation };
+    }
+
+    /**
+     * what the state can store of the image based light: no textures, and
+     * the bundled default as `null`, since its URL belongs to this build
+     */
+    private _readImageBasedLight(): StateImageBasedLight {
+        const light = this._engine.scene.imageBasedLight;
+        if (light === null || typeof light.image !== 'string') return null;
+        return {
+            image:
+                light.image === DIVEImageBasedLightDefaultSettings.image
+                    ? null
+                    : light.image,
+            rotation: light.rotation,
+            intensity: light.intensity,
+        };
+    }
+
+    private _applyImageBasedLight(
+        patch: ImageBasedLightPatch | null,
+    ): Promise<void> {
+        const scene = this._engine.scene;
+        if (patch === null) return scene.setImageBasedLight(null);
+
+        const { image, ...rest } = patch;
+        return scene.setImageBasedLight({
+            ...rest,
+            ...(image !== undefined && {
+                image: image ?? DIVEImageBasedLightDefaultSettings.image,
+            }),
+        });
+    }
 
     /**
      * Builds the node for an entity by composing the components its type needs.

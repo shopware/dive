@@ -42,13 +42,14 @@ The following table lists all available actions in DIVE:
 | [ModelLoadedAction](src/actions/object/modelloaded.ts) | Is triggered when a model is loaded. |
 | [MoveCameraAction](src/actions/camera/movecamera.ts) | Moves the camera to a new position and target. |
 | [SelectObjectAction](src/actions/object/selectobject.ts) | Selects an existing object. |
-| [SetBackgroundAction](src/actions/scene/setbackground.ts) | Set the background color of the scene. |
+| [SetBackgroundAction](src/actions/scene/setbackground.ts) | Sets what is shown behind the scene: a colour, an image or nothing. |
 | [SetCameraLayerAction](src/actions/camera/setcameralayer.ts) | Sets the camera layer to a certain layer. |
 | [SetCameraLockedAction](src/actions/camera/lockcamera.ts) | Set the camera locked state. |
 | [SetCameraTransformAction](src/actions/camera/setcameratransform.ts) | Sets the camera position and target. |
 | [SetGizmoModeAction](src/actions/toolbox/setgizmomode.ts) | Sets the gizmo's mode. |
 | [SetGizmoScaleLinkedAction](src/actions/toolbox/setgizmoscalelinked.ts) | Sets the gizmo's unified scale mode. |
 | [SetGizmoVisibleAction](src/actions/toolbox/setgizmovisible.ts) | Sets the gizmo's visibility. |
+| [SetImageBasedLightAction](src/actions/scene/setimagebasedlight.ts) | Sets the image, rotation and intensity of the image based light, or turns it off. |
 | [SetParentAction](src/actions/object/setparent.ts) | Attach an object to another object. |
 | [SetStateAction](src/actions/state/setstate.ts) | Applies complete state data to current dive instance. |
 | [StartRenderAction](src/actions/renderer/startrender.ts) | Starts the render process. |
