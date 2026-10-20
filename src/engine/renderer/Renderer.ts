@@ -1,9 +1,22 @@
 import {
+    BackSide,
     BasicShadowMap,
+    CubeCamera,
+    CubeRenderTarget,
+    HalfFloatType,
+    LinearSRGBColorSpace,
     LinearToneMapping,
+    Mesh,
+    MeshBasicMaterial,
+    NoToneMapping,
     PCFShadowMap,
     PCFSoftShadowMap,
+    PMREMGenerator,
+    type RenderTarget,
+    Scene,
+    SphereGeometry,
     SRGBColorSpace,
+    type Texture,
     WebGPURenderer,
 } from 'three/webgpu';
 import { DIVEScene } from '../scene/Scene.ts';
@@ -118,6 +131,11 @@ export class DIVERenderer {
 
     private _webgpurenderer: WebGPURenderer;
     private _environment: DIVEEnvironment;
+    private _baker: ImageBasedLightBaker;
+
+    /** the scene's image version at the last bake, -1 before the first */
+    private _bakedImageVersion = -1;
+
     private _initPromise: DIVEAbortablePromise<void> | null = null;
 
     private _settings: DIVERendererSettings;
@@ -152,6 +170,7 @@ export class DIVERenderer {
 
         this._webgpurenderer = this._createWebGPURenderer();
 
+        this._baker = new ImageBasedLightBaker(this._webgpurenderer);
         this._environment = new DIVEEnvironment(
             this._webgpurenderer,
             this._scene,
@@ -162,6 +181,9 @@ export class DIVERenderer {
         return this._webgpurenderer;
     }
 
+    /**
+     * @deprecated Use `scene.setImageBasedLight` and `scene.setBackground`.
+     */
     public get environment(): DIVEEnvironment {
         return this._environment;
     }
@@ -185,8 +207,6 @@ export class DIVERenderer {
                     if (signal.aborted) {
                         return;
                     }
-
-                    await this._environment.initAsync();
                 },
             );
         }
@@ -197,7 +217,29 @@ export class DIVERenderer {
     public tick(): void {
         if (!this._webgpurenderer.initialized) return;
 
+        this._applyImageBasedLight();
         this._webgpurenderer.render(this._scene, this.activeCamera.camera);
+    }
+
+    /**
+     * Puts the scene's image based light on the scene for this frame.
+     *
+     * Bakes only when the image changed since the last bake, so several
+     * changes within one frame cost one bake. Rotation and intensity are
+     * evaluated per frame by three and never cost one.
+     */
+    private _applyImageBasedLight(): void {
+        const light = this._scene.imageBasedLight;
+        const version = this._scene.imageBasedLightImageVersion;
+
+        if (version !== this._bakedImageVersion) {
+            this._bakedImageVersion = version;
+            this._scene.environment = this._baker.bake(light?.texture ?? null);
+        }
+
+        if (!light) return;
+        this._scene.environmentRotation.set(0, light.rotation, 0);
+        this._scene.environmentIntensity = light.intensity;
     }
 
     public onResize(width: number, height: number): void {
@@ -207,6 +249,8 @@ export class DIVERenderer {
     public dispose(): void {
         this._initPromise?.abort();
         this._environment.dispose();
+        this._releaseBake();
+        this._baker.dispose();
         this._keepCanvasUsable(this._webgpurenderer);
         this._webgpurenderer.dispose();
     }
@@ -220,10 +264,23 @@ export class DIVERenderer {
         // create new renderer with canvas
         this._settings.canvas = canvas;
         this._webgpurenderer = this._createWebGPURenderer();
-        this._environment.setRenderer(this._webgpurenderer);
+
+        // freed while the renderer that made them still listens
+        this._releaseBake();
+        this._baker.dispose();
+        this._baker = new ImageBasedLightBaker(this._webgpurenderer);
 
         this._keepCanvasUsable(previousRenderer);
         previousRenderer.dispose();
+    }
+
+    /** takes the bake off the scene, so the next tick bakes afresh */
+    private _releaseBake(): void {
+        if (this._baker.owns(this._scene.environment)) {
+            this._scene.environment = null;
+        }
+        this._baker.release();
+        this._bakedImageVersion = -1;
     }
 
     /**
@@ -290,5 +347,75 @@ export class DIVERenderer {
         renderer.toneMappingExposure = 1.0;
 
         return renderer;
+    }
+}
+
+/**
+ * Turns an equirectangular image into what `scene.environment` needs: a cube
+ * capture, then a PMREM from it. Keeps the newest bake and frees the one
+ * before.
+ */
+class ImageBasedLightBaker {
+    private _pmrem: PMREMGenerator | null = null;
+    private _target: RenderTarget | null = null;
+
+    constructor(private _renderer: WebGPURenderer) {}
+
+    /**
+     * Bakes the image, or frees the last bake for `null`.
+     *
+     * @param image - The equirectangular image.
+     * @returns The texture to put on `scene.environment`.
+     */
+    public bake(image: Texture | null): Texture | null {
+        this.release();
+        if (!image) return null;
+
+        // an inward-facing sphere, mirrored along Z to match the cube's lookup
+        const sky = new Scene();
+        const geometry = new SphereGeometry(10, 60, 40);
+        const material = new MeshBasicMaterial({ map: image, side: BackSide });
+        const mesh = new Mesh(geometry, material);
+        mesh.scale.set(1, 1, -1);
+        sky.add(mesh);
+
+        const toneMapping = this._renderer.toneMapping;
+        const outputColorSpace = this._renderer.outputColorSpace;
+        this._renderer.toneMapping = NoToneMapping;
+        this._renderer.outputColorSpace = LinearSRGBColorSpace;
+
+        const cube = new CubeRenderTarget(1024, { type: HalfFloatType });
+        new CubeCamera(0.1, 1000, cube).update(this._renderer, sky);
+
+        this._renderer.toneMapping = toneMapping;
+        this._renderer.outputColorSpace = outputColorSpace;
+
+        this._pmrem ??= new PMREMGenerator(this._renderer);
+        this._target = this._pmrem.fromCubemap(cube.texture);
+
+        cube.texture.dispose();
+        cube.dispose();
+        geometry.dispose();
+        material.dispose();
+
+        return this._target.texture;
+    }
+
+    /** whether the texture is the current bake */
+    public owns(texture: Texture | null): boolean {
+        return this._target !== null && texture === this._target.texture;
+    }
+
+    /** frees the current bake */
+    public release(): void {
+        this._target?.texture.dispose();
+        this._target?.dispose();
+        this._target = null;
+    }
+
+    public dispose(): void {
+        this.release();
+        this._pmrem?.dispose();
+        this._pmrem = null;
     }
 }
