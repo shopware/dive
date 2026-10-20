@@ -138,6 +138,10 @@ export class DIVE {
                 settings?.displayGrid ?? DIVEDefaultSettings.displayGrid,
             displayFloor:
                 settings?.displayFloor ?? DIVEDefaultSettings.displayFloor,
+            imageBasedLight:
+                settings?.imageBasedLight === undefined
+                    ? DIVEDefaultSettings.imageBasedLight
+                    : settings.imageBasedLight,
         });
 
         /**
