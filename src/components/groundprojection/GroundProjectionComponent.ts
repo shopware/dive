@@ -3,10 +3,10 @@ import {
     MeshBasicNodeMaterial,
     SphereGeometry,
     Vector3,
-    type Texture,
 } from 'three/webgpu';
 import { BACKGROUND_LAYER_MASK } from '../../constants/VisibilityLayerMask.ts';
 import { DIVEComponent } from '../../engine/component/Component.ts';
+import { TextureAsset } from '../../engine/asset/texture/TextureAsset.ts';
 
 /** @experimental See {@link GroundProjectionComponent}. */
 export type DIVEGroundProjectionSettings = {
@@ -51,7 +51,9 @@ const _vertex = new Vector3();
  * {@link BACKGROUND_LAYER_MASK}, which keeps it out of bounds, exports, picking
  * and shadow bakes.
  *
- * The image is borrowed, not owned: {@link dispose} leaves it alone.
+ * The image is taken by URL and shared with every other user of that URL,
+ * such as the scene's image based light, so it is loaded once.
+ * {@link dispose} gives it back.
  *
  * @experimental The projection has only been checked on a few HDR images; its
  * API and defaults may change without a major release.
@@ -64,6 +66,8 @@ export class GroundProjectionComponent extends DIVEComponent {
     private _mesh: Mesh<SphereGeometry, MeshBasicNodeMaterial>;
     private _height: number = DIVEGroundProjectionDefaultSettings.height;
     private _radius: number = DIVEGroundProjectionDefaultSettings.radius;
+    private _image: string | null = null;
+    private _texture = new TextureAsset(() => this._showImage());
 
     constructor() {
         super();
@@ -89,9 +93,12 @@ export class GroundProjectionComponent extends DIVEComponent {
         return this._mesh;
     }
 
-    /** The image on the dome. */
-    public get map(): Texture | null {
-        return this._mesh.material.map;
+    /**
+     * The URL of the image asked for, `null` for none. A new one shows up here
+     * at once, before it has loaded.
+     */
+    public get image(): string | null {
+        return this._image;
     }
 
     /** How far above the ground the image was taken, in meters. */
@@ -110,13 +117,20 @@ export class GroundProjectionComponent extends DIVEComponent {
     }
 
     /**
-     * @param map - An equirectangular image, or `null` for a white dome.
+     * Puts an equirectangular image on the dome. The previous one stays until
+     * the new one has loaded.
+     *
+     * @param url - The URL of the image, or `null` for a white dome.
+     * @returns Resolves once the image is in place.
      */
-    public setMap(map: Texture | null): this {
-        if (this._mesh.material.map === map) return this;
+    public async setImage(url: string | null): Promise<this> {
+        this._image = url;
 
-        this._mesh.material.map = map;
-        this._mesh.material.needsUpdate = true;
+        if (url === null) {
+            this._texture.clear();
+        } else {
+            await this._texture.request(url);
+        }
 
         return this;
     }
@@ -173,14 +187,16 @@ export class GroundProjectionComponent extends DIVEComponent {
         return this;
     }
 
-    /** Frees the dome. The image belongs to whoever set it. */
+    /** Frees the dome and gives back its image. */
     public dispose(): void {
+        this._texture.dispose();
         this._mesh.geometry.dispose();
         this._mesh.material.dispose();
     }
 
     /**
-     * Shares the image, which is borrowed either way.
+     * Requests the source's image again, which shares its texture. To wait
+     * for it, await `setImage(copy.image)`.
      *
      * @param source - The component to copy from.
      */
@@ -188,10 +204,19 @@ export class GroundProjectionComponent extends DIVEComponent {
         super.copy(source);
 
         this.applySettings({ height: source.height, radius: source.radius });
-        this.setMap(source.map);
         this.setVisibility(source.visible);
+        this.setImage(source.image).catch((error: unknown) => {
+            // nobody awaits a copy, so this is the only report
+            console.error('GroundProjectionComponent: image failed', error);
+        });
 
         return this;
+    }
+
+    /** puts the loaded image on the dome */
+    private _showImage(): void {
+        this._mesh.material.map = this._texture.value;
+        this._mesh.material.needsUpdate = true;
     }
 
     /**

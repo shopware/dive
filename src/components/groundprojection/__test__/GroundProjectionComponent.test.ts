@@ -11,6 +11,66 @@ import {
     PRODUCT_LAYER_MASK,
 } from '../../../constants/VisibilityLayerMask.ts';
 
+/** the image loader, its loads resolved when the test says so */
+const images = vi.hoisted(() => {
+    const loads: {
+        url: string;
+        texture: import('three/webgpu').Texture;
+        resolve: () => void;
+        reject: (error: Error) => void;
+    }[] = [];
+    const load = vi.fn(async (url: string) => {
+        const { Texture } = await import('three/webgpu');
+        const texture = new Texture();
+        texture.name = url;
+        vi.spyOn(texture, 'dispose');
+
+        return new Promise<import('three/webgpu').Texture>(
+            (resolve, reject) => {
+                loads.push({
+                    url,
+                    texture,
+                    resolve: () => resolve(texture),
+                    reject,
+                });
+            },
+        );
+    });
+    return { load, loads };
+});
+
+vi.mock('../../../engine/asset/texture/loadEquirectangularImage.ts', () => ({
+    loadEquirectangularImage: images.load,
+}));
+
+/** every component a test made, disposed after it so the shared cache empties */
+const made: GroundProjectionComponent[] = [];
+
+function track(projection = new GroundProjectionComponent()) {
+    made.push(projection);
+    return projection;
+}
+
+/** resolves the load of a url once it has started */
+async function arrive(url: string): Promise<Texture> {
+    await vi.waitFor(() => {
+        if (!images.loads.some((load) => load.url === url)) {
+            throw new Error(`no load of ${url}`);
+        }
+    });
+    const load = images.loads.find((load) => load.url === url)!;
+    images.loads.splice(images.loads.indexOf(load), 1);
+    load.resolve();
+    return load.texture;
+}
+
+afterEach(async () => {
+    made.splice(0).forEach((projection) => projection.dispose());
+    images.loads.splice(0).forEach((load) => load.resolve());
+    await Promise.resolve();
+    images.load.mockClear();
+});
+
 /** world positions of every vertex, with the mesh's offset applied */
 const verticesOf = (projection: GroundProjectionComponent): Vector3[] => {
     const position = projection.mesh.geometry.getAttribute('position');
@@ -32,7 +92,8 @@ describe('dive/groundprojection/GroundProjectionComponent', () => {
         expect(projection.radius).toBe(
             DIVEGroundProjectionDefaultSettings.radius,
         );
-        expect(projection.map).toBeNull();
+        expect(projection.image).toBeNull();
+        expect(projection.mesh.material.map).toBeNull();
         expect(projection.visible).toBe(true);
     });
 
@@ -128,17 +189,80 @@ describe('dive/groundprojection/GroundProjectionComponent', () => {
         );
     });
 
-    it('should mark the material for recompilation when the image changes', () => {
-        const projection = new GroundProjectionComponent();
-        const map = new Texture();
+    it('should show the image of a url on the dome once it has loaded', async () => {
+        const projection = track();
         const version = projection.mesh.material.version;
 
-        projection.setMap(map);
-        expect(projection.map).toBe(map);
-        expect(projection.mesh.material.version).toBe(version + 1);
+        const done = projection.setImage('studio.hdr');
+        expect(projection.image).toBe('studio.hdr');
+        expect(projection.mesh.material.map).toBeNull();
 
-        projection.setMap(map);
+        const texture = await arrive('studio.hdr');
+        await expect(done).resolves.toBe(projection);
+
+        expect(projection.mesh.material.map).toBe(texture);
         expect(projection.mesh.material.version).toBe(version + 1);
+    });
+
+    it('should keep the previous image until the newest call has loaded', async () => {
+        const projection = track();
+        const first = projection.setImage('a.hdr');
+        const a = await arrive('a.hdr');
+        await first;
+
+        const overtaken = projection.setImage('b.hdr');
+        const newest = projection.setImage('c.hdr');
+        expect(projection.image).toBe('c.hdr');
+
+        const b = await arrive('b.hdr');
+        await overtaken;
+        expect(projection.mesh.material.map).toBe(a);
+
+        const c = await arrive('c.hdr');
+        await newest;
+        expect(projection.mesh.material.map).toBe(c);
+        expect(b.dispose).toHaveBeenCalled();
+        expect(a.dispose).toHaveBeenCalled();
+    });
+
+    it('should turn white again for null and give back the image', async () => {
+        const projection = track();
+        const done = projection.setImage('studio.hdr');
+        const texture = await arrive('studio.hdr');
+        await done;
+
+        await projection.setImage(null);
+
+        expect(projection.image).toBeNull();
+        expect(projection.mesh.material.map).toBeNull();
+        expect(texture.dispose).toHaveBeenCalled();
+    });
+
+    it('should load an image once for every dome that shows it', async () => {
+        const one = track();
+        const other = track();
+
+        const done = Promise.all([
+            one.setImage('studio.hdr'),
+            other.setImage('studio.hdr'),
+        ]);
+        const texture = await arrive('studio.hdr');
+        await done;
+
+        expect(images.load).toHaveBeenCalledTimes(1);
+        expect(one.mesh.material.map).toBe(texture);
+        expect(other.mesh.material.map).toBe(texture);
+    });
+
+    it('should reject when the image fails to load and keep the dome as it was', async () => {
+        const projection = track();
+        const done = projection.setImage('missing.hdr');
+        await vi.waitFor(() => expect(images.loads).toHaveLength(1));
+
+        images.loads.pop()!.reject(new Error('404'));
+
+        await expect(done).rejects.toThrow('404');
+        expect(projection.mesh.material.map).toBeNull();
     });
 
     it('should toggle visibility on the dome', () => {
@@ -148,36 +272,42 @@ describe('dive/groundprojection/GroundProjectionComponent', () => {
         expect(projection.visible).toBe(false);
     });
 
-    it('should free the dome but leave the borrowed image alone', () => {
+    it('should free the dome and give back its image', async () => {
         const projection = new GroundProjectionComponent();
-        const map = new Texture();
-        projection.setMap(map);
+        const done = projection.setImage('studio.hdr');
+        const texture = await arrive('studio.hdr');
+        await done;
 
         const geometrySpy = vi.spyOn(projection.mesh.geometry, 'dispose');
         const materialSpy = vi.spyOn(projection.mesh.material, 'dispose');
-        const mapSpy = vi.spyOn(map, 'dispose');
 
         projection.dispose();
 
         expect(geometrySpy).toHaveBeenCalled();
         expect(materialSpy).toHaveBeenCalled();
-        expect(mapSpy).not.toHaveBeenCalled();
+        expect(texture.dispose).toHaveBeenCalled();
     });
 
-    it('should copy shape, image and visibility into a fresh dome', () => {
-        const map = new Texture();
-        const source = new GroundProjectionComponent()
+    it('should copy shape, image and visibility into a fresh dome', async () => {
+        const source = track()
             .applySettings({ height: 2, radius: 25 })
-            .setMap(map)
             .setVisibility(false);
+        const done = source.setImage('studio.hdr');
+        const texture = await arrive('studio.hdr');
+        await done;
 
-        const clone = source.clone();
+        const clone = track(source.clone());
 
         expect(clone).not.toBe(source);
         expect(clone.mesh).not.toBe(source.mesh);
         expect(clone.height).toBe(2);
         expect(clone.radius).toBe(25);
-        expect(clone.map).toBe(map);
         expect(clone.visible).toBe(false);
+        expect(clone.image).toBe('studio.hdr');
+
+        // requested again, and shared with the source
+        await clone.setImage(clone.image);
+        expect(clone.mesh.material.map).toBe(texture);
+        expect(images.load).toHaveBeenCalledTimes(1);
     });
 });

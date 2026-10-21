@@ -104,22 +104,26 @@ A background at infinity has no ground: its floor slides along under the model a
 moves. A dome puts the image on a sphere whose lower half is flattened into a floor, so a model at
 the dome's origin stands on the floor of the photo.
 
-The dome is `GroundProjectionComponent` on a node of your own. Give it any equirectangular texture
-with `setMap()`. The floor lies at the node's origin.
+The dome is `GroundProjectionComponent` on a node of your own. Give it the URL of an
+equirectangular image with `setImage()`. The floor lies at the node's origin.
 
 ```ts
 import { DIVENode, GroundProjectionComponent } from '@shopware-ag/dive';
 
 const dome = new DIVENode();
-dome.addComponent(new GroundProjectionComponent())
-    .setMap(texture)
+const projection = dome
+    .addComponent(new GroundProjectionComponent())
     .applySettings({ height: 1.5, radius: 50 });
 
 // turn the dome with the image based light, so light and backdrop agree
 dome.rotation.y = 1;
-await dive.scene.setImageBasedLight({ image: texture, rotation: 1 });
-
 dive.scene.add(dome);
+
+// the same url is loaded once and shared by the light and the dome
+await Promise.all([
+    dive.scene.setImageBasedLight({ image: 'studio.hdr', rotation: 1 }),
+    projection.setImage('studio.hdr'),
+]);
 ```
 
 | Setting | Default | Meaning |
@@ -130,7 +134,11 @@ dive.scene.add(dome);
 `setHeight()`, `setRadius()` and `setVisibility()` change one thing at a time.
 
 Things to know:
-- The texture is borrowed. The component never disposes it.
+- `setImage()` resolves once the image is loaded. Until then, the previous image stays on the
+  dome. If calls overlap, the last one wins. `setImage(null)` turns the dome white.
+- `projection.image` returns the URL you asked for, at once, before it has loaded.
+- The same URL as the image based light or the background is loaded once and shared. Disposing the
+  component gives its image back; it is freed once nothing uses it any more.
 - Add the node to the scene, not to `scene.root`, so it stays out of the entity tree.
 - Turn `displayFloor` off. The floor sits at the same height and covers the projected one.
 - The projection is only convincing close to where the image was taken, and the camera has to stay
