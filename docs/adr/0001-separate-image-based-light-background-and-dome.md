@@ -6,7 +6,7 @@ The environment used to bundle three things: lighting from an HDR image, showing
 - the **background**, also a scene setting (`scene.setBackground`, which now takes a colour, an equirectangular image or `null` for transparent)
 - the **dome**, which is only `GroundProjectionComponent` on a node, because it is geometry rather than a setting
 
-A background no longer refers to the light's image. Anyone who wants both from one HDR sets it twice, or loads it once and passes the same `Texture`.
+A background no longer refers to the light's image. Anyone who wants both from one HDR sets the same URL on both; it is loaded once and shared.
 
 ## Considered Options
 
