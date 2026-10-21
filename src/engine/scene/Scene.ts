@@ -16,7 +16,7 @@ import { type DIVEComponent } from '../component/Component.ts';
 import { disposeComponents } from '../../helpers/disposeComponents/disposeComponents.ts';
 import { DIVENode } from '../node/Node.ts';
 import { type DIVETicker } from '../clock/Clock.ts';
-import { ImageSlot } from './imageslot/ImageSlot.ts';
+import { TextureAsset } from '../asset/texture/TextureAsset.ts';
 
 /**
  * The light a scene gets from an equirectangular image around it.
@@ -194,12 +194,12 @@ export class DIVEScene extends Scene implements DIVETicker {
     /** the image based light as requested */
     private _imageBasedLight: DIVEImageBasedLight | null = null;
 
-    private _lightImage = new ImageSlot();
+    private _lightImage = new TextureAsset();
 
     /** the background as requested */
     private _background: DIVEBackground = null;
 
-    private _backgroundImage = new ImageSlot(() => this._showBackground());
+    private _backgroundImage = new TextureAsset(() => this._showBackground());
 
     constructor(settings?: Partial<DIVESceneSettings>) {
         super();
@@ -246,7 +246,7 @@ export class DIVEScene extends Scene implements DIVETicker {
      * @internal
      */
     public get imageBasedLightTexture(): Texture | null {
-        return this._lightImage.texture;
+        return this._lightImage.value;
     }
 
     /**
@@ -383,9 +383,9 @@ export class DIVEScene extends Scene implements DIVETicker {
         }
 
         // the previous background stays until the image has loaded
-        if (this._backgroundImage.image !== background.image) return;
+        if (this._backgroundImage.origin !== background.image) return;
 
-        this.background = this._backgroundImage.texture;
+        this.background = this._backgroundImage.value;
         this.backgroundRotation.set(0, background.rotation, 0);
     }
 
