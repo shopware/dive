@@ -17,3 +17,9 @@ _Avoid_: Environment, skybox, backdrop
 **Dome**:
 Geometry that carries an image and has a flat floor at its node's origin, so that a product can stand on the ground of the image.
 _Avoid_: Ground projection (as a setting), grounded skybox
+
+### Resources
+
+**Asset**:
+A loadable resource a DIVE object uses, requested by URL or given ready-made.
+_Avoid_: Slot, source

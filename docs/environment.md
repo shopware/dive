@@ -86,17 +86,21 @@ await Promise.all([
 ]);
 ```
 
-This loads the file twice. To load it once, load the texture yourself and pass it to both:
+This loads the file twice. To load it once, load the texture yourself and pass it to both. A
+`TextureAsset` loads it the way the scene does (`.hdr`/`.exr` stay linear, anything else is sRGB)
+and owns the result:
 
 ```ts
-import { EquirectangularReflectionMapping } from 'three/webgpu';
-import { HDRLoader } from 'three/examples/jsm/loaders/HDRLoader.js';
+import { TextureAsset } from '@shopware-ag/dive';
 
-const texture = await new HDRLoader().loadAsync('studio.hdr');
-texture.mapping = EquirectangularReflectionMapping;
+const studio = new TextureAsset();
+await studio.request('studio.hdr');
 
-await dive.scene.setImageBasedLight({ image: texture });
-await dive.scene.setBackground({ image: texture });
+await dive.scene.setImageBasedLight({ image: studio.value! });
+await dive.scene.setBackground({ image: studio.value! });
+
+// once the scene no longer uses it
+studio.dispose();
 ```
 
 ## Who frees the images
