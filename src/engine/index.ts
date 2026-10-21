@@ -3,6 +3,7 @@ export * from './component/Component.ts';
 export * from './node/Node.ts';
 export * from './boundingbox/BoundingBox.ts';
 export * from './asset/Asset.ts';
+export * from './asset/cache/AssetCache.ts';
 export * from './asset/texture/TextureAsset.ts';
 export * from './clock/Clock.ts';
 export * from './input/Input.ts';

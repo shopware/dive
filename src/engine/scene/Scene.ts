@@ -23,13 +23,11 @@ import { TextureAsset } from '../asset/texture/TextureAsset.ts';
  */
 export type DIVEImageBasedLightSettings = {
     /**
-     * The image, as a URL or as a texture, `null` for the bundled default
-     * HDR. A texture is borrowed and never disposed by the scene; what the
-     * scene loads from a URL it owns.
+     * The URL of the image, `null` for the bundled default HDR.
      *
      * @default null
      */
-    image: string | Texture | null;
+    image: string | null;
     /**
      * Rotation around Y in radians.
      *
@@ -58,10 +56,9 @@ export type DIVEImageBasedLight = Readonly<DIVEImageBasedLightSettings>;
  */
 export type DIVEBackgroundImageSettings = {
     /**
-     * The image, as a URL or as a texture. A texture is borrowed and never
-     * disposed by the scene; what the scene loads from a URL it owns.
+     * The URL of the image.
      */
-    image: string | Texture;
+    image: string;
     /**
      * Rotation around Y in radians.
      *
@@ -84,7 +81,7 @@ export type DIVEBackgroundSettings =
  */
 export type DIVEBackground =
     | Readonly<{ type: 'color'; color: Color }>
-    | Readonly<{ type: 'image'; image: string | Texture; rotation: number }>
+    | Readonly<{ type: 'image'; image: string; rotation: number }>
     | null;
 
 export type DIVESceneSettings = {
@@ -264,8 +261,8 @@ export class DIVEScene extends Scene implements DIVETicker {
      *
      * Fields left out keep their value; after `null` they start from the
      * defaults again. An `image` of `null` is the bundled default HDR. Of
-     * overlapping image changes the last one wins, and an image loaded for a
-     * call that was overtaken is disposed.
+     * overlapping image changes the last one wins. An image used in several
+     * places is loaded once and shared.
      *
      * @param settings - What to change, or `null` for no image based light.
      * @returns Resolves once the image is loaded and in place.
@@ -347,8 +344,8 @@ export class DIVEScene extends Scene implements DIVETicker {
      *
      * An image is shown as it is, without a cube capture, and rotated through
      * the scene's background rotation, so a new rotation for the same image
-     * costs no reload. Of overlapping calls the last one wins, and an image
-     * loaded for a call that was overtaken is disposed.
+     * costs no reload. Of overlapping calls the last one wins. An image used
+     * in several places is loaded once and shared.
      *
      * @param value - The new background.
      * @returns Resolves once the background is in place, for an image once it
@@ -383,7 +380,7 @@ export class DIVEScene extends Scene implements DIVETicker {
         }
 
         // the previous background stays until the image has loaded
-        if (this._backgroundImage.origin !== background.image) return;
+        if (this._backgroundImage.url !== background.image) return;
 
         this.background = this._backgroundImage.value;
         this.backgroundRotation.set(0, background.rotation, 0);

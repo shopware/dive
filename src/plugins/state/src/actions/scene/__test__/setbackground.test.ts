@@ -1,4 +1,3 @@
-import { Texture } from 'three/webgpu';
 import { SetBackgroundAction } from '../setbackground.ts';
 import { type EngineGateway } from '../../../EngineGateway.ts';
 
@@ -16,7 +15,6 @@ describe('SetBackgroundAction', () => {
     it.each([
         ['a colour', '#ff0000'],
         ['an image', { image: 'panorama.jpg', rotation: 1 }],
-        ['a texture', { image: new Texture() }],
         ['transparent', null],
     ])('should hand on %s', async (_, background) => {
         const gateway = makeGateway();

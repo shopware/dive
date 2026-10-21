@@ -30,7 +30,7 @@ import {
     CameraSchema,
     EntityTypeSchema,
 } from '../../types/index.ts';
-import { Color, Object3D, Texture, Vector3 } from 'three/webgpu';
+import { Color, Object3D, Vector3 } from 'three/webgpu';
 
 /**
  * `three/webgpu` is deliberately NOT mocked beyond the image loaders. DIVENode and DIVEComponent both
@@ -228,10 +228,14 @@ const holdNextLoad = (): (() => void) => {
     return release;
 };
 
+/** every scene a test made, disposed after it so the shared image cache empties */
+const scenes: DIVEScene[] = [];
+
 const makeSceneGateway = (
     settings?: ConstructorParameters<typeof DIVEScene>[0],
 ): { gateway: EngineGateway; scene: DIVEScene } => {
     const scene = new DIVEScene(settings);
+    scenes.push(scene);
     const gateway = new EngineGateway({ scene } as unknown as DIVE);
     return { gateway, scene };
 };
@@ -240,6 +244,14 @@ describe('plugins/state/EngineGateway', () => {
     beforeEach(() => {
         vi.clearAllMocks();
         loadAsset.mockImplementation(loadMeshAsset);
+    });
+
+    afterEach(async () => {
+        scenes.splice(0).forEach((scene) => scene.dispose());
+        await Promise.allSettled(
+            loadAsync.mock.results.map((result) => result.value),
+        );
+        await new Promise((resolve) => setTimeout(resolve));
     });
 
     afterAll(() => {
@@ -2162,19 +2174,6 @@ describe('plugins/state/EngineGateway', () => {
                 });
             });
 
-            it('exports an image set from a texture as null', async () => {
-                const { gateway } = makeSceneGateway({ background: '#ff0000' });
-
-                await gateway.applySceneSettings({
-                    background: { image: new Texture() },
-                });
-
-                expect(gateway.readSceneSettings()).toMatchObject({
-                    background: null,
-                    backgroundColor: 'transparent',
-                });
-            });
-
             it('still takes the deprecated backgroundColor', async () => {
                 const { gateway } = makeSceneGateway();
 
@@ -2208,7 +2207,7 @@ describe('plugins/state/EngineGateway', () => {
 
         describe('while an image is loading', () => {
             it('exports the default light before it has loaded', () => {
-                holdNextLoad();
+                const release = holdNextLoad();
                 const { gateway } = makeSceneGateway();
 
                 expect(gateway.readSceneSettings().imageBasedLight).toEqual({
@@ -2216,6 +2215,7 @@ describe('plugins/state/EngineGateway', () => {
                     rotation: 0,
                     intensity: 1,
                 });
+                release();
             });
 
             it('exports the requested light during a swap', async () => {
@@ -2278,16 +2278,6 @@ describe('plugins/state/EngineGateway', () => {
                 const { gateway } = makeSceneGateway();
 
                 await gateway.applySceneSettings({ imageBasedLight: null });
-
-                expect(gateway.readSceneSettings().imageBasedLight).toBeNull();
-            });
-
-            it('exports a light set from a texture as null', async () => {
-                const { gateway } = makeSceneGateway();
-
-                await gateway.applySceneSettings({
-                    imageBasedLight: { image: new Texture() },
-                });
 
                 expect(gateway.readSceneSettings().imageBasedLight).toBeNull();
             });

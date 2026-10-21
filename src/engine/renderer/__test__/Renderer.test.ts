@@ -528,10 +528,9 @@ describe('DIVERenderPipeline', () => {
             const { scene, renderer } = await setUp();
             await scene.setImageBasedLight({});
             renderer.tick();
-            const studio = new Texture();
 
             await scene.setImageBasedLight({ image: 'a.hdr' });
-            await scene.setImageBasedLight({ image: studio, rotation: 2 });
+            await scene.setImageBasedLight({ image: 'b.hdr', rotation: 2 });
             await scene.setImageBasedLight({ intensity: 3 });
             renderer.tick();
 

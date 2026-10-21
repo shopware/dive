@@ -1,4 +1,3 @@
-import { Texture } from 'three/webgpu';
 import { SetImageBasedLightAction } from '../setimagebasedlight.ts';
 import { type EngineGateway } from '../../../EngineGateway.ts';
 
@@ -12,7 +11,6 @@ describe('SetImageBasedLightAction', () => {
     it.each([
         ['a full setting', { image: 'studio.hdr', rotation: 1, intensity: 2 }],
         ['a rotation only', { rotation: 1 }],
-        ['a texture', { image: new Texture() }],
         ['the default image', { image: null }],
         ['off', null],
     ])('should hand on %s', async (_, imageBasedLight) => {

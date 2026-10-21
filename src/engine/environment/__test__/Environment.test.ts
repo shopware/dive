@@ -2,7 +2,7 @@
  * @jest-environment jsdom
  */
 
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
     Color,
     PMREMGenerator as PMREMGeneratorOriginal,
@@ -96,6 +96,9 @@ const baked = (): unknown[] =>
         pmrem.fromCubemap.mock.calls.map((call: any[]) => call[0]),
     );
 
+/** every scene a test made, disposed after it so the shared image cache empties */
+const scenes: DIVEScene[] = [];
+
 /** a scene, an initialized renderer drawing it, and its environment */
 async function setUp(
     settings?: ConstructorParameters<typeof DIVEScene>[0],
@@ -105,6 +108,7 @@ async function setUp(
     environment: DIVEEnvironment;
 }> {
     const scene = new DIVEScene(settings);
+    scenes.push(scene);
     const renderer = new DIVERenderer(scene, { camera: {} } as never);
     await renderer.initAsync();
     await scene.setImageBasedLight({});
@@ -120,6 +124,11 @@ async function settle(): Promise<void> {
 describe('DIVEEnvironment', () => {
     beforeEach(() => {
         vi.clearAllMocks();
+    });
+
+    afterEach(async () => {
+        scenes.splice(0).forEach((scene) => scene.dispose());
+        await settle();
     });
 
     it('is reachable as the renderer environment', async () => {
@@ -163,11 +172,13 @@ describe('DIVEEnvironment', () => {
     });
 
     it('reports a failed forward nobody awaits', async () => {
-        const { environment } = await setUp();
+        const { scene, renderer } = await setUp();
         const error = vi.spyOn(console, 'error').mockImplementation(() => {});
         loaders.hdr.mockRejectedValueOnce(new Error('404'));
 
-        environment.setUseAsBackground(true);
+        new DIVEEnvironment(renderer.webgpurenderer, scene, {
+            imageUrl: 'missing.hdr',
+        });
 
         await vi.waitFor(() => expect(error).toHaveBeenCalledTimes(1));
         error.mockRestore();
@@ -217,7 +228,7 @@ describe('DIVEEnvironment', () => {
         expect(scene.backgroundRotation.y).toBe(0.5);
     });
 
-    it('gives the background an image of its own, which the light cannot take away', async () => {
+    it('keeps the image on the background when the light moves on', async () => {
         const { scene, environment } = await setUp({
             imageBasedLight: { image: 'studio.hdr' },
         });
@@ -238,17 +249,18 @@ describe('DIVEEnvironment', () => {
         expect(shown.dispose).not.toHaveBeenCalled();
     });
 
-    it('shares a texture the light was given with the background', async () => {
-        const borrowed = new Texture();
+    it('shares the image of the light with the background, loading it once', async () => {
         const { scene, environment } = await setUp({
-            imageBasedLight: { image: borrowed },
+            imageBasedLight: { image: 'studio.hdr' },
         });
 
         environment.setUseAsBackground(true);
         await settle();
 
-        expect(scene.background).toBe(borrowed);
-        expect(scene.getBackground()).toMatchObject({ image: borrowed });
+        expect(scene.background).toBe(scene.imageBasedLightTexture);
+        expect(
+            loaders.hdr.mock.calls.filter(([url]) => url === 'studio.hdr'),
+        ).toHaveLength(1);
     });
 
     it('rotates an image background along with the light', async () => {

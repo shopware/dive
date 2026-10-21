@@ -10,7 +10,7 @@ import { DIVEComponent } from '../../component/Component.ts';
 import { DIVENode } from '../../node/Node.ts';
 import {
     DIVEImageBasedLightDefaultSettings,
-    DIVEScene,
+    DIVEScene as SceneUnderTest,
     DIVESceneDefaultSettings,
 } from '../Scene.ts';
 import { DIVEGridDefaultSettings } from '../../../components/grid/GridComponent.ts';
@@ -56,17 +56,25 @@ vi.mock('../root/Root.ts', async (importOriginal) => {
 });
 
 const loaders = vi.hoisted(() => {
+    const state = { pending: 0 };
+
     /** a texture per load, telling which loader made it from which url */
     const loader = (kind: string) =>
         vi.fn(async (url: string) => {
-            const texture = new (await import('three/webgpu')).Texture();
-            texture.name = url;
-            texture.userData.loader = kind;
-            vi.spyOn(texture, 'dispose');
-            return texture;
+            state.pending++;
+            try {
+                const texture = new (await import('three/webgpu')).Texture();
+                texture.name = url;
+                texture.userData.loader = kind;
+                vi.spyOn(texture, 'dispose');
+                return texture;
+            } finally {
+                state.pending--;
+            }
         });
 
     return {
+        state,
         hdr: loader('hdr'),
         exr: loader('exr'),
         texture: loader('texture'),
@@ -95,6 +103,23 @@ vi.mock('three/webgpu', async (importOriginal) => {
         }),
     };
 });
+
+/** every scene a test made, disposed after it so the shared image cache empties */
+const scenes: SceneUnderTest[] = [];
+
+/** disposes every scene made so far and lets their loads settle */
+async function disposeScenes(): Promise<void> {
+    scenes.splice(0).forEach((made) => made.dispose());
+    await vi.waitFor(() => expect(loaders.state.pending).toBe(0));
+    await new Promise((resolve) => setTimeout(resolve));
+}
+
+class DIVEScene extends SceneUnderTest {
+    constructor(...args: ConstructorParameters<typeof SceneUnderTest>) {
+        super(...args);
+        scenes.push(this);
+    }
+}
 
 class Ticker extends DIVEComponent {
     public ticks = 0;
@@ -144,6 +169,8 @@ describe('DIVEScene', () => {
         real.root = false;
         scene = new DIVEScene();
     });
+
+    afterEach(disposeScenes);
 
     it('should instantiate with correct properties', () => {
         expect(scene).toBeDefined();
@@ -646,7 +673,9 @@ describe('DIVEScene', () => {
     });
 
     describe('image based light', () => {
-        beforeEach(() => {
+        beforeEach(async () => {
+            // the scene made above shares its loads, so only this test's count
+            await disposeScenes();
             real.root = true;
             loaders.hdr.mockClear();
             loaders.exr.mockClear();
@@ -796,21 +825,40 @@ describe('DIVEScene', () => {
             expect(scene.imageBasedLightTexture).toBe(texture);
         });
 
-        it('borrows a texture passed in and never disposes it', async () => {
-            const borrowed = new Texture();
-            vi.spyOn(borrowed, 'dispose');
-            const scene = new DIVEScene({
-                imageBasedLight: { image: borrowed },
-            });
-            await scene.setImageBasedLight({});
+        it('shares one image with a background of the same url', async () => {
+            const scene = new DIVEScene({ imageBasedLight: null });
 
-            expect(scene.imageBasedLightTexture).toBe(borrowed);
+            await Promise.all([
+                scene.setImageBasedLight({ image: 'studio.hdr' }),
+                scene.setBackground({ image: 'studio.hdr' }),
+            ]);
+            const texture = scene.imageBasedLightTexture!;
+
+            expect(loaders.hdr).toHaveBeenCalledOnce();
+            expect(scene.background).toBe(texture);
 
             await scene.setImageBasedLight({ image: 'a.hdr' });
-            await scene.setImageBasedLight({ image: borrowed });
-            scene.dispose();
+            expect(texture.dispose).not.toHaveBeenCalled();
 
-            expect(borrowed.dispose).not.toHaveBeenCalled();
+            await scene.setBackground(null);
+            expect(texture.dispose).toHaveBeenCalledOnce();
+        });
+
+        it('shares one image between scenes', async () => {
+            const first = new DIVEScene();
+            const second = new DIVEScene();
+            await Promise.all([
+                first.setImageBasedLight({ image: 'studio.hdr' }),
+                second.setImageBasedLight({ image: 'studio.hdr' }),
+            ]);
+            const texture = first.imageBasedLightTexture!;
+
+            expect(second.imageBasedLightTexture).toBe(texture);
+
+            first.dispose();
+            expect(texture.dispose).not.toHaveBeenCalled();
+            second.dispose();
+            expect(texture.dispose).toHaveBeenCalledOnce();
         });
 
         it('disposes a loaded image on replace and on scene dispose', async () => {
@@ -898,7 +946,9 @@ describe('DIVEScene', () => {
             settings?: ConstructorParameters<typeof DIVEScene>[0],
         ): DIVEScene => new DIVEScene({ imageBasedLight: null, ...settings });
 
-        beforeEach(() => {
+        beforeEach(async () => {
+            // the scene made above shares its loads, so only this test's count
+            await disposeScenes();
             real.root = true;
             loaders.hdr.mockClear();
             loaders.exr.mockClear();
@@ -1075,28 +1125,6 @@ describe('DIVEScene', () => {
             expect(replaced.dispose).toHaveBeenCalled();
         });
 
-        it('borrows a texture passed in and never disposes it', async () => {
-            const borrowed = new Texture();
-            vi.spyOn(borrowed, 'dispose');
-            const scene = createScene();
-
-            await scene.setBackground({ image: borrowed, rotation: 1 });
-
-            expect(scene.background).toBe(borrowed);
-            expect(scene.getBackground()).toEqual({
-                type: 'image',
-                image: borrowed,
-                rotation: 1,
-            });
-            expect(loaders.texture).not.toHaveBeenCalled();
-
-            await scene.setBackground('#ffffff');
-            await scene.setBackground({ image: borrowed });
-            scene.dispose();
-
-            expect(borrowed.dispose).not.toHaveBeenCalled();
-        });
-
         it('disposes an image that arrives after the scene was disposed', async () => {
             const scene = createScene();
             const slow = deferred<Texture>();
@@ -1140,14 +1168,17 @@ describe('DIVEScene', () => {
             });
 
             it('takes an image from the settings', async () => {
-                const borrowed = new Texture();
                 const scene = createScene({
-                    background: { image: borrowed, rotation: 1 },
+                    background: { image: 'panorama.jpg', rotation: 1 },
                 });
-                await scene.setBackground({ image: borrowed, rotation: 1 });
+                await scene.setBackground({
+                    image: 'panorama.jpg',
+                    rotation: 1,
+                });
 
-                expect(scene.background).toBe(borrowed);
+                expect((scene.background as Texture).name).toBe('panorama.jpg');
                 expect(scene.backgroundRotation.y).toBe(1);
+                expect(loaders.texture).toHaveBeenCalledOnce();
             });
 
             it('still takes the deprecated backgroundColor', () => {

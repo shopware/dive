@@ -10,7 +10,7 @@ import { type ActionDependencies } from '../../../types/index.ts';
  */
 export type SetBackgroundPayload = {
     /**
-     * A colour, an equirectangular image (URL or texture, plus rotation), or
+     * A colour, an equirectangular image (URL plus rotation), or
      * `null` for transparent. Wins over `color`.
      */
     background?: DIVEBackgroundSettings;

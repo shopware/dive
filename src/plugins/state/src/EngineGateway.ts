@@ -286,23 +286,19 @@ export class EngineGateway {
 
     // --------------------------------------------------------------- private
 
-    /** what the state can store of the background: no textures */
+    /** what the state stores of the background */
     private _readBackground(): StateBackground {
         const background = this._engine.scene.getBackground();
         if (background === null) return null;
         if (background.type === 'color')
             return '#' + background.color.getHexString();
-        if (typeof background.image !== 'string') return null;
         return { image: background.image, rotation: background.rotation };
     }
 
-    /** what the state can store of the image based light: no textures */
+    /** what the state stores of the image based light */
     private _readImageBasedLight(): StateImageBasedLight {
         const light = this._engine.scene.imageBasedLight;
         if (light === null) return null;
-        if (light.image !== null && typeof light.image !== 'string') {
-            return null;
-        }
         return {
             image: light.image,
             rotation: light.rotation,

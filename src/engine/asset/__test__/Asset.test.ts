@@ -1,12 +1,13 @@
 import { DIVEAsset } from '../Asset.ts';
+import { DIVEAssetCache } from '../cache/AssetCache.ts';
 
 /** a stand-in value, telling where it was loaded from */
 class Thing {
     constructor(public url = '') {}
 }
 
-/** a loader whose loads resolve when the test says so */
-function deferredLoader() {
+/** a cache whose loads resolve when the test says so */
+function deferredCache() {
     const loads: {
         url: string;
         resolve: () => void;
@@ -22,47 +23,75 @@ function deferredLoader() {
                 });
             }),
     );
-    return { load, loads };
+    const dispose = vi.fn();
+    const cache = new DIVEAssetCache<Thing>(load, dispose);
+    return { cache, load, loads, dispose };
+}
+
+/** an asset with a.hdr loaded and in place */
+async function loaded(
+    cache: DIVEAssetCache<Thing>,
+    loads: { resolve: () => void }[],
+) {
+    const asset = new DIVEAsset<Thing>(cache);
+    const done = asset.request('a.hdr');
+    loads[loads.length - 1].resolve();
+    await done;
+    return asset;
 }
 
 describe('DIVEAsset', () => {
-    it('puts a borrowed value in place synchronously', () => {
-        const asset = new DIVEAsset<Thing>(vi.fn(), vi.fn());
-        const thing = new Thing();
+    it('keeps the previous value until a url has loaded', async () => {
+        const { cache, loads } = deferredCache();
+        const asset = await loaded(cache, loads);
+        const previous = asset.value;
 
-        void asset.request(thing);
+        const done = asset.request('b.hdr');
+        expect(asset.value).toBe(previous);
+        expect(asset.url).toBe('a.hdr');
 
-        expect(asset.value).toBe(thing);
-        expect(asset.origin).toBe(thing);
-        expect(asset.version).toBe(1);
+        loads[1].resolve();
+        await done;
+        expect(asset.value?.url).toBe('b.hdr');
+        expect(asset.url).toBe('b.hdr');
+        expect(asset.version).toBe(2);
     });
 
-    it('keeps the previous value until a url has loaded, then owns it', async () => {
-        const { load, loads } = deferredLoader();
-        const dispose = vi.fn();
-        const asset = new DIVEAsset<Thing>(load, dispose);
-        const borrowed = new Thing();
-        await asset.request(borrowed);
+    it('frees the value it replaced, unless someone else holds it', async () => {
+        const { cache, loads, dispose } = deferredCache();
+        const asset = await loaded(cache, loads);
+        const other = await loaded(cache, loads);
+        const shared = asset.value;
 
-        const done = asset.request('a.hdr');
-        expect(asset.value).toBe(borrowed);
-
-        loads[0].resolve();
-        await done;
-        expect(asset.value?.url).toBe('a.hdr');
-        expect(asset.origin).toBe('a.hdr');
-        expect(asset.version).toBe(2);
+        const first = asset.request('b.hdr');
+        loads[1].resolve();
+        await first;
         expect(dispose).not.toHaveBeenCalled();
 
-        const owned = asset.value;
-        await asset.request(new Thing());
-        expect(dispose).toHaveBeenCalledExactlyOnceWith(owned);
+        const second = other.request('b.hdr');
+        await second;
+        expect(dispose).toHaveBeenCalledExactlyOnceWith(shared);
     });
 
-    it('lets the last request win and disposes an overtaken load on arrival', async () => {
-        const { load, loads } = deferredLoader();
-        const dispose = vi.fn();
-        const asset = new DIVEAsset<Thing>(load, dispose);
+    it('shares the value with another asset requesting the same url', async () => {
+        const { cache, load, loads } = deferredCache();
+        const light = new DIVEAsset<Thing>(cache);
+        const background = new DIVEAsset<Thing>(cache);
+
+        const done = Promise.all([
+            light.request('a.hdr'),
+            background.request('a.hdr'),
+        ]);
+        loads[0].resolve();
+        await done;
+
+        expect(load).toHaveBeenCalledOnce();
+        expect(light.value).toBe(background.value);
+    });
+
+    it('lets the last request win and frees an overtaken load on arrival', async () => {
+        const { cache, loads, dispose } = deferredCache();
+        const asset = new DIVEAsset<Thing>(cache);
 
         const first = asset.request('a.hdr');
         const second = asset.request('b.hdr');
@@ -77,8 +106,8 @@ describe('DIVEAsset', () => {
     });
 
     it('answers a request for the url on its way with the same load', async () => {
-        const { load, loads } = deferredLoader();
-        const asset = new DIVEAsset<Thing>(load, vi.fn());
+        const { cache, load, loads } = deferredCache();
+        const asset = new DIVEAsset<Thing>(cache);
 
         const first = asset.request('a.hdr');
         const second = asset.request('a.hdr');
@@ -90,11 +119,8 @@ describe('DIVEAsset', () => {
     });
 
     it('does not reload the url in place', async () => {
-        const { load, loads } = deferredLoader();
-        const asset = new DIVEAsset<Thing>(load, vi.fn());
-        const done = asset.request('a.hdr');
-        loads[0].resolve();
-        await done;
+        const { cache, load, loads } = deferredCache();
+        const asset = await loaded(cache, loads);
 
         await asset.request('a.hdr');
 
@@ -102,26 +128,25 @@ describe('DIVEAsset', () => {
         expect(asset.version).toBe(1);
     });
 
-    it('drops a load on its way when the value in place is requested again', async () => {
-        const { load, loads } = deferredLoader();
-        const dispose = vi.fn();
-        const asset = new DIVEAsset<Thing>(load, dispose);
-        const borrowed = new Thing();
-        await asset.request(borrowed);
+    it('drops a load on its way when the url in place is requested again', async () => {
+        const { cache, loads, dispose } = deferredCache();
+        const asset = await loaded(cache, loads);
+        const inPlace = asset.value;
 
-        const done = asset.request('a.hdr');
-        await asset.request(borrowed);
-        loads[0].resolve();
+        const done = asset.request('b.hdr');
+        await asset.request('a.hdr');
+        loads[1].resolve();
         await done;
 
-        expect(asset.value).toBe(borrowed);
+        expect(asset.value).toBe(inPlace);
         expect(asset.version).toBe(1);
         expect(dispose).toHaveBeenCalledOnce();
+        expect(dispose.mock.calls[0][0].url).toBe('b.hdr');
     });
 
     it('rejects a failed load and loads again on a retry', async () => {
-        const { load, loads } = deferredLoader();
-        const asset = new DIVEAsset<Thing>(load, vi.fn());
+        const { cache, load, loads } = deferredCache();
+        const asset = new DIVEAsset<Thing>(cache);
 
         const failed = asset.request('a.hdr');
         loads[0].reject(new Error('404'));
@@ -136,10 +161,13 @@ describe('DIVEAsset', () => {
     });
 
     it('reports every change of the value', async () => {
+        const { cache, loads } = deferredCache();
         const onChange = vi.fn();
-        const asset = new DIVEAsset<Thing>(vi.fn(), vi.fn(), onChange);
+        const asset = new DIVEAsset<Thing>(cache, onChange);
 
-        await asset.request(new Thing());
+        const done = asset.request('a.hdr');
+        loads[0].resolve();
+        await done;
         asset.clear();
         asset.clear();
 
@@ -147,29 +175,21 @@ describe('DIVEAsset', () => {
         expect(asset.version).toBe(2);
     });
 
-    it('clears the value, disposing it only when owned', async () => {
-        const { load, loads } = deferredLoader();
-        const dispose = vi.fn();
-        const asset = new DIVEAsset<Thing>(load, dispose);
-        const done = asset.request('a.hdr');
-        loads[0].resolve();
-        await done;
-        const owned = asset.value;
+    it('clears the value and frees it', async () => {
+        const { cache, loads, dispose } = deferredCache();
+        const asset = await loaded(cache, loads);
+        const value = asset.value;
 
         asset.clear();
+
         expect(asset.value).toBeNull();
-        expect(asset.origin).toBeNull();
-        expect(dispose).toHaveBeenCalledExactlyOnceWith(owned);
-
-        await asset.request(new Thing());
-        asset.clear();
-        expect(dispose).toHaveBeenCalledOnce();
+        expect(asset.url).toBeNull();
+        expect(dispose).toHaveBeenCalledExactlyOnceWith(value);
     });
 
     it('drops a load on its way when cleared', async () => {
-        const { load, loads } = deferredLoader();
-        const dispose = vi.fn();
-        const asset = new DIVEAsset<Thing>(load, dispose);
+        const { cache, loads, dispose } = deferredCache();
+        const asset = new DIVEAsset<Thing>(cache);
 
         const done = asset.request('a.hdr');
         asset.clear();
@@ -180,26 +200,19 @@ describe('DIVEAsset', () => {
         expect(dispose).toHaveBeenCalledOnce();
     });
 
-    it('disposes an owned value but never a borrowed one', async () => {
-        const { load, loads } = deferredLoader();
-        const dispose = vi.fn();
-        const owning = new DIVEAsset<Thing>(load, dispose);
-        const done = owning.request('a.hdr');
-        loads[0].resolve();
-        await done;
-        const borrowing = new DIVEAsset<Thing>(vi.fn(), dispose);
-        await borrowing.request(new Thing());
+    it('frees its value on dispose', async () => {
+        const { cache, loads, dispose } = deferredCache();
+        const asset = await loaded(cache, loads);
+        const value = asset.value;
 
-        owning.dispose();
-        borrowing.dispose();
+        asset.dispose();
 
-        expect(dispose).toHaveBeenCalledExactlyOnceWith(owning.value);
+        expect(dispose).toHaveBeenCalledExactlyOnceWith(value);
     });
 
-    it('disposes a load that arrives after dispose', async () => {
-        const { load, loads } = deferredLoader();
-        const dispose = vi.fn();
-        const asset = new DIVEAsset<Thing>(load, dispose);
+    it('frees a load that arrives after dispose', async () => {
+        const { cache, loads, dispose } = deferredCache();
+        const asset = new DIVEAsset<Thing>(cache);
 
         const done = asset.request('a.hdr');
         asset.dispose();

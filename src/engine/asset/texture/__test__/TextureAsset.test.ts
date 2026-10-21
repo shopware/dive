@@ -46,11 +46,24 @@ vi.mock('three/webgpu', async (importOriginal) => {
     };
 });
 
+/** every asset a test made, given back after it so the shared cache empties */
+const assets: TextureAsset[] = [];
+
+function track(asset = new TextureAsset()) {
+    assets.push(asset);
+    return asset;
+}
+
 async function load(url: string) {
-    const asset = new TextureAsset();
+    const asset = track();
     await asset.request(url);
     return asset.value!;
 }
+
+afterEach(() => {
+    assets.splice(0).forEach((asset) => asset.dispose());
+    Object.values(loaders).forEach((loader) => loader.mockClear());
+});
 
 describe('TextureAsset', () => {
     it.each([
@@ -99,9 +112,28 @@ describe('TextureAsset', () => {
         expect(texture.dispose).toHaveBeenCalledOnce();
     });
 
+    it('shares one texture between assets requesting the same url', async () => {
+        const light = track();
+        const background = track();
+
+        await Promise.all([
+            light.request('studio.hdr'),
+            background.request('studio.hdr'),
+        ]);
+        const texture = light.value!;
+
+        expect(loaders.hdr).toHaveBeenCalledOnce();
+        expect(background.value).toBe(texture);
+
+        light.clear();
+        expect(texture.dispose).not.toHaveBeenCalled();
+        background.clear();
+        expect(texture.dispose).toHaveBeenCalledOnce();
+    });
+
     it('reports changes to the callback', async () => {
         const onChange = vi.fn();
-        const asset = new TextureAsset(onChange);
+        const asset = track(new TextureAsset(onChange));
 
         await asset.request('studio.hdr');
 
