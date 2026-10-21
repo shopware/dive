@@ -17,5 +17,5 @@ A background no longer refers to the light's image. Anyone who wants both from o
 ## Consequences
 
 - The renderer bakes only when the light's image changes. Rotation and intensity use three's `environmentRotation`, `environmentIntensity` and `backgroundRotation`, so changing them costs no rebake.
-- The state stores URLs only. A setting made with a `Texture` is exported as `null`.
+- Images are set by URL only, so the state can store every setting. The same URL used for the light and the background is loaded once and shared.
 - `renderer.environment` stays as a deprecated facade on the new scene setters until the next major release, and so does `backgroundColor` in the settings and the state. `groundProjection` was experimental and is removed directly.

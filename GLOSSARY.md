@@ -21,5 +21,5 @@ _Avoid_: Ground projection (as a setting), grounded skybox
 ### Resources
 
 **Asset**:
-A loadable resource a DIVE object uses, requested by URL or given ready-made.
+A loadable resource a DIVE object uses, requested by URL. The same URL used in several places is loaded once and shared.
 _Avoid_: Slot, source

@@ -187,7 +187,7 @@ export class DIVEEnvironment {
         );
     }
 
-    /** puts the light's image on the background, which loads it on its own */
+    /** puts the light's image on the background, which shares its load */
     private async _showImage(): Promise<void> {
         const light = this._scene.imageBasedLight;
         if (!light) return;

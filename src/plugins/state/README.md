@@ -42,7 +42,6 @@ type StateData = {
 ```
 
 - What is stored is what was asked for, also while its image is still loading.
-- A light or background set from a `Texture` is stored as `null`.
 - `backgroundColor` mirrors the background: the colour for a colour background, `'transparent'`
   otherwise. On load, `background` wins over it.
 - A state without `imageBasedLight` keeps the scene's current light. A state without `background`

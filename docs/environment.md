@@ -29,7 +29,7 @@ dive.scene.setImageBasedLight(null);
 
 | Setting | Default | Meaning |
 | --- | --- | --- |
-| `image` | `null` | A URL, a `Texture` you loaded yourself, or `null` for the bundled default HDR. |
+| `image` | `null` | The URL of the image, or `null` for the bundled default HDR. |
 | `rotation` | `0` | Rotation around Y, in radians. |
 | `intensity` | `1` | How strongly the image lights the scene. |
 
@@ -86,28 +86,13 @@ await Promise.all([
 ]);
 ```
 
-This loads the file twice. To load it once, load the texture yourself and pass it to both. A
-`TextureAsset` loads it the way the scene does (`.hdr`/`.exr` stay linear, anything else is sRGB)
-and owns the result:
+The file is loaded once. The same URL used in several places, also across scenes, is loaded once
+and shared.
 
-```ts
-import { TextureAsset } from '@shopware-ag/dive';
-
-const studio = new TextureAsset();
-await studio.request('studio.hdr');
-
-await dive.scene.setImageBasedLight({ image: studio.value! });
-await dive.scene.setBackground({ image: studio.value! });
-
-// once the scene no longer uses it
-studio.dispose();
-```
-
-## Who frees the images
-- An image the scene loaded from a URL belongs to the scene. It is freed when it is replaced and
-  when the scene is disposed.
-- A `Texture` you pass in is borrowed. DIVE never disposes it, so you can keep using it elsewhere.
-  Dispose it yourself once nothing uses it any more.
+## When images are freed
+DIVE frees an image once nothing uses it any more: once the light and the background have both
+moved on to something else, or their scene is disposed. Using the URL again after that loads it
+again.
 
 ## Deprecated
 These still work and will be removed in the next major release:
@@ -119,5 +104,4 @@ These still work and will be removed in the next major release:
 | `renderer.environment.setUseAsBackground(true)` | `scene.setBackground({ image, rotation })` |
 | `backgroundColor` setting | `background` setting |
 
-`setUseAsBackground(true)` gives the background its own copy of the light's image, so the file is
-loaded twice. Pass one texture to both setters, as shown above, to load it once.
+`setUseAsBackground(true)` shows the light's image without loading it again.
