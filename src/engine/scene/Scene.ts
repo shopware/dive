@@ -16,7 +16,7 @@ import { type DIVEComponent } from '../component/Component.ts';
 import { disposeComponents } from '../../helpers/disposeComponents/disposeComponents.ts';
 import { DIVENode } from '../node/Node.ts';
 import { type DIVETicker } from '../clock/Clock.ts';
-import { TextureAsset } from '../asset/texture/TextureAsset.ts';
+import { TextureResource } from '../resource/texture/TextureResource.ts';
 
 /**
  * The light a scene gets from an equirectangular image around it.
@@ -191,12 +191,14 @@ export class DIVEScene extends Scene implements DIVETicker {
     /** the image based light as requested */
     private _imageBasedLight: DIVEImageBasedLight | null = null;
 
-    private _lightImage = new TextureAsset();
+    private _lightImage = new TextureResource();
 
     /** the background as requested */
     private _background: DIVEBackground = null;
 
-    private _backgroundImage = new TextureAsset(() => this._showBackground());
+    private _backgroundImage = new TextureResource(() =>
+        this._showBackground(),
+    );
 
     constructor(settings?: Partial<DIVESceneSettings>) {
         super();
@@ -262,7 +264,7 @@ export class DIVEScene extends Scene implements DIVETicker {
      * Fields left out keep their value; after `null` they start from the
      * defaults again. An `image` of `null` is the bundled default HDR. Of
      * overlapping image changes the last one wins. An image used in several
-     * places is loaded once and shared.
+     * places is loaded once.
      *
      * @param settings - What to change, or `null` for no image based light.
      * @returns Resolves once the image is loaded and in place.
@@ -345,7 +347,7 @@ export class DIVEScene extends Scene implements DIVETicker {
      * An image is shown as it is, without a cube capture, and rotated through
      * the scene's background rotation, so a new rotation for the same image
      * costs no reload. Of overlapping calls the last one wins. An image used
-     * in several places is loaded once and shared.
+     * in several places is loaded once.
      *
      * @param value - The new background.
      * @returns Resolves once the background is in place, for an image once it

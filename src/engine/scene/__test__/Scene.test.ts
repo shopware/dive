@@ -14,6 +14,7 @@ import {
     DIVESceneDefaultSettings,
 } from '../Scene.ts';
 import { DIVEGridDefaultSettings } from '../../../components/grid/GridComponent.ts';
+import { GroundProjectionComponent } from '../../../components/groundprojection/GroundProjectionComponent.ts';
 
 const mock_GetSceneObject = vi.fn();
 const mock_ComputeSceneBB = vi.fn();
@@ -103,6 +104,17 @@ vi.mock('three/webgpu', async (importOriginal) => {
         }),
     };
 });
+
+/** every texture disposal, clones included: a clone carries no spy of its own */
+const textureDispose = vi.spyOn(Texture.prototype, 'dispose');
+
+/** how often a texture was disposed */
+const disposals = (texture: Texture): number =>
+    textureDispose.mock.contexts.filter((each) => each === texture).length;
+
+/** how often a url went to the hdr loader */
+const loadsOf = (url: string): number =>
+    loaders.hdr.mock.calls.filter(([each]) => each === url).length;
 
 /** every scene a test made, disposed after it so the shared image cache empties */
 const scenes: SceneUnderTest[] = [];
@@ -722,7 +734,7 @@ describe('DIVEScene', () => {
 
             expect(scene.imageBasedLight).toBeNull();
             expect(scene.imageBasedLightTexture).toBeNull();
-            expect(texture.dispose).toHaveBeenCalled();
+            expect(disposals(texture)).toBeGreaterThan(0);
         });
 
         it('keeps the fields a call leaves out', async () => {
@@ -772,7 +784,7 @@ describe('DIVEScene', () => {
 
             expect(scene.imageBasedLight!.image).toBe('fast.hdr');
             expect(scene.imageBasedLightTexture!.name).toBe('fast.hdr');
-            expect(stale.dispose).toHaveBeenCalled();
+            expect(disposals(stale)).toBeGreaterThan(0);
         });
 
         it('lets a later null win over a load still on its way', async () => {
@@ -835,13 +847,43 @@ describe('DIVEScene', () => {
             const texture = scene.imageBasedLightTexture!;
 
             expect(loaders.hdr).toHaveBeenCalledOnce();
-            expect(scene.background).toBe(texture);
+            expect(scene.background).not.toBe(texture);
+            expect((scene.background as Texture).source).toBe(texture.source);
 
             await scene.setImageBasedLight({ image: 'a.hdr' });
-            expect(texture.dispose).not.toHaveBeenCalled();
+            expect(disposals(texture)).toBe(0);
 
             await scene.setBackground(null);
-            expect(texture.dispose).toHaveBeenCalledOnce();
+            expect(disposals(texture)).toBe(1);
+        });
+
+        it('shares one load with a background and a dome of the same url', async () => {
+            const scene = new DIVEScene({ imageBasedLight: null });
+            const node = new DIVENode();
+            const dome = node.addComponent(new GroundProjectionComponent());
+            scene.add(node);
+
+            await Promise.all([
+                scene.setImageBasedLight({ image: 'studio.hdr' }),
+                scene.setBackground({ image: 'studio.hdr' }),
+                dome.setImage('studio.hdr'),
+            ]);
+            const light = scene.imageBasedLightTexture!;
+            const background = scene.background as Texture;
+            const projected = dome.mesh.material.map!;
+
+            expect(loadsOf('studio.hdr')).toBe(1);
+            expect(new Set([light, background, projected]).size).toBe(3);
+            expect(background.source).toBe(light.source);
+            expect(projected.source).toBe(light.source);
+
+            await scene.setImageBasedLight(null);
+            await scene.setBackground(null);
+            expect(disposals(light)).toBe(0);
+
+            dome.dispose();
+            expect(disposals(light)).toBe(1);
+            expect(disposals(projected)).toBe(1);
         });
 
         it('shares one image between scenes', async () => {
@@ -853,12 +895,14 @@ describe('DIVEScene', () => {
             ]);
             const texture = first.imageBasedLightTexture!;
 
-            expect(second.imageBasedLightTexture).toBe(texture);
+            expect(loadsOf('studio.hdr')).toBe(1);
+            expect(second.imageBasedLightTexture).not.toBe(texture);
+            expect(second.imageBasedLightTexture!.source).toBe(texture.source);
 
             first.dispose();
-            expect(texture.dispose).not.toHaveBeenCalled();
+            expect(disposals(texture)).toBe(0);
             second.dispose();
-            expect(texture.dispose).toHaveBeenCalledOnce();
+            expect(disposals(texture)).toBe(1);
         });
 
         it('disposes a loaded image on replace and on scene dispose', async () => {
@@ -869,12 +913,12 @@ describe('DIVEScene', () => {
             await scene.setImageBasedLight({ image: 'b.hdr' });
             const current = scene.imageBasedLightTexture!;
 
-            expect(replaced.dispose).toHaveBeenCalled();
-            expect(current.dispose).not.toHaveBeenCalled();
+            expect(disposals(replaced)).toBeGreaterThan(0);
+            expect(disposals(current)).toBe(0);
 
             scene.dispose();
 
-            expect(current.dispose).toHaveBeenCalled();
+            expect(disposals(current)).toBeGreaterThan(0);
         });
 
         it('disposes an image that arrives after the scene was disposed', async () => {
@@ -889,7 +933,7 @@ describe('DIVEScene', () => {
             slow.resolve(late);
             await pending;
 
-            expect(late.dispose).toHaveBeenCalled();
+            expect(disposals(late)).toBeGreaterThan(0);
         });
 
         it.each([
@@ -1008,7 +1052,7 @@ describe('DIVEScene', () => {
             expect(scene.background).toBe(texture);
             expect(scene.backgroundRotation.y).toBe(2);
             expect(scene.getBackground()).toMatchObject({ rotation: 2 });
-            expect(texture.dispose).not.toHaveBeenCalled();
+            expect(disposals(texture)).toBe(0);
             expect(loaders.texture).toHaveBeenCalledTimes(1);
         });
 
@@ -1047,7 +1091,7 @@ describe('DIVEScene', () => {
             slow.resolve(loaded);
             await pending;
 
-            expect(scene.background).toBe(loaded);
+            expect((scene.background as Texture).source).toBe(loaded.source);
         });
 
         it('lets the last of overlapping images win and disposes the stale one', async () => {
@@ -1064,7 +1108,7 @@ describe('DIVEScene', () => {
             await first;
 
             expect((scene.background as Texture).name).toBe('fast.jpg');
-            expect(stale.dispose).toHaveBeenCalled();
+            expect(disposals(stale)).toBeGreaterThan(0);
         });
 
         it('lets a later colour win over an image still on its way', async () => {
@@ -1080,7 +1124,7 @@ describe('DIVEScene', () => {
             await pending;
 
             expect((scene.background as Color).getHex()).toBe(0x00ff00);
-            expect(stale.dispose).toHaveBeenCalled();
+            expect(disposals(stale)).toBeGreaterThan(0);
         });
 
         it('lets a later rotation of the shown image win over a pending one', async () => {
@@ -1107,12 +1151,12 @@ describe('DIVEScene', () => {
             await scene.setBackground({ image: 'b.jpg' });
             const current = scene.background as Texture;
 
-            expect(replaced.dispose).toHaveBeenCalled();
-            expect(current.dispose).not.toHaveBeenCalled();
+            expect(disposals(replaced)).toBeGreaterThan(0);
+            expect(disposals(current)).toBe(0);
 
             scene.dispose();
 
-            expect(current.dispose).toHaveBeenCalled();
+            expect(disposals(current)).toBeGreaterThan(0);
         });
 
         it('disposes a loaded image when a colour replaces it', async () => {
@@ -1122,7 +1166,7 @@ describe('DIVEScene', () => {
 
             await scene.setBackground(null);
 
-            expect(replaced.dispose).toHaveBeenCalled();
+            expect(disposals(replaced)).toBeGreaterThan(0);
         });
 
         it('disposes an image that arrives after the scene was disposed', async () => {
@@ -1137,7 +1181,7 @@ describe('DIVEScene', () => {
             slow.resolve(late);
             await pending;
 
-            expect(late.dispose).toHaveBeenCalled();
+            expect(disposals(late)).toBeGreaterThan(0);
         });
 
         it('disposes an image requested after the scene was disposed', async () => {
@@ -1148,7 +1192,7 @@ describe('DIVEScene', () => {
 
             expect(scene.background).toBeNull();
             const [result] = loaders.texture.mock.results;
-            expect((await result.value).dispose).toHaveBeenCalled();
+            expect(disposals(await result.value)).toBeGreaterThan(0);
         });
 
         it('loads the image with the loader its extension calls for', async () => {

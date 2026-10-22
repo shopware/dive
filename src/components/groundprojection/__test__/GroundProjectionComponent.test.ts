@@ -39,7 +39,7 @@ const images = vi.hoisted(() => {
     return { load, loads };
 });
 
-vi.mock('../../../engine/asset/texture/loadEquirectangularImage.ts', () => ({
+vi.mock('../../../engine/resource/texture/loadEquirectangularImage.ts', () => ({
     loadEquirectangularImage: images.load,
 }));
 
@@ -200,7 +200,7 @@ describe('dive/groundprojection/GroundProjectionComponent', () => {
         const texture = await arrive('studio.hdr');
         await expect(done).resolves.toBe(projection);
 
-        expect(projection.mesh.material.map).toBe(texture);
+        expect(projection.mesh.material.map?.source).toBe(texture.source);
         expect(projection.mesh.material.version).toBe(version + 1);
     });
 
@@ -216,11 +216,11 @@ describe('dive/groundprojection/GroundProjectionComponent', () => {
 
         const b = await arrive('b.hdr');
         await overtaken;
-        expect(projection.mesh.material.map).toBe(a);
+        expect(projection.mesh.material.map?.source).toBe(a.source);
 
         const c = await arrive('c.hdr');
         await newest;
-        expect(projection.mesh.material.map).toBe(c);
+        expect(projection.mesh.material.map?.source).toBe(c.source);
         expect(b.dispose).toHaveBeenCalled();
         expect(a.dispose).toHaveBeenCalled();
     });
@@ -250,8 +250,9 @@ describe('dive/groundprojection/GroundProjectionComponent', () => {
         await done;
 
         expect(images.load).toHaveBeenCalledTimes(1);
-        expect(one.mesh.material.map).toBe(texture);
-        expect(other.mesh.material.map).toBe(texture);
+        expect(one.mesh.material.map?.source).toBe(texture.source);
+        expect(other.mesh.material.map?.source).toBe(texture.source);
+        expect(one.mesh.material.map).not.toBe(other.mesh.material.map);
     });
 
     it('should reject when the image fails to load and keep the dome as it was', async () => {
@@ -307,7 +308,7 @@ describe('dive/groundprojection/GroundProjectionComponent', () => {
 
         // requested again, and shared with the source
         await clone.setImage(clone.image);
-        expect(clone.mesh.material.map).toBe(texture);
+        expect(clone.mesh.material.map?.source).toBe(texture.source);
         expect(images.load).toHaveBeenCalledTimes(1);
     });
 });

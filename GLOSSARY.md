@@ -20,6 +20,12 @@ _Avoid_: Ground projection (as a setting), grounded skybox
 
 ### Resources
 
-**Asset**:
-A loadable resource a DIVE object uses, requested by URL. The same URL used in several places is loaded once and shared.
-_Avoid_: Slot, source
+**Resource prototype**:
+The loaded data that exists once per URL; resources are drawn from it. It is freed once the last resource drawn from it is given back.
+_Avoid_: Asset, source, cache entry
+
+**Resource**:
+The copy of a resource prototype that one DIVE object uses, requested by URL. The same URL used in several places is loaded once; each user holds its own resource.
+_Avoid_: Asset, slot, handle
+
+"Asset" stays the word for files (`AssetLoader`, `AssetExporter`).

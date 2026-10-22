@@ -2,8 +2,9 @@ import {
     EquirectangularReflectionMapping,
     NoColorSpace,
     SRGBColorSpace,
+    type Texture,
 } from 'three/webgpu';
-import { TextureAsset } from '../TextureAsset.ts';
+import { TextureResourcePrototype } from '../TextureResourcePrototype.ts';
 
 /** one mock per loader, so a wrong loader choice cannot pass */
 const loaders = vi.hoisted(() => {
@@ -12,7 +13,6 @@ const loaders = vi.hoisted(() => {
             const texture = new (await import('three/webgpu')).Texture();
             texture.name = url;
             texture.userData.loader = kind;
-            vi.spyOn(texture, 'dispose');
             return texture;
         });
 
@@ -46,26 +46,25 @@ vi.mock('three/webgpu', async (importOriginal) => {
     };
 });
 
-/** every asset a test made, given back after it so the shared cache empties */
-const assets: TextureAsset[] = [];
-
-function track(asset = new TextureAsset()) {
-    assets.push(asset);
-    return asset;
+/** listens for the dispose event the renderer frees GPU data on */
+function watchDispose(texture: Texture) {
+    const disposed = vi.fn();
+    texture.addEventListener('dispose', disposed);
+    return disposed;
 }
 
 async function load(url: string) {
-    const asset = track();
-    await asset.request(url);
-    return asset.value!;
+    const prototype = new TextureResourcePrototype(url);
+    const copy = await prototype.draw();
+    prototype.release(copy);
+    return copy;
 }
 
 afterEach(() => {
-    assets.splice(0).forEach((asset) => asset.dispose());
     Object.values(loaders).forEach((loader) => loader.mockClear());
 });
 
-describe('TextureAsset', () => {
+describe('TextureResourcePrototype', () => {
     it.each([
         ['studio.hdr', 'hdr'],
         ['studio.HDR', 'hdr'],
@@ -102,41 +101,30 @@ describe('TextureAsset', () => {
         }
     });
 
-    it('disposes the texture it loaded', async () => {
-        const asset = new TextureAsset();
-        await asset.request('studio.hdr');
-        const texture = asset.value!;
+    it('draws clones that share the pixel data', async () => {
+        const prototype = new TextureResourcePrototype('studio.hdr');
 
-        asset.dispose();
-
-        expect(texture.dispose).toHaveBeenCalledOnce();
-    });
-
-    it('shares one texture between assets requesting the same url', async () => {
-        const light = track();
-        const background = track();
-
-        await Promise.all([
-            light.request('studio.hdr'),
-            background.request('studio.hdr'),
-        ]);
-        const texture = light.value!;
+        const [a, b] = await Promise.all([prototype.draw(), prototype.draw()]);
 
         expect(loaders.hdr).toHaveBeenCalledOnce();
-        expect(background.value).toBe(texture);
-
-        light.clear();
-        expect(texture.dispose).not.toHaveBeenCalled();
-        background.clear();
-        expect(texture.dispose).toHaveBeenCalledOnce();
+        expect(a).not.toBe(b);
+        expect(a.source).toBe(b.source);
     });
 
-    it('reports changes to the callback', async () => {
-        const onChange = vi.fn();
-        const asset = track(new TextureAsset(onChange));
+    it('disposes no texture sharing the pixel data while a clone is drawn', async () => {
+        const prototype = new TextureResourcePrototype('studio.hdr');
+        const [a, b] = await Promise.all([prototype.draw(), prototype.draw()]);
+        const disposedA = watchDispose(a);
+        const disposedB = watchDispose(b);
 
-        await asset.request('studio.hdr');
+        prototype.release(a);
 
-        expect(onChange).toHaveBeenCalledOnce();
+        expect(disposedA).not.toHaveBeenCalled();
+        expect(disposedB).not.toHaveBeenCalled();
+
+        prototype.release(b);
+
+        expect(disposedA).toHaveBeenCalledOnce();
+        expect(disposedB).toHaveBeenCalledOnce();
     });
 });

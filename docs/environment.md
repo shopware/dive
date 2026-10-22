@@ -88,12 +88,13 @@ await Promise.all([
 ]);
 ```
 
-The file is loaded once. The same URL used in several places, also across scenes, is loaded once
-and shared.
+The file is loaded once. The same URL used in several places, also across scenes and DIVE
+instances, is loaded and parsed once; each place gets its own `Texture`, and they share the pixel
+data.
 
 ## When images are freed
-DIVE frees an image once nothing uses it any more: once the light and the background have both
-moved on to something else, or their scene is disposed. Using the URL again after that loads it
+DIVE frees an image once nothing uses it any more: once the light, the background and every dome
+showing it have moved on to something else, or have been disposed. Using the URL again after that loads it
 again.
 
 ## Dome
@@ -137,8 +138,9 @@ Things to know:
 - `setImage()` resolves once the image is loaded. Until then, the previous image stays on the
   dome. If calls overlap, the last one wins. `setImage(null)` turns the dome white.
 - `projection.image` returns the URL you asked for, at once, before it has loaded.
-- The same URL as the image based light or the background is loaded once and shared. Disposing the
-  component gives its image back; it is freed once nothing uses it any more.
+- The same URL as the image based light or the background is loaded once; the dome gets its own
+  `Texture` sharing the pixel data. Disposing the component gives its image back; it is freed once
+  nothing uses it any more.
 - Add the node to the scene, not to `scene.root`, so it stays out of the entity tree.
 - Turn `displayFloor` off. The floor sits at the same height and covers the projected one.
 - The projection is only convincing close to where the image was taken, and the camera has to stay

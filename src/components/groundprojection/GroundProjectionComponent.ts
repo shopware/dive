@@ -6,7 +6,7 @@ import {
 } from 'three/webgpu';
 import { BACKGROUND_LAYER_MASK } from '../../constants/VisibilityLayerMask.ts';
 import { DIVEComponent } from '../../engine/component/Component.ts';
-import { TextureAsset } from '../../engine/asset/texture/TextureAsset.ts';
+import { TextureResource } from '../../engine/resource/texture/TextureResource.ts';
 
 /** @experimental See {@link GroundProjectionComponent}. */
 export type DIVEGroundProjectionSettings = {
@@ -51,8 +51,8 @@ const _vertex = new Vector3();
  * {@link BACKGROUND_LAYER_MASK}, which keeps it out of bounds, exports, picking
  * and shadow bakes.
  *
- * The image is taken by URL and shared with every other user of that URL,
- * such as the scene's image based light, so it is loaded once.
+ * The image is taken by URL. A URL other users have as well, such as the
+ * scene's image based light, is loaded once; the dome holds its own texture.
  * {@link dispose} gives it back.
  *
  * @experimental The projection has only been checked on a few HDR images; its
@@ -67,7 +67,7 @@ export class GroundProjectionComponent extends DIVEComponent {
     private _height: number = DIVEGroundProjectionDefaultSettings.height;
     private _radius: number = DIVEGroundProjectionDefaultSettings.radius;
     private _image: string | null = null;
-    private _texture = new TextureAsset(() => this._showImage());
+    private _texture = new TextureResource(() => this._showImage());
 
     constructor() {
         super();

@@ -235,6 +235,8 @@ describe('DIVEEnvironment', () => {
         environment.setUseAsBackground(true);
         await settle();
         const shown = scene.background as Texture;
+        const disposed = vi.fn();
+        shown.addEventListener('dispose', disposed);
 
         expect(shown.name).toBe('studio.hdr');
         expect(scene.getBackground()).toEqual({
@@ -246,7 +248,7 @@ describe('DIVEEnvironment', () => {
         await scene.setImageBasedLight({ image: 'other.hdr' });
 
         expect(scene.background).toBe(shown);
-        expect(shown.dispose).not.toHaveBeenCalled();
+        expect(disposed).not.toHaveBeenCalled();
     });
 
     it('shares the image of the light with the background, loading it once', async () => {
@@ -257,7 +259,9 @@ describe('DIVEEnvironment', () => {
         environment.setUseAsBackground(true);
         await settle();
 
-        expect(scene.background).toBe(scene.imageBasedLightTexture);
+        expect((scene.background as Texture).source).toBe(
+            scene.imageBasedLightTexture!.source,
+        );
         expect(
             loaders.hdr.mock.calls.filter(([url]) => url === 'studio.hdr'),
         ).toHaveLength(1);
