@@ -80,23 +80,43 @@ describe('TextureResource', () => {
         expect(light.value!.source).toBe(dome.value!.source);
     });
 
-    it('frees the texture only once the last resource has given it back', async () => {
+    it('frees a texture at once when given back and the loaded one with the last', async () => {
         const light = track();
         const background = track();
         await Promise.all([
             light.request('studio.hdr'),
             background.request('studio.hdr'),
         ]);
+        const loaded = await loaders.hdr.mock.results[0].value;
+        const disposedLoaded = watchDispose(loaded);
         const disposedLight = watchDispose(light.value!);
         const disposedBackground = watchDispose(background.value!);
 
         light.clear();
-        expect(disposedLight).not.toHaveBeenCalled();
+        expect(disposedLight).toHaveBeenCalledOnce();
         expect(disposedBackground).not.toHaveBeenCalled();
+        expect(disposedLoaded).not.toHaveBeenCalled();
 
         background.clear();
-        expect(disposedLight).toHaveBeenCalledOnce();
         expect(disposedBackground).toHaveBeenCalledOnce();
+        expect(disposedLoaded).toHaveBeenCalledOnce();
+    });
+
+    it('gives a resource coming back to a url a fresh texture without loading again', async () => {
+        const light = track();
+        const background = track();
+        await Promise.all([
+            light.request('studio.hdr'),
+            background.request('studio.hdr'),
+        ]);
+        const before = light.value!;
+
+        light.clear();
+        await light.request('studio.hdr');
+
+        expect(loaders.hdr).toHaveBeenCalledOnce();
+        expect(light.value).not.toBe(before);
+        expect(light.value!.source).toBe(background.value!.source);
     });
 
     it('loads again once every resource has given a url back', async () => {

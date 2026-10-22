@@ -111,20 +111,24 @@ describe('TextureResourcePrototype', () => {
         expect(a.source).toBe(b.source);
     });
 
-    it('disposes no texture sharing the pixel data while a clone is drawn', async () => {
+    it('disposes a released clone at once and the loaded texture with the last', async () => {
         const prototype = new TextureResourcePrototype('studio.hdr');
         const [a, b] = await Promise.all([prototype.draw(), prototype.draw()]);
+        const loaded = await loaders.hdr.mock.results[0].value;
+        const disposedLoaded = watchDispose(loaded);
         const disposedA = watchDispose(a);
         const disposedB = watchDispose(b);
 
         prototype.release(a);
 
-        expect(disposedA).not.toHaveBeenCalled();
+        expect(disposedA).toHaveBeenCalledOnce();
         expect(disposedB).not.toHaveBeenCalled();
+        expect(disposedLoaded).not.toHaveBeenCalled();
+        expect(b.source).toBe(loaded.source);
 
         prototype.release(b);
 
-        expect(disposedA).toHaveBeenCalledOnce();
         expect(disposedB).toHaveBeenCalledOnce();
+        expect(disposedLoaded).toHaveBeenCalledOnce();
     });
 });

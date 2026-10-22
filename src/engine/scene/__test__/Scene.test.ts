@@ -122,6 +122,12 @@ const render = (object: Object3D): void =>
 const loadsOf = (url: string): number =>
     loaders.hdr.mock.calls.filter(([each]) => each === url).length;
 
+/** the texture the hdr loader made for a url, which every user gets a clone of */
+const loadedImage = (url: string): Promise<Texture> =>
+    loaders.hdr.mock.results[
+        loaders.hdr.mock.calls.findIndex(([each]) => each === url)
+    ].value;
+
 /** every scene a test made, disposed after it so the shared image cache empties */
 const scenes: SceneUnderTest[] = [];
 
@@ -857,11 +863,17 @@ describe('DIVEScene', () => {
             expect(scene.background).not.toBe(texture);
             expect((scene.background as Texture).source).toBe(texture.source);
 
+            const loaded = await loadedImage('studio.hdr');
+            const background = scene.background as Texture;
+
             await scene.setImageBasedLight({ image: 'a.hdr' });
-            expect(disposals(texture)).toBe(0);
+            expect(disposals(texture)).toBe(1);
+            expect(disposals(background)).toBe(0);
+            expect(disposals(loaded)).toBe(0);
 
             await scene.setBackground(null);
-            expect(disposals(texture)).toBe(1);
+            expect(disposals(background)).toBe(1);
+            expect(disposals(loaded)).toBe(1);
         });
 
         it('shares one load with a background and a dome of the same url', async () => {
@@ -886,13 +898,18 @@ describe('DIVEScene', () => {
             expect(background.source).toBe(light.source);
             expect(projected.source).toBe(light.source);
 
+            const loaded = await loadedImage('studio.hdr');
+
             await scene.setImageBasedLight(null);
             await scene.setBackground(null);
-            expect(disposals(light)).toBe(0);
+            expect(disposals(light)).toBe(1);
+            expect(disposals(background)).toBe(1);
+            expect(disposals(projected)).toBe(0);
+            expect(disposals(loaded)).toBe(0);
 
             dome.dispose();
-            expect(disposals(light)).toBe(1);
             expect(disposals(projected)).toBe(1);
+            expect(disposals(loaded)).toBe(1);
         });
 
         it('shares one image between scenes', async () => {
@@ -908,10 +925,17 @@ describe('DIVEScene', () => {
             expect(second.imageBasedLightTexture).not.toBe(texture);
             expect(second.imageBasedLightTexture!.source).toBe(texture.source);
 
+            const other = second.imageBasedLightTexture!;
+            const loaded = await loadedImage('studio.hdr');
+
             first.dispose();
-            expect(disposals(texture)).toBe(0);
-            second.dispose();
             expect(disposals(texture)).toBe(1);
+            expect(disposals(other)).toBe(0);
+            expect(disposals(loaded)).toBe(0);
+
+            second.dispose();
+            expect(disposals(other)).toBe(1);
+            expect(disposals(loaded)).toBe(1);
         });
 
         it('disposes a loaded image on replace and on scene dispose', async () => {

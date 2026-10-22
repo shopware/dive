@@ -47,7 +47,7 @@ describe('DIVEResourcePrototype', () => {
         expect(prototype.count).toBe(2);
     });
 
-    it('frees nothing while a copy is still drawn', async () => {
+    it('frees only the released copy while another is still drawn', async () => {
         const prototype = new DeferredPrototype('a.hdr');
         const first = prototype.draw();
         const second = prototype.draw();
@@ -56,13 +56,13 @@ describe('DIVEResourcePrototype', () => {
 
         prototype.release(a);
 
-        expect(a.disposed).toBe(false);
+        expect(a.disposed).toBe(true);
         expect(b.disposed).toBe(false);
         expect(a.original!.disposed).toBe(false);
         expect(prototype.freed).toBe(false);
     });
 
-    it('frees every copy and the loaded data with the last release', async () => {
+    it('frees the loaded data with the last release', async () => {
         const prototype = new DeferredPrototype('a.hdr');
         const first = prototype.draw();
         const second = prototype.draw();
@@ -79,19 +79,23 @@ describe('DIVEResourcePrototype', () => {
         expect(prototype.count).toBe(0);
     });
 
-    it('hands a released copy to the next draw instead of making another', async () => {
+    it('frees a released copy at once and draws a fresh one next', async () => {
         const prototype = new DeferredPrototype('a.hdr');
         const holder = prototype.draw();
         const first = prototype.draw();
         prototype.loads[0].resolve();
-        await holder;
+        const held = await holder;
         const released = await first;
 
         prototype.release(released);
         const next = await prototype.draw();
 
-        expect(next).toBe(released);
+        expect(released.disposed).toBe(true);
+        expect(held.disposed).toBe(false);
+        expect(held.original!.disposed).toBe(false);
+        expect(next).not.toBe(released);
         expect(next.disposed).toBe(false);
+        expect(prototype.loads).toHaveLength(1);
     });
 
     it('ignores a release of something it did not draw', async () => {

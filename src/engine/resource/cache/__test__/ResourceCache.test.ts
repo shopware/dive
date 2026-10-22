@@ -73,9 +73,9 @@ describe('DIVEResourceCache', () => {
         const [a, b] = await Promise.all([first, second]);
 
         cache.release('a.hdr', a);
-        expect(a.disposed).toBe(false);
-        cache.release('a.hdr', b);
         expect(a.disposed).toBe(true);
+        expect(b.disposed).toBe(false);
+        cache.release('a.hdr', b);
         expect(b.disposed).toBe(true);
 
         const again = cache.draw('a.hdr');

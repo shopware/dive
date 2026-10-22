@@ -5,10 +5,9 @@
  * copy of its own. It counts the copies drawn and is freed with the last
  * release. A failed load is not kept, so the next draw loads again.
  *
- * A released copy is kept for the next draw rather than freed, and every copy
- * is freed together with the loaded data. Copies may share data with it (a
- * texture clone shares its pixels), so nothing is freed while any copy is
- * still in use.
+ * A released copy is freed at once. Copies may share data with the loaded
+ * value (a texture clone shares its pixels), so that value is freed only with
+ * the last release.
  *
  * @typeParam T - The value, e.g. a texture.
  */
@@ -17,11 +16,8 @@ export abstract class DIVEResourcePrototype<T extends object> {
     private _loading: Promise<T> | null = null;
     private _value: T | null = null;
 
-    /** every copy made, drawn or not */
+    /** the copies drawn and not yet released */
     private _copies = new Set<T>();
-
-    /** copies released and waiting for the next draw */
-    private _idle: T[] = [];
 
     private _freed = false;
 
@@ -63,32 +59,26 @@ export abstract class DIVEResourcePrototype<T extends object> {
             throw error;
         }
 
-        const reused = this._idle.pop();
-        if (reused) return reused;
-
         const copy = this.copy(value);
         this._copies.add(copy);
         return copy;
     }
 
     /**
-     * Gives back a copy taken with {@link draw}. The last one frees every
-     * copy and the loaded data.
+     * Gives back a copy taken with {@link draw} and frees it. The last one
+     * frees the loaded data too.
      *
      * @param copy - The copy.
      */
     public release(copy: T): void {
-        if (!this._copies.has(copy) || this._idle.includes(copy)) return;
+        if (!this._copies.delete(copy)) return;
 
         this._count--;
-        this._idle.push(copy);
+        this.free(copy);
         if (this._count > 0) return;
 
         this._freed = true;
-        this._copies.forEach((each) => this.free(each));
         if (this._value) this.free(this._value);
-        this._copies.clear();
-        this._idle = [];
         this._value = null;
         this._loading = null;
     }

@@ -539,20 +539,31 @@ describe('DIVERenderPipeline', () => {
             expect(scene.environmentIntensity).toBe(3);
         });
 
-        it('bakes nothing when the light is back on the texture of its last bake', async () => {
+        it('rebakes a fresh texture when the light comes back to a url still loaded', async () => {
             const { scene, renderer } = await setUp();
-            // the background keeps the image loaded, so the light gets its texture back
+            // the background keeps the image loaded, so coming back loads nothing
             await scene.setBackground({ image: 'studio.hdr' });
             await scene.setImageBasedLight({ image: 'studio.hdr' });
             renderer.tick();
-            const baked = scene.imageBasedLightTexture;
+            const baked = scene.imageBasedLightTexture!;
+            const loads = loaders.hdr.mock.calls.length;
+            const freed = vi.fn();
+            baked.addEventListener('dispose', freed);
 
             await scene.setImageBasedLight({ image: 'a.hdr' });
             await scene.setImageBasedLight({ image: 'studio.hdr' });
-            expect(scene.imageBasedLightTexture).toBe(baked);
             renderer.tick();
 
-            expect(bakes()).toBe(1);
+            // the texture given back is freed at once, so the light gets a new clone
+            expect(freed).toHaveBeenCalledOnce();
+            expect(scene.imageBasedLightTexture).not.toBe(baked);
+            expect(scene.imageBasedLightTexture!.source).toBe(baked.source);
+            expect(
+                loaders.hdr.mock.calls
+                    .slice(loads)
+                    .filter(([url]) => url === 'studio.hdr'),
+            ).toHaveLength(0);
+            expect(bakes()).toBe(2);
         });
 
         it('bakes nothing before the renderer is initialized', async () => {
