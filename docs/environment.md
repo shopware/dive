@@ -69,8 +69,8 @@ transparent. The colour `'transparent'` means the same as `null`.
 
 Things to know:
 - An image background works with `.jpg`, `.png`, `.webp`, `.hdr` and `.exr`.
-- `setBackground` resolves once the image is loaded. It shows from the next frame on; until then,
-  the previous background stays on screen. A colour shows at once.
+- `setBackground` resolves once the image is loaded and on `scene.background`; until then, the
+  previous background stays on screen. A colour shows at once.
 - Setting the same image with a new rotation only turns it. Nothing is loaded again.
 - If calls overlap, the last one wins.
 - `dive.scene.getBackground()` returns what you asked for: `{ type: 'color', color }`,

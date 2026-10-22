@@ -227,28 +227,6 @@ describe('dive/softshadow/SoftShadowComponent', () => {
             );
         });
 
-        it('should leave a DIVE scene to hide its own background', () => {
-            /** it puts its image back right before each render otherwise */
-            const { shadow } = shaded();
-            const renderer = createRenderer();
-            const inside: boolean[] = [];
-            let hiding = false;
-            const scene = Object.assign(new Scene(), {
-                isDIVEScene: true,
-                withoutBackground: vi.fn((draw: () => void) => {
-                    hiding = true;
-                    draw();
-                    hiding = false;
-                }),
-            });
-            renderer.render.mockImplementation(() => inside.push(hiding));
-
-            shadow.bake(renderer, scene);
-
-            expect(scene.withoutBackground).toHaveBeenCalledOnce();
-            expect(inside[0]).toBe(true);
-        });
-
         it('should put them back after a failed render too', () => {
             const { shadow } = shaded();
             const renderer = createRenderer();

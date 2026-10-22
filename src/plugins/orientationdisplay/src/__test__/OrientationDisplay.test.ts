@@ -10,17 +10,10 @@ import {
 // jsdom has no 2D canvas context, so the axes labels cannot rasterize their text
 vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockReturnValue(null);
 
-/** hides the background while it draws, as the scene does */
 const mockScene = {
     add: vi.fn(),
     remove: vi.fn(),
     background: null,
-    withoutBackground: vi.fn((draw: () => void) => {
-        const background = mockScene.background;
-        mockScene.background = null;
-        draw();
-        mockScene.background = background;
-    }),
 } as unknown as DIVEScene;
 
 /**

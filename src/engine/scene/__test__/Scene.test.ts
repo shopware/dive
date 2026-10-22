@@ -1020,7 +1020,6 @@ describe('DIVEScene', () => {
             const scene = createScene();
 
             await scene.setBackground({ image: 'panorama.jpg', rotation: 1 });
-            render(scene);
 
             const background = scene.background as Texture;
             expect(background).toBeInstanceOf(Texture);
@@ -1035,67 +1034,42 @@ describe('DIVEScene', () => {
             });
         });
 
-        it('puts a loaded image on the scene only right before rendering', async () => {
+        it('puts a loaded image on the scene once it has loaded, without a render', async () => {
             const scene = createScene();
 
             await scene.setBackground({ image: 'panorama.jpg', rotation: 1 });
-            expect(scene.background).toBeNull();
-            expect(scene.backgroundRotation.y).toBe(0);
 
-            render(scene);
             expect((scene.background as Texture).name).toBe('panorama.jpg');
             expect(scene.backgroundRotation.y).toBe(1);
         });
 
-        it('assigns the background only when the image changed', async () => {
+        it('shows an image whatever a consumer assigns to onBeforeRender', async () => {
             const scene = createScene();
+            const consumer = vi.fn();
+            scene.onBeforeRender = consumer;
+
             await scene.setBackground({ image: 'a.jpg' });
             render(scene);
-            const shown = scene.background;
-            const assigned = vi.fn();
-            Object.defineProperty(scene, 'background', {
-                get: () => shown,
-                set: assigned,
-                configurable: true,
-            });
 
-            render(scene);
-
-            expect(assigned).not.toHaveBeenCalled();
+            expect((scene.background as Texture).name).toBe('a.jpg');
+            expect(consumer).toHaveBeenCalledOnce();
         });
 
-        it('draws without the background for a pass that asks, then puts it back', async () => {
+        it('lets a pass draw without the background through plain save and restore', async () => {
             const scene = createScene();
             await scene.setBackground({ image: 'a.jpg' });
-            render(scene);
             const shown = scene.background;
             const drawn: unknown[] = [];
 
-            scene.withoutBackground(() => {
-                render(scene);
-                drawn.push(scene.background);
-            });
+            const restore = scene.background;
+            scene.background = null;
+            render(scene);
+            drawn.push(scene.background);
+            scene.background = restore;
+            render(scene);
 
             expect(drawn).toEqual([null]);
             expect(scene.background).toBe(shown);
-        });
-
-        it('shows a new image on the first render after such a pass', async () => {
-            const scene = createScene();
-            const slow = deferred<Texture>();
-            loaders.texture.mockImplementationOnce(() => slow.promise);
-            const pending = scene.setBackground({ image: 'a.jpg' });
-            const loaded = new Texture();
-            slow.resolve(loaded);
-            await pending;
-
-            scene.withoutBackground(() => render(scene));
-            expect(scene.background).toBeNull();
-
-            render(scene);
-            expect((scene.background as Texture | null)?.source).toBe(
-                loaded.source,
-            );
         });
 
         it('shows a colour', async () => {
@@ -1125,12 +1099,10 @@ describe('DIVEScene', () => {
         it('rotates an image without loading it again', async () => {
             const scene = createScene();
             await scene.setBackground({ image: 'panorama.jpg' });
-            render(scene);
             const texture = scene.background as Texture;
             expect(scene.backgroundRotation.y).toBe(0);
 
             await scene.setBackground({ image: 'panorama.jpg', rotation: 2 });
-            render(scene);
 
             expect(scene.background).toBe(texture);
             expect(scene.backgroundRotation.y).toBe(2);
@@ -1151,7 +1123,6 @@ describe('DIVEScene', () => {
             });
             slow.resolve(new Texture());
             await Promise.all([first, second]);
-            render(scene);
 
             expect(scene.backgroundRotation.y).toBe(2);
             expect(loaders.texture).toHaveBeenCalledTimes(1);
@@ -1163,7 +1134,6 @@ describe('DIVEScene', () => {
             loaders.texture.mockImplementationOnce(() => slow.promise);
 
             const pending = scene.setBackground({ image: 'panorama.jpg' });
-            render(scene);
 
             expect((scene.background as Color).getHex()).toBe(0xff0000);
             expect(scene.getBackground()).toEqual({
@@ -1175,7 +1145,6 @@ describe('DIVEScene', () => {
             const loaded = new Texture();
             slow.resolve(loaded);
             await pending;
-            render(scene);
 
             expect((scene.background as Texture).source).toBe(loaded.source);
         });
@@ -1192,7 +1161,6 @@ describe('DIVEScene', () => {
             vi.spyOn(stale, 'dispose');
             slow.resolve(stale);
             await first;
-            render(scene);
 
             expect((scene.background as Texture).name).toBe('fast.jpg');
             expect(disposals(stale)).toBeGreaterThan(0);
@@ -1217,7 +1185,6 @@ describe('DIVEScene', () => {
         it('lets a later rotation of the shown image win over a pending one', async () => {
             const scene = createScene();
             await scene.setBackground({ image: 'a.jpg' });
-            render(scene);
             const shown = scene.background;
             const slow = deferred<Texture>();
             loaders.texture.mockImplementationOnce(() => slow.promise);
@@ -1226,7 +1193,6 @@ describe('DIVEScene', () => {
             await scene.setBackground({ image: 'a.jpg', rotation: 1 });
             slow.resolve(new Texture());
             await pending;
-            render(scene);
 
             expect(scene.background).toBe(shown);
             expect(scene.backgroundRotation.y).toBe(1);
@@ -1235,11 +1201,9 @@ describe('DIVEScene', () => {
         it('disposes a loaded image on replace and on scene dispose', async () => {
             const scene = createScene();
             await scene.setBackground({ image: 'a.jpg' });
-            render(scene);
             const replaced = scene.background as Texture;
 
             await scene.setBackground({ image: 'b.jpg' });
-            render(scene);
             const current = scene.background as Texture;
 
             expect(disposals(replaced)).toBeGreaterThan(0);
@@ -1253,7 +1217,6 @@ describe('DIVEScene', () => {
         it('disposes a loaded image when a colour replaces it', async () => {
             const scene = createScene();
             await scene.setBackground({ image: 'a.jpg' });
-            render(scene);
             const replaced = scene.background as Texture;
 
             await scene.setBackground(null);
@@ -1291,7 +1254,6 @@ describe('DIVEScene', () => {
             const scene = createScene();
 
             await scene.setBackground({ image: 'a.exr' });
-            render(scene);
 
             expect((scene.background as Texture).userData.loader).toBe('exr');
         });
@@ -1312,7 +1274,6 @@ describe('DIVEScene', () => {
                     image: 'panorama.jpg',
                     rotation: 1,
                 });
-                render(scene);
 
                 expect((scene.background as Texture).name).toBe('panorama.jpg');
                 expect(scene.backgroundRotation.y).toBe(1);

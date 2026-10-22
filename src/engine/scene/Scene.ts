@@ -198,9 +198,6 @@ export class DIVEScene extends Scene implements DIVETicker {
 
     private _backgroundImage = new TextureResource();
 
-    /** set while a pass draws without the background */
-    private _backgroundHidden = false;
-
     constructor(settings?: Partial<DIVESceneSettings>) {
         super();
 
@@ -342,8 +339,8 @@ export class DIVEScene extends Scene implements DIVETicker {
      * in several places is loaded once.
      *
      * @param value - The new background.
-     * @returns Resolves once the background is in place, for an image once it
-     * has loaded; the image is shown from the next render on.
+     * @returns Resolves once the background is on the scene, for an image
+     * once it has loaded.
      */
     public async setBackground(value: DIVEBackgroundSettings): Promise<void> {
         if (!isBackgroundImage(value)) {
@@ -360,47 +357,26 @@ export class DIVEScene extends Scene implements DIVETicker {
             image: value.image,
             rotation: value.rotation ?? 0,
         };
-        return this._backgroundImage.request(value.image);
+        await this._backgroundImage.request(value.image);
+        this._showBackgroundImage();
     }
 
     /**
-     * Puts the requested background image on the scene, once it has loaded.
+     * Puts the requested background image on the scene, unless it was
+     * overtaken or has not loaded yet.
      *
-     * Called by three right before every render of this scene, so renders
-     * DIVE does not drive get it too.
+     * Runs once a request has settled, outside any render, so passes that
+     * hide the background need nothing but a plain save and restore.
      */
-    public onBeforeRender(): void {
-        if (this._backgroundHidden) return;
-
+    private _showBackgroundImage(): void {
         const background = this._background;
         if (background?.type !== 'image') return;
 
         // the previous background stays until the image has loaded
         if (this._backgroundImage.url !== background.image) return;
 
-        const image = this._backgroundImage.value;
-        if (this.background !== image) this.background = image;
+        this.background = this._backgroundImage.value;
         this.backgroundRotation.set(0, background.rotation, 0);
-    }
-
-    /**
-     * Draws without the background, for a pass that wants only the content,
-     * and puts the background back afterwards.
-     *
-     * @param draw - Renders this scene.
-     * @internal
-     */
-    public withoutBackground(draw: () => void): void {
-        const background = this.background;
-        this._backgroundHidden = true;
-        this.background = null;
-
-        try {
-            draw();
-        } finally {
-            this.background = background;
-            this._backgroundHidden = false;
-        }
     }
 
     public computeSceneBB(): Box3 {

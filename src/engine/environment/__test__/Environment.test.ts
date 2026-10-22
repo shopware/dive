@@ -58,10 +58,7 @@ vi.mock('three/webgpu', async (importOriginal) => {
             this.init = vi.fn(async () => {
                 this.initialized = true;
             });
-            // like three, which hands the scene its turn before drawing it
-            this.render = vi.fn((scene: any, camera: unknown) =>
-                scene.onBeforeRender(this, scene, camera),
-            );
+            this.render = vi.fn();
             this.setSize = vi.fn();
             this.setPixelRatio = vi.fn();
             this.dispose = vi.fn();
@@ -117,12 +114,6 @@ async function setUp(
     await scene.setImageBasedLight({});
     return { scene, renderer, environment: renderer.environment };
 }
-
-/** what three does right before it renders the scene */
-const render = (scene: DIVEScene): void =>
-    scene.onBeforeRender(
-        ...([] as unknown as Parameters<DIVEScene['onBeforeRender']>),
-    );
 
 /** lets every pending load, and what waits for it, settle */
 async function settle(): Promise<void> {
@@ -340,7 +331,6 @@ describe('DIVEEnvironment', () => {
 
         environment.setUseAsBackground(true);
         await settle();
-        render(scene);
 
         expect(scene.imageBasedLightTexture).not.toBeNull();
         expect((scene.background as Texture).name).toMatch(/default\.hdr/);
@@ -355,7 +345,6 @@ describe('DIVEEnvironment', () => {
             useAsBackground: true,
         });
         await settle();
-        render(scene);
 
         expect(scene.imageBasedLight).toMatchObject({
             image: 'studio.hdr',
