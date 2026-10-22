@@ -115,6 +115,24 @@ describe('DIVEResource', () => {
         expect(freed.map((thing) => thing.url)).toEqual(['a.hdr', 'a.hdr']);
     });
 
+    it('reports the url it was asked for while sharing the load of another form of it', async () => {
+        const { cache, loads } = deferredCache();
+        const relative = new DIVEResource<Thing>(cache);
+        const absolute = new DIVEResource<Thing>(cache);
+        const href = new URL('a.hdr', document.baseURI).href;
+
+        const done = Promise.all([
+            relative.request('./a.hdr'),
+            absolute.request(href),
+        ]);
+        loads[0].resolve();
+        await done;
+
+        expect(loads).toHaveLength(1);
+        expect(relative.url).toBe('./a.hdr');
+        expect(absolute.url).toBe(href);
+    });
+
     it('answers a request for the url on its way with the same load', async () => {
         const { cache, loads } = deferredCache();
         const resource = new DIVEResource<Thing>(cache);

@@ -90,7 +90,8 @@ await Promise.all([
 
 The file is loaded once. The same URL used in several places, also across scenes and DIVE
 instances, is loaded and parsed once, and every place shares the one `Texture`, so its pixels are
-uploaded once per renderer.
+uploaded once per renderer. Relative, `./`-prefixed and absolute forms of one file count as the same
+URL; what you read back (`image`) is the form you passed in.
 
 ## When images are freed
 The shared `Texture` is disposed once nothing uses it any more: once the light, the background and

@@ -128,4 +128,51 @@ describe('DIVEResourceCache', () => {
         expect((await retry).value.url).toBe('a.hdr');
     });
 
+    describe('urls', () => {
+        it('loads relative, ./-prefixed and absolute forms of one file once', async () => {
+            const { cache, loads } = deferredCache();
+            const absolute = new URL('hdri/a.hdr', document.baseURI).href;
+
+            const drawn = Promise.all([
+                cache.draw('hdri/a.hdr'),
+                cache.draw('./hdri/a.hdr'),
+                cache.draw(absolute),
+            ]);
+            loads[0].resolve();
+            await drawn;
+
+            expect(loads).toHaveLength(1);
+        });
+
+        it('loads from the url the first draw passed', async () => {
+            const { cache, loads } = deferredCache();
+
+            const drawn = cache.draw('./hdri/a.hdr');
+            loads[0].resolve();
+
+            expect((await drawn).value.url).toBe('./hdri/a.hdr');
+        });
+
+        it('keeps data and blob urls as they are', async () => {
+            const { cache, loads } = deferredCache();
+            const data = 'data:image/png;base64,AAAA';
+            const blob = 'blob:http://localhost/1234';
+
+            cache.draw(data);
+            cache.draw(blob);
+
+            expect(loads.map((load) => load.url)).toEqual([data, blob]);
+        });
+
+        it('keys a url it cannot resolve by the string itself', async () => {
+            const { cache, loads } = deferredCache();
+
+            const first = cache.draw('http://[');
+            const second = cache.draw('http://[');
+            loads[0].resolve();
+            await Promise.all([first, second]);
+
+            expect(loads).toHaveLength(1);
+        });
+    });
 });

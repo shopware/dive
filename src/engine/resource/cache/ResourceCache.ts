@@ -8,7 +8,8 @@ import { type DIVEResourceLease } from '../lease/ResourceLease.ts';
  * Resource prototypes by URL, so a URL is loaded and parsed once however
  * many resources use it, independent of any DIVE instance or scene.
  *
- * A prototype is dropped once its last
+ * Prototypes are keyed by the resolved URL, so relative, `./`-prefixed and
+ * absolute forms of one file share one. A prototype is dropped once its last
  * lease has freed it or its load has failed, so the next draw of that URL
  * loads again.
  *
@@ -29,7 +30,7 @@ export class DIVEResourceCache<T extends object> {
      * @returns The lease, to be released once it is no longer used.
      */
     public async draw(url: string): Promise<DIVEResourceLease<T>> {
-        const key = url;
+        const key = resolveUrl(url);
 
         let prototype = this._prototypes.get(key);
         if (!prototype) {
@@ -59,3 +60,16 @@ export class DIVEResourceCache<T extends object> {
     }
 }
 
+/**
+ * The absolute form of a URL, or the URL itself where it cannot be resolved,
+ * e.g. outside a document. `data:` and `blob:` URLs are left as they are.
+ */
+function resolveUrl(url: string): string {
+    if (/^(data|blob):/i.test(url)) return url;
+
+    try {
+        return new URL(url, document.baseURI).href;
+    } catch {
+        return url;
+    }
+}
