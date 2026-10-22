@@ -15,6 +15,7 @@ import {
 } from '../Scene.ts';
 import { DIVEGridDefaultSettings } from '../../../components/grid/GridComponent.ts';
 import { GroundProjectionComponent } from '../../../components/groundprojection/GroundProjectionComponent.ts';
+import { textureResourceCache } from '../../resource/texture/TextureResource.ts';
 
 const mock_GetSceneObject = vi.fn();
 const mock_ComputeSceneBB = vi.fn();
@@ -108,9 +109,15 @@ vi.mock('three/webgpu', async (importOriginal) => {
 /** every texture disposal, also of textures made outside the loader mocks */
 const textureDispose = vi.spyOn(Texture.prototype, 'dispose');
 
-/** how often a texture was disposed */
-const disposals = (texture: Texture): number =>
-    textureDispose.mock.contexts.filter((each) => each === texture).length;
+/**
+ * How often a texture was disposed once the shared cache has freed the
+ * images it keeps, so only what nothing holds any more counts.
+ */
+const disposals = (texture: Texture): number => {
+    textureResourceCache.trim();
+    return textureDispose.mock.contexts.filter((each) => each === texture)
+        .length;
+};
 
 /** what three does right before it renders an object */
 const render = (object: Object3D): void =>
@@ -128,7 +135,7 @@ const loadedImage = (url: string): Promise<Texture> =>
         loaders.hdr.mock.calls.findIndex(([each]) => each === url)
     ].value;
 
-/** every scene a test made, disposed after it so the shared image cache empties */
+/** every scene a test made, disposed after it so the shared image cache empties once trimmed */
 const scenes: SceneUnderTest[] = [];
 
 /** disposes every scene made so far and lets their loads settle */
@@ -136,6 +143,7 @@ async function disposeScenes(): Promise<void> {
     scenes.splice(0).forEach((made) => made.dispose());
     await vi.waitFor(() => expect(loaders.state.pending).toBe(0));
     await new Promise((resolve) => setTimeout(resolve));
+    textureResourceCache.trim();
 }
 
 class DIVEScene extends SceneUnderTest {
@@ -893,6 +901,18 @@ describe('DIVEScene', () => {
 
             dome.dispose();
             expect(disposals(texture)).toBe(1);
+        });
+
+        it('comes back to a recently used image without loading it again', async () => {
+            const scene = new DIVEScene({ imageBasedLight: null });
+            await scene.setImageBasedLight({ image: 'a.hdr' });
+            const texture = scene.imageBasedLightTexture;
+
+            await scene.setImageBasedLight({ image: 'b.hdr' });
+            await scene.setImageBasedLight({ image: 'a.hdr' });
+
+            expect(loadsOf('a.hdr')).toBe(1);
+            expect(scene.imageBasedLightTexture).toBe(texture);
         });
 
         it('shares one texture between scenes', async () => {

@@ -49,8 +49,8 @@ class DeferredPrototype extends DIVEResourcePrototype<Thing> {
     public loads: ReturnType<typeof deferredKind>['loads'];
     public kind: DIVEResourceKind<Thing>;
 
-    constructor(url: string, onFreed?: () => void, deferred = deferredKind()) {
-        super(url, deferred.kind, onFreed);
+    constructor(url: string, onIdle?: () => void, deferred = deferredKind()) {
+        super(url, deferred.kind, onIdle);
         this.loads = deferred.loads;
         this.kind = deferred.kind;
     }
@@ -64,8 +64,8 @@ const frees = (prototype: DeferredPrototype): number =>
         : 0);
 
 /** a prototype with two leases drawn and loaded */
-async function drawnTwice(onFreed?: () => void) {
-    const prototype = new DeferredPrototype('a.hdr', onFreed);
+async function drawnTwice(onIdle?: () => void) {
+    const prototype = new DeferredPrototype('a.hdr', onIdle);
     const first = prototype.draw();
     const second = prototype.draw();
     prototype.loads[0].resolve();
@@ -97,19 +97,55 @@ describe('DIVEResourcePrototype', () => {
         expect(prototype.count).toBe(1);
     });
 
-    it('frees the loaded data with the last lease and says so', async () => {
-        const onFreed = vi.fn();
-        const { prototype, a, b } = await drawnTwice(onFreed);
+    it('says when the last lease is released and keeps the loaded data', async () => {
+        const onIdle = vi.fn();
+        const { prototype, a, b } = await drawnTwice(onIdle);
 
         a.release();
-        expect(onFreed).not.toHaveBeenCalled();
+        expect(onIdle).not.toHaveBeenCalled();
         b.release();
 
         expect(b.value.disposed).toBe(true);
-        expect(a.value.original!.disposed).toBe(true);
-        expect(prototype.freed).toBe(true);
+        expect(a.value.original!.disposed).toBe(false);
+        expect(prototype.freed).toBe(false);
         expect(prototype.count).toBe(0);
-        expect(onFreed).toHaveBeenCalledOnce();
+        expect(onIdle).toHaveBeenCalledOnce();
+    });
+
+    it('lends the kept data again after its last lease without loading', async () => {
+        const onIdle = vi.fn();
+        const { prototype, a, b } = await drawnTwice(onIdle);
+        a.release();
+        b.release();
+
+        const again = await prototype.draw();
+        again.release();
+
+        expect(again.value.original).toBe(a.value.original);
+        expect(prototype.loads).toHaveLength(1);
+        expect(onIdle).toHaveBeenCalledTimes(2);
+    });
+
+    it('frees the loaded data on free', async () => {
+        const { prototype, a, b } = await drawnTwice();
+        a.release();
+        b.release();
+
+        prototype.free();
+        prototype.free();
+
+        expect(a.value.original!.disposed).toBe(true);
+        expect(prototype.kind.freeValue).toHaveBeenCalledOnce();
+        expect(prototype.freed).toBe(true);
+    });
+
+    it('refuses to free while a lease is held', async () => {
+        const { prototype, a } = await drawnTwice();
+        a.release();
+
+        expect(() => prototype.free()).toThrow('in use');
+        expect(a.value.original!.disposed).toBe(false);
+        expect(prototype.freed).toBe(false);
     });
 
     it('releases a lease once however often it is released', async () => {
@@ -125,10 +161,11 @@ describe('DIVEResourcePrototype', () => {
     });
 
     it('frees nothing again when a lease is released after the prototype was freed', async () => {
-        const onFreed = vi.fn();
-        const { prototype, a, b } = await drawnTwice(onFreed);
+        const onIdle = vi.fn();
+        const { prototype, a, b } = await drawnTwice(onIdle);
         a.release();
         b.release();
+        prototype.free();
         const freed = frees(prototype);
 
         b.release();
@@ -136,11 +173,12 @@ describe('DIVEResourcePrototype', () => {
 
         expect(frees(prototype)).toBe(freed);
         expect(prototype.count).toBe(0);
-        expect(onFreed).toHaveBeenCalledOnce();
+        expect(onIdle).toHaveBeenCalledOnce();
     });
 
     it('releases a lease at the end of a using block', async () => {
-        const prototype = new DeferredPrototype('a.hdr');
+        const onIdle = vi.fn();
+        const prototype = new DeferredPrototype('a.hdr', onIdle);
         const drawing = prototype.draw();
         prototype.loads[0].resolve();
 
@@ -149,7 +187,7 @@ describe('DIVEResourcePrototype', () => {
             expect(lease.value.disposed).toBe(false);
         }
 
-        expect(prototype.freed).toBe(true);
+        expect(onIdle).toHaveBeenCalledOnce();
     });
 
     it('frees a released copy at once and lends a fresh one next', async () => {
@@ -215,15 +253,16 @@ describe('DIVEResourcePrototype', () => {
             expect(prototype.loads).toHaveLength(1);
         });
 
-        it('frees the loaded data once, with the last lease', async () => {
+        it('frees the loaded data only on free, not with a lease', async () => {
             const { prototype, a, b } = await sharedTwice();
 
             a.release();
-            expect(a.value.disposed).toBe(false);
+            b.release();
+            b.release();
+            expect(b.value.disposed).toBe(false);
             expect(prototype.kind.freeValue).not.toHaveBeenCalled();
 
-            b.release();
-            b.release();
+            prototype.free();
             expect(prototype.kind.freeValue).toHaveBeenCalledOnce();
             expect(b.value.disposed).toBe(true);
         });
@@ -244,6 +283,7 @@ describe('DIVEResourcePrototype', () => {
         const drawing = prototype.draw();
         prototype.loads[0].resolve();
         (await drawing).release();
+        prototype.free();
 
         await expect(prototype.draw()).rejects.toThrow('freed');
     });

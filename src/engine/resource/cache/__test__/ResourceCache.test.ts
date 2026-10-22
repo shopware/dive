@@ -7,32 +7,35 @@ class Thing {
 }
 
 /** a cache whose loads resolve when the test says so */
-function deferredCache() {
+function deferredCache({ keep }: { keep?: number } = {}) {
     const loads: {
         url: string;
         resolve: () => void;
         reject: (error: Error) => void;
     }[] = [];
 
-    const cache = new DIVEResourceCache<Thing>({
-        load: (url) =>
-            new Promise<Thing>((resolve, reject) => {
-                loads.push({
-                    url,
-                    resolve: () => resolve(new Thing(url)),
-                    reject,
-                });
-            }),
-        freeValue: (value) => {
-            value.disposed = true;
-        },
-        copy: {
-            make: (value) => new Thing(value.url),
-            free: (copy) => {
-                copy.disposed = true;
+    const cache = new DIVEResourceCache<Thing>(
+        {
+            load: (url) =>
+                new Promise<Thing>((resolve, reject) => {
+                    loads.push({
+                        url,
+                        resolve: () => resolve(new Thing(url)),
+                        reject,
+                    });
+                }),
+            freeValue: (value) => {
+                value.disposed = true;
+            },
+            copy: {
+                make: (value) => new Thing(value.url),
+                free: (copy) => {
+                    copy.disposed = true;
+                },
             },
         },
-    });
+        keep === undefined ? undefined : { keep },
+    );
     return { cache, loads };
 }
 
@@ -126,6 +129,166 @@ describe('DIVEResourceCache', () => {
         const retry = cache.draw('a.hdr');
         loads[1].resolve();
         expect((await retry).value.url).toBe('a.hdr');
+    });
+
+    describe('keeping released prototypes', () => {
+        /** draws a url, loads it and returns its lease */
+        async function loaded(
+            { cache, loads }: ReturnType<typeof deferredCache>,
+            url: string,
+        ) {
+            const drawing = cache.draw(url);
+            loads.at(-1)!.resolve();
+            return drawing;
+        }
+
+        /** switches a → b → a the way a user does: the next drawn before the last released */
+        async function switchBack(deferred: ReturnType<typeof deferredCache>) {
+            const a = await loaded(deferred, 'a.hdr');
+            const b = await loaded(deferred, 'b.hdr');
+            a.release();
+            const drawing = deferred.cache.draw('a.hdr');
+            if (deferred.loads.length > 2) deferred.loads[2].resolve();
+            const again = await drawing;
+            b.release();
+            return again;
+        }
+
+        it('loads a → b → a twice without keeping', async () => {
+            const deferred = deferredCache();
+
+            await switchBack(deferred);
+
+            expect(deferred.loads.map((load) => load.url)).toEqual([
+                'a.hdr',
+                'b.hdr',
+                'a.hdr',
+            ]);
+        });
+
+        it('loads a → b → a once while keeping one', async () => {
+            const deferred = deferredCache({ keep: 1 });
+
+            const again = await switchBack(deferred);
+
+            expect(deferred.loads.map((load) => load.url)).toEqual([
+                'a.hdr',
+                'b.hdr',
+            ]);
+            expect(again.value.url).toBe('a.hdr');
+            expect(again.value.disposed).toBe(false);
+        });
+
+        it('keeps the loaded data of a released url unfreed and lends it again', async () => {
+            const freeValue = vi.fn();
+            const cache = new DIVEResourceCache<Thing>(
+                { load: async (url) => new Thing(url), freeValue },
+                { keep: 1 },
+            );
+            const a = await cache.draw('a.hdr');
+
+            a.release();
+            const again = await cache.draw('a.hdr');
+
+            expect(freeValue).not.toHaveBeenCalled();
+            expect(again.value).toBe(a.value);
+        });
+
+        it('frees the least recently released one when another enters a full list', async () => {
+            const freeValue = vi.fn();
+            const cache = new DIVEResourceCache<Thing>(
+                { load: async (url) => new Thing(url), freeValue },
+                { keep: 1 },
+            );
+
+            const a = await cache.draw('a.hdr');
+            a.release();
+            expect(freeValue).not.toHaveBeenCalled();
+
+            (await cache.draw('b.hdr')).release();
+
+            expect(freeValue).toHaveBeenCalledOnce();
+            expect(freeValue).toHaveBeenCalledWith(a.value);
+        });
+
+        it('loads an evicted url again', async () => {
+            const deferred = deferredCache({ keep: 1 });
+
+            (await loaded(deferred, 'a.hdr')).release();
+            (await loaded(deferred, 'b.hdr')).release();
+            (await loaded(deferred, 'a.hdr')).release();
+
+            expect(deferred.loads).toHaveLength(3);
+        });
+
+        it('evicts by when a url was last released, not first loaded', async () => {
+            const load = vi.fn(async (url: string) => new Thing(url));
+            const cache = new DIVEResourceCache<Thing>(
+                { load, freeValue: () => {} },
+                { keep: 2 },
+            );
+
+            (await cache.draw('a.hdr')).release();
+            (await cache.draw('b.hdr')).release();
+            (await cache.draw('a.hdr')).release();
+            (await cache.draw('c.hdr')).release();
+            (await cache.draw('a.hdr')).release();
+            (await cache.draw('b.hdr')).release();
+
+            expect(load.mock.calls.map(([url]) => url)).toEqual([
+                'a.hdr',
+                'b.hdr',
+                'c.hdr',
+                'b.hdr',
+            ]);
+        });
+
+        it('keeps nothing of a failed load', async () => {
+            const { cache, loads } = deferredCache({ keep: 1 });
+            const failing = cache.draw('a.hdr');
+            loads[0].reject(new Error('404'));
+            await expect(failing).rejects.toThrow('404');
+
+            const retry = cache.draw('a.hdr');
+            loads[1].resolve();
+
+            expect((await retry).value.url).toBe('a.hdr');
+            expect(loads).toHaveLength(2);
+        });
+
+        it('frees every kept prototype on trim and loads them again afterwards', async () => {
+            const freeValue = vi.fn();
+            const load = vi.fn(async (url: string) => new Thing(url));
+            const cache = new DIVEResourceCache<Thing>(
+                { load, freeValue },
+                { keep: 2 },
+            );
+            (await cache.draw('a.hdr')).release();
+            (await cache.draw('b.hdr')).release();
+
+            cache.trim();
+            expect(freeValue).toHaveBeenCalledTimes(2);
+            (await cache.draw('a.hdr')).release();
+
+            expect(load).toHaveBeenCalledTimes(3);
+        });
+
+        it('leaves prototypes in use alone on trim', async () => {
+            const freeValue = vi.fn();
+            const load = vi.fn(async (url: string) => new Thing(url));
+            const cache = new DIVEResourceCache<Thing>(
+                { load, freeValue },
+                { keep: 2 },
+            );
+            const held = await cache.draw('a.hdr');
+
+            cache.trim();
+            const shared = await cache.draw('a.hdr');
+
+            expect(freeValue).not.toHaveBeenCalled();
+            expect(shared.value).toBe(held.value);
+            expect(load).toHaveBeenCalledOnce();
+        });
     });
 
     describe('urls', () => {

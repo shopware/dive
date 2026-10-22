@@ -4,7 +4,11 @@ import {
     SRGBColorSpace,
     type Texture,
 } from 'three/webgpu';
-import { TextureResource, textureResourceKind } from '../TextureResource.ts';
+import {
+    TextureResource,
+    textureResourceCache,
+    textureResourceKind,
+} from '../TextureResource.ts';
 import { DIVEResourceCache } from '../../cache/ResourceCache.ts';
 
 /** one mock per loader, so a wrong loader choice cannot pass */
@@ -169,6 +173,46 @@ describe('TextureResource', () => {
         expect(light.value).toBe(background.value);
         light.dispose();
         background.dispose();
+    });
+
+    describe('the default cache', () => {
+        /** a resource on the default cache, disposed after the test */
+        let resource: TextureResource;
+
+        beforeEach(() => {
+            resource = new TextureResource();
+        });
+
+        afterEach(() => {
+            resource.dispose();
+            textureResourceCache.trim();
+        });
+
+        it('keeps the last two images let go of, without loading them again', async () => {
+            await resource.request('a.hdr');
+            const a = resource.value!;
+            await resource.request('b.hdr');
+            await resource.request('c.hdr');
+            const disposed = watchDispose(a);
+
+            await resource.request('a.hdr');
+
+            expect(loaders.hdr).toHaveBeenCalledTimes(3);
+            expect(resource.value).toBe(a);
+            expect(disposed).not.toHaveBeenCalled();
+        });
+
+        it('disposes the least recently let go of once a third is let go of', async () => {
+            await resource.request('a.hdr');
+            const disposed = watchDispose(resource.value!);
+            await resource.request('b.hdr');
+            await resource.request('c.hdr');
+            expect(disposed).not.toHaveBeenCalled();
+
+            await resource.request('d.hdr');
+
+            expect(disposed).toHaveBeenCalledOnce();
+        });
     });
 
     describe('loading', () => {

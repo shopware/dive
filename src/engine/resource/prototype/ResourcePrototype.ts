@@ -13,7 +13,7 @@ export type DIVEResourceKind<T extends object> = {
      */
     load(url: string): Promise<T>;
     /**
-     * Frees the loaded data, once the last lease is released.
+     * Frees the loaded data, once its prototype is freed.
      *
      * @param value - The loaded data.
      */
@@ -34,8 +34,9 @@ export type DIVEResourceKind<T extends object> = {
  *
  * It loads once, however many resources are drawn, and lends each draw the
  * loaded data or, where its kind says so, a copy of its own, through a lease.
- * It counts the leases and frees the data with the last one released. A
- * failed load is not kept, so the next draw loads again.
+ * It counts the leases and says when the last one is released; whoever made
+ * it then keeps it for later draws or {@link free}s it. A copy is freed with
+ * its lease. A failed load is not kept, so the next draw loads again.
  *
  * @typeParam T - The value, e.g. a texture.
  */
@@ -49,12 +50,12 @@ export class DIVEResourcePrototype<T extends object> {
     /**
      * @param url - Where the data is loaded from.
      * @param _kind - How the data is loaded, lent and freed.
-     * @param _onFreed - Called once the last lease has freed it.
+     * @param _onIdle - Called each time the last lease is released.
      */
     constructor(
         public readonly url: string,
         private _kind: DIVEResourceKind<T>,
-        private _onFreed?: () => void,
+        private _onIdle?: () => void,
     ) {}
 
     /** How many leases are held or on their way. */
@@ -62,7 +63,7 @@ export class DIVEResourcePrototype<T extends object> {
         return this._count;
     }
 
-    /** Whether the last lease has freed it. */
+    /** Whether it was freed. */
     public get freed(): boolean {
         return this._freed;
     }
@@ -94,17 +95,28 @@ export class DIVEResourcePrototype<T extends object> {
         return new DIVEResourceLease(lent, () => this._release(lent));
     }
 
-    /** frees what a released lease got, and the data with the last */
-    private _release(lent: T): void {
-        this._count--;
-        if (lent !== this._value) this._kind.copy?.free(lent);
-        if (this._count > 0) return;
+    /**
+     * Frees the loaded data; it draws nothing afterwards.
+     *
+     * @throws While a lease is held or on its way.
+     */
+    public free(): void {
+        if (this._count > 0) {
+            throw new Error(`DIVEResourcePrototype: ${this.url} is in use.`);
+        }
+        if (this._freed) return;
 
         this._freed = true;
         if (this._value) this._kind.freeValue(this._value);
         this._value = null;
         this._loading = null;
-        this._onFreed?.();
+    }
+
+    /** frees what a released lease got, and says so with the last */
+    private _release(lent: T): void {
+        this._count--;
+        if (lent !== this._value) this._kind.copy?.free(lent);
+        if (this._count === 0) this._onIdle?.();
     }
 
     /** loads, rejecting rather than throwing when the load throws at once */

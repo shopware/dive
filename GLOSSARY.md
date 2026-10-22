@@ -21,7 +21,7 @@ _Avoid_: Ground projection (as a setting), grounded skybox
 ### Resources
 
 **Resource prototype**:
-The loaded data that exists once per URL; resources are drawn from it. It is freed once the last resource drawn from it is given back. Relative and absolute forms of one URL share one.
+The loaded data that exists once per URL; resources are drawn from it. Once the last resource drawn from it is given back, its cache keeps it for a later draw or frees it. Relative and absolute forms of one URL share one.
 _Avoid_: Asset, source, cache entry
 
 **Resource**:

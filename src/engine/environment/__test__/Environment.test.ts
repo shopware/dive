@@ -11,6 +11,7 @@ import {
 import { DIVEScene } from '../../scene/Scene.ts';
 import { DIVERenderer } from '../../renderer/Renderer.ts';
 import { DIVEEnvironment } from '../Environment.ts';
+import { textureResourceCache } from '../../resource/texture/TextureResource.ts';
 
 const loaders = vi.hoisted(() => {
     const state = { pending: 0 };
@@ -129,6 +130,7 @@ describe('DIVEEnvironment', () => {
     afterEach(async () => {
         scenes.splice(0).forEach((scene) => scene.dispose());
         await settle();
+        textureResourceCache.trim();
     });
 
     it('is reachable as the renderer environment', async () => {

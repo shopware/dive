@@ -21,6 +21,7 @@ import {
 } from '@shopware-ag/dive';
 import { type State } from '../State.ts';
 import { type DIVESceneObject } from '@shopware-ag/dive';
+import { textureResourceCache } from '../../../../engine/resource/texture/TextureResource.ts';
 import {
     LightSchema,
     ModelSchema,
@@ -252,6 +253,7 @@ describe('plugins/state/EngineGateway', () => {
             loadAsync.mock.results.map((result) => result.value),
         );
         await new Promise((resolve) => setTimeout(resolve));
+        textureResourceCache.trim();
     });
 
     afterAll(() => {

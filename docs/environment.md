@@ -94,10 +94,11 @@ uploaded once per renderer. Relative, `./`-prefixed and absolute forms of one fi
 URL; what you read back (`image`) is the form you passed in.
 
 ## When images are freed
-The shared `Texture` is disposed once nothing uses it any more: once the light, the background and
-every dome showing it have moved on or have been disposed. Coming back to a URL that is still in use
-elsewhere gets the same `Texture` again without loading it; using the URL after it was freed loads it
-again.
+Once nothing uses an image any more (the light, the background and every dome showing it have
+moved on or have been disposed), it is kept loaded for a while: DIVE keeps the two images let go of
+last, and disposes the oldest of them when a third is let go of. Coming back to a URL that is still
+in use elsewhere or still kept gets the same `Texture` again without loading it, so switching between
+two presets loads each once; using a URL after it was disposed loads it again.
 
 ## Dome
 > **Experimental:** only checked on a few HDR images so far. The API and its defaults may change
@@ -141,8 +142,8 @@ Things to know:
   previous image stays on the dome. If calls overlap, the last one wins. `setImage(null)` turns the dome white.
 - `projection.image` returns the URL you asked for, at once, before it has loaded.
 - The same URL as the image based light or the background is loaded once, and the dome shares its
-  `Texture`. Disposing the component lets go of it; the `Texture` is disposed once nothing uses it
-  any more.
+  `Texture`. Disposing the component lets go of it; the `Texture` is disposed as described in
+  [When images are freed](#when-images-are-freed).
 - Add the node to the scene, not to `scene.root`, so it stays out of the entity tree.
 - Turn `displayFloor` off. The floor sits at the same height and covers the projected one.
 - The projection is only convincing close to where the image was taken, and the camera has to stay

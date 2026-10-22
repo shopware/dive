@@ -4,6 +4,7 @@ import {
     DIVEGroundProjectionDefaultSettings,
     GroundProjectionComponent,
 } from '../GroundProjectionComponent.ts';
+import { textureResourceCache } from '../../../engine/resource/texture/TextureResource.ts';
 import { DIVENode } from '../../../engine/node/Node.ts';
 import { computeProductBounds } from '../../../helpers/computeProductBounds/computeProductBounds.ts';
 import {
@@ -43,7 +44,7 @@ vi.mock('../../../engine/resource/texture/loadEquirectangularImage.ts', () => ({
     loadEquirectangularImage: images.load,
 }));
 
-/** every component a test made, disposed after it so the shared cache empties */
+/** every component a test made, disposed after it so the shared cache empties once trimmed */
 const made: GroundProjectionComponent[] = [];
 
 function track(projection = new GroundProjectionComponent()) {
@@ -68,6 +69,7 @@ afterEach(async () => {
     made.splice(0).forEach((projection) => projection.dispose());
     images.loads.splice(0).forEach((load) => load.resolve());
     await Promise.resolve();
+    textureResourceCache.trim();
     images.load.mockClear();
 });
 
@@ -244,6 +246,7 @@ describe('dive/groundprojection/GroundProjectionComponent', () => {
         await newest;
         render(projection);
         expect(projection.mesh.material.map).toBe(c);
+        textureResourceCache.trim();
         expect(b.dispose).toHaveBeenCalled();
         expect(a.dispose).toHaveBeenCalled();
     });
@@ -260,6 +263,7 @@ describe('dive/groundprojection/GroundProjectionComponent', () => {
 
         expect(projection.image).toBeNull();
         expect(projection.mesh.material.map).toBeNull();
+        textureResourceCache.trim();
         expect(texture.dispose).toHaveBeenCalled();
     });
 
@@ -313,6 +317,7 @@ describe('dive/groundprojection/GroundProjectionComponent', () => {
 
         expect(geometrySpy).toHaveBeenCalled();
         expect(materialSpy).toHaveBeenCalled();
+        textureResourceCache.trim();
         expect(texture.dispose).toHaveBeenCalled();
     });
 
