@@ -89,14 +89,14 @@ await Promise.all([
 ```
 
 The file is loaded once. The same URL used in several places, also across scenes and DIVE
-instances, is loaded and parsed once; each place gets its own `Texture`, and they share the pixel
-data.
+instances, is loaded and parsed once, and every place shares the one `Texture`, so its pixels are
+uploaded once per renderer.
 
 ## When images are freed
-Each place frees its own `Texture` as soon as it moves on to something else or is disposed. The
-loaded image is freed once nothing uses it any more: once the light, the background and every dome
-showing it have moved on or have been disposed. Coming back to a URL that is still in use elsewhere
-gets a new `Texture` without loading again; using the URL after it was freed loads it again.
+The shared `Texture` is disposed once nothing uses it any more: once the light, the background and
+every dome showing it have moved on or have been disposed. Coming back to a URL that is still in use
+elsewhere gets the same `Texture` again without loading it; using the URL after it was freed loads it
+again.
 
 ## Dome
 > **Experimental:** only checked on a few HDR images so far. The API and its defaults may change
@@ -139,9 +139,9 @@ Things to know:
 - `setImage()` resolves once the image is loaded. It shows from the next frame on; until then, the
   previous image stays on the dome. If calls overlap, the last one wins. `setImage(null)` turns the dome white.
 - `projection.image` returns the URL you asked for, at once, before it has loaded.
-- The same URL as the image based light or the background is loaded once; the dome gets its own
-  `Texture` sharing the pixel data. Disposing the component frees its `Texture` at once; the loaded
-  image is freed once nothing uses it any more.
+- The same URL as the image based light or the background is loaded once, and the dome shares its
+  `Texture`. Disposing the component lets go of it; the `Texture` is disposed once nothing uses it
+  any more.
 - Add the node to the scene, not to `scene.root`, so it stays out of the entity tree.
 - Turn `displayFloor` off. The floor sits at the same height and covers the projected one.
 - The projection is only convincing close to where the image was taken, and the camera has to stay

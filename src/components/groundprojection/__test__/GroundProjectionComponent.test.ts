@@ -208,7 +208,7 @@ describe('dive/groundprojection/GroundProjectionComponent', () => {
         expect(projection.mesh.material.map).toBeNull();
 
         render(projection);
-        expect(projection.mesh.material.map?.source).toBe(texture.source);
+        expect(projection.mesh.material.map).toBe(texture);
         expect(projection.mesh.material.version).toBe(version + 1);
     });
 
@@ -238,12 +238,12 @@ describe('dive/groundprojection/GroundProjectionComponent', () => {
         const b = await arrive('b.hdr');
         await overtaken;
         render(projection);
-        expect(projection.mesh.material.map?.source).toBe(a.source);
+        expect(projection.mesh.material.map).toBe(a);
 
         const c = await arrive('c.hdr');
         await newest;
         render(projection);
-        expect(projection.mesh.material.map?.source).toBe(c.source);
+        expect(projection.mesh.material.map).toBe(c);
         expect(b.dispose).toHaveBeenCalled();
         expect(a.dispose).toHaveBeenCalled();
     });
@@ -263,7 +263,7 @@ describe('dive/groundprojection/GroundProjectionComponent', () => {
         expect(texture.dispose).toHaveBeenCalled();
     });
 
-    it('should load an image once for every dome that shows it', async () => {
+    it('should load an image once and share its texture between every dome that shows it', async () => {
         const one = track();
         const other = track();
 
@@ -277,9 +277,8 @@ describe('dive/groundprojection/GroundProjectionComponent', () => {
         render(other);
 
         expect(images.load).toHaveBeenCalledTimes(1);
-        expect(one.mesh.material.map?.source).toBe(texture.source);
-        expect(other.mesh.material.map?.source).toBe(texture.source);
-        expect(one.mesh.material.map).not.toBe(other.mesh.material.map);
+        expect(one.mesh.material.map).toBe(texture);
+        expect(other.mesh.material.map).toBe(texture);
     });
 
     it('should reject when the image fails to load and keep the dome as it was', async () => {
@@ -337,7 +336,7 @@ describe('dive/groundprojection/GroundProjectionComponent', () => {
         // requested again, and shared with the source
         await clone.setImage(clone.image);
         render(clone);
-        expect(clone.mesh.material.map?.source).toBe(texture.source);
+        expect(clone.mesh.material.map).toBe(texture);
         expect(images.load).toHaveBeenCalledTimes(1);
     });
 });

@@ -25,7 +25,7 @@ The loaded data that exists once per URL; resources are drawn from it. It is fre
 _Avoid_: Asset, source, cache entry
 
 **Resource**:
-The copy of a resource prototype that one DIVE object uses, requested by URL. The same URL used in several places is loaded once; each user holds its own resource.
+What one DIVE object holds of a resource prototype, requested by URL: the loaded data itself where it can be shared (an image), or a copy of its own where it cannot. The same URL used in several places is loaded once; each user holds its own resource.
 _Avoid_: Asset, slot, handle
 
 "Asset" stays the word for files (`AssetLoader`, `AssetExporter`).

@@ -1,11 +1,16 @@
-import { type DIVEResourcePrototype } from '../prototype/ResourcePrototype.ts';
+import {
+    DIVEResourcePrototype,
+    type DIVEResourceKind,
+} from '../prototype/ResourcePrototype.ts';
+import { type DIVEResourceLease } from '../lease/ResourceLease.ts';
 
 /**
  * Resource prototypes by URL, so a URL is loaded and parsed once however
  * many resources use it, independent of any DIVE instance or scene.
  *
- * A prototype is dropped with its last release or a failed load, so the
- * next draw of that URL loads again.
+ * A prototype is dropped once its last
+ * lease has freed it or its load has failed, so the next draw of that URL
+ * loads again.
  *
  * @typeParam T - The value, e.g. a texture.
  */
@@ -13,50 +18,44 @@ export class DIVEResourceCache<T extends object> {
     private _prototypes = new Map<string, DIVEResourcePrototype<T>>();
 
     /**
-     * @param _create - Makes the prototype for a URL.
+     * @param _kind - How the data is loaded, lent and freed.
      */
-    constructor(private _create: (url: string) => DIVEResourcePrototype<T>) {}
+    constructor(private _kind: DIVEResourceKind<T>) {}
 
     /**
-     * Draws a copy from the prototype of a URL, making it unless it exists.
+     * Draws from the prototype of a URL, making it unless it exists.
      *
      * @param url - The URL.
-     * @returns The copy. Each one that resolves is to be released once.
+     * @returns The lease, to be released once it is no longer used.
      */
-    public async draw(url: string): Promise<T> {
-        let prototype = this._prototypes.get(url);
+    public async draw(url: string): Promise<DIVEResourceLease<T>> {
+        const key = url;
+
+        let prototype = this._prototypes.get(key);
         if (!prototype) {
-            prototype = this._create(url);
-            this._prototypes.set(url, prototype);
+            const made: DIVEResourcePrototype<T> = new DIVEResourcePrototype(
+                url,
+                this._kind,
+                () => this._drop(key, made),
+            );
+            this._prototypes.set(key, made);
+            prototype = made;
         }
 
         try {
             return await prototype.draw();
         } catch (error) {
-            this._drop(prototype);
+            // a failed load must not answer the next draw
+            if (prototype.count === 0) this._drop(key, prototype);
             throw error;
         }
     }
 
-    /**
-     * Gives back a copy taken with {@link draw}.
-     *
-     * @param url - The URL it was drawn for.
-     * @param copy - The copy.
-     */
-    public release(url: string, copy: T): void {
-        const prototype = this._prototypes.get(url);
-        if (!prototype) return;
-
-        prototype.release(copy);
-        this._drop(prototype);
-    }
-
-    /** drops a prototype nothing is drawn from any more */
-    private _drop(prototype: DIVEResourcePrototype<T>): void {
-        if (prototype.count > 0) return;
-        if (this._prototypes.get(prototype.url) === prototype) {
-            this._prototypes.delete(prototype.url);
+    /** drops a prototype, unless a newer one took its key */
+    private _drop(key: string, prototype: DIVEResourcePrototype<T>): void {
+        if (this._prototypes.get(key) === prototype) {
+            this._prototypes.delete(key);
         }
     }
 }
+

@@ -1,47 +1,78 @@
+import { DIVEResourceLease } from '../lease/ResourceLease.ts';
+
 /**
- * The loaded data for one URL, which resources are drawn from.
- *
- * It loads once, however many resources are drawn, and hands each resource a
- * copy of its own. It counts the copies drawn and is freed with the last
- * release. A failed load is not kept, so the next draw loads again.
- *
- * A released copy is freed at once. Copies may share data with the loaded
- * value (a texture clone shares its pixels), so that value is freed only with
- * the last release.
+ * How resources of one kind are loaded, lent and freed.
  *
  * @typeParam T - The value, e.g. a texture.
  */
-export abstract class DIVEResourcePrototype<T extends object> {
+export type DIVEResourceKind<T extends object> = {
+    /**
+     * Loads the data of a URL.
+     *
+     * @param url - The URL.
+     */
+    load(url: string): Promise<T>;
+    /**
+     * Frees the loaded data, once the last lease is released.
+     *
+     * @param value - The loaded data.
+     */
+    freeValue(value: T): void;
+    /**
+     * What each lease gets in place of the loaded data, and how it is freed
+     * once that lease is released. Left out, every lease shares the loaded
+     * data itself.
+     */
+    copy?: {
+        make(value: T): T;
+        free(copy: T): void;
+    };
+};
+
+/**
+ * The loaded data for one URL, which resources are drawn from.
+ *
+ * It loads once, however many resources are drawn, and lends each draw the
+ * loaded data or, where its kind says so, a copy of its own, through a lease.
+ * It counts the leases and frees the data with the last one released. A
+ * failed load is not kept, so the next draw loads again.
+ *
+ * @typeParam T - The value, e.g. a texture.
+ */
+export class DIVEResourcePrototype<T extends object> {
     private _count = 0;
     private _loading: Promise<T> | null = null;
     private _value: T | null = null;
-
-    /** the copies drawn and not yet released */
-    private _copies = new Set<T>();
 
     private _freed = false;
 
     /**
      * @param url - Where the data is loaded from.
+     * @param _kind - How the data is loaded, lent and freed.
+     * @param _onFreed - Called once the last lease has freed it.
      */
-    constructor(public readonly url: string) {}
+    constructor(
+        public readonly url: string,
+        private _kind: DIVEResourceKind<T>,
+        private _onFreed?: () => void,
+    ) {}
 
-    /** How many copies are drawn or on their way. */
+    /** How many leases are held or on their way. */
     public get count(): number {
         return this._count;
     }
 
-    /** Whether the last release has freed it. */
+    /** Whether the last lease has freed it. */
     public get freed(): boolean {
         return this._freed;
     }
 
     /**
-     * Draws a copy, loading the data unless it is loading or loaded already.
+     * Draws a lease, loading the data unless it is loading or loaded already.
      *
-     * @returns The copy. Each one that resolves is to be released once.
+     * @returns The lease, to be released once it is no longer used.
      */
-    public async draw(): Promise<T> {
+    public async draw(): Promise<DIVEResourceLease<T>> {
         if (this._freed) {
             throw new Error(`DIVEResourcePrototype: ${this.url} is freed.`);
         }
@@ -59,54 +90,26 @@ export abstract class DIVEResourcePrototype<T extends object> {
             throw error;
         }
 
-        const copy = this.copy(value);
-        this._copies.add(copy);
-        return copy;
+        const lent = this._kind.copy ? this._kind.copy.make(value) : value;
+        return new DIVEResourceLease(lent, () => this._release(lent));
     }
 
-    /**
-     * Gives back a copy taken with {@link draw} and frees it. The last one
-     * frees the loaded data too.
-     *
-     * @param copy - The copy.
-     */
-    public release(copy: T): void {
-        if (!this._copies.delete(copy)) return;
-
+    /** frees what a released lease got, and the data with the last */
+    private _release(lent: T): void {
         this._count--;
-        this.free(copy);
+        if (lent !== this._value) this._kind.copy?.free(lent);
         if (this._count > 0) return;
 
         this._freed = true;
-        if (this._value) this.free(this._value);
+        if (this._value) this._kind.freeValue(this._value);
         this._value = null;
         this._loading = null;
+        this._onFreed?.();
     }
-
-    /**
-     * Loads the data of a URL.
-     *
-     * @param url - The URL.
-     */
-    protected abstract load(url: string): Promise<T>;
-
-    /**
-     * Makes a copy for one resource.
-     *
-     * @param value - The loaded data.
-     */
-    protected abstract copy(value: T): T;
-
-    /**
-     * Frees a copy or the loaded data.
-     *
-     * @param value - What to free.
-     */
-    protected abstract free(value: T): void;
 
     /** loads, rejecting rather than throwing when the load throws at once */
     private async _load(): Promise<T> {
-        const value = await this.load(this.url);
+        const value = await this._kind.load(this.url);
         this._value = value;
         return value;
     }

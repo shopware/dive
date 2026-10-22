@@ -1,5 +1,11 @@
-import { type Texture } from 'three/webgpu';
-import { TextureResource } from '../TextureResource.ts';
+import {
+    EquirectangularReflectionMapping,
+    NoColorSpace,
+    SRGBColorSpace,
+    type Texture,
+} from 'three/webgpu';
+import { TextureResource, textureResourceKind } from '../TextureResource.ts';
+import { DIVEResourceCache } from '../../cache/ResourceCache.ts';
 
 /** one mock per loader, so a wrong loader choice cannot pass */
 const loaders = vi.hoisted(() => {
@@ -41,13 +47,15 @@ vi.mock('three/webgpu', async (importOriginal) => {
     };
 });
 
-/** every resource a test made, given back after it so the shared cache empties */
-const resources: TextureResource[] = [];
+/** a cache of each test's own, so no load is shared across tests */
+let cache: DIVEResourceCache<Texture>;
 
-function track(resource = new TextureResource()) {
-    resources.push(resource);
-    return resource;
-}
+beforeEach(() => {
+    cache = new DIVEResourceCache(textureResourceKind);
+});
+
+/** a resource on the test's cache */
+const track = (): TextureResource => new TextureResource(cache);
 
 /** listens for the dispose event the renderer frees GPU data on */
 function watchDispose(texture: Texture) {
@@ -57,12 +65,11 @@ function watchDispose(texture: Texture) {
 }
 
 afterEach(() => {
-    resources.splice(0).forEach((resource) => resource.dispose());
     Object.values(loaders).forEach((loader) => loader.mockClear());
 });
 
 describe('TextureResource', () => {
-    it('loads a url once for every resource and gives each its own texture', async () => {
+    it('loads a url once and gives every resource the same texture', async () => {
         const light = track();
         const background = track();
         const dome = track();
@@ -74,35 +81,29 @@ describe('TextureResource', () => {
         ]);
 
         expect(loaders.hdr).toHaveBeenCalledOnce();
-        const textures = new Set([light.value, background.value, dome.value]);
-        expect(textures.size).toBe(3);
-        expect(light.value!.source).toBe(background.value!.source);
-        expect(light.value!.source).toBe(dome.value!.source);
+        expect(light.value).toBe(await loaders.hdr.mock.results[0].value);
+        expect(background.value).toBe(light.value);
+        expect(dome.value).toBe(light.value);
     });
 
-    it('frees a texture at once when given back and the loaded one with the last', async () => {
+    it('disposes the texture once, after the last resource lets go', async () => {
         const light = track();
         const background = track();
         await Promise.all([
             light.request('studio.hdr'),
             background.request('studio.hdr'),
         ]);
-        const loaded = await loaders.hdr.mock.results[0].value;
-        const disposedLoaded = watchDispose(loaded);
-        const disposedLight = watchDispose(light.value!);
-        const disposedBackground = watchDispose(background.value!);
+        const disposed = watchDispose(light.value!);
 
         light.clear();
-        expect(disposedLight).toHaveBeenCalledOnce();
-        expect(disposedBackground).not.toHaveBeenCalled();
-        expect(disposedLoaded).not.toHaveBeenCalled();
+        expect(disposed).not.toHaveBeenCalled();
 
         background.clear();
-        expect(disposedBackground).toHaveBeenCalledOnce();
-        expect(disposedLoaded).toHaveBeenCalledOnce();
+        background.dispose();
+        expect(disposed).toHaveBeenCalledOnce();
     });
 
-    it('gives a resource coming back to a url a fresh texture without loading again', async () => {
+    it('gives a resource coming back to a url the same texture without loading again', async () => {
         const light = track();
         const background = track();
         await Promise.all([
@@ -115,8 +116,7 @@ describe('TextureResource', () => {
         await light.request('studio.hdr');
 
         expect(loaders.hdr).toHaveBeenCalledOnce();
-        expect(light.value).not.toBe(before);
-        expect(light.value!.source).toBe(background.value!.source);
+        expect(light.value).toBe(before);
     });
 
     it('loads again once every resource has given a url back', async () => {
@@ -139,5 +139,80 @@ describe('TextureResource', () => {
 
         expect(loaders.hdr).toHaveBeenCalledTimes(2);
         expect(light.value?.name).toBe('studio.hdr');
+    });
+
+    it('keeps resources on separate caches apart', async () => {
+        const own = track();
+        const other = new TextureResource(
+            new DIVEResourceCache(textureResourceKind),
+        );
+
+        await Promise.all([
+            own.request('studio.hdr'),
+            other.request('studio.hdr'),
+        ]);
+
+        expect(loaders.hdr).toHaveBeenCalledTimes(2);
+        expect(own.value).not.toBe(other.value);
+    });
+
+    it('shares the module-level cache when given none', async () => {
+        const light = new TextureResource();
+        const background = new TextureResource();
+
+        await Promise.all([
+            light.request('shared.hdr'),
+            background.request('shared.hdr'),
+        ]);
+
+        expect(loaders.hdr).toHaveBeenCalledOnce();
+        expect(light.value).toBe(background.value);
+        light.dispose();
+        background.dispose();
+    });
+
+    describe('loading', () => {
+        /** the texture a fresh resource gets for a url */
+        async function load(url: string): Promise<Texture> {
+            const resource = track();
+            await resource.request(url);
+            return resource.value!;
+        }
+
+        it.each([
+            ['studio.hdr', 'hdr'],
+            ['studio.HDR', 'hdr'],
+            ['studio.exr', 'exr'],
+            ['studio.jpg', 'texture'],
+            ['studio.png', 'texture'],
+            ['studio', 'texture'],
+        ])('loads %s with the %s loader', async (url, loader) => {
+            const texture = await load(url);
+
+            expect(texture.userData.loader).toBe(loader);
+            expect(texture.name).toBe(url);
+        });
+
+        it('reads the extension without query or hash', async () => {
+            expect((await load('studio.hdr?v=2')).userData.loader).toBe('hdr');
+            expect((await load('studio.exr#top')).userData.loader).toBe('exr');
+            expect((await load('studio.jpg?x=a.hdr')).userData.loader).toBe(
+                'texture',
+            );
+        });
+
+        it('tags only non-linear images as sRGB', async () => {
+            expect((await load('a.jpg')).colorSpace).toBe(SRGBColorSpace);
+            expect((await load('a.hdr')).colorSpace).toBe(NoColorSpace);
+            expect((await load('a.exr')).colorSpace).toBe(NoColorSpace);
+        });
+
+        it('maps every image as equirectangular', async () => {
+            for (const url of ['b.hdr', 'b.exr', 'b.jpg']) {
+                expect((await load(url)).mapping).toBe(
+                    EquirectangularReflectionMapping,
+                );
+            }
+        });
     });
 });

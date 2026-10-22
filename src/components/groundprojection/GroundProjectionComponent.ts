@@ -52,7 +52,7 @@ const _vertex = new Vector3();
  * and shadow bakes.
  *
  * The image is taken by URL. A URL other users have as well, such as the
- * scene's image based light, is loaded once; the dome holds its own texture.
+ * scene's image based light, is loaded once and shares one texture.
  * {@link dispose} gives it back.
  *
  * @experimental The projection has only been checked on a few HDR images; its

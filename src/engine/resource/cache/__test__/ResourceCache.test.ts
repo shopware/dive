@@ -1,5 +1,4 @@
 import { DIVEResourceCache } from '../ResourceCache.ts';
-import { DIVEResourcePrototype } from '../../prototype/ResourcePrototype.ts';
 
 /** a stand-in value, telling where it was loaded from */
 class Thing {
@@ -15,29 +14,25 @@ function deferredCache() {
         reject: (error: Error) => void;
     }[] = [];
 
-    class DeferredPrototype extends DIVEResourcePrototype<Thing> {
-        protected load(url: string): Promise<Thing> {
-            return new Promise<Thing>((resolve, reject) => {
+    const cache = new DIVEResourceCache<Thing>({
+        load: (url) =>
+            new Promise<Thing>((resolve, reject) => {
                 loads.push({
                     url,
                     resolve: () => resolve(new Thing(url)),
                     reject,
                 });
-            });
-        }
-
-        protected copy(value: Thing): Thing {
-            return new Thing(value.url);
-        }
-
-        protected free(value: Thing): void {
+            }),
+        freeValue: (value) => {
             value.disposed = true;
-        }
-    }
-
-    const cache = new DIVEResourceCache<Thing>(
-        (url) => new DeferredPrototype(url),
-    );
+        },
+        copy: {
+            make: (value) => new Thing(value.url),
+            free: (copy) => {
+                copy.disposed = true;
+            },
+        },
+    });
     return { cache, loads };
 }
 
@@ -52,6 +47,7 @@ describe('DIVEResourceCache', () => {
 
         expect(loads).toHaveLength(1);
         expect(a).not.toBe(b);
+        expect(a.value).not.toBe(b.value);
     });
 
     it('keeps urls apart', async () => {
@@ -61,26 +57,60 @@ describe('DIVEResourceCache', () => {
         const b = cache.draw('b.hdr');
         loads.forEach((load) => load.resolve());
 
-        expect((await a).url).toBe('a.hdr');
-        expect((await b).url).toBe('b.hdr');
+        expect((await a).value.url).toBe('a.hdr');
+        expect((await b).value.url).toBe('b.hdr');
     });
 
-    it('drops a prototype with its last release and loads again afterwards', async () => {
+    it('drops a prototype with its last lease and loads again afterwards', async () => {
         const { cache, loads } = deferredCache();
         const first = cache.draw('a.hdr');
         const second = cache.draw('a.hdr');
         loads[0].resolve();
         const [a, b] = await Promise.all([first, second]);
 
-        cache.release('a.hdr', a);
-        expect(a.disposed).toBe(true);
-        expect(b.disposed).toBe(false);
-        cache.release('a.hdr', b);
-        expect(b.disposed).toBe(true);
+        a.release();
+        expect(a.value.disposed).toBe(true);
+        expect(b.value.disposed).toBe(false);
+        b.release();
+        expect(b.value.disposed).toBe(true);
 
         const again = cache.draw('a.hdr');
         loads[1].resolve();
-        expect(await again).not.toBe(a);
+        expect((await again).value).not.toBe(a.value);
+        expect(loads).toHaveLength(2);
+    });
+
+    it('keeps a prototype when one lease is released twice', async () => {
+        const { cache, loads } = deferredCache();
+        const first = cache.draw('a.hdr');
+        const second = cache.draw('a.hdr');
+        loads[0].resolve();
+        const [a, b] = await Promise.all([first, second]);
+
+        a.release();
+        a.release();
+        const third = await cache.draw('a.hdr');
+
+        expect(b.value.disposed).toBe(false);
+        expect(third.value.disposed).toBe(false);
+        expect(loads).toHaveLength(1);
+    });
+
+    it('leaves the next prototype of a url alone when a lease of a freed one is released again', async () => {
+        const { cache, loads } = deferredCache();
+        const drawing = cache.draw('a.hdr');
+        loads[0].resolve();
+        const old = await drawing;
+        old.release();
+
+        const next = cache.draw('a.hdr');
+        loads[1].resolve();
+        const current = await next;
+        old.release();
+        const shared = await cache.draw('a.hdr');
+
+        expect(current.value.disposed).toBe(false);
+        expect(shared.value.disposed).toBe(false);
         expect(loads).toHaveLength(2);
     });
 
@@ -95,12 +125,7 @@ describe('DIVEResourceCache', () => {
 
         const retry = cache.draw('a.hdr');
         loads[1].resolve();
-        expect((await retry).url).toBe('a.hdr');
+        expect((await retry).value.url).toBe('a.hdr');
     });
 
-    it('ignores a release for a url it does not hold', () => {
-        const { cache } = deferredCache();
-
-        expect(() => cache.release('a.hdr', new Thing())).not.toThrow();
-    });
 });

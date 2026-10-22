@@ -1,6 +1,5 @@
 import { DIVEResource } from '../Resource.ts';
 import { DIVEResourceCache } from '../cache/ResourceCache.ts';
-import { DIVEResourcePrototype } from '../prototype/ResourcePrototype.ts';
 
 /** a stand-in value, telling where it was loaded from */
 class Thing {
@@ -20,30 +19,23 @@ function deferredCache() {
     }[] = [];
     const freed: Thing[] = [];
 
-    class DeferredPrototype extends DIVEResourcePrototype<Thing> {
-        protected load(url: string): Promise<Thing> {
-            return new Promise<Thing>((resolve, reject) => {
+    const free = (value: Thing): void => {
+        value.disposed = true;
+        freed.push(value);
+    };
+
+    const cache = new DIVEResourceCache<Thing>({
+        load: (url) =>
+            new Promise<Thing>((resolve, reject) => {
                 loads.push({
                     url,
                     resolve: () => resolve(new Thing(url)),
                     reject,
                 });
-            });
-        }
-
-        protected copy(value: Thing): Thing {
-            return new Thing(value.url, value);
-        }
-
-        protected free(value: Thing): void {
-            value.disposed = true;
-            freed.push(value);
-        }
-    }
-
-    const cache = new DIVEResourceCache<Thing>(
-        (url) => new DeferredPrototype(url),
-    );
+            }),
+        freeValue: free,
+        copy: { make: (value) => new Thing(value.url, value), free },
+    });
     return { cache, loads, freed };
 }
 
@@ -228,6 +220,20 @@ describe('DIVEResource', () => {
         resource.dispose();
 
         expect(copy.disposed).toBe(true);
+    });
+
+    it('gives its copy back once when disposed twice or cleared after dispose', async () => {
+        const { cache, loads, freed } = deferredCache();
+        const resource = await loaded(cache, loads);
+        const other = new DIVEResource<Thing>(cache);
+        await other.request('a.hdr');
+
+        resource.dispose();
+        resource.dispose();
+        resource.clear();
+
+        expect(freed).toHaveLength(1);
+        expect(other.value!.disposed).toBe(false);
     });
 
     it('gives back a load that arrives after dispose', async () => {
