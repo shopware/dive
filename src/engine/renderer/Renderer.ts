@@ -4,6 +4,7 @@ import {
     PCFShadowMap,
     PCFSoftShadowMap,
     SRGBColorSpace,
+    type Texture,
     WebGPURenderer,
 } from 'three/webgpu';
 import { DIVEScene } from '../scene/Scene.ts';
@@ -121,8 +122,8 @@ export class DIVERenderer {
     private _environment: DIVEEnvironment;
     private _baker: ImageBasedLightBaker;
 
-    /** the scene's light version at the last bake, -1 before the first */
-    private _bakedLightVersion = -1;
+    /** the light's texture at the last bake, `null` for none */
+    private _bakedLightTexture: Texture | null = null;
 
     private _initPromise: DIVEAbortablePromise<void> | null = null;
 
@@ -218,13 +219,11 @@ export class DIVERenderer {
      */
     private _applyImageBasedLight(): void {
         const light = this._scene.imageBasedLight;
-        const version = this._scene.imageBasedLightVersion;
+        const texture = this._scene.imageBasedLightTexture;
 
-        if (version !== this._bakedLightVersion) {
-            this._bakedLightVersion = version;
-            this._scene.environment = this._baker.bake(
-                this._scene.imageBasedLightTexture,
-            );
+        if (texture !== this._bakedLightTexture) {
+            this._bakedLightTexture = texture;
+            this._scene.environment = this._baker.bake(texture);
         }
 
         if (!light) return;
@@ -270,7 +269,7 @@ export class DIVERenderer {
             this._scene.environment = null;
         }
         this._baker.release();
-        this._bakedLightVersion = -1;
+        this._bakedLightTexture = null;
     }
 
     /**

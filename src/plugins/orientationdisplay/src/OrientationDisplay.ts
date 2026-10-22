@@ -46,10 +46,7 @@ export class OrientationDisplay implements DIVETicker {
     public tick(): void {
         if (!this._renderer.webgpurenderer.initialized) return;
 
-        // save current background reference and set it to transparent
-        const restoreBackground = this._scene.background ?? null;
         const restoreAutoClear = this._renderer.webgpurenderer.autoClear;
-        this._scene.background = null;
 
         // save current viewport and set it to desired size
         this._renderer.webgpurenderer.getViewport(this._restoreViewport);
@@ -75,16 +72,17 @@ export class OrientationDisplay implements DIVETicker {
             this._cameraComponent.camera.matrixWorld,
         );
 
-        // render scene to orthographic camera
-        this._renderer.webgpurenderer.render(
-            this._scene,
-            this._orthographicCamera,
+        // the axes over the frame, without the background between
+        this._scene.withoutBackground(() =>
+            this._renderer.webgpurenderer.render(
+                this._scene,
+                this._orthographicCamera,
+            ),
         );
 
-        // restore viewport and background
+        // restore viewport
         this._renderer.webgpurenderer.setViewport(this._restoreViewport);
         this._renderer.webgpurenderer.autoClear = restoreAutoClear;
-        this._scene.background = restoreBackground;
     }
 
     public dispose(): void {

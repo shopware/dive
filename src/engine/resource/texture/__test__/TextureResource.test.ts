@@ -120,13 +120,4 @@ describe('TextureResource', () => {
         expect(loaders.hdr).toHaveBeenCalledTimes(2);
         expect(light.value?.name).toBe('studio.hdr');
     });
-
-    it('reports changes to the callback', async () => {
-        const onChange = vi.fn();
-        const resource = track(new TextureResource(onChange));
-
-        await resource.request('studio.hdr');
-
-        expect(onChange).toHaveBeenCalledOnce();
-    });
 });

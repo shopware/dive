@@ -58,7 +58,10 @@ vi.mock('three/webgpu', async (importOriginal) => {
             this.init = vi.fn(async () => {
                 this.initialized = true;
             });
-            this.render = vi.fn();
+            // like three, which hands the scene its turn before drawing it
+            this.render = vi.fn((scene: any, camera: unknown) =>
+                scene.onBeforeRender(this, scene, camera),
+            );
             this.setSize = vi.fn();
             this.setPixelRatio = vi.fn();
             this.dispose = vi.fn();
@@ -114,6 +117,12 @@ async function setUp(
     await scene.setImageBasedLight({});
     return { scene, renderer, environment: renderer.environment };
 }
+
+/** what three does right before it renders the scene */
+const render = (scene: DIVEScene): void =>
+    scene.onBeforeRender(
+        ...([] as unknown as Parameters<DIVEScene['onBeforeRender']>),
+    );
 
 /** lets every pending load, and what waits for it, settle */
 async function settle(): Promise<void> {
@@ -218,22 +227,24 @@ describe('DIVEEnvironment', () => {
     });
 
     it('shows the light image as the background', async () => {
-        const { scene, environment } = await setUp();
+        const { scene, renderer, environment } = await setUp();
         environment.setRotationY(0.5);
 
         environment.setUseAsBackground(true);
         await settle();
+        renderer.tick();
 
         expect((scene.background as Texture).name).toMatch(/default\.hdr/);
         expect(scene.backgroundRotation.y).toBe(0.5);
     });
 
     it('keeps the image on the background when the light moves on', async () => {
-        const { scene, environment } = await setUp({
+        const { scene, renderer, environment } = await setUp({
             imageBasedLight: { image: 'studio.hdr' },
         });
         environment.setUseAsBackground(true);
         await settle();
+        renderer.tick();
         const shown = scene.background as Texture;
         const disposed = vi.fn();
         shown.addEventListener('dispose', disposed);
@@ -246,18 +257,20 @@ describe('DIVEEnvironment', () => {
         });
 
         await scene.setImageBasedLight({ image: 'other.hdr' });
+        renderer.tick();
 
         expect(scene.background).toBe(shown);
         expect(disposed).not.toHaveBeenCalled();
     });
 
     it('shares the image of the light with the background, loading it once', async () => {
-        const { scene, environment } = await setUp({
+        const { scene, renderer, environment } = await setUp({
             imageBasedLight: { image: 'studio.hdr' },
         });
 
         environment.setUseAsBackground(true);
         await settle();
+        renderer.tick();
 
         expect((scene.background as Texture).source).toBe(
             scene.imageBasedLightTexture!.source,
@@ -268,23 +281,25 @@ describe('DIVEEnvironment', () => {
     });
 
     it('rotates an image background along with the light', async () => {
-        const { scene, environment } = await setUp();
+        const { scene, renderer, environment } = await setUp();
         environment.setUseAsBackground(true);
         await settle();
 
         environment.setRotationY(2);
         await settle();
+        renderer.tick();
 
         expect(scene.imageBasedLight!.rotation).toBe(2);
         expect(scene.backgroundRotation.y).toBe(2);
     });
 
     it('follows a new image while used as background', async () => {
-        const { scene, environment } = await setUp();
+        const { scene, renderer, environment } = await setUp();
         environment.setUseAsBackground(true);
         await settle();
 
         await environment.setImageUrl('studio.hdr');
+        renderer.tick();
 
         expect((scene.background as Texture).name).toBe('studio.hdr');
         expect(scene.imageBasedLightTexture!.name).toBe('studio.hdr');
@@ -325,6 +340,7 @@ describe('DIVEEnvironment', () => {
 
         environment.setUseAsBackground(true);
         await settle();
+        render(scene);
 
         expect(scene.imageBasedLightTexture).not.toBeNull();
         expect((scene.background as Texture).name).toMatch(/default\.hdr/);
@@ -339,6 +355,7 @@ describe('DIVEEnvironment', () => {
             useAsBackground: true,
         });
         await settle();
+        render(scene);
 
         expect(scene.imageBasedLight).toMatchObject({
             image: 'studio.hdr',

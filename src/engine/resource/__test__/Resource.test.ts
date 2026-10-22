@@ -73,7 +73,6 @@ describe('DIVEResource', () => {
         await done;
         expect(resource.value?.url).toBe('b.hdr');
         expect(resource.url).toBe('b.hdr');
-        expect(resource.version).toBe(2);
     });
 
     it('frees the url it moved away from, unless another resource holds it', async () => {
@@ -134,17 +133,18 @@ describe('DIVEResource', () => {
         await Promise.all([first, second]);
 
         expect(loads).toHaveLength(1);
-        expect(resource.version).toBe(1);
+        expect(resource.value?.url).toBe('a.hdr');
     });
 
     it('does not reload the url in place', async () => {
         const { cache, loads } = deferredCache();
         const resource = await loaded(cache, loads);
+        const inPlace = resource.value;
 
         await resource.request('a.hdr');
 
         expect(loads).toHaveLength(1);
-        expect(resource.version).toBe(1);
+        expect(resource.value).toBe(inPlace);
     });
 
     it('drops a load on its way when the url in place is requested again', async () => {
@@ -158,7 +158,6 @@ describe('DIVEResource', () => {
         await done;
 
         expect(resource.value).toBe(inPlace);
-        expect(resource.version).toBe(1);
         expect(freed.every((thing) => thing.url === 'b.hdr')).toBe(true);
     });
 
@@ -193,21 +192,6 @@ describe('DIVEResource', () => {
 
         expect(loads).toHaveLength(2);
         expect(resource.value?.url).toBe('b.hdr');
-    });
-
-    it('reports every change of the value', async () => {
-        const { cache, loads } = deferredCache();
-        const onChange = vi.fn();
-        const resource = new DIVEResource<Thing>(cache, onChange);
-
-        const done = resource.request('a.hdr');
-        loads[0].resolve();
-        await done;
-        resource.clear();
-        resource.clear();
-
-        expect(onChange).toHaveBeenCalledTimes(2);
-        expect(resource.version).toBe(2);
     });
 
     it('clears its copy and gives it back', async () => {

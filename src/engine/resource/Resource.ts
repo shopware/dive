@@ -9,12 +9,14 @@ import { type DIVEResourceCache } from './cache/ResourceCache.ts';
  * disposed. Of overlapping requests the last one wins, and a copy drawn for
  * a request that was overtaken is given back on arrival.
  *
+ * Holding a value puts it nowhere: a user compares it with what three
+ * renders from and assigns it there itself, right before rendering.
+ *
  * @typeParam T - The value, e.g. a texture.
  */
 export class DIVEResource<T extends object> {
     private _url: string | null = null;
     private _value: T | null = null;
-    private _version = 0;
 
     /** the load serving the newest request; replacing it makes it stale */
     private _pending: {
@@ -26,12 +28,8 @@ export class DIVEResource<T extends object> {
 
     /**
      * @param _cache - Where the prototypes are kept.
-     * @param _onChange - Called whenever the value in place changes.
      */
-    constructor(
-        private _cache: DIVEResourceCache<T>,
-        private _onChange: () => void = () => {},
-    ) {}
+    constructor(private _cache: DIVEResourceCache<T>) {}
 
     /** The URL of the value in place, `null` for none. */
     public get url(): string | null {
@@ -41,11 +39,6 @@ export class DIVEResource<T extends object> {
     /** The copy in place, `null` for none. */
     public get value(): T | null {
         return this._value;
-    }
-
-    /** Counts every change of the value, including to and from none. */
-    public get version(): number {
-        return this._version;
     }
 
     /**
@@ -110,7 +103,5 @@ export class DIVEResource<T extends object> {
         }
         this._url = url;
         this._value = value;
-        this._version++;
-        this._onChange();
     }
 }

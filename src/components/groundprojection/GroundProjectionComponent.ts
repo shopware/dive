@@ -67,7 +67,7 @@ export class GroundProjectionComponent extends DIVEComponent {
     private _height: number = DIVEGroundProjectionDefaultSettings.height;
     private _radius: number = DIVEGroundProjectionDefaultSettings.radius;
     private _image: string | null = null;
-    private _texture = new TextureResource(() => this._showImage());
+    private _texture = new TextureResource();
 
     constructor() {
         super();
@@ -84,6 +84,8 @@ export class GroundProjectionComponent extends DIVEComponent {
 
         // the background, drawn before everything that stands in it
         this._mesh.renderOrder = -1;
+
+        this._mesh.onBeforeRender = (): void => this._showImage();
 
         this.contribute(this._mesh);
     }
@@ -121,7 +123,8 @@ export class GroundProjectionComponent extends DIVEComponent {
      * the new one has loaded.
      *
      * @param url - The URL of the image, or `null` for a white dome.
-     * @returns Resolves once the image is in place.
+     * @returns Resolves once the image has loaded; it is drawn from the next
+     * render on.
      */
     public async setImage(url: string | null): Promise<this> {
         this._image = url;
@@ -213,10 +216,18 @@ export class GroundProjectionComponent extends DIVEComponent {
         return this;
     }
 
-    /** puts the loaded image on the dome */
+    /**
+     * Puts the loaded image on the dome, right before it is drawn.
+     *
+     * Rebuilds the material only when the image changed: with or without a
+     * map is a different shader.
+     */
     private _showImage(): void {
-        this._mesh.material.map = this._texture.value;
-        this._mesh.material.needsUpdate = true;
+        const material = this._mesh.material;
+        if (material.map === this._texture.value) return;
+
+        material.map = this._texture.value;
+        material.needsUpdate = true;
     }
 
     /**

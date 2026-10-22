@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { SphereGeometry, Texture, Vector3 } from 'three/webgpu';
+import { type Mesh, SphereGeometry, Texture, Vector3 } from 'three/webgpu';
 import {
     DIVEGroundProjectionDefaultSettings,
     GroundProjectionComponent,
@@ -70,6 +70,12 @@ afterEach(async () => {
     await Promise.resolve();
     images.load.mockClear();
 });
+
+/** what three does right before it draws the dome */
+const render = (projection: GroundProjectionComponent): void =>
+    projection.mesh.onBeforeRender(
+        ...([] as unknown as Parameters<Mesh['onBeforeRender']>),
+    );
 
 /** world positions of every vertex, with the mesh's offset applied */
 const verticesOf = (projection: GroundProjectionComponent): Vector3[] => {
@@ -199,9 +205,24 @@ describe('dive/groundprojection/GroundProjectionComponent', () => {
 
         const texture = await arrive('studio.hdr');
         await expect(done).resolves.toBe(projection);
+        expect(projection.mesh.material.map).toBeNull();
 
+        render(projection);
         expect(projection.mesh.material.map?.source).toBe(texture.source);
         expect(projection.mesh.material.version).toBe(version + 1);
+    });
+
+    it('should touch the material only when the image changed', async () => {
+        const projection = track();
+        const done = projection.setImage('studio.hdr');
+        await arrive('studio.hdr');
+        await done;
+        render(projection);
+        const version = projection.mesh.material.version;
+
+        render(projection);
+
+        expect(projection.mesh.material.version).toBe(version);
     });
 
     it('should keep the previous image until the newest call has loaded', async () => {
@@ -216,10 +237,12 @@ describe('dive/groundprojection/GroundProjectionComponent', () => {
 
         const b = await arrive('b.hdr');
         await overtaken;
+        render(projection);
         expect(projection.mesh.material.map?.source).toBe(a.source);
 
         const c = await arrive('c.hdr');
         await newest;
+        render(projection);
         expect(projection.mesh.material.map?.source).toBe(c.source);
         expect(b.dispose).toHaveBeenCalled();
         expect(a.dispose).toHaveBeenCalled();
@@ -231,7 +254,9 @@ describe('dive/groundprojection/GroundProjectionComponent', () => {
         const texture = await arrive('studio.hdr');
         await done;
 
+        render(projection);
         await projection.setImage(null);
+        render(projection);
 
         expect(projection.image).toBeNull();
         expect(projection.mesh.material.map).toBeNull();
@@ -248,6 +273,8 @@ describe('dive/groundprojection/GroundProjectionComponent', () => {
         ]);
         const texture = await arrive('studio.hdr');
         await done;
+        render(one);
+        render(other);
 
         expect(images.load).toHaveBeenCalledTimes(1);
         expect(one.mesh.material.map?.source).toBe(texture.source);
@@ -263,6 +290,7 @@ describe('dive/groundprojection/GroundProjectionComponent', () => {
         images.loads.pop()!.reject(new Error('404'));
 
         await expect(done).rejects.toThrow('404');
+        render(projection);
         expect(projection.mesh.material.map).toBeNull();
     });
 
@@ -308,6 +336,7 @@ describe('dive/groundprojection/GroundProjectionComponent', () => {
 
         // requested again, and shared with the source
         await clone.setImage(clone.image);
+        render(clone);
         expect(clone.mesh.material.map?.source).toBe(texture.source);
         expect(images.load).toHaveBeenCalledTimes(1);
     });

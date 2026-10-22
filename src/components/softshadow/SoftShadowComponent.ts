@@ -27,6 +27,7 @@ import {
 import { BoundingBox } from '../../engine/boundingbox/BoundingBox.ts';
 import { DIVEComponent } from '../../engine/component/Component.ts';
 import { type DIVENode } from '../../engine/node/Node.ts';
+import { type DIVEScene } from '../../engine/scene/Scene.ts';
 
 /** scratch for placing the plane, so a bake allocates nothing */
 const _inverse = new Matrix4();
@@ -428,25 +429,23 @@ export class SoftShadowComponent extends DIVEComponent {
 
         const restoreRenderTarget = renderer.getRenderTarget();
         const restoreOverride = scene.overrideMaterial;
-        const restoreBackground = scene.background;
         const restoreClearAlpha = renderer.getClearAlpha();
         renderer.getClearColor(_clearColor);
 
         try {
             scene.overrideMaterial = this._depthMaterial;
+            renderer.setClearColor(0x000000, 0);
+            renderer.setRenderTarget(this._target);
 
             // a background would be drawn over the whole target as full alpha
-            scene.background = null;
-            renderer.setClearColor(0x000000, 0);
-
-            renderer.setRenderTarget(this._target);
-            renderer.render(scene, this._camera);
+            withoutBackground(scene, () =>
+                renderer.render(scene, this._camera),
+            );
 
             this._blur(renderer, 1);
             this._blur(renderer, BLUR_FALLOFF);
         } finally {
             scene.overrideMaterial = restoreOverride;
-            scene.background = restoreBackground;
             renderer.setClearColor(_clearColor, restoreClearAlpha);
             renderer.setRenderTarget(restoreRenderTarget);
         }
@@ -628,5 +627,24 @@ export class SoftShadowComponent extends DIVEComponent {
         this.setTickEnabled(false);
 
         return this;
+    }
+}
+
+/**
+ * Renders a scene without its background. A DIVE scene hides it itself,
+ * since it puts its image back right before each render.
+ */
+function withoutBackground(scene: Scene, draw: () => void): void {
+    if ((scene as DIVEScene).isDIVEScene) {
+        (scene as DIVEScene).withoutBackground(draw);
+        return;
+    }
+
+    const background = scene.background;
+    scene.background = null;
+    try {
+        draw();
+    } finally {
+        scene.background = background;
     }
 }

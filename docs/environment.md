@@ -69,8 +69,8 @@ transparent. The colour `'transparent'` means the same as `null`.
 
 Things to know:
 - An image background works with `.jpg`, `.png`, `.webp`, `.hdr` and `.exr`.
-- `setBackground` resolves once the image is loaded. Until then, the previous background stays on
-  screen.
+- `setBackground` resolves once the image is loaded. It shows from the next frame on; until then,
+  the previous background stays on screen. A colour shows at once.
 - Setting the same image with a new rotation only turns it. Nothing is loaded again.
 - If calls overlap, the last one wins.
 - `dive.scene.getBackground()` returns what you asked for: `{ type: 'color', color }`,
@@ -135,8 +135,8 @@ await Promise.all([
 `setHeight()`, `setRadius()` and `setVisibility()` change one thing at a time.
 
 Things to know:
-- `setImage()` resolves once the image is loaded. Until then, the previous image stays on the
-  dome. If calls overlap, the last one wins. `setImage(null)` turns the dome white.
+- `setImage()` resolves once the image is loaded. It shows from the next frame on; until then, the
+  previous image stays on the dome. If calls overlap, the last one wins. `setImage(null)` turns the dome white.
 - `projection.image` returns the URL you asked for, at once, before it has loaded.
 - The same URL as the image based light or the background is loaded once; the dome gets its own
   `Texture` sharing the pixel data. Disposing the component gives its image back; it is freed once

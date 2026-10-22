@@ -196,9 +196,10 @@ export class DIVEScene extends Scene implements DIVETicker {
     /** the background as requested */
     private _background: DIVEBackground = null;
 
-    private _backgroundImage = new TextureResource(() =>
-        this._showBackground(),
-    );
+    private _backgroundImage = new TextureResource();
+
+    /** set while a pass draws without the background */
+    private _backgroundHidden = false;
 
     constructor(settings?: Partial<DIVESceneSettings>) {
         super();
@@ -249,16 +250,6 @@ export class DIVEScene extends Scene implements DIVETicker {
     }
 
     /**
-     * Counts every change of {@link imageBasedLightTexture}, including to and
-     * from none, so whoever bakes from it can compare against its last bake.
-     *
-     * @internal
-     */
-    public get imageBasedLightVersion(): number {
-        return this._lightImage.version;
-    }
-
-    /**
      * Sets the image based light, or turns it off with `null`.
      *
      * Fields left out keep their value; after `null` they start from the
@@ -267,7 +258,8 @@ export class DIVEScene extends Scene implements DIVETicker {
      * places is loaded once.
      *
      * @param settings - What to change, or `null` for no image based light.
-     * @returns Resolves once the image is loaded and in place.
+     * @returns Resolves once the image has loaded; it lights the scene from
+     * the next render on.
      */
     public async setImageBasedLight(
         settings: Partial<DIVEImageBasedLightSettings> | null,
@@ -351,13 +343,15 @@ export class DIVEScene extends Scene implements DIVETicker {
      *
      * @param value - The new background.
      * @returns Resolves once the background is in place, for an image once it
-     * has loaded.
+     * has loaded; the image is shown from the next render on.
      */
     public async setBackground(value: DIVEBackgroundSettings): Promise<void> {
         if (!isBackgroundImage(value)) {
-            this._background = toColorBackground(value);
+            const background = toColorBackground(value);
+            this._background = background;
             this._backgroundImage.clear();
-            this._showBackground();
+            this.background = background?.color ?? null;
+            this.backgroundRotation.set(0, 0, 0);
             return;
         }
 
@@ -366,26 +360,47 @@ export class DIVEScene extends Scene implements DIVETicker {
             image: value.image,
             rotation: value.rotation ?? 0,
         };
-        const done = this._backgroundImage.request(value.image);
-        this._showBackground();
-        return done;
+        return this._backgroundImage.request(value.image);
     }
 
-    /** puts the requested background on the scene, an image once it has loaded */
-    private _showBackground(): void {
-        const background = this._background;
+    /**
+     * Puts the requested background image on the scene, once it has loaded.
+     *
+     * Called by three right before every render of this scene, so renders
+     * DIVE does not drive get it too.
+     */
+    public onBeforeRender(): void {
+        if (this._backgroundHidden) return;
 
-        if (background?.type !== 'image') {
-            this.background = background?.color ?? null;
-            this.backgroundRotation.set(0, 0, 0);
-            return;
-        }
+        const background = this._background;
+        if (background?.type !== 'image') return;
 
         // the previous background stays until the image has loaded
         if (this._backgroundImage.url !== background.image) return;
 
-        this.background = this._backgroundImage.value;
+        const image = this._backgroundImage.value;
+        if (this.background !== image) this.background = image;
         this.backgroundRotation.set(0, background.rotation, 0);
+    }
+
+    /**
+     * Draws without the background, for a pass that wants only the content,
+     * and puts the background back afterwards.
+     *
+     * @param draw - Renders this scene.
+     * @internal
+     */
+    public withoutBackground(draw: () => void): void {
+        const background = this.background;
+        this._backgroundHidden = true;
+        this.background = null;
+
+        try {
+            draw();
+        } finally {
+            this.background = background;
+            this._backgroundHidden = false;
+        }
     }
 
     public computeSceneBB(): Box3 {
@@ -508,7 +523,7 @@ function isBackgroundImage(
 /** a colour background, `null` and `'transparent'` being transparent */
 function toColorBackground(
     value: Exclude<DIVEBackgroundSettings, DIVEBackgroundImageSettings>,
-): DIVEBackground {
+): Extract<DIVEBackground, { type: 'color' }> | null {
     if (value === null || value === 'transparent') return null;
 
     // a Color passed in is used as it is

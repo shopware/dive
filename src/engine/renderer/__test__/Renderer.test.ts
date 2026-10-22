@@ -539,6 +539,22 @@ describe('DIVERenderPipeline', () => {
             expect(scene.environmentIntensity).toBe(3);
         });
 
+        it('bakes nothing when the light is back on the texture of its last bake', async () => {
+            const { scene, renderer } = await setUp();
+            // the background keeps the image loaded, so the light gets its texture back
+            await scene.setBackground({ image: 'studio.hdr' });
+            await scene.setImageBasedLight({ image: 'studio.hdr' });
+            renderer.tick();
+            const baked = scene.imageBasedLightTexture;
+
+            await scene.setImageBasedLight({ image: 'a.hdr' });
+            await scene.setImageBasedLight({ image: 'studio.hdr' });
+            expect(scene.imageBasedLightTexture).toBe(baked);
+            renderer.tick();
+
+            expect(bakes()).toBe(1);
+        });
+
         it('bakes nothing before the renderer is initialized', async () => {
             const scene = new DIVEScene();
             const renderer = new DIVERenderer(scene, { camera: {} } as never);

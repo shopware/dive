@@ -10,10 +10,17 @@ import {
 // jsdom has no 2D canvas context, so the axes labels cannot rasterize their text
 vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockReturnValue(null);
 
+/** hides the background while it draws, as the scene does */
 const mockScene = {
     add: vi.fn(),
     remove: vi.fn(),
     background: null,
+    withoutBackground: vi.fn((draw: () => void) => {
+        const background = mockScene.background;
+        mockScene.background = null;
+        draw();
+        mockScene.background = background;
+    }),
 } as unknown as DIVEScene;
 
 /**
@@ -146,6 +153,20 @@ describe('OrientationDisplay', () => {
                 mockRenderer.webgpurenderer.setViewport,
             ).toHaveBeenCalledWith(orientationDisplay['_restoreViewport']);
             expect(mockScene.background).toBe(originalBackground);
+        });
+
+        it('should draw the axes without the background', () => {
+            mockScene.background = new Color(0x000000);
+            let drawnOver: unknown;
+            vi.mocked(
+                mockRenderer.webgpurenderer.render,
+            ).mockImplementationOnce(() => {
+                drawnOver = mockScene.background;
+            });
+
+            orientationDisplay.tick();
+
+            expect(drawnOver).toBeNull();
         });
 
         it('should handle null background', () => {

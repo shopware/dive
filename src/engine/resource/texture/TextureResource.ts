@@ -16,10 +16,7 @@ const textureResourcePrototypes = new DIVEResourceCache<Texture>(
  * URL load it once and share the pixel data.
  */
 export class TextureResource extends DIVEResource<Texture> {
-    /**
-     * @param onChange - Called whenever the texture in place changes.
-     */
-    constructor(onChange?: () => void) {
-        super(textureResourcePrototypes, onChange);
+    constructor() {
+        super(textureResourcePrototypes);
     }
 }
