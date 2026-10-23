@@ -35,9 +35,15 @@ export const SetStateAction = Action.define<
             ).execute();
         });
 
-        // one call instead of a hand-written copy per property, which is how
-        // gridEnabled went missing here while updatescene had it
-        gateway.applySceneSettings(_payload);
+        // a failed image is reported like a broken entity, so the entities still load
+        const sceneSettings = gateway
+            .applySceneSettings(_payload)
+            .catch((reason: unknown) => {
+                console.warn(
+                    'SET_STATE: The scene settings could not be applied.',
+                    reason,
+                );
+            });
         /**
          * the same move SET_CAMERA_TRANSFORM makes, so it is that action rather
          * than a second copy of it
@@ -197,7 +203,7 @@ export const SetStateAction = Action.define<
         }
 
         // ADD_OBJECT resolves once its scene object exists, which for models includes loading the asset. None of these can reject, so this waits for all of them.
-        await Promise.all(promises);
+        await Promise.all([...promises, sceneSettings]);
 
         // Second pass restores the hierarchy. Every object exists by now, so the order the entities arrive in no longer matters.
         for (const entity of added) {

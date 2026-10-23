@@ -8,14 +8,42 @@ import {
     LinearToneMapping,
     PCFShadowMap,
     PCFSoftShadowMap,
+    PMREMGenerator as PMREMGeneratorOriginal,
     SRGBColorSpace,
+    Texture,
     WebGPURenderer as WebGPURendererOriginal,
 } from 'three/webgpu';
 import { DIVEEnvironment } from '../../environment/Environment.ts';
+import { DIVEScene } from '../../scene/Scene.ts';
 import { DIVERenderer, DIVERendererDefaultSettings } from '../Renderer.ts';
 
 /** Records whether disposing killed the canvas context, as three's does. */
 const { loseContext } = vi.hoisted(() => ({ loseContext: vi.fn() }));
+
+const loaders = vi.hoisted(() => {
+    /** a texture per load, named after its url */
+    const loader = () =>
+        vi.fn(async (url: string) => {
+            const texture = new (await import('three/webgpu')).Texture();
+            texture.name = url;
+            vi.spyOn(texture, 'dispose');
+            return texture;
+        });
+
+    return { hdr: loader(), exr: loader(), texture: loader() };
+});
+
+vi.mock('three/examples/jsm/loaders/HDRLoader.js', () => ({
+    HDRLoader: vi.fn(function (this: any) {
+        this.loadAsync = loaders.hdr;
+    }),
+}));
+
+vi.mock('three/examples/jsm/loaders/EXRLoader.js', () => ({
+    EXRLoader: vi.fn(function (this: any) {
+        this.loadAsync = loaders.exr;
+    }),
+}));
 
 vi.mock('three/webgpu', async (importOriginal) => {
     const actual = await importOriginal<typeof import('three/webgpu')>();
@@ -79,20 +107,49 @@ vi.mock('three/webgpu', async (importOriginal) => {
             this.toneMappingExposure = 0;
             return this;
         }),
+        TextureLoader: vi.fn(function (this: any) {
+            this.loadAsync = loaders.texture;
+        }),
+        PMREMGenerator: vi.fn(function (this: any, renderer: unknown) {
+            this.renderer = renderer;
+            this.dispose = vi.fn();
+            /** a target per bake, telling which renderer made it */
+            this.fromCubemap = vi.fn(() => {
+                const texture = new actual.Texture();
+                texture.userData.renderer = renderer;
+                vi.spyOn(texture, 'dispose');
+                return { texture, dispose: vi.fn() };
+            });
+        }),
+        CubeRenderTarget: vi.fn(function (this: any) {
+            this.texture = new actual.Texture();
+            this.dispose = vi.fn();
+        }),
+        CubeCamera: vi.fn(function (this: any) {
+            this.update = vi.fn();
+        }),
     };
 });
 
-vi.mock('../../environment/Environment.ts', () => ({
-    DIVEEnvironment: vi.fn(function (this: any) {
-        this.dispose = vi.fn();
-        this.setRenderer = vi.fn();
-        this.initAsync = vi.fn(async () => {});
-        return this;
-    }),
-}));
-
 const WebGPURenderer = WebGPURendererOriginal as any;
-const MockedDIVEEnvironment = DIVEEnvironment as any;
+const PMREMGenerator = PMREMGeneratorOriginal as any;
+
+/** how many bakes happened, across every renderer */
+const bakes = (): number =>
+    PMREMGenerator.mock.instances.reduce(
+        (sum: number, pmrem: any) => sum + pmrem.fromCubemap.mock.calls.length,
+        0,
+    );
+
+/** a scene and an initialized renderer drawing it */
+async function setUp(
+    settings?: ConstructorParameters<typeof DIVEScene>[0],
+): Promise<{ scene: DIVEScene; renderer: DIVERenderer }> {
+    const scene = new DIVEScene(settings);
+    const renderer = new DIVERenderer(scene, { camera: {} } as never);
+    await renderer.initAsync();
+    return { scene, renderer };
+}
 
 describe('DIVERenderPipeline', () => {
     let renderer: DIVERenderer;
@@ -136,7 +193,6 @@ describe('DIVERenderPipeline', () => {
         );
         expect(instance.outputColorSpace).toBe(SRGBColorSpace);
         expect(instance.toneMapping).toBe(LinearToneMapping);
-        expect(MockedDIVEEnvironment).toHaveBeenCalledWith(instance, scene);
     });
 
     it('should instantiate with custom settings', () => {
@@ -181,37 +237,30 @@ describe('DIVERenderPipeline', () => {
     });
 
     it('should expose the environment instance', () => {
-        const environment = MockedDIVEEnvironment.mock.results[0].value;
-
-        expect(renderer.environment).toBe(environment);
+        expect(renderer.environment).toBeInstanceOf(DIVEEnvironment);
     });
 
-    it('should initialize renderer and environment', async () => {
+    it('should initialize the renderer', async () => {
         const instance = WebGPURenderer.mock.results[0].value;
-        const environment = MockedDIVEEnvironment.mock.results[0].value;
 
         await renderer.initAsync();
 
         expect(instance.init).toHaveBeenCalled();
-        expect(environment.initAsync).toHaveBeenCalled();
         expect(renderer.initialized).toBe(true);
     });
 
-    it('should initialize the environment immediately when the renderer is already initialized', async () => {
+    it('should not initialize a renderer that already is', async () => {
         const instance = WebGPURenderer.mock.results[0].value;
-        const environment = MockedDIVEEnvironment.mock.results[0].value;
 
         instance.initialized = true;
 
         await renderer.initAsync();
 
         expect(instance.init).not.toHaveBeenCalled();
-        expect(environment.initAsync).toHaveBeenCalledTimes(1);
     });
 
     it('should reuse the pending init when init is called twice concurrently', async () => {
         const instance = WebGPURenderer.mock.results[0].value;
-        const environment = MockedDIVEEnvironment.mock.results[0].value;
         let resolveInit: (() => void) | undefined;
 
         instance.init = vi.fn(
@@ -230,12 +279,12 @@ describe('DIVERenderPipeline', () => {
         await Promise.resolve();
 
         expect(instance.init).toHaveBeenCalledTimes(1);
-        expect(environment.initAsync).not.toHaveBeenCalled();
 
         resolveInit?.();
         await Promise.all([firstInit, secondInit]);
 
-        expect(environment.initAsync).toHaveBeenCalledTimes(1);
+        expect(instance.init).toHaveBeenCalledTimes(1);
+        expect(renderer.initialized).toBe(true);
     });
 
     it('should render only after initialization', () => {
@@ -285,7 +334,6 @@ describe('DIVERenderPipeline', () => {
 
     it('should recreate the renderer when setting a canvas', () => {
         const firstInstance = WebGPURenderer.mock.results[0].value;
-        const environment = MockedDIVEEnvironment.mock.results[0].value;
         const newCanvas = document.createElement('canvas');
 
         renderer.setCanvas(newCanvas);
@@ -295,22 +343,7 @@ describe('DIVERenderPipeline', () => {
         expect(WebGPURenderer).toHaveBeenLastCalledWith(
             expect.objectContaining({ canvas: newCanvas }),
         );
-        expect(environment.setRenderer).toHaveBeenCalledWith(secondInstance);
         expect(renderer.canvas).toBe(secondInstance.domElement);
-    });
-
-    it('should swap the environment to the new renderer before disposing the previous renderer', () => {
-        const firstInstance = WebGPURenderer.mock.results[0].value;
-        const environment = MockedDIVEEnvironment.mock.results[0].value;
-        const newCanvas = document.createElement('canvas');
-
-        renderer.setCanvas(newCanvas);
-
-        expect(environment.setRenderer).toHaveBeenCalledTimes(1);
-        expect(firstInstance.dispose).toHaveBeenCalledTimes(1);
-        expect(
-            environment.setRenderer.mock.invocationCallOrder[0],
-        ).toBeLessThan(firstInstance.dispose.mock.invocationCallOrder[0]);
     });
 
     it('should not auto reinitialize after a canvas swap', () => {
@@ -327,7 +360,6 @@ describe('DIVERenderPipeline', () => {
 
     it('should ignore stale init completions after a canvas swap', async () => {
         const firstInstance = WebGPURenderer.mock.results[0].value;
-        const environment = MockedDIVEEnvironment.mock.results[0].value;
         let resolveFirstInit: (() => void) | undefined;
 
         firstInstance.init = vi.fn(
@@ -346,16 +378,14 @@ describe('DIVERenderPipeline', () => {
         resolveFirstInit?.();
         await pendingInit;
 
-        expect(environment.initAsync).not.toHaveBeenCalled();
+        expect(renderer.initialized).toBe(false);
     });
 
-    it('should dispose environment and renderer', () => {
+    it('should dispose the renderer', () => {
         const instance = WebGPURenderer.mock.results[0].value;
-        const environment = MockedDIVEEnvironment.mock.results[0].value;
 
         renderer.dispose();
 
-        expect(environment.dispose).toHaveBeenCalled();
         expect(instance.dispose).toHaveBeenCalled();
     });
 
@@ -419,6 +449,164 @@ describe('DIVERenderPipeline', () => {
             expect(console.warn).toHaveBeenCalledWith(
                 expect.stringContaining('end this canvas context'),
             );
+        });
+    });
+
+    describe('image based light', () => {
+        beforeEach(() => {
+            vi.clearAllMocks();
+        });
+
+        it('bakes the default HDR into the scene environment', async () => {
+            const { scene, renderer } = await setUp();
+            await scene.setImageBasedLight({});
+
+            renderer.tick();
+
+            expect(loaders.hdr).toHaveBeenCalledTimes(1);
+            expect(bakes()).toBe(1);
+            expect(scene.environment).toBeInstanceOf(Texture);
+            expect(scene.environment).toBe(
+                PMREMGenerator.mock.instances[0].fromCubemap.mock.results[0]
+                    .value.texture,
+            );
+        });
+
+        it('clears the scene environment for null', async () => {
+            const { scene, renderer } = await setUp();
+            await scene.setImageBasedLight({});
+            renderer.tick();
+            const baked = scene.environment!;
+
+            await scene.setImageBasedLight(null);
+            renderer.tick();
+
+            expect(scene.environment).toBeNull();
+            expect(baked.dispose).toHaveBeenCalled();
+        });
+
+        it('bakes nothing for a scene without a light', async () => {
+            const { scene, renderer } = await setUp({ imageBasedLight: null });
+
+            renderer.tick();
+
+            expect(scene.environment).toBeNull();
+            expect(bakes()).toBe(0);
+        });
+
+        it('rotates and dims the light without a rebake', async () => {
+            const { scene, renderer } = await setUp();
+            await scene.setImageBasedLight({});
+            renderer.tick();
+            const baked = scene.environment;
+
+            await scene.setImageBasedLight({ rotation: 1.5, intensity: 0.25 });
+            renderer.tick();
+
+            expect(bakes()).toBe(1);
+            expect(scene.environment).toBe(baked);
+            expect(scene.environmentRotation.y).toBe(1.5);
+            expect(scene.environmentIntensity).toBe(0.25);
+        });
+
+        it('rebakes once for a new image and frees the bake before', async () => {
+            const { scene, renderer } = await setUp();
+            await scene.setImageBasedLight({});
+            renderer.tick();
+            const before = scene.environment!;
+
+            await scene.setImageBasedLight({ image: 'studio.hdr' });
+            renderer.tick();
+            renderer.tick();
+
+            expect(bakes()).toBe(2);
+            expect(scene.environment).not.toBe(before);
+            expect(before.dispose).toHaveBeenCalled();
+        });
+
+        it('bakes once for several changes within one frame', async () => {
+            const { scene, renderer } = await setUp();
+            await scene.setImageBasedLight({});
+            renderer.tick();
+
+            await scene.setImageBasedLight({ image: 'a.hdr' });
+            await scene.setImageBasedLight({ image: 'b.hdr', rotation: 2 });
+            await scene.setImageBasedLight({ intensity: 3 });
+            renderer.tick();
+
+            expect(bakes()).toBe(2);
+            expect(scene.environmentRotation.y).toBe(2);
+            expect(scene.environmentIntensity).toBe(3);
+        });
+
+        it('gets the same texture back and does not rebake when the light comes back to a url still loaded', async () => {
+            const { scene, renderer } = await setUp();
+            // the background keeps the image loaded, so coming back loads nothing
+            await scene.setBackground({ image: 'studio.hdr' });
+            await scene.setImageBasedLight({ image: 'studio.hdr' });
+            renderer.tick();
+            const baked = scene.imageBasedLightTexture!;
+            const loads = loaders.hdr.mock.calls.length;
+            const bakesBefore = bakes();
+            const freed = vi.fn();
+            baked.addEventListener('dispose', freed);
+
+            await scene.setImageBasedLight({ image: 'a.hdr' });
+            await scene.setImageBasedLight({ image: 'studio.hdr' });
+            renderer.tick();
+
+            expect(freed).not.toHaveBeenCalled();
+            expect(scene.imageBasedLightTexture).toBe(baked);
+            expect(
+                loaders.hdr.mock.calls
+                    .slice(loads)
+                    .filter(([url]) => url === 'studio.hdr'),
+            ).toHaveLength(0);
+            expect(bakes()).toBe(bakesBefore);
+        });
+
+        it('bakes nothing before the renderer is initialized', async () => {
+            const scene = new DIVEScene();
+            const renderer = new DIVERenderer(scene, { camera: {} } as never);
+            await scene.setImageBasedLight({});
+
+            renderer.tick();
+
+            expect(bakes()).toBe(0);
+            expect(scene.environment).toBeNull();
+        });
+
+        it('rebakes on the new renderer after a canvas swap', async () => {
+            const { scene, renderer } = await setUp();
+            await scene.setImageBasedLight({});
+            renderer.tick();
+            const first = renderer.webgpurenderer;
+            const before = scene.environment!;
+
+            renderer.setCanvas(document.createElement('canvas'));
+            await renderer.initAsync();
+            renderer.tick();
+
+            // freed while the renderer that made it was still there
+            expect(
+                (before.dispose as any).mock.invocationCallOrder[0],
+            ).toBeLessThan((first.dispose as any).mock.invocationCallOrder[0]);
+            expect(bakes()).toBe(2);
+            expect(scene.environment!.userData.renderer).toBe(
+                renderer.webgpurenderer,
+            );
+        });
+
+        it('frees its bake on dispose', async () => {
+            const { scene, renderer } = await setUp();
+            await scene.setImageBasedLight({});
+            renderer.tick();
+            const baked = scene.environment!;
+
+            renderer.dispose();
+
+            expect(baked.dispose).toHaveBeenCalled();
+            expect(scene.environment).toBeNull();
         });
     });
 });

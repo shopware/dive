@@ -22,7 +22,9 @@ export const GetStateAction = Action.define<
         return {
             name: settings.name,
             mediaItem: null,
+            background: settings.background,
             backgroundColor: settings.backgroundColor,
+            imageBasedLight: settings.imageBasedLight,
             floorEnabled: settings.floorEnabled,
             floorColor: settings.floorColor,
             userCamera: {

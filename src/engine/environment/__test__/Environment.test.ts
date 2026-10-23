@@ -2,521 +2,367 @@
  * @jest-environment jsdom
  */
 
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
     Color,
-    CubeRenderTarget as CubeRenderTargetOriginal,
-    Scene,
-    WebGPURenderer,
+    PMREMGenerator as PMREMGeneratorOriginal,
+    Texture,
 } from 'three/webgpu';
+import { DIVEScene } from '../../scene/Scene.ts';
+import { DIVERenderer } from '../../renderer/Renderer.ts';
 import { DIVEEnvironment } from '../Environment.ts';
+import { textureResourceCache } from '../../resource/texture/TextureResource.ts';
+
+const loaders = vi.hoisted(() => {
+    const state = { pending: 0 };
+
+    /** a texture per load, named after its url */
+    const loader = () =>
+        vi.fn(async (url: string) => {
+            state.pending++;
+            try {
+                const texture = new (await import('three/webgpu')).Texture();
+                texture.name = url;
+                vi.spyOn(texture, 'dispose');
+                return texture;
+            } finally {
+                state.pending--;
+            }
+        });
+
+    return { state, hdr: loader(), exr: loader(), texture: loader() };
+});
+
+vi.mock('three/examples/jsm/loaders/HDRLoader.js', () => ({
+    HDRLoader: vi.fn(function (this: any) {
+        this.loadAsync = loaders.hdr;
+    }),
+}));
+
+vi.mock('three/examples/jsm/loaders/EXRLoader.js', () => ({
+    EXRLoader: vi.fn(function (this: any) {
+        this.loadAsync = loaders.exr;
+    }),
+}));
 
 vi.mock('three/webgpu', async (importOriginal) => {
     const actual = await importOriginal<typeof import('three/webgpu')>();
 
     return {
         ...actual,
-        WebGPURenderer: vi.fn(function (this: any) {
-            this.initialized = true;
+        TextureLoader: vi.fn(function (this: any) {
+            this.loadAsync = loaders.texture;
+        }),
+        WebGPURenderer: vi.fn(function (this: any, settings: any = {}) {
+            this.domElement = settings.canvas ?? {};
+            this.initialized = false;
+            this.init = vi.fn(async () => {
+                this.initialized = true;
+            });
+            this.render = vi.fn();
+            this.setSize = vi.fn();
+            this.setPixelRatio = vi.fn();
+            this.dispose = vi.fn();
+            this.backend = { extensions: { extensions: {} } };
+            this.shadowMap = { enabled: false, type: 0 };
             this.toneMapping = actual.NoToneMapping;
             this.outputColorSpace = actual.LinearSRGBColorSpace;
-            this.render = vi.fn();
-            this.init = vi.fn(async () => {});
+        }),
+        PMREMGenerator: vi.fn(function (this: any, renderer: unknown) {
+            this.renderer = renderer;
             this.dispose = vi.fn();
-            return this;
+            /** a target per bake, telling which renderer made it */
+            this.fromCubemap = vi.fn(() => {
+                const texture = new actual.Texture();
+                texture.userData.renderer = renderer;
+                vi.spyOn(texture, 'dispose');
+                return { texture, dispose: vi.fn() };
+            });
         }),
         CubeRenderTarget: vi.fn(function (this: any) {
-            this.texture = {
-                dispose: vi.fn(),
-            };
+            this.texture = new actual.Texture();
             this.dispose = vi.fn();
-            return this;
         }),
-        CubeCamera: vi.fn(function (this: any, _near: number, _far: number) {
+        CubeCamera: vi.fn(function (this: any) {
             this.update = vi.fn();
-            return this;
-        }),
-        PMREMGenerator: vi.fn(function (this: any) {
-            this.dispose = vi.fn();
-            this.fromCubemap = vi.fn(() => ({
-                texture: {
-                    dispose: vi.fn(),
-                },
-                dispose: vi.fn(),
-            }));
-            return this;
         }),
     };
 });
 
-vi.mock('three/examples/jsm/loaders/HDRLoader.js', () => ({
-    HDRLoader: vi.fn(function (this: any) {
-        this.loadAsync = vi.fn(async () => ({
-            mapping: undefined,
-            dispose: vi.fn(),
-            colorSpace: 'srgb',
-        }));
-        return this;
-    }),
-}));
+const PMREMGenerator = PMREMGeneratorOriginal as any;
 
-const CubeRenderTarget = CubeRenderTargetOriginal as any;
-const createDeferred = <T>() => {
-    let resolve!: (value: T) => void;
-    const promise = new Promise<T>((resolver) => {
-        resolve = resolver;
-    });
+/** what the renderer baked, across every renderer */
+const baked = (): unknown[] =>
+    PMREMGenerator.mock.instances.flatMap((pmrem: any) =>
+        pmrem.fromCubemap.mock.calls.map((call: any[]) => call[0]),
+    );
 
-    return {
-        promise,
-        resolve,
-    };
-};
+/** every scene a test made, disposed after it so the shared image cache empties */
+const scenes: DIVEScene[] = [];
 
-describe('HDREnvironment', () => {
-    let renderer: any;
-    let scene: Scene;
+/** a scene, an initialized renderer drawing it, and its environment */
+async function setUp(
+    settings?: ConstructorParameters<typeof DIVEScene>[0],
+): Promise<{
+    scene: DIVEScene;
+    renderer: DIVERenderer;
+    environment: DIVEEnvironment;
+}> {
+    const scene = new DIVEScene(settings);
+    scenes.push(scene);
+    const renderer = new DIVERenderer(scene, { camera: {} } as never);
+    await renderer.initAsync();
+    await scene.setImageBasedLight({});
+    return { scene, renderer, environment: renderer.environment };
+}
 
+/** lets every pending load, and what waits for it, settle */
+async function settle(): Promise<void> {
+    await vi.waitFor(() => expect(loaders.state.pending).toBe(0));
+    await new Promise((resolve) => setTimeout(resolve));
+}
+
+describe('DIVEEnvironment', () => {
     beforeEach(() => {
         vi.clearAllMocks();
-        renderer = new WebGPURenderer();
-        scene = new Scene();
     });
 
-    it('loads default image when no imageUrl provided', async () => {
-        const env = new DIVEEnvironment(renderer, scene, { enabled: true });
-
-        await env.initAsync();
-
-        expect(scene.environment).toBeDefined();
+    afterEach(async () => {
+        scenes.splice(0).forEach((scene) => scene.dispose());
+        await settle();
+        textureResourceCache.trim();
     });
 
-    it('reuses the in-flight init promise when init is called twice', async () => {
-        const env = new DIVEEnvironment(renderer, scene, {
-            imageUrl: 'hdr.hdr',
+    it('is reachable as the renderer environment', async () => {
+        const { environment } = await setUp();
+
+        expect(environment).toBeInstanceOf(DIVEEnvironment);
+    });
+
+    it('lights the scene with the image from a URL', async () => {
+        const { scene, renderer, environment } = await setUp();
+        renderer.tick();
+
+        await environment.setImageUrl('studio.hdr');
+        renderer.tick();
+
+        expect(scene.imageBasedLight!.image).toBe('studio.hdr');
+        expect(scene.environment).not.toBeNull();
+        expect(baked()).toHaveLength(2);
+    });
+
+    it('goes back to the default HDR for a null URL', async () => {
+        const { scene, environment } = await setUp();
+        await environment.setImageUrl('studio.hdr');
+
+        await environment.setImageUrl(null);
+
+        expect(scene.imageBasedLight!.image).toBeNull();
+        expect(scene.imageBasedLightTexture!.name).toMatch(/default\.hdr/);
+    });
+
+    it('hands a failed image to the caller who awaits it, and only to them', async () => {
+        const { environment } = await setUp();
+        const error = vi.spyOn(console, 'error').mockImplementation(() => {});
+        loaders.hdr.mockRejectedValueOnce(new Error('404'));
+
+        await expect(environment.setImageUrl('missing.hdr')).rejects.toThrow(
+            '404',
+        );
+        expect(error).not.toHaveBeenCalled();
+        error.mockRestore();
+    });
+
+    it('reports a failed forward nobody awaits', async () => {
+        const { scene, renderer } = await setUp();
+        const error = vi.spyOn(console, 'error').mockImplementation(() => {});
+        loaders.hdr.mockRejectedValueOnce(new Error('404'));
+
+        new DIVEEnvironment(renderer.webgpurenderer, scene, {
+            imageUrl: 'missing.hdr',
         });
-        const updateSpy = vi.spyOn(env, 'update');
-        const deferred = createDeferred<void>();
 
-        (env as any)._loadPromise = deferred.promise;
-
-        const firstInit = env.initAsync();
-        const secondInit = env.initAsync();
-
-        expect(updateSpy).not.toHaveBeenCalled();
-
-        deferred.resolve();
-        await Promise.all([firstInit, secondInit]);
-
-        expect(updateSpy).toHaveBeenCalledTimes(1);
+        await vi.waitFor(() => expect(error).toHaveBeenCalledTimes(1));
+        error.mockRestore();
     });
 
-    it('enables IBL with equirect source and sets background', async () => {
-        const env = new DIVEEnvironment(renderer, scene, {
-            imageUrl: 'hdr.hdr',
+    it('resolves init once the image asked for has loaded', async () => {
+        const { scene, environment } = await setUp();
+
+        environment.setImageUrl('studio.hdr');
+        await environment.initAsync();
+
+        expect(scene.imageBasedLight!.image).toBe('studio.hdr');
+    });
+
+    it('rotates the light without a rebake', async () => {
+        const { scene, renderer, environment } = await setUp();
+        renderer.tick();
+
+        environment.setRotationY(1);
+        await settle();
+        renderer.tick();
+
+        expect(scene.environmentRotation.y).toBe(1);
+        expect(baked()).toHaveLength(1);
+    });
+
+    it('leaves a colour background alone when rotating', async () => {
+        const { scene, environment } = await setUp({
+            backgroundColor: '#ff0000',
+        });
+
+        environment.setRotationY(1);
+        await settle();
+
+        expect(scene.background).toEqual(new Color('#ff0000'));
+        expect(scene.backgroundRotation.y).toBe(0);
+    });
+
+    it('shows the light image as the background', async () => {
+        const { scene, renderer, environment } = await setUp();
+        environment.setRotationY(0.5);
+
+        environment.setUseAsBackground(true);
+        await settle();
+        renderer.tick();
+
+        expect((scene.background as Texture).name).toMatch(/default\.hdr/);
+        expect(scene.backgroundRotation.y).toBe(0.5);
+    });
+
+    it('keeps the image on the background when the light moves on', async () => {
+        const { scene, renderer, environment } = await setUp({
+            imageBasedLight: { image: 'studio.hdr' },
+        });
+        environment.setUseAsBackground(true);
+        await settle();
+        renderer.tick();
+        const shown = scene.background as Texture;
+        const disposed = vi.fn();
+        shown.addEventListener('dispose', disposed);
+
+        expect(shown.name).toBe('studio.hdr');
+        expect(scene.getBackground()).toEqual({
+            type: 'image',
+            image: 'studio.hdr',
+            rotation: 0,
+        });
+
+        await scene.setImageBasedLight({ image: 'other.hdr' });
+        renderer.tick();
+
+        expect(scene.background).toBe(shown);
+        expect(disposed).not.toHaveBeenCalled();
+    });
+
+    it('shares the image of the light with the background, loading it once', async () => {
+        const { scene, renderer, environment } = await setUp({
+            imageBasedLight: { image: 'studio.hdr' },
+        });
+
+        environment.setUseAsBackground(true);
+        await settle();
+        renderer.tick();
+
+        expect((scene.background as Texture).source).toBe(
+            scene.imageBasedLightTexture!.source,
+        );
+        expect(
+            loaders.hdr.mock.calls.filter(([url]) => url === 'studio.hdr'),
+        ).toHaveLength(1);
+    });
+
+    it('rotates an image background along with the light', async () => {
+        const { scene, renderer, environment } = await setUp();
+        environment.setUseAsBackground(true);
+        await settle();
+
+        environment.setRotationY(2);
+        await settle();
+        renderer.tick();
+
+        expect(scene.imageBasedLight!.rotation).toBe(2);
+        expect(scene.backgroundRotation.y).toBe(2);
+    });
+
+    it('follows a new image while used as background', async () => {
+        const { scene, renderer, environment } = await setUp();
+        environment.setUseAsBackground(true);
+        await settle();
+
+        await environment.setImageUrl('studio.hdr');
+        renderer.tick();
+
+        expect((scene.background as Texture).name).toBe('studio.hdr');
+        expect(scene.imageBasedLightTexture!.name).toBe('studio.hdr');
+    });
+
+    it('goes back to the colour from before when turned off', async () => {
+        const { scene, environment } = await setUp({
+            backgroundColor: '#336699',
+        });
+        environment.setUseAsBackground(true);
+        await settle();
+
+        environment.setUseAsBackground(false);
+        await settle();
+
+        expect(scene.getBackground()).toEqual({
+            type: 'color',
+            color: new Color('#336699'),
+        });
+        expect(scene.backgroundRotation.y).toBe(0);
+    });
+
+    it('goes back to transparent when that was the background before', async () => {
+        const { scene, environment } = await setUp();
+        environment.setUseAsBackground(true);
+        await settle();
+
+        environment.setUseAsBackground(false);
+        await settle();
+
+        expect(scene.background).toBeNull();
+    });
+
+    it('shows the image once it has loaded when turned on early', async () => {
+        const scene = new DIVEScene();
+        const environment = new DIVERenderer(scene, { camera: {} } as never)
+            .environment;
+
+        environment.setUseAsBackground(true);
+        await settle();
+
+        expect(scene.imageBasedLightTexture).not.toBeNull();
+        expect((scene.background as Texture).name).toMatch(/default\.hdr/);
+    });
+
+    it('applies the options it is given and leaves the rest to the scene', async () => {
+        const scene = new DIVEScene({ imageBasedLight: { intensity: 2 } });
+
+        new DIVEEnvironment({} as never, scene, {
+            imageUrl: 'studio.hdr',
+            rotateY: 1,
             useAsBackground: true,
         });
+        await settle();
 
-        await env.initAsync();
-
-        expect(scene.background).toBeDefined();
-        expect(scene.environment).toBeDefined();
-    });
-
-    it('applies rotation path via CubeCamera and PMREM when rotateY provided', async () => {
-        const env = new DIVEEnvironment(renderer, scene, {
-            imageUrl: 'hdr.hdr',
-            rotateY: Math.PI * 0.5,
-            useAsBackground: true,
+        expect(scene.imageBasedLight).toMatchObject({
+            image: 'studio.hdr',
+            rotation: 1,
+            intensity: 2,
         });
-
-        await env.initAsync();
-
-        expect(scene.environment).toBeDefined();
-        expect(scene.background).toBeDefined();
+        expect((scene.background as Texture).name).toBe('studio.hdr');
+        expect(scene.backgroundRotation.y).toBe(1);
     });
 
-    it('can set image URL after construction and initialize again', async () => {
-        const env = new DIVEEnvironment(renderer, scene, { enabled: true });
+    it('turns the light off when disabled', async () => {
+        const scene = new DIVEScene();
 
-        await env.initAsync();
-        await env.setImageUrl('later.hdr');
+        new DIVEEnvironment({} as never, scene, { enabled: false });
+        await settle();
 
-        expect(scene.environment).toBeDefined();
-    });
-
-    it('does not update during init when the renderer is not initialized', async () => {
-        const uninitializedRenderer = new WebGPURenderer();
-        (
-            uninitializedRenderer as unknown as { initialized: boolean }
-        ).initialized = false;
-        const env = new DIVEEnvironment(uninitializedRenderer, scene, {
-            imageUrl: 'hdr.hdr',
-        });
-        const updateSpy = vi.spyOn(env, 'update');
-
-        await env.initAsync();
-
-        expect(updateSpy).not.toHaveBeenCalled();
-    });
-
-    it('disposes resources and clears source image', async () => {
-        const env = new DIVEEnvironment(renderer, scene, {
-            imageUrl: 'hdr.hdr',
-        });
-
-        await env.initAsync();
-        env.dispose();
-
-        expect(scene.environment).toBeNull();
-    });
-
-    it('disposes resources including background cube', async () => {
-        const env = new DIVEEnvironment(renderer, scene, {
-            imageUrl: 'hdr.hdr',
-            useAsBackground: true,
-        });
-
-        await env.initAsync();
-
-        expect((env as any).currentBackgroundCube).toBeDefined();
-
-        env.dispose();
-
-        expect(scene.environment).toBeNull();
-        expect((env as any).currentBackgroundCube).toBeNull();
-    });
-
-    it('setRotationY updates environment when image is loaded', async () => {
-        const env = new DIVEEnvironment(renderer, scene, {
-            imageUrl: 'hdr.hdr',
-        });
-
-        await env.initAsync();
-
-        const spy = vi.spyOn(env, 'update');
-        env.setRotationY(1.23);
-
-        expect(spy).toHaveBeenCalled();
-        expect((env as any).options.rotateY).toBe(1.23);
-    });
-
-    it('disposes previous background cube on subsequent rotations', async () => {
-        const env = new DIVEEnvironment(renderer, scene, {
-            imageUrl: 'hdr.hdr',
-            rotateY: 0.1,
-            useAsBackground: true,
-        });
-
-        await env.initAsync();
-
-        const firstCube = (env as any).currentBackgroundCube;
-        expect(firstCube).toBeDefined();
-
-        const texDispose = firstCube.texture.dispose as any;
-        const rtDispose = firstCube.dispose as any;
-
-        env.update();
-
-        expect(texDispose).toHaveBeenCalled();
-        expect(rtDispose).toHaveBeenCalled();
-    });
-
-    it('disposes intermediate cubemap when not using background', async () => {
-        const env = new DIVEEnvironment(renderer, scene, {
-            imageUrl: 'hdr.hdr',
-            rotateY: 0.5,
-            useAsBackground: false,
-        });
-
-        await env.initAsync();
-
-        const baseLen = CubeRenderTarget.mock.instances.length;
-
-        env.update();
-
-        const created = CubeRenderTarget.mock.instances[baseLen];
-        expect(created.texture.dispose).toHaveBeenCalled();
-        expect(created.dispose).toHaveBeenCalled();
-    });
-
-    it('clears the environment when the source image is missing', async () => {
-        const originalBg = new Color(0x123456);
-        scene.background = originalBg;
-
-        const env = new DIVEEnvironment(renderer, scene, {
-            imageUrl: 'hdr.hdr',
-            useAsBackground: true,
-        });
-
-        await env.initAsync();
-
-        (env as any).sourceImage = null;
-        env.update();
-
-        expect(scene.environment).toBeNull();
-        expect(scene.background).toBe(originalBg);
-        expect((env as any).currentBackgroundCube).toBeNull();
-    });
-
-    it('restores original background when background option toggled off', async () => {
-        const originalBg = new Color(0xff0000);
-        scene.background = originalBg;
-
-        const env = new DIVEEnvironment(renderer, scene, {
-            imageUrl: 'hdr.hdr',
-            useAsBackground: true,
-        });
-
-        await env.initAsync();
-
-        expect(scene.background).not.toBe(originalBg);
-        expect(scene.background).toBeDefined();
-
-        env.setUseAsBackground(false);
-
-        expect(scene.background).toBe(originalBg);
-    });
-
-    it('does not overwrite original background with HDR texture on re-enable', async () => {
-        const originalBg = new Color(0x00ff00);
-        scene.background = originalBg;
-
-        const env = new DIVEEnvironment(renderer, scene, {
-            imageUrl: 'hdr.hdr',
-            useAsBackground: true,
-        });
-
-        await env.initAsync();
-
-        const hdrBg = scene.background;
-        expect(hdrBg).not.toBe(originalBg);
-
-        env.setUseAsBackground(false);
-        expect(scene.background).toBe(originalBg);
-
-        env.setUseAsBackground(true);
-        expect(scene.background).not.toBe(originalBg);
-    });
-
-    it('does not capture the scene background in the constructor', () => {
-        scene.background = new Color(0x654321);
-
-        const env = new DIVEEnvironment(renderer, scene, {
-            imageUrl: 'hdr.hdr',
-        });
-
-        expect((env as any).originalBackground).toBeNull();
-        expect((env as any).installedBackground).toBeNull();
-    });
-
-    it('captures a background that is set after construction', async () => {
-        const env = new DIVEEnvironment(renderer, scene, {
-            imageUrl: 'hdr.hdr',
-            useAsBackground: true,
-        });
-
-        // the scene background is commonly set while the HDR is still loading
-        const originalBg = new Color(0x123456);
-        scene.background = originalBg;
-
-        await env.initAsync();
-
-        expect((env as any).originalBackground).toBe(originalBg);
-        expect(scene.background).not.toBe(originalBg);
-
-        env.setUseAsBackground(false);
-
-        expect(scene.background).toBe(originalBg);
-    });
-
-    it('does not mistake its own HDR background for the original one', async () => {
-        const env = new DIVEEnvironment(renderer, scene, {
-            imageUrl: 'hdr.hdr',
-            useAsBackground: true,
-        });
-        const originalBg = new Color(0xff00ff);
-        scene.background = originalBg;
-
-        await env.initAsync();
-
-        // the HDR cube is the scene background now, and re-capturing it would
-        // make the original background unrecoverable
-        env.update();
-        env.setRotationY(1.5);
-
-        expect((env as any).originalBackground).toBe(originalBg);
-
-        env.setUseAsBackground(false);
-
-        expect(scene.background).toBe(originalBg);
-    });
-
-    it('restores the latest foreign background, not the first one', async () => {
-        const env = new DIVEEnvironment(renderer, scene, {
-            imageUrl: 'hdr.hdr',
-            useAsBackground: true,
-        });
-        scene.background = new Color(0x111111);
-
-        await env.initAsync();
-
-        // the background is changed while the HDR is the one on the scene
-        const latestBg = new Color(0x222222);
-        scene.background = latestBg;
-
-        env.setRotationY(0.75);
-
-        expect((env as any).originalBackground).toBe(latestBg);
-
-        env.setUseAsBackground(false);
-
-        expect(scene.background).toBe(latestBg);
-    });
-
-    it('restores a color that was set between two useAsBackground toggles', async () => {
-        const first = new Color(0x0000ff);
-        scene.background = first;
-
-        const env = new DIVEEnvironment(renderer, scene, {
-            imageUrl: 'hdr.hdr',
-            useAsBackground: true,
-        });
-
-        await env.initAsync();
-        expect(scene.background).not.toBe(first);
-
-        env.setUseAsBackground(false);
-        expect(scene.background).toBe(first);
-
-        // the color is changed while the HDR is not used as background
-        const red = new Color(0xff0000);
-        scene.background = red;
-
-        env.setUseAsBackground(true);
-        env.setUseAsBackground(false);
-
-        expect(scene.background).toBe(red);
-        expect(scene.background).not.toBe(first);
-    });
-
-    it('re-captures the background on every update while unused as background', async () => {
-        const env = new DIVEEnvironment(renderer, scene, {
-            imageUrl: 'hdr.hdr',
-            useAsBackground: false,
-        });
-        scene.background = new Color(0x333333);
-
-        await env.initAsync();
-
-        const latestBg = new Color(0x444444);
-        scene.background = latestBg;
-
-        env.setRotationY(0.5);
-
-        expect((env as any).originalBackground).toBe(latestBg);
-        expect(scene.background).toBe(latestBg);
-    });
-
-    it('keeps a foreign background when the source image is missing', async () => {
-        const originalBg = new Color(0xabcdef);
-        scene.background = originalBg;
-
-        const env = new DIVEEnvironment(renderer, scene, {
-            imageUrl: 'hdr.hdr',
-            useAsBackground: true,
-        });
-
-        // the HDR is still in flight, so update() only clears the environment
-        env.update();
-
-        expect(scene.environment).toBeNull();
-        expect(scene.background).toBe(originalBg);
-
-        await env.initAsync();
-        env.setUseAsBackground(false);
-
-        expect(scene.background).toBe(originalBg);
-    });
-
-    it('keeps a foreign background on dispose', async () => {
-        const env = new DIVEEnvironment(renderer, scene, {
-            imageUrl: 'hdr.hdr',
-            useAsBackground: true,
-        });
-        scene.background = new Color(0x555555);
-
-        await env.initAsync();
-
-        const latestBg = new Color(0x666666);
-        scene.background = latestBg;
-
-        env.dispose();
-
-        expect(scene.environment).toBeNull();
-        expect(scene.background).toBe(latestBg);
-    });
-
-    it('updates renderer and regenerates PMREM', async () => {
-        const env = new DIVEEnvironment(renderer, scene, {
-            imageUrl: 'hdr.hdr',
-        });
-
-        await env.initAsync();
-
-        const newRenderer = new WebGPURenderer();
-        const pmremDisposeSpy = vi.spyOn((env as any).pmrem, 'dispose');
-
-        env.setRenderer(newRenderer);
-
-        expect((env as any)._webgpurenderer).toBe(newRenderer);
-        expect(pmremDisposeSpy).toHaveBeenCalled();
-        expect(scene.environment).toBeDefined();
-    });
-
-    it('falls back to the default HDR URL when setting a null image URL', async () => {
-        const env = new DIVEEnvironment(renderer, scene, {
-            imageUrl: 'hdr.hdr',
-        });
-        const updateSpy = vi.spyOn(env, 'update');
-
-        await env.initAsync();
-        await env.setImageUrl(null);
-
-        expect((env as any).options.imageUrl).toBeTruthy();
-        expect(updateSpy).toHaveBeenCalled();
-    });
-
-    it('disposes stale source images when a newer HDR load replaces them', async () => {
-        const env = new DIVEEnvironment(renderer, scene, {
-            imageUrl: 'hdr.hdr',
-        });
-        const firstTexture = {
-            mapping: undefined,
-            dispose: vi.fn(),
-        } as any;
-        const secondTexture = {
-            mapping: undefined,
-            dispose: vi.fn(),
-        } as any;
-        const firstLoad = createDeferred<any>();
-        const secondLoad = createDeferred<any>();
-
-        await env.initAsync();
-
-        vi.spyOn(env as any, 'loadHDRImage')
-            .mockImplementationOnce(() => firstLoad.promise)
-            .mockImplementationOnce(() => secondLoad.promise);
-
-        const firstUpdate = env.setImageUrl('first.hdr');
-        const secondUpdate = env.setImageUrl('second.hdr');
-
-        firstLoad.resolve(firstTexture);
-        await Promise.resolve();
-        secondLoad.resolve(secondTexture);
-        await Promise.all([firstUpdate, secondUpdate]);
-
-        expect(firstTexture.dispose).toHaveBeenCalledTimes(1);
-        expect((env as any).sourceImage).toBe(secondTexture);
+        expect(scene.imageBasedLight).toBeNull();
     });
 });
