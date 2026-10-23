@@ -245,6 +245,19 @@ describe('TextureResource', () => {
             );
         });
 
+        it('picks the loader of a data url by its content', async () => {
+            const base64 = (bytes: string): string => btoa(bytes);
+            const radiance = `data:application/octet-stream;base64,${base64('#?RADIANCE\nFORMAT=32-bit_rle_rgbe')}`;
+            const rgbe = `data:application/octet-stream;base64,${base64('#?RGBE\n')}`;
+            const exr = `data:application/octet-stream;base64,${base64('\x76\x2f\x31\x01\x02\x00')}`;
+            const png = `data:image/png;base64,${base64('\x89PNG\r\n')}`;
+
+            expect((await load(radiance)).userData.loader).toBe('hdr');
+            expect((await load(rgbe)).userData.loader).toBe('hdr');
+            expect((await load(exr)).userData.loader).toBe('exr');
+            expect((await load(png)).userData.loader).toBe('texture');
+        });
+
         it('tags only non-linear images as sRGB', async () => {
             expect((await load('a.jpg')).colorSpace).toBe(SRGBColorSpace);
             expect((await load('a.hdr')).colorSpace).toBe(NoColorSpace);
