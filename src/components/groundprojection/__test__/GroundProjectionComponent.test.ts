@@ -344,4 +344,23 @@ describe('dive/groundprojection/GroundProjectionComponent', () => {
         expect(clone.mesh.material.map).toBe(texture);
         expect(images.load).toHaveBeenCalledTimes(1);
     });
+
+    it('should log when the image of a copy fails, since nobody awaits it', async () => {
+        const error = vi.spyOn(console, 'error').mockImplementation(() => {});
+        const source = track();
+        const done = source.setImage('missing.hdr');
+        await vi.waitFor(() => expect(images.loads).toHaveLength(1));
+
+        track(source.clone());
+        images.loads.pop()!.reject(new Error('404'));
+
+        await expect(done).rejects.toThrow('404');
+        await vi.waitFor(() =>
+            expect(error).toHaveBeenCalledWith(
+                'GroundProjectionComponent: image failed',
+                expect.objectContaining({ message: '404' }),
+            ),
+        );
+        error.mockRestore();
+    });
 });

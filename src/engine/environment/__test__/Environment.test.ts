@@ -219,6 +219,16 @@ describe('DIVEEnvironment', () => {
         expect(scene.backgroundRotation.y).toBe(0);
     });
 
+    it('keeps a light that is off turned off when rotating', async () => {
+        const { scene, environment } = await setUp();
+        await scene.setImageBasedLight(null);
+
+        environment.setRotationY(1);
+        await settle();
+
+        expect(scene.imageBasedLight).toBeNull();
+    });
+
     it('shows the light image as the background', async () => {
         const { scene, renderer, environment } = await setUp();
         environment.setRotationY(0.5);
@@ -326,6 +336,56 @@ describe('DIVEEnvironment', () => {
         expect(scene.background).toBeNull();
     });
 
+    it('goes back to the image from before when turned off', async () => {
+        const { scene, environment } = await setUp({
+            background: { image: 'panorama.jpg', rotation: 0.5 },
+        });
+        environment.setUseAsBackground(true);
+        await settle();
+
+        environment.setUseAsBackground(false);
+        await settle();
+
+        expect(scene.getBackground()).toEqual({
+            type: 'image',
+            image: 'panorama.jpg',
+            rotation: 0.5,
+        });
+        expect((scene.background as Texture).name).toBe('panorama.jpg');
+        expect(scene.backgroundRotation.y).toBe(0.5);
+    });
+
+    it('does nothing when asked for the background use it already has', async () => {
+        const { scene, environment } = await setUp({
+            backgroundColor: '#336699',
+        });
+        const setBackground = vi.spyOn(scene, 'setBackground');
+
+        environment.setUseAsBackground(false);
+        environment.setUseAsBackground(true);
+        environment.setUseAsBackground(true);
+        await settle();
+
+        expect(setBackground).toHaveBeenCalledTimes(1);
+    });
+
+    it('leaves the background alone when there is no light to show', async () => {
+        const scene = new DIVEScene({
+            backgroundColor: '#336699',
+            imageBasedLight: null,
+        });
+        scenes.push(scene);
+        const environment = new DIVEEnvironment({} as never, scene);
+
+        environment.setUseAsBackground(true);
+        await settle();
+
+        expect(scene.getBackground()).toEqual({
+            type: 'color',
+            color: new Color('#336699'),
+        });
+    });
+
     it('shows the image once it has loaded when turned on early', async () => {
         const scene = new DIVEScene();
         const environment = new DIVERenderer(scene, { camera: {} } as never)
@@ -364,5 +424,16 @@ describe('DIVEEnvironment', () => {
         await settle();
 
         expect(scene.imageBasedLight).toBeNull();
+    });
+
+    it('leaves the scene alone on the old lifecycle calls', async () => {
+        const { scene, renderer, environment } = await setUp();
+        const before = scene.imageBasedLight;
+
+        environment.update();
+        environment.setRenderer(renderer.webgpurenderer);
+        environment.dispose();
+
+        expect(scene.imageBasedLight).toBe(before);
     });
 });

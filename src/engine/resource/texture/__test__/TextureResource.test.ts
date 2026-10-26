@@ -258,6 +258,14 @@ describe('TextureResource', () => {
             expect((await load(png)).userData.loader).toBe('texture');
         });
 
+        it('falls back to the texture loader for a data url it cannot read', async () => {
+            const plain = 'data:image/svg+xml,%3Csvg%2F%3E';
+            const broken = 'data:application/octet-stream;base64,A===';
+
+            expect((await load(plain)).userData.loader).toBe('texture');
+            expect((await load(broken)).userData.loader).toBe('texture');
+        });
+
         it('tags only non-linear images as sRGB', async () => {
             expect((await load('a.jpg')).colorSpace).toBe(SRGBColorSpace);
             expect((await load('a.hdr')).colorSpace).toBe(NoColorSpace);

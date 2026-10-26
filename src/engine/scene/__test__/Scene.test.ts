@@ -1276,6 +1276,23 @@ describe('DIVEScene', () => {
                 expect(loaders.texture).toHaveBeenCalledOnce();
             });
 
+            it('reports an image from the settings that fails, since nobody awaits the constructor', async () => {
+                const error = vi
+                    .spyOn(console, 'error')
+                    .mockImplementation(() => {});
+                loaders.texture.mockRejectedValueOnce(new Error('404'));
+
+                createScene({ background: { image: 'missing.jpg' } });
+
+                await vi.waitFor(() =>
+                    expect(error).toHaveBeenCalledWith(
+                        'DIVEScene: background failed',
+                        expect.objectContaining({ message: '404' }),
+                    ),
+                );
+                error.mockRestore();
+            });
+
             it('still takes the deprecated backgroundColor', () => {
                 const scene = createScene({ backgroundColor: '#0000ff' });
 

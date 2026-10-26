@@ -320,6 +320,21 @@ describe('DIVE', () => {
         );
     });
 
+    it('hands a given image based light to the scene, null included', () => {
+        new DIVE({ autoStart: false, imageBasedLight: null });
+
+        expect(vi.mocked(DIVEScene)).toHaveBeenLastCalledWith(
+            expect.objectContaining({ imageBasedLight: null }),
+        );
+
+        const light = { image: 'studio.hdr', rotation: 1, intensity: 2 };
+        new DIVE({ autoStart: false, imageBasedLight: light });
+
+        expect(vi.mocked(DIVEScene)).toHaveBeenLastCalledWith(
+            expect.objectContaining({ imageBasedLight: light }),
+        );
+    });
+
     it('should have Canvas', () => {
         const dive = new DIVE();
         expect(dive.mainView.canvas).toBeDefined();
