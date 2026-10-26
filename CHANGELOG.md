@@ -1,5 +1,17 @@
 # Changelog
 
+## [4.3.0](https://github.com/shopware/dive/compare/v4.2.2...v4.3.0) (2026-10-26)
+
+
+### 🚀 Features
+
+* dome environment ([#276](https://github.com/shopware/dive/issues/276)) ([1121d87](https://github.com/shopware/dive/commit/1121d879a9b9e02dab23b452776b9d7c9dab4ab8))
+
+
+### 📚 Documentation
+
+* add agentic issue tracker to dive project. ([#273](https://github.com/shopware/dive/issues/273)) ([1ee681f](https://github.com/shopware/dive/commit/1ee681fd20594806699a83cd634b43e8d814c9fd))
+
 ## [4.2.2](https://github.com/shopware/dive/compare/v4.2.1...v4.2.2) (2026-10-15)
 
 
