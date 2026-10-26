@@ -35,6 +35,7 @@ const {
     canvasLayout,
     gyroPermission,
     gyroEnable,
+    diveLoaded,
 } = vi.hoisted(() => ({
     diveDisposeAsync: vi.fn(async () => {}),
     diveStartAsync: vi.fn(async () => {}),
@@ -50,6 +51,8 @@ const {
     canvasLayout: { clientWidth: 800, clientHeight: 600 },
     gyroPermission: vi.fn(async () => true),
     gyroEnable: vi.fn(async () => {}),
+    // what `dive.loaded` hands out, read through a spy
+    diveLoaded: vi.fn(() => Promise.resolve()),
 }));
 
 vi.mock('@shopware-ag/dive', () => {
@@ -78,6 +81,9 @@ vi.mock('@shopware-ag/dive', () => {
                     },
                 },
                 clock: { addTicker: vi.fn(), removeTicker: vi.fn() },
+                get loaded() {
+                    return diveLoaded();
+                },
                 startAsync: diveStartAsync,
                 disposeAsync: diveDisposeAsync,
             };
@@ -180,6 +186,7 @@ describe('QuickView', () => {
         // reset, not just cleared: a pending once-implementation would leak
         gyroPermission.mockReset().mockImplementation(async () => true);
         gyroEnable.mockReset().mockImplementation(async () => {});
+        diveLoaded.mockReset().mockImplementation(() => Promise.resolve());
         vi.spyOn(console, 'error').mockImplementation(() => {});
     });
 
@@ -214,6 +221,61 @@ describe('QuickView', () => {
         expect(DIVE).toHaveBeenCalledWith({
             displayGrid: true,
             autoStart: false,
+        });
+    });
+
+    describe('the initial light', () => {
+        it('should not start before what the engine loads has loaded', async () => {
+            let finish!: () => void;
+            diveLoaded.mockImplementation(
+                () => new Promise<void>((resolve) => (finish = resolve)),
+            );
+
+            const created = QuickView('test_uri');
+            await vi.waitFor(() => expect(setFromURL).toHaveBeenCalled());
+            await new Promise((resolve) => setTimeout(resolve));
+
+            expect(diveStartAsync).not.toHaveBeenCalled();
+
+            finish();
+            await created;
+
+            expect(diveStartAsync).toHaveBeenCalledTimes(1);
+        });
+
+        it('should wait for it alongside the model, not after it', async () => {
+            let arrive!: () => void;
+            setFromURL.mockImplementation(
+                () => new Promise<void>((resolve) => (arrive = resolve)),
+            );
+
+            const created = QuickView('test_uri');
+            await vi.waitFor(() => expect(setFromURL).toHaveBeenCalled());
+
+            expect(diveLoaded).toHaveBeenCalled();
+
+            arrive();
+            await created;
+        });
+
+        it('should wait for it even when it was told not to start', async () => {
+            let finish!: () => void;
+            diveLoaded.mockImplementation(
+                () => new Promise<void>((resolve) => (finish = resolve)),
+            );
+            let resolved = false;
+
+            const created = QuickView('test_uri', { autoStart: false }).then(
+                () => (resolved = true),
+            );
+            await new Promise((resolve) => setTimeout(resolve));
+
+            expect(resolved).toBe(false);
+
+            finish();
+            await created;
+
+            expect(diveStartAsync).not.toHaveBeenCalled();
         });
     });
 

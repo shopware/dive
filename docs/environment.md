@@ -39,8 +39,8 @@ Fields you leave out keep their current value. After `null`, they start from the
 
 Things to know:
 - `setImageBasedLight` resolves once the image is loaded. The light shows from the next frame on.
-- `dive.startAsync()` does not wait for the image. If you need the light in place, await the setter.
-  To wait for the default image, `await dive.scene.setImageBasedLight({})`.
+- `dive.startAsync()` does not wait for the image. If you need the light in place, await the setter,
+  or `await dive.loaded` before starting.
 - Rotation and intensity are cheap to change. You can drive them from a slider or an animation.
   Only a new image costs a new bake.
 - If calls overlap, the last one wins.
@@ -49,6 +49,32 @@ Things to know:
 - `dive.scene.imageBasedLight` returns what you asked for: `{ image, rotation, intensity }`, or
   `null` for none. The bundled default HDR shows up as `image: null`. A new image shows up there at
   once, and the previous one lights the scene until it has loaded.
+
+## Waiting for the initial light
+The constructor starts loading the images in the settings, but it cannot be awaited. `dive.loaded`
+settles once everything requested so far is in place, so a first frame rendered after it is lit:
+
+```ts
+const dive = new DIVE({
+    autoStart: false,
+    imageBasedLight: { image: 'studio.hdr' },
+    background: { image: 'studio.hdr' },
+});
+
+await dive.loaded;
+await dive.startAsync();
+```
+
+Things to know:
+- `dive.loaded` never rejects. A failed image is reported where it was requested: by the setter's
+  promise, or on the console for the constructor's settings.
+- It covers what was requested when you read it. Read it again after a later request to cover that
+  one too. With nothing loading, it settles at once.
+- `dive.isLoaded` tells whether nothing is still loading.
+- `dive.scene.loaded` and `dive.scene.isLoaded` are the same for the scene alone.
+- Neither changes a setting or starts a load.
+- QuickView waits for `dive.loaded` before it starts, so pass the light and background as settings
+  to have them in the first frame.
 
 ## Background
 The background takes one of three forms:

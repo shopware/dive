@@ -1300,13 +1300,145 @@ describe('DIVEScene', () => {
             );
         });
     });
+
+    describe('loaded', () => {
+        beforeEach(async () => {
+            // the scene made above shares its loads, so only this test's count
+            await disposeScenes();
+            real.root = true;
+            loaders.hdr.mockClear();
+            loaders.texture.mockClear();
+        });
+
+        it('settles once the light and the background image are in place', async () => {
+            const light = deferred<Texture>();
+            const image = deferred<Texture>();
+            loaders.hdr.mockImplementationOnce(() => light.promise);
+            loaders.texture.mockImplementationOnce(() => image.promise);
+            const scene = new DIVEScene({
+                imageBasedLight: { image: 'studio.hdr' },
+                background: { image: 'panorama.jpg' },
+            });
+
+            const loaded = scene.loaded;
+            expect(scene.isLoaded).toBe(false);
+
+            light.resolve(new Texture());
+            expect(await hasSettled(loaded)).toBe(false);
+
+            const texture = new Texture();
+            image.resolve(texture);
+            await loaded;
+
+            expect(scene.isLoaded).toBe(true);
+            expect(scene.imageBasedLightTexture).toBeInstanceOf(Texture);
+            expect(scene.background).toBe(texture);
+        });
+
+        it('settles at once with nothing loading', async () => {
+            const scene = new DIVEScene({
+                imageBasedLight: null,
+                background: '#ff0000',
+            });
+
+            expect(scene.isLoaded).toBe(true);
+            expect(await hasSettled(scene.loaded)).toBe(true);
+        });
+
+        it('is loaded once an image in place is requested again', async () => {
+            const scene = new DIVEScene({ background: null });
+            await scene.loaded;
+
+            const request = scene.setImageBasedLight({ rotation: 1 });
+
+            expect(scene.isLoaded).toBe(true);
+            await request;
+        });
+
+        it('does not reject for a failed image, which the request reports', async () => {
+            const scene = new DIVEScene({ imageBasedLight: null });
+            const broken = deferred<Texture>();
+            loaders.hdr.mockImplementationOnce(() => broken.promise);
+            const request = scene.setImageBasedLight({ image: 'broken.hdr' });
+            const loaded = scene.loaded;
+
+            broken.reject(new Error('broken'));
+
+            await expect(request).rejects.toThrow('broken');
+            await expect(loaded).resolves.toBeUndefined();
+            expect(scene.isLoaded).toBe(true);
+        });
+
+        it('covers only what was requested when it was read', async () => {
+            const scene = new DIVEScene({ imageBasedLight: null });
+            const earlier = scene.loaded;
+            const slow = deferred<Texture>();
+            loaders.hdr.mockImplementationOnce(() => slow.promise);
+            const request = scene.setImageBasedLight({ image: 'later.hdr' });
+
+            expect(await hasSettled(earlier)).toBe(true);
+            expect(scene.isLoaded).toBe(false);
+            const later = scene.loaded;
+            expect(await hasSettled(later)).toBe(false);
+
+            slow.resolve(new Texture());
+            await request;
+            expect(await hasSettled(later)).toBe(true);
+        });
+
+        it('waits for the newest of overlapping requests only', async () => {
+            const scene = new DIVEScene({ imageBasedLight: null });
+            const slow = deferred<Texture>();
+            loaders.hdr.mockImplementationOnce(() => slow.promise);
+            scene.setImageBasedLight({ image: 'slow.hdr' });
+            await scene.setImageBasedLight({ image: 'fast.hdr' });
+
+            expect(scene.isLoaded).toBe(true);
+            expect(await hasSettled(scene.loaded)).toBe(true);
+
+            slow.resolve(new Texture());
+        });
+
+        it('is loaded once the light is turned off and the background is a colour', async () => {
+            const light = deferred<Texture>();
+            const image = deferred<Texture>();
+            loaders.hdr.mockImplementationOnce(() => light.promise);
+            loaders.texture.mockImplementationOnce(() => image.promise);
+            const scene = new DIVEScene({
+                imageBasedLight: { image: 'studio.hdr' },
+                background: { image: 'panorama.jpg' },
+            });
+
+            scene.setImageBasedLight(null);
+            scene.setBackground('#ffffff');
+
+            expect(scene.isLoaded).toBe(true);
+            expect(await hasSettled(scene.loaded)).toBe(true);
+
+            light.resolve(new Texture());
+            image.resolve(new Texture());
+        });
+    });
 });
 
 function deferred<T>() {
     let resolve!: (value: T) => void;
-    const promise = new Promise<T>((resolver) => {
+    let reject!: (reason: unknown) => void;
+    const promise = new Promise<T>((resolver, rejecter) => {
         resolve = resolver;
+        reject = rejecter;
     });
 
-    return { promise, resolve };
+    return { promise, resolve, reject };
+}
+
+/** whether a promise has settled once pending work has run */
+async function hasSettled(promise: Promise<unknown>): Promise<boolean> {
+    let settled = false;
+    promise.then(
+        () => (settled = true),
+        () => (settled = true),
+    );
+    await new Promise((resolve) => setTimeout(resolve));
+    return settled;
 }

@@ -428,7 +428,11 @@ export async function QuickView(
             },
         });
 
-        await load(source);
+        /**
+         * the light the engine started loading comes in alongside the model,
+         * so the first frame rendered is lit
+         */
+        await Promise.all([load(source), dive.loaded]);
 
         frame();
 

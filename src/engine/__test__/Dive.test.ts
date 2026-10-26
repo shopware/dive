@@ -501,4 +501,29 @@ describe('DIVE', () => {
             .invocationCallOrder[0];
         expect(sceneDisposedAt).toBeLessThan(viewDisposedAt);
     });
+
+    it('is loaded once the scene has loaded what the constructor requested', async () => {
+        const dive = new DIVE({ autoStart: false });
+        let finish!: () => void;
+        const scene = dive.scene as unknown as {
+            loaded: Promise<void>;
+            isLoaded: boolean;
+        };
+        scene.loaded = new Promise<void>((resolve) => (finish = resolve));
+        scene.isLoaded = false;
+
+        let settled = false;
+        dive.loaded.then(() => (settled = true));
+        await waitForAsync();
+
+        expect(dive.isLoaded).toBe(false);
+        expect(settled).toBe(false);
+
+        scene.isLoaded = true;
+        finish();
+        await waitForAsync();
+
+        expect(dive.isLoaded).toBe(true);
+        expect(settled).toBe(true);
+    });
 });

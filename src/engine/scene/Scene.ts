@@ -198,6 +198,12 @@ export class DIVEScene extends Scene implements DIVETicker {
 
     private _backgroundImage = new TextureResource();
 
+    /** the newest image request of each kind, until it has settled */
+    private _loading: {
+        light?: Promise<void>;
+        background?: Promise<void>;
+    } = {};
+
     constructor(settings?: Partial<DIVESceneSettings>) {
         super();
 
@@ -224,6 +230,50 @@ export class DIVEScene extends Scene implements DIVETicker {
                 console.error('DIVEScene: image based light failed', error);
             },
         );
+    }
+
+    /**
+     * Settles once every image requested so far is in place or has failed.
+     *
+     * Never rejects; a failure is reported by the request that started it.
+     * A request made later is not covered, reading this again covers it.
+     */
+    public get loaded(): Promise<void> {
+        return Promise.all(Object.values(this._loading)).then(() => {});
+    }
+
+    /** Whether no requested image is still loading. */
+    public get isLoaded(): boolean {
+        return Object.keys(this._loading).length === 0;
+    }
+
+    /**
+     * Keeps a request as the newest of its kind until it settles.
+     *
+     * @param kind - Which image the request is for.
+     * @param request - The request, or `null` when nothing loads.
+     */
+    private _track(
+        kind: 'light' | 'background',
+        request: Promise<void> | null,
+    ): void {
+        if (!request) {
+            delete this._loading[kind];
+            return;
+        }
+
+        const settled: Promise<void> = request.then(
+            () => this._untrack(kind, settled),
+            () => this._untrack(kind, settled),
+        );
+        this._loading[kind] = settled;
+    }
+
+    private _untrack(
+        kind: 'light' | 'background',
+        settled: Promise<void>,
+    ): void {
+        if (this._loading[kind] === settled) delete this._loading[kind];
     }
 
     /**
@@ -264,6 +314,7 @@ export class DIVEScene extends Scene implements DIVETicker {
         if (settings === null) {
             this._imageBasedLight = null;
             this._lightImage.clear();
+            this._track('light', null);
             return;
         }
 
@@ -281,7 +332,11 @@ export class DIVEScene extends Scene implements DIVETicker {
         }
         this._imageBasedLight = light;
 
-        return this._lightImage.request(light.image ?? defaultEnvUrl);
+        const url = light.image ?? defaultEnvUrl;
+        const request = this._lightImage.request(url);
+        // an image already in place loads nothing
+        this._track('light', this._lightImage.url === url ? null : request);
+        return request;
     }
 
     public get root(): DIVERoot {
@@ -347,6 +402,7 @@ export class DIVEScene extends Scene implements DIVETicker {
             const background = toColorBackground(value);
             this._background = background;
             this._backgroundImage.clear();
+            this._track('background', null);
             this.background = background?.color ?? null;
             this.backgroundRotation.set(0, 0, 0);
             return;
@@ -357,8 +413,15 @@ export class DIVEScene extends Scene implements DIVETicker {
             image: value.image,
             rotation: value.rotation ?? 0,
         };
-        await this._backgroundImage.request(value.image);
-        this._showBackgroundImage();
+        const request = this._backgroundImage
+            .request(value.image)
+            .then(() => this._showBackgroundImage());
+        // an image already in place loads nothing
+        this._track(
+            'background',
+            this._backgroundImage.url === value.image ? null : request,
+        );
+        return request;
     }
 
     /**

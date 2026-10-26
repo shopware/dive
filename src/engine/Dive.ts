@@ -226,6 +226,22 @@ export class DIVE {
         return this._clock;
     }
 
+    /**
+     * Settles once everything requested so far has loaded or failed, such as
+     * the images the constructor asked the scene for.
+     *
+     * Never rejects and starts nothing. A request made later is not covered,
+     * reading this again covers it.
+     */
+    public get loaded(): Promise<void> {
+        return this._scene.loaded;
+    }
+
+    /** Whether nothing requested is still loading. */
+    public get isLoaded(): boolean {
+        return this._scene.isLoaded;
+    }
+
     public async startAsync(): Promise<void> {
         if (this._disposed) {
             return;
