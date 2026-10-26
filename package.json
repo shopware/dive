@@ -149,7 +149,7 @@
     "resolutions": {
         "vite": "^6.2.1",
         "minimatch/brace-expansion": "1.1.16",
-        "fast-uri": "^3.1.7"
+        "fast-uri": "^3.1.9"
     },
     "scripts": {
         "build": "vite build",
