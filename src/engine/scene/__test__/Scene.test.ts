@@ -1,18 +1,41 @@
 import type { Mock } from 'vitest';
-import { Color, Object3D } from 'three/webgpu';
+import {
+    Color,
+    EquirectangularReflectionMapping,
+    Object3D,
+    SRGBColorSpace,
+    Texture,
+} from 'three/webgpu';
 import { DIVEComponent } from '../../component/Component.ts';
 import { DIVENode } from '../../node/Node.ts';
-import { DIVEScene, DIVESceneDefaultSettings } from '../Scene.ts';
+import {
+    DIVEImageBasedLightDefaultSettings,
+    DIVEScene as SceneUnderTest,
+    DIVESceneDefaultSettings,
+} from '../Scene.ts';
 import { DIVEGridDefaultSettings } from '../../../components/grid/GridComponent.ts';
+import { GroundProjectionComponent } from '../../../components/groundprojection/GroundProjectionComponent.ts';
+import { textureResourceCache } from '../../resource/texture/TextureResource.ts';
 
 const mock_GetSceneObject = vi.fn();
 const mock_ComputeSceneBB = vi.fn();
 
 let mock_FloorSetVisibility: Mock;
 
-vi.mock('../root/Root', () => {
+/**
+ * The root is a stand-in for the construction and settings tests, and the
+ * real one for the suites that put nodes in the scene.
+ */
+const real = vi.hoisted(() => ({ root: false }));
+
+vi.mock('../root/Root.ts', async (importOriginal) => {
+    const actual = await importOriginal<typeof import('../root/Root.ts')>();
+
     return {
+        ...actual,
         DIVERoot: vi.fn(function (this: any) {
+            if (real.root) return new actual.DIVERoot();
+
             this.isObject3D = true;
             this.parent = null;
             this.dispatchEvent = vi.fn();
@@ -34,19 +57,152 @@ vi.mock('../root/Root', () => {
     };
 });
 
-vi.mock('../../renderer/Renderer', () => {
+const loaders = vi.hoisted(() => {
+    const state = { pending: 0 };
+
+    /** a texture per load, telling which loader made it from which url */
+    const loader = (kind: string) =>
+        vi.fn(async (url: string) => {
+            state.pending++;
+            try {
+                const texture = new (await import('three/webgpu')).Texture();
+                texture.name = url;
+                texture.userData.loader = kind;
+                vi.spyOn(texture, 'dispose');
+                return texture;
+            } finally {
+                state.pending--;
+            }
+        });
+
     return {
-        DIVERenderPipeline: vi.fn(function (this: any) {}),
+        state,
+        hdr: loader('hdr'),
+        exr: loader('exr'),
+        texture: loader('texture'),
     };
 });
+
+vi.mock('three/examples/jsm/loaders/HDRLoader.js', () => ({
+    HDRLoader: vi.fn(function (this: any) {
+        this.loadAsync = loaders.hdr;
+    }),
+}));
+
+vi.mock('three/examples/jsm/loaders/EXRLoader.js', () => ({
+    EXRLoader: vi.fn(function (this: any) {
+        this.loadAsync = loaders.exr;
+    }),
+}));
+
+vi.mock('three/webgpu', async (importOriginal) => {
+    const actual = await importOriginal<typeof import('three/webgpu')>();
+
+    return {
+        ...actual,
+        TextureLoader: vi.fn(function (this: any) {
+            this.loadAsync = loaders.texture;
+        }),
+    };
+});
+
+/** every texture disposal, also of textures made outside the loader mocks */
+const textureDispose = vi.spyOn(Texture.prototype, 'dispose');
+
+/**
+ * How often a texture was disposed once the shared cache has freed the
+ * images it keeps, so only what nothing holds any more counts.
+ */
+const disposals = (texture: Texture): number => {
+    textureResourceCache.trim();
+    return textureDispose.mock.contexts.filter((each) => each === texture)
+        .length;
+};
+
+/** what three does right before it renders an object */
+const render = (object: Object3D): void =>
+    object.onBeforeRender(
+        ...([] as unknown as Parameters<Object3D['onBeforeRender']>),
+    );
+
+/** how often a url went to the hdr loader */
+const loadsOf = (url: string): number =>
+    loaders.hdr.mock.calls.filter(([each]) => each === url).length;
+
+/** the texture the hdr loader made for a url, which every user shares */
+const loadedImage = (url: string): Promise<Texture> =>
+    loaders.hdr.mock.results[
+        loaders.hdr.mock.calls.findIndex(([each]) => each === url)
+    ].value;
+
+/** every scene a test made, disposed after it so the shared image cache empties once trimmed */
+const scenes: SceneUnderTest[] = [];
+
+/** disposes every scene made so far and lets their loads settle */
+async function disposeScenes(): Promise<void> {
+    scenes.splice(0).forEach((made) => made.dispose());
+    await vi.waitFor(() => expect(loaders.state.pending).toBe(0));
+    await new Promise((resolve) => setTimeout(resolve));
+    textureResourceCache.trim();
+}
+
+class DIVEScene extends SceneUnderTest {
+    constructor(...args: ConstructorParameters<typeof SceneUnderTest>) {
+        super(...args);
+        scenes.push(this);
+    }
+}
+
+class Ticker extends DIVEComponent {
+    public ticks = 0;
+    public deltas: number[] = [];
+
+    public tick(deltaTime: number): void {
+        this.ticks++;
+        this.deltas.push(deltaTime);
+    }
+}
+
+class Passive extends DIVEComponent {}
+
+/** Removes another component from inside its own tick. */
+class Remover extends DIVEComponent {
+    public victim: DIVEComponent | null = null;
+
+    public tick(): void {
+        if (!this.victim?.isAttached) return;
+
+        this.victim.owner.removeComponent(this.victim);
+    }
+}
+
+/** Takes its own node out of the scene from inside its own tick. */
+class Detacher extends DIVEComponent {
+    public tick(): void {
+        if (this.isAttached) this.owner.removeFromParent();
+    }
+}
+
+/** Disables itself the first time it runs, the expected way to stop ticking. */
+class SelfStopping extends DIVEComponent {
+    public ticks = 0;
+
+    public tick(): void {
+        this.ticks++;
+        this.setTickEnabled(false);
+    }
+}
 
 let scene: DIVEScene;
 
 describe('DIVEScene', () => {
     beforeEach(() => {
         vi.clearAllMocks();
+        real.root = false;
         scene = new DIVEScene();
     });
+
+    afterEach(disposeScenes);
 
     it('should instantiate with correct properties', () => {
         expect(scene).toBeDefined();
@@ -93,6 +249,7 @@ describe('DIVEScene', () => {
                 displayGrid: false,
                 grid: DIVEGridDefaultSettings,
                 backgroundColor: 'transparent',
+                imageBasedLight: DIVEImageBasedLightDefaultSettings,
             });
         });
     });
@@ -236,4 +393,1069 @@ describe('DIVEScene', () => {
             expect(scene.children).not.toContain(gridNode);
         });
     });
+
+    describe('ticking', () => {
+        let scene: DIVEScene;
+
+        beforeEach(() => {
+            real.root = true;
+            scene = new DIVEScene();
+        });
+
+        const addNodeWith = (...components: DIVEComponent[]): DIVENode => {
+            const node = new DIVENode();
+            components.forEach((component) => node.addComponent(component));
+            scene.root.add(node);
+            return node;
+        };
+
+        describe('a component withdrawn during a tick', () => {
+            it('should stop ticking once it is removed', () => {
+                const ticker = new Ticker();
+                const remover = new Remover();
+                remover.victim = ticker;
+                addNodeWith(remover, ticker);
+
+                scene.tick(0.1);
+                const afterRemoval = ticker.ticks;
+                scene.tick(0.1);
+                scene.tick(0.1);
+
+                expect(ticker.ticks).toBe(afterRemoval);
+            });
+
+            it('should leave the tick list without it', () => {
+                const ticker = new Ticker();
+                const remover = new Remover();
+                remover.victim = ticker;
+                addNodeWith(remover, ticker);
+
+                scene.tick(0.1);
+
+                expect(scene['_tickingComponents']).not.toContain(ticker);
+            });
+
+            it('should stop ticking when its node leaves the scene', () => {
+                const detacher = new Detacher();
+                addNodeWith(detacher);
+
+                scene.tick(0.1);
+                scene.tick(0.1);
+
+                expect(scene['_tickingComponents']).not.toContain(detacher);
+            });
+
+            it('should never tick a component that has lost its node', () => {
+                /**
+                 * a tick that reads `owner` is the ordinary case, and the getter
+                 * throws while detached -- so a withdrawal that does not take effect
+                 * turns into an exception on the next frame
+                 */
+                const reader = new (class extends DIVEComponent {
+                    public ticks = 0;
+
+                    public tick(): void {
+                        void this.owner;
+                        this.ticks++;
+                    }
+                })();
+                const remover = new Remover();
+                remover.victim = reader;
+                addNodeWith(remover, reader);
+
+                expect(() => {
+                    scene.tick(0.1);
+                    scene.tick(0.1);
+                }).not.toThrow();
+            });
+
+            it('should keep ticking a component enrolled again in the same frame', () => {
+                // withdrawn and re-enlisted mid-frame, so the pending removal is void
+                const ticker = new Ticker();
+                const node = addNodeWith(ticker);
+                const rejoin = node.addComponent(
+                    new (class extends DIVEComponent {
+                        public tick(): void {
+                            if (!ticker.isAttached) return;
+
+                            node.removeComponent(ticker);
+                            node.addComponent(ticker);
+                        }
+                    })(),
+                );
+                void rejoin;
+
+                scene.tick(0.1);
+                const before = ticker.ticks;
+                scene.tick(0.1);
+
+                expect(ticker.ticks).toBe(before + 1);
+                expect(scene['_tickingComponents']).toContain(ticker);
+            });
+
+            it('should never end up enrolled in two scenes at once', () => {
+                // moving a node mid-tick withdraws from one scene and enlists in the
+                // other; a deferred withdrawal that never happens leaves both
+                const other = new DIVEScene();
+                const ticker = new Ticker();
+                const mover = new (class extends DIVEComponent {
+                    public tick(): void {
+                        if (this.isAttached) other.root.add(this.owner);
+                    }
+                })();
+                addNodeWith(mover, ticker);
+
+                scene.tick(0.1);
+
+                expect(scene['_tickingComponents']).not.toContain(ticker);
+                expect(other['_tickingComponents']).toContain(ticker);
+            });
+        });
+
+        it('should tick an enrolled component', () => {
+            const ticker = new Ticker();
+            addNodeWith(ticker);
+
+            scene.tick(0.5);
+
+            expect(ticker.ticks).toBe(1);
+            expect(ticker.deltas).toEqual([0.5]);
+        });
+
+        it('should never visit a component without a tick method', () => {
+            const passive = new Passive();
+            addNodeWith(passive);
+
+            expect(() => scene.tick(0.1)).not.toThrow();
+            // nothing to assert on the component itself; the point is the flat list
+            expect(scene['_tickingComponents']).not.toContain(passive);
+        });
+
+        it('should tick components attached to nested nodes', () => {
+            const ticker = new Ticker();
+            const parent = addNodeWith();
+            const child = new DIVENode();
+            child.addComponent(ticker);
+            parent.add(child);
+
+            scene.tick(0.1);
+
+            expect(ticker.ticks).toBe(1);
+        });
+
+        it('should enrol a whole prebuilt subtree added in one go', () => {
+            // three fires `added` only on the object added, not its descendants
+            const first = new Ticker();
+            const second = new Ticker();
+
+            const branch = new DIVENode();
+            branch.addComponent(first);
+            const leaf = new DIVENode();
+            leaf.addComponent(second);
+            branch.add(leaf);
+
+            scene.root.add(branch);
+            scene.tick(0.1);
+
+            expect(first.ticks).toBe(1);
+            expect(second.ticks).toBe(1);
+        });
+
+        it('should not tick a component while its node is detached', () => {
+            const ticker = new Ticker();
+            const node = new DIVENode();
+            node.addComponent(ticker);
+
+            scene.tick(0.1);
+
+            expect(ticker.ticks).toBe(0);
+        });
+
+        it('should stop ticking a component once its node leaves the scene', () => {
+            const ticker = new Ticker();
+            const node = addNodeWith(ticker);
+
+            scene.tick(0.1);
+            node.removeFromParent();
+            scene.tick(0.1);
+
+            expect(ticker.ticks).toBe(1);
+        });
+
+        it('should stop ticking a component removed from its node', () => {
+            const ticker = new Ticker();
+            const node = addNodeWith(ticker);
+
+            scene.tick(0.1);
+            node.removeComponent(ticker);
+            scene.tick(0.1);
+
+            expect(ticker.ticks).toBe(1);
+        });
+
+        it('should enrol a component added to an already live node', () => {
+            const node = addNodeWith();
+            const ticker = new Ticker();
+
+            node.addComponent(ticker);
+            scene.tick(0.1);
+
+            expect(ticker.ticks).toBe(1);
+        });
+
+        it('should respect setTickEnabled', () => {
+            const ticker = new Ticker();
+            addNodeWith(ticker);
+
+            ticker.setTickEnabled(false);
+            scene.tick(0.1);
+            expect(ticker.ticks).toBe(0);
+
+            ticker.setTickEnabled(true);
+            scene.tick(0.1);
+            expect(ticker.ticks).toBe(1);
+        });
+
+        it('should let a component disable itself from inside its own tick', () => {
+            const selfStopping = new SelfStopping();
+            addNodeWith(selfStopping);
+
+            scene.tick(0.1);
+            scene.tick(0.1);
+
+            expect(selfStopping.ticks).toBe(1);
+        });
+
+        it('should not skip a neighbour when one component withdraws mid-tick', () => {
+            /**
+             * the classic mutation-during-iteration bug: splicing inside forEach
+             * makes the loop jump over the following entry
+             */
+            const selfStopping = new SelfStopping();
+            const after = new Ticker();
+            addNodeWith(selfStopping, after);
+
+            scene.tick(0.1);
+
+            expect(after.ticks).toBe(1);
+        });
+
+        it('should not enrol the same component twice', () => {
+            const ticker = new Ticker();
+            const node = addNodeWith(ticker);
+
+            // re-adding an existing child is a no-op re-parent in three
+            node.addComponent(ticker);
+            scene.tick(0.1);
+
+            expect(ticker.ticks).toBe(1);
+        });
+
+        it('should drop all tickers on dispose', () => {
+            const ticker = new Ticker();
+            addNodeWith(ticker);
+
+            scene.dispose();
+            scene.tick(0.1);
+
+            expect(ticker.ticks).toBe(0);
+        });
+
+        it('should skip a disabled component without removing it', () => {
+            /**
+             * enrolled but switched off: the loop must skip it and leave the entry
+             * in place, so re-enabling does not need a re-enrolment
+             */
+            const ticker = new Ticker();
+            addNodeWith(ticker);
+            scene['_tickingComponents'][0].setTickEnabled(false);
+            scene['_tickingComponents'] = [ticker];
+
+            scene.tick(0.1);
+
+            expect(ticker.ticks).toBe(0);
+            expect(scene['_tickingComponents']).toContain(ticker);
+        });
+
+        it('should ignore enlisting a component that cannot tick', () => {
+            const passive = new Passive();
+
+            scene.enlistComponent(passive);
+
+            expect(scene['_tickingComponents']).toHaveLength(0);
+        });
+
+        it('should ignore enlisting a component whose tick is disabled', () => {
+            const ticker = new Ticker();
+            ticker.setTickEnabled(false);
+
+            scene.enlistComponent(ticker);
+
+            expect(scene['_tickingComponents']).toHaveLength(0);
+        });
+
+        it('should ignore withdrawing a component that was never enrolled', () => {
+            expect(() => scene.withdrawComponent(new Ticker())).not.toThrow();
+        });
+
+        it('should expose a uuid so the clock can dedupe it', () => {
+            expect(typeof scene.uuid).toBe('string');
+            expect(scene.uuid.length).toBeGreaterThan(0);
+        });
+    });
+
+    describe('image based light', () => {
+        beforeEach(async () => {
+            // the scene made above shares its loads, so only this test's count
+            await disposeScenes();
+            real.root = true;
+            loaders.hdr.mockClear();
+            loaders.exr.mockClear();
+            loaders.texture.mockClear();
+        });
+
+        it('is lit by the bundled default HDR without any setting', async () => {
+            const scene = new DIVEScene();
+            await scene.setImageBasedLight({});
+
+            expect(scene.imageBasedLight).toEqual({
+                image: null,
+                rotation: 0,
+                intensity: 1,
+            });
+            expect(scene.imageBasedLightTexture).toBeInstanceOf(Texture);
+            expect(scene.imageBasedLightTexture!.name).toMatch(/default\.hdr/);
+            expect(loaders.hdr).toHaveBeenCalledTimes(1);
+        });
+
+        it('takes the light from the DIVE settings', async () => {
+            const scene = new DIVEScene({
+                imageBasedLight: { image: 'studio.hdr', intensity: 2 },
+            });
+            await scene.setImageBasedLight({});
+
+            expect(scene.imageBasedLight).toMatchObject({
+                image: 'studio.hdr',
+                rotation: 0,
+                intensity: 2,
+            });
+        });
+
+        it('has no light with null, in the settings or later', async () => {
+            const unlit = new DIVEScene({ imageBasedLight: null });
+            expect(unlit.imageBasedLight).toBeNull();
+            expect(loaders.hdr).not.toHaveBeenCalled();
+
+            const scene = new DIVEScene();
+            await scene.setImageBasedLight({});
+            const texture = scene.imageBasedLightTexture!;
+
+            await scene.setImageBasedLight(null);
+
+            expect(scene.imageBasedLight).toBeNull();
+            expect(scene.imageBasedLightTexture).toBeNull();
+            expect(disposals(texture)).toBeGreaterThan(0);
+        });
+
+        it('keeps the fields a call leaves out', async () => {
+            const scene = new DIVEScene();
+            await scene.setImageBasedLight({ image: 'a.hdr', rotation: 1 });
+            const texture = scene.imageBasedLightTexture;
+
+            await scene.setImageBasedLight({ intensity: 3 });
+
+            expect(scene.imageBasedLight).toMatchObject({
+                image: 'a.hdr',
+                rotation: 1,
+                intensity: 3,
+            });
+            expect(scene.imageBasedLightTexture).toBe(texture);
+        });
+
+        it('starts from the defaults again after null', async () => {
+            const scene = new DIVEScene();
+            await scene.setImageBasedLight({ image: 'a.hdr', rotation: 1 });
+            await scene.setImageBasedLight(null);
+
+            await scene.setImageBasedLight({ intensity: 3 });
+
+            expect(scene.imageBasedLight).toEqual({
+                image: null,
+                rotation: 0,
+                intensity: 3,
+            });
+            expect(scene.imageBasedLightTexture!.name).toMatch(/default\.hdr/);
+        });
+
+        it('lets the last of overlapping calls win and disposes the stale image', async () => {
+            const scene = new DIVEScene();
+            await scene.setImageBasedLight({});
+
+            const slow = deferred<Texture>();
+            loaders.hdr.mockImplementationOnce(() => slow.promise);
+            const first = scene.setImageBasedLight({ image: 'slow.hdr' });
+            const second = scene.setImageBasedLight({ image: 'fast.hdr' });
+
+            await second;
+            const stale = new Texture();
+            vi.spyOn(stale, 'dispose');
+            slow.resolve(stale);
+            await first;
+
+            expect(scene.imageBasedLight!.image).toBe('fast.hdr');
+            expect(scene.imageBasedLightTexture!.name).toBe('fast.hdr');
+            expect(disposals(stale)).toBeGreaterThan(0);
+        });
+
+        it('lets a later null win over a load still on its way', async () => {
+            const scene = new DIVEScene({ imageBasedLight: null });
+
+            const pending = scene.setImageBasedLight({ image: 'a.hdr' });
+            await scene.setImageBasedLight(null);
+            await pending;
+
+            expect(scene.imageBasedLight).toBeNull();
+        });
+
+        it('applies rotation and intensity before a pending image arrives', async () => {
+            const scene = new DIVEScene();
+            await scene.setImageBasedLight({});
+
+            const slow = deferred<Texture>();
+            loaders.hdr.mockImplementationOnce(() => slow.promise);
+            const pending = scene.setImageBasedLight({ image: 'slow.hdr' });
+            const rotated = scene.setImageBasedLight({ rotation: 2 });
+
+            expect(scene.imageBasedLight).toMatchObject({
+                image: 'slow.hdr',
+                rotation: 2,
+            });
+            expect(scene.imageBasedLightTexture!.name).toMatch(/default\.hdr/);
+
+            slow.resolve(new Texture());
+            await Promise.all([pending, rotated]);
+
+            expect(scene.imageBasedLight).toMatchObject({
+                image: 'slow.hdr',
+                rotation: 2,
+            });
+        });
+
+        it('describes the default image as null, also when given its URL', async () => {
+            const scene = new DIVEScene({
+                imageBasedLight: { image: 'a.hdr' },
+            });
+            await scene.setImageBasedLight({});
+
+            await scene.setImageBasedLight({ image: null });
+            const texture = scene.imageBasedLightTexture;
+            expect(scene.imageBasedLight!.image).toBeNull();
+            expect(texture!.name).toMatch(/default\.hdr/);
+
+            await scene.setImageBasedLight({ image: texture!.name });
+            expect(scene.imageBasedLight!.image).toBeNull();
+            expect(scene.imageBasedLightTexture).toBe(texture);
+        });
+
+        it('shares one texture with a background of the same url', async () => {
+            const scene = new DIVEScene({ imageBasedLight: null });
+
+            await Promise.all([
+                scene.setImageBasedLight({ image: 'studio.hdr' }),
+                scene.setBackground({ image: 'studio.hdr' }),
+            ]);
+            const texture = scene.imageBasedLightTexture!;
+
+            expect(loaders.hdr).toHaveBeenCalledOnce();
+            expect(texture).toBe(await loadedImage('studio.hdr'));
+            expect(scene.background).toBe(texture);
+
+            await scene.setImageBasedLight({ image: 'a.hdr' });
+            expect(disposals(texture)).toBe(0);
+
+            await scene.setBackground(null);
+            expect(disposals(texture)).toBe(1);
+        });
+
+        it('shares one texture with a background and a dome of the same url', async () => {
+            const scene = new DIVEScene({ imageBasedLight: null });
+            const node = new DIVENode();
+            const dome = node.addComponent(new GroundProjectionComponent());
+            scene.add(node);
+
+            await Promise.all([
+                scene.setImageBasedLight({ image: 'studio.hdr' }),
+                scene.setBackground({ image: 'studio.hdr' }),
+                dome.setImage('studio.hdr'),
+            ]);
+            render(dome.mesh);
+            const texture = scene.imageBasedLightTexture!;
+
+            expect(loadsOf('studio.hdr')).toBe(1);
+            expect(scene.background).toBe(texture);
+            expect(dome.mesh.material.map).toBe(texture);
+
+            await scene.setImageBasedLight(null);
+            await scene.setBackground(null);
+            expect(disposals(texture)).toBe(0);
+
+            dome.dispose();
+            expect(disposals(texture)).toBe(1);
+        });
+
+        it('comes back to a recently used image without loading it again', async () => {
+            const scene = new DIVEScene({ imageBasedLight: null });
+            await scene.setImageBasedLight({ image: 'a.hdr' });
+            const texture = scene.imageBasedLightTexture;
+
+            await scene.setImageBasedLight({ image: 'b.hdr' });
+            await scene.setImageBasedLight({ image: 'a.hdr' });
+
+            expect(loadsOf('a.hdr')).toBe(1);
+            expect(scene.imageBasedLightTexture).toBe(texture);
+        });
+
+        it('shares one texture between scenes', async () => {
+            const first = new DIVEScene();
+            const second = new DIVEScene();
+            await Promise.all([
+                first.setImageBasedLight({ image: 'studio.hdr' }),
+                second.setImageBasedLight({ image: 'studio.hdr' }),
+            ]);
+            const texture = first.imageBasedLightTexture!;
+
+            expect(loadsOf('studio.hdr')).toBe(1);
+            expect(second.imageBasedLightTexture).toBe(texture);
+
+            first.dispose();
+            expect(disposals(texture)).toBe(0);
+
+            second.dispose();
+            expect(disposals(texture)).toBe(1);
+        });
+
+        it('disposes a loaded image on replace and on scene dispose', async () => {
+            const scene = new DIVEScene();
+            await scene.setImageBasedLight({ image: 'a.hdr' });
+            const replaced = scene.imageBasedLightTexture!;
+
+            await scene.setImageBasedLight({ image: 'b.hdr' });
+            const current = scene.imageBasedLightTexture!;
+
+            expect(disposals(replaced)).toBeGreaterThan(0);
+            expect(disposals(current)).toBe(0);
+
+            scene.dispose();
+
+            expect(disposals(current)).toBeGreaterThan(0);
+        });
+
+        it('disposes an image that arrives after the scene was disposed', async () => {
+            const scene = new DIVEScene({ imageBasedLight: null });
+            const slow = deferred<Texture>();
+            loaders.hdr.mockImplementationOnce(() => slow.promise);
+            const pending = scene.setImageBasedLight({ image: 'a.hdr' });
+
+            scene.dispose();
+            const late = new Texture();
+            vi.spyOn(late, 'dispose');
+            slow.resolve(late);
+            await pending;
+
+            expect(disposals(late)).toBeGreaterThan(0);
+        });
+
+        it.each([
+            ['a.hdr', 'hdr'],
+            ['a.HDR?v=2', 'hdr'],
+            ['a.exr', 'exr'],
+            ['a.jpg', 'texture'],
+            ['a.png', 'texture'],
+            ['a.webp#x', 'texture'],
+        ] as const)('loads %s with the %s loader', async (url, loader) => {
+            const scene = new DIVEScene({ imageBasedLight: null });
+            await scene.setImageBasedLight({ image: url });
+
+            const texture = scene.imageBasedLightTexture!;
+            expect(texture.userData.loader).toBe(loader);
+            expect(texture.name).toBe(url);
+            expect(texture.mapping).toBe(EquirectangularReflectionMapping);
+        });
+
+        it('tags images from the texture loader as sRGB', async () => {
+            const scene = new DIVEScene({ imageBasedLight: null });
+
+            await scene.setImageBasedLight({ image: 'a.jpg' });
+            expect(scene.imageBasedLightTexture!.colorSpace).toBe(
+                SRGBColorSpace,
+            );
+
+            await scene.setImageBasedLight({ image: 'a.hdr' });
+            expect(scene.imageBasedLightTexture!.colorSpace).not.toBe(
+                SRGBColorSpace,
+            );
+        });
+    });
+
+    describe('background', () => {
+        /** a scene without an image based light, so only background loads count */
+        const createScene = (
+            settings?: ConstructorParameters<typeof DIVEScene>[0],
+        ): DIVEScene => new DIVEScene({ imageBasedLight: null, ...settings });
+
+        beforeEach(async () => {
+            // the scene made above shares its loads, so only this test's count
+            await disposeScenes();
+            real.root = true;
+            loaders.hdr.mockClear();
+            loaders.exr.mockClear();
+            loaders.texture.mockClear();
+        });
+
+        it('shows an image from a URL as an equirectangular background', async () => {
+            const scene = createScene();
+
+            await scene.setBackground({ image: 'panorama.jpg', rotation: 1 });
+
+            const background = scene.background as Texture;
+            expect(background).toBeInstanceOf(Texture);
+            expect(background.name).toBe('panorama.jpg');
+            expect(background.userData.loader).toBe('texture');
+            expect(background.mapping).toBe(EquirectangularReflectionMapping);
+            expect(scene.backgroundRotation.y).toBe(1);
+            expect(scene.getBackground()).toEqual({
+                type: 'image',
+                image: 'panorama.jpg',
+                rotation: 1,
+            });
+        });
+
+        it('puts a loaded image on the scene once it has loaded, without a render', async () => {
+            const scene = createScene();
+
+            await scene.setBackground({ image: 'panorama.jpg', rotation: 1 });
+
+            expect((scene.background as Texture).name).toBe('panorama.jpg');
+            expect(scene.backgroundRotation.y).toBe(1);
+        });
+
+        it('shows an image whatever a consumer assigns to onBeforeRender', async () => {
+            const scene = createScene();
+            const consumer = vi.fn();
+            scene.onBeforeRender = consumer;
+
+            await scene.setBackground({ image: 'a.jpg' });
+            render(scene);
+
+            expect((scene.background as Texture).name).toBe('a.jpg');
+            expect(consumer).toHaveBeenCalledOnce();
+        });
+
+        it('lets a pass draw without the background through plain save and restore', async () => {
+            const scene = createScene();
+            await scene.setBackground({ image: 'a.jpg' });
+            const shown = scene.background;
+            const drawn: unknown[] = [];
+
+            const restore = scene.background;
+            scene.background = null;
+            render(scene);
+            drawn.push(scene.background);
+            scene.background = restore;
+            render(scene);
+
+            expect(drawn).toEqual([null]);
+            expect(scene.background).toBe(shown);
+        });
+
+        it('shows a colour', async () => {
+            const scene = createScene();
+
+            await scene.setBackground('#ff0000');
+
+            expect((scene.background as Color).getHex()).toBe(0xff0000);
+            expect(scene.getBackground()).toEqual({
+                type: 'color',
+                color: new Color(0xff0000),
+            });
+        });
+
+        it.each([null, 'transparent'] as const)(
+            'is transparent with %s',
+            async (value) => {
+                const scene = createScene({ background: '#ff0000' });
+
+                await scene.setBackground(value);
+
+                expect(scene.background).toBeNull();
+                expect(scene.getBackground()).toBeNull();
+            },
+        );
+
+        it('rotates an image without loading it again', async () => {
+            const scene = createScene();
+            await scene.setBackground({ image: 'panorama.jpg' });
+            const texture = scene.background as Texture;
+            expect(scene.backgroundRotation.y).toBe(0);
+
+            await scene.setBackground({ image: 'panorama.jpg', rotation: 2 });
+
+            expect(scene.background).toBe(texture);
+            expect(scene.backgroundRotation.y).toBe(2);
+            expect(scene.getBackground()).toMatchObject({ rotation: 2 });
+            expect(disposals(texture)).toBe(0);
+            expect(loaders.texture).toHaveBeenCalledTimes(1);
+        });
+
+        it('applies the newest rotation to an image still on its way', async () => {
+            const scene = createScene();
+            const slow = deferred<Texture>();
+            loaders.texture.mockImplementationOnce(() => slow.promise);
+
+            const first = scene.setBackground({ image: 'panorama.jpg' });
+            const second = scene.setBackground({
+                image: 'panorama.jpg',
+                rotation: 2,
+            });
+            slow.resolve(new Texture());
+            await Promise.all([first, second]);
+
+            expect(scene.backgroundRotation.y).toBe(2);
+            expect(loaders.texture).toHaveBeenCalledTimes(1);
+        });
+
+        it('keeps the previous background until a new image has loaded', async () => {
+            const scene = createScene({ background: '#ff0000' });
+            const slow = deferred<Texture>();
+            loaders.texture.mockImplementationOnce(() => slow.promise);
+
+            const pending = scene.setBackground({ image: 'panorama.jpg' });
+
+            expect((scene.background as Color).getHex()).toBe(0xff0000);
+            expect(scene.getBackground()).toEqual({
+                type: 'image',
+                image: 'panorama.jpg',
+                rotation: 0,
+            });
+
+            const loaded = new Texture();
+            slow.resolve(loaded);
+            await pending;
+
+            expect((scene.background as Texture).source).toBe(loaded.source);
+        });
+
+        it('lets the last of overlapping images win and disposes the stale one', async () => {
+            const scene = createScene();
+            const slow = deferred<Texture>();
+            loaders.texture.mockImplementationOnce(() => slow.promise);
+
+            const first = scene.setBackground({ image: 'slow.jpg' });
+            const second = scene.setBackground({ image: 'fast.jpg' });
+            await second;
+            const stale = new Texture();
+            vi.spyOn(stale, 'dispose');
+            slow.resolve(stale);
+            await first;
+
+            expect((scene.background as Texture).name).toBe('fast.jpg');
+            expect(disposals(stale)).toBeGreaterThan(0);
+        });
+
+        it('lets a later colour win over an image still on its way', async () => {
+            const scene = createScene();
+            const slow = deferred<Texture>();
+            loaders.texture.mockImplementationOnce(() => slow.promise);
+
+            const pending = scene.setBackground({ image: 'panorama.jpg' });
+            await scene.setBackground('#00ff00');
+            const stale = new Texture();
+            vi.spyOn(stale, 'dispose');
+            slow.resolve(stale);
+            await pending;
+
+            expect((scene.background as Color).getHex()).toBe(0x00ff00);
+            expect(disposals(stale)).toBeGreaterThan(0);
+        });
+
+        it('lets a later rotation of the shown image win over a pending one', async () => {
+            const scene = createScene();
+            await scene.setBackground({ image: 'a.jpg' });
+            const shown = scene.background;
+            const slow = deferred<Texture>();
+            loaders.texture.mockImplementationOnce(() => slow.promise);
+
+            const pending = scene.setBackground({ image: 'b.jpg' });
+            await scene.setBackground({ image: 'a.jpg', rotation: 1 });
+            slow.resolve(new Texture());
+            await pending;
+
+            expect(scene.background).toBe(shown);
+            expect(scene.backgroundRotation.y).toBe(1);
+        });
+
+        it('disposes a loaded image on replace and on scene dispose', async () => {
+            const scene = createScene();
+            await scene.setBackground({ image: 'a.jpg' });
+            const replaced = scene.background as Texture;
+
+            await scene.setBackground({ image: 'b.jpg' });
+            const current = scene.background as Texture;
+
+            expect(disposals(replaced)).toBeGreaterThan(0);
+            expect(disposals(current)).toBe(0);
+
+            scene.dispose();
+
+            expect(disposals(current)).toBeGreaterThan(0);
+        });
+
+        it('disposes a loaded image when a colour replaces it', async () => {
+            const scene = createScene();
+            await scene.setBackground({ image: 'a.jpg' });
+            const replaced = scene.background as Texture;
+
+            await scene.setBackground(null);
+
+            expect(disposals(replaced)).toBeGreaterThan(0);
+        });
+
+        it('disposes an image that arrives after the scene was disposed', async () => {
+            const scene = createScene();
+            const slow = deferred<Texture>();
+            loaders.texture.mockImplementationOnce(() => slow.promise);
+            const pending = scene.setBackground({ image: 'a.jpg' });
+
+            scene.dispose();
+            const late = new Texture();
+            vi.spyOn(late, 'dispose');
+            slow.resolve(late);
+            await pending;
+
+            expect(disposals(late)).toBeGreaterThan(0);
+        });
+
+        it('disposes an image requested after the scene was disposed', async () => {
+            const scene = createScene();
+            scene.dispose();
+
+            await scene.setBackground({ image: 'a.jpg' });
+
+            expect(scene.background).toBeNull();
+            const [result] = loaders.texture.mock.results;
+            expect(disposals(await result.value)).toBeGreaterThan(0);
+        });
+
+        it('loads the image with the loader its extension calls for', async () => {
+            const scene = createScene();
+
+            await scene.setBackground({ image: 'a.exr' });
+
+            expect((scene.background as Texture).userData.loader).toBe('exr');
+        });
+
+        describe('settings', () => {
+            it('is transparent by default', () => {
+                const scene = createScene();
+
+                expect(scene.background).toBeNull();
+                expect(scene.getBackground()).toBeNull();
+            });
+
+            it('takes an image from the settings', async () => {
+                const scene = createScene({
+                    background: { image: 'panorama.jpg', rotation: 1 },
+                });
+                await scene.setBackground({
+                    image: 'panorama.jpg',
+                    rotation: 1,
+                });
+
+                expect((scene.background as Texture).name).toBe('panorama.jpg');
+                expect(scene.backgroundRotation.y).toBe(1);
+                expect(loaders.texture).toHaveBeenCalledOnce();
+            });
+
+            it('reports an image from the settings that fails, since nobody awaits the constructor', async () => {
+                const error = vi
+                    .spyOn(console, 'error')
+                    .mockImplementation(() => {});
+                loaders.texture.mockRejectedValueOnce(new Error('404'));
+
+                createScene({ background: { image: 'missing.jpg' } });
+
+                await vi.waitFor(() =>
+                    expect(error).toHaveBeenCalledWith(
+                        'DIVEScene: background failed',
+                        expect.objectContaining({ message: '404' }),
+                    ),
+                );
+                error.mockRestore();
+            });
+
+            it('still takes the deprecated backgroundColor', () => {
+                const scene = createScene({ backgroundColor: '#0000ff' });
+
+                expect((scene.background as Color).getHex()).toBe(0x0000ff);
+            });
+
+            it.each([
+                ['a colour', '#00ff00', 0x00ff00],
+                ['null', null, null],
+            ] as const)(
+                'prefers background over backgroundColor with %s',
+                (_, background, expected) => {
+                    const scene = createScene({
+                        background,
+                        backgroundColor: '#0000ff',
+                    });
+
+                    expect(
+                        (scene.background as Color | null)?.getHex() ?? null,
+                    ).toBe(expected);
+                },
+            );
+        });
+    });
+
+    describe('loaded', () => {
+        beforeEach(async () => {
+            // the scene made above shares its loads, so only this test's count
+            await disposeScenes();
+            real.root = true;
+            loaders.hdr.mockClear();
+            loaders.texture.mockClear();
+        });
+
+        it('settles once the light and the background image are in place', async () => {
+            const light = deferred<Texture>();
+            const image = deferred<Texture>();
+            loaders.hdr.mockImplementationOnce(() => light.promise);
+            loaders.texture.mockImplementationOnce(() => image.promise);
+            const scene = new DIVEScene({
+                imageBasedLight: { image: 'studio.hdr' },
+                background: { image: 'panorama.jpg' },
+            });
+
+            const loaded = scene.loaded;
+            expect(scene.isLoaded).toBe(false);
+
+            light.resolve(new Texture());
+            expect(await hasSettled(loaded)).toBe(false);
+
+            const texture = new Texture();
+            image.resolve(texture);
+            await loaded;
+
+            expect(scene.isLoaded).toBe(true);
+            expect(scene.imageBasedLightTexture).toBeInstanceOf(Texture);
+            expect(scene.background).toBe(texture);
+        });
+
+        it('settles at once with nothing loading', async () => {
+            const scene = new DIVEScene({
+                imageBasedLight: null,
+                background: '#ff0000',
+            });
+
+            expect(scene.isLoaded).toBe(true);
+            expect(await hasSettled(scene.loaded)).toBe(true);
+        });
+
+        it('is loaded once an image in place is requested again', async () => {
+            const scene = new DIVEScene({ background: null });
+            await scene.loaded;
+
+            const request = scene.setImageBasedLight({ rotation: 1 });
+
+            expect(scene.isLoaded).toBe(true);
+            await request;
+        });
+
+        it('does not reject for a failed image, which the request reports', async () => {
+            const scene = new DIVEScene({ imageBasedLight: null });
+            const broken = deferred<Texture>();
+            loaders.hdr.mockImplementationOnce(() => broken.promise);
+            const request = scene.setImageBasedLight({ image: 'broken.hdr' });
+            const loaded = scene.loaded;
+
+            broken.reject(new Error('broken'));
+
+            await expect(request).rejects.toThrow('broken');
+            await expect(loaded).resolves.toBeUndefined();
+            expect(scene.isLoaded).toBe(true);
+        });
+
+        it('covers only what was requested when it was read', async () => {
+            const scene = new DIVEScene({ imageBasedLight: null });
+            const earlier = scene.loaded;
+            const slow = deferred<Texture>();
+            loaders.hdr.mockImplementationOnce(() => slow.promise);
+            const request = scene.setImageBasedLight({ image: 'later.hdr' });
+
+            expect(await hasSettled(earlier)).toBe(true);
+            expect(scene.isLoaded).toBe(false);
+            const later = scene.loaded;
+            expect(await hasSettled(later)).toBe(false);
+
+            slow.resolve(new Texture());
+            await request;
+            expect(await hasSettled(later)).toBe(true);
+        });
+
+        it('waits for the newest of overlapping requests only', async () => {
+            const scene = new DIVEScene({ imageBasedLight: null });
+            const slow = deferred<Texture>();
+            loaders.hdr.mockImplementationOnce(() => slow.promise);
+            scene.setImageBasedLight({ image: 'slow.hdr' });
+            await scene.setImageBasedLight({ image: 'fast.hdr' });
+
+            expect(scene.isLoaded).toBe(true);
+            expect(await hasSettled(scene.loaded)).toBe(true);
+
+            slow.resolve(new Texture());
+        });
+
+        it('is loaded once the light is turned off and the background is a colour', async () => {
+            const light = deferred<Texture>();
+            const image = deferred<Texture>();
+            loaders.hdr.mockImplementationOnce(() => light.promise);
+            loaders.texture.mockImplementationOnce(() => image.promise);
+            const scene = new DIVEScene({
+                imageBasedLight: { image: 'studio.hdr' },
+                background: { image: 'panorama.jpg' },
+            });
+
+            scene.setImageBasedLight(null);
+            scene.setBackground('#ffffff');
+
+            expect(scene.isLoaded).toBe(true);
+            expect(await hasSettled(scene.loaded)).toBe(true);
+
+            light.resolve(new Texture());
+            image.resolve(new Texture());
+        });
+    });
 });
+
+function deferred<T>() {
+    let resolve!: (value: T) => void;
+    let reject!: (reason: unknown) => void;
+    const promise = new Promise<T>((resolver, rejecter) => {
+        resolve = resolver;
+        reject = rejecter;
+    });
+
+    return { promise, resolve, reject };
+}
+
+/** whether a promise has settled once pending work has run */
+async function hasSettled(promise: Promise<unknown>): Promise<boolean> {
+    let settled = false;
+    promise.then(
+        () => (settled = true),
+        () => (settled = true),
+    );
+    await new Promise((resolve) => setTimeout(resolve));
+    return settled;
+}

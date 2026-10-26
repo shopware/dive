@@ -17,7 +17,7 @@ import {
     type ModelSchema,
     type PrimitiveSchema,
 } from '../../../../types/index.ts';
-import { Color, MeshStandardMaterial, Vector3 } from 'three/webgpu';
+import { Vector3 } from 'three/webgpu';
 import { OrbitController } from '@shopware-ag/dive/orbitcontroller';
 import { type StateData } from '../../../../types/index.ts';
 import { EntityRegistry } from '../../../EntityRegistry.ts';
@@ -58,6 +58,26 @@ vi.mock('@shopware-ag/dive/state', async () => ({
     }),
 }));
 
+/** each image load hands out a texture, so the scene records it at once */
+vi.mock('three/examples/jsm/loaders/HDRLoader.js', async () => {
+    const { Texture } = await import('three/webgpu');
+    return {
+        HDRLoader: vi.fn(function (this: any) {
+            this.loadAsync = vi.fn(async () => new Texture());
+        }),
+    };
+});
+
+vi.mock('three/webgpu', async (importOriginal) => {
+    const actual = await importOriginal<typeof import('three/webgpu')>();
+    return {
+        ...actual,
+        TextureLoader: vi.fn(function (this: any) {
+            this.loadAsync = vi.fn(async () => new actual.Texture());
+        }),
+    };
+});
+
 type MockDeps = { registry: EntityRegistry };
 
 /** Restores the default behaviour, since single tests override it. */
@@ -91,7 +111,7 @@ const createDependencies = (
     // what the scene ends up holding is the gateway's own business, tested
     // there; here it only matters that the state is handed over in one piece
     const gateway = {
-        applySceneSettings: vi.fn(),
+        applySceneSettings: vi.fn().mockResolvedValue(undefined),
     } as unknown as EngineGateway;
 
     const controller = makeCameraController();
@@ -138,6 +158,48 @@ describe('SetStateAction', () => {
                     floorEnabled: true,
                     floorColor: '#00ff00',
                 }),
+            );
+        });
+
+        it('should resolve once the scene settings have loaded', async () => {
+            const deps = createDependencies();
+            let resolve!: () => void;
+            vi.mocked(deps.gateway.applySceneSettings).mockReturnValue(
+                new Promise<void>((r) => (resolve = r)),
+            );
+            const settled = vi.fn();
+
+            const done = new SetStateAction(stateData(), deps)
+                .execute()
+                .then(settled);
+            await new Promise((r) => setTimeout(r, 0));
+            expect(settled).not.toHaveBeenCalled();
+
+            resolve();
+            await done;
+            expect(settled).toHaveBeenCalled();
+        });
+
+        it('should apply the entities even when an image fails to load', async () => {
+            const deps = createDependencies();
+            const reason = new Error('404');
+            vi.mocked(deps.gateway.applySceneSettings).mockRejectedValue(
+                reason,
+            );
+
+            await new SetStateAction(
+                stateData({
+                    groups: [{ id: 'group' }],
+                } as unknown as Partial<StateData>),
+                deps,
+            ).execute();
+
+            expect(deps.registry.read().map((e) => e.schema.id)).toEqual([
+                'group',
+            ]);
+            expect(console.warn).toHaveBeenCalledWith(
+                'SET_STATE: The scene settings could not be applied.',
+                reason,
             );
         });
 
@@ -469,8 +531,8 @@ describe('SetStateAction', () => {
     });
 
     /**
-     * A DIVE instance whose setters actually write back, so what SET_STATE applies
-     * is what a following GET_STATE reads.
+     * A DIVE instance with a real scene, so what SET_STATE applies is what a
+     * following GET_STATE reads.
      */
     const createInstance = (
         entities: EntitySchema[] = [],
@@ -480,29 +542,9 @@ describe('SetStateAction', () => {
         state: State;
         registry: EntityRegistry;
         dispatch: Mock;
-        scene: { name: string; background: Color };
-        floor: { visible: boolean; material: MeshStandardMaterial };
+        scene: DIVEScene;
     } => {
-        const floor = {
-            visible: false,
-            material: new MeshStandardMaterial({ color: new Color('#ffffff') }),
-            setVisibility: vi.fn((visible: boolean) => {
-                floor.visible = visible;
-            }),
-            setColor: vi.fn((color: string) => {
-                floor.material.color = new Color(color);
-            }),
-        };
-
-        const scene = {
-            name: '',
-            background: new Color('#000000'),
-            grid: { visible: false, setVisibility: vi.fn() },
-            setBackground: vi.fn((color: string) => {
-                scene.background = new Color(color);
-            }),
-            root: { floor },
-        } as unknown as DIVEScene & { name: string; background: Color };
+        const scene = new DIVEScene();
 
         /**
          * a real node and camera component, so what SET_STATE writes is what
@@ -539,7 +581,6 @@ describe('SetStateAction', () => {
             state,
             registry,
             scene,
-            floor,
             dispatch: vi.fn(),
         };
     };
@@ -568,9 +609,17 @@ describe('SetStateAction', () => {
                 entity<GroupSchema>('group-1', 'group'),
             ]);
             source.scene.name = 'Source Scene';
-            source.scene.background = new Color('#123456');
-            source.floor.visible = true;
-            source.floor.material.color = new Color('#abcdef');
+            await source.scene.setBackground({
+                image: 'panorama.jpg',
+                rotation: 1,
+            });
+            await source.scene.setImageBasedLight({
+                image: 'studio.hdr',
+                rotation: 2,
+                intensity: 3,
+            });
+            source.scene.root.floor.setVisibility(true);
+            source.scene.root.floor.setColor('#abcdef');
             source.controller.object.owner!.position.set(1, 2, 3);
             source.controller.target.set(4, 5, 6);
 
@@ -588,6 +637,33 @@ describe('SetStateAction', () => {
             ).execute();
 
             expect(reExported).toEqual(exported);
+            expect(reExported).toMatchObject({
+                background: { image: 'panorama.jpg', rotation: 1 },
+                backgroundColor: 'transparent',
+                imageBasedLight: {
+                    image: 'studio.hdr',
+                    rotation: 2,
+                    intensity: 3,
+                },
+                floorEnabled: true,
+                floorColor: '#abcdef',
+            });
+        });
+
+        it('should take the background colour of a state saved before background existed', async () => {
+            const exported = await new GetStateAction(
+                undefined,
+                createInstance(),
+            ).execute();
+            delete exported.background;
+            exported.backgroundColor = '#123456';
+
+            const target = createInstance();
+            await new SetStateAction(exported, target).execute();
+
+            expect(target.gateway.readSceneSettings().background).toBe(
+                '#123456',
+            );
         });
 
         it('should carry every entity type across the round trip', async () => {

@@ -434,12 +434,11 @@ export class SoftShadowComponent extends DIVEComponent {
 
         try {
             scene.overrideMaterial = this._depthMaterial;
+            renderer.setClearColor(0x000000, 0);
+            renderer.setRenderTarget(this._target);
 
             // a background would be drawn over the whole target as full alpha
             scene.background = null;
-            renderer.setClearColor(0x000000, 0);
-
-            renderer.setRenderTarget(this._target);
             renderer.render(scene, this._camera);
 
             this._blur(renderer, 1);

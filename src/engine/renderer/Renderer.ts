@@ -4,9 +4,11 @@ import {
     PCFShadowMap,
     PCFSoftShadowMap,
     SRGBColorSpace,
+    type Texture,
     WebGPURenderer,
 } from 'three/webgpu';
 import { DIVEScene } from '../scene/Scene.ts';
+import { ImageBasedLightBaker } from './ImageBasedLightBaker.ts';
 import { type DIVECameraComponent } from '../../components/camera/CameraComponent.ts';
 import { DIVEEnvironment } from '../environment/Environment.ts';
 import { DIVEAbortablePromise } from '../promise/abortable/AbortablePromise.ts';
@@ -118,6 +120,11 @@ export class DIVERenderer {
 
     private _webgpurenderer: WebGPURenderer;
     private _environment: DIVEEnvironment;
+    private _baker: ImageBasedLightBaker;
+
+    /** the light's texture at the last bake, `null` for none */
+    private _bakedLightTexture: Texture | null = null;
+
     private _initPromise: DIVEAbortablePromise<void> | null = null;
 
     private _settings: DIVERendererSettings;
@@ -152,6 +159,7 @@ export class DIVERenderer {
 
         this._webgpurenderer = this._createWebGPURenderer();
 
+        this._baker = new ImageBasedLightBaker(this._webgpurenderer);
         this._environment = new DIVEEnvironment(
             this._webgpurenderer,
             this._scene,
@@ -162,6 +170,9 @@ export class DIVERenderer {
         return this._webgpurenderer;
     }
 
+    /**
+     * @deprecated Use `scene.setImageBasedLight` and `scene.setBackground`.
+     */
     public get environment(): DIVEEnvironment {
         return this._environment;
     }
@@ -185,8 +196,6 @@ export class DIVERenderer {
                     if (signal.aborted) {
                         return;
                     }
-
-                    await this._environment.initAsync();
                 },
             );
         }
@@ -197,7 +206,29 @@ export class DIVERenderer {
     public tick(): void {
         if (!this._webgpurenderer.initialized) return;
 
+        this._applyImageBasedLight();
         this._webgpurenderer.render(this._scene, this.activeCamera.camera);
+    }
+
+    /**
+     * Puts the scene's image based light on the scene for this frame.
+     *
+     * Bakes only when the image changed since the last bake, so several
+     * changes within one frame cost one bake. Rotation and intensity are
+     * evaluated per frame by three and never cost one.
+     */
+    private _applyImageBasedLight(): void {
+        const light = this._scene.imageBasedLight;
+        const texture = this._scene.imageBasedLightTexture;
+
+        if (texture !== this._bakedLightTexture) {
+            this._bakedLightTexture = texture;
+            this._scene.environment = this._baker.bake(texture);
+        }
+
+        if (!light) return;
+        this._scene.environmentRotation.set(0, light.rotation, 0);
+        this._scene.environmentIntensity = light.intensity;
     }
 
     public onResize(width: number, height: number): void {
@@ -207,6 +238,8 @@ export class DIVERenderer {
     public dispose(): void {
         this._initPromise?.abort();
         this._environment.dispose();
+        this._releaseBake();
+        this._baker.dispose();
         this._keepCanvasUsable(this._webgpurenderer);
         this._webgpurenderer.dispose();
     }
@@ -220,10 +253,23 @@ export class DIVERenderer {
         // create new renderer with canvas
         this._settings.canvas = canvas;
         this._webgpurenderer = this._createWebGPURenderer();
-        this._environment.setRenderer(this._webgpurenderer);
+
+        // freed while the renderer that made them still listens
+        this._releaseBake();
+        this._baker.dispose();
+        this._baker = new ImageBasedLightBaker(this._webgpurenderer);
 
         this._keepCanvasUsable(previousRenderer);
         previousRenderer.dispose();
+    }
+
+    /** takes the bake off the scene, so the next tick bakes afresh */
+    private _releaseBake(): void {
+        if (this._baker.owns(this._scene.environment)) {
+            this._scene.environment = null;
+        }
+        this._baker.release();
+        this._bakedLightTexture = null;
     }
 
     /**

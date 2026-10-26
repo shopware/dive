@@ -131,6 +131,8 @@ export class DIVE {
 
         // set up scene
         this._scene = new DIVEScene({
+            // the scene lets it win over backgroundColor
+            background: settings?.background,
             backgroundColor:
                 settings?.backgroundColor ??
                 DIVEDefaultSettings.backgroundColor,
@@ -138,6 +140,10 @@ export class DIVE {
                 settings?.displayGrid ?? DIVEDefaultSettings.displayGrid,
             displayFloor:
                 settings?.displayFloor ?? DIVEDefaultSettings.displayFloor,
+            imageBasedLight:
+                settings?.imageBasedLight === undefined
+                    ? DIVEDefaultSettings.imageBasedLight
+                    : settings.imageBasedLight,
         });
 
         /**
@@ -218,6 +224,22 @@ export class DIVE {
 
     public get clock(): DIVEClock {
         return this._clock;
+    }
+
+    /**
+     * Settles once everything requested so far has loaded or failed, such as
+     * the images the constructor asked the scene for.
+     *
+     * Never rejects and starts nothing. A request made later is not covered,
+     * reading this again covers it.
+     */
+    public get loaded(): Promise<void> {
+        return this._scene.loaded;
+    }
+
+    /** Whether nothing requested is still loading. */
+    public get isLoaded(): boolean {
+        return this._scene.isLoaded;
     }
 
     public async startAsync(): Promise<void> {

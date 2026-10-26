@@ -3,7 +3,9 @@ import {
     Scene,
     type Box3,
     type ColorRepresentation,
+    type Texture,
 } from 'three/webgpu';
+import defaultEnvUrl from '../../../assets/maps/env/default.hdr?url';
 import { DIVERoot } from './root/Root.ts';
 import {
     DIVEGridDefaultSettings,
@@ -14,6 +16,73 @@ import { type DIVEComponent } from '../component/Component.ts';
 import { disposeComponents } from '../../helpers/disposeComponents/disposeComponents.ts';
 import { DIVENode } from '../node/Node.ts';
 import { type DIVETicker } from '../clock/Clock.ts';
+import { TextureResource } from '../resource/texture/TextureResource.ts';
+
+/**
+ * The light a scene gets from an equirectangular image around it.
+ */
+export type DIVEImageBasedLightSettings = {
+    /**
+     * The URL of the image, `null` for the bundled default HDR.
+     *
+     * @default null
+     */
+    image: string | null;
+    /**
+     * Rotation around Y in radians.
+     *
+     * @default 0
+     */
+    rotation: number;
+    /**
+     * @default 1
+     */
+    intensity: number;
+};
+
+export const DIVEImageBasedLightDefaultSettings: DIVEImageBasedLightSettings = {
+    image: null,
+    rotation: 0,
+    intensity: 1,
+};
+
+/**
+ * The image based light as requested, its image possibly still loading.
+ */
+export type DIVEImageBasedLight = Readonly<DIVEImageBasedLightSettings>;
+
+/**
+ * An equirectangular image at infinity behind the scene.
+ */
+export type DIVEBackgroundImageSettings = {
+    /**
+     * The URL of the image.
+     */
+    image: string;
+    /**
+     * Rotation around Y in radians.
+     *
+     * @default 0
+     */
+    rotation?: number;
+};
+
+/**
+ * What to show behind the scene: a colour, an image, or `null` for nothing,
+ * so that the page behind the canvas shows through. The colour
+ * `'transparent'` is read as `null`.
+ */
+export type DIVEBackgroundSettings =
+    ColorRepresentation | DIVEBackgroundImageSettings | null;
+
+/**
+ * The background as requested, `null` being transparent. An image may still
+ * be loading.
+ */
+export type DIVEBackground =
+    | Readonly<{ type: 'color'; color: Color }>
+    | Readonly<{ type: 'image'; image: string; rotation: number }>
+    | null;
 
 export type DIVESceneSettings = {
     /**
@@ -41,18 +110,36 @@ export type DIVESceneSettings = {
      */
     grid: Partial<DIVEGridSettings>;
     /**
+     * What to show behind the scene: a colour, an image, or `null` for
+     * transparent. Wins over `backgroundColor` when both are given.
+     *
+     * @default undefined, which leaves the background to `backgroundColor`
+     */
+    background: DIVEBackgroundSettings | undefined;
+    /**
      * The background color of the scene.
      *
+     * @deprecated Use `background` instead, which also takes an image or
+     * `null` for transparent.
      * @default transparent
      */
     backgroundColor: ColorRepresentation;
+    /**
+     * The image based light, or `null` for none. Whatever it leaves out keeps
+     * its default.
+     *
+     * @default DIVEImageBasedLightDefaultSettings
+     */
+    imageBasedLight: Partial<DIVEImageBasedLightSettings> | null;
 };
 
 export const DIVESceneDefaultSettings: Required<DIVESceneSettings> = {
     displayFloor: false,
     displayGrid: false,
     grid: DIVEGridDefaultSettings,
+    background: undefined,
     backgroundColor: 'transparent',
+    imageBasedLight: DIVEImageBasedLightDefaultSettings,
 };
 
 /**
@@ -101,18 +188,155 @@ export class DIVEScene extends Scene implements DIVETicker {
      */
     private _withdrawn: Set<DIVEComponent> | null = null;
 
+    /** the image based light as requested */
+    private _imageBasedLight: DIVEImageBasedLight | null = null;
+
+    private _lightImage = new TextureResource();
+
+    /** the background as requested */
+    private _background: DIVEBackground = null;
+
+    private _backgroundImage = new TextureResource();
+
+    /** the newest image request of each kind, until it has settled */
+    private _loading: {
+        light?: Promise<void>;
+        background?: Promise<void>;
+    } = {};
+
     constructor(settings?: Partial<DIVESceneSettings>) {
         super();
 
         this._settings = { ...DIVESceneDefaultSettings, ...(settings ?? {}) };
 
-        this.setBackground(this._settings.backgroundColor);
+        this.setBackground(
+            this._settings.background !== undefined
+                ? this._settings.background
+                : this._settings.backgroundColor,
+        ).catch((error: unknown) => {
+            // nobody awaits the constructor, so this is the only report
+            console.error('DIVEScene: background failed', error);
+        });
 
         this._root = new DIVERoot();
         this._root.floor.setVisibility(this._settings.displayFloor);
         this.add(this._root);
 
         if (this._settings.displayGrid) this._buildGrid();
+
+        this.setImageBasedLight(this._settings.imageBasedLight).catch(
+            (error: unknown) => {
+                // nobody awaits the constructor, so this is the only report
+                console.error('DIVEScene: image based light failed', error);
+            },
+        );
+    }
+
+    /**
+     * Settles once every image requested so far is in place or has failed.
+     *
+     * Never rejects; a failure is reported by the request that started it.
+     * A request made later is not covered, reading this again covers it.
+     */
+    public get loaded(): Promise<void> {
+        return Promise.all(Object.values(this._loading)).then(() => {});
+    }
+
+    /** Whether no requested image is still loading. */
+    public get isLoaded(): boolean {
+        return Object.keys(this._loading).length === 0;
+    }
+
+    /**
+     * Keeps a request as the newest of its kind until it settles.
+     *
+     * @param kind - Which image the request is for.
+     * @param request - The request, or `null` when nothing loads.
+     */
+    private _track(
+        kind: 'light' | 'background',
+        request: Promise<void> | null,
+    ): void {
+        if (!request) {
+            delete this._loading[kind];
+            return;
+        }
+
+        const settled: Promise<void> = request.then(
+            () => this._untrack(kind, settled),
+            () => this._untrack(kind, settled),
+        );
+        this._loading[kind] = settled;
+    }
+
+    private _untrack(
+        kind: 'light' | 'background',
+        settled: Promise<void>,
+    ): void {
+        if (this._loading[kind] === settled) delete this._loading[kind];
+    }
+
+    /**
+     * The image based light as requested, or `null` for none.
+     *
+     * A new image shows up here at once and lights the scene once it has
+     * loaded, the previous one lighting it until then.
+     */
+    public get imageBasedLight(): DIVEImageBasedLight | null {
+        return this._imageBasedLight;
+    }
+
+    /**
+     * The texture the scene is lit by, `null` before the first image has
+     * loaded.
+     *
+     * @internal
+     */
+    public get imageBasedLightTexture(): Texture | null {
+        return this._lightImage.value;
+    }
+
+    /**
+     * Sets the image based light, or turns it off with `null`.
+     *
+     * Fields left out keep their value; after `null` they start from the
+     * defaults again. An `image` of `null` is the bundled default HDR. Of
+     * overlapping image changes the last one wins. An image used in several
+     * places is loaded once.
+     *
+     * @param settings - What to change, or `null` for no image based light.
+     * @returns Resolves once the image has loaded; it lights the scene from
+     * the next render on.
+     */
+    public async setImageBasedLight(
+        settings: Partial<DIVEImageBasedLightSettings> | null,
+    ): Promise<void> {
+        if (settings === null) {
+            this._imageBasedLight = null;
+            this._lightImage.clear();
+            this._track('light', null);
+            return;
+        }
+
+        const light: DIVEImageBasedLightSettings = {
+            ...(this._imageBasedLight ?? DIVEImageBasedLightDefaultSettings),
+        };
+        if (settings.image !== undefined) {
+            // the default's URL belongs to this build, so it is described as null
+            light.image =
+                settings.image === defaultEnvUrl ? null : settings.image;
+        }
+        if (settings.rotation !== undefined) light.rotation = settings.rotation;
+        if (settings.intensity !== undefined) {
+            light.intensity = settings.intensity;
+        }
+        this._imageBasedLight = light;
+
+        const url = light.image ?? defaultEnvUrl;
+        const request = this._lightImage.request(url);
+        // an image already in place loads nothing
+        this._track('light', this._lightImage.url === url ? null : request);
+        return request;
     }
 
     public get root(): DIVERoot {
@@ -150,14 +374,72 @@ export class DIVEScene extends Scene implements DIVETicker {
         this.add(node);
     }
 
-    public setBackground(value: ColorRepresentation): void {
-        if (value === 'transparent') {
-            this.background = null;
-        } else if (typeof value === 'string' || typeof value === 'number') {
-            this.background = new Color(value);
-        } else {
-            this.background = value;
+    /**
+     * The background as requested, `null` being transparent.
+     *
+     * A new image shows up here at once and is shown once it has loaded, the
+     * previous background staying until then.
+     */
+    public getBackground(): DIVEBackground {
+        return this._background;
+    }
+
+    /**
+     * Sets what is shown behind the scene: a colour, an equirectangular image,
+     * or `null` for transparent.
+     *
+     * An image is shown as it is, without a cube capture, and rotated through
+     * the scene's background rotation, so a new rotation for the same image
+     * costs no reload. Of overlapping calls the last one wins. An image used
+     * in several places is loaded once.
+     *
+     * @param value - The new background.
+     * @returns Resolves once the background is on the scene, for an image
+     * once it has loaded.
+     */
+    public async setBackground(value: DIVEBackgroundSettings): Promise<void> {
+        if (!isBackgroundImage(value)) {
+            const background = toColorBackground(value);
+            this._background = background;
+            this._backgroundImage.clear();
+            this._track('background', null);
+            this.background = background?.color ?? null;
+            this.backgroundRotation.set(0, 0, 0);
+            return;
         }
+
+        this._background = {
+            type: 'image',
+            image: value.image,
+            rotation: value.rotation ?? 0,
+        };
+        const request = this._backgroundImage
+            .request(value.image)
+            .then(() => this._showBackgroundImage());
+        // an image already in place loads nothing
+        this._track(
+            'background',
+            this._backgroundImage.url === value.image ? null : request,
+        );
+        return request;
+    }
+
+    /**
+     * Puts the requested background image on the scene, unless it was
+     * overtaken or has not loaded yet.
+     *
+     * Runs once a request has settled, outside any render, so passes that
+     * hide the background need nothing but a plain save and restore.
+     */
+    private _showBackgroundImage(): void {
+        const background = this._background;
+        if (background?.type !== 'image') return;
+
+        // the previous background stays until the image has loaded
+        if (this._backgroundImage.url !== background.image) return;
+
+        this.background = this._backgroundImage.value;
+        this.backgroundRotation.set(0, background.rotation, 0);
     }
 
     public computeSceneBB(): Box3 {
@@ -265,5 +547,27 @@ export class DIVEScene extends Scene implements DIVETicker {
         if (this._grid) this.remove(this._grid.owner);
 
         this._tickingComponents = [];
+
+        this._lightImage.dispose();
+        this._backgroundImage.dispose();
     }
+}
+
+function isBackgroundImage(
+    value: DIVEBackgroundSettings,
+): value is DIVEBackgroundImageSettings {
+    return typeof value === 'object' && value !== null && 'image' in value;
+}
+
+/** a colour background, `null` and `'transparent'` being transparent */
+function toColorBackground(
+    value: Exclude<DIVEBackgroundSettings, DIVEBackgroundImageSettings>,
+): Extract<DIVEBackground, { type: 'color' }> | null {
+    if (value === null || value === 'transparent') return null;
+
+    // a Color passed in is used as it is
+    return {
+        type: 'color',
+        color: value instanceof Color ? value : new Color(value),
+    };
 }

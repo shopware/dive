@@ -148,6 +148,20 @@ describe('OrientationDisplay', () => {
             expect(mockScene.background).toBe(originalBackground);
         });
 
+        it('should draw the axes without the background', () => {
+            mockScene.background = new Color(0x000000);
+            let drawnOver: unknown;
+            vi.mocked(
+                mockRenderer.webgpurenderer.render,
+            ).mockImplementationOnce(() => {
+                drawnOver = mockScene.background;
+            });
+
+            orientationDisplay.tick();
+
+            expect(drawnOver).toBeNull();
+        });
+
         it('should handle null background', () => {
             mockScene.background = null;
 

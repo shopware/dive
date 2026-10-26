@@ -7,6 +7,7 @@ import {
     GyroInput,
     ModelComponent,
     PointerInput,
+    SoftShadowComponent,
 } from '@shopware-ag/dive';
 import { OrbitController } from '@shopware-ag/dive/orbitcontroller';
 import type { State, StateData } from '@shopware-ag/dive/state';
@@ -82,11 +83,9 @@ export type QuickView = DIVE & {
  */
 export type QuickViewController = 'orbit' | 'gyro';
 
-export const QuickViewDefaultSettings: Omit<
-    Required<QuickViewSettings>,
-    'hdr'
-> = {
+export const QuickViewDefaultSettings: Required<QuickViewSettings> = {
     ...DIVEDefaultSettings,
+    softShadow: false,
 };
 
 /** Frees the GPU resources of every component below a node, and unparents it. */
@@ -115,7 +114,11 @@ export async function QuickView(
      * list and is only removed by its own dispose, so one left behind eats an
      * instance slot for good -- and may leave a clock running.
      */
-    const dive = new DIVE({ ...settings, autoStart: false });
+    const {
+        softShadow = QuickViewDefaultSettings.softShadow,
+        ...diveSettings
+    } = settings ?? {};
+    const dive = new DIVE({ ...diveSettings, autoStart: false });
 
     try {
         /**
@@ -243,6 +246,10 @@ export async function QuickView(
                 model = new DIVENode();
                 model.name = 'QuickViewModel';
                 model.addComponent(new ModelComponent());
+
+                // on the node, so it stays for the next model and re-bakes itself
+                if (softShadow) model.addComponent(new SoftShadowComponent());
+
                 dive.scene.root.add(model);
             }
 
@@ -421,7 +428,11 @@ export async function QuickView(
             },
         });
 
-        await load(source);
+        /**
+         * the light the engine started loading comes in alongside the model,
+         * so the first frame rendered is lit
+         */
+        await Promise.all([load(source), dive.loaded]);
 
         frame();
 

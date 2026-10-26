@@ -5,6 +5,7 @@
 import { vi } from 'vitest';
 import { DIVE, DIVESettings } from '../Dive.ts';
 import { MathUtils } from 'three/webgpu';
+import { DIVEScene } from '../scene/Scene.ts';
 
 const waitForAsync = () => new Promise((resolve) => setTimeout(resolve, 0));
 
@@ -296,6 +297,44 @@ describe('DIVE', () => {
         expect(dive).toBeDefined();
     });
 
+    it('hands background and backgroundColor to the scene, which picks one', () => {
+        new DIVE({
+            autoStart: false,
+            background: { image: 'panorama.jpg' },
+            backgroundColor: '#ffffff',
+        });
+
+        expect(vi.mocked(DIVEScene)).toHaveBeenLastCalledWith(
+            expect.objectContaining({
+                background: { image: 'panorama.jpg' },
+                backgroundColor: '#ffffff',
+            }),
+        );
+    });
+
+    it('leaves background unset when it is not given', () => {
+        new DIVE({ autoStart: false });
+
+        expect(vi.mocked(DIVEScene)).toHaveBeenLastCalledWith(
+            expect.objectContaining({ background: undefined }),
+        );
+    });
+
+    it('hands a given image based light to the scene, null included', () => {
+        new DIVE({ autoStart: false, imageBasedLight: null });
+
+        expect(vi.mocked(DIVEScene)).toHaveBeenLastCalledWith(
+            expect.objectContaining({ imageBasedLight: null }),
+        );
+
+        const light = { image: 'studio.hdr', rotation: 1, intensity: 2 };
+        new DIVE({ autoStart: false, imageBasedLight: light });
+
+        expect(vi.mocked(DIVEScene)).toHaveBeenLastCalledWith(
+            expect.objectContaining({ imageBasedLight: light }),
+        );
+    });
+
     it('should have Canvas', () => {
         const dive = new DIVE();
         expect(dive.mainView.canvas).toBeDefined();
@@ -476,5 +515,30 @@ describe('DIVE', () => {
         const viewDisposedAt = vi.mocked(dive.mainView.dispose).mock
             .invocationCallOrder[0];
         expect(sceneDisposedAt).toBeLessThan(viewDisposedAt);
+    });
+
+    it('is loaded once the scene has loaded what the constructor requested', async () => {
+        const dive = new DIVE({ autoStart: false });
+        let finish!: () => void;
+        const scene = dive.scene as unknown as {
+            loaded: Promise<void>;
+            isLoaded: boolean;
+        };
+        scene.loaded = new Promise<void>((resolve) => (finish = resolve));
+        scene.isLoaded = false;
+
+        let settled = false;
+        dive.loaded.then(() => (settled = true));
+        await waitForAsync();
+
+        expect(dive.isLoaded).toBe(false);
+        expect(settled).toBe(false);
+
+        scene.isLoaded = true;
+        finish();
+        await waitForAsync();
+
+        expect(dive.isLoaded).toBe(true);
+        expect(settled).toBe(true);
     });
 });

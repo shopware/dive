@@ -10,6 +10,7 @@ import {
     GyroInput,
     ModelComponent,
     PointerInput,
+    SoftShadowComponent,
 } from '@shopware-ag/dive';
 import { OrbitController } from '@shopware-ag/dive/orbitcontroller';
 import { State, type StateData } from '@shopware-ag/dive/state';
@@ -34,6 +35,7 @@ const {
     canvasLayout,
     gyroPermission,
     gyroEnable,
+    diveLoaded,
 } = vi.hoisted(() => ({
     diveDisposeAsync: vi.fn(async () => {}),
     diveStartAsync: vi.fn(async () => {}),
@@ -49,6 +51,8 @@ const {
     canvasLayout: { clientWidth: 800, clientHeight: 600 },
     gyroPermission: vi.fn(async () => true),
     gyroEnable: vi.fn(async () => {}),
+    // what `dive.loaded` hands out, read through a spy
+    diveLoaded: vi.fn(() => Promise.resolve()),
 }));
 
 vi.mock('@shopware-ag/dive', () => {
@@ -77,6 +81,9 @@ vi.mock('@shopware-ag/dive', () => {
                     },
                 },
                 clock: { addTicker: vi.fn(), removeTicker: vi.fn() },
+                get loaded() {
+                    return diveLoaded();
+                },
                 startAsync: diveStartAsync,
                 disposeAsync: diveDisposeAsync,
             };
@@ -106,6 +113,7 @@ vi.mock('@shopware-ag/dive', () => {
             return this;
         }),
         ModelComponent: vi.fn(),
+        SoftShadowComponent: vi.fn(),
         PointerInput: vi.fn(function () {
             return { dispose: vi.fn() };
         }),
@@ -178,11 +186,16 @@ describe('QuickView', () => {
         // reset, not just cleared: a pending once-implementation would leak
         gyroPermission.mockReset().mockImplementation(async () => true);
         gyroEnable.mockReset().mockImplementation(async () => {});
+        diveLoaded.mockReset().mockImplementation(() => Promise.resolve());
         vi.spyOn(console, 'error').mockImplementation(() => {});
     });
 
     it('exposes the DIVE defaults as QuickView defaults', () => {
         expect(QuickViewDefaultSettings).toMatchObject({ displayGrid: false });
+    });
+
+    it('should leave the contact shadow off by default', () => {
+        expect(QuickViewDefaultSettings.softShadow).toBe(false);
     });
 
     it('should build the scene without auto start and start it afterwards', async () => {
@@ -199,6 +212,117 @@ describe('QuickView', () => {
         expect(DIVE).toHaveBeenCalledWith({
             displayGrid: true,
             autoStart: false,
+        });
+    });
+
+    it('should keep its own settings away from the engine', async () => {
+        await QuickView('test_uri', { displayGrid: true, softShadow: true });
+
+        expect(DIVE).toHaveBeenCalledWith({
+            displayGrid: true,
+            autoStart: false,
+        });
+    });
+
+    describe('the initial light', () => {
+        it('should not start before what the engine loads has loaded', async () => {
+            let finish!: () => void;
+            diveLoaded.mockImplementation(
+                () => new Promise<void>((resolve) => (finish = resolve)),
+            );
+
+            const created = QuickView('test_uri');
+            await vi.waitFor(() => expect(setFromURL).toHaveBeenCalled());
+            await new Promise((resolve) => setTimeout(resolve));
+
+            expect(diveStartAsync).not.toHaveBeenCalled();
+
+            finish();
+            await created;
+
+            expect(diveStartAsync).toHaveBeenCalledTimes(1);
+        });
+
+        it('should wait for it alongside the model, not after it', async () => {
+            let arrive!: () => void;
+            setFromURL.mockImplementation(
+                () => new Promise<void>((resolve) => (arrive = resolve)),
+            );
+
+            const created = QuickView('test_uri');
+            await vi.waitFor(() => expect(setFromURL).toHaveBeenCalled());
+
+            expect(diveLoaded).toHaveBeenCalled();
+
+            arrive();
+            await created;
+        });
+
+        it('should wait for it even when it was told not to start', async () => {
+            let finish!: () => void;
+            diveLoaded.mockImplementation(
+                () => new Promise<void>((resolve) => (finish = resolve)),
+            );
+            let resolved = false;
+
+            const created = QuickView('test_uri', { autoStart: false }).then(
+                () => (resolved = true),
+            );
+            await new Promise((resolve) => setTimeout(resolve));
+
+            expect(resolved).toBe(false);
+
+            finish();
+            await created;
+
+            expect(diveStartAsync).not.toHaveBeenCalled();
+        });
+    });
+
+    describe('softShadow', () => {
+        /** whether a node was given a contact shadow */
+        const hasShadow = (node: DIVENode | null) =>
+            vi
+                .mocked(node!.addComponent)
+                .mock.calls.some(
+                    ([component]) => component instanceof SoftShadowComponent,
+                );
+
+        it('should put no shadow under the model unless asked to', async () => {
+            const quickView = await QuickView('test_uri');
+
+            expect(hasShadow(quickView.model)).toBe(false);
+            expect(SoftShadowComponent).not.toHaveBeenCalled();
+        });
+
+        it('should put a shadow under the model', async () => {
+            const quickView = await QuickView('test_uri', { softShadow: true });
+
+            expect(hasShadow(quickView.model)).toBe(true);
+        });
+
+        it('should keep the shadow for the next model', async () => {
+            // it sits on the node, which the next model reuses
+            const quickView = await QuickView('test_uri', { softShadow: true });
+
+            await quickView.load('second_uri');
+
+            expect(SoftShadowComponent).toHaveBeenCalledTimes(1);
+            expect(hasShadow(quickView.model)).toBe(true);
+        });
+
+        it('should put none under scene state', async () => {
+            await QuickView(sceneData, { softShadow: true });
+
+            expect(SoftShadowComponent).not.toHaveBeenCalled();
+        });
+
+        it('should put one under a model that replaces scene state', async () => {
+            const quickView = await QuickView(sceneData, { softShadow: true });
+
+            await quickView.load('a_uri');
+
+            expect(hasShadow(quickView.model)).toBe(true);
         });
     });
 

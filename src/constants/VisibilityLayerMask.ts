@@ -41,3 +41,12 @@ export const PROXY_LAYER_MASK = 0b01000000; // 64
  * it.
  */
 export const SHADOW_LAYER_MASK = 0b10000000; // 128
+
+/**
+ * An environment image drawn as scenery, such as a ground-projected dome.
+ *
+ * Its own bit, because it is the backdrop and nothing else: drawn in both views,
+ * but never content -- not in bounds, exports or picking, and not on the product
+ * layer a shadow bake renders, which would otherwise capture the whole dome.
+ */
+export const BACKGROUND_LAYER_MASK = 0b100000000; // 256
