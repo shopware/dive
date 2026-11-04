@@ -103,7 +103,13 @@ export class MediaCreator {
                 canvasElement ?? document.createElement('canvas');
             outputCanvas.width = width;
             outputCanvas.height = height;
-            this._writePixelsToCanvas(outputCanvas, pixels, width, height);
+            this._writePixelsToCanvas(
+                outputCanvas,
+                pixels,
+                width,
+                height,
+                this._readsBottomUp(renderer),
+            );
 
             return outputCanvas;
         } finally {
@@ -113,11 +119,22 @@ export class MediaCreator {
         }
     }
 
+    /**
+     * WebGL's readPixels returns rows bottom-up, WebGPU top-down.
+     */
+    private _readsBottomUp(renderer: DIVERenderer['webgpurenderer']): boolean {
+        return (
+            (renderer.backend as { isWebGLBackend?: boolean })
+                .isWebGLBackend === true
+        );
+    }
+
     private _writePixelsToCanvas(
         canvas: HTMLCanvasElement,
         pixels: ArrayLike<number>,
         width: number,
         height: number,
+        flipY: boolean,
     ): void {
         const context = canvas.getContext('2d');
         if (!context) {
@@ -127,7 +144,20 @@ export class MediaCreator {
         }
 
         const imageData = context.createImageData(width, height);
-        imageData.data.set(new Uint8ClampedArray(Array.from(pixels)));
+        const source = new Uint8ClampedArray(Array.from(pixels));
+
+        if (flipY) {
+            const rowLength = width * 4;
+            for (let row = 0; row < height; row++) {
+                const from = (height - 1 - row) * rowLength;
+                imageData.data.set(
+                    source.subarray(from, from + rowLength),
+                    row * rowLength,
+                );
+            }
+        } else {
+            imageData.data.set(source);
+        }
         context.putImageData(imageData, 0, 0);
     }
 }
