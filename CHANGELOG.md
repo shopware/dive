@@ -1,5 +1,12 @@
 # Changelog
 
+## [4.3.1](https://github.com/shopware/dive/compare/v4.3.0...v4.3.1) (2026-11-04)
+
+
+### 🐛 Bug Fixes
+
+* change pixel order on webgpu renderer. ([#280](https://github.com/shopware/dive/issues/280)) ([9a7cc3e](https://github.com/shopware/dive/commit/9a7cc3e58e54ea990d36394e32417e19b62e1ea6))
+
 ## [4.3.0](https://github.com/shopware/dive/compare/v4.2.2...v4.3.0) (2026-10-26)
 
 
