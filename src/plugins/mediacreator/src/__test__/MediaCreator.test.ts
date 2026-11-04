@@ -2,7 +2,7 @@
  * @jest-environment jsdom
  */
 
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 // Mock ResizeObserver
 class MockResizeObserver {
@@ -26,6 +26,7 @@ const mockCreateImageData = vi.fn((width: number, height: number) => ({
     data: new Uint8ClampedArray(width * height * 4),
 }));
 const mockPutImageData = vi.fn();
+const mockBackend: { isWebGLBackend?: boolean } = {};
 
 const createMockCanvas = (): HTMLCanvasElement => {
     const canvas = originalCreateElement('canvas');
@@ -79,6 +80,7 @@ vi.mock('@shopware-ag/dive', () => {
             setRenderTarget: mockSetRenderTarget,
             getRenderTarget: mockGetRenderTarget,
             readRenderTargetPixelsAsync: mockReadRenderTargetPixelsAsync,
+            backend: mockBackend,
         };
 
         this.canvas = nativeRenderer.domElement;
@@ -291,6 +293,41 @@ describe('MediaCreator', () => {
             321,
             123,
         );
+    });
+
+    describe('row order', () => {
+        /** two rows of one pixel each: red on top, blue below */
+        const topDown = [255, 0, 0, 255, 0, 0, 255, 255];
+        const bottomUp = [0, 0, 255, 255, 255, 0, 0, 255];
+
+        const drawnPixels = async (): Promise<number[]> => {
+            await mediaCreator.drawCanvas(createMockCanvas(), {
+                width: 1,
+                height: 2,
+            });
+            return Array.from(mockPutImageData.mock.calls[0][0].data);
+        };
+
+        afterEach(() => {
+            delete mockBackend.isWebGLBackend;
+        });
+
+        it('should keep WebGPU pixels as they are', async () => {
+            mockReadRenderTargetPixelsAsync.mockResolvedValueOnce(
+                new Uint8Array(topDown),
+            );
+
+            expect(await drawnPixels()).toEqual(topDown);
+        });
+
+        it('should flip WebGL fallback pixels upright', async () => {
+            mockBackend.isWebGLBackend = true;
+            mockReadRenderTargetPixelsAsync.mockResolvedValueOnce(
+                new Uint8Array(bottomUp),
+            );
+
+            expect(await drawnPixels()).toEqual(topDown);
+        });
     });
 
     it('should throw when the output canvas has no 2D context', async () => {
