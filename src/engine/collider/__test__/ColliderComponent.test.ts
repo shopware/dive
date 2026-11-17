@@ -4,7 +4,7 @@ import {
     type ColliderHit,
     type ColliderIntersection,
 } from '../ColliderComponent.ts';
-import { DIVENode } from '../../../engine/node/Node.ts';
+import { DIVENode } from '../../node/Node.ts';
 import {
     PRODUCT_LAYER_MASK,
     PROXY_LAYER_MASK,

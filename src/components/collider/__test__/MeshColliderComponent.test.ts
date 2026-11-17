@@ -13,7 +13,7 @@ import {
 import { ModelComponent } from '../../mesh/model/ModelComponent.ts';
 import { FloorComponent } from '../../mesh/floor/FloorComponent.ts';
 import { MeshColliderComponent } from '../MeshColliderComponent.ts';
-import { type ColliderIntersection } from '../ColliderComponent.ts';
+import { type ColliderIntersection } from '../../../engine/collider/ColliderComponent.ts';
 import { DIVENode } from '../../../engine/node/Node.ts';
 import { PrimitiveComponent } from '../../mesh/primitive/PrimitiveComponent.ts';
 import { PRODUCT_LAYER_MASK } from '../../../constants/VisibilityLayerMask.ts';
@@ -121,6 +121,37 @@ describe('dive/collider/MeshColliderComponent', () => {
             node.addComponent(new FloorComponent());
 
             expect(cast([3, 10, 0], [0, -1, 0])).toHaveLength(0);
+        });
+
+        it('should not hit a hidden mesh, and hit the one behind it', () => {
+            const model = node.addComponent(new ModelComponent());
+            const front = plane(0, 0, 1);
+            front.visible = false;
+            model.setFromGLTF(gltf(front, plane(0, 0, -1)));
+
+            expect(cast([0, 0, 10])[0].distance).toBeCloseTo(11);
+        });
+
+        it('should not hit a mesh below a hidden glTF node', () => {
+            const model = node.addComponent(new ModelComponent());
+            const hidden = new Group();
+            hidden.visible = false;
+            hidden.add(plane(0, 0, 1));
+            model.setFromGLTF(gltf(hidden));
+
+            expect(cast([0, 0, 10])).toHaveLength(0);
+        });
+
+        it('should hit a part again once it is shown', () => {
+            const model = node.addComponent(new ModelComponent());
+            const part = plane(0, 0, 1);
+            model.setFromGLTF(gltf(part));
+            part.visible = false;
+            expect(cast([0, 0, 10])).toHaveLength(0);
+
+            part.visible = true;
+
+            expect(cast([0, 0, 10])[0].distance).toBeCloseTo(9);
         });
 
         it('should hit a finished asset load without a refresh', () => {

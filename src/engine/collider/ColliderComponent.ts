@@ -1,12 +1,18 @@
 import {
     Layers,
+    Matrix4,
+    Ray,
+    Vector3,
     type Intersection,
     type Raycaster,
-    type Vector3,
 } from 'three/webgpu';
 import { PRODUCT_LAYER_MASK } from '../../constants/VisibilityLayerMask.ts';
-import { DIVEComponent } from '../../engine/component/Component.ts';
-import { type DIVENode } from '../../engine/node/Node.ts';
+import { DIVEComponent } from '../component/Component.ts';
+import { type DIVENode } from '../node/Node.ts';
+
+const _inverse = new Matrix4();
+const _ray = new Ray();
+const _point = new Vector3();
 
 /**
  * A collider hit: a three `Intersection` whose `object` is the owner node,
@@ -96,4 +102,28 @@ export abstract class ColliderComponent extends DIVEComponent {
      * @param raycaster - The ray to test.
      */
     protected abstract intersectRay(raycaster: Raycaster): ColliderHit | null;
+
+    /**
+     * Runs a shape test in the owner's space and returns its hit in world space.
+     *
+     * For shapes sized in the owner's space: the ray is moved there, `test`
+     * writes the nearest point on the shape into `target` and returns it, or
+     * returns `null` on a miss. Distance is measured in world space, so the
+     * owner's scale does not distort it.
+     *
+     * @param raycaster - The ray, in world space.
+     * @param test - The shape test in the owner's space, like `Ray.intersectBox`.
+     */
+    protected intersectInOwnerSpace(
+        raycaster: Raycaster,
+        test: (ray: Ray, target: Vector3) => Vector3 | null,
+    ): ColliderHit | null {
+        _inverse.copy(this.owner.matrixWorld).invert();
+        _ray.copy(raycaster.ray).applyMatrix4(_inverse);
+        if (!test(_ray, _point)) return null;
+
+        const point = _point.clone().applyMatrix4(this.owner.matrixWorld);
+
+        return { distance: raycaster.ray.origin.distanceTo(point), point };
+    }
 }

@@ -1,6 +1,6 @@
 import { Raycaster, Vector3, type Intersection } from 'three/webgpu';
 import { BoxColliderComponent } from '../BoxColliderComponent.ts';
-import { type ColliderIntersection } from '../ColliderComponent.ts';
+import { type ColliderIntersection } from '../../../engine/collider/ColliderComponent.ts';
 import { DIVENode } from '../../../engine/node/Node.ts';
 import { PRODUCT_LAYER_MASK } from '../../../constants/VisibilityLayerMask.ts';
 

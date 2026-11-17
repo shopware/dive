@@ -1,16 +1,8 @@
+import { Box3, Vector3, type Raycaster, type Vector3Like } from 'three/webgpu';
 import {
-    Box3,
-    Matrix4,
-    Ray,
-    Vector3,
-    type Raycaster,
-    type Vector3Like,
-} from 'three/webgpu';
-import { ColliderComponent, type ColliderHit } from './ColliderComponent.ts';
-
-const _inverse = new Matrix4();
-const _ray = new Ray();
-const _point = new Vector3();
+    ColliderComponent,
+    type ColliderHit,
+} from '../../engine/collider/ColliderComponent.ts';
 
 /**
  * Makes its owner hittable as a box.
@@ -90,13 +82,8 @@ export class BoxColliderComponent extends ColliderComponent {
     protected intersectRay(raycaster: Raycaster): ColliderHit | null {
         if (this._box.isEmpty()) return null;
 
-        /** into the owner's space, where the box is axis-aligned */
-        _inverse.copy(this.owner.matrixWorld).invert();
-        _ray.copy(raycaster.ray).applyMatrix4(_inverse);
-        if (!_ray.intersectBox(this._box, _point)) return null;
-
-        const point = _point.clone().applyMatrix4(this.owner.matrixWorld);
-
-        return { distance: raycaster.ray.origin.distanceTo(point), point };
+        return this.intersectInOwnerSpace(raycaster, (ray, target) =>
+            ray.intersectBox(this._box, target),
+        );
     }
 }
