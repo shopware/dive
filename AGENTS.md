@@ -5,6 +5,7 @@
 - Always respond in the language the user is writing in
 - Always update this `AGENTS.md` with new insights after code changes (workspace facts, patterns, preferences)
 - Always write `AGENTS.md` content in English
+- PR descriptions follow the repo template (`.github/pull_request_template.md`): short, to-the-point bullets only, no long prose, no emojis, no generated-by footer
 - All tests of a class live in one test file `<Class>.test.ts`, grouped by `describe`; never split by topic into `<Class>.<topic>.test.ts`
 
 ## Learned Workspace Facts
