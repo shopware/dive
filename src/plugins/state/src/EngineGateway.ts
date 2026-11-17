@@ -1,7 +1,7 @@
 import { Color, MeshStandardMaterial, type Vector3Like } from 'three/webgpu';
 import {
     AmbientLightComponent,
-    ColliderComponent,
+    BoxColliderComponent,
     detachTransformControls,
     DirectionalLightComponent,
     disposeComponents,
@@ -13,6 +13,7 @@ import {
     ModelComponent,
     PrimitiveComponent,
     PointLightComponent,
+    PROXY_LAYER_MASK,
     type DIVE,
     type DIVEBackgroundSettings,
     type DIVEImageBasedLightSettings,
@@ -408,9 +409,9 @@ export class EngineGateway {
 
             // spanned once, the icon does not change
             icon.computeBoundingBox();
-            camera
-                .addComponent(new ColliderComponent())
-                .set(icon.boundingBox!.min, icon.boundingBox!.max);
+            const collider = camera.addComponent(new BoxColliderComponent());
+            collider.layers.mask = PROXY_LAYER_MASK;
+            collider.set(icon.boundingBox!.min, icon.boundingBox!.max);
             return camera;
         }
 

@@ -6,7 +6,9 @@ import { GroupLinksComponent } from '../components/grouplinks/GroupLinksComponen
 import {
     detachTransformControls,
     AmbientLightComponent,
-    ColliderComponent,
+    BoxColliderComponent,
+    PRODUCT_LAYER_MASK,
+    PROXY_LAYER_MASK,
     BoundingBoxComponent,
     DirectionalLightComponent,
     DIVEImageBasedLightDefaultSettings,
@@ -34,7 +36,13 @@ import {
     CameraSchema,
     EntityTypeSchema,
 } from '../../types/index.ts';
-import { Color, Object3D, Vector3 } from 'three/webgpu';
+import {
+    Color,
+    Object3D,
+    Raycaster,
+    Vector3,
+    type Intersection,
+} from 'three/webgpu';
 
 /**
  * `three/webgpu` is deliberately NOT mocked beyond the image loaders. DIVENode and DIVEComponent both
@@ -667,7 +675,7 @@ describe('plugins/state/EngineGateway', () => {
             expect(camera.parent).toBe(gateway.root);
             // a box of 12 edges and a pyramid of 8
             expect(camera.getComponent(MultiLineComponent)?.lineCount).toBe(20);
-            expect(camera.getComponent(ColliderComponent)?.isEmpty()).toBe(
+            expect(camera.getComponent(BoxColliderComponent)?.isEmpty()).toBe(
                 false,
             );
             expectVec(camera.position, cameraData.position);
@@ -683,13 +691,44 @@ describe('plugins/state/EngineGateway', () => {
                     id: 'c',
                     entityType: 'camera',
                 }) as DIVENode
-            ).requireComponent(ColliderComponent);
+            ).requireComponent(BoxColliderComponent);
             const center = collider.getCenter(new Vector3());
             const size = collider.getSize(new Vector3());
 
             // lens base on the node's plane, body behind it down to -0.4
             expectVec(size, { x: 0.24, y: 0.18, z: 0.4 });
             expectVec(center, { x: 0, y: 0, z: -0.2 });
+        });
+
+        it('should make the camera hittable on the proxy layer only', async () => {
+            const gateway = makeGateway();
+            await addEntity(gateway, cameraSchema('c'));
+            const camera = findEntity(gateway, {
+                id: 'c',
+                entityType: 'camera',
+            }) as DIVENode;
+            camera.updateMatrixWorld(true);
+            const collider = camera.requireComponent(BoxColliderComponent);
+
+            /** straight down onto the icon from above */
+            const raycaster = new Raycaster(
+                camera.localToWorld(new Vector3(0, 5, -0.2)),
+                new Vector3(0, -1, 0),
+            );
+            const intersects: Intersection[] = [];
+
+            raycaster.layers.mask = PRODUCT_LAYER_MASK;
+            collider.raycast(raycaster, intersects);
+            expect(intersects).toHaveLength(0);
+
+            raycaster.layers.mask = PROXY_LAYER_MASK;
+            collider.raycast(raycaster, intersects);
+            expect(intersects).toHaveLength(1);
+            expect(intersects[0].object).toBe(camera);
+            expect(camera.children).toHaveLength(
+                camera.requireComponent(MultiLineComponent).contributions
+                    .length,
+            );
         });
 
         it('should keep the camera icon behind the eye', async () => {

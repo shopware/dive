@@ -1,139 +1,101 @@
-import { Raycaster, Vector3, type MeshBasicMaterial } from 'three/webgpu';
-import { ColliderComponent } from '../ColliderComponent.ts';
+import { Raycaster, Vector3, type Intersection } from 'three/webgpu';
+import {
+    ColliderComponent,
+    type ColliderHit,
+    type ColliderIntersection,
+} from '../ColliderComponent.ts';
 import { DIVENode } from '../../../engine/node/Node.ts';
-import { PROXY_LAYER_MASK } from '../../../constants/VisibilityLayerMask.ts';
+import {
+    PRODUCT_LAYER_MASK,
+    PROXY_LAYER_MASK,
+} from '../../../constants/VisibilityLayerMask.ts';
+
+/** a collider that is hit wherever the ray is, at a fixed distance */
+class FixedCollider extends ColliderComponent {
+    public distance = 5;
+
+    protected intersectRay(raycaster: Raycaster): ColliderHit | null {
+        return {
+            distance: this.distance,
+            point: raycaster.ray.at(this.distance, new Vector3()),
+        };
+    }
+}
 
 describe('dive/collider/ColliderComponent', () => {
-    let collider: ColliderComponent;
+    let collider: FixedCollider;
+    let node: DIVENode;
+    let raycaster: Raycaster;
 
     beforeEach(() => {
-        collider = new ColliderComponent();
+        collider = new FixedCollider();
+        node = new DIVENode();
+        node.addComponent(collider);
+        raycaster = new Raycaster(new Vector3(0, 0, 10), new Vector3(0, 0, -1));
+        raycaster.layers.mask = PRODUCT_LAYER_MASK;
     });
 
-    const material = (): MeshBasicMaterial =>
-        collider.mesh.material as MeshBasicMaterial;
-
-    /** casts along -Z through (x, y) onto a node holding the collider */
-    const hits = (node: DIVENode, x: number, y: number): boolean => {
-        node.updateMatrixWorld(true);
-        const raycaster = new Raycaster(
-            new Vector3(x, y, 10),
-            new Vector3(0, 0, -1),
-        );
-        raycaster.layers.mask = PROXY_LAYER_MASK;
-
-        return raycaster.intersectObject(node, true).length > 0;
+    const cast = (): ColliderIntersection[] => {
+        const intersects: Intersection[] = [];
+        collider.raycast(raycaster, intersects);
+        return intersects as ColliderIntersection[];
     };
 
-    describe('construction', () => {
-        it('should start as a unit box around the origin', () => {
-            expect(collider.getCenter(new Vector3()).toArray()).toEqual([
-                0, 0, 0,
-            ]);
-            expect(collider.getSize(new Vector3()).toArray()).toEqual([
-                1, 1, 1,
-            ]);
+    describe('layers', () => {
+        it('should default to the product layer', () => {
+            expect(collider.layers.mask).toBe(PRODUCT_LAYER_MASK);
         });
 
-        it('should be a proxy, invisible through its material', () => {
-            expect(collider.mesh.layers.mask).toBe(PROXY_LAYER_MASK);
-            expect(material().visible).toBe(false);
-            expect(collider.mesh.visible).toBe(true);
+        it('should not be hit by a raycaster on other layers', () => {
+            raycaster.layers.mask = PROXY_LAYER_MASK;
+
+            expect(cast()).toHaveLength(0);
         });
 
-        it('should contribute its mesh to the owner', () => {
-            const node = new DIVENode();
-            node.addComponent(collider);
+        it('should be hit once its layers match the raycaster', () => {
+            raycaster.layers.mask = PROXY_LAYER_MASK;
+            collider.layers.mask = PROXY_LAYER_MASK;
 
-            expect(node.children).toContain(collider.mesh);
-        });
-    });
-
-    describe('set', () => {
-        it('should place the mesh over the box', () => {
-            collider.set({ x: 0, y: 0, z: 0 }, { x: 2, y: 4, z: 6 });
-
-            expect(collider.mesh.position.toArray()).toEqual([1, 2, 3]);
-            expect(collider.mesh.scale.toArray()).toEqual([2, 4, 6]);
+            expect(cast()).toHaveLength(1);
         });
 
-        it('should keep a flat box hittable', () => {
-            collider.set({ x: -1, y: -1, z: 0 }, { x: 1, y: 1, z: 0 });
+        it('should be copied', () => {
+            collider.layers.mask = PROXY_LAYER_MASK;
 
-            expect(collider.mesh.scale.z).toBeGreaterThan(0);
-
-            const node = new DIVENode();
-            node.addComponent(collider);
-            expect(hits(node, 0, 0)).toBe(true);
-        });
-
-        it('should hide the mesh for an empty box', () => {
-            collider.set(
-                { x: Infinity, y: Infinity, z: Infinity },
-                { x: -Infinity, y: -Infinity, z: -Infinity },
-            );
-
-            expect(collider.isEmpty()).toBe(true);
-            expect(collider.mesh.visible).toBe(false);
-        });
-
-        it('should show the mesh again for a box that is not empty', () => {
-            collider.set({ x: 1, y: 1, z: 1 }, { x: -1, y: -1, z: -1 });
-            collider.set({ x: -1, y: -1, z: -1 }, { x: 1, y: 1, z: 1 });
-
-            expect(collider.mesh.visible).toBe(true);
+            expect(collider.clone().layers.mask).toBe(PROXY_LAYER_MASK);
         });
     });
 
-    describe('setFromCenterAndSize', () => {
-        it('should size the box around the centre', () => {
-            collider.setFromCenterAndSize(
-                { x: 1, y: 0, z: 0 },
-                { x: 2, y: 2, z: 2 },
-            );
+    describe('raycast', () => {
+        it('should report the owner node as object, and itself', () => {
+            const [hit] = cast();
 
-            expect(collider.getCenter(new Vector3()).toArray()).toEqual([
-                1, 0, 0,
-            ]);
-            expect(collider.getSize(new Vector3()).toArray()).toEqual([
-                2, 2, 2,
-            ]);
-            expect(collider.mesh.position.toArray()).toEqual([1, 0, 0]);
+            expect(hit.object).toBe(node);
+            expect(hit.collider).toBe(collider);
+            expect(hit.distance).toBe(5);
+            expect(hit.point.toArray()).toEqual([0, 0, 5]);
         });
-    });
 
-    describe('picking', () => {
-        it('should be hit inside the box and missed outside, in the owner space', () => {
-            const node = new DIVENode();
-            node.position.set(10, 0, 0);
-            node.addComponent(collider);
+        it('should append to what is already there', () => {
+            const intersects: Intersection[] = [cast()[0]];
+            collider.raycast(raycaster, intersects);
 
-            expect(hits(node, 10, 0)).toBe(true);
-            expect(hits(node, 0, 0)).toBe(false);
+            expect(intersects).toHaveLength(2);
         });
-    });
 
-    describe('copy', () => {
-        it('should take over the box', () => {
-            collider.set({ x: 0, y: 0, z: 0 }, { x: 2, y: 2, z: 2 });
+        it('should report nothing outside near and far', () => {
+            raycaster.near = 6;
+            expect(cast()).toHaveLength(0);
 
-            const clone = collider.clone();
-
-            expect(clone.getSize(new Vector3()).toArray()).toEqual([2, 2, 2]);
-            expect(clone.mesh).not.toBe(collider.mesh);
-            expect(clone.mesh.position.toArray()).toEqual([1, 1, 1]);
+            raycaster.near = 0;
+            raycaster.far = 4;
+            expect(cast()).toHaveLength(0);
         });
-    });
 
-    describe('dispose', () => {
-        it('should dispose geometry and material', () => {
-            const geometry = vi.spyOn(collider.mesh.geometry, 'dispose');
-            const materialDispose = vi.spyOn(material(), 'dispose');
+        it('should report nothing while detached', () => {
+            node.removeComponent(collider);
 
-            collider.dispose();
-
-            expect(geometry).toHaveBeenCalled();
-            expect(materialDispose).toHaveBeenCalled();
+            expect(cast()).toHaveLength(0);
         });
     });
 });
