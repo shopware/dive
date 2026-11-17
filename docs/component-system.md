@@ -219,18 +219,22 @@ geometry for?", and every consumer reads it instead of special-casing classes:
 
 | Layer | Meaning | Counts for bounds / export | Picked |
 |---|---|---|---|
-| `PRODUCT` | real content | yes | yes |
-| `PROXY` | stands in for an entity with no geometry, e.g. a point light's handle | no | yes |
+| `PRODUCT` | real content; also the default collider category | yes | yes, through colliders |
+| `PROXY` | collider category for stand-ins of entities with no geometry, e.g. a camera's box | no | yes, through colliders |
 | `FLOOR` | the ground plane | no (renders, receives shadows) | no |
-| `UI` | gizmo handles | no | no |
+| `UI` | gizmo handles | no | the gizmo only, never selected |
 | `HELPER` | visualisations, group links, the grid | no | no |
 | `COORDINATE` | orientation display | no | no |
 | `DEFAULT` | three's own bit, for anything that never chose a layer | no | no |
 
-`PROXY` is the row worth reading twice: a point light is nothing but a position,
-so the little sphere is what you click, and picking it means picking the light.
-`PRODUCT` would make that sphere count towards bounds and exports, and `UI` is
-the gizmo - which must never be selectable as an object.
+Picking does not raycast render meshes: the toolbox asks colliders through
+`DIVERaycaster`, and a collider's `layers` say which category it answers for.
+`PROXY` is the row worth reading twice: a camera or a point light is nothing but
+a pose, so a box or sphere collider on its node is what you click, and the hit
+is the entity's node. Nothing renders on `PROXY`; it only sorts colliders, so
+the toolbox can ask for entities (`PRODUCT | PROXY`) or models only (`PRODUCT`).
+The gizmo stays on three's `Raycaster` with `UI` and three's default layer, and
+must never be selectable as an object.
 
 `DIVECameraComponent` composes two masks out of these: `EDITOR_VIEW_LAYER_MASK`
 is everything but `COORDINATE`, and `LIVE_VIEW_LAYER_MASK` is `PRODUCT | FLOOR`.

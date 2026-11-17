@@ -15,17 +15,15 @@ export const PRODUCT_LAYER_MASK = 0b00010000; // 16
 export const FLOOR_LAYER_MASK = 0b00100000; // 32
 
 /**
- * Stands in for an entity that has no geometry of its own.
+ * The collider category for stand-ins of entities without geometry of their own.
  *
- * A point light is nothing but a position; the little sphere you can see and
- * click in the editor represents it. Picking a proxy therefore means picking the
- * entity behind it, which is what `findInterface` resolves by walking up.
+ * A point light is nothing but a position and a camera nothing but a pose, so
+ * what makes them pickable is a collider on their node with this mask, such as
+ * the light's sphere or the camera's box. Nothing renders on it.
  *
- * Its own bit, because it sits between two others that both fit badly:
- * `PRODUCT_LAYER_MASK` would make it count towards bounds, snapping and exports,
- * and `UI_LAYER_MASK` is the gizmo — which must never be selectable as an
- * object. `HELPER_LAYER_MASK` is the opposite case again: decoration that is not
- * picked at all.
+ * Its own bit, so picking can ask for entities (`PRODUCT_LAYER_MASK | PROXY_LAYER_MASK`)
+ * or for models only (`PRODUCT_LAYER_MASK`). `UI_LAYER_MASK` is the gizmo, which
+ * must never be selectable as an object.
  */
 export const PROXY_LAYER_MASK = 0b01000000; // 64
 

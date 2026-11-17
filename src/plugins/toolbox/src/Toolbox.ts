@@ -1,6 +1,9 @@
 import { Raycaster, Vector2, type Intersection } from 'three/webgpu';
 import {
+    type ColliderIntersection,
     DEFAULT_LAYER_MASK,
+    DIVERaycaster,
+    type DIVENode,
     type DIVEScene,
     isVisibleInHierarchy,
     PRODUCT_LAYER_MASK,
@@ -43,7 +46,11 @@ export class Toolbox {
         return this._selectionState;
     }
 
-    // Raycasting (shared, computed once per event)
+    /**
+     * raycasting, shared and computed once per event
+     * entities through their colliders, the gizmo through its meshes
+     */
+    private _colliderRaycaster: DIVERaycaster;
     private _raycaster: Raycaster;
     private _pointer: Vector2;
 
@@ -70,8 +77,16 @@ export class Toolbox {
 
         this._selectionState = new SelectionState();
 
-        // Initialize raycaster
+        this._colliderRaycaster = new DIVERaycaster();
+        this._colliderRaycaster.layers.mask =
+            PRODUCT_LAYER_MASK | PROXY_LAYER_MASK;
+
+        /**
+         * DEFAULT, because TransformControls never sets a layer
+         * UI for DIVE's own gizmo handles
+         */
         this._raycaster = new Raycaster();
+        this._raycaster.layers.mask = DEFAULT_LAYER_MASK | UI_LAYER_MASK;
         this._pointer = new Vector2();
         this._lastPointerDown = new Vector2();
 
@@ -254,38 +269,41 @@ export class Toolbox {
     /**
      * The four intersect lists, each raycast on first read and then kept.
      *
-     * Still one raycast per event shared by every tool -- but only if a tool
-     * actually looks. It used to run eagerly, so a pointer move cost a full
-     * raycast even with no tool enabled at all, and while the camera was being
-     * orbited that was a raycast per frame against every mesh in the scene.
+     * One collider raycast and one gizmo raycast per event at most, shared by
+     * every tool, and only if a tool actually looks.
      */
     private createLazyIntersects(): Pick<
         PointerContext,
         'intersects' | 'modelIntersects' | 'entityIntersects' | 'uiIntersects'
     > {
-        const raycast = (): Intersection[] => (all ??= this.raycast());
-        const byLayer = (mask: number): Intersection[] =>
-            this.filterIntersectsByLayer(raycast(), mask);
-
+        let entity: ColliderIntersection[] | undefined;
+        let gizmo: Intersection[] | undefined;
         let all: Intersection[] | undefined;
         let model: Intersection[] | undefined;
-        let entity: Intersection[] | undefined;
         let ui: Intersection[] | undefined;
+
+        const entities = (): ColliderIntersection[] =>
+            (entity ??= this.raycastColliders());
+        const gizmos = (): Intersection[] => (gizmo ??= this.raycastGizmo());
 
         return {
             get intersects() {
-                return raycast();
-            },
-            get modelIntersects() {
-                return (model ??= byLayer(PRODUCT_LAYER_MASK));
-            },
-            get entityIntersects() {
-                return (entity ??= byLayer(
-                    PRODUCT_LAYER_MASK | PROXY_LAYER_MASK,
+                return (all ??= [...entities(), ...gizmos()].sort(
+                    (a, b) => a.distance - b.distance,
                 ));
             },
+            get modelIntersects() {
+                return (model ??= entities().filter(
+                    (i) => (i.collider.layers.mask & PRODUCT_LAYER_MASK) !== 0,
+                ));
+            },
+            get entityIntersects() {
+                return entities();
+            },
             get uiIntersects() {
-                return (ui ??= byLayer(UI_LAYER_MASK));
+                return (ui ??= gizmos().filter(
+                    (i) => (i.object.layers.mask & UI_LAYER_MASK) !== 0,
+                ));
             },
         };
     }
@@ -296,10 +314,9 @@ export class Toolbox {
         this._pointer.x = (e.offsetX / this._canvas.clientWidth) * 2 - 1;
         this._pointer.y = -(e.offsetY / this._canvas.clientHeight) * 2 + 1;
 
-        this._raycaster.setFromCamera(
-            this._pointer,
-            this._controller.object.camera,
-        );
+        const camera = this._controller.object.camera;
+        this._raycaster.setFromCamera(this._pointer, camera);
+        this._colliderRaycaster.setFromCamera(this._pointer, camera);
     }
 
     private updatePointerState(e: PointerEvent, isDown: boolean): void {
@@ -316,40 +333,26 @@ export class Toolbox {
         }
     }
 
-    private raycast(): Intersection[] {
-        /**
-         * DEFAULT, because three puts an object on layer 0 unless someone says
-         * otherwise, the gizmo among them
-         * PROXY, or a point light would be unreachable, its handle is the only
-         * thing a pointer can hit
-         * FLOOR and HELPER stay out, the ground plane and the group link lines
-         * are there to be looked at, not grabbed
-         */
-        this._raycaster.layers.mask =
-            DEFAULT_LAYER_MASK |
-            PRODUCT_LAYER_MASK |
-            UI_LAYER_MASK |
-            PROXY_LAYER_MASK;
+    /**
+     * PRODUCT and PROXY colliders, one hit per collider with its node as
+     * `object`; hidden subtrees are not entered
+     */
+    private raycastColliders(): ColliderIntersection[] {
+        return this._colliderRaycaster.intersectObjects<DIVENode>(
+            this._scene.children,
+        ) as ColliderIntersection[];
+    }
 
-        /**
-         * recurse from the scene's direct children, none of which is a mesh itself
-         * layers prunes per object while recursing, visible does not because
-         * Raycaster ignores it, hence the hierarchy check
-         */
+    /**
+     * the gizmo's meshes, the one thing picked by geometry
+     * layers prune per object, visible does not, hence the hierarchy check
+     */
+    private raycastGizmo(): Intersection[] {
         return this._raycaster
             .intersectObjects(this._scene.children, true)
             .filter((intersection) =>
                 isVisibleInHierarchy(intersection.object),
             );
-    }
-
-    private filterIntersectsByLayer(
-        intersects: Intersection[],
-        layerMask: number,
-    ): Intersection[] {
-        return intersects.filter(
-            (i) => (i.object.layers.mask & layerMask) !== 0,
-        );
     }
 
     private updateSortedTools(): void {
