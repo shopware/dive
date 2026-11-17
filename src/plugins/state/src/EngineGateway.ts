@@ -2,6 +2,7 @@ import { Color, MeshStandardMaterial, type Vector3Like } from 'three/webgpu';
 import {
     AmbientLightComponent,
     BoxColliderComponent,
+    MeshColliderComponent,
     detachTransformControls,
     DirectionalLightComponent,
     disposeComponents,
@@ -384,12 +385,14 @@ export class EngineGateway {
             // marks the semantic root for a later re-import of an exported scene
             model.userData.isDIVEModel = true;
             model.addComponent(new ModelComponent());
+            model.addComponent(new MeshColliderComponent());
             return model;
         }
         if (isPrimitiveSchema(entity)) {
             const primitive = new DIVENode();
             primitive.name = 'DIVEPrimitive';
             primitive.addComponent(new PrimitiveComponent());
+            primitive.addComponent(new MeshColliderComponent());
             return primitive;
         }
         if (isGroupSchema(entity)) {

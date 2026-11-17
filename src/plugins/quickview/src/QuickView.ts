@@ -5,6 +5,7 @@ import {
     DIVENode,
     disposeComponents,
     GyroInput,
+    MeshColliderComponent,
     ModelComponent,
     PointerInput,
     SoftShadowComponent,
@@ -246,6 +247,7 @@ export async function QuickView(
                 model = new DIVENode();
                 model.name = 'QuickViewModel';
                 model.addComponent(new ModelComponent());
+                model.addComponent(new MeshColliderComponent());
 
                 // on the node, so it stays for the next model and re-bakes itself
                 if (softShadow) model.addComponent(new SoftShadowComponent());

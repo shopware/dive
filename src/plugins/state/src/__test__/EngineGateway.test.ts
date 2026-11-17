@@ -20,6 +20,7 @@ import {
     HemisphereLightComponent,
     MultiLineComponent,
     MeshComponent,
+    MeshColliderComponent,
     PointLightComponent,
     PrimitiveComponent,
     type DIVE,
@@ -187,6 +188,17 @@ const addEntity = async (
     if (node) await gateway.applyEntity(node, entity);
 
     return node;
+};
+
+/** casts on the product layer through the node's mesh collider, along -Z */
+const castAt = (node: DIVENode, origin: Vector3): Intersection[] => {
+    node.updateMatrixWorld(true);
+    const raycaster = new Raycaster(origin, new Vector3(0, 0, -1));
+    raycaster.layers.mask = PRODUCT_LAYER_MASK;
+    const intersects: Intersection[] = [];
+    node.getComponent(MeshColliderComponent)?.raycast(raycaster, intersects);
+
+    return intersects;
 };
 
 const makeGateway = (): EngineGateway => {
@@ -1650,6 +1662,17 @@ describe('plugins/state/EngineGateway', () => {
             expect(loadAsset).toHaveBeenCalledWith('b.glb');
             expect(model.userData.uri).toBe('b.glb');
         });
+
+        it('should make the loaded asset hittable through a mesh collider', async () => {
+            const gateway = makeGateway();
+            const model = (await addModel(gateway, 'a.glb')) as DIVENode;
+
+            const hits = castAt(model, new Vector3(0, 0, 10));
+
+            expect(hits).toHaveLength(1);
+            expect(hits[0].object).toBe(model);
+            expect(hits[0].distance).toBeCloseTo(9.5);
+        });
     });
 
     describe('removing a light', () => {
@@ -1896,6 +1919,26 @@ describe('plugins/state/EngineGateway', () => {
             await addEntity(gateway, primitiveData as PrimitiveSchema);
             const primitive = findEntity(gateway, primitiveData);
             expect(primitive).toBeDefined();
+        });
+
+        it('should make the primitive hittable through a mesh collider', async () => {
+            const gateway = makeGateway();
+            const primitive = (await addEntity(gateway, {
+                id: 'primitive-1',
+                entityType: 'primitive',
+                geometry: {
+                    name: 'box',
+                    width: 1,
+                    height: 1,
+                    depth: 1,
+                },
+            } as PrimitiveSchema)) as DIVENode;
+
+            const hits = castAt(primitive, new Vector3(0, 0.5, 10));
+
+            expect(hits).toHaveLength(1);
+            expect(hits[0].object).toBe(primitive);
+            expect(hits[0].distance).toBeCloseTo(9.5);
         });
 
         it('should handle primitive with null properties', async () => {

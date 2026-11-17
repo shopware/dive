@@ -8,6 +8,7 @@ import {
     DIVE,
     DIVENode,
     GyroInput,
+    MeshColliderComponent,
     ModelComponent,
     PointerInput,
     SoftShadowComponent,
@@ -112,6 +113,7 @@ vi.mock('@shopware-ag/dive', () => {
             this.isDIVENode = true;
             return this;
         }),
+        MeshColliderComponent: vi.fn(),
         ModelComponent: vi.fn(),
         SoftShadowComponent: vi.fn(),
         PointerInput: vi.fn(function () {
@@ -276,6 +278,29 @@ describe('QuickView', () => {
             await created;
 
             expect(diveStartAsync).not.toHaveBeenCalled();
+        });
+    });
+
+    describe('collider', () => {
+        it('should make the model node hittable through a mesh collider', async () => {
+            const quickView = await QuickView('test_uri');
+
+            expect(
+                vi
+                    .mocked(quickView.model!.addComponent)
+                    .mock.calls.some(
+                        ([component]) =>
+                            component instanceof MeshColliderComponent,
+                    ),
+            ).toBe(true);
+        });
+
+        it('should keep the collider for the next model', async () => {
+            const quickView = await QuickView('test_uri');
+
+            await quickView.load('second_uri');
+
+            expect(MeshColliderComponent).toHaveBeenCalledTimes(1);
         });
     });
 
