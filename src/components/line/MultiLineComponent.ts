@@ -1,4 +1,5 @@
 import {
+    Box3,
     BufferGeometry,
     DynamicDrawUsage,
     Float32BufferAttribute,
@@ -82,6 +83,13 @@ type DIVELine = {
  */
 export class MultiLineComponent extends DIVEComponent {
     readonly isMultiLineComponent: true = true;
+
+    /**
+     * The visible lines' bounds in the owner's space, like
+     * `BufferGeometry.boundingBox`: `null` until {@link computeBoundingBox} is
+     * called, and not kept up to date after that.
+     */
+    public boundingBox: Box3 | null = null;
 
     private _lines: LineSegments;
     private _geometry: BufferGeometry;
@@ -248,6 +256,22 @@ export class MultiLineComponent extends DIVEComponent {
     public setDashPattern(dashSize: number, gapSize: number): void {
         this._material.dashSize = dashSize;
         this._material.gapSize = gapSize;
+    }
+
+    /**
+     * Computes {@link boundingBox} from the visible lines.
+     *
+     * From the lines, not the buffer: unused and hidden slots sit at the origin
+     * and would always be enclosed. Empty when no line is visible.
+     */
+    public computeBoundingBox(): void {
+        if (this.boundingBox === null) this.boundingBox = new Box3();
+
+        const box = this.boundingBox.makeEmpty();
+        this._byKey.forEach((line) => {
+            if (!line.visible) return;
+            box.expandByPoint(line.start).expandByPoint(line.end);
+        });
     }
 
     /**

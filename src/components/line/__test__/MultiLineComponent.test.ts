@@ -398,6 +398,42 @@ describe('dive/line/MultiLineComponent', () => {
         expect(materialDispose).toHaveBeenCalled();
     });
 
+    describe('computeBoundingBox', () => {
+        it('should be null until computed', () => {
+            expect(lines.boundingBox).toBeNull();
+        });
+
+        it('should enclose the visible lines only, not the unused slots', () => {
+            lines.setLineFor('a', { x: 1, y: 1, z: 1 }, { x: 2, y: 3, z: 1 });
+            lines.setLineFor('b', { x: 9, y: 9, z: 9 }, { x: 9, y: 9, z: 10 });
+            lines.setLineVisibleFor('b', false);
+
+            lines.computeBoundingBox();
+
+            expect(lines.boundingBox!.min.toArray()).toEqual([1, 1, 1]);
+            expect(lines.boundingBox!.max.toArray()).toEqual([2, 3, 1]);
+        });
+
+        it('should be empty without lines', () => {
+            lines.computeBoundingBox();
+
+            expect(lines.boundingBox!.isEmpty()).toBe(true);
+        });
+
+        it('should not follow later changes until computed again', () => {
+            lines.setLineFor('a', ORIGIN, { x: 1, y: 0, z: 0 });
+            lines.computeBoundingBox();
+            const box = lines.boundingBox;
+
+            lines.setLineFor('a', ORIGIN, { x: 5, y: 0, z: 0 });
+            expect(lines.boundingBox!.max.x).toBe(1);
+
+            lines.computeBoundingBox();
+            expect(lines.boundingBox!.max.x).toBe(5);
+            expect(lines.boundingBox).toBe(box);
+        });
+    });
+
     describe('cloning', () => {
         it('should give the clone its own geometry, not a second one', () => {
             /**

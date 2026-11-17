@@ -19,10 +19,7 @@ import { type EntitySchema } from './schema/index.ts';
 export type RegisteredEntity = {
     schema: EntitySchema;
 
-    /**
-     * Absent for a state-only entity. A camera has a position and a target, but
-     * nothing in the scene tree.
-     */
+    /** Absent for an entity registered without a scene object. */
     node?: DIVESceneObject;
 
     /** Drops the listeners on {@link node}. Called by `EntityRegistry.unregister`. */
