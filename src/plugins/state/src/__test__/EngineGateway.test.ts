@@ -5,6 +5,7 @@ import { readCameraTarget } from '../helpers/cameraTarget/cameraTarget.ts';
 import { GroupLinksComponent } from '../components/grouplinks/GroupLinksComponent.ts';
 import {
     detachTransformControls,
+    disposeComponents,
     AmbientLightComponent,
     BoxColliderComponent,
     PRODUCT_LAYER_MASK,
@@ -25,11 +26,14 @@ import {
     PointLightComponent,
     PrimitiveComponent,
     SphereColliderComponent,
+    SpriteComponent,
     type DIVE,
 } from '@shopware-ag/dive';
+import lightBulbUrl from '../../../../../assets/svg/light-bulb.svg?url';
 import { type State } from '../State.ts';
 import { type DIVESceneObject } from '@shopware-ag/dive';
 import { textureResourceCache } from '../../../../engine/resource/texture/TextureResource.ts';
+import { imageResourceCache } from '../../../../engine/resource/image/ImageResource.ts';
 import {
     LightSchema,
     ModelSchema,
@@ -205,6 +209,9 @@ const castAt = (node: DIVENode, origin: Vector3): Intersection[] => {
     return intersects;
 };
 
+/** every bare root a test made, freed after it so the shared image cache empties */
+const roots: DIVERoot[] = [];
+
 const makeGateway = (): EngineGateway => {
     const scene = Object.assign(new Object3D(), {
         root: new DIVERoot(),
@@ -213,12 +220,16 @@ const makeGateway = (): EngineGateway => {
         setBackground: vi.fn(),
     });
     const engine = { scene } as unknown as DIVE;
+    roots.push(scene.root);
     return new EngineGateway(engine);
 };
 
 /** A gateway over a bare root, nothing else in the scene. */
-const makeBareGateway = (): EngineGateway =>
-    new EngineGateway({ scene: { root: new DIVERoot() } } as unknown as DIVE);
+const makeBareGateway = (): EngineGateway => {
+    const root = new DIVERoot();
+    roots.push(root);
+    return new EngineGateway({ scene: { root } } as unknown as DIVE);
+};
 
 const cameraSchema = (id: string): CameraSchema => ({
     id,
@@ -285,11 +296,13 @@ describe('plugins/state/EngineGateway', () => {
 
     afterEach(async () => {
         scenes.splice(0).forEach((scene) => scene.dispose());
+        roots.splice(0).forEach((root) => disposeComponents(root));
         await Promise.allSettled(
             loadAsync.mock.results.map((result) => result.value),
         );
         await new Promise((resolve) => setTimeout(resolve));
         textureResourceCache.trim();
+        imageResourceCache.trim();
     });
 
     afterAll(() => {
@@ -420,9 +433,9 @@ describe('plugins/state/EngineGateway', () => {
             expect(node.getComponent(DirectionalLightComponent)).toBeDefined();
         });
 
-        it('should give a point light a sphere collider the size of its sphere mesh', () => {
+        it('should show a point light as a light bulb', async () => {
             const gateway = makeGateway();
-            const node = gateway['_instantiate']({
+            const node = (await addEntity(gateway, {
                 id: 'light-point',
                 entityType: 'light',
                 type: 'point',
@@ -431,13 +444,94 @@ describe('plugins/state/EngineGateway', () => {
                 intensity: 1,
                 enabled: true,
                 color: '#ffffff',
-            } as LightSchema) as DIVENode;
+            } as LightSchema)) as DIVENode;
+
+            const sprite = node.requireComponent(SpriteComponent);
+            expect(sprite.image).toBe(lightBulbUrl);
+            expect(sprite.width).toBeCloseTo(0.2);
+            expect(sprite.height).toBeCloseTo(0.2);
+            await vi.waitFor(() =>
+                expect(sprite.sprite.material.map).not.toBeNull(),
+            );
+        });
+
+        it('should report a bulb image that fails to load', async () => {
+            const error = vi
+                .spyOn(console, 'error')
+                .mockImplementation(() => {});
+            const setImage = vi
+                .spyOn(SpriteComponent.prototype, 'setImage')
+                .mockRejectedValueOnce(new Error('offline'));
+
+            const gateway = makeGateway();
+            await addEntity(gateway, {
+                id: 'light-point',
+                entityType: 'light',
+                type: 'point',
+                name: 'Point Light',
+                visible: true,
+                intensity: 1,
+                enabled: true,
+                color: '#ffffff',
+            } as LightSchema);
+
+            await vi.waitFor(() =>
+                expect(error).toHaveBeenCalledWith(
+                    'EngineGateway: light bulb failed',
+                    expect.any(Error),
+                ),
+            );
+            error.mockRestore();
+            setImage.mockRestore();
+        });
+
+        it('should give a point light a sphere collider the size of its bulb', async () => {
+            const gateway = makeGateway();
+            const node = (await addEntity(gateway, {
+                id: 'light-point',
+                entityType: 'light',
+                type: 'point',
+                name: 'Point Light',
+                visible: true,
+                intensity: 1,
+                enabled: true,
+                color: '#ffffff',
+            } as LightSchema)) as DIVENode;
 
             const collider = node.requireComponent(SphereColliderComponent);
             expect(collider.radius).toBeCloseTo(0.1);
             expect(collider.getCenter(new Vector3()).toArray()).toEqual([
                 0, 0, 0,
             ]);
+        });
+
+        it('should tint the bulb in the light colour and fade it with the intensity', async () => {
+            const gateway = makeGateway();
+            const node = (await addEntity(gateway, {
+                id: 'light-point',
+                entityType: 'light',
+                type: 'point',
+                name: 'Point Light',
+                visible: true,
+                intensity: 0.5,
+                enabled: true,
+                color: '#ff0000',
+            } as LightSchema)) as DIVENode;
+            const sprite = node.requireComponent(SpriteComponent);
+
+            expect(sprite.color.getHexString()).toBe('ff0000');
+            expect(sprite.opacity).toBeCloseTo(0.4);
+
+            await gateway.updateEntity({
+                id: 'light-point',
+                entityType: 'light',
+                color: '#0000ff',
+                intensity: 10,
+            });
+
+            // a bright light never makes the bulb more than 0.8 opaque
+            expect(sprite.color.getHexString()).toBe('0000ff');
+            expect(sprite.opacity).toBe(0.8);
         });
 
         it('should make the point light hittable on the proxy layer only', () => {
@@ -456,7 +550,7 @@ describe('plugins/state/EngineGateway', () => {
             node.updateMatrixWorld(true);
             const collider = node.requireComponent(SphereColliderComponent);
 
-            /** grazing the sphere mesh's rim from above */
+            /** grazing the bulb's rim from above */
             const raycaster = new Raycaster(
                 new Vector3(1.09, 10, 3),
                 new Vector3(0, -1, 0),
@@ -2691,6 +2785,14 @@ describe('plugins/state/EngineGateway', () => {
             expect(pickAt(-1, 0.5)).toEqual([nodes.primitive]);
             expect(pickAt(1, 1)).toEqual([nodes.camera]);
             expect(pickAt(3, 1)).toEqual([nodes.light]);
+        });
+
+        it('should pick the light where its bulb is drawn', async () => {
+            const nodes = await compose();
+
+            expect(pickAt(3.08, 1)).toEqual([nodes.light]);
+            expect(pickAt(3, 1.08)).toEqual([nodes.light]);
+            expect(pickAt(3.15, 1)).toEqual([]);
         });
 
         it('should pick nothing where no entity is', async () => {

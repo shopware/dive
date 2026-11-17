@@ -90,11 +90,11 @@ Two rules, each with a reason:
    the section below for what breaks.
 
    The line between the two is where the object comes from, not how much of it
-   there is. `PointLightComponent` owns a light *and* a clickable proxy sphere,
-   and contributes both:
+   there is. `BoundingBoxComponent` owns a box helper *and* a sphere helper, and
+   contributes both:
 
    ```ts
-   this.contribute(this._light, this._handle);   // content: yours to own
+   this.contribute(this._boxHelper, this._sphereHelper);   // content: yours to own
    ```
 
    What it must not do is decide that its node also needs bounds:

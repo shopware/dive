@@ -15,6 +15,11 @@ declare module '*.hdr?url' {
     export default url;
 }
 
+declare module '*.svg?url' {
+    const url: string;
+    export default url;
+}
+
 declare module '*.glsl?raw' {
     export default glsl as string;
 }
