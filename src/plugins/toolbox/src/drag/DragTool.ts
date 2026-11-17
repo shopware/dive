@@ -4,7 +4,12 @@ import {
     Raycaster,
     Vector3,
 } from 'three/webgpu';
-import { type DIVEDraggable, findInterface } from '@shopware-ag/dive';
+import {
+    type DIVEDraggable,
+    findInterface,
+    isVisibleInHierarchy,
+    PRODUCT_LAYER_MASK,
+} from '@shopware-ag/dive';
 import { type OrbitController } from '@shopware-ag/dive/orbitcontroller';
 import { type Tool } from '../Tool.ts';
 import { type PointerContext } from '../PointerContext.ts';
@@ -26,6 +31,7 @@ export class DragTool implements Tool {
 
     private _controller: OrbitController;
     private _raycaster: Raycaster;
+    private _surfaceRaycaster: Raycaster;
 
     // Drag state
     private _dragging: boolean = false;
@@ -41,6 +47,10 @@ export class DragTool implements Tool {
     constructor(controller: OrbitController) {
         this._controller = controller;
         this._raycaster = new Raycaster();
+
+        // the real geometry a drag slides over, not the colliders it grabs by
+        this._surfaceRaycaster = new Raycaster();
+        this._surfaceRaycaster.layers.mask = PRODUCT_LAYER_MASK;
     }
 
     /**
@@ -85,21 +95,18 @@ export class DragTool implements Tool {
         if (!this._draggable) return;
 
         // Update raycaster from context
-        this._raycaster.setFromCamera(
-            ctx.pointer,
-            this._controller.object.camera,
-        );
+        this.updateRaycasters(ctx);
 
         // Check if we should start dragging
         if (!this._dragging) {
             const distance = ctx.lastPointerDown.distanceTo(ctx.pointer);
             if (distance > POINTER_DRAG_THRESHOLD) {
-                this.startDrag(ctx);
+                this.startDrag();
             }
         }
 
         if (this._dragging) {
-            this.updateDrag(ctx);
+            this.updateDrag();
             return true; // Block other tools during drag
         }
     }
@@ -107,10 +114,7 @@ export class DragTool implements Tool {
     onPointerUp(ctx: PointerContext): void {
         if (this._dragging) {
             // Update raycaster for final position
-            this._raycaster.setFromCamera(
-                ctx.pointer,
-                this._controller.object.camera,
-            );
+            this.updateRaycasters(ctx);
             this.endDrag();
         }
         this._draggable = null;
@@ -120,7 +124,8 @@ export class DragTool implements Tool {
      * Set custom objects to raycast against during drag.
      * Useful for constraining drag to a floor plane.
      *
-     * @param targets Objects to raycast against, or null to use scene objects
+     * @param targets Objects to raycast against, or null for the visible
+     * product geometry of the scene the dragged object is in
      */
     setDragRaycastTargets(targets: Object3D[] | null): void {
         this._dragRaycastTargets = targets;
@@ -128,8 +133,14 @@ export class DragTool implements Tool {
 
     // ============ Private Methods ============
 
-    private startDrag(ctx: PointerContext): void {
-        const intersect = this.getDragIntersect(ctx);
+    private updateRaycasters(ctx: PointerContext): void {
+        const camera = this._controller.object.camera;
+        this._raycaster.setFromCamera(ctx.pointer, camera);
+        this._surfaceRaycaster.setFromCamera(ctx.pointer, camera);
+    }
+
+    private startDrag(): void {
+        const intersect = this.getDragIntersect();
         if (!intersect) return;
 
         this._dragStart.copy(intersect.point);
@@ -143,8 +154,8 @@ export class DragTool implements Tool {
         this._controller.inputEnabled = false;
     }
 
-    private updateDrag(ctx: PointerContext): void {
-        const intersect = this.getDragIntersect(ctx);
+    private updateDrag(): void {
+        const intersect = this.getDragIntersect();
         if (!intersect) return;
 
         this._dragCurrent.copy(intersect.point);
@@ -165,7 +176,7 @@ export class DragTool implements Tool {
         this.resetDragState();
     }
 
-    private getDragIntersect(ctx: PointerContext): Intersection | null {
+    private getDragIntersect(): Intersection | null {
         if (this._dragRaycastTargets) {
             const intersects = this._raycaster.intersectObjects(
                 this._dragRaycastTargets,
@@ -173,7 +184,19 @@ export class DragTool implements Tool {
             );
             return intersects[0] || null;
         }
-        return ctx.intersects[0] || null;
+
+        // the scene the dragged object is in
+        let scene: Object3D | null = this._draggable;
+        while (scene?.parent) scene = scene.parent;
+        if (!scene) return null;
+
+        // layers prune per object, visible does not, hence the hierarchy check
+        return (
+            this._surfaceRaycaster
+                .intersectObject(scene, true)
+                .find((intersect) => isVisibleInHierarchy(intersect.object)) ??
+            null
+        );
     }
 
     private createDragEvent(): DraggableEvent {

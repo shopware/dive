@@ -233,8 +233,9 @@ Picking does not raycast render meshes: the toolbox asks colliders through
 a pose, so a box or sphere collider on its node is what you click, and the hit
 is the entity's node. Nothing renders on `PROXY`; it only sorts colliders, so
 the toolbox can ask for entities (`PRODUCT | PROXY`) or models only (`PRODUCT`).
-The gizmo stays on three's `Raycaster` with `UI` and three's default layer, and
-must never be selectable as an object.
+The gizmo stays on three's `Raycaster`: `UI` for DIVE's handles, and three's
+default layer only inside the transform controls' own helper. It must never be
+selectable as an object.
 
 `DIVECameraComponent` composes two masks out of these: `EDITOR_VIEW_LAYER_MASK`
 is everything but `COORDINATE`, and `LIVE_VIEW_LAYER_MASK` is `PRODUCT | FLOOR`.

@@ -2,6 +2,7 @@ import {
     BoxGeometry,
     Mesh,
     MeshBasicMaterial,
+    Object3D,
     PerspectiveCamera,
     Scene,
 } from 'three/webgpu';
@@ -67,9 +68,15 @@ vi.mock('../select/SelectTool.ts', () => ({
     isSelectTool: vi.fn(),
 }));
 
+/** the root the transform tool's gizmo hangs in the scene, set per test */
+const transformGizmo = vi.hoisted(() => ({
+    helper: null as unknown,
+}));
+
 vi.mock('../transform/TransformTool.ts', () => ({
     TransformTool: vi.fn().mockImplementation(function () {
         return {
+            gizmo: { getHelper: () => transformGizmo.helper },
             name: 'transform',
             priority: 5,
             onActivate: vi.fn(),
@@ -468,9 +475,12 @@ describe('Toolbox', () => {
             raycasts = { colliders: 0, gizmo: 0 };
             const raycasters = toolbox as unknown as Record<
                 '_colliderRaycaster' | '_raycaster',
-                { intersectObjects: () => unknown[] }
+                {
+                    intersectObject: () => unknown[];
+                    intersectObjects: () => unknown[];
+                }
             >;
-            raycasters._colliderRaycaster.intersectObjects = () => {
+            raycasters._colliderRaycaster.intersectObject = () => {
                 raycasts.colliders++;
                 return [];
             };
@@ -548,6 +558,7 @@ describe('Toolbox', () => {
         let root: DIVENode;
         let canvas: HTMLElement;
         let ctx: PointerContext;
+        let transformControls: Object3D;
 
         /** a 1 m cube centred on the origin, as a box collider */
         const boxEntity = (layers = PRODUCT_LAYER_MASK): DIVENode => {
@@ -582,14 +593,18 @@ describe('Toolbox', () => {
          * off-centre, or the ray runs along the diagonal both triangles of the
          * front face share and is reported twice
          */
-        const handle = (layers: number, z: number): Mesh => {
+        const handle = (
+            layers: number,
+            z: number,
+            parent: Object3D = scene,
+        ): Mesh => {
             const mesh = new Mesh(
                 new BoxGeometry(0.2, 0.2, 0.2),
                 new MeshBasicMaterial(),
             );
             mesh.layers.mask = layers;
             mesh.position.set(0.03, -0.04, z);
-            scene.add(mesh);
+            parent.add(mesh);
             return mesh;
         };
 
@@ -611,6 +626,9 @@ describe('Toolbox', () => {
             scene = new Scene();
             root = new DIVENode();
             scene.add(root);
+            transformControls = new Object3D();
+            scene.add(transformControls);
+            transformGizmo.helper = transformControls;
 
             const camera = new PerspectiveCamera(75, 1, 0.1, 1000);
             camera.position.set(0, 0, 5);
@@ -713,7 +731,7 @@ describe('Toolbox', () => {
         it('should merge gizmo and entity hits, nearest first', () => {
             const behind = handle(UI_LAYER_MASK, -2);
             const entity = boxEntity();
-            const front = handle(DEFAULT_LAYER_MASK, 2);
+            const front = handle(DEFAULT_LAYER_MASK, 2, transformControls);
 
             const { intersects, uiIntersects } = pointAtCentre();
 
@@ -724,6 +742,19 @@ describe('Toolbox', () => {
                 behind,
             ]);
             expect(uiIntersects.map((i) => i.object)).toEqual([behind]);
+        });
+
+        it('should not hit a default-layer mesh outside the transform gizmo', () => {
+            handle(DEFAULT_LAYER_MASK, 2);
+
+            expect(pointAtCentre().intersects).toHaveLength(0);
+        });
+
+        it('should not hit the transform gizmo while it is out of the scene', () => {
+            handle(DEFAULT_LAYER_MASK, 2, transformControls);
+            scene.remove(transformControls);
+
+            expect(pointAtCentre().intersects).toHaveLength(0);
         });
 
         it('should return empty lists when the ray misses everything', () => {

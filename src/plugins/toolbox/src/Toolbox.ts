@@ -1,4 +1,9 @@
-import { Raycaster, Vector2, type Intersection } from 'three/webgpu';
+import {
+    Raycaster,
+    Vector2,
+    type Intersection,
+    type Object3D,
+} from 'three/webgpu';
 import {
     type ColliderIntersection,
     DEFAULT_LAYER_MASK,
@@ -48,10 +53,11 @@ export class Toolbox {
 
     /**
      * raycasting, shared and computed once per event
-     * entities through their colliders, the gizmo through its meshes
+     * entities through their colliders, the gizmos through their meshes
      */
     private _colliderRaycaster: DIVERaycaster;
     private _raycaster: Raycaster;
+    private _transformRaycaster: Raycaster;
     private _pointer: Vector2;
 
     // Pointer state
@@ -81,12 +87,16 @@ export class Toolbox {
         this._colliderRaycaster.layers.mask =
             PRODUCT_LAYER_MASK | PROXY_LAYER_MASK;
 
-        /**
-         * DEFAULT, because TransformControls never sets a layer
-         * UI for DIVE's own gizmo handles
-         */
+        // dive's own gizmo handles, anywhere in the scene
         this._raycaster = new Raycaster();
-        this._raycaster.layers.mask = DEFAULT_LAYER_MASK | UI_LAYER_MASK;
+        this._raycaster.layers.mask = UI_LAYER_MASK;
+
+        /**
+         * the transform controls never set a layer, so default, but only
+         * inside their own helper, where nothing else hangs
+         */
+        this._transformRaycaster = new Raycaster();
+        this._transformRaycaster.layers.mask = DEFAULT_LAYER_MASK;
         this._pointer = new Vector2();
         this._lastPointerDown = new Vector2();
 
@@ -316,6 +326,7 @@ export class Toolbox {
 
         const camera = this._controller.object.camera;
         this._raycaster.setFromCamera(this._pointer, camera);
+        this._transformRaycaster.setFromCamera(this._pointer, camera);
         this._colliderRaycaster.setFromCamera(this._pointer, camera);
     }
 
@@ -334,25 +345,43 @@ export class Toolbox {
     }
 
     /**
-     * PRODUCT and PROXY colliders, one hit per collider with its node as
-     * `object`; hidden subtrees are not entered
+     * product and proxy colliders, one hit per collider with its node as the
+     * object; hidden subtrees are not entered
      */
     private raycastColliders(): ColliderIntersection[] {
-        return this._colliderRaycaster.intersectObjects<DIVENode>(
-            this._scene.children,
+        return this._colliderRaycaster.intersectObject<DIVENode>(
+            this._scene,
         ) as ColliderIntersection[];
     }
 
     /**
-     * the gizmo's meshes, the one thing picked by geometry
+     * the gizmos' meshes, the one thing picked by geometry
      * layers prune per object, visible does not, hence the hierarchy check
      */
     private raycastGizmo(): Intersection[] {
-        return this._raycaster
-            .intersectObjects(this._scene.children, true)
-            .filter((intersection) =>
-                isVisibleInHierarchy(intersection.object),
+        const intersects = this._raycaster.intersectObjects(
+            this._scene.children,
+            true,
+        );
+
+        const transform = this.transformGizmo();
+        if (transform?.parent === this._scene) {
+            this._transformRaycaster.intersectObject(
+                transform,
+                true,
+                intersects,
             );
+        }
+
+        return intersects
+            .filter((intersection) => isVisibleInHierarchy(intersection.object))
+            .sort((a, b) => a.distance - b.distance);
+    }
+
+    // the transform tool's gizmo root, in the scene only while it is shown
+    private transformGizmo(): Object3D | undefined {
+        const tool = this._tools.get('transform') as TransformTool | undefined;
+        return tool?.gizmo.getHelper() as unknown as Object3D | undefined;
     }
 
     private updateSortedTools(): void {
