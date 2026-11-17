@@ -29,7 +29,7 @@ describe('dive/light/PointLightComponent', () => {
     });
 
     it('should contribute its light and nothing else', () => {
-        /** the editor's stand-in is the caller's to compose, see the state plugin */
+        // the editor's stand-in is the caller's to compose, see the state plugin
         const component = new PointLightComponent();
 
         expect(component.contributions).toEqual([component.light]);

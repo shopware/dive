@@ -75,9 +75,9 @@ export abstract class DIVELightComponent extends DIVEComponent {
      * Takes on the source's colour, brightness, direction and on/off state.
      *
      * Goes through the setters rather than writing the light, so a subclass that
-     * overrides them keeps up. {@link setIntensity} applies the factor, so the stored value has to be
-     * divided back out first; both components are the same class and therefore
-     * carry the same factor.
+     * overrides them keeps up. {@link setIntensity} applies the factor, so the
+     * stored value has to be divided back out first; both components are the
+     * same class and therefore carry the same factor.
      *
      * The light's position is direction rather than placement for a hemisphere or
      * a directional light, and unused for the others, so copying it is right in

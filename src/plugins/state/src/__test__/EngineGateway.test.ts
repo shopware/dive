@@ -550,7 +550,7 @@ describe('plugins/state/EngineGateway', () => {
             node.updateMatrixWorld(true);
             const collider = node.requireComponent(SphereColliderComponent);
 
-            /** grazing the bulb's rim from above */
+            // grazing the bulb's rim from above
             const raycaster = new Raycaster(
                 new Vector3(1.09, 10, 3),
                 new Vector3(0, -1, 0),
@@ -889,7 +889,7 @@ describe('plugins/state/EngineGateway', () => {
             camera.updateMatrixWorld(true);
             const collider = camera.requireComponent(BoxColliderComponent);
 
-            /** straight down onto the icon from above */
+            // straight down onto the icon from above
             const raycaster = new Raycaster(
                 camera.localToWorld(new Vector3(0, 5, -0.2)),
                 new Vector3(0, -1, 0),
@@ -2766,7 +2766,7 @@ describe('plugins/state/EngineGateway', () => {
             };
         };
 
-        /** what a click on the pixel showing `point` picks */
+        /** what a click on the pixel showing the point x, y picks */
         const pickAt = (x: number, y: number): Object3D[] => {
             scene.updateMatrixWorld(true);
             const ndc = new Vector3(x, y, 0).project(camera);
