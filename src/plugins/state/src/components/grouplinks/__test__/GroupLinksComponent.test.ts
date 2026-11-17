@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { Object3D } from 'three/webgpu';
+import { Object3D, type LineDashedMaterial } from 'three/webgpu';
 import { DIVENode, MultiLineComponent } from '@shopware-ag/dive';
 import { GroupLinksComponent } from '../GroupLinksComponent.ts';
 
@@ -35,6 +35,16 @@ describe('plugins/state/GroupLinksComponent', () => {
             expect(new GroupLinksComponent().clone()).toBeInstanceOf(
                 GroupLinksComponent,
             );
+        });
+    });
+
+    describe('look', () => {
+        it('should draw dashed links', () => {
+            const material = new GroupLinksComponent().lines
+                .material as LineDashedMaterial;
+
+            expect(material.dashSize).toBe(0.05);
+            expect(material.gapSize).toBe(0.025);
         });
     });
 

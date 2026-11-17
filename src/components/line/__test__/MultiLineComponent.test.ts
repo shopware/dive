@@ -371,6 +371,10 @@ describe('dive/line/MultiLineComponent', () => {
             expect(material().color.getHexString()).toBe('ff0000');
         });
 
+        it('should draw solid lines by default', () => {
+            expect(material().gapSize).toBe(0);
+        });
+
         it('should set the dash pattern', () => {
             lines.setDashPattern(1, 2);
 

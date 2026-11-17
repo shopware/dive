@@ -19,6 +19,12 @@ const ORIGIN = new Vector3();
  * @module
  */
 export class GroupLinksComponent extends MultiLineComponent {
+    constructor() {
+        super();
+        // dashed, to tell a link from content
+        this.setDashPattern(0.05, 0.025);
+    }
+
     /**
      * Draws the link to a member, wherever it is now.
      *

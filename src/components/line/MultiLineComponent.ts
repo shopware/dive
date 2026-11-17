@@ -119,10 +119,11 @@ export class MultiLineComponent extends DIVEComponent {
 
         this.name = 'MultiLineComponent';
 
+        // solid until a gap is set, see setDashPattern
         this._material = new LineDashedMaterial({
             color: 0x666666,
-            dashSize: 0.05,
-            gapSize: 0.025,
+            dashSize: 1,
+            gapSize: 0,
         });
 
         this._geometry = new BufferGeometry();
@@ -248,7 +249,7 @@ export class MultiLineComponent extends DIVEComponent {
     }
 
     /**
-     * Sets the dash pattern.
+     * Sets the dash pattern. Lines are solid by default, i.e. without a gap.
      *
      * @param dashSize - Length of a drawn stretch.
      * @param gapSize - Length of a gap.
