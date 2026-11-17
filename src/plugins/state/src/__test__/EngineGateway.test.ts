@@ -687,9 +687,25 @@ describe('plugins/state/EngineGateway', () => {
             const center = collider.getCenter(new Vector3());
             const size = collider.getSize(new Vector3());
 
-            // body behind the eye down to -0.25, lens base in front at 0.15
+            // lens base on the node's plane, body behind it down to -0.4
             expectVec(size, { x: 0.24, y: 0.18, z: 0.4 });
-            expectVec(center, { x: 0, y: 0, z: -0.05 });
+            expectVec(center, { x: 0, y: 0, z: -0.2 });
+        });
+
+        it('should keep the camera icon behind the eye', async () => {
+            /** a view camera on the node looks along +Z, past its near plane */
+            const gateway = makeGateway();
+            await addEntity(gateway, cameraSchema('c'));
+
+            const icon = (
+                findEntity(gateway, {
+                    id: 'c',
+                    entityType: 'camera',
+                }) as DIVENode
+            ).requireComponent(MultiLineComponent);
+            icon.computeBoundingBox();
+
+            expect(icon.boundingBox!.max.z).toBeLessThanOrEqual(0);
         });
 
         it('should warn for unknown entity type', async () => {

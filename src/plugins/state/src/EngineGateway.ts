@@ -63,17 +63,32 @@ const outline = (
         end: corners[(i + 1) % corners.length],
     }));
 
-/** the eye, at the node's origin; the lens stands on it */
-const CAMERA_EYE: Vector3Like = { x: 0, y: 0, z: 0 };
-/** the body, a box behind the eye */
-const CAMERA_BODY_BACK = rectangle(0.1, 0.075, -0.25);
-const CAMERA_BODY_FRONT = rectangle(0.1, 0.075, 0);
-/** the lens, a pyramid whose base faces the view */
-const CAMERA_LENS_BASE = rectangle(0.12, 0.09, 0.15);
+/** how far the lens reaches back from its base */
+const CAMERA_LENS_DEPTH = 0.15;
+/** how deep the body is, behind the lens */
+const CAMERA_BODY_DEPTH = 0.25;
+
+/**
+ * the lens, a pyramid whose base faces the view and lies in the node's own
+ * plane, so the whole icon sits behind the eye
+ */
+const CAMERA_LENS_BASE = rectangle(0.12, 0.09, 0);
+const CAMERA_LENS_APEX: Vector3Like = { x: 0, y: 0, z: -CAMERA_LENS_DEPTH };
+/** the body, a box behind the lens, its front face on the apex */
+const CAMERA_BODY_FRONT = rectangle(0.1, 0.075, -CAMERA_LENS_DEPTH);
+const CAMERA_BODY_BACK = rectangle(
+    0.1,
+    0.075,
+    -CAMERA_LENS_DEPTH - CAMERA_BODY_DEPTH,
+);
 
 /**
  * The lines of a camera's icon, in the node's own space, looking along +Z:
  * `Object3D.lookAt` turns a non-camera object's +Z towards the target.
+ *
+ * Nothing lies in front of the node's origin: a view camera moved onto the node
+ * looks along +Z, and its near plane is always in front of it, so it never
+ * shows its own icon.
  */
 const CAMERA_ICON_LINES: { start: Vector3Like; end: Vector3Like }[] = [
     ...outline(CAMERA_BODY_BACK),
@@ -82,7 +97,7 @@ const CAMERA_ICON_LINES: { start: Vector3Like; end: Vector3Like }[] = [
         start,
         end: CAMERA_BODY_FRONT[i],
     })),
-    ...CAMERA_LENS_BASE.map((end) => ({ start: CAMERA_EYE, end })),
+    ...CAMERA_LENS_BASE.map((end) => ({ start: CAMERA_LENS_APEX, end })),
     ...outline(CAMERA_LENS_BASE),
 ];
 
