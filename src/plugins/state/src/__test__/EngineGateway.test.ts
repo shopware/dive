@@ -665,13 +665,31 @@ describe('plugins/state/EngineGateway', () => {
             const camera = findEntity(gateway, cameraData) as DIVENode;
             expect(camera).toBeInstanceOf(DIVENode);
             expect(camera.parent).toBe(gateway.root);
-            expect(camera.getComponent(MultiLineComponent)).toBeDefined();
-            // spanned on an icon without lines yet, so nothing to hit
+            // a box of 12 edges and a pyramid of 8
+            expect(camera.getComponent(MultiLineComponent)?.lineCount).toBe(20);
             expect(camera.getComponent(ColliderComponent)?.isEmpty()).toBe(
-                true,
+                false,
             );
             expectVec(camera.position, cameraData.position);
             expectVec(readCameraTarget(camera), cameraData.target);
+        });
+
+        it('should span the collider over the camera icon', async () => {
+            const gateway = makeGateway();
+            await addEntity(gateway, cameraSchema('c'));
+
+            const collider = (
+                findEntity(gateway, {
+                    id: 'c',
+                    entityType: 'camera',
+                }) as DIVENode
+            ).requireComponent(ColliderComponent);
+            const center = collider.getCenter(new Vector3());
+            const size = collider.getSize(new Vector3());
+
+            // body behind the eye down to -0.25, lens base in front at 0.15
+            expectVec(size, { x: 0.24, y: 0.18, z: 0.4 });
+            expectVec(center, { x: 0, y: 0, z: -0.05 });
         });
 
         it('should warn for unknown entity type', async () => {

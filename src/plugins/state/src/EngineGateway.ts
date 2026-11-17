@@ -42,12 +42,48 @@ import {
 import { GroupLinksComponent } from './components/grouplinks/GroupLinksComponent.ts';
 import { updateParentLink } from './helpers/updateParentLink/updateParentLink.ts';
 
+/** The corners of an axis-aligned rectangle at depth `z`, in order. */
+const rectangle = (
+    halfWidth: number,
+    halfHeight: number,
+    z: number,
+): Vector3Like[] => [
+    { x: -halfWidth, y: -halfHeight, z },
+    { x: halfWidth, y: -halfHeight, z },
+    { x: halfWidth, y: halfHeight, z },
+    { x: -halfWidth, y: halfHeight, z },
+];
+
+/** The edges of a closed polygon. */
+const outline = (
+    corners: Vector3Like[],
+): { start: Vector3Like; end: Vector3Like }[] =>
+    corners.map((start, i) => ({
+        start,
+        end: corners[(i + 1) % corners.length],
+    }));
+
+/** the eye, at the node's origin; the lens stands on it */
+const CAMERA_EYE: Vector3Like = { x: 0, y: 0, z: 0 };
+/** the body, a box behind the eye */
+const CAMERA_BODY_BACK = rectangle(0.1, 0.075, -0.25);
+const CAMERA_BODY_FRONT = rectangle(0.1, 0.075, 0);
+/** the lens, a pyramid whose base faces the view */
+const CAMERA_LENS_BASE = rectangle(0.12, 0.09, 0.15);
+
 /**
  * The lines of a camera's icon, in the node's own space, looking along +Z:
  * `Object3D.lookAt` turns a non-camera object's +Z towards the target.
  */
 const CAMERA_ICON_LINES: { start: Vector3Like; end: Vector3Like }[] = [
-    // TODO: build the icon
+    ...outline(CAMERA_BODY_BACK),
+    ...outline(CAMERA_BODY_FRONT),
+    ...CAMERA_BODY_BACK.map((start, i) => ({
+        start,
+        end: CAMERA_BODY_FRONT[i],
+    })),
+    ...CAMERA_LENS_BASE.map((end) => ({ start: CAMERA_EYE, end })),
+    ...outline(CAMERA_LENS_BASE),
 ];
 
 /**
