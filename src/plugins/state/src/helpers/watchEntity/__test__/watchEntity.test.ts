@@ -3,12 +3,14 @@ import { Vector3 } from 'three/webgpu';
 import {
     DIVENode,
     ModelComponent,
-    MultiLineComponent,
     type DIVESceneObject,
 } from '@shopware-ag/dive';
 import { watchEntity } from '../watchEntity.ts';
+import { aimCamera } from '../../cameraTarget/cameraTarget.ts';
+import { GroupLinksComponent } from '../../../components/grouplinks/GroupLinksComponent.ts';
 import { EntityRegistry } from '../../../EntityRegistry.ts';
 import {
+    type CameraSchema,
     type EntitySchema,
     type ModelSchema,
 } from '../../../../types/index.ts';
@@ -138,7 +140,7 @@ describe('plugins/state/watchEntity', () => {
 
         it('should redraw the link to the group it belongs to', () => {
             const group = new DIVENode();
-            const lines = group.addComponent(new MultiLineComponent());
+            const lines = group.addComponent(new GroupLinksComponent());
             group.add(node);
             watch();
 
@@ -152,6 +154,39 @@ describe('plugins/state/watchEntity', () => {
             watch();
 
             expect(() => fire('object-transform', transform)).not.toThrow();
+        });
+
+        it('should report a camera as position and target', () => {
+            const camera: CameraSchema = {
+                id: 'camera-1',
+                entityType: 'camera',
+                name: 'C',
+                visible: true,
+                position: { x: 0, y: 0, z: 5 },
+                target: { x: 0, y: 0, z: 0 },
+            };
+            const group = new DIVENode();
+            group.add(node);
+            node.position.set(0, 0, 5);
+            aimCamera(node, camera.target);
+            watch(camera);
+
+            group.position.set(10, 0, 0);
+            node.onMove();
+
+            const sent = dispatch.mock.calls.find(
+                (call) => call[0] === 'UPDATE_OBJECT',
+            )![1];
+            expect(Object.keys(sent).sort()).toEqual([
+                'entityType',
+                'id',
+                'position',
+                'target',
+            ]);
+            expect(sent.position).toEqual({ x: 10, y: 0, z: 5 });
+            expect(sent.target.x).toBeCloseTo(10);
+            expect(sent.target.y).toBeCloseTo(0);
+            expect(sent.target.z).toBeCloseTo(0);
         });
     });
 

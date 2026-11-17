@@ -58,7 +58,7 @@ export const SetStateAction = Action.define<
             ).execute();
         }
 
-        /** What was created, in the order the entities finished loading. Entity types without a scene object, currently cameras, contribute nothing. */
+        /** What was created, in the order the entities finished loading. */
         const objects: DIVESceneObject[] = [];
         /** Entities that made it into the scene and can be reparented below. */
         const added: EntitySchema[] = [];

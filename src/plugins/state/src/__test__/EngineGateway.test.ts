@@ -1,9 +1,12 @@
 import { EngineGateway } from '../EngineGateway.ts';
 import { EntityRegistry } from '../EntityRegistry.ts';
 import { watchEntity } from '../helpers/watchEntity/watchEntity.ts';
+import { readCameraTarget } from '../helpers/cameraTarget/cameraTarget.ts';
+import { GroupLinksComponent } from '../components/grouplinks/GroupLinksComponent.ts';
 import {
     detachTransformControls,
     AmbientLightComponent,
+    ColliderComponent,
     BoundingBoxComponent,
     DirectionalLightComponent,
     DIVEImageBasedLightDefaultSettings,
@@ -115,9 +118,9 @@ vi.mock('three/webgpu', async (importOriginal) => {
 /**
  * Puts an object into the gateway's entity registry by hand.
  *
- * For the cases `addEntity` cannot produce -- a camera creates no scene object,
- * an unknown entity type is rejected -- but where the gateway still has to cope
- * with finding something under that id.
+ * For the cases `addEntity` cannot produce -- an unknown entity type is
+ * rejected -- but where the gateway still has to cope with finding something
+ * under that id.
  */
 const registerRaw = (
     gateway: EngineGateway,
@@ -192,6 +195,15 @@ const makeGateway = (): EngineGateway => {
 /** A gateway over a bare root, nothing else in the scene. */
 const makeBareGateway = (): EngineGateway =>
     new EngineGateway({ scene: { root: new DIVERoot() } } as unknown as DIVE);
+
+const cameraSchema = (id: string): CameraSchema => ({
+    id,
+    entityType: 'camera',
+    name: id,
+    visible: true,
+    position: { x: 0, y: 0, z: 5 },
+    target: { x: 0, y: 0, z: 0 },
+});
 
 const groupSchema = (id: string): GroupSchema =>
     ({
@@ -649,9 +661,51 @@ describe('plugins/state/EngineGateway', () => {
 
             const gateway = makeGateway();
             await addEntity(gateway, cameraData);
-            // CAMERA objects are not added to the scene
-            const camera = findEntity(gateway, cameraData);
-            expect(camera).toBeUndefined();
+
+            const camera = findEntity(gateway, cameraData) as DIVENode;
+            expect(camera).toBeInstanceOf(DIVENode);
+            expect(camera.parent).toBe(gateway.root);
+            // a box of 12 edges and a pyramid of 8
+            expect(camera.getComponent(MultiLineComponent)?.lineCount).toBe(20);
+            expect(camera.getComponent(ColliderComponent)?.isEmpty()).toBe(
+                false,
+            );
+            expectVec(camera.position, cameraData.position);
+            expectVec(readCameraTarget(camera), cameraData.target);
+        });
+
+        it('should span the collider over the camera icon', async () => {
+            const gateway = makeGateway();
+            await addEntity(gateway, cameraSchema('c'));
+
+            const collider = (
+                findEntity(gateway, {
+                    id: 'c',
+                    entityType: 'camera',
+                }) as DIVENode
+            ).requireComponent(ColliderComponent);
+            const center = collider.getCenter(new Vector3());
+            const size = collider.getSize(new Vector3());
+
+            // lens base on the node's plane, body behind it down to -0.4
+            expectVec(size, { x: 0.24, y: 0.18, z: 0.4 });
+            expectVec(center, { x: 0, y: 0, z: -0.2 });
+        });
+
+        it('should keep the camera icon behind the eye', async () => {
+            /** a view camera on the node looks along +Z, past its near plane */
+            const gateway = makeGateway();
+            await addEntity(gateway, cameraSchema('c'));
+
+            const icon = (
+                findEntity(gateway, {
+                    id: 'c',
+                    entityType: 'camera',
+                }) as DIVENode
+            ).requireComponent(MultiLineComponent);
+            icon.computeBoundingBox();
+
+            expect(icon.boundingBox!.max.z).toBeLessThanOrEqual(0);
         });
 
         it('should warn for unknown entity type', async () => {
@@ -848,22 +902,69 @@ describe('plugins/state/EngineGateway', () => {
             );
         });
 
-        it('should no-op when updating a found CAMERA object', async () => {
-            const cameraData = {
-                id: 'camera-1',
-                entityType: 'camera' as EntityTypeSchema,
-                name: 'Test CAMERA',
-                visible: true,
-            };
-
+        it('should keep a CAMERA looking at its target when only the position changes', async () => {
             const gateway = makeGateway();
-            const cameraObject = new Object3D();
-            registerRaw(gateway, cameraData.id, cameraObject);
+            await addEntity(gateway, cameraSchema('camera-1'));
 
-            await gateway.updateEntity(cameraData);
+            await gateway.updateEntity({
+                id: 'camera-1',
+                entityType: 'camera',
+                position: { x: 0, y: 5, z: 5 },
+            });
 
-            expect(spyConsoleWarn).not.toHaveBeenCalled();
-            expect(findEntity(gateway, cameraData)).toBe(cameraObject);
+            const camera = findEntity(gateway, cameraSchema('camera-1'));
+            expectVec(camera?.position, { x: 0, y: 5, z: 5 });
+            expectVec(readCameraTarget(camera as DIVENode), {
+                x: 0,
+                y: 0,
+                z: 0,
+            });
+        });
+
+        it('should aim a CAMERA at a new target', async () => {
+            const gateway = makeGateway();
+            await addEntity(gateway, cameraSchema('camera-1'));
+
+            await gateway.updateEntity({
+                id: 'camera-1',
+                entityType: 'camera',
+                target: { x: 1, y: 1, z: 0 },
+            });
+
+            const camera = findEntity(gateway, cameraSchema('camera-1'));
+            expectVec(camera?.position, { x: 0, y: 0, z: 5 });
+            expectVec(readCameraTarget(camera as DIVENode), {
+                x: 1,
+                y: 1,
+                z: 0,
+            });
+        });
+
+        it('should carry a CAMERA and its target along with its group', async () => {
+            const gateway = makeGateway();
+            await addEntity(gateway, groupSchema('group-1'));
+            await addEntity(gateway, {
+                ...cameraSchema('camera-1'),
+                parentId: 'group-1',
+            });
+
+            await gateway.updateEntity({
+                id: 'group-1',
+                entityType: 'group',
+                position: { x: 10, y: 0, z: 0 },
+                rotation: { x: 0, y: Math.PI / 2, z: 0 },
+            });
+
+            const camera = findEntity(
+                gateway,
+                cameraSchema('camera-1'),
+            ) as DIVENode;
+            expectVec(camera.getWorldPosition(new Vector3()), {
+                x: 15,
+                y: 0,
+                z: 0,
+            });
+            expectVec(readCameraTarget(camera), { x: 10, y: 0, z: 0 });
         });
 
         it('should warn for unknown entity type in update', async () => {
@@ -1876,12 +1977,12 @@ describe('plugins/state/EngineGateway', () => {
             gateway = makeBareGateway();
         });
 
-        const linesOf = (id: string): MultiLineComponent =>
+        const linesOf = (id: string): GroupLinksComponent =>
             (
                 gateway.findEntity({ id, entityType: 'group' }) as DIVENode
-            ).requireComponent(MultiLineComponent);
+            ).requireComponent(GroupLinksComponent);
 
-        it('should give a group nothing but a line component', () => {
+        it('should give a group nothing but its links component', () => {
             return addEntity(gateway, groupSchema('g')).then(() => {
                 const group = gateway.findEntity({
                     id: 'g',
@@ -1890,7 +1991,7 @@ describe('plugins/state/EngineGateway', () => {
 
                 // no group-aware component exists in the engine at all
                 expect(group.components).toHaveLength(1);
-                expect(group.components[0]).toBeInstanceOf(MultiLineComponent);
+                expect(group.components[0]).toBeInstanceOf(GroupLinksComponent);
             });
         });
 
@@ -1905,6 +2006,23 @@ describe('plugins/state/EngineGateway', () => {
             await addEntity(gateway, modelSchema('m', 'g'));
 
             expect(linesOf('g').lineCount).toBe(1);
+        });
+
+        it('should not draw a link into a camera icon', async () => {
+            /** the icon is a line component too, but not the group's links */
+            await addEntity(gateway, cameraSchema('c'));
+            const icon = (
+                gateway.findEntity({
+                    id: 'c',
+                    entityType: 'camera',
+                }) as DIVENode
+            ).requireComponent(MultiLineComponent);
+            const member = (await addEntity(
+                gateway,
+                modelSchema('m', 'c'),
+            )) as DIVENode;
+
+            expect(icon.hasLineFor(member)).toBe(false);
         });
 
         it('should not add a line for a member of a plain node', async () => {

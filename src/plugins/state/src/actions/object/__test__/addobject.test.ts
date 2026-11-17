@@ -100,17 +100,6 @@ describe('AddObjectAction', () => {
         expect(result).toBe(node);
     });
 
-    it('should register a state-only entity without a scene object', async () => {
-        // a camera: createEntity has nothing to put in the scene
-        vi.mocked(gateway.createEntity).mockReturnValue(undefined);
-
-        const result = await run();
-
-        expect(result).toBeUndefined();
-        expect(deps.registry.read('test-object')?.node).toBeUndefined();
-        expect(gateway.applyEntity).not.toHaveBeenCalled();
-    });
-
     it('should leave nothing behind when applying fails', async () => {
         /**
          * a failed asset load used to leave a registered schema whose object was

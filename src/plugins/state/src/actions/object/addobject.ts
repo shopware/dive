@@ -19,12 +19,6 @@ export const AddObjectAction = Action.define<
 
         const node = gateway.createEntity(payload);
 
-        // a camera has no scene object, nothing to listen to and nothing to apply
-        if (!node) {
-            registry.register(payload);
-            return undefined;
-        }
-
         /**
          * registered and listening before the data is applied, because applying a
          * model awaits the asset load and object-load fires inside it

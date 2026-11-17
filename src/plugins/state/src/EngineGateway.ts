@@ -1,6 +1,7 @@
-import { Color, MeshStandardMaterial } from 'three/webgpu';
+import { Color, MeshStandardMaterial, type Vector3Like } from 'three/webgpu';
 import {
     AmbientLightComponent,
+    ColliderComponent,
     detachTransformControls,
     DirectionalLightComponent,
     disposeComponents,
@@ -34,7 +35,71 @@ import {
     type StateBackground,
     type StateImageBasedLight,
 } from '../types/index.ts';
+import {
+    aimCamera,
+    readCameraTarget,
+} from './helpers/cameraTarget/cameraTarget.ts';
+import { GroupLinksComponent } from './components/grouplinks/GroupLinksComponent.ts';
 import { updateParentLink } from './helpers/updateParentLink/updateParentLink.ts';
+
+/** The corners of an axis-aligned rectangle at depth `z`, in order. */
+const rectangle = (
+    halfWidth: number,
+    halfHeight: number,
+    z: number,
+): Vector3Like[] => [
+    { x: -halfWidth, y: -halfHeight, z },
+    { x: halfWidth, y: -halfHeight, z },
+    { x: halfWidth, y: halfHeight, z },
+    { x: -halfWidth, y: halfHeight, z },
+];
+
+/** The edges of a closed polygon. */
+const outline = (
+    corners: Vector3Like[],
+): { start: Vector3Like; end: Vector3Like }[] =>
+    corners.map((start, i) => ({
+        start,
+        end: corners[(i + 1) % corners.length],
+    }));
+
+/** how far the lens reaches back from its base */
+const CAMERA_LENS_DEPTH = 0.15;
+/** how deep the body is, behind the lens */
+const CAMERA_BODY_DEPTH = 0.25;
+
+/**
+ * the lens, a pyramid whose base faces the view and lies in the node's own
+ * plane, so the whole icon sits behind the eye
+ */
+const CAMERA_LENS_BASE = rectangle(0.12, 0.09, 0);
+const CAMERA_LENS_APEX: Vector3Like = { x: 0, y: 0, z: -CAMERA_LENS_DEPTH };
+/** the body, a box behind the lens, its front face on the apex */
+const CAMERA_BODY_FRONT = rectangle(0.1, 0.075, -CAMERA_LENS_DEPTH);
+const CAMERA_BODY_BACK = rectangle(
+    0.1,
+    0.075,
+    -CAMERA_LENS_DEPTH - CAMERA_BODY_DEPTH,
+);
+
+/**
+ * The lines of a camera's icon, in the node's own space, looking along +Z:
+ * `Object3D.lookAt` turns a non-camera object's +Z towards the target.
+ *
+ * Nothing lies in front of the node's origin: a view camera moved onto the node
+ * looks along +Z, and its near plane is always in front of it, so it never
+ * shows its own icon.
+ */
+const CAMERA_ICON_LINES: { start: Vector3Like; end: Vector3Like }[] = [
+    ...outline(CAMERA_BODY_BACK),
+    ...outline(CAMERA_BODY_FRONT),
+    ...CAMERA_BODY_BACK.map((start, i) => ({
+        start,
+        end: CAMERA_BODY_FRONT[i],
+    })),
+    ...CAMERA_LENS_BASE.map((end) => ({ start: CAMERA_LENS_APEX, end })),
+    ...outline(CAMERA_LENS_BASE),
+];
 
 /**
  * The scene properties that are not entities.
@@ -136,9 +201,9 @@ export class EngineGateway {
      *
      * Synchronous, so nothing can slip in front of the caller either.
      *
-     * @returns The scene object, or `undefined` for a state-only entity.
+     * @returns The scene object.
      */
-    public createEntity(entity: EntitySchema): DIVESceneObject | undefined {
+    public createEntity(entity: EntitySchema): DIVESceneObject {
         const existing = this.findEntity(entity);
         if (existing) {
             console.warn(
@@ -146,9 +211,6 @@ export class EngineGateway {
             );
             return existing;
         }
-
-        // a camera is state-only, there is nothing to put in the scene
-        if (isCameraSchema(entity)) return undefined;
 
         const sceneObject = this._instantiate(entity);
 
@@ -332,21 +394,25 @@ export class EngineGateway {
         if (isGroupSchema(entity)) {
             const group = new DIVENode();
             group.name = 'DIVEGroup';
-            const lines = group.addComponent(new MultiLineComponent());
-
-            /**
-             * the group has to drop the line itself, because Object3D.remove
-             * nulls child.parent before announcing anything
-             * childremoved also covers re-parenting and contributed content;
-             * removeLineFor with an unknown child does nothing
-             */
-            group.addEventListener('childremoved', (event) =>
-                lines.removeLineFor(event.child),
-            );
-
+            group.addComponent(new GroupLinksComponent());
             return group;
         }
         if (isLightSchema(entity)) return this._instantiateLight(entity);
+        if (isCameraSchema(entity)) {
+            const camera = new DIVENode();
+            camera.name = 'DIVECamera';
+            const icon = camera.addComponent(new MultiLineComponent());
+            CAMERA_ICON_LINES.forEach(({ start, end }, i) =>
+                icon.setLineFor(i, start, end),
+            );
+
+            // spanned once, the icon does not change
+            icon.computeBoundingBox();
+            camera
+                .addComponent(new ColliderComponent())
+                .set(icon.boundingBox!.min, icon.boundingBox!.max);
+            return camera;
+        }
 
         throw new Error(
             `EngineGateway.addEntity: Unknown entity type: ${(entity as EntitySchema).entityType}`,
@@ -381,10 +447,13 @@ export class EngineGateway {
         sceneObject: DIVESceneObject,
         patch: PartialSchema,
     ): Promise<void> {
-        // state-only: there is nothing in the scene to write to
-        if (patch.entityType === 'camera') return;
-
         const node = sceneObject as DIVENode;
+
+        /** read before the move, so a camera keeps looking at its target */
+        const cameraTarget =
+            patch.entityType === 'camera'
+                ? (patch.target ?? readCameraTarget(node))
+                : undefined;
 
         /**
          * what only this kind of entity has, and first, so an unknown type is
@@ -403,6 +472,9 @@ export class EngineGateway {
             case 'group':
                 this._applyGroup(node, patch);
                 break;
+            case 'camera':
+                // aimed after the transform, see below
+                break;
             default:
                 throw new Error(
                     `EngineGateway.updateEntity: Unknown entity type: ${(patch as EntitySchema).entityType}`,
@@ -415,6 +487,7 @@ export class EngineGateway {
          */
         if (patch.name !== undefined) node.name = patch.name;
         node.applyTransform(patch);
+        if (cameraTarget !== undefined) aimCamera(node, cameraTarget);
         if (patch.visible !== undefined) node.setVisibility(patch.visible);
 
         // re-parent last, so the object is fully written before it moves
@@ -481,7 +554,7 @@ export class EngineGateway {
     ): void {
         if (props.linksVisible !== undefined)
             sceneObject
-                .requireComponent(MultiLineComponent)
+                .requireComponent(GroupLinksComponent)
                 .setVisible(props.linksVisible);
     }
 

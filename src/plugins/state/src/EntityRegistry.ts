@@ -60,7 +60,7 @@ export class EntityRegistry {
      * Takes an entity in.
      *
      * @param schema - The entity data.
-     * @param node - Its scene object, absent for a state-only entity.
+     * @param node - Its scene object.
      * @param unwatch - Drops the listeners on the node again.
      */
     public register(

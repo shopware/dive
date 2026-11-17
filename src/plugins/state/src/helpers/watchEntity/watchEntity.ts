@@ -8,6 +8,7 @@ import {
     type EntitySchema,
     type PartialSchema,
 } from '../../../types/index.ts';
+import { readCameraTarget } from '../cameraTarget/cameraTarget.ts';
 import { copyVectors } from '../copyVectors/copyVectors.ts';
 import { updateParentLink } from '../updateParentLink/updateParentLink.ts';
 
@@ -50,13 +51,23 @@ export const watchEntity = (
          * copied once for both the schema and the subscribers, the event carries
          * live references into a buffer the next frame overwrites
          */
-        const report = copyVectors({
-            id,
-            entityType,
-            position: event.position,
-            rotation: event.rotation,
-            scale: event.scale,
-        } as PartialSchema);
+        const report = copyVectors(
+            (entityType === 'camera'
+                ? {
+                      id,
+                      entityType,
+                      position: event.position,
+                      // turns and moves with the node, e.g. inside a group
+                      target: readCameraTarget(node),
+                  }
+                : {
+                      id,
+                      entityType,
+                      position: event.position,
+                      rotation: event.rotation,
+                      scale: event.scale,
+                  }) as PartialSchema,
+        );
 
         registry.write(id, report);
 
