@@ -2,6 +2,7 @@ import { EngineGateway } from '../EngineGateway.ts';
 import { EntityRegistry } from '../EntityRegistry.ts';
 import { watchEntity } from '../helpers/watchEntity/watchEntity.ts';
 import { readCameraTarget } from '../helpers/cameraTarget/cameraTarget.ts';
+import { GroupLinksComponent } from '../components/grouplinks/GroupLinksComponent.ts';
 import {
     detachTransformControls,
     AmbientLightComponent,
@@ -1942,12 +1943,12 @@ describe('plugins/state/EngineGateway', () => {
             gateway = makeBareGateway();
         });
 
-        const linesOf = (id: string): MultiLineComponent =>
+        const linesOf = (id: string): GroupLinksComponent =>
             (
                 gateway.findEntity({ id, entityType: 'group' }) as DIVENode
-            ).requireComponent(MultiLineComponent);
+            ).requireComponent(GroupLinksComponent);
 
-        it('should give a group nothing but a line component', () => {
+        it('should give a group nothing but its links component', () => {
             return addEntity(gateway, groupSchema('g')).then(() => {
                 const group = gateway.findEntity({
                     id: 'g',
@@ -1956,7 +1957,7 @@ describe('plugins/state/EngineGateway', () => {
 
                 // no group-aware component exists in the engine at all
                 expect(group.components).toHaveLength(1);
-                expect(group.components[0]).toBeInstanceOf(MultiLineComponent);
+                expect(group.components[0]).toBeInstanceOf(GroupLinksComponent);
             });
         });
 
@@ -1971,6 +1972,23 @@ describe('plugins/state/EngineGateway', () => {
             await addEntity(gateway, modelSchema('m', 'g'));
 
             expect(linesOf('g').lineCount).toBe(1);
+        });
+
+        it('should not draw a link into a camera icon', async () => {
+            /** the icon is a line component too, but not the group's links */
+            await addEntity(gateway, cameraSchema('c'));
+            const icon = (
+                gateway.findEntity({
+                    id: 'c',
+                    entityType: 'camera',
+                }) as DIVENode
+            ).requireComponent(MultiLineComponent);
+            const member = (await addEntity(
+                gateway,
+                modelSchema('m', 'c'),
+            )) as DIVENode;
+
+            expect(icon.hasLineFor(member)).toBe(false);
         });
 
         it('should not add a line for a member of a plain node', async () => {

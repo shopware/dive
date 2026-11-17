@@ -3,11 +3,11 @@ import { Vector3 } from 'three/webgpu';
 import {
     DIVENode,
     ModelComponent,
-    MultiLineComponent,
     type DIVESceneObject,
 } from '@shopware-ag/dive';
 import { watchEntity } from '../watchEntity.ts';
 import { aimCamera } from '../../cameraTarget/cameraTarget.ts';
+import { GroupLinksComponent } from '../../../components/grouplinks/GroupLinksComponent.ts';
 import { EntityRegistry } from '../../../EntityRegistry.ts';
 import {
     type CameraSchema,
@@ -140,7 +140,7 @@ describe('plugins/state/watchEntity', () => {
 
         it('should redraw the link to the group it belongs to', () => {
             const group = new DIVENode();
-            const lines = group.addComponent(new MultiLineComponent());
+            const lines = group.addComponent(new GroupLinksComponent());
             group.add(node);
             watch();
 

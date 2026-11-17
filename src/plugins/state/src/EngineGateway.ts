@@ -39,6 +39,7 @@ import {
     aimCamera,
     readCameraTarget,
 } from './helpers/cameraTarget/cameraTarget.ts';
+import { GroupLinksComponent } from './components/grouplinks/GroupLinksComponent.ts';
 import { updateParentLink } from './helpers/updateParentLink/updateParentLink.ts';
 
 /**
@@ -342,18 +343,7 @@ export class EngineGateway {
         if (isGroupSchema(entity)) {
             const group = new DIVENode();
             group.name = 'DIVEGroup';
-            const lines = group.addComponent(new MultiLineComponent());
-
-            /**
-             * the group has to drop the line itself, because Object3D.remove
-             * nulls child.parent before announcing anything
-             * childremoved also covers re-parenting and contributed content;
-             * removeLineFor with an unknown child does nothing
-             */
-            group.addEventListener('childremoved', (event) =>
-                lines.removeLineFor(event.child),
-            );
-
+            group.addComponent(new GroupLinksComponent());
             return group;
         }
         if (isLightSchema(entity)) return this._instantiateLight(entity);
@@ -513,7 +503,7 @@ export class EngineGateway {
     ): void {
         if (props.linksVisible !== undefined)
             sceneObject
-                .requireComponent(MultiLineComponent)
+                .requireComponent(GroupLinksComponent)
                 .setVisible(props.linksVisible);
     }
 
