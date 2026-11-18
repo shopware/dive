@@ -263,11 +263,17 @@ bottom centre of the node's bounds through `PRODUCT` colliders and rests the nod
 on the hit point (a table top, the floor under an arch), or on y = 0 without a
 hit. A model without a collider, a camera or a light is no surface.
 
+The toolbox's drag tool slides over the same `PRODUCT` colliders. Targets given
+to `setDragRaycastTargets` restrict that search, so each target needs a collider
+on or below it (a plain floor mesh is no surface), and targets hidden in their
+hierarchy are skipped.
+
 To see what can be hit, call `scene.setColliderHelpersVisible(true)`. It
 outlines every collider the collider raycaster would test below the root,
 product colliders green and proxy colliders orange, on `HELPER`, so only the
 editor view shows it. It is redrawn every frame while on, so it follows moves,
-loads and visibility, and costs nothing while off.
+loads and visibility, and costs nothing while off. A collider of your own is
+left out of the view unless it outlines itself.
 
 `DIVECameraComponent` composes two masks out of these: `EDITOR_VIEW_LAYER_MASK`
 is everything but `COORDINATE`, and `LIVE_VIEW_LAYER_MASK` is `PRODUCT | FLOOR`.
