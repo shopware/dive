@@ -248,6 +248,11 @@ edits nothing announces, flat content tested as its box). Only the mesh
 collider is added by default, to models and primitives; the others are the
 caller's choice.
 
+`DIVENode.dropIt()` asks the same colliders: it casts straight down from the
+bottom centre of the node's bounds through `PRODUCT` colliders and rests the node
+on the hit point (a table top, the floor under an arch), or on y = 0 without a
+hit. A model without a collider, a camera or a light is no surface.
+
 `DIVECameraComponent` composes two masks out of these: `EDITOR_VIEW_LAYER_MASK`
 is everything but `COORDINATE`, and `LIVE_VIEW_LAYER_MASK` is `PRODUCT | FLOOR`.
 
