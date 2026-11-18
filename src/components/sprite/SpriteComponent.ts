@@ -38,8 +38,4 @@ export class SpriteComponent extends ImageComponentBase<Sprite> {
     public get sprite(): Sprite {
         return this._object;
     }
-
-    protected applySize(width: number, height: number): void {
-        this._object.scale.set(width, height, 1);
-    }
 }

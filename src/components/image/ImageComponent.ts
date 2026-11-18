@@ -52,8 +52,4 @@ export class ImageComponent extends ImageComponentBase<
         super.dispose();
         this._object.geometry.dispose();
     }
-
-    protected applySize(width: number, height: number): void {
-        this._object.scale.set(width, height, 1);
-    }
 }

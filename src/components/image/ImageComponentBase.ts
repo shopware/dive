@@ -24,11 +24,11 @@ export type ImageObject<M extends ImageMaterial = ImageMaterial> = Object3D & {
 
 /**
  * The shared half of the image components: the image by URL, colour, opacity,
- * size, copying and disposal. A subclass builds the object, passes it to the
- * constructor and applies the size in {@link applySize}.
+ * size, copying and disposal. A subclass builds the object and passes it to
+ * the constructor.
  *
- * The object has to start at 1 x 1 m, the size reported before
- * {@link setSize} is called.
+ * The object has to be 1 x 1 m at scale 1: the size is its scale, and 1 x 1 m
+ * is what is reported before {@link setSize} is called.
  *
  * Every component showing one URL shares one loaded texture; {@link dispose}
  * gives it back.
@@ -41,7 +41,7 @@ export abstract class ImageComponentBase<
     private _image: string | null = null;
     private _width = 1;
     private _height = 1;
-    private _texture = new ImageResource();
+    private _resource = new ImageResource();
 
     /**
      * @param object - What the image is drawn on; it is contributed to the
@@ -91,9 +91,9 @@ export abstract class ImageComponentBase<
         this._image = url;
 
         if (url === null) {
-            this._texture.clear();
+            this._resource.clear();
         } else {
-            await this._texture.request(url);
+            await this._resource.request(url);
         }
 
         this._showImage();
@@ -127,7 +127,7 @@ export abstract class ImageComponentBase<
     public setSize(width: number, height: number): this {
         this._width = width;
         this._height = height;
-        this.applySize(width, height);
+        this._object.scale.set(width, height, 1);
 
         return this;
     }
@@ -154,23 +154,15 @@ export abstract class ImageComponentBase<
 
     /** Frees the material and gives back its image. */
     public dispose(): void {
-        this._texture.dispose();
+        this._resource.dispose();
         this._object.material.dispose();
     }
 
-    /**
-     * Gives the object its size.
-     *
-     * @param width - The width in metres.
-     * @param height - The height in metres.
-     */
-    protected abstract applySize(width: number, height: number): void;
-
     private _showImage(): void {
         const material = this._object.material;
-        if (material.map === this._texture.value) return;
+        if (material.map === this._resource.value) return;
 
-        material.map = this._texture.value;
+        material.map = this._resource.value;
         material.needsUpdate = true;
     }
 }
