@@ -1,18 +1,17 @@
 import { type Mesh } from 'three/webgpu';
-import { type DIVENode } from '../../engine/node/Node.ts';
 import { PRODUCT_LAYER_MASK } from '../../constants/VisibilityLayerMask.ts';
+import { type DIVENode } from '../../engine/node/Node.ts';
 
 /**
- * Calls `callback` for every mesh a geometry-based collider covers: the
- * visible product-layer meshes the owner's components contribute, read live.
+ * Calls `callback` for every mesh a mesh-based collider tests on `owner`.
  *
- * A hidden mesh or a mesh below a hidden object is skipped, and meshes of
- * child nodes belong to their own node, not this one.
+ * Those are the visible product-layer meshes the owner's components
+ * contribute; a mesh below a hidden object and meshes of child nodes are left
+ * out.
  *
- * @param owner - The collider's owner node.
- * @param callback - Called once per mesh.
+ * @internal
  */
-export function forEachProductMesh(
+export function forEachTestedMesh(
     owner: DIVENode,
     callback: (mesh: Mesh) => void,
 ): void {

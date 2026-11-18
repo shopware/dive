@@ -13,7 +13,7 @@ import {
     ColliderComponent,
     type ColliderHit,
 } from '../../engine/collider/ColliderComponent.ts';
-import { forEachProductMesh } from './forEachProductMesh.ts';
+import { forEachTestedMesh } from './forEachTestedMesh.ts';
 
 const _intersects: Intersection[] = [];
 const _inverse = new Matrix4();
@@ -118,7 +118,7 @@ export class MeshColliderComponent extends ColliderComponent {
     public refresh(): this {
         if (!this.isAttached) return this;
 
-        forEachProductMesh(this.owner, (mesh) => _dropStructure(mesh.geometry));
+        forEachTestedMesh(this.owner, (mesh) => _dropStructure(mesh.geometry));
 
         return this;
     }
@@ -126,7 +126,7 @@ export class MeshColliderComponent extends ColliderComponent {
     protected intersectRay(raycaster: Raycaster): ColliderHit | null {
         _intersects.length = 0;
 
-        forEachProductMesh(this.owner, (mesh) => {
+        forEachTestedMesh(this.owner, (mesh) => {
             if (_isDeformed(mesh)) {
                 // three caches a skinned mesh's sphere from the first pose it saw
                 if ((mesh as SkinnedMesh).isSkinnedMesh) {
