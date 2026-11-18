@@ -6,7 +6,9 @@ import { GroupLinksComponent } from '../components/grouplinks/GroupLinksComponen
 import {
     detachTransformControls,
     AmbientLightComponent,
-    ColliderComponent,
+    BoxColliderComponent,
+    PRODUCT_LAYER_MASK,
+    PROXY_LAYER_MASK,
     BoundingBoxComponent,
     DirectionalLightComponent,
     DIVEImageBasedLightDefaultSettings,
@@ -18,6 +20,7 @@ import {
     HemisphereLightComponent,
     MultiLineComponent,
     MeshComponent,
+    MeshColliderComponent,
     PointLightComponent,
     PrimitiveComponent,
     type DIVE,
@@ -34,7 +37,13 @@ import {
     CameraSchema,
     EntityTypeSchema,
 } from '../../types/index.ts';
-import { Color, Object3D, Vector3 } from 'three/webgpu';
+import {
+    Color,
+    Object3D,
+    Raycaster,
+    Vector3,
+    type Intersection,
+} from 'three/webgpu';
 
 /**
  * `three/webgpu` is deliberately NOT mocked beyond the image loaders. DIVENode and DIVEComponent both
@@ -179,6 +188,17 @@ const addEntity = async (
     if (node) await gateway.applyEntity(node, entity);
 
     return node;
+};
+
+/** casts on the product layer through the node's mesh collider, along -Z */
+const castAt = (node: DIVENode, origin: Vector3): Intersection[] => {
+    node.updateMatrixWorld(true);
+    const raycaster = new Raycaster(origin, new Vector3(0, 0, -1));
+    raycaster.layers.mask = PRODUCT_LAYER_MASK;
+    const intersects: Intersection[] = [];
+    node.getComponent(MeshColliderComponent)?.raycast(raycaster, intersects);
+
+    return intersects;
 };
 
 const makeGateway = (): EngineGateway => {
@@ -667,7 +687,7 @@ describe('plugins/state/EngineGateway', () => {
             expect(camera.parent).toBe(gateway.root);
             // a box of 12 edges and a pyramid of 8
             expect(camera.getComponent(MultiLineComponent)?.lineCount).toBe(20);
-            expect(camera.getComponent(ColliderComponent)?.isEmpty()).toBe(
+            expect(camera.getComponent(BoxColliderComponent)?.isEmpty()).toBe(
                 false,
             );
             expectVec(camera.position, cameraData.position);
@@ -683,13 +703,44 @@ describe('plugins/state/EngineGateway', () => {
                     id: 'c',
                     entityType: 'camera',
                 }) as DIVENode
-            ).requireComponent(ColliderComponent);
+            ).requireComponent(BoxColliderComponent);
             const center = collider.getCenter(new Vector3());
             const size = collider.getSize(new Vector3());
 
             // lens base on the node's plane, body behind it down to -0.4
             expectVec(size, { x: 0.24, y: 0.18, z: 0.4 });
             expectVec(center, { x: 0, y: 0, z: -0.2 });
+        });
+
+        it('should make the camera hittable on the proxy layer only', async () => {
+            const gateway = makeGateway();
+            await addEntity(gateway, cameraSchema('c'));
+            const camera = findEntity(gateway, {
+                id: 'c',
+                entityType: 'camera',
+            }) as DIVENode;
+            camera.updateMatrixWorld(true);
+            const collider = camera.requireComponent(BoxColliderComponent);
+
+            /** straight down onto the icon from above */
+            const raycaster = new Raycaster(
+                camera.localToWorld(new Vector3(0, 5, -0.2)),
+                new Vector3(0, -1, 0),
+            );
+            const intersects: Intersection[] = [];
+
+            raycaster.layers.mask = PRODUCT_LAYER_MASK;
+            collider.raycast(raycaster, intersects);
+            expect(intersects).toHaveLength(0);
+
+            raycaster.layers.mask = PROXY_LAYER_MASK;
+            collider.raycast(raycaster, intersects);
+            expect(intersects).toHaveLength(1);
+            expect(intersects[0].object).toBe(camera);
+            expect(camera.children).toHaveLength(
+                camera.requireComponent(MultiLineComponent).contributions
+                    .length,
+            );
         });
 
         it('should keep the camera icon behind the eye', async () => {
@@ -1611,6 +1662,17 @@ describe('plugins/state/EngineGateway', () => {
             expect(loadAsset).toHaveBeenCalledWith('b.glb');
             expect(model.userData.uri).toBe('b.glb');
         });
+
+        it('should make the loaded asset hittable through a mesh collider', async () => {
+            const gateway = makeGateway();
+            const model = (await addModel(gateway, 'a.glb')) as DIVENode;
+
+            const hits = castAt(model, new Vector3(0, 0, 10));
+
+            expect(hits).toHaveLength(1);
+            expect(hits[0].object).toBe(model);
+            expect(hits[0].distance).toBeCloseTo(9.5);
+        });
     });
 
     describe('removing a light', () => {
@@ -1857,6 +1919,26 @@ describe('plugins/state/EngineGateway', () => {
             await addEntity(gateway, primitiveData as PrimitiveSchema);
             const primitive = findEntity(gateway, primitiveData);
             expect(primitive).toBeDefined();
+        });
+
+        it('should make the primitive hittable through a mesh collider', async () => {
+            const gateway = makeGateway();
+            const primitive = (await addEntity(gateway, {
+                id: 'primitive-1',
+                entityType: 'primitive',
+                geometry: {
+                    name: 'box',
+                    width: 1,
+                    height: 1,
+                    depth: 1,
+                },
+            } as PrimitiveSchema)) as DIVENode;
+
+            const hits = castAt(primitive, new Vector3(0, 0.5, 10));
+
+            expect(hits).toHaveLength(1);
+            expect(hits[0].object).toBe(primitive);
+            expect(hits[0].distance).toBeCloseTo(9.5);
         });
 
         it('should handle primitive with null properties', async () => {

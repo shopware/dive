@@ -1,6 +1,7 @@
 export * from './Dive.ts';
 export * from './component/Component.ts';
 export * from './node/Node.ts';
+export * from './collider/ColliderComponent.ts';
 export * from './boundingbox/BoundingBox.ts';
 export * from './clock/Clock.ts';
 export * from './input/Input.ts';
