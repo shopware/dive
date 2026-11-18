@@ -2,6 +2,7 @@ export * from './camera/index.ts';
 export * from './collider/index.ts';
 export * from './grid/GridComponent.ts';
 export * from './groundprojection/index.ts';
+export * from './image/index.ts';
 export * from './line/index.ts';
 export * from './light/index.ts';
 export * from './mesh/index.ts';

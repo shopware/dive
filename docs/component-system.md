@@ -278,6 +278,23 @@ left out of the view unless it outlines itself.
 `DIVECameraComponent` composes two masks out of these: `EDITOR_VIEW_LAYER_MASK`
 is everything but `COORDINATE`, and `LIVE_VIEW_LAYER_MASK` is `PRODUCT | FLOOR`.
 
+Images show the difference in practice. A `SpriteComponent` is a billboard on
+`HELPER`: it always faces the camera and is an editing aid, kept out of the live
+view, bounds, exports and picking. An `ImageComponent` is a flat, double-sided
+plane on `PRODUCT` in the owner's XY plane, centred and facing +Z: fixed content
+that keeps its orientation, is drawn in the live view, counted in bounds and
+exported. Both take an image by URL (`setImage(url | null)`), `setColor`,
+`setOpacity` and `setSize(width, height)` in metres, and share one texture per
+URL. Neither adds a collider; add a `MeshColliderComponent` to make an image
+plane pickable.
+
+```ts
+const poster = new DIVENode();
+const image = poster.addComponent(new ImageComponent()).setSize(0.6, 0.9);
+poster.addComponent(new MeshColliderComponent());
+await image.setImage('poster.png');
+```
+
 Put your component's helper geometry on `HELPER` and its content on the owner's
 layer. Two things to know:
 
