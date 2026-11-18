@@ -7,8 +7,8 @@ import { type ColliderComponent } from './ColliderComponent.ts';
  * Calls `callback` for every collider on `object` and, if `recursive`, below it.
  *
  * `object` is always entered; below it the walk descends only into nodes that
- * no component contributed, and it stops at `visible === false`. Internal: the
- * collider raycaster and the collider debug view share it.
+ * no component contributed, and it stops at `visible === false`. The collider
+ * raycaster and the collider debug view share it internally.
  */
 export function traverseColliders(
     object: Object3D,

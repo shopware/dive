@@ -378,11 +378,11 @@ export class DIVENode
      * ground plane.
      *
      * Casts straight down from the bottom centre of its own bounds through the
-     * product-layer colliders, so it rests where the ray hits -- on a table top,
-     * or on the floor under an arch -- not on the top of what it hits. Content
+     * product-layer colliders, so it rests where the ray hits (on a table top,
+     * or on the floor under an arch), not on the top of what it hits. Content
      * without a collider and proxy colliders are no surface, as they are not
-     * pickable as products. The floor has no collider: a flat plane at y = 0 and
-     * "hit nothing" give the same answer, and the clamp to y = 0 also keeps
+     * pickable as products. The floor has no collider, since a flat plane at y = 0
+     * and "hit nothing" give the same answer, and the clamp to y = 0 also keeps
      * colliders parked below the floor from dragging this node underground.
      */
     public dropIt(): void {

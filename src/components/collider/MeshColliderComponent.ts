@@ -92,7 +92,7 @@ function _raycastStructure(
 
 /**
  * Calls `callback` with the vertex indices of every triangle `Mesh.raycast`
- * tests: within the draw range, and only in groups that have a material.
+ * tests, within the draw range and only in groups that have a material.
  */
 function forEachTriangle(
     mesh: Mesh,

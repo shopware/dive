@@ -862,7 +862,7 @@ describe('dive/node/DIVENode dropIt', () => {
     });
 
     it('should not rest on content without a collider', () => {
-        // pickable content only: a mesh nobody can hit is no surface
+        // a mesh nobody can pick is no surface
         const other = createModel();
         other.removeComponent(other.getComponent(MeshColliderComponent)!);
         other.position.set(0, 0.5, 0);
