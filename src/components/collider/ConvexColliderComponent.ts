@@ -4,7 +4,6 @@ import {
     Matrix4,
     Plane,
     Vector3,
-    type Object3D,
     type Raycaster,
 } from 'three/webgpu';
 import { ConvexHull } from 'three/examples/jsm/math/ConvexHull.js';
@@ -13,7 +12,7 @@ import {
     type ColliderHit,
 } from '../../engine/collider/ColliderComponent.ts';
 import { type DIVENode } from '../../engine/node/Node.ts';
-import { forEachTestedMesh } from './forEachTestedMesh.ts';
+import { forEachTestedMesh, toOwnerSpace } from './forEachTestedMesh.ts';
 import { pushBox, pushSegment } from '../../engine/collider/outline.ts';
 
 const _matrix = new Matrix4();
@@ -134,7 +133,7 @@ export class ConvexColliderComponent extends ColliderComponent {
 
         const points: Vector3[] = [];
         forEachTestedMesh(this.owner, (mesh) => {
-            this._toOwnerSpace(mesh, _matrix);
+            toOwnerSpace(mesh, this.owner, _matrix);
 
             // the raw attribute, so a skinned mesh counts in its bind pose
             const position = mesh.geometry.getAttribute('position');
@@ -152,20 +151,6 @@ export class ConvexColliderComponent extends ColliderComponent {
         this._flat = points.length > 0 && isFlat(points, this._box);
 
         if (points.length > 0 && !this._flat) this._hull.setFromPoints(points);
-    }
-
-    /** the transform from `object`'s space into the owner's, from local matrices */
-    private _toOwnerSpace(object: Object3D, target: Matrix4): Matrix4 {
-        target.identity();
-        for (
-            let current: Object3D | null = object;
-            current && current !== this.owner;
-            current = current.parent
-        ) {
-            target.premultiply(current.matrix);
-        }
-
-        return target;
     }
 }
 
@@ -197,12 +182,12 @@ function isFlat(points: Vector3[], box: Box3): boolean {
     const start = furthest((p) => p.distanceTo(points[0])).point;
     const end = furthest((p) => p.distanceTo(start)).point;
     _line.set(start, end);
-    const off = furthest((p) =>
+    const furthestFromLine = furthest((p) =>
         _line.closestPointToPoint(p, false, _closest).distanceTo(p),
     );
-    if (off.distance <= epsilon) return true;
+    if (furthestFromLine.distance <= epsilon) return true;
 
-    _plane.setFromCoplanarPoints(start, end, off.point);
+    _plane.setFromCoplanarPoints(start, end, furthestFromLine.point);
 
     return (
         furthest((p) => Math.abs(_plane.distanceToPoint(p))).distance <= epsilon

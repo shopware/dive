@@ -1,4 +1,4 @@
-import { type Mesh } from 'three/webgpu';
+import { type Matrix4, type Mesh, type Object3D } from 'three/webgpu';
 import { PRODUCT_LAYER_MASK } from '../../constants/VisibilityLayerMask.ts';
 import { type DIVENode } from '../../engine/node/Node.ts';
 
@@ -25,4 +25,29 @@ export function forEachTestedMesh(
             }),
         ),
     );
+}
+
+/**
+ * Writes the transform from `object`'s space into `owner`'s into `target`.
+ *
+ * Built from local matrices up to the owner, so it holds wherever the owner
+ * hangs and needs no world matrices.
+ *
+ * @internal
+ */
+export function toOwnerSpace(
+    object: Object3D,
+    owner: DIVENode,
+    target: Matrix4,
+): Matrix4 {
+    target.identity();
+    for (
+        let current: Object3D | null = object;
+        current && current !== owner;
+        current = current.parent
+    ) {
+        target.premultiply(current.matrix);
+    }
+
+    return target;
 }

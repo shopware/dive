@@ -419,6 +419,132 @@ describe('dive/collider/MeshColliderComponent', () => {
         });
     });
 
+    describe('outline', () => {
+        /** the outline's points, in the owner's space */
+        const outlinePoints = (): Vector3[] => {
+            node.updateMatrixWorld(true);
+            const target: number[] = [];
+            collider.outline(target);
+            const points: Vector3[] = [];
+            for (let i = 0; i < target.length; i += 3) {
+                points.push(new Vector3().fromArray(target, i));
+            }
+            return points;
+        };
+
+        /** a 2 m plane of two triangles at the origin */
+        const addPlane = (
+            geometry: BufferGeometry = new PlaneGeometry(2, 2),
+        ): Mesh => {
+            const model = node.addComponent(new ModelComponent());
+            const surface = new Mesh(geometry, new MeshStandardMaterial());
+            model.setFromGLTF(gltf(surface));
+            return surface;
+        };
+
+        it('should draw every tested triangle in the owner space', () => {
+            const surface = addPlane();
+            surface.position.set(0, 0, 2);
+
+            const points = outlinePoints();
+
+            // two triangles, three edges each, two points per edge
+            expect(points).toHaveLength(12);
+            points.forEach((point) => expect(point.z).toBeCloseTo(2));
+        });
+
+        it('should draw a skinned mesh in its current pose', () => {
+            const geometry = new PlaneGeometry(2, 2);
+            const count = geometry.attributes.position.count;
+            geometry.setAttribute(
+                'skinIndex',
+                new Uint16BufferAttribute(new Array(count * 4).fill(0), 4),
+            );
+            geometry.setAttribute(
+                'skinWeight',
+                new Float32BufferAttribute(
+                    Array.from({ length: count }, () => [1, 0, 0, 0]).flat(),
+                    4,
+                ),
+            );
+            const bone = new Bone();
+            const skinned = new SkinnedMesh(
+                geometry,
+                new MeshStandardMaterial(),
+            );
+            skinned.add(bone);
+            node.updateMatrixWorld(true);
+            skinned.bind(new Skeleton([bone]));
+            node.addComponent(new ModelComponent()).setFromGLTF(gltf(skinned));
+
+            bone.position.set(5, 0, 0);
+            node.updateMatrixWorld(true);
+            skinned.skeleton.update();
+
+            const points = outlinePoints();
+            expect(points).toHaveLength(12);
+            points.forEach((point) =>
+                expect(Math.abs(point.x - 5)).toBeCloseTo(1),
+            );
+        });
+
+        it('should draw a mesh with morph targets in its current pose', () => {
+            const geometry = new PlaneGeometry(2, 2);
+            const moved = geometry.attributes.position.clone();
+            for (let i = 0; i < moved.count; i++) {
+                moved.setZ(i, -3);
+            }
+            geometry.morphAttributes.position = [moved];
+            const surface = addPlane(geometry);
+            surface.updateMorphTargets();
+            surface.morphTargetInfluences![0] = 1;
+
+            const points = outlinePoints();
+            expect(points).toHaveLength(12);
+            points.forEach((point) => expect(point.z).toBeCloseTo(-3));
+        });
+
+        it('should draw only the triangles in the draw range', () => {
+            const geometry = new PlaneGeometry(2, 2);
+            geometry.setDrawRange(0, 3);
+            addPlane(geometry);
+
+            expect(outlinePoints()).toHaveLength(6);
+        });
+
+        it('should draw only the triangles in the draw range of a geometry without index', () => {
+            const geometry = new PlaneGeometry(2, 2).toNonIndexed();
+            geometry.setDrawRange(3, 3);
+            addPlane(geometry);
+
+            expect(outlinePoints()).toHaveLength(6);
+        });
+
+        it('should draw only the triangles of groups that have a material', () => {
+            const geometry = new PlaneGeometry(2, 2, 3, 1);
+            geometry.addGroup(0, 6, 0);
+            geometry.addGroup(6, 6, 1);
+            // a group whose material is missing is not tested
+            geometry.addGroup(12, 6, 2);
+            const model = node.addComponent(new ModelComponent());
+            model.setFromGLTF(
+                gltf(
+                    new Mesh(geometry, [
+                        new MeshStandardMaterial(),
+                        new MeshStandardMaterial(),
+                    ]),
+                ),
+            );
+
+            // four triangles
+            expect(outlinePoints()).toHaveLength(24);
+        });
+
+        it('should draw nothing without content', () => {
+            expect(outlinePoints()).toEqual([]);
+        });
+    });
+
     describe('copy', () => {
         it('should clone into a collider that tests its own owner', () => {
             addCube();

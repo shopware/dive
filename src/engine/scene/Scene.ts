@@ -388,19 +388,17 @@ export class DIVEScene extends Scene implements DIVETicker {
      * @param visible - Whether to draw the colliders.
      */
     public setColliderHelpersVisible(visible: boolean): void {
-        if (!this._colliderHelpers) {
-            if (!visible) return;
-            this._buildColliderHelpers();
-        }
+        if (!this._colliderHelpers && !visible) return;
 
-        this._colliderHelpers!.setVisible(visible);
+        const helpers = this._colliderHelpers ?? this._buildColliderHelpers();
+        helpers.setVisible(visible);
     }
 
     /**
      * Puts the collider debug view on its own node in the scene, outside the
      * root like the grid, so bounds, exports and the entity tree never see it.
      */
-    private _buildColliderHelpers(): void {
+    private _buildColliderHelpers(): ColliderHelpers {
         const node = new DIVENode();
         node.name = 'DIVEColliderHelpers';
 
@@ -409,6 +407,8 @@ export class DIVEScene extends Scene implements DIVETicker {
         );
 
         this.add(node);
+
+        return this._colliderHelpers;
     }
 
     /**

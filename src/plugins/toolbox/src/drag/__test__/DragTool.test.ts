@@ -528,6 +528,18 @@ describe('DragTool', () => {
             expect(drag()?.y).toBeCloseTo(0);
         });
 
+        it('should skip targets hidden in their hierarchy', () => {
+            const low = floor(0);
+            const group = new DIVENode();
+            group.visible = false;
+            scene.add(group);
+            const high = floor(2);
+            group.add(high);
+            dragTool.setDragRaycastTargets([high, low]);
+
+            expect(drag()?.y).toBeCloseTo(0);
+        });
+
         it('should search the whole scene again once the targets are cleared', () => {
             const low = floor(0);
             floor(2);

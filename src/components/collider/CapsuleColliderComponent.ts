@@ -157,7 +157,7 @@ export class CapsuleColliderComponent extends ColliderComponent {
         const b = _offset.dot(ray.direction);
         const c = _offset.lengthSq() - this.radius * this.radius;
 
-        return solve(1, 2 * b, c);
+        return solveQuadratic(1, 2 * b, c);
     }
 
     /** the finite cylinder between the end points, without its caps */
@@ -173,11 +173,11 @@ export class CapsuleColliderComponent extends ColliderComponent {
         _offset.addScaledVector(_axis, -offsetAlong);
         _direction.copy(ray.direction).addScaledVector(_axis, -directionAlong);
 
-        // parallel to the axis: the end spheres cover it
+        // the end spheres cover a ray parallel to the axis
         const a = _direction.lengthSq();
         if (a < 1e-12) return null;
 
-        const side = solve(
+        const side = solveQuadratic(
             a,
             2 * _offset.dot(_direction),
             _offset.lengthSq() - this.radius * this.radius,
@@ -198,7 +198,7 @@ export class CapsuleColliderComponent extends ColliderComponent {
 }
 
 /** the roots of `a t² + b t + c = 0`, or `null` without real ones */
-function solve(a: number, b: number, c: number): Span | null {
+function solveQuadratic(a: number, b: number, c: number): Span | null {
     const discriminant = b * b - 4 * a * c;
     if (discriminant < 0) return null;
 

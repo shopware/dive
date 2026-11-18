@@ -13,12 +13,14 @@ import {
     ColliderComponent,
     type ColliderHit,
 } from '../../engine/collider/ColliderComponent.ts';
-import { forEachTestedMesh } from './forEachTestedMesh.ts';
+import { forEachTestedMesh, toOwnerSpace } from './forEachTestedMesh.ts';
 import { pushSegment } from '../../engine/collider/outline.ts';
 
 const _intersects: Intersection[] = [];
 const _toOwner = new Matrix4();
-const _corners = [new Vector3(), new Vector3(), new Vector3()];
+const _a = new Vector3();
+const _b = new Vector3();
+const _c = new Vector3();
 const _inverse = new Matrix4();
 const _ray = new Ray();
 const _scale = new Vector3();
@@ -89,6 +91,44 @@ function _raycastStructure(
 }
 
 /**
+ * Calls `callback` with the vertex indices of every triangle `Mesh.raycast`
+ * tests, within the draw range and only in groups that have a material.
+ */
+function forEachTriangle(
+    mesh: Mesh,
+    callback: (a: number, b: number, c: number) => void,
+): void {
+    const { geometry, material } = mesh;
+    const index = geometry.getIndex();
+    const position = geometry.getAttribute('position');
+    if (!position) return;
+
+    const count = index ? index.count : position.count;
+    const vertex = (i: number): number => (index ? index.getX(i) : i);
+    const range = (start: number, end: number): void => {
+        const from = Math.max(start, geometry.drawRange.start);
+        const to = Math.min(
+            end,
+            count,
+            geometry.drawRange.start + geometry.drawRange.count,
+        );
+        for (let i = from; i + 2 < to; i += 3) {
+            callback(vertex(i), vertex(i + 1), vertex(i + 2));
+        }
+    };
+
+    if (Array.isArray(material)) {
+        for (const group of geometry.groups) {
+            if (!material[group.materialIndex ?? 0]) continue;
+            range(group.start, group.start + group.count);
+        }
+        return;
+    }
+
+    range(0, count);
+}
+
+/**
  * Makes its owner hittable exactly where its surfaces are.
  *
  * Tests the visible product-layer meshes the owner's components contribute,
@@ -127,34 +167,22 @@ export class MeshColliderComponent extends ColliderComponent {
     }
 
     /**
-     * @internal the wireframe of the tested triangles, read from world
-     * matrices, so the caller updates them first
+     * @internal the wireframe of the tested triangles, in their current pose
      */
     public outline(target: number[]): void {
-        const toOwnerSpace = _toOwner.copy(this.owner.matrixWorld).invert();
-
         forEachTestedMesh(this.owner, (mesh) => {
-            const matrix = new Matrix4().multiplyMatrices(
-                toOwnerSpace,
-                mesh.matrixWorld,
-            );
-            const position = mesh.geometry.getAttribute('position');
-            const index = mesh.geometry.getIndex();
-            const count = index ? index.count : position.count;
+            toOwnerSpace(mesh, this.owner, _toOwner);
 
-            for (let i = 0; i + 2 < count; i += 3) {
-                _corners.forEach((corner, k) =>
-                    corner
-                        .fromBufferAttribute(
-                            position,
-                            index ? index.getX(i + k) : i + k,
-                        )
-                        .applyMatrix4(matrix),
-                );
-                pushSegment(target, _corners[0], _corners[1]);
-                pushSegment(target, _corners[1], _corners[2]);
-                pushSegment(target, _corners[2], _corners[0]);
-            }
+            forEachTriangle(mesh, (a, b, c) => {
+                const corner = (index: number, point: Vector3): Vector3 =>
+                    mesh.getVertexPosition(index, point).applyMatrix4(_toOwner);
+                corner(a, _a);
+                corner(b, _b);
+                corner(c, _c);
+                pushSegment(target, _a, _b);
+                pushSegment(target, _b, _c);
+                pushSegment(target, _c, _a);
+            });
         });
     }
 

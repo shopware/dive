@@ -99,12 +99,14 @@ export abstract class ColliderComponent extends DIVEComponent {
      *
      * Line segments as flat coordinates, six per segment (start, then end),
      * for the collider debug view. Appends nothing while there is nothing to
-     * hit. Only called while attached.
+     * hit. Only called while attached. Draws nothing unless a subclass
+     * overrides it, so a collider without an outline is left out of the view.
      *
      * @param target - Where the coordinates are appended.
      * @internal
      */
-    public abstract outline(target: number[]): void;
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    public outline(target: number[]): void {}
 
     /**
      * The shape test: the nearest hit of the ray in world space, or `null`.
