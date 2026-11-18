@@ -14,7 +14,11 @@ interface pluginRegistration {
  * An import with a query (`?raw`, `?url`) stays internal: only Vite
  * understands those, so they must be resolved here, not by the consumer.
  */
-const externalDependencies = [/^three(?:\/[^?]*)?$/, '@tweenjs/tween.js'];
+const externalDependencies = [
+    /^three(?:\/[^?]*)?$/,
+    /^three-mesh-bvh(?:\/[^?]*)?$/,
+    '@tweenjs/tween.js',
+];
 
 // Function to update package.json exports
 function updatePackageJsonExports(registrations: pluginRegistration[]): void {

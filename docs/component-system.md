@@ -248,6 +248,14 @@ edits nothing announces, flat content tested as its box). Only the mesh
 collider is added by default, to models and primitives; the others are the
 caller's choice.
 
+A `MeshColliderComponent` hits a model exactly where its surfaces are, and a
+heavy model costs about as much to pick as a light one: each geometry gets a
+bounding volume hierarchy (`three-mesh-bvh`, used directly, three's prototypes
+stay untouched) on its first raycast, shared by every mesh using that geometry
+and freed when the geometry is disposed. A swapped geometry needs nothing; after
+editing a geometry in place, call `collider.refresh()`. Skinned meshes and
+meshes with morph targets skip the hierarchy and are hit in their current pose.
+
 `DIVENode.dropIt()` asks the same colliders: it casts straight down from the
 bottom centre of the node's bounds through `PRODUCT` colliders and rests the node
 on the hit point (a table top, the floor under an arch), or on y = 0 without a
