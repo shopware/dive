@@ -233,16 +233,20 @@ Picking does not raycast render meshes: the toolbox asks colliders through
 a pose, so a box or sphere collider on its node is what you click, and the hit
 is the entity's node. Nothing renders on `PROXY`; it only sorts colliders, so
 the toolbox can ask for entities (`PRODUCT | PROXY`) or models only (`PRODUCT`).
-
-The collider shapes, from exact to cheap: `MeshColliderComponent` tests every
-triangle of the owner's own product meshes; `ConvexColliderComponent` wraps the
-same meshes in their convex hull, rebuilt after a load or a component change
-(call `refresh()` after edits nothing announces; flat content falls back to its
-box); `BoxColliderComponent` and `SphereColliderComponent` are sized by hand.
-Nothing adds a convex collider by default.
 The gizmo stays on three's `Raycaster`: `UI` for DIVE's handles, and three's
 default layer only inside the transform controls' own helper. It must never be
 selectable as an object.
+
+The collider shapes, all sized in the owner's space: `BoxColliderComponent`
+(like `Box3`), `SphereColliderComponent` (like `Sphere`),
+`CapsuleColliderComponent` (like three's `Capsule`: `set(start, end, radius)`,
+one metre up Y with radius 0.5 by default, for elongated content),
+`MeshColliderComponent` (the owner's own product meshes) and
+`ConvexColliderComponent` (the convex hull of the same meshes, a cheap stand-in
+for heavy content; rebuilt after a load or a component change, `refresh()` after
+edits nothing announces, flat content tested as its box). Only the mesh
+collider is added by default, to models and primitives; the others are the
+caller's choice.
 
 `DIVECameraComponent` composes two masks out of these: `EDITOR_VIEW_LAYER_MASK`
 is everything but `COORDINATE`, and `LIVE_VIEW_LAYER_MASK` is `PRODUCT | FLOOR`.
