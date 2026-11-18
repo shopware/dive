@@ -23,6 +23,7 @@ import {
     MeshColliderComponent,
     PointLightComponent,
     PrimitiveComponent,
+    SphereColliderComponent,
     type DIVE,
 } from '@shopware-ag/dive';
 import { type State } from '../State.ts';
@@ -414,6 +415,75 @@ describe('plugins/state/EngineGateway', () => {
             expect(node.getComponents(DIVELightComponent)).toHaveLength(2);
             expect(node.getComponent(HemisphereLightComponent)).toBeDefined();
             expect(node.getComponent(DirectionalLightComponent)).toBeDefined();
+        });
+
+        it('should give a point light a sphere collider the size of its sphere mesh', () => {
+            const gateway = makeGateway();
+            const node = gateway['_instantiate']({
+                id: 'light-point',
+                entityType: 'light',
+                type: 'point',
+                name: 'Point Light',
+                visible: true,
+                intensity: 1,
+                enabled: true,
+                color: '#ffffff',
+            } as LightSchema) as DIVENode;
+
+            const collider = node.requireComponent(SphereColliderComponent);
+            expect(collider.radius).toBeCloseTo(0.1);
+            expect(collider.getCenter(new Vector3()).toArray()).toEqual([
+                0, 0, 0,
+            ]);
+        });
+
+        it('should make the point light hittable on the proxy layer only', () => {
+            const gateway = makeGateway();
+            const node = gateway['_instantiate']({
+                id: 'light-point',
+                entityType: 'light',
+                type: 'point',
+                name: 'Point Light',
+                visible: true,
+                intensity: 1,
+                enabled: true,
+                color: '#ffffff',
+            } as LightSchema) as DIVENode;
+            node.position.set(1, 2, 3);
+            node.updateMatrixWorld(true);
+            const collider = node.requireComponent(SphereColliderComponent);
+
+            /** grazing the sphere mesh's rim from above */
+            const raycaster = new Raycaster(
+                new Vector3(1.09, 10, 3),
+                new Vector3(0, -1, 0),
+            );
+            const intersects: Intersection[] = [];
+
+            raycaster.layers.mask = PRODUCT_LAYER_MASK;
+            collider.raycast(raycaster, intersects);
+            expect(intersects).toHaveLength(0);
+
+            raycaster.layers.mask = PROXY_LAYER_MASK;
+            collider.raycast(raycaster, intersects);
+            expect(intersects).toHaveLength(1);
+            expect(intersects[0].object).toBe(node);
+        });
+
+        it('should give no other light a collider', () => {
+            const gateway = makeGateway();
+            const node = gateway['_instantiate']({
+                id: 'light-ambient',
+                entityType: 'light',
+                type: 'ambient',
+                name: 'Ambient',
+                visible: true,
+                intensity: 1,
+                enabled: true,
+                color: '#ffffff',
+            } as LightSchema) as DIVENode;
+
+            expect(node.getComponent(SphereColliderComponent)).toBeUndefined();
         });
 
         it('should give an ambient light one ambient component', async () => {

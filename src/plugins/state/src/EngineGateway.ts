@@ -15,6 +15,7 @@ import {
     PrimitiveComponent,
     PointLightComponent,
     PROXY_LAYER_MASK,
+    SphereColliderComponent,
     type DIVE,
     type DIVEBackgroundSettings,
     type DIVEImageBasedLightSettings,
@@ -435,9 +436,22 @@ export class EngineGateway {
             case 'ambient':
                 node.addComponent(new AmbientLightComponent());
                 break;
-            case 'point':
-                node.addComponent(new PointLightComponent());
+            case 'point': {
+                const light = node.addComponent(new PointLightComponent());
+
+                // sized once to the sphere mesh, which does not change
+                const { geometry } = light.handle;
+                geometry.computeBoundingSphere();
+                const collider = node.addComponent(
+                    new SphereColliderComponent(),
+                );
+                collider.layers.mask = PROXY_LAYER_MASK;
+                collider.set(
+                    geometry.boundingSphere!.center,
+                    geometry.boundingSphere!.radius,
+                );
                 break;
+            }
             default:
                 throw new Error(
                     `EngineGateway.addEntity: Unknown light type: ${(entity as LightSchema).type}`,
