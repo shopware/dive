@@ -237,6 +237,14 @@ The gizmo stays on three's `Raycaster`: `UI` for DIVE's handles, and three's
 default layer only inside the transform controls' own helper. It must never be
 selectable as an object.
 
+The collider shapes, all sized in the owner's space: `BoxColliderComponent`
+(like `Box3`), `SphereColliderComponent` (like `Sphere`),
+`CapsuleColliderComponent` (like three's `Capsule`: `set(start, end, radius)`,
+one metre up Y with radius 0.5 by default, for elongated content) and
+`MeshColliderComponent` (the owner's own product meshes). Only the mesh
+collider is added by default, to models and primitives; the others are the
+caller's choice.
+
 `DIVECameraComponent` composes two masks out of these: `EDITOR_VIEW_LAYER_MASK`
 is everything but `COORDINATE`, and `LIVE_VIEW_LAYER_MASK` is `PRODUCT | FLOOR`.
 
