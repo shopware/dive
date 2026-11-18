@@ -247,7 +247,7 @@ jobs:
     #                   exit 1
     #                 fi
     #               done
-    publish-dry-run:
+    pack-dry-run:
         runs-on: ubuntu-latest
         needs: [unit, eslint, build, prettier-check, check-docs, typecheck]
         if: github.actor != 'dependabot[bot]'
@@ -265,5 +265,7 @@ jobs:
               run: yarn
             - name: Build DIVE
               run: yarn build
-            - name: Publish DIVE to npm (dry-run)
-              run: npm publish --dry-run --access public
+            # publish --dry-run asks the registry and fails on the version already
+            # published, which only the release PR bumps, so only pack is checked
+            - name: Pack DIVE (dry-run)
+              run: npm pack --dry-run
