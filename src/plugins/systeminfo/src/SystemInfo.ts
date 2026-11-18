@@ -9,6 +9,14 @@ export enum EBrowser {
     UNKNOWN = 'Unknown',
 }
 
+/**
+ * iOS browsers that run on WKWebView but still open AR Quick Look for
+ * `rel="ar"` links: Chrome, Edge, Firefox, the Google app and DuckDuckGo.
+ * Same list as Google's model-viewer uses.
+ */
+const AR_QUICK_LOOK_WEBVIEW_BROWSERS =
+    /CriOS\/|EdgiOS\/|FxiOS\/|GSA\/|DuckDuckGo\//;
+
 export class SystemInfo {
     private static _supportsWebXR: boolean = false;
     private static _webXRUnsupportedReason: EWebXRUnsupportedReason | null =
@@ -95,28 +103,62 @@ export class SystemInfo {
     }
 
     /**
-     * Checks if ARQuickLook is supported on the current device
-     * This checks for:
-     * 1. AR support via relList
+     * Checks if ARQuickLook is supported in the current browser.
      *
-     * Requirements:
-     * - iOS 12.0 or later
-     * - Safari browser (ARQuickLook is only supported in Safari)
-     * - Device with AR capabilities (iPhone/iPad with LiDAR scanner or ARKit support)
+     * - Safari itself (not a WKWebView app): `rel="ar"` support reported by `relList`.
+     * - WKWebView apps on iOS (every other iOS browser and in-app browsers): `relList`
+     *   is unreliable there (it reports `false` in Chrome, which does open AR Quick Look),
+     *   so only browsers known to handle `rel="ar"` links count as supported.
+     *   See {@link SystemInfo.getIsARQuickLookBrowser}.
      *
-     * Note: ARQuickLook is only available in Safari on iOS. Other browsers
-     * (Chrome, Firefox, etc.) do not support ARQuickLook, even on iOS.
+     * The device itself still needs ARKit support and iOS 12 or later.
      *
      * @returns boolean indicating if ARQuickLook is supported
-     * @throws ARCompatibilityError if ARQuickLook is not supported, with detailed browser information
      */
     public static getSupportsARQuickLook(): boolean {
-        const a = document.createElement('a');
-        if (a.relList.supports('ar')) {
-            return true;
+        if (this.getIsIOSWebView()) {
+            return this.getIsARQuickLookBrowser();
         }
 
-        return false;
+        const a = document.createElement('a');
+        return a.relList.supports('ar');
+    }
+
+    /**
+     * Checks if the page runs inside a WKWebView on iOS, which is the case for
+     * every iOS browser except Safari itself (Chrome, Brave, Firefox, ...) and
+     * for in-app browsers. Detected by `window.webkit.messageHandlers`, which
+     * Safari does not expose.
+     *
+     * @returns boolean indicating if the page runs in a WKWebView on iOS
+     */
+    public static getIsIOSWebView(): boolean {
+        if (this.getSystem() !== ESystem.IOS) {
+            return false;
+        }
+
+        const webkit = (
+            window as Window & { webkit?: { messageHandlers?: unknown } }
+        ).webkit;
+        return Boolean(webkit?.messageHandlers);
+    }
+
+    /**
+     * Checks if the current browser is one that can open AR Quick Look:
+     * Safari, or one of the WKWebView browsers known to handle `rel="ar"` links
+     * (Chrome, Edge, Firefox, the Google app, DuckDuckGo). Other WKWebView
+     * browsers such as Brave download the USDZ file instead.
+     *
+     * @returns boolean indicating if the browser can open AR Quick Look
+     */
+    public static getIsARQuickLookBrowser(): boolean {
+        if (this.getIsIOSWebView()) {
+            return AR_QUICK_LOOK_WEBVIEW_BROWSERS.test(
+                window.navigator.userAgent,
+            );
+        }
+
+        return this.getBrowser() === EBrowser.SAFARI;
     }
 
     /**

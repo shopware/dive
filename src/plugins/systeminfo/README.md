@@ -6,7 +6,7 @@ Provides information about the system's capabilities and performance.
 - WebXR support detection
 - AR capability checking
 - Device type detection
-- SceneViewer and AR Quick Look support detection
+- SceneViewer and AR Quick Look support detection, including which iOS browsers can open AR Quick Look (`getIsARQuickLookBrowser()`, `getIsIOSWebView()`)
 
 ## Usage
 ```ts

@@ -11,6 +11,7 @@ Activates native AR capabilities on mobile devices with one function call.
     - `auto`: User can scale in native environement
     - `fixed`: Scaling deactivated
 - Takes care of converting to USDZ for AR Quick Look (iOS) automatically.
+- AR Quick Look on iOS works in Safari, Chrome, Edge, Firefox, the Google app and DuckDuckGo. Other iOS browsers (e.g. Brave) and in-app browsers reject with `ARQuickLookUnsupportedBrowserError`.
 - Catches if launched on desktop system.
 
 

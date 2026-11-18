@@ -1,6 +1,8 @@
 export enum EARErrorType {
     AR_DESKTOP_PLATFORM_ERROR = 'ar-desktop-platform-error',
+    /** @deprecated No longer thrown, see AR_QUICK_LOOK_UNSUPPORTED_BROWSER_ERROR. */
     AR_QUICK_LOOK_NOT_SAFARI_ERROR = 'ar-quicklook-not-safari-error',
+    AR_QUICK_LOOK_UNSUPPORTED_BROWSER_ERROR = 'ar-quicklook-unsupported-browser-error',
     AR_QUICK_LOOK_VERSION_MISMATCH_ERROR = 'ar-quicklook-version-mismatch-error',
     AR_QUICK_LOOK_UNKNOWN_ERROR = 'ar-quicklook-unknown-error',
 }
@@ -25,11 +27,24 @@ export class ARDesktopPlatformError extends ARError {
     }
 }
 
+/**
+ * @deprecated No longer thrown. AR Quick Look also works in some non-Safari iOS
+ * browsers, so {@link ARQuickLookUnsupportedBrowserError} is thrown instead.
+ */
 export class ARQuickLookNotSafariError extends ARError {
     constructor() {
         super(
             'ARQuickLook on iOS is only available in Safari.',
             EARErrorType.AR_QUICK_LOOK_NOT_SAFARI_ERROR,
+        );
+    }
+}
+
+export class ARQuickLookUnsupportedBrowserError extends ARError {
+    constructor() {
+        super(
+            'ARQuickLook is not supported in this browser.',
+            EARErrorType.AR_QUICK_LOOK_UNSUPPORTED_BROWSER_ERROR,
         );
     }
 }
