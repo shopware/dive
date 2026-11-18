@@ -113,7 +113,7 @@ export class Toolbox {
                     this._selectionState,
                 ),
             ],
-            ['drag', new DragTool(controller)],
+            ['drag', new DragTool(scene, controller)],
         ]);
 
         // Bind event handlers
