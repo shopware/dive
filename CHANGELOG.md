@@ -1,5 +1,24 @@
 # Changelog
 
+## [4.4.0](https://github.com/shopware/dive/compare/v4.3.0...v4.4.0) (2026-11-18)
+
+
+### 🚀 Features
+
+* add camera visual representation and collider component. ([#284](https://github.com/shopware/dive/issues/284)) ([e4e6c09](https://github.com/shopware/dive/commit/e4e6c095306c66bf145db5b3d47ce5a5a0447d33))
+* collider extensions (BVH, convex, capsule, debug view, dropIt and drag through colliders) ([#293](https://github.com/shopware/dive/issues/293)) ([c59e1f0](https://github.com/shopware/dive/commit/c59e1f0bb6ba3da3f1d95dcd4e7f994f28656d1d))
+* collider family with box and mesh colliders ([#286](https://github.com/shopware/dive/issues/286)) ([4961d9a](https://github.com/shopware/dive/commit/4961d9a4c48626861e57d3d25cd89682499bff38))
+* image component, an image on a fixed plane ([#294](https://github.com/shopware/dive/issues/294)) ([efc411e](https://github.com/shopware/dive/commit/efc411e36b102c6b9fec715b71ef2410a794b505))
+* pick through colliders with a collider raycaster ([#288](https://github.com/shopware/dive/issues/288)) ([5552cdc](https://github.com/shopware/dive/commit/5552cdc53f76df543f93f8e6d3b23db543630b5a))
+* show the point light as a light bulb sprite ([#289](https://github.com/shopware/dive/issues/289)) ([c826ff1](https://github.com/shopware/dive/commit/c826ff1fb46193b92451c251129690db0d68c615))
+* sphere collider for the point light ([#287](https://github.com/shopware/dive/issues/287)) ([10838e0](https://github.com/shopware/dive/commit/10838e09fa6d1071d9b589a06f66819aacc82ab5))
+
+
+### 🐛 Bug Fixes
+
+* change pixel order on webgpu renderer. ([#280](https://github.com/shopware/dive/issues/280)) ([9a7cc3e](https://github.com/shopware/dive/commit/9a7cc3e58e54ea990d36394e32417e19b62e1ea6))
+* check for all supported browsers on iOS instead of only Safari t… ([#292](https://github.com/shopware/dive/issues/292)) ([7cc06a6](https://github.com/shopware/dive/commit/7cc06a6f9aa801e516f078d8e49873a2982a0d15))
+
 ## [4.3.0](https://github.com/shopware/dive/compare/v4.2.2...v4.3.0) (2026-10-26)
 
 
