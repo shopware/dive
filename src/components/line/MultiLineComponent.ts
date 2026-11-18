@@ -13,9 +13,9 @@ import { LineSegments2 } from 'three/examples/jsm/lines/webgpu/LineSegments2.js'
 import { HELPER_LAYER_MASK } from '../../constants/VisibilityLayerMask.ts';
 import { DIVEComponent } from '../../engine/component/Component.ts';
 
-/** Floats per line: two vertices, three components each. */
+// two vertices per line, three components each
 const FLOATS_PER_LINE = 6;
-/** Line-distance values per line: one per end. */
+// one line distance per end
 const DISTANCES_PER_LINE = 2;
 
 const INITIAL_CAPACITY = 8;
@@ -25,46 +25,42 @@ const _delta = new Vector3();
 /**
  * Whatever a caller identifies one of its lines by.
  *
- * Opaque here: this component never inspects a key, it only compares them. A
+ * Opaque here, this component never inspects a key, it only compares them. A
  * caller drawing lines to scene objects passes the objects; one drawing an
  * arbitrary set passes numbers or symbols.
  */
 export type DIVELineKey = unknown;
 
 /**
- * One line: where it is drawn, and where in the shared buffer it lives.
+ * One line, where it is drawn and which instance draws it.
  *
  * Named for the prefix rather than plain `Line`, which is three's own class.
  */
 type DIVELine = {
-    /**
-     * Index of this line's two vertices in the shared buffer.
-     *
-     * Fixed for the line's lifetime, so moving or hiding it never touches
-     * another line's vertices.
-     */
-    readonly slot: number;
     readonly start: Vector3;
     readonly end: Vector3;
     /**
-     * Whether the line is drawn, spelled as `Object3D.visible` is rather than
-     * inverted, so it reads the same way as everything else in the scene.
+     * The instance drawing this line, or `-1` while it is hidden.
+     *
+     * Only visible lines have an instance, so the buffers hold no collapsed
+     * segment that `Line2NodeMaterial` would have to normalize a zero
+     * direction for.
      */
-    visible: boolean;
+    index: number;
 };
 
 /**
  * Draws a set of independent line segments.
  *
- * A pure drawing primitive: it knows about points, nothing else. It does not
+ * A pure drawing primitive that knows about points, nothing else. It does not
  * watch the scene, does not care what the lines mean, and never decides when
  * they should change — a caller places lines and removes them. What keeps the
  * lines in sync with something else is that caller's job.
  *
  * All lines share **one** `LineSegments2`, so the whole set costs a single draw
- * call no matter how many there are. Each line owns a fixed slot, one instance,
- * in a shared buffer, so adding, moving or hiding one rewrites only that slot and
- * uploads only that range. Lines are drawn as screen-space quads, so they can be
+ * call no matter how many there are. Each visible line is one instance in a
+ * shared buffer, packed without gaps, so moving one rewrites only its instance
+ * and hiding or removing one moves the last instance into its place. Lines are drawn as screen-space quads, so they can be
  * wider than the one pixel WebGPU draws plain lines at, see {@link setLineWidth}.
  *
  * ### Lines are addressed by the caller's own identity for them
@@ -86,7 +82,7 @@ export class MultiLineComponent extends DIVEComponent {
 
     /**
      * The visible lines' bounds in the owner's space, like
-     * `BufferGeometry.boundingBox`: `null` until {@link computeBoundingBox} is
+     * `BufferGeometry.boundingBox`, `null` until {@link computeBoundingBox} is
      * called, and not kept up to date after that.
      */
     public boundingBox: Box3 | null = null;
@@ -95,26 +91,17 @@ export class MultiLineComponent extends DIVEComponent {
     private _geometry: LineSegmentsGeometry;
     private _material: Line2NodeMaterial;
 
-    /** start and end of every line, interleaved: six floats per slot */
+    // start and end of every drawn line, six floats per instance
     private _positions!: InstancedInterleavedBuffer;
-    /** where each line's start and end sit along the dash pattern */
+    // where each drawn line's start and end sit along the dash pattern
     private _distances!: InstancedInterleavedBuffer;
 
-    /**
-     * Every line, by the key it was placed under.
-     *
-     * The single piece of bookkeeping: which keys exist, where each line is
-     * drawn, which buffer slot it owns and whether it is visible. Those were four
-     * separate containers keyed by a handle, which had to be kept in step with
-     * each other and with whatever the caller kept on its own side.
-     */
+    // every line by the key it was placed under, hidden ones included
     private _byKey: Map<DIVELineKey, DIVELine> = new Map();
-    /** Slots freed by removed lines, reused before the buffer grows. */
-    private _freeSlots: number[] = [];
+    // the visible lines in instance order, always as long as instanceCount
+    private _drawn: DIVELine[] = [];
 
     private _capacity: number = INITIAL_CAPACITY;
-    /** One past the highest slot ever used, i.e. what has to be drawn. */
-    private _highWater: number = 0;
 
     constructor() {
         super();
@@ -175,32 +162,21 @@ export class MultiLineComponent extends DIVEComponent {
         if (existing) {
             existing.start.set(start.x, start.y, start.z);
             existing.end.set(end.x, end.y, end.z);
-            this._writeLine(existing);
+            if (existing.index !== -1) this._writeLine(existing);
             return;
         }
 
-        const slot = this._freeSlots.pop() ?? this._byKey.size;
-        if (slot >= this._capacity) this._grow();
-
         const line: DIVELine = {
-            slot,
             start: new Vector3(start.x, start.y, start.z),
             end: new Vector3(end.x, end.y, end.z),
-            visible: true,
+            index: -1,
         };
         this._byKey.set(key, line);
-
-        if (slot + 1 > this._highWater) {
-            this._highWater = slot + 1;
-            this._geometry.instanceCount = this._highWater;
-        }
-
-        this._writeLine(line);
+        this._draw(line);
     }
 
     /**
-     * Removes the line for a key and frees its slot for reuse. Does nothing if
-     * there is no such line.
+     * Removes the line for a key. Does nothing if there is no such line.
      *
      * @param key - Whatever the caller identifies this line by.
      */
@@ -209,13 +185,7 @@ export class MultiLineComponent extends DIVEComponent {
         if (!line) return;
 
         this._byKey.delete(key);
-        this._freeSlots.push(line.slot);
-
-        /**
-         * collapse rather than repack: every other line keeps its slot, so none
-         * of them has to be rewritten
-         */
-        this._collapseSlot(line.slot);
+        this._undraw(line);
     }
 
     /** Whether a line is currently drawn for this key. */
@@ -226,8 +196,8 @@ export class MultiLineComponent extends DIVEComponent {
     /**
      * Shows or hides a single line.
      *
-     * A hidden line keeps its slot and is collapsed to zero length, so toggling
-     * it back costs one range upload and never reshuffles the buffer.
+     * A hidden line keeps its key and endpoints but has no instance, so it is
+     * not drawn at all. Hiding or showing one rewrites at most one instance.
      *
      * @param key - Whatever the caller identifies this line by.
      * @param visible - Whether it should be drawn.
@@ -236,8 +206,8 @@ export class MultiLineComponent extends DIVEComponent {
         const line = this._byKey.get(key);
         if (!line) return;
 
-        line.visible = visible;
-        this._writeLine(line);
+        if (visible) this._draw(line);
+        else this._undraw(line);
     }
 
     /**
@@ -289,15 +259,14 @@ export class MultiLineComponent extends DIVEComponent {
     /**
      * Computes {@link boundingBox} from the visible lines.
      *
-     * From the lines, not the buffer: unused and hidden slots sit at the origin
-     * and would always be enclosed. Empty when no line is visible.
+     * From the lines, not the buffer, whose instances past `instanceCount`
+     * hold stale data. Empty when no line is visible.
      */
     public computeBoundingBox(): void {
         if (this.boundingBox === null) this.boundingBox = new Box3();
 
         const box = this.boundingBox.makeEmpty();
-        this._byKey.forEach((line) => {
-            if (!line.visible) return;
+        this._drawn.forEach((line) => {
             box.expandByPoint(line.start).expandByPoint(line.end);
         });
     }
@@ -305,14 +274,12 @@ export class MultiLineComponent extends DIVEComponent {
     /**
      * Removes every line.
      *
-     * Deliberately not called `clear`: that is `Object3D.clear()`, which removes
+     * Deliberately not called `clear`, since `Object3D.clear()` removes
      * children, and overriding it with a different meaning would be a trap.
      */
     public clearLines(): void {
-        this._byKey.forEach((line) => this._collapseSlot(line.slot));
         this._byKey.clear();
-        this._freeSlots = [];
-        this._highWater = 0;
+        this._drawn = [];
         this._geometry.instanceCount = 0;
     }
 
@@ -343,7 +310,7 @@ export class MultiLineComponent extends DIVEComponent {
         this._geometry.dispose();
         this._material.dispose();
         this._byKey.clear();
-        this._freeSlots = [];
+        this._drawn = [];
     }
 
     private _createBuffer(stride: number): InstancedInterleavedBuffer {
@@ -388,16 +355,42 @@ export class MultiLineComponent extends DIVEComponent {
         );
     }
 
-    /** Writes a line's endpoints into its slot, or collapses it when hidden. */
-    private _writeLine(line: DIVELine): void {
-        if (!line.visible) {
-            this._collapseSlot(line.slot);
-            return;
+    /** Gives a hidden line the next instance. Does nothing if it is drawn. */
+    private _draw(line: DIVELine): void {
+        if (line.index !== -1) return;
+
+        if (this._drawn.length >= this._capacity) this._grow();
+
+        line.index = this._drawn.length;
+        this._drawn.push(line);
+        this._geometry.instanceCount = this._drawn.length;
+
+        this._writeLine(line);
+    }
+
+    /**
+     * Takes a line's instance away and moves the last drawn line into it, so
+     * the drawn instances stay packed. Does nothing if it is hidden.
+     */
+    private _undraw(line: DIVELine): void {
+        if (line.index === -1) return;
+
+        const last = this._drawn.pop()!;
+        if (last !== line) {
+            last.index = line.index;
+            this._drawn[last.index] = last;
+            this._writeLine(last);
         }
 
-        const { slot, start, end } = line;
+        line.index = -1;
+        this._geometry.instanceCount = this._drawn.length;
+    }
 
-        const offset = slot * FLOATS_PER_LINE;
+    /** Writes a drawn line's endpoints and distances into its instance. */
+    private _writeLine(line: DIVELine): void {
+        const { index, start, end } = line;
+
+        const offset = index * FLOATS_PER_LINE;
         const positions = this._positions.array as Float32Array;
         positions[offset] = start.x;
         positions[offset + 1] = start.y;
@@ -411,40 +404,14 @@ export class MultiLineComponent extends DIVEComponent {
          * accumulates across lines and lets a short line vanish inside a gap
          */
         const distances = this._distances.array as Float32Array;
-        const distanceOffset = slot * DISTANCES_PER_LINE;
+        const distanceOffset = index * DISTANCES_PER_LINE;
         distances[distanceOffset] = 0;
         distances[distanceOffset + 1] = _delta.subVectors(end, start).length();
 
-        this._markSlotDirty(slot);
-    }
-
-    private _collapseSlot(slot: number): void {
-        const offset = slot * FLOATS_PER_LINE;
-        (this._positions.array as Float32Array).fill(
-            0,
-            offset,
-            offset + FLOATS_PER_LINE,
-        );
-
-        const distanceOffset = slot * DISTANCES_PER_LINE;
-        (this._distances.array as Float32Array).fill(
-            0,
-            distanceOffset,
-            distanceOffset + DISTANCES_PER_LINE,
-        );
-
-        this._markSlotDirty(slot);
-    }
-
-    /** Uploads just this slot's range instead of the whole buffer. */
-    private _markSlotDirty(slot: number): void {
-        this._positions.addUpdateRange(slot * FLOATS_PER_LINE, FLOATS_PER_LINE);
+        // upload just this instance's range instead of the whole buffer
+        this._positions.addUpdateRange(offset, FLOATS_PER_LINE);
         this._positions.needsUpdate = true;
-
-        this._distances.addUpdateRange(
-            slot * DISTANCES_PER_LINE,
-            DISTANCES_PER_LINE,
-        );
+        this._distances.addUpdateRange(distanceOffset, DISTANCES_PER_LINE);
         this._distances.needsUpdate = true;
     }
 

@@ -24,7 +24,7 @@ describe('dive/line/MultiLineComponent', () => {
         nextKey = 0;
     });
 
-    /** One instance attribute of the line geometry, read per slot. */
+    /** One instance attribute of the line geometry, read per instance. */
     const instanceAttribute = (name: string): InterleavedBufferAttribute =>
         lines.lines.geometry.getAttribute(name) as InterleavedBufferAttribute;
 
@@ -37,12 +37,12 @@ describe('dive/line/MultiLineComponent', () => {
         ];
     };
 
-    /** Reads the endpoint written for a slot. */
+    /** Reads the endpoint written for an instance. */
     const endpointAt = (slot: number): number[] => pointAt('instanceEnd', slot);
 
     const startAt = (slot: number): number[] => pointAt('instanceStart', slot);
 
-    /** Line distances of a slot's start and end, which dashes are measured by. */
+    /** Line distances of an instance's start and end, which dashes are measured by. */
     const distancesAt = (slot: number): number[] => [
         instanceAttribute('instanceDistanceStart').getX(slot),
         instanceAttribute('instanceDistanceEnd').getX(slot),
@@ -51,11 +51,30 @@ describe('dive/line/MultiLineComponent', () => {
     /** One instance per line, so this is how many lines are drawn. */
     const drawnLines = (): number => lines.lines.geometry.instanceCount;
 
+    /** Every instance the GPU draws, as start and end, in buffer order. */
+    const drawnSegments = (): number[][][] =>
+        Array.from({ length: drawnLines() }, (_, i) => [
+            startAt(i),
+            endpointAt(i),
+        ]);
+
+    /** The drawn instances' end points, sorted, so the order does not matter. */
+    const drawnEnds = (): number[][] =>
+        drawnSegments()
+            .map(([, end]) => end)
+            .sort((a, b) => a[0] - b[0] || a[1] - b[1] || a[2] - b[2]);
+
+    /** How many drawn instances start and end in the same point. */
+    const degenerateSegments = (): number =>
+        drawnSegments().filter(([start, end]) =>
+            start.every((value, i) => value === end[i]),
+        ).length;
+
     /**
      * Places a line under a key nobody else uses, and returns that key.
      *
-     * Most tests here are about slots, buffers and draw ranges, and only need
-     * *some* identity per line.
+     * Most tests here are about instances, buffers and upload ranges, and only
+     * need *some* identity per line.
      */
     const addLine = (start: Vector3Like, end: Vector3Like): number => {
         const key = nextKey++;
@@ -181,7 +200,7 @@ describe('dive/line/MultiLineComponent', () => {
 
             lines.setLineFor(second, ORIGIN, { x: 7, y: 0, z: 0 });
 
-            // second slot only: offset 6, six floats
+            // the second instance only, six floats from offset 6
             expect(positionBuffer().updateRanges).toEqual([
                 { start: 6, count: 6 },
             ]);
@@ -250,41 +269,44 @@ describe('dive/line/MultiLineComponent', () => {
         });
     });
 
-    describe('slots', () => {
-        it('should collapse a removed line', () => {
+    describe('instances', () => {
+        it('should stop drawing a removed line', () => {
             const key = addLine(ORIGIN, { x: 4, y: 0, z: 0 });
 
             lines.removeLineFor(key);
 
             expect(lines.lineCount).toBe(0);
-            expect(endpointAt(0)).toEqual([0, 0, 0]);
+            expect(drawnLines()).toBe(0);
         });
 
         it('should ignore removing an unknown key', () => {
             expect(() => lines.removeLineFor(42)).not.toThrow();
         });
 
-        it('should reuse a freed slot', () => {
+        it('should draw a line added after a removal', () => {
             const first = addLine(ORIGIN, { x: 1, y: 0, z: 0 });
             addLine(ORIGIN, { x: 2, y: 0, z: 0 });
 
             lines.removeLineFor(first);
             addLine(ORIGIN, { x: 3, y: 0, z: 0 });
 
-            // the freed slot took the new line, so the buffer did not grow
-            expect(endpointAt(0)).toEqual([3, 0, 0]);
-            expect(drawnLines()).toBe(2);
+            expect(drawnEnds()).toEqual([
+                [2, 0, 0],
+                [3, 0, 0],
+            ]);
         });
 
-        it('should not disturb other lines when one is removed', () => {
+        it('should keep the other lines when one is removed', () => {
             addLine(ORIGIN, { x: 1, y: 0, z: 0 });
             const second = addLine(ORIGIN, { x: 2, y: 0, z: 0 });
             addLine(ORIGIN, { x: 3, y: 0, z: 0 });
 
             lines.removeLineFor(second);
 
-            expect(endpointAt(0)).toEqual([1, 0, 0]);
-            expect(endpointAt(2)).toEqual([3, 0, 0]);
+            expect(drawnEnds()).toEqual([
+                [1, 0, 0],
+                [3, 0, 0],
+            ]);
         });
 
         it('should grow beyond its initial capacity', () => {
@@ -325,6 +347,73 @@ describe('dive/line/MultiLineComponent', () => {
         });
     });
 
+    describe('drawn instances', () => {
+        /**
+         * a zero-length segment makes Line2NodeMaterial normalize a zero
+         * direction, which is undefined in WGSL, so none may be drawn
+         */
+        it('should draw only the visible lines after hiding, removing and clearing', () => {
+            const a = addLine(ORIGIN, { x: 1, y: 0, z: 0 });
+            const b = addLine(ORIGIN, { x: 2, y: 0, z: 0 });
+            addLine(ORIGIN, { x: 3, y: 0, z: 0 });
+            const d = addLine(ORIGIN, { x: 4, y: 0, z: 0 });
+
+            lines.setLineVisibleFor(b, false);
+            lines.removeLineFor(a);
+
+            expect(drawnEnds()).toEqual([
+                [3, 0, 0],
+                [4, 0, 0],
+            ]);
+            expect(degenerateSegments()).toBe(0);
+
+            lines.setLineVisibleFor(b, true);
+            lines.setLineVisibleFor(d, false);
+
+            expect(drawnEnds()).toEqual([
+                [2, 0, 0],
+                [3, 0, 0],
+            ]);
+            expect(degenerateSegments()).toBe(0);
+
+            lines.clearLines();
+
+            expect(drawnSegments()).toEqual([]);
+        });
+
+        it('should keep each drawn line with its own dash distances', () => {
+            const a = addLine(ORIGIN, { x: 1, y: 0, z: 0 });
+            addLine({ x: 5, y: 0, z: 0 }, { x: 7, y: 0, z: 0 });
+
+            lines.removeLineFor(a);
+
+            expect(drawnLines()).toBe(1);
+            expect(endpointAt(0)).toEqual([7, 0, 0]);
+            expect(distancesAt(0)).toEqual([0, 2]);
+        });
+
+        it('should not draw a hidden line that moves', () => {
+            const key = addLine(ORIGIN, { x: 1, y: 0, z: 0 });
+            lines.setLineVisibleFor(key, false);
+
+            lines.setLineFor(key, ORIGIN, { x: 6, y: 0, z: 0 });
+            expect(drawnLines()).toBe(0);
+
+            lines.setLineVisibleFor(key, true);
+            expect(drawnEnds()).toEqual([[6, 0, 0]]);
+        });
+
+        it('should not draw a line twice when it is shown twice', () => {
+            const key = addLine(ORIGIN, { x: 1, y: 0, z: 0 });
+
+            lines.setLineVisibleFor(key, true);
+            lines.setLineVisibleFor(key, false);
+            lines.setLineVisibleFor(key, false);
+
+            expect(drawnLines()).toBe(0);
+        });
+    });
+
     describe('visibility', () => {
         it('should hide and show the whole set', () => {
             addLine(ORIGIN, { x: 1, y: 0, z: 0 });
@@ -344,15 +433,14 @@ describe('dive/line/MultiLineComponent', () => {
             expect(lines.lines.visible).toBe(false);
         });
 
-        it('should collapse a single hidden line', () => {
+        it('should stop drawing a single hidden line', () => {
             addLine(ORIGIN, { x: 1, y: 0, z: 0 });
             const second = addLine(ORIGIN, { x: 2, y: 0, z: 0 });
 
             lines.setLineVisibleFor(second, false);
 
-            expect(endpointAt(0)).toEqual([1, 0, 0]);
-            expect(endpointAt(1)).toEqual([0, 0, 0]);
-            expect(distancesAt(1)).toEqual([0, 0]);
+            expect(drawnEnds()).toEqual([[1, 0, 0]]);
+            expect(lines.hasLineFor(second)).toBe(true);
         });
 
         it('should restore a single line', () => {
@@ -364,16 +452,7 @@ describe('dive/line/MultiLineComponent', () => {
             expect(endpointAt(0)).toEqual([4, 0, 0]);
         });
 
-        it('should keep a hidden line collapsed when it moves', () => {
-            const key = addLine(ORIGIN, { x: 1, y: 0, z: 0 });
-            lines.setLineVisibleFor(key, false);
-
-            lines.setLineFor(key, ORIGIN, { x: 6, y: 0, z: 0 });
-
-            expect(endpointAt(0)).toEqual([0, 0, 0]);
-        });
-
-        it('should make a line visible again when its slot is reused', () => {
+        it('should draw a new line under a key that was hidden and removed', () => {
             const key = addLine(ORIGIN, { x: 1, y: 0, z: 0 });
             lines.setLineVisibleFor(key, false);
             lines.removeLineFor(key);
@@ -425,7 +504,7 @@ describe('dive/line/MultiLineComponent', () => {
 
             expect(lines.lineWidth).toBe(3);
             expect(material().linewidth).toBe(3);
-            // pixels, not world units: the width stays the same at any distance
+            // pixels, not world units, so the width stays the same at any distance
             expect(material().worldUnits).toBe(false);
         });
 
@@ -440,7 +519,7 @@ describe('dive/line/MultiLineComponent', () => {
     });
 
     it('should not watch the scene graph', () => {
-        // the whole point of the split: adding children means nothing here
+        // adding children means nothing here, which is the point of the split
         const node = new DIVENode();
         node.addComponent(lines);
         node.add(new DIVENode());
