@@ -1,7 +1,6 @@
 import { Raycaster, type Intersection, type Object3D } from 'three/webgpu';
-import { contributedBy } from '../component/Component.ts';
 import { type DIVENode } from '../node/Node.ts';
-import { type ColliderComponent } from '../collider/ColliderComponent.ts';
+import { traverseColliders } from '../collider/traverseColliders.ts';
 
 /**
  * The collider raycaster: three's `Raycaster` API, but it tests colliders only.
@@ -68,22 +67,11 @@ export class DIVERaycaster extends Raycaster {
         recursive: boolean,
         intersects: Intersection[],
     ): void {
-        if (!object.visible) return;
-
-        if ('isDIVENode' in object) {
-            for (const component of (object as DIVENode).components) {
-                if (!('isColliderComponent' in component)) continue;
-                (component as ColliderComponent).raycast(this, intersects);
-            }
-        }
-
-        if (!recursive) return;
-
-        for (const child of object.children) {
-            if (!('isDIVENode' in child)) continue;
-            if (contributedBy(child)) continue;
-            this._collect(child, true, intersects);
-        }
+        traverseColliders(
+            object,
+            (collider) => collider.raycast(this, intersects),
+            recursive,
+        );
     }
 }
 
