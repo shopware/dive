@@ -14,6 +14,7 @@ import {
 } from '../../engine/collider/ColliderComponent.ts';
 import { type DIVENode } from '../../engine/node/Node.ts';
 import { forEachTestedMesh } from './forEachTestedMesh.ts';
+import { pushBox, pushSegment } from '../../engine/collider/outline.ts';
 
 const _matrix = new Matrix4();
 const _line = new Line3();
@@ -86,6 +87,29 @@ export class ConvexColliderComponent extends ColliderComponent {
         previousOwner.removeEventListener('componentremoved', this._invalidate);
 
         this._stale = true;
+    }
+
+    /** @internal the hull's edges, or the box of flat content */
+    public outline(target: number[]): void {
+        if (this._stale) this._build();
+
+        if (this._flat) {
+            pushBox(target, this._box);
+            return;
+        }
+
+        // each edge once, though both of its faces list it
+        const drawn = new Set<object>();
+        for (const face of this._hull.faces) {
+            let edge = face.edge;
+            do {
+                if (!drawn.has(edge.twin)) {
+                    drawn.add(edge);
+                    pushSegment(target, edge.tail().point, edge.head().point);
+                }
+                edge = edge.next;
+            } while (edge !== face.edge);
+        }
     }
 
     protected intersectRay(raycaster: Raycaster): ColliderHit | null {

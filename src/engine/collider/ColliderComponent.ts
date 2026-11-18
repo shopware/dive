@@ -95,6 +95,18 @@ export abstract class ColliderComponent extends DIVEComponent {
     }
 
     /**
+     * Appends the collider's outline to `target`, in the owner's space.
+     *
+     * Line segments as flat coordinates, six per segment (start, then end),
+     * for the collider debug view. Appends nothing while there is nothing to
+     * hit. Only called while attached.
+     *
+     * @param target - Where the coordinates are appended.
+     * @internal
+     */
+    public abstract outline(target: number[]): void;
+
+    /**
      * The shape test: the nearest hit of the ray in world space, or `null`.
      *
      * Only called while attached, so `this.owner` is safe.

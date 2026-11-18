@@ -248,6 +248,12 @@ edits nothing announces, flat content tested as its box). Only the mesh
 collider is added by default, to models and primitives; the others are the
 caller's choice.
 
+To see what can be hit, call `scene.setColliderHelpersVisible(true)`. It
+outlines every collider the collider raycaster would test below the root,
+product colliders green and proxy colliders orange, on `HELPER`, so only the
+editor view shows it. It is redrawn every frame while on, so it follows moves,
+loads and visibility, and costs nothing while off.
+
 `DIVECameraComponent` composes two masks out of these: `EDITOR_VIEW_LAYER_MASK`
 is everything but `COORDINATE`, and `LIVE_VIEW_LAYER_MASK` is `PRODUCT | FLOOR`.
 

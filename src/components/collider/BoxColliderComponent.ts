@@ -3,6 +3,7 @@ import {
     ColliderComponent,
     type ColliderHit,
 } from '../../engine/collider/ColliderComponent.ts';
+import { pushBox } from '../../engine/collider/outline.ts';
 
 /**
  * Makes its owner hittable as a box.
@@ -77,6 +78,11 @@ export class BoxColliderComponent extends ColliderComponent {
         this.set(source._box.min, source._box.max);
 
         return this;
+    }
+
+    /** @internal */
+    public outline(target: number[]): void {
+        if (!this._box.isEmpty()) pushBox(target, this._box);
     }
 
     protected intersectRay(raycaster: Raycaster): ColliderHit | null {

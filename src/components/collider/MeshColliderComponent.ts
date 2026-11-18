@@ -1,11 +1,19 @@
-import { type Intersection, type Raycaster } from 'three/webgpu';
+import {
+    Matrix4,
+    Vector3,
+    type Intersection,
+    type Raycaster,
+} from 'three/webgpu';
 import {
     ColliderComponent,
     type ColliderHit,
 } from '../../engine/collider/ColliderComponent.ts';
 import { forEachTestedMesh } from './forEachTestedMesh.ts';
+import { pushSegment } from '../../engine/collider/outline.ts';
 
 const _intersects: Intersection[] = [];
+const _toOwner = new Matrix4();
+const _corners = [new Vector3(), new Vector3(), new Vector3()];
 
 /**
  * Makes its owner hittable exactly where its surfaces are.
@@ -27,6 +35,38 @@ export class MeshColliderComponent extends ColliderComponent {
         super();
 
         this.name = 'MeshColliderComponent';
+    }
+
+    /**
+     * @internal the wireframe of the tested triangles, read from world
+     * matrices, so the caller updates them first
+     */
+    public outline(target: number[]): void {
+        const toOwnerSpace = _toOwner.copy(this.owner.matrixWorld).invert();
+
+        forEachTestedMesh(this.owner, (mesh) => {
+            const matrix = new Matrix4().multiplyMatrices(
+                toOwnerSpace,
+                mesh.matrixWorld,
+            );
+            const position = mesh.geometry.getAttribute('position');
+            const index = mesh.geometry.getIndex();
+            const count = index ? index.count : position.count;
+
+            for (let i = 0; i + 2 < count; i += 3) {
+                _corners.forEach((corner, k) =>
+                    corner
+                        .fromBufferAttribute(
+                            position,
+                            index ? index.getX(i + k) : i + k,
+                        )
+                        .applyMatrix4(matrix),
+                );
+                pushSegment(target, _corners[0], _corners[1]);
+                pushSegment(target, _corners[1], _corners[2]);
+                pushSegment(target, _corners[2], _corners[0]);
+            }
+        });
     }
 
     protected intersectRay(raycaster: Raycaster): ColliderHit | null {
