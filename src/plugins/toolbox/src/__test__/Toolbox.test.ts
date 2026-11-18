@@ -7,6 +7,7 @@ import {
     Scene,
 } from 'three/webgpu';
 import { Toolbox } from '../Toolbox.ts';
+import { DragTool } from '../drag/DragTool.ts';
 import { type Tool } from '../Tool.ts';
 import { type PointerContext } from '../PointerContext.ts';
 import {
@@ -165,6 +166,10 @@ describe('Toolbox', () => {
             expect(toolbox.getTool('select')).toBeDefined();
             expect(toolbox.getTool('transform')).toBeDefined();
             expect(toolbox.getTool('drag')).toBeDefined();
+        });
+
+        it('should hand the drag tool its scene', () => {
+            expect(DragTool).toHaveBeenCalledWith(mockScene, mockController);
         });
     });
 

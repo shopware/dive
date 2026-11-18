@@ -233,6 +233,8 @@ Picking does not raycast render meshes: the toolbox asks colliders through
 a pose, so a box or sphere collider on its node is what you click, and the hit
 is the entity's node. Nothing renders on `PROXY`; it only sorts colliders, so
 the toolbox can ask for entities (`PRODUCT | PROXY`) or models only (`PRODUCT`).
+Dragging slides over the same colliders, on `PRODUCT` only: a camera or a light
+is never a surface, and neither is content without a collider.
 The gizmo stays on three's `Raycaster`: `UI` for DIVE's handles, and three's
 default layer only inside the transform controls' own helper. It must never be
 selectable as an object.
