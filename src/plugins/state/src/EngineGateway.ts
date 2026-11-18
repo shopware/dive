@@ -16,6 +16,7 @@ import {
     PointLightComponent,
     PROXY_LAYER_MASK,
     SphereColliderComponent,
+    SpriteComponent,
     type DIVE,
     type DIVEBackgroundSettings,
     type DIVEImageBasedLightSettings,
@@ -44,6 +45,13 @@ import {
 } from './helpers/cameraTarget/cameraTarget.ts';
 import { GroupLinksComponent } from './components/grouplinks/GroupLinksComponent.ts';
 import { updateParentLink } from './helpers/updateParentLink/updateParentLink.ts';
+import lightBulbUrl from '../../../../assets/svg/light-bulb.svg?url';
+
+/** The edge length of a point light's bulb, in metres. */
+const BULB_SIZE = 0.2;
+
+/** The bulb never gets more opaque than this, however bright the light. */
+const MAX_BULB_OPACITY = 0.8;
 
 /** The corners of an axis-aligned rectangle at depth `z`, in order. */
 const rectangle = (
@@ -437,19 +445,23 @@ export class EngineGateway {
                 node.addComponent(new AmbientLightComponent());
                 break;
             case 'point': {
-                const light = node.addComponent(new PointLightComponent());
+                node.addComponent(new PointLightComponent());
 
-                // sized once to the sphere mesh, which does not change
-                const { geometry } = light.handle;
-                geometry.computeBoundingSphere();
+                const bulb = node
+                    .addComponent(new SpriteComponent())
+                    .setSize(BULB_SIZE, BULB_SIZE)
+                    .setOpacity(MAX_BULB_OPACITY);
+                bulb.setImage(lightBulbUrl).catch((error: unknown) => {
+                    // nobody awaits a composition, so this is the only report
+                    console.error('EngineGateway: light bulb failed', error);
+                });
+
+                // the bulb faces the camera, so a sphere fits it from every side
                 const collider = node.addComponent(
                     new SphereColliderComponent(),
                 );
                 collider.layers.mask = PROXY_LAYER_MASK;
-                collider.set(
-                    geometry.boundingSphere!.center,
-                    geometry.boundingSphere!.radius,
-                );
+                collider.radius = BULB_SIZE / 2;
                 break;
             }
             default:
@@ -529,6 +541,15 @@ export class EngineGateway {
             if (props.color !== undefined)
                 light.setColor(new Color(props.color));
         });
+
+        // a point light's bulb shows its colour and fades with its intensity
+        const bulb = sceneObject.getComponent(SpriteComponent);
+        if (!bulb) return;
+        if (props.color !== undefined) bulb.setColor(props.color);
+        if (props.intensity !== undefined)
+            bulb.setOpacity(
+                Math.min(props.intensity * MAX_BULB_OPACITY, MAX_BULB_OPACITY),
+            );
     }
 
     private async _applyModel(

@@ -21,7 +21,7 @@ import { type DIVEComponentEventMap } from '../../types/events/DIVEComponentEven
  *    it on the object contributed -- a directional light's direction lives on the
  *    light. A component has no transform of its own to offer.
  * 2. **Never attach another component.** Contribute all the objects you like --
- *    `PointLightComponent` contributes a light and a clickable proxy sphere --
+ *    `BoundingBoxComponent` contributes a box and a sphere helper --
  *    but never call `owner.addComponent`. A component describes one capability
  *    and does not decide what else its owner is made of; composing a node is the
  *    caller's job. A component that needs a sibling should be handed it, or the
