@@ -14,7 +14,7 @@ export const isSelectTool = (tool: Tool): tool is SelectTool => {
 /**
  * Tool for selecting objects via click.
  *
- * Only processes objects on PRODUCT_LAYER (models), ignoring UI elements like gizmos.
+ * Reads entities through their colliders, so a hit object is an entity node.
  * Uses SelectionState to manage selection and notify other tools (like TransformTool).
  *
  * @module
@@ -42,8 +42,8 @@ export class SelectTool implements Tool {
 
     public onClick(ctx: PointerContext): void {
         /**
-         * entities only, real geometry plus the proxies that stand in for what
-         * has none, while the gizmo is on the UI layer and stays unselectable
+         * entities only, product and proxy colliders, while the gizmo is
+         * raycast separately and stays unselectable
          */
         const intersect = ctx.entityIntersects[0];
         const selectable = findInterface<DIVESelectable>(

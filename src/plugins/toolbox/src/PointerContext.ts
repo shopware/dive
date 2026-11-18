@@ -15,19 +15,20 @@ export interface PointerContext {
     /** Normalized device coordinates (-1 to 1) */
     readonly pointer: Vector2;
 
-    /** All raycast intersections */
+    /** Entity and gizmo intersections, merged and sorted by distance */
     readonly intersects: Intersection[];
 
-    /** Intersections filtered to PRODUCT_LAYER (models only) */
+    /** Collider hits on PRODUCT_LAYER (models and primitives), one per collider */
     readonly modelIntersects: Intersection[];
 
     /**
-     * Intersections that stand for an entity: real geometry, or a proxy for
-     * something that has none, such as a light's handle. What selecting reads.
+     * Collider hits that stand for an entity: PRODUCT_LAYER for real geometry,
+     * PROXY_LAYER for something that has none, such as a camera or a light.
+     * `object` is the entity's node. What selecting reads.
      */
     readonly entityIntersects: Intersection[];
 
-    /** Intersections filtered to UI_LAYER (gizmo, UI elements) */
+    /** Gizmo meshes on UI_LAYER, raycast by geometry */
     readonly uiIntersects: Intersection[];
 
     /** Whether primary mouse button (left) is pressed */
@@ -55,15 +56,15 @@ export interface WheelContext {
     /** Normalized device coordinates (-1 to 1) */
     readonly pointer: Vector2;
 
-    /** All raycast intersections at current pointer position */
+    /** Entity and gizmo intersections. See {@link PointerContext}. */
     readonly intersects: Intersection[];
 
-    /** Intersections filtered to PRODUCT_LAYER (models only) */
+    /** Collider hits on PRODUCT_LAYER. See {@link PointerContext}. */
     readonly modelIntersects: Intersection[];
 
     /** Intersections that stand for an entity. See {@link PointerContext}. */
     readonly entityIntersects: Intersection[];
 
-    /** Intersections filtered to UI_LAYER (gizmo, UI elements) */
+    /** Gizmo meshes on UI_LAYER. See {@link PointerContext}. */
     readonly uiIntersects: Intersection[];
 }

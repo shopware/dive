@@ -14,6 +14,7 @@ import {
     DIVEImageBasedLightDefaultSettings,
     DIVELightComponent,
     DIVENode,
+    DIVERaycaster,
     DIVERoot,
     DIVEScene,
     DIVEGeometryType,
@@ -41,7 +42,9 @@ import {
 import {
     Color,
     Object3D,
+    PerspectiveCamera,
     Raycaster,
+    Vector2,
     Vector3,
     type Intersection,
 } from 'three/webgpu';
@@ -2610,6 +2613,130 @@ describe('plugins/state/EngineGateway', () => {
                     image: 'studio.hdr',
                 });
             });
+        });
+    });
+
+    describe('picking through the collider raycaster', () => {
+        let gateway: EngineGateway;
+        let scene: DIVEScene;
+        let camera: PerspectiveCamera;
+
+        beforeEach(() => {
+            ({ gateway, scene } = makeSceneGateway());
+            camera = new PerspectiveCamera(50, 1, 0.1, 100);
+            camera.position.set(0, 1, 10);
+            camera.lookAt(0, 1, 0);
+            camera.updateMatrixWorld(true);
+        });
+
+        /** one entity of each kind, side by side, all facing the camera */
+        const compose = async (): Promise<Record<string, DIVENode>> => {
+            const model = await addEntity(gateway, {
+                ...modelSchema('model', null),
+                position: { x: -3, y: 0, z: 0 },
+            });
+            const primitive = await addEntity(gateway, {
+                id: 'primitive',
+                entityType: 'primitive',
+                name: 'primitive',
+                visible: true,
+                geometry: { name: 'box', width: 1, height: 1, depth: 1 },
+                position: { x: -1, y: 0, z: 0 },
+                rotation: { x: 0, y: 0, z: 0 },
+                scale: { x: 1, y: 1, z: 1 },
+                parentId: null,
+            } as PrimitiveSchema);
+            const viewCamera = await addEntity(gateway, {
+                ...cameraSchema('camera'),
+                position: { x: 1, y: 1, z: 0 },
+                target: { x: 1, y: 1, z: 10 },
+            });
+            const light = await addEntity(gateway, {
+                id: 'light',
+                entityType: 'light',
+                type: 'point',
+                name: 'light',
+                visible: true,
+                position: { x: 3, y: 1, z: 0 },
+                intensity: 1,
+                enabled: true,
+                color: '#ffffff',
+                parentId: null,
+            } as LightSchema);
+
+            return {
+                model: model as DIVENode,
+                primitive: primitive as DIVENode,
+                camera: viewCamera as DIVENode,
+                light: light as DIVENode,
+            };
+        };
+
+        /** what a click on the pixel showing `point` picks */
+        const pickAt = (x: number, y: number): Object3D[] => {
+            scene.updateMatrixWorld(true);
+            const ndc = new Vector3(x, y, 0).project(camera);
+            const raycaster = new DIVERaycaster();
+            raycaster.setFromCamera(new Vector2(ndc.x, ndc.y), camera);
+            raycaster.layers.mask = PRODUCT_LAYER_MASK | PROXY_LAYER_MASK;
+
+            return raycaster.intersectObject(scene).map((hit) => hit.object);
+        };
+
+        it('should pick the node of every kind of entity', async () => {
+            const nodes = await compose();
+
+            // the model's box and the primitive stand on their origin
+            expect(pickAt(-3, 0.5)).toEqual([nodes.model]);
+            expect(pickAt(-1, 0.5)).toEqual([nodes.primitive]);
+            expect(pickAt(1, 1)).toEqual([nodes.camera]);
+            expect(pickAt(3, 1)).toEqual([nodes.light]);
+        });
+
+        it('should pick nothing where no entity is', async () => {
+            await compose();
+
+            expect(pickAt(0, 3)).toEqual([]);
+        });
+
+        it('should not pick a hidden entity', async () => {
+            const nodes = await compose();
+
+            for (const node of Object.values(nodes)) node.setVisibility(false);
+
+            expect(pickAt(-3, 0.5)).toEqual([]);
+            expect(pickAt(-1, 0.5)).toEqual([]);
+            expect(pickAt(1, 1)).toEqual([]);
+            expect(pickAt(3, 1)).toEqual([]);
+        });
+
+        it('should pick a member of a group, never the group itself', async () => {
+            const group = await addEntity(gateway, {
+                ...groupSchema('group'),
+                position: { x: 0, y: 0, z: 0 },
+            } as GroupSchema);
+            const model = await addEntity(gateway, {
+                ...modelSchema('model', 'group'),
+                position: { x: 0, y: 0, z: 0 },
+            });
+
+            expect(pickAt(0, 0.5)).toEqual([model]);
+            expect(group).toBeDefined();
+        });
+
+        it('should not pick the members of a hidden group', async () => {
+            const group = (await addEntity(
+                gateway,
+                groupSchema('group'),
+            )) as DIVENode;
+            await addEntity(gateway, {
+                ...modelSchema('model', 'group'),
+                position: { x: 0, y: 0, z: 0 },
+            });
+
+            group.setVisibility(false);
+
+            expect(pickAt(0, 0.5)).toEqual([]);
         });
     });
 });

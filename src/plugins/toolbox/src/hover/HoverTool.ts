@@ -6,7 +6,7 @@ import { type PointerContext } from '../PointerContext.ts';
 /**
  * Tool for handling hover events on models.
  *
- * Only processes objects on PRODUCT_LAYER (models), ignoring UI elements like gizmos.
+ * Reads `intersects`: entity nodes through their colliders, plus the gizmo.
  * Triggers DIVEHoverable callbacks: onPointerEnter, onPointerOver, onPointerLeave.
  *
  * @module
