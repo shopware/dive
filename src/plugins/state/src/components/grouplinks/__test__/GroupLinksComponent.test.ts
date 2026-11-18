@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { Object3D, type LineDashedMaterial } from 'three/webgpu';
+import { Object3D } from 'three/webgpu';
 import { DIVENode, MultiLineComponent } from '@shopware-ag/dive';
 import { GroupLinksComponent } from '../GroupLinksComponent.ts';
 
@@ -40,9 +40,9 @@ describe('plugins/state/GroupLinksComponent', () => {
 
     describe('look', () => {
         it('should draw dashed links', () => {
-            const material = new GroupLinksComponent().lines
-                .material as LineDashedMaterial;
+            const material = new GroupLinksComponent().lines.material;
 
+            expect(material.dashed).toBe(true);
             expect(material.dashSize).toBe(0.05);
             expect(material.gapSize).toBe(0.025);
         });
@@ -55,18 +55,14 @@ describe('plugins/state/GroupLinksComponent', () => {
 
             links.updateLinkFor(member);
 
-            const position = links.lines.geometry.getAttribute('position');
+            const { geometry } = links.lines;
+            const start = geometry.getAttribute('instanceStart');
+            const end = geometry.getAttribute('instanceEnd');
             expect(links.lineCount).toBe(1);
-            expect([
-                position.getX(0),
-                position.getY(0),
-                position.getZ(0),
-            ]).toEqual([0, 0, 0]);
-            expect([
-                position.getX(1),
-                position.getY(1),
-                position.getZ(1),
-            ]).toEqual([1, 2, 3]);
+            expect([start.getX(0), start.getY(0), start.getZ(0)]).toEqual([
+                0, 0, 0,
+            ]);
+            expect([end.getX(0), end.getY(0), end.getZ(0)]).toEqual([1, 2, 3]);
         });
 
         it('should move the link instead of adding one', () => {
@@ -77,9 +73,9 @@ describe('plugins/state/GroupLinksComponent', () => {
             links.updateLinkFor(member);
 
             expect(links.lineCount).toBe(1);
-            expect(links.lines.geometry.getAttribute('position').getX(1)).toBe(
-                4,
-            );
+            expect(
+                links.lines.geometry.getAttribute('instanceEnd').getX(0),
+            ).toBe(4);
         });
     });
 

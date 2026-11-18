@@ -11,7 +11,12 @@ import {
     Points,
     PointsMaterial,
 } from 'three/webgpu';
-import { DIVEComponent, DIVENode, ParseError } from '@shopware-ag/dive';
+import {
+    DIVEComponent,
+    DIVENode,
+    MultiLineComponent,
+    ParseError,
+} from '@shopware-ag/dive';
 import {
     FLOOR_LAYER_MASK,
     HELPER_LAYER_MASK,
@@ -362,6 +367,19 @@ describe('AssetExporter', () => {
             await exporter.export(mockObject, 'glb');
 
             expect(computeVertexNormals).not.toHaveBeenCalled();
+        });
+
+        it('should leave wide lines without normals', async () => {
+            // LineSegments2 is a Mesh only in how it is drawn
+            const node = new DIVENode();
+            const lines = node.addComponent(new MultiLineComponent());
+            lines.setLineFor('a', { x: 0, y: 0, z: 0 }, { x: 1, y: 0, z: 0 });
+            mockObject.add(node);
+
+            mockGltfParseAsync.mockResolvedValue(mockArrayBuffer);
+            await exporter.export(mockObject, 'glb');
+
+            expect(lines.lines.geometry.getAttribute('normal')).toBeUndefined();
         });
     });
 

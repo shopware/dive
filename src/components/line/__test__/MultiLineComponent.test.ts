@@ -1,9 +1,9 @@
 import {
-    type BufferAttribute,
+    Line2NodeMaterial,
+    type InterleavedBufferAttribute,
     type Vector3Like,
-    type LineDashedMaterial,
-    LineSegments,
 } from 'three/webgpu';
+import { LineSegments2 } from 'three/examples/jsm/lines/webgpu/LineSegments2.js';
 import { MultiLineComponent } from '../MultiLineComponent.ts';
 import { DIVENode } from '../../../engine/node/Node.ts';
 import { HELPER_LAYER_MASK } from '../../../constants/VisibilityLayerMask.ts';
@@ -24,20 +24,32 @@ describe('dive/line/MultiLineComponent', () => {
         nextKey = 0;
     });
 
+    /** One instance attribute of the line geometry, read per slot. */
+    const instanceAttribute = (name: string): InterleavedBufferAttribute =>
+        lines.lines.geometry.getAttribute(name) as InterleavedBufferAttribute;
+
+    const pointAt = (name: string, slot: number): number[] => {
+        const attribute = instanceAttribute(name);
+        return [
+            attribute.getX(slot),
+            attribute.getY(slot),
+            attribute.getZ(slot),
+        ];
+    };
+
     /** Reads the endpoint written for a slot. */
-    const endpointAt = (slot: number): number[] => {
-        const array = lines.lines.geometry.attributes.position
-            .array as Float32Array;
-        return Array.from(array.slice(slot * 6 + 3, slot * 6 + 6));
-    };
+    const endpointAt = (slot: number): number[] => pointAt('instanceEnd', slot);
 
-    const startAt = (slot: number): number[] => {
-        const array = lines.lines.geometry.attributes.position
-            .array as Float32Array;
-        return Array.from(array.slice(slot * 6, slot * 6 + 3));
-    };
+    const startAt = (slot: number): number[] => pointAt('instanceStart', slot);
 
-    const drawnVertices = (): number => lines.lines.geometry.drawRange.count;
+    /** Line distances of a slot's start and end, which dashes are measured by. */
+    const distancesAt = (slot: number): number[] => [
+        instanceAttribute('instanceDistanceStart').getX(slot),
+        instanceAttribute('instanceDistanceEnd').getX(slot),
+    ];
+
+    /** One instance per line, so this is how many lines are drawn. */
+    const drawnLines = (): number => lines.lines.geometry.instanceCount;
 
     /**
      * Places a line under a key nobody else uses, and returns that key.
@@ -52,23 +64,21 @@ describe('dive/line/MultiLineComponent', () => {
         return key;
     };
 
-    /** `material` is a union of one-or-many; these lines always have one. */
-    const material = (): LineDashedMaterial =>
-        lines.lines.material as LineDashedMaterial;
+    const material = (): Line2NodeMaterial => lines.lines.material;
 
-    /** `attributes.position` is a union; only BufferAttribute tracks ranges. */
-    const positionAttribute = (): BufferAttribute =>
-        lines.lines.geometry.attributes.position as BufferAttribute;
+    /** start and end share one interleaved buffer, which tracks the ranges */
+    const positionBuffer = () => instanceAttribute('instanceStart').data;
 
     describe('single draw call', () => {
-        it('should draw every line from one LineSegments', () => {
+        it('should draw every line from one LineSegments2', () => {
             addLine(ORIGIN, { x: 1, y: 0, z: 0 });
             addLine(ORIGIN, { x: 2, y: 0, z: 0 });
             addLine(ORIGIN, { x: 3, y: 0, z: 0 });
 
-            // one LineSegments for every line, contributed to the node
+            // one LineSegments2 for every line, contributed to the node
             expect(lines.contributions).toEqual([lines.lines]);
-            expect(lines.lines).toBeInstanceOf(LineSegments);
+            expect(lines.lines).toBeInstanceOf(LineSegments2);
+            expect(lines.lines.material).toBeInstanceOf(Line2NodeMaterial);
             expect(lines.lineCount).toBe(3);
         });
 
@@ -76,16 +86,16 @@ describe('dive/line/MultiLineComponent', () => {
             expect(lines.lines.layers.mask).toBe(HELPER_LAYER_MASK);
         });
 
-        it('should draw two vertices per line', () => {
+        it('should draw one instance per line', () => {
             addLine(ORIGIN, { x: 1, y: 0, z: 0 });
-            expect(drawnVertices()).toBe(2);
+            expect(drawnLines()).toBe(1);
 
             addLine(ORIGIN, { x: 2, y: 0, z: 0 });
-            expect(drawnVertices()).toBe(4);
+            expect(drawnLines()).toBe(2);
         });
 
         it('should draw nothing while empty', () => {
-            expect(drawnVertices()).toBe(0);
+            expect(drawnLines()).toBe(0);
         });
     });
 
@@ -109,26 +119,39 @@ describe('dive/line/MultiLineComponent', () => {
 
         it('should restart the dash pattern for every line', () => {
             /**
-             * LineSegments.computeLineDistances() accumulates across segments,
+             * LineSegments2.computeLineDistances() accumulates across segments,
              * which can drop a short line entirely into a gap
              */
             addLine(ORIGIN, { x: 1, y: 0, z: 0 });
-            addLine(ORIGIN, { x: 2, y: 0, z: 0 });
+            addLine({ x: 5, y: 0, z: 0 }, { x: 7, y: 0, z: 0 });
 
-            const distances = lines.lines.geometry.attributes.lineDistance
-                .array as Float32Array;
-            expect(distances[0]).toBe(0);
-            expect(distances[1]).toBeCloseTo(1);
-            expect(distances[2]).toBe(0);
-            expect(distances[3]).toBeCloseTo(2);
+            expect(distancesAt(0)).toEqual([0, 1]);
+            expect(distancesAt(1)).toEqual([0, 2]);
         });
 
         it('should measure the distance between the endpoints', () => {
             addLine({ x: 1, y: 0, z: 0 }, { x: 4, y: 0, z: 0 });
 
-            const distances = lines.lines.geometry.attributes.lineDistance
-                .array as Float32Array;
-            expect(distances[1]).toBeCloseTo(3);
+            expect(distancesAt(0)[1]).toBeCloseTo(3);
+        });
+
+        it('should restart the dash pattern when a line moves', () => {
+            const key = addLine(ORIGIN, { x: 1, y: 0, z: 0 });
+            addLine(ORIGIN, { x: 2, y: 0, z: 0 });
+
+            lines.setLineFor(key, { x: 1, y: 1, z: 0 }, { x: 4, y: 5, z: 0 });
+
+            expect(distancesAt(0)).toEqual([0, 5]);
+            expect(distancesAt(1)).toEqual([0, 2]);
+        });
+
+        it('should keep the dash distances of earlier lines after growing', () => {
+            for (let i = 0; i < 12; i++) {
+                addLine(ORIGIN, { x: i + 1, y: 0, z: 0 });
+            }
+
+            expect(distancesAt(0)).toEqual([0, 1]);
+            expect(distancesAt(11)).toEqual([0, 12]);
         });
 
         it('should move a line', () => {
@@ -154,12 +177,12 @@ describe('dive/line/MultiLineComponent', () => {
         it('should upload only the changed range', () => {
             addLine(ORIGIN, { x: 1, y: 0, z: 0 });
             const second = addLine(ORIGIN, { x: 2, y: 0, z: 0 });
-            positionAttribute().clearUpdateRanges();
+            positionBuffer().clearUpdateRanges();
 
             lines.setLineFor(second, ORIGIN, { x: 7, y: 0, z: 0 });
 
             // second slot only: offset 6, six floats
-            expect(positionAttribute().updateRanges).toEqual([
+            expect(positionBuffer().updateRanges).toEqual([
                 { start: 6, count: 6 },
             ]);
         });
@@ -250,7 +273,7 @@ describe('dive/line/MultiLineComponent', () => {
 
             // the freed slot took the new line, so the buffer did not grow
             expect(endpointAt(0)).toEqual([3, 0, 0]);
-            expect(drawnVertices()).toBe(4);
+            expect(drawnLines()).toBe(2);
         });
 
         it('should not disturb other lines when one is removed', () => {
@@ -271,7 +294,7 @@ describe('dive/line/MultiLineComponent', () => {
             }
 
             expect(lines.lineCount).toBe(20);
-            expect(drawnVertices()).toBe(40);
+            expect(drawnLines()).toBe(20);
             expect(endpointAt(19)).toEqual([20, 0, 0]);
         });
 
@@ -291,7 +314,7 @@ describe('dive/line/MultiLineComponent', () => {
             lines.clearLines();
 
             expect(lines.lineCount).toBe(0);
-            expect(drawnVertices()).toBe(0);
+            expect(drawnLines()).toBe(0);
         });
 
         it('should not shadow Object3D.clear', () => {
@@ -329,6 +352,7 @@ describe('dive/line/MultiLineComponent', () => {
 
             expect(endpointAt(0)).toEqual([1, 0, 0]);
             expect(endpointAt(1)).toEqual([0, 0, 0]);
+            expect(distancesAt(1)).toEqual([0, 0]);
         });
 
         it('should restore a single line', () => {
@@ -372,14 +396,46 @@ describe('dive/line/MultiLineComponent', () => {
         });
 
         it('should draw solid lines by default', () => {
+            expect(material().dashed).toBe(false);
             expect(material().gapSize).toBe(0);
         });
 
         it('should set the dash pattern', () => {
             lines.setDashPattern(1, 2);
 
+            expect(material().dashed).toBe(true);
             expect(material().dashSize).toBe(1);
             expect(material().gapSize).toBe(2);
+        });
+
+        it('should draw solid again once the gap is zero', () => {
+            lines.setDashPattern(1, 2);
+            lines.setDashPattern(1, 0);
+
+            expect(material().dashed).toBe(false);
+        });
+
+        it('should draw one pixel wide by default', () => {
+            expect(lines.lineWidth).toBe(1);
+            expect(material().linewidth).toBe(1);
+        });
+
+        it('should set the line width in screen pixels', () => {
+            lines.setLineWidth(3);
+
+            expect(lines.lineWidth).toBe(3);
+            expect(material().linewidth).toBe(3);
+            // pixels, not world units: the width stays the same at any distance
+            expect(material().worldUnits).toBe(false);
+        });
+
+        it('should keep dashes at any width', () => {
+            lines.setDashPattern(0.05, 0.025);
+            lines.setLineWidth(4);
+
+            expect(material().dashed).toBe(true);
+            expect(material().dashSize).toBe(0.05);
+            expect(material().gapSize).toBe(0.025);
         });
     });
 
@@ -457,14 +513,18 @@ describe('dive/line/MultiLineComponent', () => {
             const source = new MultiLineComponent();
             source.setColor(0xff0000);
             source.setDashPattern(0.2, 0.1);
+            source.setLineWidth(3);
             source.setVisible(false);
 
             const copy = source.clone();
-            const material = copy.lines.material as LineDashedMaterial;
+            const material = copy.lines.material;
 
             expect(material.color.getHexString()).toBe('ff0000');
+            expect(material.dashed).toBe(true);
             expect(material.dashSize).toBe(0.2);
             expect(material.gapSize).toBe(0.1);
+            expect(copy.lineWidth).toBe(3);
+            expect(material.linewidth).toBe(3);
             expect(copy.lines.visible).toBe(false);
         });
 

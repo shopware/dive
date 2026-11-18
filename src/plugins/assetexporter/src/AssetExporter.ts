@@ -195,6 +195,8 @@ export class AssetExporter {
 
     private _computeNormals(object: Object3D): void {
         object.traverse((child) => {
+            // wide lines are meshes only in how they are drawn
+            if ('isLineSegments2' in child) return;
             if (child instanceof Mesh && child.geometry) {
                 if (!child.geometry.getAttribute('normal')) {
                     child.geometry.computeVertexNormals();

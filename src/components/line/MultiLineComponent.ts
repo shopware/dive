@@ -1,23 +1,22 @@
 import {
     Box3,
-    BufferGeometry,
     DynamicDrawUsage,
-    Float32BufferAttribute,
-    LineDashedMaterial,
-    LineSegments,
+    InstancedInterleavedBuffer,
+    InterleavedBufferAttribute,
+    Line2NodeMaterial,
     Vector3,
     type ColorRepresentation,
     type Vector3Like,
 } from 'three/webgpu';
+import { LineSegmentsGeometry } from 'three/examples/jsm/lines/LineSegmentsGeometry.js';
+import { LineSegments2 } from 'three/examples/jsm/lines/webgpu/LineSegments2.js';
 import { HELPER_LAYER_MASK } from '../../constants/VisibilityLayerMask.ts';
 import { DIVEComponent } from '../../engine/component/Component.ts';
 
 /** Floats per line: two vertices, three components each. */
 const FLOATS_PER_LINE = 6;
-/** Line-distance values per line: one per vertex. */
+/** Line-distance values per line: one per end. */
 const DISTANCES_PER_LINE = 2;
-/** Vertices per line. */
-const VERTICES_PER_LINE = 2;
 
 const INITIAL_CAPACITY = 8;
 
@@ -62,10 +61,11 @@ type DIVELine = {
  * they should change — a caller places lines and removes them. What keeps the
  * lines in sync with something else is that caller's job.
  *
- * All lines share **one** `LineSegments`, so the whole set costs a single draw
- * call no matter how many there are. Each line owns a fixed slot of two vertices
+ * All lines share **one** `LineSegments2`, so the whole set costs a single draw
+ * call no matter how many there are. Each line owns a fixed slot, one instance,
  * in a shared buffer, so adding, moving or hiding one rewrites only that slot and
- * uploads only that range.
+ * uploads only that range. Lines are drawn as screen-space quads, so they can be
+ * wider than the one pixel WebGPU draws plain lines at, see {@link setLineWidth}.
  *
  * ### Lines are addressed by the caller's own identity for them
  *
@@ -91,12 +91,14 @@ export class MultiLineComponent extends DIVEComponent {
      */
     public boundingBox: Box3 | null = null;
 
-    private _lines: LineSegments;
-    private _geometry: BufferGeometry;
-    private _material: LineDashedMaterial;
+    private _lines: LineSegments2;
+    private _geometry: LineSegmentsGeometry;
+    private _material: Line2NodeMaterial;
 
-    private _positions: Float32BufferAttribute;
-    private _distances: Float32BufferAttribute;
+    /** start and end of every line, interleaved: six floats per slot */
+    private _positions!: InstancedInterleavedBuffer;
+    /** where each line's start and end sit along the dash pattern */
+    private _distances!: InstancedInterleavedBuffer;
 
     /**
      * Every line, by the key it was placed under.
@@ -120,29 +122,35 @@ export class MultiLineComponent extends DIVEComponent {
         this.name = 'MultiLineComponent';
 
         // solid until a gap is set, see setDashPattern
-        this._material = new LineDashedMaterial({
+        this._material = new Line2NodeMaterial({
             color: 0x666666,
+            linewidth: 1,
+            dashed: false,
             dashSize: 1,
             gapSize: 0,
         });
 
-        this._geometry = new BufferGeometry();
-        this._positions = this._createAttribute(FLOATS_PER_LINE, 3);
-        this._distances = this._createAttribute(DISTANCES_PER_LINE, 1);
+        this._geometry = new LineSegmentsGeometry();
+        this._setBuffers(
+            this._createBuffer(FLOATS_PER_LINE),
+            this._createBuffer(DISTANCES_PER_LINE),
+        );
+        this._geometry.instanceCount = 0;
 
-        this._geometry.setAttribute('position', this._positions);
-        this._geometry.setAttribute('lineDistance', this._distances);
-        this._geometry.setDrawRange(0, 0);
-
-        this._lines = new LineSegments(this._geometry, this._material);
+        this._lines = new LineSegments2(this._geometry, this._material);
         this._lines.layers.mask = HELPER_LAYER_MASK;
         this._lines.frustumCulled = false;
         this.contribute(this._lines);
     }
 
     /** The single object all lines are drawn by. */
-    public get lines(): LineSegments {
+    public get lines(): LineSegments2 {
         return this._lines;
+    }
+
+    /** How wide the lines are drawn, in screen pixels. */
+    public get lineWidth(): number {
+        return this._material.linewidth;
     }
 
     /** How many lines currently exist, hidden ones included. */
@@ -184,7 +192,7 @@ export class MultiLineComponent extends DIVEComponent {
 
         if (slot + 1 > this._highWater) {
             this._highWater = slot + 1;
-            this._geometry.setDrawRange(0, this._highWater * VERTICES_PER_LINE);
+            this._geometry.instanceCount = this._highWater;
         }
 
         this._writeLine(line);
@@ -251,12 +259,31 @@ export class MultiLineComponent extends DIVEComponent {
     /**
      * Sets the dash pattern. Lines are solid by default, i.e. without a gap.
      *
+     * Each line starts the pattern afresh at its own start. Sizes are in the
+     * owner's units, so dashes stay the same length along a line at any width.
+     *
      * @param dashSize - Length of a drawn stretch.
      * @param gapSize - Length of a gap.
      */
     public setDashPattern(dashSize: number, gapSize: number): void {
         this._material.dashSize = dashSize;
         this._material.gapSize = gapSize;
+
+        /**
+         * without a gap nothing is cut, so the solid variant is drawn, which
+         * also gives wide lines round caps
+         */
+        this._material.dashed = gapSize > 0;
+    }
+
+    /**
+     * Sets how wide the lines are drawn, in screen pixels, so a line keeps its
+     * width on screen however far away it is. One pixel by default.
+     *
+     * @param width - The width in pixels.
+     */
+    public setLineWidth(width: number): void {
+        this._material.linewidth = width;
     }
 
     /**
@@ -286,7 +313,7 @@ export class MultiLineComponent extends DIVEComponent {
         this._byKey.clear();
         this._freeSlots = [];
         this._highWater = 0;
-        this._geometry.setDrawRange(0, 0);
+        this._geometry.instanceCount = 0;
     }
 
     /**
@@ -306,6 +333,7 @@ export class MultiLineComponent extends DIVEComponent {
             source._material.dashSize,
             source._material.gapSize,
         );
+        this.setLineWidth(source.lineWidth);
         this.setVisible(source._lines.visible);
 
         return this;
@@ -318,16 +346,46 @@ export class MultiLineComponent extends DIVEComponent {
         this._freeSlots = [];
     }
 
-    private _createAttribute(
-        stride: number,
-        itemSize: number,
-    ): Float32BufferAttribute {
-        const attribute = new Float32BufferAttribute(
+    private _createBuffer(stride: number): InstancedInterleavedBuffer {
+        const buffer = new InstancedInterleavedBuffer(
             new Float32Array(this._capacity * stride),
-            itemSize,
+            stride,
+            1,
         );
-        attribute.setUsage(DynamicDrawUsage);
-        return attribute;
+        buffer.setUsage(DynamicDrawUsage);
+        return buffer;
+    }
+
+    /**
+     * Puts the buffers under the attribute names `Line2NodeMaterial` reads.
+     *
+     * The distances are written per line by {@link _writeLine}, never through
+     * `LineSegments2.computeLineDistances()`, which accumulates across lines.
+     */
+    private _setBuffers(
+        positions: InstancedInterleavedBuffer,
+        distances: InstancedInterleavedBuffer,
+    ): void {
+        this._positions = positions;
+        this._distances = distances;
+
+        const geometry = this._geometry;
+        geometry.setAttribute(
+            'instanceStart',
+            new InterleavedBufferAttribute(positions, 3, 0),
+        );
+        geometry.setAttribute(
+            'instanceEnd',
+            new InterleavedBufferAttribute(positions, 3, 3),
+        );
+        geometry.setAttribute(
+            'instanceDistanceStart',
+            new InterleavedBufferAttribute(distances, 1, 0),
+        );
+        geometry.setAttribute(
+            'instanceDistanceEnd',
+            new InterleavedBufferAttribute(distances, 1, 1),
+        );
     }
 
     /** Writes a line's endpoints into its slot, or collapses it when hidden. */
@@ -349,8 +407,8 @@ export class MultiLineComponent extends DIVEComponent {
         positions[offset + 5] = end.z;
 
         /**
-         * each line restarts the dash pattern at 0, while LineSegments accumulates
-         * across segments and lets a short line vanish inside a gap
+         * each line restarts the dash pattern at 0, while computeLineDistances()
+         * accumulates across lines and lets a short line vanish inside a gap
          */
         const distances = this._distances.array as Float32Array;
         const distanceOffset = slot * DISTANCES_PER_LINE;
@@ -393,19 +451,16 @@ export class MultiLineComponent extends DIVEComponent {
     private _grow(): void {
         this._capacity *= 2;
 
-        const positions = this._createAttribute(FLOATS_PER_LINE, 3);
+        const positions = this._createBuffer(FLOATS_PER_LINE);
         (positions.array as Float32Array).set(
             this._positions.array as Float32Array,
         );
-        this._positions = positions;
 
-        const distances = this._createAttribute(DISTANCES_PER_LINE, 1);
+        const distances = this._createBuffer(DISTANCES_PER_LINE);
         (distances.array as Float32Array).set(
             this._distances.array as Float32Array,
         );
-        this._distances = distances;
 
-        this._geometry.setAttribute('position', this._positions);
-        this._geometry.setAttribute('lineDistance', this._distances);
+        this._setBuffers(positions, distances);
     }
 }
