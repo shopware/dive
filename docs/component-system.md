@@ -233,6 +233,13 @@ Picking does not raycast render meshes: the toolbox asks colliders through
 a pose, so a box or sphere collider on its node is what you click, and the hit
 is the entity's node. Nothing renders on `PROXY`; it only sorts colliders, so
 the toolbox can ask for entities (`PRODUCT | PROXY`) or models only (`PRODUCT`).
+
+The collider shapes, from exact to cheap: `MeshColliderComponent` tests every
+triangle of the owner's own product meshes; `ConvexColliderComponent` wraps the
+same meshes in their convex hull, rebuilt after a load or a component change
+(call `refresh()` after edits nothing announces; flat content falls back to its
+box); `BoxColliderComponent` and `SphereColliderComponent` are sized by hand.
+Nothing adds a convex collider by default.
 The gizmo stays on three's `Raycaster`: `UI` for DIVE's handles, and three's
 default layer only inside the transform controls' own helper. It must never be
 selectable as an object.
