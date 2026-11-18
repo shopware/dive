@@ -182,12 +182,12 @@ function isFlat(points: Vector3[], box: Box3): boolean {
     const start = furthest((p) => p.distanceTo(points[0])).point;
     const end = furthest((p) => p.distanceTo(start)).point;
     _line.set(start, end);
-    const off = furthest((p) =>
+    const furthestFromLine = furthest((p) =>
         _line.closestPointToPoint(p, false, _closest).distanceTo(p),
     );
-    if (off.distance <= epsilon) return true;
+    if (furthestFromLine.distance <= epsilon) return true;
 
-    _plane.setFromCoplanarPoints(start, end, off.point);
+    _plane.setFromCoplanarPoints(start, end, furthestFromLine.point);
 
     return (
         furthest((p) => Math.abs(_plane.distanceToPoint(p))).distance <= epsilon
