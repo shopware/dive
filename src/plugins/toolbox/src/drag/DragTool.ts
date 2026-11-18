@@ -4,6 +4,7 @@ import {
     type DIVEDraggable,
     DIVERaycaster,
     findInterface,
+    isVisibleInHierarchy,
     PRODUCT_LAYER_MASK,
 } from '@shopware-ag/dive';
 import { type OrbitController } from '@shopware-ag/dive/orbitcontroller';
@@ -37,7 +38,7 @@ export class DragTool implements Tool {
     private _dragEnd: Vector3 = new Vector3();
     private _dragDelta: Vector3 = new Vector3();
 
-    // Custom raycast targets for drag plane
+    // Custom raycast targets for the drag surface
     private _dragRaycastTargets: Object3D[] | null = null;
 
     /**
@@ -122,7 +123,9 @@ export class DragTool implements Tool {
 
     /**
      * Set custom objects to raycast against during drag.
-     * Useful for constraining drag to a floor plane.
+     *
+     * Only product colliders on or below the targets are a surface, so a
+     * target needs a collider. Targets hidden in their hierarchy are skipped.
      *
      * @param targets Objects whose product colliders are searched, or null
      * for the whole scene
@@ -181,7 +184,7 @@ export class DragTool implements Tool {
         const intersects = (
             this._dragRaycastTargets
                 ? this._surfaceRaycaster.intersectObjects(
-                      this._dragRaycastTargets,
+                      this._dragRaycastTargets.filter(isVisibleInHierarchy),
                   )
                 : this._surfaceRaycaster.intersectObject(this._scene)
         ) as ColliderIntersection[];
