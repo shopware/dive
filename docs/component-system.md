@@ -233,6 +233,8 @@ Picking does not raycast render meshes: the toolbox asks colliders through
 a pose, so a box or sphere collider on its node is what you click, and the hit
 is the entity's node. Nothing renders on `PROXY`; it only sorts colliders, so
 the toolbox can ask for entities (`PRODUCT | PROXY`) or models only (`PRODUCT`).
+Dragging slides over the same colliders, on `PRODUCT` only: a camera or a light
+is never a surface, and neither is content without a collider.
 The gizmo stays on three's `Raycaster`: `UI` for DIVE's handles, and three's
 default layer only inside the transform controls' own helper. It must never be
 selectable as an object.
@@ -247,6 +249,19 @@ for heavy content; rebuilt after a load or a component change, `refresh()` after
 edits nothing announces, flat content tested as its box). Only the mesh
 collider is added by default, to models and primitives; the others are the
 caller's choice.
+
+A `MeshColliderComponent` hits a model exactly where its surfaces are, and a
+heavy model costs about as much to pick as a light one: each geometry gets a
+bounding volume hierarchy (`three-mesh-bvh`, used directly, three's prototypes
+stay untouched) on its first raycast, shared by every mesh using that geometry
+and freed when the geometry is disposed. A swapped geometry needs nothing; after
+editing a geometry in place, call `collider.refresh()`. Skinned meshes and
+meshes with morph targets skip the hierarchy and are hit in their current pose.
+
+`DIVENode.dropIt()` asks the same colliders: it casts straight down from the
+bottom centre of the node's bounds through `PRODUCT` colliders and rests the node
+on the hit point (a table top, the floor under an arch), or on y = 0 without a
+hit. A model without a collider, a camera or a light is no surface.
 
 To see what can be hit, call `scene.setColliderHelpersVisible(true)`. It
 outlines every collider the collider raycaster would test below the root,

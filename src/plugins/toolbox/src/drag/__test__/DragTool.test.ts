@@ -13,8 +13,11 @@ import { DragTool } from '../DragTool.ts';
 import { type DraggableEvent } from '../DraggableEvent.ts';
 import { type PointerContext } from '../../PointerContext.ts';
 import {
-    DEFAULT_LAYER_MASK,
+    BoxColliderComponent,
+    DIVENode,
+    DIVERaycaster,
     PRODUCT_LAYER_MASK,
+    PROXY_LAYER_MASK,
     type DIVEDraggable,
 } from '@shopware-ag/dive';
 import { type OrbitController } from '@shopware-ag/dive/orbitcontroller';
@@ -23,37 +26,12 @@ import { type OrbitController } from '@shopware-ag/dive/orbitcontroller';
  * @vitest-environment jsdom
  */
 
-const RaycasterIntersectObjectMock = vi.fn((): unknown[] => []);
-
 /** makes the drag surface report a hit at the given point */
 const surfaceAt = (x: number, y: number, z: number): void => {
-    RaycasterIntersectObjectMock.mockReturnValue([
+    vi.spyOn(DIVERaycaster.prototype, 'intersectObject').mockReturnValue([
         { object: new Object3D(), point: new Vector3(x, y, z), distance: 1 },
-    ]);
+    ] as never);
 };
-
-/** the drag surface suite switches to the real raycaster */
-const raycasterState = vi.hoisted(() => ({ real: false }));
-
-vi.mock('three/webgpu', async () => {
-    const actual =
-        await vi.importActual<typeof import('three/webgpu')>('three/webgpu');
-
-    const Raycaster = vi.fn(function (this: any) {
-        if (raycasterState.real) return new actual.Raycaster();
-
-        this.layers = { mask: 0 };
-        this.setFromCamera = vi.fn(() => this);
-        this.intersectObjects = RaycasterIntersectObjectMock;
-        this.intersectObject = RaycasterIntersectObjectMock;
-        return this;
-    });
-
-    return {
-        ...actual,
-        Raycaster,
-    };
-});
 
 // Mock PointerEvent for jsdom
 class MockPointerEvent extends MouseEvent {
@@ -65,10 +43,7 @@ globalThis.PointerEvent = MockPointerEvent as unknown as typeof PointerEvent;
 
 const createMockController = () =>
     ({
-        object: {
-            isPerspectiveCamera: true,
-            layers: { mask: 0 },
-        },
+        object: { camera: new PerspectiveCamera() },
         inputEnabled: true,
     }) as unknown as OrbitController;
 
@@ -94,12 +69,11 @@ describe('DragTool', () => {
 
     beforeEach(() => {
         mockController = createMockController();
-        dragTool = new DragTool(mockController);
+        dragTool = new DragTool(new Scene(), mockController);
     });
 
     afterEach(() => {
-        vi.clearAllMocks();
-        RaycasterIntersectObjectMock.mockReset();
+        vi.restoreAllMocks();
     });
 
     describe('properties', () => {
@@ -430,133 +404,142 @@ describe('DragTool', () => {
             expect(dragTool.isDragging).toBe(false);
             expect(mockController.inputEnabled).toBe(true);
         });
-
-        it('should use custom raycast targets in getDragIntersect', () => {
-            const mockFloor = {
-                uuid: 'floor',
-                isMesh: true,
-            } as unknown as Object3D;
-
-            const mockDraggable = {
-                uuid: 'test',
-                isDraggable: true,
-                onDrag: vi.fn(),
-            } as unknown as Object3D & DIVEDraggable;
-
-            // Set custom raycast targets
-            dragTool.setDragRaycastTargets([mockFloor]);
-
-            // Setup drag state and mock raycaster
-            (dragTool as any)._dragging = true;
-            (dragTool as any)._draggable = mockDraggable;
-            (dragTool as any)._raycaster = {
-                setFromCamera: vi.fn(),
-                intersectObjects: vi.fn(() => [
-                    { object: mockFloor, point: new Vector3(1, 0, 0) },
-                ]),
-            };
-
-            const ctx = createMockContext({
-                pointer: new Vector2(0.2, 0.2),
-                intersects: [], // Empty - should use custom targets instead
-                pointerPrimaryDown: true,
-            });
-
-            dragTool.onPointerMove(ctx);
-
-            expect(
-                (dragTool as any)._raycaster.intersectObjects,
-            ).toHaveBeenCalledWith([mockFloor], true);
-            expect(mockDraggable.onDrag).toHaveBeenCalled();
-        });
     });
 
     describe('drag surface', () => {
         let scene: Scene;
-        let draggable: Object3D & DIVEDraggable;
+        let draggable: DIVENode & DIVEDraggable;
         let dragStart: Mock<(event: DraggableEvent) => void>;
 
-        /** a 10 m square at the given height, facing up */
-        const floor = (y: number, layers = PRODUCT_LAYER_MASK): Mesh => {
-            const mesh = new Mesh(
-                new PlaneGeometry(10, 10),
-                new MeshBasicMaterial(),
+        /** a 10 m square collider at the given height */
+        const floor = (y: number, layers = PRODUCT_LAYER_MASK): DIVENode => {
+            const node = new DIVENode();
+            const collider = new BoxColliderComponent().set(
+                { x: -5, y: 0, z: -5 },
+                { x: 5, y: 0, z: 5 },
             );
-            mesh.rotation.x = -Math.PI / 2;
-            mesh.position.y = y;
-            mesh.layers.mask = layers;
-            scene.add(mesh);
-            return mesh;
+            collider.layers.mask = layers;
+            node.addComponent(collider);
+            node.position.y = y;
+            scene.add(node);
+            return node;
         };
 
         /** grabs the draggable, moves past the threshold, returns the start */
-        const drag = (): Vector3 => {
+        const drag = (): Vector3 | undefined => {
             scene.updateMatrixWorld(true);
             const grabbed = {
                 object: draggable,
                 point: new Vector3(0, 0.5, 0),
                 distance: 1,
             } as any;
-            dragTool.onPointerDown(
-                createMockContext({
-                    intersects: [grabbed],
-                    pointerPrimaryDown: true,
-                    lastPointerDown: new Vector2(0.1, 0),
-                }),
-            );
-            dragTool.onPointerMove(
-                createMockContext({
-                    intersects: [grabbed],
-                    pointerPrimaryDown: true,
-                    lastPointerDown: new Vector2(0.1, 0),
-                }),
-            );
+            const ctx = createMockContext({
+                intersects: [grabbed],
+                pointerPrimaryDown: true,
+                lastPointerDown: new Vector2(0.1, 0),
+            });
+            dragTool.onPointerDown(ctx);
+            dragTool.onPointerMove(ctx);
             return dragStart.mock.calls[0]?.[0].dragStart;
         };
 
         beforeEach(() => {
-            raycasterState.real = true;
-
             const camera = new PerspectiveCamera(75, 1, 0.1, 1000);
             camera.position.set(0, 5, 0);
             camera.lookAt(0, 0, 0);
             camera.updateMatrixWorld(true);
-            dragTool = new DragTool({
+
+            scene = new Scene();
+            dragTool = new DragTool(scene, {
                 object: { camera },
                 inputEnabled: true,
             } as unknown as OrbitController);
 
-            scene = new Scene();
             dragStart = vi.fn();
-            draggable = Object.assign(new Object3D(), {
+            draggable = Object.assign(new DIVENode(), {
                 isDraggable: true as const,
                 onDragStart: dragStart,
             });
+
+            // the dragged object stands in the ray, one metre high
+            draggable.addComponent(
+                new BoxColliderComponent().set(
+                    { x: -0.5, y: 0, z: -0.5 },
+                    { x: 0.5, y: 1, z: 0.5 },
+                ),
+            );
             scene.add(draggable);
         });
 
-        afterEach(() => {
-            raycasterState.real = false;
-        });
-
-        it('should slide over the real geometry below, not the grabbed hit', () => {
+        it('should slide over the colliders below, not the dragged object', () => {
             floor(0);
 
-            expect(drag().y).toBeCloseTo(0);
+            expect(drag()?.y).toBeCloseTo(0);
         });
 
-        it('should ignore hidden geometry', () => {
+        it('should skip colliders below the dragged object', () => {
+            const child = floor(0.8);
+            draggable.add(child);
+            floor(0);
+
+            expect(drag()?.y).toBeCloseTo(0);
+        });
+
+        it('should search the scene from the constructor, not the dragged object', () => {
+            floor(0);
+            scene.remove(draggable);
+
+            expect(drag()?.y).toBeCloseTo(0);
+        });
+
+        it('should ignore hidden colliders', () => {
             floor(0);
             floor(2).visible = false;
 
-            expect(drag().y).toBeCloseTo(0);
+            expect(drag()?.y).toBeCloseTo(0);
         });
 
-        it('should ignore geometry off the product layer', () => {
+        it('should ignore proxy colliders', () => {
             floor(0);
-            floor(2, DEFAULT_LAYER_MASK);
+            floor(2, PROXY_LAYER_MASK);
 
-            expect(drag().y).toBeCloseTo(0);
+            expect(drag()?.y).toBeCloseTo(0);
+        });
+
+        it('should ignore content without a collider', () => {
+            floor(0);
+            const mesh = new Mesh(
+                new PlaneGeometry(10, 10),
+                new MeshBasicMaterial(),
+            );
+            mesh.rotation.x = -Math.PI / 2;
+            mesh.position.y = 2;
+            mesh.layers.mask = PRODUCT_LAYER_MASK;
+            scene.add(mesh);
+
+            expect(drag()?.y).toBeCloseTo(0);
+        });
+
+        it('should search only the given targets', () => {
+            const low = floor(0);
+            floor(2);
+            dragTool.setDragRaycastTargets([low]);
+
+            expect(drag()?.y).toBeCloseTo(0);
+        });
+
+        it('should search the whole scene again once the targets are cleared', () => {
+            const low = floor(0);
+            floor(2);
+            dragTool.setDragRaycastTargets([low]);
+            dragTool.setDragRaycastTargets(null);
+
+            expect(drag()?.y).toBeCloseTo(2);
+        });
+
+        it('should not start without a surface', () => {
+            expect(drag()).toBeUndefined();
+            expect(dragTool.isDragging).toBe(false);
         });
     });
 });
