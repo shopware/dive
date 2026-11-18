@@ -14,8 +14,6 @@ import {
 class FixedCollider extends ColliderComponent {
     public distance = 5;
 
-    public outline(): void {}
-
     protected intersectRay(raycaster: Raycaster): ColliderHit | null {
         return {
             distance: this.distance,
@@ -42,6 +40,16 @@ describe('dive/collider/ColliderComponent', () => {
         collider.raycast(raycaster, intersects);
         return intersects as ColliderIntersection[];
     };
+
+    describe('outline', () => {
+        it('should draw nothing for a collider that does not outline itself', () => {
+            const target: number[] = [];
+
+            collider.outline(target);
+
+            expect(target).toEqual([]);
+        });
+    });
 
     describe('layers', () => {
         it('should default to the product layer', () => {
