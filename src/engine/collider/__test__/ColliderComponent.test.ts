@@ -41,6 +41,16 @@ describe('dive/collider/ColliderComponent', () => {
         return intersects as ColliderIntersection[];
     };
 
+    describe('outline', () => {
+        it('should draw nothing for a collider that does not outline itself', () => {
+            const target: number[] = [];
+
+            collider.outline(target);
+
+            expect(target).toEqual([]);
+        });
+    });
+
     describe('layers', () => {
         it('should default to the product layer', () => {
             expect(collider.layers.mask).toBe(PRODUCT_LAYER_MASK);

@@ -8,6 +8,11 @@ import {
     ColliderComponent,
     type ColliderHit,
 } from '../../engine/collider/ColliderComponent.ts';
+import { pushArc } from '../../engine/collider/outline.ts';
+
+const _x = new Vector3(1, 0, 0);
+const _y = new Vector3(0, 1, 0);
+const _z = new Vector3(0, 0, 1);
 
 /**
  * Makes its owner hittable as a sphere.
@@ -68,6 +73,16 @@ export class SphereColliderComponent extends ColliderComponent {
         this.set(source._sphere.center, source._sphere.radius);
 
         return this;
+    }
+
+    /** @internal three great circles */
+    public outline(target: number[]): void {
+        if (this._sphere.isEmpty()) return;
+
+        const { center, radius } = this._sphere;
+        pushArc(target, center, _x, _y, radius);
+        pushArc(target, center, _y, _z, radius);
+        pushArc(target, center, _z, _x, radius);
     }
 
     protected intersectRay(raycaster: Raycaster): ColliderHit | null {

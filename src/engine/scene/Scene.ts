@@ -17,6 +17,7 @@ import { disposeComponents } from '../../helpers/disposeComponents/disposeCompon
 import { DIVENode } from '../node/Node.ts';
 import { type DIVETicker } from '../clock/Clock.ts';
 import { TextureResource } from '../resource/texture/TextureResource.ts';
+import { ColliderHelpers } from '../collider/ColliderHelpers.ts';
 
 /**
  * The light a scene gets from an equirectangular image around it.
@@ -163,6 +164,7 @@ export class DIVEScene extends Scene implements DIVETicker {
 
     private _root: DIVERoot;
     private _grid: GridComponent | null = null;
+    private _colliderHelpers: ColliderHelpers | null = null;
 
     /**
      * Components that asked for a per-frame callback.
@@ -375,6 +377,41 @@ export class DIVEScene extends Scene implements DIVETicker {
     }
 
     /**
+     * Shows or hides the collider debug view: an outline of every collider
+     * the collider raycaster would test below the root, product colliders
+     * green and proxy colliders orange.
+     *
+     * On the helper layer, so the live view does not show it. Built on first
+     * use and redrawn every frame while visible, so it follows moves, loads
+     * and visibility; nothing runs while it is hidden.
+     *
+     * @param visible - Whether to draw the colliders.
+     */
+    public setColliderHelpersVisible(visible: boolean): void {
+        if (!this._colliderHelpers && !visible) return;
+
+        const helpers = this._colliderHelpers ?? this._buildColliderHelpers();
+        helpers.setVisible(visible);
+    }
+
+    /**
+     * Puts the collider debug view on its own node in the scene, outside the
+     * root like the grid, so bounds, exports and the entity tree never see it.
+     */
+    private _buildColliderHelpers(): ColliderHelpers {
+        const node = new DIVENode();
+        node.name = 'DIVEColliderHelpers';
+
+        this._colliderHelpers = node.addComponent(
+            new ColliderHelpers(this._root),
+        );
+
+        this.add(node);
+
+        return this._colliderHelpers;
+    }
+
+    /**
      * The background as requested, `null` being transparent.
      *
      * A new image shows up here at once and is shown once it has loaded, the
@@ -545,6 +582,7 @@ export class DIVEScene extends Scene implements DIVETicker {
         // already disposed by the traverse above, since it sits on a node
         // kept rather than nulled, the getter would build a fresh one on demand
         if (this._grid) this.remove(this._grid.owner);
+        if (this._colliderHelpers) this.remove(this._colliderHelpers.owner);
 
         this._tickingComponents = [];
 

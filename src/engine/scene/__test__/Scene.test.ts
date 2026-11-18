@@ -5,7 +5,21 @@ import {
     Object3D,
     SRGBColorSpace,
     Texture,
+    Line3,
+    Vector3,
+    type LineBasicMaterial,
+    type LineSegments,
 } from 'three/webgpu';
+import {
+    HELPER_LAYER_MASK,
+    PROXY_LAYER_MASK,
+} from '../../../constants/VisibilityLayerMask.ts';
+import { SphereColliderComponent } from '../../../components/collider/SphereColliderComponent.ts';
+import { CapsuleColliderComponent } from '../../../components/collider/CapsuleColliderComponent.ts';
+import { ConvexColliderComponent } from '../../../components/collider/ConvexColliderComponent.ts';
+import { MeshColliderComponent } from '../../../components/collider/MeshColliderComponent.ts';
+import { PrimitiveComponent } from '../../../components/mesh/primitive/PrimitiveComponent.ts';
+import { BoxColliderComponent } from '../../../components/collider/BoxColliderComponent.ts';
 import { DIVEComponent } from '../../component/Component.ts';
 import { DIVENode } from '../../node/Node.ts';
 import {
@@ -1434,6 +1448,272 @@ describe('DIVEScene', () => {
 
             light.resolve(new Texture());
             image.resolve(new Texture());
+        });
+    });
+
+    describe('collider helpers', () => {
+        beforeEach(() => {
+            real.root = true;
+            scene = new DIVEScene();
+        });
+
+        const GREEN = 0x00ff00;
+        const ORANGE = 0xff8800;
+
+        /** the line drawings on the helper layer, as segments of rounded world points */
+        const drawn = (color: number): string[] => {
+            const segments: string[] = [];
+            scene.traverse((object) => {
+                const lines = object as LineSegments;
+                if (!lines.isLineSegments) return;
+                if (lines.layers.mask !== HELPER_LAYER_MASK) return;
+                if (!lines.visible) return;
+                const material = lines.material as LineBasicMaterial;
+                if (material.color.getHex() !== color) return;
+
+                const position = lines.geometry.getAttribute('position');
+                const { start, count } = lines.geometry.drawRange;
+                const end = Math.min(start + count, position.count);
+                const point = (i: number): string =>
+                    new Vector3()
+                        .fromBufferAttribute(position, i)
+                        .toArray()
+                        .map((value) => Math.round(value * 1000) / 1000 + 0)
+                        .join(',');
+                for (let i = start; i + 1 < end; i += 2) {
+                    segments.push([point(i), point(i + 1)].sort().join(' '));
+                }
+            });
+            return segments.sort();
+        };
+
+        const addNodeWith = (...components: DIVEComponent[]): DIVENode => {
+            const node = new DIVENode();
+            components.forEach((component) => node.addComponent(component));
+            scene.root.add(node);
+            return node;
+        };
+
+        it('should draw a box collider green, in world space', () => {
+            const node = addNodeWith(new BoxColliderComponent());
+            node.position.set(2, 0, 0);
+
+            scene.setColliderHelpersVisible(true);
+            scene.tick(0);
+
+            const segments = drawn(GREEN);
+            expect(segments).toHaveLength(12);
+            expect(segments).toContain('1.5,-0.5,-0.5 2.5,-0.5,-0.5');
+            expect(segments).toContain('2.5,-0.5,-0.5 2.5,0.5,-0.5');
+            expect(drawn(ORANGE)).toEqual([]);
+        });
+
+        it('should draw a proxy collider orange', () => {
+            const sphere = new SphereColliderComponent();
+            sphere.layers.mask = PROXY_LAYER_MASK;
+            sphere.radius = 1;
+            addNodeWith(sphere);
+
+            scene.setColliderHelpersVisible(true);
+            scene.tick(0);
+
+            const segments = drawn(ORANGE);
+            expect(segments.length).toBeGreaterThan(0);
+            expect(drawn(GREEN)).toEqual([]);
+            // three great circles, every point on the sphere
+            const points = segments.flatMap((segment) => segment.split(' '));
+            points.forEach((point) =>
+                expect(
+                    new Vector3(...point.split(',').map(Number)).length(),
+                ).toBeCloseTo(1, 2),
+            );
+            expect(points.some((point) => point === '1,0,0')).toBe(true);
+            expect(points.some((point) => point === '0,1,0')).toBe(true);
+            expect(points.some((point) => point === '0,0,1')).toBe(true);
+        });
+
+        /** every point of every segment */
+        const pointsOf = (segments: string[]): Vector3[] =>
+            segments.flatMap((segment) =>
+                segment
+                    .split(' ')
+                    .map(
+                        (point) => new Vector3(...point.split(',').map(Number)),
+                    ),
+            );
+
+        const isCubeCorner = (point: Vector3): boolean =>
+            Math.abs(point.x) === 0.5 &&
+            (point.y === 0 || point.y === 1) &&
+            Math.abs(point.z) === 0.5;
+
+        const addCube = (collider: DIVEComponent): void => {
+            const node = addNodeWith(collider);
+            node.addComponent(new PrimitiveComponent()).setGeometry({
+                name: 'box',
+                width: 1,
+                height: 1,
+                depth: 1,
+            });
+        };
+
+        it('should draw a capsule as rings and lines around its axis', () => {
+            addNodeWith(
+                new CapsuleColliderComponent().set(
+                    new Vector3(0, 0, 0),
+                    new Vector3(0, 2, 0),
+                    0.5,
+                ),
+            );
+
+            scene.setColliderHelpersVisible(true);
+            scene.tick(0);
+
+            const segments = drawn(GREEN);
+            const axis = new Line3(new Vector3(0, 0, 0), new Vector3(0, 2, 0));
+            pointsOf(segments).forEach((point) =>
+                expect(
+                    axis
+                        .closestPointToPoint(point, true, new Vector3())
+                        .distanceTo(point),
+                ).toBeCloseTo(0.5, 2),
+            );
+            // a ring at both ends and in the middle
+            [0, 1, 2].forEach((y) =>
+                expect(
+                    pointsOf(segments).filter(
+                        (point) => Math.abs(point.y - y) < 1e-6,
+                    ).length,
+                ).toBeGreaterThanOrEqual(16),
+            );
+            // lines along the side, and the tips of the caps
+            expect(
+                segments.filter((segment) => {
+                    const [a, b] = pointsOf([segment]);
+                    return a.y === 0 && b.y === 2;
+                }).length,
+            ).toBeGreaterThanOrEqual(4);
+            expect(
+                pointsOf(segments).some((point) =>
+                    point.equals(new Vector3(0, 2.5, 0)),
+                ),
+            ).toBe(true);
+            expect(
+                pointsOf(segments).some((point) =>
+                    point.equals(new Vector3(0, -0.5, 0)),
+                ),
+            ).toBe(true);
+        });
+
+        it('should draw the edges of a convex hull once each', () => {
+            addCube(new ConvexColliderComponent());
+
+            scene.setColliderHelpersVisible(true);
+            scene.tick(0);
+
+            const segments = drawn(GREEN);
+            expect(segments.length).toBeGreaterThanOrEqual(12);
+            expect(new Set(segments).size).toBe(segments.length);
+            expect(pointsOf(segments).every(isCubeCorner)).toBe(true);
+            expect(segments).toContain('-0.5,0,-0.5 0.5,0,-0.5');
+        });
+
+        it('should draw the triangles a mesh collider tests as a wireframe', () => {
+            addCube(new MeshColliderComponent());
+
+            scene.setColliderHelpersVisible(true);
+            scene.tick(0);
+
+            const segments = drawn(GREEN);
+            // twelve triangles, three edges each
+            expect(segments).toHaveLength(36);
+            expect(pointsOf(segments).every(isCubeCorner)).toBe(true);
+            expect(segments).toContain('-0.5,0,-0.5 0.5,0,-0.5');
+        });
+
+        it('should follow a load: an empty mesh collider draws once content arrives', () => {
+            const node = addNodeWith(new MeshColliderComponent());
+            scene.setColliderHelpersVisible(true);
+            scene.tick(0);
+            expect(drawn(GREEN)).toEqual([]);
+
+            node.addComponent(new PrimitiveComponent()).setGeometry({
+                name: 'box',
+                width: 1,
+                height: 1,
+                depth: 1,
+            });
+            scene.tick(0);
+
+            expect(drawn(GREEN)).toHaveLength(36);
+        });
+
+        it('should follow a collider that moved since the last frame', () => {
+            const node = addNodeWith(new BoxColliderComponent());
+            scene.setColliderHelpersVisible(true);
+            scene.tick(0);
+
+            node.position.set(0, 3, 0);
+            scene.tick(0);
+
+            expect(drawn(GREEN)).toContain('-0.5,2.5,-0.5 0.5,2.5,-0.5');
+        });
+
+        it('should leave out colliders the collider raycaster would not test', () => {
+            const hidden = addNodeWith(new BoxColliderComponent());
+            hidden.visible = false;
+            const other = new BoxColliderComponent();
+            other.layers.mask = HELPER_LAYER_MASK;
+            addNodeWith(other);
+
+            scene.setColliderHelpersVisible(true);
+            scene.tick(0);
+
+            expect(drawn(GREEN)).toEqual([]);
+            expect(drawn(ORANGE)).toEqual([]);
+        });
+
+        it('should draw nothing and do no work once hidden again', () => {
+            const collider = new BoxColliderComponent();
+            const outline = vi.spyOn(collider, 'outline');
+            addNodeWith(collider);
+            scene.setColliderHelpersVisible(true);
+            scene.tick(0);
+
+            scene.setColliderHelpersVisible(false);
+            outline.mockClear();
+            scene.tick(0);
+
+            expect(drawn(GREEN)).toEqual([]);
+            expect(outline).not.toHaveBeenCalled();
+        });
+
+        it('should build nothing while never switched on', () => {
+            const collider = new BoxColliderComponent();
+            const outline = vi.spyOn(collider, 'outline');
+            addNodeWith(collider);
+
+            scene.setColliderHelpersVisible(false);
+            scene.tick(0);
+
+            expect(outline).not.toHaveBeenCalled();
+            expect(scene.children).toHaveLength(1);
+        });
+
+        it('should stay out of the root, on the helper layer only', () => {
+            addNodeWith(new BoxColliderComponent());
+            const bounds = scene.computeSceneBB().clone();
+
+            scene.setColliderHelpersVisible(true);
+            scene.tick(0);
+
+            let lines = 0;
+            scene.root.traverse((object) => {
+                if ((object as LineSegments).isLineSegments) lines++;
+            });
+            expect(lines).toBe(0);
+            expect(scene.computeSceneBB()).toEqual(bounds);
+            expect(drawn(GREEN)).toHaveLength(12);
         });
     });
 });

@@ -1,11 +1,8 @@
+import { type Object3D, Vector3 } from 'three/webgpu';
 import {
-    type Object3D,
-    type Intersection,
-    Raycaster,
-    Vector3,
-} from 'three/webgpu';
-import {
+    type ColliderIntersection,
     type DIVEDraggable,
+    DIVERaycaster,
     findInterface,
     isVisibleInHierarchy,
     PRODUCT_LAYER_MASK,
@@ -29,9 +26,9 @@ export class DragTool implements Tool {
     readonly name = 'drag';
     readonly priority = 10;
 
+    private _scene: Object3D;
     private _controller: OrbitController;
-    private _raycaster: Raycaster;
-    private _surfaceRaycaster: Raycaster;
+    private _surfaceRaycaster: DIVERaycaster;
 
     // Drag state
     private _dragging: boolean = false;
@@ -41,15 +38,19 @@ export class DragTool implements Tool {
     private _dragEnd: Vector3 = new Vector3();
     private _dragDelta: Vector3 = new Vector3();
 
-    // Custom raycast targets for drag plane
+    // Custom raycast targets for the drag surface
     private _dragRaycastTargets: Object3D[] | null = null;
 
-    constructor(controller: OrbitController) {
+    /**
+     * @param scene What a drag slides over unless targets are set
+     * @param controller The controller whose camera aims the pointer
+     */
+    constructor(scene: Object3D, controller: OrbitController) {
+        this._scene = scene;
         this._controller = controller;
-        this._raycaster = new Raycaster();
 
-        // the real geometry a drag slides over, not the colliders it grabs by
-        this._surfaceRaycaster = new Raycaster();
+        // product colliders, the same picking sees; proxies are no surface
+        this._surfaceRaycaster = new DIVERaycaster();
         this._surfaceRaycaster.layers.mask = PRODUCT_LAYER_MASK;
     }
 
@@ -122,10 +123,12 @@ export class DragTool implements Tool {
 
     /**
      * Set custom objects to raycast against during drag.
-     * Useful for constraining drag to a floor plane.
      *
-     * @param targets Objects to raycast against, or null for the visible
-     * product geometry of the scene the dragged object is in
+     * Only product colliders on or below the targets are a surface, so a
+     * target needs a collider. Targets hidden in their hierarchy are skipped.
+     *
+     * @param targets Objects whose product colliders are searched, or null
+     * for the whole scene
      */
     setDragRaycastTargets(targets: Object3D[] | null): void {
         this._dragRaycastTargets = targets;
@@ -134,9 +137,10 @@ export class DragTool implements Tool {
     // ============ Private Methods ============
 
     private updateRaycasters(ctx: PointerContext): void {
-        const camera = this._controller.object.camera;
-        this._raycaster.setFromCamera(ctx.pointer, camera);
-        this._surfaceRaycaster.setFromCamera(ctx.pointer, camera);
+        this._surfaceRaycaster.setFromCamera(
+            ctx.pointer,
+            this._controller.object.camera,
+        );
     }
 
     private startDrag(): void {
@@ -176,27 +180,28 @@ export class DragTool implements Tool {
         this.resetDragState();
     }
 
-    private getDragIntersect(): Intersection | null {
-        if (this._dragRaycastTargets) {
-            const intersects = this._raycaster.intersectObjects(
-                this._dragRaycastTargets,
-                true,
-            );
-            return intersects[0] || null;
-        }
+    private getDragIntersect(): ColliderIntersection | null {
+        const intersects = (
+            this._dragRaycastTargets
+                ? this._surfaceRaycaster.intersectObjects(
+                      this._dragRaycastTargets.filter(isVisibleInHierarchy),
+                  )
+                : this._surfaceRaycaster.intersectObject(this._scene)
+        ) as ColliderIntersection[];
 
-        // the scene the dragged object is in
-        let scene: Object3D | null = this._draggable;
-        while (scene?.parent) scene = scene.parent;
-        if (!scene) return null;
-
-        // layers prune per object, visible does not, hence the hierarchy check
+        // the dragged object would otherwise be its own surface
         return (
-            this._surfaceRaycaster
-                .intersectObject(scene, true)
-                .find((intersect) => isVisibleInHierarchy(intersect.object)) ??
+            intersects.find((intersect) => !this.isDragged(intersect.object)) ??
             null
         );
+    }
+
+    /** whether the object is the dragged one or below it */
+    private isDragged(object: Object3D): boolean {
+        for (let o: Object3D | null = object; o; o = o.parent) {
+            if (o === this._draggable) return true;
+        }
+        return false;
     }
 
     private createDragEvent(): DraggableEvent {
