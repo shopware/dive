@@ -2,6 +2,7 @@ import type { Mock } from 'vitest';
 import {
     BoxGeometry,
     DoubleSide,
+    Group,
     Mesh,
     MeshStandardMaterial,
     Object3D,
@@ -14,8 +15,13 @@ import { MeshComponent } from '../../../components/mesh/MeshComponent.ts';
 import { ModelComponent } from '../../../components/mesh/model/ModelComponent.ts';
 import { DIVEScene } from '../../scene/Scene.ts';
 import {
+    BoxColliderComponent,
+    MeshColliderComponent,
+} from '../../../components/collider/index.ts';
+import {
     HELPER_LAYER_MASK,
     PRODUCT_LAYER_MASK,
+    PROXY_LAYER_MASK,
 } from '../../../constants/VisibilityLayerMask.ts';
 /**
  * Uses real three throughout. The previous grounding tests drove `Box3` through
@@ -35,16 +41,33 @@ const createCube = (): Mesh => {
     return mesh;
 };
 
-const createModel = (): DIVENode => {
+/** A product-layer box of the given size, its centre at the given position. */
+const createBox = (
+    [width, height, depth]: [number, number, number],
+    [x, y, z]: [number, number, number],
+): Mesh => {
+    const mesh = new Mesh(
+        new BoxGeometry(width, height, depth),
+        new MeshStandardMaterial(),
+    );
+    mesh.position.set(x, y, z);
+    return mesh;
+};
+
+/**
+ * A node holding the given meshes as model content, with a mesh collider,
+ * exactly as the gateway composes a model.
+ */
+const createModelOf = (...meshes: Mesh[]): DIVENode => {
     const model = new DIVENode();
-    /**
-     * a mesh component and the geometry it contributes, exactly as the gateway
-     * composes it: the component owns the mesh, the node holds it
-     */
-    model.addComponent(new ModelComponent());
-    model.add(createCube());
+    const group = new Group();
+    group.add(...meshes);
+    model.addComponent(new ModelComponent()).setFromGLTF(group);
+    model.addComponent(new MeshColliderComponent());
     return model;
 };
+
+const createModel = (): DIVENode => createModelOf(createCube());
 class AlphaComponent extends DIVEComponent {}
 class BetaComponent extends DIVEComponent {}
 class SpecialAlphaComponent extends AlphaComponent {}
@@ -757,9 +780,9 @@ describe('dive/node/DIVENode dropIt', () => {
          * the ray starts on the bottom face, and a double-sided one is hit
          * there at distance zero
          */
-        const cube = model.children.find((child) => child instanceof Mesh)!;
-        (cube as Mesh<BoxGeometry, MeshStandardMaterial>).material.side =
-            DoubleSide;
+        model.traverse((child) => {
+            if (child instanceof Mesh) child.material.side = DoubleSide;
+        });
 
         model.position.set(0, 5, 0);
         scene.updateMatrixWorld(true);
@@ -782,6 +805,94 @@ describe('dive/node/DIVENode dropIt', () => {
 
         // top of the other cube is at y = 1, plus this cube's half-height
         expect(model.position.y).toBeCloseTo(1.5);
+    });
+
+    it('should rest on a table top', () => {
+        // a top at y = 1 on four legs, a lamp reaching up to y = 2 beside it
+        const table = createModelOf(
+            createBox([2, 0.1, 2], [0, 0.95, 0]),
+            ...[-0.9, 0.9].flatMap((x) =>
+                [-0.9, 0.9].map((z) =>
+                    createBox([0.1, 0.9, 0.1], [x, 0.45, z]),
+                ),
+            ),
+            createBox([0.1, 2, 0.1], [3, 1, 0]),
+        );
+        scene.root.add(table);
+
+        model.position.set(0, 6, 0);
+        scene.updateMatrixWorld(true);
+
+        model.dropIt();
+
+        expect(model.position.y).toBeCloseTo(1.5);
+    });
+
+    it('should rest on the hit point, not on the top of what it hits', () => {
+        // a cube turned onto its edge, its ridge at y = sqrt(2)
+        const ridge = createBox([2, 2, 2], [0, 0, 0]);
+        ridge.rotation.z = Math.PI / 4;
+        scene.root.add(createModelOf(ridge));
+
+        // half a metre beside the ridge the slope is at y = 0.914
+        model.position.set(0.5, 6, 0);
+        scene.updateMatrixWorld(true);
+
+        model.dropIt();
+
+        // plus the cube's half-height
+        expect(model.position.y).toBeCloseTo(1.414);
+    });
+
+    it('should drop onto the floor under an arch', () => {
+        // two pillars 3 m high, a beam on top of them, an opening in between
+        const arch = createModelOf(
+            createBox([0.5, 3, 0.5], [-2, 1.5, 0]),
+            createBox([0.5, 3, 0.5], [2, 1.5, 0]),
+            createBox([4.5, 0.5, 0.5], [0, 3.25, 0]),
+        );
+        scene.root.add(arch);
+
+        model.position.set(0, 2, 0);
+        scene.updateMatrixWorld(true);
+
+        model.dropIt();
+
+        expect(model.position.y).toBeCloseTo(0.5);
+    });
+
+    it('should not rest on content without a collider', () => {
+        // pickable content only: a mesh nobody can hit is no surface
+        const other = createModel();
+        other.removeComponent(other.getComponent(MeshColliderComponent)!);
+        other.position.set(0, 0.5, 0);
+        scene.root.add(other);
+
+        model.position.set(0, 6, 0);
+        scene.updateMatrixWorld(true);
+
+        model.dropIt();
+
+        expect(model.position.y).toBeCloseTo(0.5);
+    });
+
+    it('should not rest on a proxy collider', () => {
+        // a camera or light icon is clickable, but nothing stands on it
+        const proxy = new DIVENode();
+        const collider = proxy.addComponent(new BoxColliderComponent());
+        collider.setFromCenterAndSize(
+            new Vector3(0, 0.5, 0),
+            new Vector3(1, 1, 1),
+        );
+        collider.layers.mask = PROXY_LAYER_MASK;
+        scene.root.add(proxy);
+
+        model.position.set(0, 6, 0);
+        scene.updateMatrixWorld(true);
+
+        model.dropIt();
+
+        expect(model.position.y).toBeCloseTo(0.5);
     });
 
     it('should not drop below the ground plane onto sunken geometry', () => {

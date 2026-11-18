@@ -242,10 +242,26 @@ selectable as an object.
 The collider shapes, all sized in the owner's space: `BoxColliderComponent`
 (like `Box3`), `SphereColliderComponent` (like `Sphere`),
 `CapsuleColliderComponent` (like three's `Capsule`: `set(start, end, radius)`,
-one metre up Y with radius 0.5 by default, for elongated content) and
-`MeshColliderComponent` (the owner's own product meshes). Only the mesh
+one metre up Y with radius 0.5 by default, for elongated content),
+`MeshColliderComponent` (the owner's own product meshes) and
+`ConvexColliderComponent` (the convex hull of the same meshes, a cheap stand-in
+for heavy content; rebuilt after a load or a component change, `refresh()` after
+edits nothing announces, flat content tested as its box). Only the mesh
 collider is added by default, to models and primitives; the others are the
 caller's choice.
+
+A `MeshColliderComponent` hits a model exactly where its surfaces are, and a
+heavy model costs about as much to pick as a light one: each geometry gets a
+bounding volume hierarchy (`three-mesh-bvh`, used directly, three's prototypes
+stay untouched) on its first raycast, shared by every mesh using that geometry
+and freed when the geometry is disposed. A swapped geometry needs nothing; after
+editing a geometry in place, call `collider.refresh()`. Skinned meshes and
+meshes with morph targets skip the hierarchy and are hit in their current pose.
+
+`DIVENode.dropIt()` asks the same colliders: it casts straight down from the
+bottom centre of the node's bounds through `PRODUCT` colliders and rests the node
+on the hit point (a table top, the floor under an arch), or on y = 0 without a
+hit. A model without a collider, a camera or a light is no surface.
 
 `DIVECameraComponent` composes two masks out of these: `EDITOR_VIEW_LAYER_MASK`
 is everything but `COORDINATE`, and `LIVE_VIEW_LAYER_MASK` is `PRODUCT | FLOOR`.

@@ -1,10 +1,4 @@
-import {
-    Box3,
-    Object3D,
-    Raycaster,
-    Vector3,
-    type Vector3Like,
-} from 'three/webgpu';
+import { Box3, Object3D, Vector3, type Vector3Like } from 'three/webgpu';
 import { PRODUCT_LAYER_MASK } from '../../constants/VisibilityLayerMask.ts';
 
 import { DIVEMovable } from '../../interfaces/Movable.ts';
@@ -19,6 +13,7 @@ import {
 import { findSceneRecursive } from '../../helpers/findSceneRecursive/findSceneRecursive.ts';
 import { computeProductBounds } from '../../helpers/computeProductBounds/computeProductBounds.ts';
 import { type DIVEScene } from '../scene/Scene.ts';
+import { DIVERaycaster } from '../raycaster/Raycaster.ts';
 
 /**
  * A node in the scene tree.
@@ -379,13 +374,16 @@ export class DIVENode
     }
 
     /**
-     * Rests this node on the highest surface below it, and never below the
+     * Rests this node on the collider right below it, and never below the
      * ground plane.
      *
-     * The floor is deliberately not a raycast target: it is a flat plane at
-     * y = 0, so "hit the floor" and "hit nothing" produce the same answer. The
-     * clamp to y = 0 covers the remaining case, geometry parked below the floor,
-     * which must not drag this node underground.
+     * Casts straight down from the bottom centre of its own bounds through the
+     * product-layer colliders, so it rests where the ray hits -- on a table top,
+     * or on the floor under an arch -- not on the top of what it hits. Content
+     * without a collider and proxy colliders are no surface, as they are not
+     * pickable as products. The floor has no collider: a flat plane at y = 0 and
+     * "hit nothing" give the same answer, and the clamp to y = 0 also keeps
+     * colliders parked below the floor from dragging this node underground.
      */
     public dropIt(): void {
         if (!this.parent) {
@@ -411,7 +409,10 @@ export class DIVENode
         const bottomCenter = box.getCenter(new Vector3());
         bottomCenter.y = box.min.y;
 
-        const raycaster = new Raycaster(bottomCenter, new Vector3(0, -1, 0));
+        const raycaster = new DIVERaycaster(
+            bottomCenter,
+            new Vector3(0, -1, 0),
+        );
         raycaster.layers.mask = PRODUCT_LAYER_MASK;
 
         /**
@@ -419,10 +420,10 @@ export class DIVENode
          * there is hit at distance zero -- the node would rest on itself
          */
         const hit = raycaster
-            .intersectObjects(scene.root.children, true)
+            .intersectObject(scene.root)
             .find(({ object }) => !this._contains(object));
 
-        const hitY = hit ? computeProductBounds(hit.object).max.y : 0;
+        const hitY = hit ? hit.point.y : 0;
 
         const restY = Math.max(hitY, 0);
         const delta = restY - box.min.y;
