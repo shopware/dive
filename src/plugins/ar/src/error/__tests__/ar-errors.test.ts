@@ -3,6 +3,7 @@ import {
     ARDesktopPlatformError,
     ARQuickLookNotSafariError,
     ARQuickLookUnknownError,
+    ARQuickLookUnsupportedBrowserError,
     ARQuickLookVersionMismatchError,
 } from '../ar-errors.ts';
 
@@ -28,6 +29,18 @@ describe('ARError System', () => {
                 'ARQuickLook on iOS is only available in Safari.',
             );
             expect(error.type).toBe('ar-quicklook-not-safari-error');
+        });
+    });
+
+    describe('ARQuickLookUnsupportedBrowserError', () => {
+        it('should create an ARQuickLookUnsupportedBrowserError with default message and type', () => {
+            const error = new ARQuickLookUnsupportedBrowserError();
+            expect(error).toBeInstanceOf(ARError);
+            expect(error.name).toBe('ARQuickLookUnsupportedBrowserError');
+            expect(error.message).toBe(
+                'ARQuickLook is not supported in this browser.',
+            );
+            expect(error.type).toBe('ar-quicklook-unsupported-browser-error');
         });
     });
 

@@ -205,6 +205,10 @@ describe('dive/info/DIVEInfo', () => {
     });
 
     it('should support ARQuickLook when relList supports AR', () => {
+        mockNavigator({
+            userAgent:
+                'Mozilla/5.0 (iPhone; CPU iPhone OS 14_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/14.0 Mobile/15E148 Safari/604.1',
+        });
         vi.spyOn(document, 'createElement').mockReturnValue({
             relList: { supports: () => true },
         } as unknown as HTMLAnchorElement);
@@ -251,6 +255,94 @@ describe('dive/info/DIVEInfo', () => {
         expect(supports).toBe(false);
 
         getSystemSpy.mockRestore();
+    });
+
+    describe('AR Quick Look browser detection', () => {
+        // UAs recorded on an iPhone with iOS 26.6.2
+        const SAFARI_UA =
+            'Mozilla/5.0 (iPhone; CPU iPhone OS 18_7 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/26.6.2 Mobile/15E148 Safari/604.1';
+        const CHROME_UA =
+            'Mozilla/5.0 (iPhone; CPU iPhone OS 26_6_2 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) CriOS/158.0.8127.35 Mobile/15E148 Safari/604.1';
+        const BRAVE_UA =
+            'Mozilla/5.0 (iPhone; CPU iPhone OS 18_7 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/26.6.2 Mobile/15E148 Safari/604.1 Brave';
+        const EDGE_UA =
+            'Mozilla/5.0 (iPhone; CPU iPhone OS 17_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 EdgiOS/125.2535.60 Mobile/15E148 Safari/605.1.15';
+        const FIREFOX_UA =
+            'Mozilla/5.0 (iPhone; CPU iPhone OS 17_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) FxiOS/127.0 Mobile/15E148 Safari/605.1.15';
+        const FACEBOOK_UA =
+            'Mozilla/5.0 (iPhone; CPU iPhone OS 17_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148 [FBAN/FBIOS;FBAV/470.0.0.40.97]';
+        const DESKTOP_SAFARI_UA =
+            'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.5 Safari/605.1.15';
+
+        const setWebView = (isWebView: boolean) => {
+            (window as unknown as { webkit?: unknown }).webkit = isWebView
+                ? { messageHandlers: {} }
+                : undefined;
+        };
+
+        const mockRelList = (supported: boolean) =>
+            vi.spyOn(document, 'createElement').mockReturnValue({
+                relList: { supports: () => supported },
+            } as unknown as HTMLAnchorElement);
+
+        afterEach(() => {
+            delete (window as unknown as { webkit?: unknown }).webkit;
+            vi.restoreAllMocks();
+        });
+
+        it.each([
+            ['Safari', SAFARI_UA, false, false],
+            ['Chrome', CHROME_UA, true, true],
+            ['Brave', BRAVE_UA, true, false],
+            ['Edge', EDGE_UA, true, true],
+            ['Firefox', FIREFOX_UA, true, true],
+            ['Facebook in-app browser', FACEBOOK_UA, true, false],
+        ])(
+            'should detect %s on iOS (WKWebView: %s, AR Quick Look browser: %s)',
+            (_name, userAgent, isWebView, isARQuickLookBrowser) => {
+                mockNavigator({ userAgent });
+                setWebView(isWebView);
+
+                expect(SystemInfo.getIsIOSWebView()).toBe(isWebView);
+                // Safari is an AR Quick Look browser, it is only marked false
+                // above because it is not a WKWebView
+                expect(SystemInfo.getIsARQuickLookBrowser()).toBe(
+                    isWebView ? isARQuickLookBrowser : true,
+                );
+            },
+        );
+
+        it('should not treat desktop browsers as iOS WKWebView', () => {
+            mockNavigator({ userAgent: DESKTOP_SAFARI_UA });
+            setWebView(true);
+
+            expect(SystemInfo.getIsIOSWebView()).toBe(false);
+        });
+
+        it('should support AR Quick Look in Safari when relList supports ar', () => {
+            mockNavigator({ userAgent: SAFARI_UA });
+            setWebView(false);
+            mockRelList(true);
+
+            expect(SystemInfo.getSupportsARQuickLook()).toBe(true);
+        });
+
+        it('should support AR Quick Look in Chrome on iOS even though relList does not', () => {
+            mockNavigator({ userAgent: CHROME_UA });
+            setWebView(true);
+            const createElement = mockRelList(false);
+
+            expect(SystemInfo.getSupportsARQuickLook()).toBe(true);
+            expect(createElement).not.toHaveBeenCalled();
+        });
+
+        it('should not support AR Quick Look in Brave on iOS even if relList does', () => {
+            mockNavigator({ userAgent: BRAVE_UA });
+            setWebView(true);
+            mockRelList(true);
+
+            expect(SystemInfo.getSupportsARQuickLook()).toBe(false);
+        });
     });
 
     it('should be mobile (iOS)', () => {

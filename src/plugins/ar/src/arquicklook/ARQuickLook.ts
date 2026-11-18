@@ -2,9 +2,9 @@ import { type ARSystemOptions } from '../ARSystem.ts';
 import { AssetConverter } from '@shopware-ag/dive/assetconverter';
 import { AssetLoader } from '@shopware-ag/dive/assetloader';
 import { AssetExporter } from '@shopware-ag/dive/assetexporter';
-import { EBrowser, SystemInfo } from '@shopware-ag/dive/systeminfo';
+import { SystemInfo } from '@shopware-ag/dive/systeminfo';
 import {
-    ARQuickLookNotSafariError,
+    ARQuickLookUnsupportedBrowserError,
     ARQuickLookVersionMismatchError,
     ARQuickLookUnknownError,
 } from '../error/ar-errors.ts';
@@ -26,8 +26,8 @@ export class ARQuickLook {
      * @throws Error if ARQuickLook is not supported on the device
      */
     public async launch(uri: string, options?: ARSystemOptions): Promise<void> {
-        if (SystemInfo.getBrowser() !== EBrowser.SAFARI) {
-            return Promise.reject(new ARQuickLookNotSafariError());
+        if (!SystemInfo.getIsARQuickLookBrowser()) {
+            return Promise.reject(new ARQuickLookUnsupportedBrowserError());
         }
 
         const iosVersionDetails = SystemInfo.getIOSVersion();

@@ -1,9 +1,9 @@
 import { type ARSystemOptions } from '../../ARSystem.ts';
 import { ARQuickLook } from '../ARQuickLook.ts';
 import { AssetConverter } from '@shopware-ag/dive/assetconverter';
-import { SystemInfo, EBrowser } from '@shopware-ag/dive/systeminfo';
+import { SystemInfo } from '@shopware-ag/dive/systeminfo';
 import {
-    ARQuickLookNotSafariError,
+    ARQuickLookUnsupportedBrowserError,
     ARQuickLookVersionMismatchError,
     ARQuickLookUnknownError,
 } from '../../error/ar-errors.ts';
@@ -55,7 +55,7 @@ describe('ARQuickLook', () => {
         quickLook = new ARQuickLook();
 
         // Default mocks for SystemInfo to allow most tests to pass without specific setup
-        vi.mocked(SystemInfo.getBrowser).mockReturnValue(EBrowser.SAFARI);
+        vi.mocked(SystemInfo.getIsARQuickLookBrowser).mockReturnValue(true);
         vi.mocked(SystemInfo.getIOSVersion).mockReturnValue({
             major: 15,
             full: '15.0',
@@ -146,11 +146,14 @@ describe('ARQuickLook', () => {
             expect(anchorMock?.href).toContain('#allowsContentScaling=0');
         });
 
-        it('should reject if browser is not Safari', async () => {
-            vi.mocked(SystemInfo.getBrowser).mockReturnValue(EBrowser.CHROMIUM);
-            await expect(quickLook.launch(mockUri)).rejects.toThrow(
-                ARQuickLookNotSafariError,
+        it('should reject if the browser cannot open AR Quick Look', async () => {
+            vi.mocked(SystemInfo.getIsARQuickLookBrowser).mockReturnValue(
+                false,
             );
+            await expect(quickLook.launch(mockUri)).rejects.toThrow(
+                ARQuickLookUnsupportedBrowserError,
+            );
+            expect(mockConvert).not.toHaveBeenCalled();
         });
 
         it('should reject if iOS version is too low', async () => {
