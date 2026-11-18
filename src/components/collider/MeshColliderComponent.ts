@@ -1,9 +1,9 @@
-import { type Intersection, type Mesh, type Raycaster } from 'three/webgpu';
+import { type Intersection, type Raycaster } from 'three/webgpu';
 import {
     ColliderComponent,
     type ColliderHit,
 } from '../../engine/collider/ColliderComponent.ts';
-import { PRODUCT_LAYER_MASK } from '../../constants/VisibilityLayerMask.ts';
+import { forEachTestedMesh } from './forEachTestedMesh.ts';
 
 const _intersects: Intersection[] = [];
 
@@ -32,16 +32,9 @@ export class MeshColliderComponent extends ColliderComponent {
     protected intersectRay(raycaster: Raycaster): ColliderHit | null {
         _intersects.length = 0;
 
-        this.owner.components.forEach((component) =>
-            component.contributions.forEach((object) =>
-                object.traverseVisible((child) => {
-                    if (!(child as Mesh).isMesh) return;
-                    if ((child.layers.mask & PRODUCT_LAYER_MASK) === 0) return;
-
-                    // three's own triangle test, honouring material.side
-                    child.raycast(raycaster, _intersects);
-                }),
-            ),
+        // three's own triangle test, honouring material.side
+        forEachTestedMesh(this.owner, (mesh) =>
+            mesh.raycast(raycaster, _intersects),
         );
 
         // the base replaces object with the owner
