@@ -8,8 +8,15 @@ import {
     ColliderComponent,
     type ColliderHit,
 } from '../../engine/collider/ColliderComponent.ts';
+import { pushArc, pushSegment } from '../../engine/collider/outline.ts';
 
 const _axis = new Vector3();
+const _back = new Vector3();
+const _u = new Vector3();
+const _v = new Vector3();
+const _middle = new Vector3();
+const _a = new Vector3();
+const _b = new Vector3();
 const _offset = new Vector3();
 const _direction = new Vector3();
 
@@ -74,6 +81,47 @@ export class CapsuleColliderComponent extends ColliderComponent {
         this.set(source.start, source.end, source.radius);
 
         return this;
+    }
+
+    /** @internal rings at both ends and the middle, side lines and caps */
+    public outline(target: number[]): void {
+        if (this.isEmpty()) return;
+
+        const { start, end, radius } = this;
+        const length = _axis.subVectors(end, start).length();
+        if (length === 0) _axis.set(0, 1, 0);
+        else _axis.divideScalar(length);
+        _back.copy(_axis).negate();
+
+        // two unit vectors across the axis
+        _u.set(
+            Math.abs(_axis.x) < 0.9 ? 1 : 0,
+            Math.abs(_axis.x) < 0.9 ? 0 : 1,
+            0,
+        )
+            .cross(_axis)
+            .normalize();
+        _v.crossVectors(_axis, _u);
+
+        if (length > 0) {
+            _middle.addVectors(start, end).multiplyScalar(0.5);
+            pushArc(target, start, _u, _v, radius);
+            pushArc(target, _middle, _u, _v, radius);
+            for (const side of [_u, _v]) {
+                for (const sign of [1, -1]) {
+                    _a.copy(start).addScaledVector(side, sign * radius);
+                    _b.copy(end).addScaledVector(side, sign * radius);
+                    pushSegment(target, _a, _b);
+                }
+            }
+        }
+        pushArc(target, end, _u, _v, radius);
+
+        // half circles over each cap, from one side across the tip to the other
+        pushArc(target, end, _u, _axis, radius, 0, Math.PI);
+        pushArc(target, end, _v, _axis, radius, 0, Math.PI);
+        pushArc(target, start, _u, _back, radius, 0, Math.PI);
+        pushArc(target, start, _v, _back, radius, 0, Math.PI);
     }
 
     protected intersectRay(raycaster: Raycaster): ColliderHit | null {

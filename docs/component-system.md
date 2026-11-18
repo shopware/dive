@@ -263,6 +263,12 @@ bottom centre of the node's bounds through `PRODUCT` colliders and rests the nod
 on the hit point (a table top, the floor under an arch), or on y = 0 without a
 hit. A model without a collider, a camera or a light is no surface.
 
+To see what can be hit, call `scene.setColliderHelpersVisible(true)`. It
+outlines every collider the collider raycaster would test below the root,
+product colliders green and proxy colliders orange, on `HELPER`, so only the
+editor view shows it. It is redrawn every frame while on, so it follows moves,
+loads and visibility, and costs nothing while off.
+
 `DIVECameraComponent` composes two masks out of these: `EDITOR_VIEW_LAYER_MASK`
 is everything but `COORDINATE`, and `LIVE_VIEW_LAYER_MASK` is `PRODUCT | FLOOR`.
 
