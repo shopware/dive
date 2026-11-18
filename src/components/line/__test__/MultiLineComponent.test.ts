@@ -1,9 +1,9 @@
 import {
-    type BufferAttribute,
+    Line2NodeMaterial,
+    type InterleavedBufferAttribute,
     type Vector3Like,
-    type LineDashedMaterial,
-    LineSegments,
 } from 'three/webgpu';
+import { LineSegments2 } from 'three/examples/jsm/lines/webgpu/LineSegments2.js';
 import { MultiLineComponent } from '../MultiLineComponent.ts';
 import { DIVENode } from '../../../engine/node/Node.ts';
 import { HELPER_LAYER_MASK } from '../../../constants/VisibilityLayerMask.ts';
@@ -24,26 +24,57 @@ describe('dive/line/MultiLineComponent', () => {
         nextKey = 0;
     });
 
-    /** Reads the endpoint written for a slot. */
-    const endpointAt = (slot: number): number[] => {
-        const array = lines.lines.geometry.attributes.position
-            .array as Float32Array;
-        return Array.from(array.slice(slot * 6 + 3, slot * 6 + 6));
+    /** One instance attribute of the line geometry, read per instance. */
+    const instanceAttribute = (name: string): InterleavedBufferAttribute =>
+        lines.lines.geometry.getAttribute(name) as InterleavedBufferAttribute;
+
+    const pointAt = (name: string, slot: number): number[] => {
+        const attribute = instanceAttribute(name);
+        return [
+            attribute.getX(slot),
+            attribute.getY(slot),
+            attribute.getZ(slot),
+        ];
     };
 
-    const startAt = (slot: number): number[] => {
-        const array = lines.lines.geometry.attributes.position
-            .array as Float32Array;
-        return Array.from(array.slice(slot * 6, slot * 6 + 3));
-    };
+    /** Reads the endpoint written for an instance. */
+    const endpointAt = (slot: number): number[] => pointAt('instanceEnd', slot);
 
-    const drawnVertices = (): number => lines.lines.geometry.drawRange.count;
+    const startAt = (slot: number): number[] => pointAt('instanceStart', slot);
+
+    /** Line distances of an instance's start and end, which dashes are measured by. */
+    const distancesAt = (slot: number): number[] => [
+        instanceAttribute('instanceDistanceStart').getX(slot),
+        instanceAttribute('instanceDistanceEnd').getX(slot),
+    ];
+
+    /** One instance per line, so this is how many lines are drawn. */
+    const drawnLines = (): number => lines.lines.geometry.instanceCount;
+
+    /** Every instance the GPU draws, as start and end, in buffer order. */
+    const drawnSegments = (): number[][][] =>
+        Array.from({ length: drawnLines() }, (_, i) => [
+            startAt(i),
+            endpointAt(i),
+        ]);
+
+    /** The drawn instances' end points, sorted, so the order does not matter. */
+    const drawnEnds = (): number[][] =>
+        drawnSegments()
+            .map(([, end]) => end)
+            .sort((a, b) => a[0] - b[0] || a[1] - b[1] || a[2] - b[2]);
+
+    /** How many drawn instances start and end in the same point. */
+    const degenerateSegments = (): number =>
+        drawnSegments().filter(([start, end]) =>
+            start.every((value, i) => value === end[i]),
+        ).length;
 
     /**
      * Places a line under a key nobody else uses, and returns that key.
      *
-     * Most tests here are about slots, buffers and draw ranges, and only need
-     * *some* identity per line.
+     * Most tests here are about instances, buffers and upload ranges, and only
+     * need *some* identity per line.
      */
     const addLine = (start: Vector3Like, end: Vector3Like): number => {
         const key = nextKey++;
@@ -52,23 +83,21 @@ describe('dive/line/MultiLineComponent', () => {
         return key;
     };
 
-    /** `material` is a union of one-or-many; these lines always have one. */
-    const material = (): LineDashedMaterial =>
-        lines.lines.material as LineDashedMaterial;
+    const material = (): Line2NodeMaterial => lines.lines.material;
 
-    /** `attributes.position` is a union; only BufferAttribute tracks ranges. */
-    const positionAttribute = (): BufferAttribute =>
-        lines.lines.geometry.attributes.position as BufferAttribute;
+    /** start and end share one interleaved buffer, which tracks the ranges */
+    const positionBuffer = () => instanceAttribute('instanceStart').data;
 
     describe('single draw call', () => {
-        it('should draw every line from one LineSegments', () => {
+        it('should draw every line from one LineSegments2', () => {
             addLine(ORIGIN, { x: 1, y: 0, z: 0 });
             addLine(ORIGIN, { x: 2, y: 0, z: 0 });
             addLine(ORIGIN, { x: 3, y: 0, z: 0 });
 
-            // one LineSegments for every line, contributed to the node
+            // one LineSegments2 for every line, contributed to the node
             expect(lines.contributions).toEqual([lines.lines]);
-            expect(lines.lines).toBeInstanceOf(LineSegments);
+            expect(lines.lines).toBeInstanceOf(LineSegments2);
+            expect(lines.lines.material).toBeInstanceOf(Line2NodeMaterial);
             expect(lines.lineCount).toBe(3);
         });
 
@@ -76,16 +105,16 @@ describe('dive/line/MultiLineComponent', () => {
             expect(lines.lines.layers.mask).toBe(HELPER_LAYER_MASK);
         });
 
-        it('should draw two vertices per line', () => {
+        it('should draw one instance per line', () => {
             addLine(ORIGIN, { x: 1, y: 0, z: 0 });
-            expect(drawnVertices()).toBe(2);
+            expect(drawnLines()).toBe(1);
 
             addLine(ORIGIN, { x: 2, y: 0, z: 0 });
-            expect(drawnVertices()).toBe(4);
+            expect(drawnLines()).toBe(2);
         });
 
         it('should draw nothing while empty', () => {
-            expect(drawnVertices()).toBe(0);
+            expect(drawnLines()).toBe(0);
         });
     });
 
@@ -109,26 +138,39 @@ describe('dive/line/MultiLineComponent', () => {
 
         it('should restart the dash pattern for every line', () => {
             /**
-             * LineSegments.computeLineDistances() accumulates across segments,
+             * LineSegments2.computeLineDistances() accumulates across segments,
              * which can drop a short line entirely into a gap
              */
             addLine(ORIGIN, { x: 1, y: 0, z: 0 });
-            addLine(ORIGIN, { x: 2, y: 0, z: 0 });
+            addLine({ x: 5, y: 0, z: 0 }, { x: 7, y: 0, z: 0 });
 
-            const distances = lines.lines.geometry.attributes.lineDistance
-                .array as Float32Array;
-            expect(distances[0]).toBe(0);
-            expect(distances[1]).toBeCloseTo(1);
-            expect(distances[2]).toBe(0);
-            expect(distances[3]).toBeCloseTo(2);
+            expect(distancesAt(0)).toEqual([0, 1]);
+            expect(distancesAt(1)).toEqual([0, 2]);
         });
 
         it('should measure the distance between the endpoints', () => {
             addLine({ x: 1, y: 0, z: 0 }, { x: 4, y: 0, z: 0 });
 
-            const distances = lines.lines.geometry.attributes.lineDistance
-                .array as Float32Array;
-            expect(distances[1]).toBeCloseTo(3);
+            expect(distancesAt(0)[1]).toBeCloseTo(3);
+        });
+
+        it('should restart the dash pattern when a line moves', () => {
+            const key = addLine(ORIGIN, { x: 1, y: 0, z: 0 });
+            addLine(ORIGIN, { x: 2, y: 0, z: 0 });
+
+            lines.setLineFor(key, { x: 1, y: 1, z: 0 }, { x: 4, y: 5, z: 0 });
+
+            expect(distancesAt(0)).toEqual([0, 5]);
+            expect(distancesAt(1)).toEqual([0, 2]);
+        });
+
+        it('should keep the dash distances of earlier lines after growing', () => {
+            for (let i = 0; i < 12; i++) {
+                addLine(ORIGIN, { x: i + 1, y: 0, z: 0 });
+            }
+
+            expect(distancesAt(0)).toEqual([0, 1]);
+            expect(distancesAt(11)).toEqual([0, 12]);
         });
 
         it('should move a line', () => {
@@ -154,12 +196,12 @@ describe('dive/line/MultiLineComponent', () => {
         it('should upload only the changed range', () => {
             addLine(ORIGIN, { x: 1, y: 0, z: 0 });
             const second = addLine(ORIGIN, { x: 2, y: 0, z: 0 });
-            positionAttribute().clearUpdateRanges();
+            positionBuffer().clearUpdateRanges();
 
             lines.setLineFor(second, ORIGIN, { x: 7, y: 0, z: 0 });
 
-            // second slot only: offset 6, six floats
-            expect(positionAttribute().updateRanges).toEqual([
+            // the second instance only, six floats from offset 6
+            expect(positionBuffer().updateRanges).toEqual([
                 { start: 6, count: 6 },
             ]);
         });
@@ -227,41 +269,44 @@ describe('dive/line/MultiLineComponent', () => {
         });
     });
 
-    describe('slots', () => {
-        it('should collapse a removed line', () => {
+    describe('instances', () => {
+        it('should stop drawing a removed line', () => {
             const key = addLine(ORIGIN, { x: 4, y: 0, z: 0 });
 
             lines.removeLineFor(key);
 
             expect(lines.lineCount).toBe(0);
-            expect(endpointAt(0)).toEqual([0, 0, 0]);
+            expect(drawnLines()).toBe(0);
         });
 
         it('should ignore removing an unknown key', () => {
             expect(() => lines.removeLineFor(42)).not.toThrow();
         });
 
-        it('should reuse a freed slot', () => {
+        it('should draw a line added after a removal', () => {
             const first = addLine(ORIGIN, { x: 1, y: 0, z: 0 });
             addLine(ORIGIN, { x: 2, y: 0, z: 0 });
 
             lines.removeLineFor(first);
             addLine(ORIGIN, { x: 3, y: 0, z: 0 });
 
-            // the freed slot took the new line, so the buffer did not grow
-            expect(endpointAt(0)).toEqual([3, 0, 0]);
-            expect(drawnVertices()).toBe(4);
+            expect(drawnEnds()).toEqual([
+                [2, 0, 0],
+                [3, 0, 0],
+            ]);
         });
 
-        it('should not disturb other lines when one is removed', () => {
+        it('should keep the other lines when one is removed', () => {
             addLine(ORIGIN, { x: 1, y: 0, z: 0 });
             const second = addLine(ORIGIN, { x: 2, y: 0, z: 0 });
             addLine(ORIGIN, { x: 3, y: 0, z: 0 });
 
             lines.removeLineFor(second);
 
-            expect(endpointAt(0)).toEqual([1, 0, 0]);
-            expect(endpointAt(2)).toEqual([3, 0, 0]);
+            expect(drawnEnds()).toEqual([
+                [1, 0, 0],
+                [3, 0, 0],
+            ]);
         });
 
         it('should grow beyond its initial capacity', () => {
@@ -271,7 +316,7 @@ describe('dive/line/MultiLineComponent', () => {
             }
 
             expect(lines.lineCount).toBe(20);
-            expect(drawnVertices()).toBe(40);
+            expect(drawnLines()).toBe(20);
             expect(endpointAt(19)).toEqual([20, 0, 0]);
         });
 
@@ -291,7 +336,7 @@ describe('dive/line/MultiLineComponent', () => {
             lines.clearLines();
 
             expect(lines.lineCount).toBe(0);
-            expect(drawnVertices()).toBe(0);
+            expect(drawnLines()).toBe(0);
         });
 
         it('should not shadow Object3D.clear', () => {
@@ -299,6 +344,73 @@ describe('dive/line/MultiLineComponent', () => {
             expect(lines.contributions).toEqual([lines.lines]);
             lines.clearLines();
             expect(lines.contributions).toEqual([lines.lines]);
+        });
+    });
+
+    describe('drawn instances', () => {
+        /**
+         * a zero-length segment makes Line2NodeMaterial normalize a zero
+         * direction, which is undefined in WGSL, so none may be drawn
+         */
+        it('should draw only the visible lines after hiding, removing and clearing', () => {
+            const a = addLine(ORIGIN, { x: 1, y: 0, z: 0 });
+            const b = addLine(ORIGIN, { x: 2, y: 0, z: 0 });
+            addLine(ORIGIN, { x: 3, y: 0, z: 0 });
+            const d = addLine(ORIGIN, { x: 4, y: 0, z: 0 });
+
+            lines.setLineVisibleFor(b, false);
+            lines.removeLineFor(a);
+
+            expect(drawnEnds()).toEqual([
+                [3, 0, 0],
+                [4, 0, 0],
+            ]);
+            expect(degenerateSegments()).toBe(0);
+
+            lines.setLineVisibleFor(b, true);
+            lines.setLineVisibleFor(d, false);
+
+            expect(drawnEnds()).toEqual([
+                [2, 0, 0],
+                [3, 0, 0],
+            ]);
+            expect(degenerateSegments()).toBe(0);
+
+            lines.clearLines();
+
+            expect(drawnSegments()).toEqual([]);
+        });
+
+        it('should keep each drawn line with its own dash distances', () => {
+            const a = addLine(ORIGIN, { x: 1, y: 0, z: 0 });
+            addLine({ x: 5, y: 0, z: 0 }, { x: 7, y: 0, z: 0 });
+
+            lines.removeLineFor(a);
+
+            expect(drawnLines()).toBe(1);
+            expect(endpointAt(0)).toEqual([7, 0, 0]);
+            expect(distancesAt(0)).toEqual([0, 2]);
+        });
+
+        it('should not draw a hidden line that moves', () => {
+            const key = addLine(ORIGIN, { x: 1, y: 0, z: 0 });
+            lines.setLineVisibleFor(key, false);
+
+            lines.setLineFor(key, ORIGIN, { x: 6, y: 0, z: 0 });
+            expect(drawnLines()).toBe(0);
+
+            lines.setLineVisibleFor(key, true);
+            expect(drawnEnds()).toEqual([[6, 0, 0]]);
+        });
+
+        it('should not draw a line twice when it is shown twice', () => {
+            const key = addLine(ORIGIN, { x: 1, y: 0, z: 0 });
+
+            lines.setLineVisibleFor(key, true);
+            lines.setLineVisibleFor(key, false);
+            lines.setLineVisibleFor(key, false);
+
+            expect(drawnLines()).toBe(0);
         });
     });
 
@@ -321,14 +433,14 @@ describe('dive/line/MultiLineComponent', () => {
             expect(lines.lines.visible).toBe(false);
         });
 
-        it('should collapse a single hidden line', () => {
+        it('should stop drawing a single hidden line', () => {
             addLine(ORIGIN, { x: 1, y: 0, z: 0 });
             const second = addLine(ORIGIN, { x: 2, y: 0, z: 0 });
 
             lines.setLineVisibleFor(second, false);
 
-            expect(endpointAt(0)).toEqual([1, 0, 0]);
-            expect(endpointAt(1)).toEqual([0, 0, 0]);
+            expect(drawnEnds()).toEqual([[1, 0, 0]]);
+            expect(lines.hasLineFor(second)).toBe(true);
         });
 
         it('should restore a single line', () => {
@@ -340,16 +452,7 @@ describe('dive/line/MultiLineComponent', () => {
             expect(endpointAt(0)).toEqual([4, 0, 0]);
         });
 
-        it('should keep a hidden line collapsed when it moves', () => {
-            const key = addLine(ORIGIN, { x: 1, y: 0, z: 0 });
-            lines.setLineVisibleFor(key, false);
-
-            lines.setLineFor(key, ORIGIN, { x: 6, y: 0, z: 0 });
-
-            expect(endpointAt(0)).toEqual([0, 0, 0]);
-        });
-
-        it('should make a line visible again when its slot is reused', () => {
+        it('should draw a new line under a key that was hidden and removed', () => {
             const key = addLine(ORIGIN, { x: 1, y: 0, z: 0 });
             lines.setLineVisibleFor(key, false);
             lines.removeLineFor(key);
@@ -372,19 +475,51 @@ describe('dive/line/MultiLineComponent', () => {
         });
 
         it('should draw solid lines by default', () => {
+            expect(material().dashed).toBe(false);
             expect(material().gapSize).toBe(0);
         });
 
         it('should set the dash pattern', () => {
             lines.setDashPattern(1, 2);
 
+            expect(material().dashed).toBe(true);
             expect(material().dashSize).toBe(1);
             expect(material().gapSize).toBe(2);
+        });
+
+        it('should draw solid again once the gap is zero', () => {
+            lines.setDashPattern(1, 2);
+            lines.setDashPattern(1, 0);
+
+            expect(material().dashed).toBe(false);
+        });
+
+        it('should draw one pixel wide by default', () => {
+            expect(lines.lineWidth).toBe(1);
+            expect(material().linewidth).toBe(1);
+        });
+
+        it('should set the line width in screen pixels', () => {
+            lines.setLineWidth(3);
+
+            expect(lines.lineWidth).toBe(3);
+            expect(material().linewidth).toBe(3);
+            // pixels, not world units, so the width stays the same at any distance
+            expect(material().worldUnits).toBe(false);
+        });
+
+        it('should keep dashes at any width', () => {
+            lines.setDashPattern(0.05, 0.025);
+            lines.setLineWidth(4);
+
+            expect(material().dashed).toBe(true);
+            expect(material().dashSize).toBe(0.05);
+            expect(material().gapSize).toBe(0.025);
         });
     });
 
     it('should not watch the scene graph', () => {
-        // the whole point of the split: adding children means nothing here
+        // adding children means nothing here, which is the point of the split
         const node = new DIVENode();
         node.addComponent(lines);
         node.add(new DIVENode());
@@ -457,14 +592,18 @@ describe('dive/line/MultiLineComponent', () => {
             const source = new MultiLineComponent();
             source.setColor(0xff0000);
             source.setDashPattern(0.2, 0.1);
+            source.setLineWidth(3);
             source.setVisible(false);
 
             const copy = source.clone();
-            const material = copy.lines.material as LineDashedMaterial;
+            const material = copy.lines.material;
 
             expect(material.color.getHexString()).toBe('ff0000');
+            expect(material.dashed).toBe(true);
             expect(material.dashSize).toBe(0.2);
             expect(material.gapSize).toBe(0.1);
+            expect(copy.lineWidth).toBe(3);
+            expect(material.linewidth).toBe(3);
             expect(copy.lines.visible).toBe(false);
         });
 

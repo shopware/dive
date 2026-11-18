@@ -772,7 +772,7 @@ describe('plugins/state/EngineGateway', () => {
             expectVec(group?.rotation, groupData.rotation);
             expectVec(group?.scale, groupData.scale);
             expect(group?.visible).toBe(groupData.visible);
-            // all member lines share one LineSegments, so one flag covers them
+            // all member lines share one LineSegments2, so one flag covers them
             expect(
                 group?.requireComponent(MultiLineComponent).lines.visible,
             ).toBe(groupData.linksVisible);

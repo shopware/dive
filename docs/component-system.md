@@ -212,6 +212,20 @@ plugin holds all the group knowledge:
 So the drawing half is reusable for anything that needs many cheap lines -
 measurement overlays, debug rays - and no component ever learns what a group is.
 
+`MultiLineComponent` draws all its lines with one three `LineSegments2`
+(`lines`) and a `Line2NodeMaterial`, on `HELPER_LAYER_MASK`. Lines are one pixel
+wide by default; `setLineWidth(width)` draws them wider, in screen pixels, so a
+line keeps its width on screen at any distance. `setDashPattern(dashSize,
+gapSize)` dashes them in the owner's units, and every line starts the pattern
+afresh at its own start; without a gap the lines are solid.
+
+```ts
+const icon = node.addComponent(new MultiLineComponent());
+icon.setLineFor('edge', { x: 0, y: 0, z: 0 }, { x: 1, y: 0, z: 0 });
+icon.setLineWidth(2);
+icon.setDashPattern(0.05, 0.025);
+```
+
 ## Layers decide what geometry means
 
 `src/constants/VisibilityLayerMask.ts` is the contract for "what is this
