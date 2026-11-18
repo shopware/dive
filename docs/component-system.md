@@ -237,6 +237,14 @@ The gizmo stays on three's `Raycaster`: `UI` for DIVE's handles, and three's
 default layer only inside the transform controls' own helper. It must never be
 selectable as an object.
 
+A `MeshColliderComponent` hits a model exactly where its surfaces are, and a
+heavy model costs about as much to pick as a light one: each geometry gets a
+bounding volume hierarchy (`three-mesh-bvh`, used directly, three's prototypes
+stay untouched) on its first raycast, shared by every mesh using that geometry
+and freed when the geometry is disposed. A swapped geometry needs nothing; after
+editing a geometry in place, call `collider.refresh()`. Skinned meshes and
+meshes with morph targets skip the hierarchy and are hit in their current pose.
+
 `DIVECameraComponent` composes two masks out of these: `EDITOR_VIEW_LAYER_MASK`
 is everything but `COORDINATE`, and `LIVE_VIEW_LAYER_MASK` is `PRODUCT | FLOOR`.
 
